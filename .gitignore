@@ -1,0 +1,4 @@
+# Real configuration and secrets never go in git. Use .env.example as the template.
+.env
+.env.*
+!.env.example
