@@ -86,6 +86,12 @@
   @keyframes exampleFadeOut { from { opacity: 1; } to { opacity: 0; } }
   @keyframes exampleFadeIn { from { opacity: 0; } to { opacity: 1; } }
   .example-fade-out { animation: exampleFadeOut .35s ease forwards; }
+  .tp-exp { height:0; overflow:hidden; visibility:hidden; opacity:0; transition:height .34s cubic-bezier(.22,.9,.32,1), opacity .22s ease, visibility 0s linear .34s; }
+  .tp-open .tp-exp { visibility:visible; opacity:1; transition:height .34s cubic-bezier(.22,.9,.32,1), opacity .22s ease .06s, visibility 0s; }
+  .tp-settled .tp-exp { height:auto; overflow:visible; }
+  .tp-chev { transition:transform .3s cubic-bezier(.22,.9,.32,1), background-color .2s; transform:rotate(90deg); }
+  .tp-open .tp-chev { transform:rotate(-90deg); background:#eef2ff; color:#4f46e5; }
+  @media (prefers-reduced-motion: reduce){ .tp-exp, .tp-chev { transition:none !important; } }
   .pmenu > summary { list-style: none; } .pmenu > summary::-webkit-details-marker { display: none; }
   .example-fade-in { animation: exampleFadeIn .35s ease forwards; }
   .nav-item { position:relative; color:rgba(17,22,43,0.55); }
@@ -985,6 +991,27 @@ const JOBS = [
         evidence:[ {icon:'send', label:'Monthly check-in email scheduled'} ] },
     ] },
 ];
+
+// More open roles for the demo - each with its own hiring process, so candidates in several
+// jobs show different rounds per job.
+(function(){
+  const J = function(id, title, client, loc, skills, minExp, workflow, extra){
+    JOBS.push(Object.assign({ id:id, title:title, client:client, loc:loc, status:'Active', priority:'Medium', recruiter:'Priya Sharma', assignedBy:'Manager Assigned',
+      positions:1, matchQuality:80, recommended:4, submitted:0, daysOpen:6, replacementDays:90, skills:skills, preferredSkills:[], minExp:minExp, notice:'< 60 Days',
+      department:'Engineering', employmentType:'Full-time', workMode:'Hybrid', responsibilities:[], candidateRequirements:[],
+      summary:title+' for '+client+'.', candidateIds:[], interested:[], recs:[], interviewWorkflow:workflow }, extra||{}));
+  };
+  J('j5','Python Backend Developer','Fintech Corp','Pune, IN',['Python','Django','PostgreSQL','AWS'],'3+ Years',
+    ['Online Coding Test','Technical Round','System Design','HR Round','Offer','Joining'],{ priority:'High' });
+  J('j6','React Native Developer','RetailX','Bengaluru, IN',['React Native','TypeScript','Redux'],'3+ Years',
+    ['Take-home Assignment','Technical Round','Culture Fit','Offer','Joining'],{ workMode:'Remote' });
+  J('j7','Data Engineer','CloudNova','Hyderabad, IN',['Python','SQL','Spark','Airflow'],'4+ Years',
+    ['Phone Screen','SQL Assessment','Technical Panel','VP Round','Offer','Joining']);
+  J('j8','Full Stack Engineer','HealthAI','Bengaluru, IN',['React','Node.js','PostgreSQL'],'4+ Years',
+    ['Technical Round','CTO Round','Offer','Joining'],{ daysOpen:12 });
+  J('j9','QA Automation Lead','Fintech Corp','Mumbai, IN',['Selenium','Automation','Test Strategy'],'6+ Years',
+    ['Telephonic Screen','Automation Exercise','Manager Round','HR Round','Offer','Joining']);
+})();
 
 const CLIENTS = [
   { id:'c1', name:'Fintech Corp', industry:'Financial Services', openRoles:3, submissions:6, health:88, contact:'Meera Kulkarni, TA Lead',
@@ -7757,7 +7784,7 @@ function pipeFmt(iso, withTime){ const d = new Date(iso); if(isNaN(d)) return St
 function pipeStageKind(name){
   if(/offer/i.test(name)) return 'offer';
   if(/join/i.test(name)) return 'join';
-  if(/round|interview|technical|hiring manager|panel|discussion|\bhr\b|director|cultural|assessment|assignment|coding|case|test/i.test(name)) return 'interview';
+  if(/round|interview|technical|hiring manager|manager|panel|discussion|\bhr\b|director|cultural|culture|fit|assessment|assignment|exercise|take-home|coding|case|test|design|screen|\bcto\b|\bvp\b/i.test(name)) return 'interview';
   return 'step';
 }
 function pipeAgency(){ return (typeof agencyBranding!=='undefined' && agencyBranding && agencyBranding.name) || 'Oontu'; }
@@ -8504,6 +8531,55 @@ function pdRender(){
 
 /* ---- Demo data: the seeded submissions at realistic points of the flow, in line with the
    offers, interviews and placements already on record. Runs once at load. */
+// Candidates in several jobs at once, each job at its own point in its own hiring process.
+function seedMultiJobDemo(){
+  if(seedMultiJobDemo.done) return; seedMultiJobDemo.done = true;
+  const days = function(n, h){ const d = new Date(Date.now()-n*86400000); d.setHours(h||11, 0, 0, 0); return d.toISOString(); };
+  const add = function(jobId, name){ const c = findCandidateByName(name), j = jobById(jobId); if(!c || !j) return null;
+    const sb = findSubmission(jobId, c.id) || createSubmission(jobId, c.id, { source:'Talent Pool' }); return sb; };
+  // Sent to the client n days ago; then optionally shortlisted and moved through `cleared` rounds.
+  const place = function(sb, sentAgo, to, cleared){
+    if(!sb) return null; const j = jobById(sb.jobId), st = jobProcessStages(j), me = 'Priya Sharma';
+    sb.createdAt = days(sentAgo+1, 10); sb.stageHistory = [{ stage:'Submitted', at:sb.createdAt, reason:'Submitted to job', by:me }];
+    sb.sent = { at:days(sentAgo), by:me, channel:'Email', to:[to], subject:'', ref:'', masked:true, resume:true, pitch:'' }; sb.rtrConfirmedAt = sb.sent.at;
+    sb.stageHistory.push({ stage:'Submitted', at:sb.sent.at, reason:'Sent to '+j.client+' by email to '+to, by:me });
+    sb.stage = 'Submitted'; sb.status = submissionStatusFor('Submitted'); j.submitted = (j.submitted||0)+1;
+    if(cleared==null) return sb;
+    let t = sentAgo-1;
+    sb.clientFeedback = { decision:'Shortlisted', reason:'', via:'Email', note:'', at:days(t), by:me }; sb.processStage = 0; sb.stage = 'Shortlisted'; sb.status = submissionStatusFor('Shortlisted');
+    sb.stageHistory.push({ stage:'Shortlisted', at:days(t), reason:'Shortlisted by '+j.client+' (heard by email)', by:me });
+    for(let i=0;i<cleared;i++){ t = Math.max(0, t-2); sb.steps = sb.steps||{}; sb.steps[i] = { outcome:'Cleared', reason:'', note:'', at:days(t), by:me }; sb.processStage = i+1;
+      sb.stageHistory.push({ stage:'Shortlisted', at:days(t), reason:'Cleared '+st[i]+' → '+st[i+1], by:me }); }
+    return sb;
+  };
+  const book = function(sb, dayOffset, hour, mode, who, confirmed){
+    const j = jobById(sb.jobId), c = byId(sb.candidateId), at = subProcessIndex(j, sb), round = jobProcessStages(j)[at];
+    const d = new Date(Date.now()+dayOffset*86400000); d.setHours(hour, 0, 0, 0);
+    const label = d.toLocaleDateString('en-US',{ month:'short', day:'numeric' })+', '+d.toLocaleTimeString('en-US',{ hour:'numeric', minute:'2-digit' });
+    hmInterviews.unshift({ id:'int-'+(hmInterviewIdSeq++), candidate:c.name, role:j.title, candidateId:c.id, jobId:j.id, submissionId:sb.id, stageIndex:at, round:round,
+      date:label, at:d.toISOString(), duration:60, mode:mode, meetingLink: mode==='Video' ? 'https://meet.google.com/abc-'+sb.id.replace(/\D/g,'').padStart(4,'0')+'-xyz' : '', meetProvider: mode==='Video' ? 'Google Meet' : null,
+      venue: mode==='Onsite' ? j.client+' office, '+j.loc : '', interviewerName:who, status: confirmed ? 'Confirmed' : 'Pending confirmation', candidateConfirmed:!!confirmed, interviewerConfirmed:true, rescheduleHistory:[], noShow:null });
+    sb.stage = 'Interview Scheduled'; sb.status = submissionStatusFor('Interview Scheduled');
+    sb.stageHistory.push({ stage:'Interview Scheduled', at:days(Math.max(0,-dayOffset)+1), reason:round+' scheduled for '+label, by:'Priya Sharma' });
+  };
+  // Karan Mehta: React Frontend (already in Hiring Manager Round) + React Native (take-home due) + Full Stack (with client).
+  book(place(add('j6','Karan Mehta'), 6, 'Suresh Iyer', 0), 2, 12, 'Video', 'Suresh Iyer', true);
+  place(add('j8','Karan Mehta'), 2, 'Farhan Sheikh');
+  // Sneha Patel: Full Stack (CTO Round, outcome due) + Python Backend (with client, chase).
+  book(place(add('j8','Sneha Patel'), 10, 'Farhan Sheikh', 1), -1, 15, 'Video', 'Farhan Sheikh', true);
+  place(add('j5','Sneha Patel'), 5, 'Meera Kulkarni');
+  // Vikram Rao: Python Backend at System Design.
+  book(place(add('j5','Vikram Rao'), 14, 'Meera Kulkarni', 2), 4, 11, 'Onsite', 'Rohit Bansal', false);
+  // Amit Verma: Data Engineer at SQL Assessment (to schedule).
+  place(add('j7','Amit Verma'), 8, 'Devika Rao', 1);
+  // Priya Nair: Data Engineer - just sent.
+  place(add('j7','Priya Nair'), 1, 'Devika Rao');
+  // Neha Joshi: QA Automation Lead at Manager Round.
+  book(place(add('j9','Neha Joshi'), 12, 'Rohit Bansal', 2), 1, 10, 'Video', 'Rohit Bansal', true);
+  // Riya Desai: Python Backend - ready to send.
+  const rd = add('j5','Riya Desai'); if(rd){ rd.stage = 'Ready to Send'; rd.status = submissionStatusFor('Ready to Send'); rd.stageHistory.push({ stage:'Ready to Send', at:days(0, 9), reason:'Ready to send to Fintech Corp', by:'Priya Sharma' }); }
+  SUBMISSIONS.forEach(function(sb){ sb.updatedAt = (sb.stageHistory[sb.stageHistory.length-1]||{}).at || sb.updatedAt; });
+}
 function seedPipelineDemo(){
   if(seedPipelineDemo.done) return; seedPipelineDemo.done = true;
   const days = function(n, h){ const d = new Date(Date.now()-n*86400000); d.setHours(h||11, 0, 0, 0); return d.toISOString(); };
@@ -10511,10 +10587,6 @@ function tpPipeRefresh(){
   const f = document.getElementById('tp-pipe-filters'); if(f) f.outerHTML = tpPipeFiltersHTML();
   const h = document.getElementById('tp-pipe-head'); if(h) h.outerHTML = tpPipeHeadHTML();
 }
-// ---- Pipeline list: one row per candidate, one line per job they're in ----
-// Header and rows share this grid so the columns line up.
-// The last column is fixed: sized by its buttons it would differ per row and shift the others.
-const TP_PIPE_GRID = 'md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.15fr)_15rem]';
 // Waiting this long on the client at a round (nothing booked) counts as stuck.
 const PIPE_STUCK_DAYS = 3;
 // When the candidate reached the stage they're at now. Follow-ups are logged in the same
@@ -10586,24 +10658,96 @@ function tpStandsHTML(sb){
   const flag = stuck ? '<span class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full whitespace-nowrap bg-terracotta-50 text-terracotta-600" title="Waiting on '+escapeHtml(jobById(sb.jobId).client)+' for '+stuck+' day'+(stuck===1?'':'s')+'">'+icon('clock','w-3.5 h-3.5')+'Needs client feedback · '+stuck+'d</span>' : '';
   return '<div class="flex flex-wrap items-center gap-1.5">'+main+flag+'</div>';
 }
-// One candidate, every job of theirs that's in view.
-function tpPipeGroupHTML(g){
-  const c = g.c, n = g.rows.length, act = g.rows.some(function(x){ return pipeNeedsAction(x.sub); });
-  const cand = '<div class="flex items-center gap-3 min-w-0 px-4 md:px-0 py-3.5 '+(n>1 ? 'md:self-start' : 'md:self-center cursor-pointer')+'" style="grid-row:span '+n+'"'+(n>1 ? '' : ' onclick="openPipelineDetail(\''+g.rows[0].sub.id+'\')"')+'>'+
-    '<span class="relative shrink-0">'+candidateAvatarHTML(c, 'w-9 h-9', {})+(act ? '<span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-terracotta-500 ring-2 ring-white" title="Needs action"></span>' : '')+'</span>'+
-    '<div class="min-w-0"><p class="text-sm font-semibold text-ink truncate">'+escapeHtml(c.name)+'</p>'+
-      '<p class="text-xs text-zinc-500 truncate">'+escapeHtml([c.role, c.exp && c.exp!=='—' ? c.exp : ''].filter(Boolean).join(' · '))+'</p>'+
-      (n>1 ? '<p class="mt-1"><span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">'+n+' jobs</span></p>' : '')+'</div></div>';
-  const jobs = g.rows.map(function(x, k){
-    const sb = x.sub, j = x.job, nx = pipeNext(sb);
-    const primary = nx && nx.actions[0] ? { actions:[nx.actions[0]], more:(nx.actions.slice(1)).concat(nx.more||[]) } : (nx && (nx.more||[]).length ? { actions:[], more:nx.more } : null);
-    return '<div class="md:col-span-3 grid grid-cols-1 md:grid-cols-subgrid items-center gap-x-4 gap-y-2 px-4 md:px-0 py-3.5 cursor-pointer'+(n>1 ? ' hover:bg-zinc-50/80' : '')+(k ? ' border-t border-zinc-100' : '')+'" onclick="openPipelineDetail(\''+sb.id+'\')">'+
-      '<div class="min-w-0"><p class="text-sm text-ink truncate">'+escapeHtml(j.title)+'</p><p class="text-xs text-zinc-500 truncate">'+escapeHtml(j.client)+' · by '+escapeHtml(jobWsWho(sb))+'</p></div>'+
+// ---- Pipeline cards: one card per candidate; each job they're in is a "track" showing
+// where they stand in that job's own hiring process. With several jobs the card shows the
+// most urgent one and the rest open with "Show all jobs".
+let tpPipeOpenIds = {};
+// Open/close a candidate in place, so the jobs slide open instead of the list re-drawing.
+function tpPipeToggleCand(id){
+  tpPipeOpenIds[id] = !tpPipeOpenIds[id];
+  const li = document.querySelector('#tp-pipeline-list [data-cand="'+id+'"]');
+  if(!li){ const el = document.getElementById('tp-pipeline-list'); if(el) el.outerHTML = tpPipelineListHTML(); return; }
+  const open = tpPipeOpenIds[id], head = li.querySelector('[data-tp-head]');
+  const ex = li.querySelector('.tp-exp'); if(!ex) return;
+  clearTimeout(li._tpT);
+  if(head) head.setAttribute('aria-expanded', open);
+  if(open){
+    li.classList.add('tp-open'); ex.style.height = ex.scrollHeight+'px';
+    li._tpT = setTimeout(function(){ li.classList.add('tp-settled'); ex.style.height = ''; }, 360);
+  } else {
+    ex.style.height = ex.offsetHeight+'px'; li.classList.remove('tp-settled'); void ex.offsetHeight;
+    li.classList.remove('tp-open'); ex.style.height = '';
+  }
+}
+const TP_LOGO_TONES = ['bg-accent-50 text-accent-700','bg-forest-50 text-forest-600','bg-gold-100 text-gold-700','bg-terracotta-50 text-terracotta-600','bg-zinc-100 text-zinc-700'];
+function tpClientLogo(name, size){
+  let h = 0; String(name).split('').forEach(function(ch){ h = (h*31 + ch.charCodeAt(0)) >>> 0; });
+  return '<span class="'+(size||'w-9 h-9 text-xs')+' rounded-xl flex items-center justify-center font-bold shrink-0 '+TP_LOGO_TONES[h % TP_LOGO_TONES.length]+'" aria-hidden="true">'+escapeHtml(String(name||'?').split(/\s+/).map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase())+'</span>';
+}
+// Where this candidate is in this job: "Submitted" (with the client) + the job's own rounds.
+function tpTrackPos(j, sb){
+  const steps = ['Submitted'].concat(jobProcessStages(j)), ph = subPhase(sb), joined = sb.stage==='Joined' || sb.stage==='Lock-in Completed';
+  const at = ph==='client' ? 0 : ph==='process' ? subProcessIndex(j, sb)+1 : ph==='closed' ? (typeof sb.processStage==='number' ? sb.processStage+1 : subSentInfo(sb) ? 0 : -1) : -1;
+  return { steps:steps, at:at, joined:joined, closed:ph==='closed', pre: ph==='review' || ph==='ready' || ph==='applied' };
+}
+// Dot-and-line stepper: green up to here, a ring on the current step, grey ahead.
+function tpTrackBarHTML(j, sb){
+  const p = tpTrackPos(j, sb), stuck = pipeStuckDays(sb), last = p.steps.length-1;
+  const cur = p.closed ? '#c65f3f' : (sb.hold || stuck) ? '#c9a35a' : '#4f46e5';
+  const line = function(on){ return on ? 'background:#3c6b52' : 'background:#e4e4e7'; };
+  const nodes = p.steps.map(function(name, k){
+    const done = k<p.at || (p.joined && k<=p.at), here = k===p.at && !p.joined;
+    const dot = done ? '<span class="relative z-[1] w-4 h-4 rounded-full flex items-center justify-center text-white" style="background:#3c6b52">'+icon('check','w-2.5 h-2.5')+'</span>'
+      : here ? '<span class="relative z-[1] w-4 h-4 rounded-full bg-white flex items-center justify-center" style="box-shadow:0 0 0 2px '+cur+', 0 0 0 6px '+cur+'22"><span class="w-1.5 h-1.5 rounded-full" style="background:'+cur+'"></span></span>'
+      : '<span class="relative z-[1] w-4 h-4 rounded-full bg-white ring-2 ring-zinc-200"></span>';
+    return '<li class="relative flex-1 min-w-[64px] flex flex-col items-center" title="'+escapeHtml(name)+'">'+
+      (k ? '<span class="absolute top-[7px] left-0 right-1/2 h-0.5" style="'+line(k<=p.at || p.joined)+'"></span>' : '')+
+      (k<last ? '<span class="absolute top-[7px] left-1/2 right-0 h-0.5" style="'+line(k<p.at || p.joined)+'"></span>' : '')+dot+
+      '<span class="mt-2 px-1 text-center text-[10px] leading-tight '+(here ? 'font-semibold' : done ? 'text-zinc-500' : 'text-zinc-400')+'" style="'+(here ? 'color:'+cur : '')+'">'+escapeHtml(name)+'</span></li>';
+  }).join('');
+  return '<ol class="flex overflow-x-auto pt-1 pb-1" role="img" aria-label="'+escapeHtml(p.pre ? 'Not sent to '+j.client+' yet' : p.at>=0 ? 'Step '+(p.at+1)+' of '+p.steps.length+': '+p.steps[p.at] : 'Not started')+'">'+nodes+'</ol>';
+}
+function tpPipeTrackHTML(x){
+  const sb = x.sub, j = x.job, nx = pipeNext(sb), urgent = pipeNeedsAction(sb), p = tpTrackPos(j, sb);
+  const primary = nx && nx.actions[0] ? { actions:[nx.actions[0]], more:(nx.actions.slice(1)).concat(nx.more||[]) } : (nx && (nx.more||[]).length ? { actions:[], more:nx.more } : null);
+  const where = p.pre ? 'Not with '+j.client+' yet' : p.joined ? 'Placed' : p.closed ? 'Stopped at step '+(p.at+1)+' of '+p.steps.length : 'Step '+(p.at+1)+' of '+p.steps.length;
+  return '<div class="relative rounded-xl bg-white ring-1 '+(urgent ? 'ring-terracotta-100' : 'ring-zinc-100')+' px-4 py-3.5 cursor-pointer hover:ring-zinc-200 transition" onclick="openPipelineDetail(\''+sb.id+'\')">'+
+    '<div class="flex flex-wrap items-center gap-x-4 gap-y-2">'+
+      '<div class="flex items-center gap-3 min-w-0 flex-1 basis-56">'+tpClientLogo(j.client, 'w-8 h-8 text-[11px]')+
+        '<div class="min-w-0"><p class="text-sm font-semibold text-ink truncate">'+escapeHtml(j.title)+'</p>'+
+          '<p class="text-xs text-zinc-500 truncate">'+escapeHtml(j.client)+' · by '+escapeHtml(jobWsWho(sb))+'</p></div></div>'+
       '<div class="min-w-0">'+tpStandsHTML(sb)+'</div>'+
-      '<div class="flex items-center justify-start md:justify-end gap-1.5" onclick="event.stopPropagation()">'+(primary ? pipeButtonsHTML(primary, 'sm') : '')+'</div>'+
-    '</div>'; }).join('');
-  // One job: the whole row highlights and opens. Several: each job line does.
-  return '<li class="grid grid-cols-1 '+TP_PIPE_GRID+' md:gap-x-4 md:px-4'+(act ? ' bg-accent-50/30' : '')+(n>1 ? '' : ' hover:bg-zinc-50/80')+'">'+cand+jobs+'</li>';
+      '<div class="flex items-center gap-1.5 shrink-0 ml-auto" onclick="event.stopPropagation()">'+(primary ? pipeButtonsHTML(primary, 'sm') : '')+'</div>'+
+    '</div>'+
+    '<div class="mt-3">'+tpTrackBarHTML(j, sb)+'</div>'+
+    '<p class="text-[11px] text-zinc-400 mt-1">'+escapeHtml(where)+(nx && !nx.closed && !nx.done && !p.pre ? ' · <span class="'+(nx.warn ? 'text-terracotta-600' : 'text-zinc-500')+'">'+escapeHtml(nx.title)+'</span>' : p.pre && nx ? ' · '+escapeHtml(nx.title) : '')+'</p>'+
+  '</div>';
+}
+function tpDotFor(tone){ return /terracotta/.test(tone) ? 'bg-terracotta-500' : /gold/.test(tone) ? 'bg-gold-500' : /forest/.test(tone) ? 'bg-forest-500' : /zinc/.test(tone) ? 'bg-zinc-400' : 'bg-accent-500'; }
+function tpPipeGroupHTML(g){
+  const c = g.c, n = g.rows.length, todo = g.rows.filter(function(x){ return pipeNeedsAction(x.sub); }).length, open = !!tpPipeOpenIds[c.id];
+  const nd = tsNotice(c), city = c.city || String(c.loc||'').split(',')[0];
+  const facts = [c.role, c.exp && c.exp!=='—' ? c.exp : '', city, nd==null ? '' : nd===0 ? 'Immediate joiner' : nd+'d notice'].filter(Boolean);
+  const pill = function(x){ const s = tpStandChip(x.sub);
+    return '<span class="inline-flex items-center gap-1.5 h-7 pl-1 pr-2.5 rounded-full bg-zinc-50 ring-1 ring-zinc-200 text-[11px] text-zinc-700 max-w-[220px]">'+tpClientLogo(x.job.client, 'w-5 h-5 text-[8px] rounded-full')+
+      '<span class="truncate">'+escapeHtml(x.job.title)+'</span><span class="w-1.5 h-1.5 rounded-full shrink-0 '+tpDotFor(s.tone)+'" title="'+escapeHtml(s.text)+'"></span></span>'; };
+  return '<li data-cand="'+c.id+'" class="card rounded-2xl p-0 overflow-visible'+(open ? ' tp-open tp-settled' : '')+'">'+
+    '<button type="button" data-tp-head aria-expanded="'+open+'" onclick="tpPipeToggleCand('+c.id+')" class="w-full flex items-center gap-4 px-5 py-4 text-left rounded-2xl hover:bg-zinc-50/60 transition-colors">'+
+      candidateAvatarHTML(c, 'w-11 h-11', {})+
+      '<span class="min-w-0 flex-1 basis-48"><span class="flex items-center gap-2"><span class="text-[15px] font-semibold text-ink truncate">'+escapeHtml(c.name)+'</span>'+
+          (todo ? '<span class="w-2 h-2 rounded-full bg-terracotta-500 shrink-0" title="'+todo+' need'+(todo===1?'s':'')+' action"></span>' : '')+'</span>'+
+        '<span class="block text-xs text-zinc-500 truncate mt-0.5">'+escapeHtml(facts.join(' · '))+'</span></span>'+
+      '<span class="hidden md:flex items-center gap-1.5 flex-wrap justify-end max-w-[46%]">'+g.rows.slice(0,2).map(pill).join('')+(n>2 ? '<span class="text-[11px] text-zinc-400">+'+(n-2)+'</span>' : '')+'</span>'+
+      '<span class="shrink-0 text-right w-20"><span class="block text-sm font-semibold text-ink">'+odPlural(n,'job')+'</span>'+
+        '<span class="block text-[11px] '+(todo ? 'text-terracotta-600 font-medium' : 'text-forest-600')+'">'+(todo ? todo+' need'+(todo===1?'s':'')+' action' : 'On track')+'</span></span>'+
+      '<span class="tp-chev shrink-0 w-8 h-8 rounded-full bg-zinc-100 text-zinc-500 flex items-center justify-center">'+icon('chevronRight','w-4 h-4')+'</span>'+
+    '</button>'+
+    '<div class="tp-exp"><div><div class="px-5 pb-5 pt-1 space-y-2.5 border-t border-zinc-100 bg-zinc-50/50 rounded-b-2xl">'+
+      '<div class="flex items-center justify-between pt-3"><p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">'+(n===1 ? 'Job' : 'All '+n+' jobs')+'</p>'+
+        '<button type="button" onclick="openCandidate('+c.id+')" class="text-xs font-medium text-accent-700 hover:underline">View profile</button></div>'+
+      g.rows.map(tpPipeTrackHTML).join('')+
+    '</div></div></div>'+
+  '</li>';
 }
 // Rows stay in priority order; a candidate sits where their most urgent job sits.
 function tpPipelineGroups(rows){
@@ -10617,11 +10761,8 @@ function tpPipelineListHTML(){
     : { all:'No one in the pipeline yet. Submit candidates from Search Candidates or a job page.', submitted:'Nothing waiting for approval or to be sent.', client:'No profiles waiting on client feedback.',
         interview:'No one is interviewing right now.', offer:'No offers in progress.', joining:'No one joining yet.', closed:'Nothing closed yet.' }[tpPipeFilter];
   return '<div id="tp-pipeline-list">'+(rows.length
-    ? '<div class="card p-0">'+
-        '<div class="hidden md:grid '+TP_PIPE_GRID+' gap-x-4 px-4 py-2.5 border-b border-zinc-100 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">'+
-          '<span class="pl-12">Candidate</span><span>Job</span><span>Where it stands</span><span class="text-right">Next step</span></div>'+
-      '<ul class="divide-y divide-zinc-100">'+shown.map(tpPipeGroupHTML).join('')+'</ul>'+
-      (groups.length>shown.length ? '<button type="button" onclick="tpPipeLimit+=25; tpPipeRefresh()" class="w-full border-t border-zinc-100 py-3 text-xs font-semibold text-accent-700 hover:bg-zinc-50 rounded-b-2xl">Show '+Math.min(25, groups.length-shown.length)+' more · '+(groups.length-shown.length)+' left</button>' : '')+'</div>'
+    ? '<ul class="space-y-3">'+shown.map(tpPipeGroupHTML).join('')+'</ul>'+
+      (groups.length>shown.length ? '<button type="button" onclick="tpPipeLimit+=25; tpPipeRefresh()" class="w-full mt-3 card py-3 text-xs font-semibold text-accent-700 hover:bg-zinc-50">Show '+Math.min(25, groups.length-shown.length)+' more · '+(groups.length-shown.length)+' left</button>' : '')
     : '<div class="card py-12 px-6 text-center text-sm text-zinc-500">'+empty+'</div>')+'</div>';
 }
 // Every interview on a live journey's current round: due an outcome, coming up, or needing a new slot.
@@ -32315,6 +32456,7 @@ PAGE_TITLES['client-new'] = 'New Client';
 resolveCanonicalReferences();
 migrateInboundApplications();
 seedPipelineDemo();
+seedMultiJobDemo();
 // Talent Pool's sticky header: publish its height (the form's step list sits below it) and
 // show a hairline once content scrolls underneath.
 function tpSyncHead(){
