@@ -1945,6 +1945,10 @@ span.rounded-full[class*="text-xs"][class*="px-"][class*="py-"][class*="bg-"]:no
 .bk-scan, .bk-orb > *, .chip-pop, .msg-bubble-in, .jdp-tag, .jdp-stamp, .bk-drop, .bk-pill, .expand-panel{ animation:none !important; }
 .bk-scan{ display:none; }
 .bk-field{ opacity:1; animation:none !important; }
+/* dialogs: the overlay fades, the panel slides 16 px over 320 ms; radius 16, shadow only on the dialog */
+.modal-backdrop{ animation:modalFadeIn 320ms var(--ease); background-color:rgba(47,49,63,.40) !important; }
+.modal-panel{ border-radius:var(--r-panel); animation:modalPopIn 320ms var(--ease); box-shadow:0 24px 48px -12px rgba(47,49,63,.25), 0 2px 6px rgba(47,49,63,.06); }
+@media (prefers-reduced-motion: reduce){ .modal-backdrop, .modal-panel, .app-sheet{ animation:none !important; } }
 </style>
 </head>
 <body class="text-zinc-900 antialiased">
@@ -12494,6 +12498,7 @@ function avatarHash(str){
 }
 const AVATAR_PALETTES = [
 ['#F2F3F6','#D2D5DD','#2F313F'], ['#E9EBEF','#B3B7C3','#424553'], ['#F9FAFB','#DFE1E7','#555968'], ['#F2F3F6','#B3B7C3','#2F313F'],  ['#E9EBEF','#D2D5DD','#555968'], ['#F9FAFB','#B3B7C3','#424553'], ['#F2F3F6','#DFE1E7','#2F313F'], ['#E9EBEF','#B3B7C3','#555968'],
+];
 const AVATAR_SKIN = ['#e7b48c','#d9a374','#c68a5c','#f0c8a4','#b67a4e'];
 const AVATAR_HAIR = ['#1f1710','#2e2119','#3b2a1e','#151515'];
 function avatarSVG(gender, seed){
