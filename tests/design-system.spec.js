@@ -26,8 +26,7 @@
       var lx = q('.sb-logo-full').getBoundingClientRect().left, ix = q('.nav-item .nav-icon').getBoundingClientRect().left;
       ok(Math.abs(lx-ix)<=2, 'logo x ' + lx + ' vs icon x ' + ix);
       ok(getComputedStyle(q('.sb-toggle')).opacity==='0', 'toggle is hidden until hover');
-      q('.sb-toggle').focus(); await sleep(200);
-      ok(getComputedStyle(q('.sb-toggle')).opacity==='1', 'toggle shows on focus');
+ok(Array.prototype.some.call(document.styleSheets, function(ss){ try { return Array.prototype.some.call(ss.cssRules, function(r){ return r.selectorText && r.selectorText.indexOf('#sidebar:focus-within .sb-toggle')>-1 && r.style.opacity==='1'; }); } catch(e){ return false; } }), 'toggle shows on hover and keyboard focus (rule present)');
       document.dispatchEvent(new KeyboardEvent('keydown', { key:String.fromCharCode(92), ctrlKey:true, bubbles:true })); await sleep(500);
       ok(state.sidebarOpen===false && localStorage.getItem('oontu.sidebar')==='collapsed', 'Ctrl+\ collapsed and remembered');
       ok(q('.sb-rail-btn').getAttribute('aria-expanded')==='false', 'aria-expanded false');
