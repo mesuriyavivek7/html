@@ -1261,6 +1261,91 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 .ws-prefixed { display:flex; align-items:stretch; }
 .ws-prefixed > span { display:flex; align-items:center; padding:0 10px; border:1px solid #CBD0DC; border-right:0; border-radius:8px 0 0 8px; background:#F7F8FB; font-size:14px; color:#5A6177; white-space:nowrap; }
 .ws-prefixed .au-input { border-radius:0 8px 8px 0; }
+/* job creation (flow A3) */
+.jc-steps { margin:0 0 24px; overflow-x:auto; }
+.jc-steps ol { display:flex; align-items:center; gap:4px; margin:0; padding:0; list-style:none; white-space:nowrap; }
+.jc-step + .jc-step::before { content:''; display:inline-block; width:20px; height:1px; margin:0 6px 0 2px; vertical-align:middle; background:#E3E6EE; }
+.jc-step button { display:inline-flex; align-items:center; gap:8px; padding:4px 4px; border-radius:6px; font-size:13px; color:#7A8299; vertical-align:middle; }
+.jc-step button:disabled { cursor:default; }
+.jc-step__dot { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:999px; font-size:11px; font-weight:600; background:#E3E6EE; color:#7A8299; }
+.jc-step--current button { color:#11162B; font-weight:600; }
+.jc-step--current .jc-step__dot, .jc-step--done .jc-step__dot { background:#3A5BE8; color:#FFFFFF; }
+.jc-step--done button { color:#3A5BE8; }
+.jc-step--done button:hover { text-decoration:underline; text-underline-offset:2px; }
+.jc-step button:focus-visible { outline:2px solid #3A5BE8; outline-offset:2px; }
+.jc-foot { position:sticky; bottom:-24px; z-index:10; display:flex; align-items:center; gap:10px; margin:8px -32px -24px; padding:12px 32px 16px; background:#FFFFFF; border-top:1px solid #E3E6EE; }
+@media (max-width:899px){ .jc-foot { margin:8px -16px -24px; padding:12px 16px 16px; } }
+.jc-title { font-family:'Plus Jakarta Sans', Inter, sans-serif; font-size:28px; line-height:34px; font-weight:700; letter-spacing:-.01em; color:#11162B; }
+.jc-starts { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; margin:0 0 16px; padding:0; border:0; }
+@media (max-width:640px){ .jc-starts { grid-template-columns:1fr; } }
+.jc-start { display:flex; flex-direction:column; gap:4px; padding:16px; border:1px solid #E3E6EE; border-radius:12px; background:#FFFFFF; cursor:pointer; }
+.jc-start:hover { border-color:#CBD0DC; }
+.jc-start.is-on { border-color:#3A5BE8; background:#F5F7FF; box-shadow:inset 0 0 0 .5px #3A5BE8; }
+.jc-start:has(input:focus-visible) { outline:2px solid #3A5BE8; outline-offset:2px; }
+.jc-start__icon { display:flex; color:#3A5BE8; margin-bottom:6px; }
+.jc-start__title { font-size:14px; font-weight:600; color:#11162B; }
+.jc-start__sub { font-size:12px; line-height:17px; color:#626A80; }
+.jc-or { display:flex; align-items:center; gap:10px; margin:20px 0 16px; font-size:12px; color:#7A8299; }
+.jc-or::before, .jc-or::after { content:''; flex:1; height:1px; background:#E3E6EE; }
+.jc-kairo-tag { display:inline-flex; align-items:center; gap:3px; margin-left:6px; padding:1px 7px; border-radius:999px; background:#F0F2F7; color:#626A80; font-size:11px; font-weight:500; vertical-align:middle; white-space:nowrap; }
+.jc-link { display:inline-flex; align-items:center; gap:4px; font-size:13px; font-weight:600; color:#3A5BE8; }
+.jc-link:hover { text-decoration:underline; text-underline-offset:2px; }
+.jc-secs > .jc-sec + .jc-sec { margin-top:24px; padding-top:24px; border-top:1px solid #EEF0F4; }
+.jc-sec__title { font-family:'Plus Jakarta Sans', Inter, sans-serif; font-size:16px; line-height:22px; font-weight:600; color:#11162B; margin-bottom:14px; }
+.jc-sec__sub { margin:-8px 0 14px; font-size:13px; color:#626A80; }
+.jc-input { height:40px; padding:0 12px; border:1px solid #CBD0DC; border-radius:8px; background:#FFFFFF; font-size:14px; color:#11162B; }
+.jc-input:focus { outline:none; border-color:#3A5BE8; box-shadow:0 0 0 3px rgba(58,91,232,.15); }
+.jc-stage-list { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px; }
+.jc-stage { border:1px solid #E3E6EE; border-radius:12px; background:#FFFFFF; padding:12px 14px; }
+.jc-stage.is-dragging { opacity:.5; }
+.jc-stage__head { display:flex; align-items:center; gap:8px; }
+.jc-stage__grip { cursor:grab; color:#A3A9B8; padding:0 2px; }
+.jc-stage__num { flex:none; width:22px; height:22px; border-radius:999px; background:#EEF2FE; color:#2D48C8; font-size:11px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; }
+.jc-stage__name { flex:1; min-width:0; font-weight:600; }
+.jc-stage__grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-top:10px; padding-left:52px; }
+@media (max-width:900px){ .jc-stage__grid { grid-template-columns:1fr; padding-left:0; } }
+.jc-stage__field { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.jc-stage__field > span { font-size:12px; color:#626A80; }
+.jc-stage__confirm { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; padding:10px 12px; border-radius:8px; background:#FBEEE9; font-size:13px; color:#943F2C; }
+.jc-stage__confirm > span { flex:1; min-width:180px; }
+.jc-icon-btn { flex:none; width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; color:#626A80; font-size:15px; }
+.jc-icon-btn:hover:not(:disabled) { background:#F0F2F7; color:#11162B; }
+.jc-icon-btn:disabled { opacity:.35; cursor:default; }
+.jc-icon-btn--danger:hover:not(:disabled) { background:#FBEEE9; color:#943F2C; }
+.jc-icon-btn:focus-visible, .jc-add:focus-visible { outline:2px solid #3A5BE8; outline-offset:2px; }
+.jc-add { display:inline-flex; align-items:center; gap:6px; margin-top:12px; height:38px; padding:0 14px; border:1px dashed #CBD0DC; border-radius:10px; font-size:13px; font-weight:600; color:#3A5BE8; }
+.jc-add:hover { border-color:#3A5BE8; background:#F5F7FF; }
+.jc-seg .seg__btn { padding:0 10px; }
+.jc-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid #EEF0F4; }
+.jc-row__title { font-size:14px; font-weight:500; color:#11162B; }
+.jc-row__desc { font-size:12px; line-height:17px; color:#626A80; margin-top:2px; }
+.jc-check { display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid #E3E6EE; border-radius:10px; font-size:13px; color:#11162B; cursor:pointer; }
+.jc-load { display:inline-block; margin-top:4px; padding:1px 8px; border-radius:999px; font-size:11px; font-weight:500; }
+.jc-load--ok { background:#E7F5EE; color:#1E7A4E; }
+.jc-load--busy { background:#FDF3E1; color:#8A5300; }
+.jc-load--over { background:#FBEEE9; color:#943F2C; }
+.jc-routing { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media (max-width:640px){ .jc-routing { grid-template-columns:1fr; } }
+.jc-route { display:flex; flex-direction:column; gap:3px; padding:14px; border:1px solid #E3E6EE; border-radius:12px; cursor:pointer; }
+.jc-route.is-on { border-color:#3A5BE8; background:#F5F7FF; box-shadow:inset 0 0 0 .5px #3A5BE8; }
+.jc-route:has(input:focus-visible) { outline:2px solid #3A5BE8; outline-offset:2px; }
+.jc-route__title { font-size:14px; font-weight:600; color:#11162B; }
+.jc-route__desc { font-size:12px; line-height:17px; color:#626A80; }
+.jc-made { display:flex; align-items:center; gap:8px; margin-bottom:16px; padding:12px 14px; border-radius:10px; background:#E7F5EE; color:#1E7A4E; font-size:13px; font-weight:500; }
+.jc-read-stages { margin:0; padding:0; list-style:none; }
+.jc-read-stages li { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-top:1px solid #EEF0F4; }
+.jc-read-stages li:first-child { border-top:0; }
+.jd-tabs { display:flex; gap:4px; padding:0 20px; border-bottom:1px solid #E3E6EE; }
+.jd-tab { position:relative; padding:12px 10px; font-size:14px; color:#626A80; }
+.jd-tab.is-on { color:#11162B; font-weight:600; }
+.jd-tab.is-on::after { content:''; position:absolute; left:8px; right:8px; bottom:-1px; height:2px; border-radius:2px; background:#3A5BE8; }
+.jd-tab:focus-visible { outline:2px solid #3A5BE8; outline-offset:-2px; }
+.jobs-table thead tr { border-bottom:1px solid #EEF0F4; }
+.jobs-row { border-bottom:1px solid #EEF0F4; cursor:pointer; }
+.jobs-row:last-child { border-bottom:0; }
+.jobs-row:hover { background:#F7F8FB; }
+.jobs-row:focus-visible { outline:2px solid #3A5BE8; outline-offset:-2px; }
+.jobs-table td { vertical-align:middle; max-width:320px; }
 /* client form (full page): 1100px, labels left on desktop, plain sticky footer */
 .nc-page { max-width:1100px; }
 .nc-foot { position:sticky; bottom:0; z-index:10; display:flex; align-items:center; gap:10px; margin:0 -32px; padding:12px 32px; background:#FFFFFF; border-top:1px solid #E3E6EE; }
@@ -4582,8 +4667,19 @@ function priorityClasses(p){
   if(p==='Medium') return 'bg-gold-100 text-gold-700';
   return 'bg-zinc-100 text-zinc-500';
 }
+/* Job statuses use the flow's names: Draft, Pending approval, Open, On hold, Filled, Closed. Stored values are unchanged
+   ('Active' shows as Open; 'Declined' is internal and shows as "Closed · declined"). */
+function jobStatusLabel(s){
+  return { Active:'Open', 'Pending Approval':'Pending approval', 'On Hold':'On hold', Paused:'On hold', Declined:'Closed · declined' }[s] || s || 'Draft';
+}
+function jobStatusPillHTML(s){
+  const tone = { Active:['#E7F5EE','#1E7A4E'], 'Pending Approval':['#FDF3E1','#8A5300'], 'On Hold':['#FDF3E1','#8A5300'], Paused:['#FDF3E1','#8A5300'], Draft:['#F0F2F7','#5A6177'],
+    Filled:['#EEF2FE','#2D48C8'], Closed:['#F0F2F7','#5A6177'], Declined:['#FBEEE9','#943F2C'] }[s] || ['#F0F2F7','#5A6177'];
+  return '<span class="status-pill" style="background:'+tone[0]+';color:'+tone[1]+'"><span class="status-pill__dot" style="background:'+tone[1]+'"></span>'+escapeHtml(jobStatusLabel(s))+'</span>';
+}
 function jobStatusClasses(s){
   if(s==='Active') return 'bg-accent-50 text-accent-700';
+  if(s==='Draft') return 'bg-zinc-100 text-zinc-600';
   if(s==='On Hold' || s==='Pending Approval') return 'bg-gold-100 text-gold-700';
   if(s==='Closed') return 'bg-zinc-100 text-zinc-500';
   if(s==='Declined') return 'bg-terracotta-50 text-terracotta-600';
@@ -4893,7 +4989,11 @@ function jobsInScopeRaw(scope){
 function jobsFiltered(){
   const q = jobSearch.trim().toLowerCase();
   return jobsInScope(jobsCurrentScope()).filter(function(j){
-    if(jobsStatus!=='All' && j.status!==jobsStatus) return false;
+    if(jobsStatus==='Closed' ? !(j.status==='Closed' || j.status==='Declined' || j.status==='Filled')
+      : jobsStatus==='Draft' ? !(j.status==='Draft' || j.status==='Pending Approval')
+      : jobsStatus==='On Hold' ? !(j.status==='On Hold' || j.status==='Paused')
+      : jobsStatus!=='All' && j.status!==jobsStatus) return false;
+    if(jobsStatus==='All' && j.status==='Draft' && !(j.createdById && currentActingUser() && j.createdById===currentActingUser().id) && !hasOrgWideAuthority()) return false;   // someone else's draft
     if(jobsHighOnly && j.priority!=='High' && j.priority!=='Urgent') return false;
     return !q || (j.title+' '+j.client+' '+j.id+' '+(j.loc||'')).toLowerCase().indexOf(q)>-1;
   }).sort(function(a,b){
@@ -4948,63 +5048,37 @@ function jobsScopeHTML(){
       o[1]+'<span class="text-[11px] '+(on?'text-zinc-500':'text-zinc-400')+'">'+n+'</span></button>';
   }).join('')+'</div>';
 }
-// One calm strip of the numbers that matter for this person's job-to-be-done.
+// Kairo mentions the one thing that needs attention, instead of number cards.
 function jobsInsightsHTML(){
-  const p = jobsPersona(), me = currentActingUser();
-  const mine = JOBS.filter(jobsIsMine), open = function(l){ return l.filter(function(j){ return j.status==='Active'; }); };
-  const unassigned = JOBS.filter(function(j){ return !(j.assignedRecruiters||[]).length && j.status!=='Closed'; });
+  const mine = jobsPersona()==='org' ? JOBS.slice() : JOBS.filter(jobsIsMine);
+  const unassigned = JOBS.filter(function(j){ return !(j.assignedRecruiters||[]).length && j.status==='Active'; });
   const pending = myJobRequests();
-  const attention = function(l){ return l.filter(jobNeedsAttention); };
-  const attHint = 'no submissions or open '+JOB_ATTENTION_DAYS+'+ days';
-  const attCorner = hasOrgWideAuthority() ? '<button type="button" onclick="openAttentionSettings()" aria-label="Change when jobs need attention" class="absolute top-3 right-3 h-7 px-2 rounded-lg text-[11px] font-medium text-accent-700 hover:bg-accent-50">Change</button>' : '';
-  const stat = function(label, value, hint, action, tone, corner){
-    return '<div class="relative">'+
-      '<button type="button" '+(action?'onclick="'+action+'"':'disabled')+' class="w-full h-full flex flex-col items-start justify-start text-left px-5 py-4 '+(action?'hover:bg-zinc-50':'cursor-default')+' focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-500">'+
-        '<p class="text-[11px] font-semibold tracking-[0.12em] text-zinc-400 uppercase'+(corner?' pr-14':'')+'">'+label+'</p>'+
-        '<p class="mt-1.5 text-2xl font-semibold '+(tone||'text-ink')+'">'+value+'</p>'+
-        '<p class="text-xs text-zinc-500 mt-0.5">'+hint+'</p></button>'+
-      (corner||'')+'</div>';
-  };
-  let cells;
-  if(p==='org'){
-    cells = stat('Open jobs', open(JOBS).length, 'across '+CLIENTS.length+' clients', "setJobsScope('all'); setJobsStatus('Active')")+
-      stat('Unassigned', unassigned.length, unassigned.length ? 'need a recruiter' : 'every job has an owner', unassigned.length ? "setJobsScope('unassigned')" : '', unassigned.length ? 'text-terracotta-600' : '')+
-      stat('Requests', pending.length, pending.length ? 'jobs & access to approve' : 'nothing to approve', pending.length ? "setJobsScope('requests')" : '', pending.length ? 'text-gold-700' : '')+
-      stat('Need attention', attention(JOBS).length, attHint, "setJobsScope('all'); setJobsStatus('Active')", '', attCorner);
-  } else if(p==='team'){
-    const team = jobsInScope('team');
-    cells = stat('Mapped to me', open(mine).length, 'open jobs you own', "setJobsScope('mine')")+
-      stat('Team jobs', open(team).length, 'open across your team', "setJobsScope('team')")+
-      stat('Direct reports', me ? recruitersManagedBy(me.id).length : 0, 'you can add to your jobs', '')+
-      stat('Requests', pending.length, pending.length ? 'from your reports' : 'none pending', pending.length ? "setJobsScope('requests')" : '', pending.length ? 'text-gold-700' : '');
-  } else {
-    const subs = mine.reduce(function(a,j){ return a+(j.submitted||0); }, 0);
-    const ivs = hmInterviews.filter(function(i){ return i.jobId && me && isRecruiterMappedToJob(i.jobId, me.id); }).length;
-    cells = stat('My open jobs', open(mine).length, mine.length ? 'mapped to you' : 'none mapped yet', "setJobsScope('mine')")+
-      stat('Need attention', attention(mine).length, attHint, "setJobsScope('mine'); setJobsStatus('Active')", attention(mine).length ? 'text-terracotta-600' : '', attCorner)+
-      stat('Submitted', subs, 'candidates on your jobs', '')+
-      stat('Interviews', ivs, 'on your jobs', "showView('interviews')");
-  }
-  return '<div id="jobs-insights" class="card p-0 mb-6 grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-zinc-100 overflow-hidden">'+cells+'</div>';
+  const attention = mine.filter(function(j){ return j.status==='Active' && jobNeedsAttention(j); });
+  let text = '', btn = null;
+  if(pending.length){ text = pending.length+(pending.length===1 ? ' request is' : ' requests are')+' waiting for you: new jobs to approve or people asking for access.'; btn = { label:'Open requests', onclick:"setJobsScope('requests')" }; }
+  else if(unassigned.length && jobsPersona()==='org'){ text = unassigned.length+' open job'+(unassigned.length===1?' has':'s have')+' no recruiter yet.'; btn = { label:'Show them', onclick:"setJobsScope('unassigned')" }; }
+  else if(attention.length){ text = attention.length+' open job'+(attention.length===1?' has':'s have')+' had no submissions or been open '+JOB_ATTENTION_DAYS+'+ days. I can suggest people from your talent pool.'; btn = { label:'Show open jobs', onclick:"setJobsStatus('Active')" }; }
+  if(!text) return '<div id="jobs-insights"></div>';
+  return '<div id="jobs-insights">'+kairoNoteHTML(escapeHtml(text), btn ? [btn] : [])+'</div>';
 }
 function jobsFiltersHTML(){
   const chip = function(label, on, onclick){
     return '<button type="button" aria-pressed="'+on+'" onclick="'+onclick+'" class="h-9 px-3.5 rounded-full text-[13px] font-medium border transition '+(on?'bg-ink text-white border-ink':'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300')+'">'+label+'</button>';
   };
   if(jobsCurrentScope()==='requests') return '<div id="jobs-filters"></div>';
-  return '<div id="jobs-filters" class="flex flex-wrap items-center gap-2">'+
-    ['All','Active','On Hold','Closed'].map(function(s){ return chip(s==='All'?'All statuses':s==='Active'?'Open':s, jobsStatus===s, "setJobsStatus('"+s+"')"); }).join('')+
-    '<span class="w-px h-5 bg-zinc-200 mx-1" aria-hidden="true"></span>'+
-    chip(icon('bell','w-3.5 h-3.5 inline -mt-0.5 mr-1')+'High priority', jobsHighOnly, 'toggleJobsHighOnly()')+
+  return '<div id="jobs-filters" class="seg" role="group" aria-label="Status">'+
+    [['All','All'],['Active','Open'],['On Hold','On hold'],['Closed','Closed'],['Draft','Drafts']].map(function(o){
+      const on = jobsStatus===o[0];
+      return '<button type="button" aria-pressed="'+on+'" onclick="setJobsStatus(\''+o[0]+'\')" class="seg__btn'+(on?' is-on':'')+'">'+o[1]+'</button>'; }).join('')+
   '</div>';
 }
-function jobsRecruiterStackHTML(j){
+function jobsRecruiterStackHTML(j, avatarsOnly){
   const rs = (j.assignedRecruiters||[]).map(function(id){ return RECRUITER_ROSTER.find(function(r){ return r.id===id; }); }).filter(Boolean);
   if(!rs.length) return '<span class="inline-flex items-center gap-1 text-xs font-medium text-terracotta-600">'+icon('user','w-3.5 h-3.5')+'Unassigned</span>';
   return '<span class="flex items-center" title="'+escapeHtml(rs.map(function(r){ return r.name; }).join(', '))+'">'+rs.slice(0,3).map(function(r, i){
     return '<span class="w-7 h-7 rounded-full bg-accent-600 text-white text-[10px] font-semibold flex items-center justify-center ring-2 ring-white '+(i?'-ml-2':'')+'">'+initials(r.name)+'</span>'; }).join('')+
     (rs.length>3 ? '<span class="w-7 h-7 -ml-2 rounded-full bg-zinc-100 text-zinc-600 text-[10px] font-semibold flex items-center justify-center ring-2 ring-white">+'+(rs.length-3)+'</span>' : '')+
-    (rs.length===1 ? '<span class="ml-2 text-xs text-zinc-600 truncate max-w-[7rem]">'+escapeHtml(rs[0].name)+'</span>' : '')+'</span>';
+    (rs.length===1 && !avatarsOnly ? '<span class="ml-2 text-xs text-zinc-600 truncate max-w-[7rem]">'+escapeHtml(rs[0].name)+'</span>' : '')+'</span>';
 }
 // Right-hand access cell: what this person can do with this job, from real mapping + permissions.
 function jobsAccessHTML(j){
@@ -5012,12 +5086,12 @@ function jobsAccessHTML(j){
   if(j.status==='Pending Approval') return hasOrgWideAuthority()
     ? '<button type="button" onclick="event.stopPropagation(); setJobsScope(\'requests\')" class="h-8 px-3 rounded-lg text-xs font-medium bg-gold-100 text-gold-700 hover:bg-gold-200">Review</button>'
     : '<span class="text-[11px] font-medium px-2 py-1 rounded-full bg-gold-100 text-gold-700">Awaiting approval</span>';
-  if(j.status==='Declined') return '<span class="text-[11px] font-medium px-2 py-1 rounded-full bg-terracotta-50 text-terracotta-600">Declined</span>';
+  if(j.status==='Declined') return '';   // the status pill already says "Closed · declined"
   if(j.status==='Closed') return '<span class="text-[11px] text-zinc-500" title="'+escapeHtml((j.closedReason||'Closed')+(j.closedByName?' · by '+j.closedByName:''))+'">Closed'+(j.closedReason?' · '+escapeHtml(j.closedReason):'')+'</span>';
   if(jobsIsMine(j) && jobsPersona()!=='org' && !jobsCanAssign(j)) return '<span class="text-[11px] font-medium px-2 py-1 rounded-full bg-forest-50 text-forest-600">Mapped to you</span>';
   if(jobsCanAssign(j)){
     const open = jobsAssignOpenId===j.id;
-    return '<button type="button" onclick="event.stopPropagation(); openAssignPicker(\''+j.id+'\')" aria-haspopup="dialog" class="h-8 px-3 rounded-lg text-xs font-medium '+((j.assignedRecruiters||[]).length?'border border-zinc-200 text-zinc-700 hover:bg-zinc-50':'bg-accent-50 text-accent-700 hover:bg-accent-100')+'">'+((j.assignedRecruiters||[]).length?(hasOrgWideAuthority()?'Add recruiter':'Add team member'):'Assign')+'</button>';
+    return '<button type="button" onclick="event.stopPropagation(); openAssignPicker(\''+j.id+'\')" aria-haspopup="dialog" class="h-8 px-3 rounded-lg text-xs font-medium whitespace-nowrap '+((j.assignedRecruiters||[]).length?'border border-zinc-200 text-zinc-700 hover:bg-zinc-50':'bg-accent-50 text-accent-700 hover:bg-accent-100')+'">'+((j.assignedRecruiters||[]).length?(hasOrgWideAuthority()?'Add recruiter':'Add team member'):'Assign')+'</button>';
   }
   const st = me ? jobMappingStateFor(j.id, me.id) : 'Unmapped';
   if(st==='Pending') return '<span class="inline-flex items-center gap-1 whitespace-nowrap"><span class="text-[11px] font-medium px-2 py-1 rounded-full bg-gold-100 text-gold-700 whitespace-nowrap">Request pending</span>'+
@@ -5368,52 +5442,48 @@ function jobsRequestsHTML(){
       }).join('')+'</div>';
   }).join('');
 }
+function jobsUpdatedLabel(j){
+  const t = j.updatedAt || (j.editHistory && j.editHistory.length && j.editHistory[j.editHistory.length-1].at) || j.liveAt || j.createdAt;
+  const days = t ? Math.floor((Date.now()-new Date(t).getTime())/864e5) : (j.daysOpen||0);
+  return days<=0 ? 'Today' : days===1 ? 'Yesterday' : days+' days ago';
+}
+function jobsPayLine(j){
+  const city = (j.locations && j.locations[0] || j.loc || '').split(',')[0].replace(/^Remote\s*[–-]\s*/,'Remote · ');
+  const pay = j.salary && j.salary!=='Not Disclosed' && !(j.confidential && j.confidential.compensation) ? j.salary : '';
+  return [city, j.workMode, pay].filter(Boolean).join(' · ');
+}
 function jobsListHTML(){
   if(jobsCurrentScope()==='requests') return '<div id="jobs-list" class="card p-0 overflow-hidden">'+jobsRequestsHTML()+'</div>';
-  const scope = jobsCurrentScope(), rows = jobsFiltered(), org = jobsPersona()==='org';
-  const cols = org ? 'md:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1.1fr)]'
-    : 'md:grid-cols-[minmax(0,2.2fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,0.9fr)_minmax(0,1.1fr)]';
-  const head = '<div class="hidden md:grid '+cols+' gap-4 px-5 py-3 border-b border-zinc-100 text-[11px] font-semibold tracking-[0.12em] text-zinc-400 uppercase">'+
-    '<span>Job</span><span>Status</span><span>Pipeline</span>'+(org ? '<span>Recruiters</span>' : '<span>Mapped by</span><span class="flex items-center gap-1">Your fit</span>')+'<span class="text-right">Access</span></div>';
+  const scope = jobsCurrentScope(), rows = jobsFiltered();
   const row = function(j){
-    const hidden = j.confidential && j.confidential.companyName;
     const urgent = j.priority==='High' || j.priority==='Urgent';
-    const stale = j.status==='Active' && j.daysOpen>=JOB_ATTENTION_DAYS;
-    const dim = !jobsIsMine(j) && !jobsCanAssign(j);
-    return '<div class="border-b border-zinc-100 last:border-b-0">'+
-      '<div role="link" tabindex="0" onclick="openJob(\''+j.id+'\')" onkeydown="if(event.key===\'Enter\') openJob(\''+j.id+'\')" class="grid grid-cols-1 '+cols+' gap-x-4 gap-y-2 items-center px-5 py-4 cursor-pointer hover:bg-zinc-50/70 focus:outline-none focus-visible:bg-accent-50/40">'+
-        '<div class="min-w-0">'+
-          '<p class="flex items-center gap-2 min-w-0"><span class="text-[15px] font-semibold '+(dim?'text-zinc-700':'text-ink')+' truncate">'+escapeHtml(j.title)+'</span>'+
-            '<span class="text-[10px] font-mono text-zinc-400 shrink-0">'+ojId(j.id)+'</span>'+
-            (urgent ? '<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-terracotta-50 text-terracotta-600 shrink-0">'+j.priority+'</span>' : '')+'</p>'+
-          '<p class="text-xs text-zinc-500 mt-1 truncate">'+escapeHtml(j.client)+(hidden?' <span class="inline-flex items-center align-middle text-zinc-400" title="Company not disclosed to candidates">'+icon('eyeOff','w-3 h-3')+'</span>':'')+
-            ' · '+escapeHtml(j.loc||'')+(j.workMode?' · '+escapeHtml(j.workMode):'')+'</p>'+
-        '</div>'+
-        '<div class="flex md:block items-center gap-2"><span class="text-[11px] font-medium px-2.5 py-1 rounded-full '+jobStatusClasses(j.status)+'">'+(j.status==='Active'?'Open':j.status)+'</span>'+
-          '<p class="text-xs mt-1 '+(stale?'text-terracotta-600':'text-zinc-400')+'">'+j.daysOpen+'d open</p></div>'+
-        '<div class="text-xs text-zinc-600"><span class="font-semibold text-ink">'+(j.submitted||0)+'</span> submitted<p class="text-zinc-400 mt-0.5">'+(j.recommended||0)+' recommended · '+(j.positions||1)+' opening'+((j.positions||1)===1?'':'s')+'</p></div>'+
-        (org ? '<div class="min-w-0">'+jobsRecruiterStackHTML(j)+'</div>' : '<div class="min-w-0">'+jobsMappedByHTML(j)+'</div><div>'+jobsFitHTML(j)+'</div>')+
-        '<div class="flex items-center md:justify-end gap-1.5">'+jobsAccessHTML(j)+jobsRowMenuHTML(j)+'</div>'+
-      '</div>'+
-    '</div>';
+    const open = j.status==='Draft' ? "openJobDraft('"+j.id+"')" : "openJob('"+j.id+"')";
+    return '<tr role="link" tabindex="0" class="jobs-row" onclick="'+open+'" onkeydown="if(event.key===\'Enter\') '+open+'">'+
+      '<td class="px-4 py-3.5 min-w-0"><p class="flex items-center gap-2 min-w-0"><span class="text-sm font-semibold text-ink truncate">'+escapeHtml(j.title)+'</span>'+
+          (urgent ? '<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-terracotta-50 text-terracotta-600 shrink-0">'+j.priority+'</span>' : '')+'</p>'+
+        '<p class="text-xs text-zinc-500 mt-0.5 truncate">'+escapeHtml(jobsPayLine(j))+'</p>'+
+        '<p class="text-[11px] text-zinc-400 font-mono mt-0.5">'+jcJobRef(j)+'</p></td>'+
+      '<td class="px-4 py-3.5 text-sm text-zinc-700 truncate">'+escapeHtml(j.client||'')+(j.confidential && j.confidential.companyName ? ' <span class="inline-flex align-middle text-zinc-400" title="Company not disclosed to candidates">'+icon('eyeOff','w-3 h-3')+'</span>' : '')+'</td>'+
+      '<td class="px-4 py-3.5">'+jobStatusPillHTML(j.status)+'</td>'+
+      '<td class="px-4 py-3.5 text-sm font-semibold text-ink tabular-nums">'+(typeof submissionsForJob==='function' ? submissionsForJob(j.id).length : (j.submitted||0))+'</td>'+
+      '<td class="px-4 py-3.5">'+jobsRecruiterStackHTML(j, true)+'</td>'+
+      '<td class="px-4 py-3.5 text-xs text-zinc-500 whitespace-nowrap">'+jobsUpdatedLabel(j)+'</td>'+
+      '<td class="px-3 py-3.5"><div class="flex items-center justify-end gap-1.5" onclick="event.stopPropagation()">'+(j.status==='Draft' ? '' : jobsAccessHTML(j)+jobsRowMenuHTML(j))+'</div></td>'+
+    '</tr>';
   };
-  return '<div id="jobs-list" class="card p-0 overflow-hidden">'+
-    '<div class="flex items-center justify-between gap-3 px-5 py-3 border-b border-zinc-100">'+
-      '<p class="text-xs text-zinc-500"><span class="font-semibold text-ink">'+rows.length+'</span> job'+(rows.length===1?'':'s')+'</p>'+
-      '<label class="flex items-center gap-2 text-xs text-zinc-500">Sort'+
-        '<select onchange="setJobsSort(this.value)" class="h-8 border border-zinc-200 rounded-lg px-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-accent-500">'+
-          [['daysOpen','Longest open'],['priority','Priority'],['submitted','Most submitted'],['title','Title A–Z']].map(function(o){ return '<option value="'+o[0]+'"'+(jobSort.key===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+
-        '</select></label>'+
-    '</div>'+
-    (rows.length ? head+rows.map(row).join('') : jobsEmptyHTML(scope))+
+  return '<div id="jobs-list" class="card p-0 overflow-x-auto">'+
+    (rows.length ? '<table class="w-full text-left jobs-table"><thead><tr>'+
+        ['Job','Client','Status','Candidates','Team','Updated',''].map(function(h){ return '<th class="px-4 py-3 text-xs font-medium text-zinc-500">'+(h || '<span class="sr-only">Actions</span>')+'</th>'; }).join('')+
+      '</tr></thead><tbody>'+rows.map(row).join('')+'</tbody></table>'
+      : jobsEmptyHTML(scope))+
   '</div>';
 }
 function renderJobs(){
   const canCreateJob = canI('jobs','Create');
   const p = jobsPersona();
-  const sub = p==='org' ? 'Every mandate in your organization — create, assign and track.'
-    : p==='team' ? 'Your jobs and your team’s — assign recruiters where needed.'
-    : 'Jobs mapped to you. Other jobs are view-only until you’re given access.';
+  const openJobs = JOBS.filter(function(j){ return j.status==='Active' && jobVisibleToMe(j); });
+  const clientsN = Array.from(new Set(openJobs.map(function(j){ return j.client; }))).length;
+  const sub = openJobs.length+' open across '+clientsN+' client'+(clientsN===1?'':'s');
   const jc = typeof checkTenantResourceLimit==='function' ? checkTenantResourceLimit('job') : { limit:null };
   return '<div id="jobs-page" class="content-shell max-w-6xl">'+
     (previewAsRoleId ? '<div class="rounded-xl bg-gold-100 border border-gold-200 px-4 py-3 mb-6 flex items-center justify-between gap-3">'+
@@ -5424,15 +5494,14 @@ function renderJobs(){
       '<div>'+sectionTitle('Jobs', sub)+'</div>'+
       '<div class="flex items-center gap-3">'+
         (jc.limit!=null && canCreateJob ? '<span class="text-xs font-medium '+(jc.current>=jc.limit?'text-terracotta-600':'text-zinc-400')+'">'+jc.current+' / '+jc.limit+' jobs used</span>' : '')+
-        (canCreateJob ? '<button onclick="openJobCreate()" class="flex items-center gap-1.5 h-11 px-4 rounded-xl btn-primary text-sm font-medium">'+icon('plus','w-4 h-4')+'New Job</button>' : '')+
+        (canCreateJob ? '<button onclick="openJobCreate()" class="btn-primary app-btn">'+icon('plus','w-4 h-4')+'New job</button>' : '')+
       '</div>'+
     '</div>'+
     jobsInsightsHTML()+
-    '<div class="flex items-center justify-between gap-3 flex-wrap mb-3">'+jobsScopeHTML()+
-      '<div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">'+icon('search','w-4 h-4')+'</span>'+
-        '<input value="'+escapeHtml(jobSearch)+'" oninput="setJobSearch(this.value)" placeholder="Search title, client or ID…" aria-label="Search jobs" class="h-11 w-72 max-w-full border border-zinc-200 rounded-xl pl-9 pr-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent placeholder:text-zinc-400" /></div>'+
+    '<div class="flex items-center gap-3 flex-wrap mb-4">'+jobsScopeHTML()+jobsFiltersHTML()+
+      '<div class="relative ml-auto"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">'+icon('search','w-4 h-4')+'</span>'+
+        '<input value="'+escapeHtml(jobSearch)+'" oninput="setJobSearch(this.value)" placeholder="Search title, client or job ID" aria-label="Search jobs" class="h-10 w-72 max-w-full border border-zinc-200 rounded-lg pl-9 pr-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500 placeholder:text-zinc-400" /></div>'+
     '</div>'+
-    '<div class="mb-4">'+jobsFiltersHTML()+'</div>'+
     jobsListHTML()+
   '</div>';
 }
@@ -5455,14 +5524,22 @@ function openJob(id){
    Settings -> Review -> Publish. Kairo assists quietly throughout;
    nothing publishes automatically — the recruiter stays in control.
 ============================================================ */
-// Internal step ids stay 1,2,3,5,6 - step 4 (job tags / confidential hiring) was removed and its
-// visibility options now live on Basic Info. The stepper numbers them 1-5.
-const JOB_CREATE_STEPS = [[1,'Upload JD'],[2,'Basic Info'],[3,'Job Details'],[5,'Review'],[6,'Publish']];
-// Editing an existing job reuses the same steps minus Upload JD and Publish.
-const JOB_EDIT_STEPS = [[2,'Basic Info'],[3,'Job Details'],[5,'Review']];
+// Flow A3. Step ids follow the order: 1 Start, 2 Basic info, 3 Job details, 4 Hiring process, 5 Rules and team,
+// 6 Review, 7 Publish. Review still renders jobCreateStep5HTML and Publish jobCreateStep6HTML (their original names).
+const JOB_CREATE_STEPS = [[1,'Start'],[2,'Basic info'],[3,'Job details'],[4,'Hiring process'],[5,'Rules and team'],[6,'Review'],[7,'Publish']];
+// Editing an existing job reuses the same steps minus Start and Publish.
+const JOB_EDIT_STEPS = [[2,'Basic info'],[3,'Job details'],[4,'Hiring process'],[5,'Rules and team'],[6,'Review']];
+const JOB_STEP_REVIEW = 6, JOB_STEP_PUBLISH = 7;
+const JC_REQUIRED_OPTIONS = ['Current CTC','Expected CTC','Notice period','Current location','Resume','Reason for change','Interview availability','LinkedIn profile'];
+const JC_REQUIRED_DEFAULT = ['Current CTC','Expected CTC','Notice period','Current location'];
+const JC_STAGE_TYPES = ['Screening','Interview','Assessment','Client review','Offer','Joining'];
+const JC_STAGE_MODES = ['Video','In person','Phone'];
+const JC_FEEDBACK_FORMS = ['Standard','Technical','Culture fit','None'];
+const JC_ROUTING = [['round_robin','Round-robin','Shares new applicants evenly across the team.'],['workload','Workload','Sends to whoever has the fewest open applicants.'],
+  ['skill','Skill match','Sends to the recruiter who filled similar roles.'],['manual','Manual','You assign every applicant yourself.']];
 function jobCreateSteps(){ return jobDraft && jobDraft.editingJobId ? JOB_EDIT_STEPS : JOB_CREATE_STEPS; }
-function jobCreateStepAfter(n){ return n===3 ? 5 : Math.min(6, n+1); }
-function jobCreateStepBefore(n){ return n===5 ? 3 : Math.max(jobDraft && jobDraft.editingJobId ? 2 : 1, n-1); }
+function jobCreateStepAfter(n){ const ids = jobCreateSteps().map(function(x){ return x[0]; }), i = ids.indexOf(n); return i<0 ? ids[0] : ids[Math.min(ids.length-1, i+1)]; }
+function jobCreateStepBefore(n){ const ids = jobCreateSteps().map(function(x){ return x[0]; }), i = ids.indexOf(n); return i<=0 ? ids[0] : ids[i-1]; }
 let jobDraft = null;
 let jobCreateOpenSections = new Set(['summary','skills']);
 
@@ -5479,7 +5556,12 @@ function jobCreateDefaults(){
     highPriority:false, replacementHiring:false, autoMapRecruiters:true, allowRecruiterRequests:true,
     confidential:{companyName:false, clientPOC:false, interviewer:false, compensation:false},
     channels:{career:true, linkedin:false, naukri:false, shine:false, internal:true, publicLink:false},
-    publicLinkCode:null
+    publicLinkCode:null,
+    // Flow A3
+    hiringProcess:jcStagesFromNames(DEFAULT_JOB_WORKFLOW), saveProcessToClient:false, contractMonths:'',
+    rules:{ approvalBeforeClient:false, hideContacts:true, maxProfiles:5, required:JC_REQUIRED_DEFAULT.slice() },
+    jobLeadId: (currentActingUser() || {}).id || '', applicantRouting:'round_robin',
+    kairoFilled:{}, startMode:'', draftJobId:null, createdJobId:null
   };
 }
 // The job's contact person is one of the client's saved Contact Persons.
@@ -5531,7 +5613,7 @@ function openJobCreate(){
 }
 function cancelJobCreate(){ const editing = jobDraft && jobDraft.editingJobId; jobDraft = null; if(editing) openJob(editing); else showView('jobs'); }
 function refreshJobCreate(){ document.getElementById('main-content').innerHTML = (jobDraft && jobDraft.isHmPost) ? renderHmJobCreate() : renderJobCreate(); }
-function updateJobDraft(key, value){ if(jobDraft) jobDraft[key] = value; }
+function updateJobDraft(key, value){ if(jobDraft){ jobDraft[key] = value; jcKairoEdited(key); } }
 function updateJobDraftNested(group, key, value){
   if(!jobDraft) return;
   jobDraft[group][key] = value;
@@ -5572,12 +5654,12 @@ function jobCreateBack(){
   document.getElementById('main-content').scrollTop = 0;
 }
 function jobCreateOnClientChange(name){
-  updateJobDraft('client', name);
+  updateJobDraft('client', name); jcKairoEdited('pocId');
   jobDraft.pocId = jobDefaultPocId(jobCreateClient());
   jcContactOpen = false; jcContactQuery = ''; jcContactShowAll = false;
   jcSyncContactToLocation();
   jobDraft.noticePeriod = jobDraft.noticePeriod || '< 30 Days';
-  if(!jobDraft.workflowIsCustom) jobDraft.interviewWorkflow = (clientHiringProcess(name) || DEFAULT_JOB_WORKFLOW).slice();
+  if(!jobDraft.workflowIsCustom){ jobDraft.interviewWorkflow = (clientHiringProcess(name) || DEFAULT_JOB_WORKFLOW).slice(); jobDraft.hiringProcess = jcClientStages(name) || jcStagesFromNames(jobDraft.interviewWorkflow); }
   toast('Loaded '+name+'\u2019s contact persons, offices, default notice period and interview workflow.');
   refreshJobCreate();
 }
@@ -5669,7 +5751,7 @@ function jdParseProgress(pct, stage){
 function simulateJdUpload(input){
   const file = input.files && input.files[0];
   if(!file) return;
-  input.value = '';
+  try { input.value = ''; } catch(e){}
   const run = ++jdParseRun, x = jdExtractedPayload(), fields = jdParseFields(x);
   window.jdParsePending = x;
   const old = document.getElementById('jdp-modal'); if(old) old.remove();
@@ -5699,7 +5781,10 @@ function jdParseFinish(){
   const x = window.jdParsePending; if(!x) return;
   window.jdParsePending = null; jdParseRun++;
   const m = document.getElementById('jdp-modal'); if(m) m.remove();
-  Object.assign(jobDraft, x, { maxStep: Math.max(jobDraft.maxStep, 2), step:2 });
+  Object.assign(jobDraft, x, { maxStep: Math.max(jobDraft.maxStep, 2), step:2, startMode:'jd' });
+  jobDraft.kairoFilled = {};
+  JC_KAIRO_KEYS.forEach(function(k){ const v = x[k==='salary' ? 'salary' : k]; if(v!=null && v!=='' && !(Array.isArray(v) && !v.length)) jobDraft.kairoFilled[k] = true; });
+  if(x.expMin!=null) jobDraft.kairoFilled.experience = true;
   jdUploadProgress = null;
   toast('Job details extracted — review before continuing.');
   refreshJobCreate();
@@ -5898,6 +5983,7 @@ function selectMasterPickerItem(fieldKey, dataset, name){
   refreshMasterPickerChips(fieldKey);
   refreshMasterPickerResults(fieldKey);
   if(fieldKey==='locations') jcOnLocationsChanged(); else refreshJobCreateSidebar();
+  jcKairoEdited(fieldKey);
   if(input) input.focus();
 }
 function removeMasterPickerItem(fieldKey, name){
@@ -6013,6 +6099,7 @@ function jdChipKeydown(event, key, placeholder){
   }
 }
 function addChip(key, value, placeholder){
+  jcKairoEdited(key);
   value = value.trim().replace(/,$/,'');
   if(!value) return;
   if(!jobDraft[key]) jobDraft[key] = [];
@@ -6020,6 +6107,7 @@ function addChip(key, value, placeholder){
   refreshChipField(key, placeholder);
 }
 function removeChip(key, idx, placeholder){
+  jcKairoEdited(key);
   jobDraft[key].splice(idx,1);
   refreshChipField(key, placeholder);
 }
@@ -6048,51 +6136,131 @@ function kairoSkillSuggestionsHTML(){
   '</div>';
 }
 
-/* ---- Step indicator ---- */
+/* ---- Step indicator: small numbered dots on one line. Done steps open again; upcoming ones are locked. ---- */
 function jobCreateStepperHTML(){
-  const steps = jobCreateSteps();
-  return '<div class="flex items-center gap-1 mb-8 overflow-x-auto pb-1">'+steps.map(function(st, i){
-    const n = st[0], label = st[1], shown = i+1, last = i===steps.length-1;
-    const state_ = n===jobDraft.step ? 'current' : n<=jobDraft.maxStep ? 'done' : 'locked';
-    const dot = state_==='done' ? '<span class="w-5 h-5 rounded-full bg-accent-600 text-white flex items-center justify-center text-[10px]">\u2713</span>'
-      : '<span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold '+(state_==='current'?'bg-accent-600 text-white':'bg-zinc-100 text-zinc-400')+'">'+shown+'</span>';
-    return '<button onclick="jobCreateGoStep('+n+')" '+(state_==='locked'?'disabled':'')+' class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full shrink-0 transition '+(state_==='locked'?'opacity-40 cursor-not-allowed':'hover:bg-white/60')+'">'+
-      dot+'<span class="text-xs font-medium '+(state_==='current'?'text-zinc-900':'text-zinc-500')+' whitespace-nowrap">'+label+'</span>'+
-      (!last?'<span class="text-zinc-300 mx-0.5">\u2014</span>':'')+
-    '</button>';
-  }).join('')+'</div>';
+  const steps = jobCreateSteps(), d = jobDraft;
+  return '<nav class="jc-steps" aria-label="Job creation steps"><ol>'+steps.map(function(st, i){
+    const n = st[0], cur = n===d.step, done = !cur && n<=d.maxStep && !(d.createdJobId && n<JOB_STEP_PUBLISH);
+    const state_ = cur ? 'current' : done ? 'done' : 'locked';
+    return '<li class="jc-step jc-step--'+state_+'">'+
+      '<button type="button" onclick="jobCreateGoStep('+n+')"'+(state_==='done' ? '' : ' disabled')+(cur ? ' aria-current="step"' : '')+'>'+
+        '<span class="jc-step__dot" aria-hidden="true">'+(i+1)+'</span><span class="jc-step__label">'+st[1]+'</span>'+
+        '<span class="sr-only">'+(cur ? ', current step' : done ? ', done' : ', not started')+'</span></button></li>';
+  }).join('')+'</ol></nav>';
 }
+/* The sticky footer: Save draft on the left, Back and Continue on the right. */
 function jobCreateNavButtonsHTML(){
   const d = jobDraft;
+  const quiet = function(label, fn){ return '<button type="button" onclick="'+fn+'" class="btn-quiet text-sm">'+label+'</button>'; };
+  const primary = function(label, fn){ return '<button type="button" onclick="'+fn+'" class="btn-primary app-btn">'+label+'</button>'; };
+  const secondary = function(label, fn){ return '<button type="button" onclick="'+fn+'" class="btn-secondary app-btn">'+label+'</button>'; };
+  let left = '', right = '';
   if(d.editingJobId){
-    return '<div class="flex items-center justify-between mb-10">'+
-      (d.step>2 ? '<button onclick="jobCreateBack()" class="px-4 py-2.5 rounded-xl btn-secondary text-sm font-medium">Back</button>'
-        : '<button onclick="cancelJobCreate()" class="px-4 py-2.5 rounded-xl btn-secondary text-sm font-medium">Cancel</button>')+
-      '<div class="flex items-center gap-2">'+
-        (d.step<5 ? '<button onclick="saveJobEdits()" class="px-4 py-2.5 rounded-xl btn-secondary text-sm font-medium">Save changes</button>'+
-          '<button onclick="jobCreateNext()" class="px-5 py-2.5 rounded-xl btn-primary text-sm font-medium">Continue</button>'
-          : '<button onclick="saveJobEdits()" class="px-5 py-2.5 rounded-xl btn-primary text-sm font-medium">Save changes</button>')+
-      '</div>'+
-    '</div>';
+    left = secondary('Save changes', 'saveJobEdits()');
+    right = (d.step>2 ? quiet('Back', 'jobCreateBack()') : quiet('Cancel', 'cancelJobCreate()'))+
+      (d.step<JOB_STEP_REVIEW ? primary('Continue', 'jobCreateNext()') : primary('Save changes', 'saveJobEdits()'));
+  } else if(d.step===JOB_STEP_PUBLISH){
+    left = quiet('Skip for now', 'jcFinishPublish(false)');
+    right = primary('Publish', 'jcFinishPublish(true)');
+  } else {
+    left = d.step>1 || d.title.trim() ? secondary('Save draft', 'saveJobDraft()') : quiet('Cancel', 'cancelJobCreate()');
+    right = (d.step>1 ? quiet('Back', 'jobCreateBack()') : '')+
+      (d.step===JOB_STEP_REVIEW ? primary(jcNeedsApproval() ? 'Send for approval' : 'Open job', 'jcOpenJob()')
+        : d.step===1 ? primary('Continue', 'jcStartContinue()') : primary('Continue', 'jobCreateNext()'));
   }
-  return '<div class="flex items-center justify-between mb-10">'+
-    (d.step>1 ? '<button onclick="jobCreateBack()" class="px-4 py-2.5 rounded-xl btn-secondary text-sm font-medium">Back</button>' : '<span></span>')+
-    (d.step<6 ? '<button onclick="jobCreateNext()" class="px-5 py-2.5 rounded-xl btn-primary text-sm font-medium">'+(d.step===5?'Continue to Publish':'Continue')+'</button>'
-      : '<button onclick="publishJob()" class="px-5 py-2.5 rounded-xl btn-primary text-sm font-medium">Publish Job</button>')+
-  '</div>';
+  return '<div class="jc-foot">'+left+'<span class="flex-1"></span>'+right+'</div>';
 }
 
-/* ---- Step 1: Upload JD (optional, primary entry) ---- */
+/* ---- Step 1: Start. Three ways in: a JD (upload or paste, read by Kairo), a past job, or a blank form. ---- */
+let jcCopyQuery = '';
 function jobCreateStep1HTML(){
   if(jdUploadProgress) return jdUploadProgressHTML();
-  return '<div class="card rounded-2xl border-2 border-dashed border-zinc-200 p-10 text-center mb-6">'+
-      icon('sparkles','w-8 h-8 text-accent-400 mx-auto mb-3')+
-      '<p class="text-sm font-medium text-zinc-700 mb-1">Upload Job Description <span class="text-zinc-400 font-normal">(optional)</span></p>'+
-      '<p class="text-xs text-zinc-400 mb-4">PDF, DOC or DOCX \u2014 Kairo pre-fills the form and takes you straight to it. You review and edit everything before publishing.</p>'+
-      '<label class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 px-4 py-2.5 rounded-xl cursor-pointer transition">'+icon('upload','w-4 h-4')+'Choose File'+
-        '<input type="file" accept=".pdf,.doc,.docx" class="hidden" onchange="simulateJdUpload(this)" /></label>'+
-    '</div>'+
-    '<div class="text-center mb-6"><button onclick="jobCreateNext()" class="text-sm font-medium text-accent-700 hover:text-accent-900">Skip \u2014 I\u2019ll fill it manually</button></div>';
+  const d = jobDraft, mode = d.startMode || 'jd';
+  const card = function(key, iconName, title, sub){
+    const on = mode===key;
+    return '<label class="jc-start'+(on ? ' is-on' : '')+'"><input type="radio" name="jc-start" value="'+key+'"'+(on ? ' checked' : '')+' onchange="jcSetStart(this.value)" class="sr-only" />'+
+      '<span class="jc-start__icon" aria-hidden="true">'+icon(iconName,'w-5 h-5')+'</span><span class="jc-start__title">'+title+'</span><span class="jc-start__sub">'+sub+'</span></label>';
+  };
+  const cards = '<fieldset class="jc-starts"><legend class="sr-only">How do you want to start?</legend>'+
+    card('jd','sparkles','Upload or paste a JD','Kairo reads it and fills in the job.')+
+    card('copy','doc','Copy a past job','Start from a job your agency already ran.')+
+    card('blank','edit','Start blank','Fill in each step yourself.')+'</fieldset>';
+  let body = '';
+  if(mode==='jd'){
+    body = '<div class="card p-6 mb-4">'+
+        '<p class="text-sm font-semibold text-ink">Upload a JD</p><p class="text-xs text-zinc-500 mt-0.5 mb-3">PDF, DOC or DOCX. You review everything before the job opens.</p>'+
+        '<label class="btn-secondary app-btn cursor-pointer">'+icon('upload','w-4 h-4')+'Choose file<input type="file" accept=".pdf,.doc,.docx" class="hidden" onchange="simulateJdUpload(this)" /></label>'+
+        '<div class="jc-or" aria-hidden="true"><span>or</span></div>'+
+        '<label for="jc-paste" class="text-sm font-semibold text-ink">Paste the JD text</label>'+
+        '<textarea id="jc-paste" rows="6" oninput="window.jcPasteText=this.value" placeholder="Paste the job description here" class="mt-2 w-full border border-zinc-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">'+escapeHtml(window.jcPasteText||'')+'</textarea>'+
+        '<button type="button" onclick="jcExtractPasted()" class="btn-secondary app-btn mt-3">'+icon('sparkles','w-4 h-4')+'Extract with Kairo</button>'+
+      '</div>';
+  } else if(mode==='copy'){
+    body = '<div class="card p-0 overflow-hidden mb-4">'+
+        '<div class="p-4 border-b border-zinc-100"><label for="jc-copy-q" class="sr-only">Search past jobs</label>'+
+          '<input id="jc-copy-q" type="search" value="'+escapeHtml(jcCopyQuery)+'" oninput="jcCopyQuery=this.value; jcRefreshCopyList()" placeholder="Search by title, client or job ID" class="w-full h-11 border border-zinc-200 rounded-xl px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500" /></div>'+
+        jcCopyListHTML()+'</div>';
+  } else {
+    body = '<div class="card p-6 mb-4 text-sm text-zinc-600">You’ll fill in the basic info, job details, hiring process and team yourself. Continue when you’re ready.</div>';
+  }
+  return cards+body;
+}
+function jcSetStart(v){ jobDraft.startMode = v; refreshJobCreate(); if(v==='copy') setTimeout(function(){ const q = document.getElementById('jc-copy-q'); if(q) q.focus(); }, 20); }
+function jcStartContinue(){
+  const d = jobDraft;
+  if((d.startMode||'jd')==='copy'){ toast('Pick a past job to copy, or choose another way to start.'); return; }
+  if((d.startMode||'jd')==='jd' && !d.extracted){ toast('Upload or paste a JD first, or choose Start blank.'); return; }
+  jobCreateNext();
+}
+function jcCopyCandidates(){
+  const q = jcCopyQuery.trim().toLowerCase();
+  return JOBS.filter(function(j){ return j.status!=='Draft' && (typeof jobVisibleToMe!=='function' || jobVisibleToMe(j)); })
+    .filter(function(j){ return !q || (j.title+' '+j.client+' '+ojId(j.id)+' '+j.id).toLowerCase().indexOf(q)>-1; })
+    .slice().reverse().slice(0, 12);
+}
+function jcCopyListHTML(){
+  const list = jcCopyCandidates();
+  if(!list.length) return '<div id="jc-copy-list" class="px-5 py-10 text-center text-sm text-zinc-500">No past job matches “'+escapeHtml(jcCopyQuery)+'”.</div>';
+  return '<ul id="jc-copy-list" class="divide-y divide-zinc-100">'+list.map(function(j){
+    return '<li><button type="button" onclick="jcCopyJob(\''+j.id+'\')" class="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-zinc-50">'+
+      '<span class="min-w-0 flex-1"><span class="block text-sm font-semibold text-ink truncate">'+escapeHtml(j.title)+'</span>'+
+        '<span class="block text-xs text-zinc-500 truncate">'+escapeHtml(j.client)+' · '+jcJobDate(j)+' · <span class="font-mono">'+jcJobRef(j)+'</span></span></span>'+
+      jobStatusPillHTML(j.status)+'</button></li>';
+  }).join('')+'</ul>';
+}
+function jcRefreshCopyList(){ const el = document.getElementById('jc-copy-list'); if(el) el.outerHTML = jcCopyListHTML(); }
+/* Copy a past job: every field and its hiring process; the title says "(copy)" until edited. */
+function jcCopyJob(id){
+  const j = jobById(id); if(!j) return;
+  const d = jobDraftFromJob(j);
+  Object.assign(d, { editingJobId:null, step:2, maxStep:2, extracted:false, startMode:'copy', copiedFrom:j.id, title:j.title+' (copy)', kairoFilled:{},
+    jobLeadId:(currentActingUser()||{}).id || '', draftJobId:null, createdJobId:null, workflowIsCustom:true });
+  jobDraft = d;
+  logAudit('Jobs', 'Job copied into a new draft', j.title+' — '+j.client);
+  toast('Copied '+j.title+' with its hiring process. Check the details before opening it.');
+  refreshJobCreate();
+  document.getElementById('main-content').scrollTop = 0;
+}
+function jcJobRef(j){ return 'JOB-'+String(1000+(parseInt(String(j.id).replace(/\D/g,''),10)||0)); }
+function jcJobDate(j){
+  const t = j.liveAt || (j.publication && j.publication.createdAt) || j.createdAt;
+  if(t) return new Date(t).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+  const dd = new Date(Date.now() - (j.daysOpen||0)*864e5); return dd.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+/* Pasted JD: the same Kairo extraction as an upload. */
+function jcExtractPasted(){
+  const t = String(window.jcPasteText||'').trim();
+  if(t.length<60){ toast('Paste the full job description (at least a few lines).'); const el = document.getElementById('jc-paste'); if(el) el.focus(); return; }
+  simulateJdUpload({ files:[{ name:'Pasted text' }], value:'' });
+}
+/* "Filled by Kairo": a small grey tag beside a field Kairo filled, gone once the field is edited. */
+const JC_KAIRO_KEYS = ['title','client','pocId','employmentType','workMode','hiringType','experience','openings','locations','salary','priority','noticePeriod',
+  'roleSummary','responsibilities','requiredSkills','preferredSkills','education'];
+function jcKairoTag(key){ return jobDraft && jobDraft.kairoFilled && jobDraft.kairoFilled[key] ? '<span id="kf-'+key+'" class="jc-kairo-tag">'+icon('sparkles','w-3 h-3')+'Filled by Kairo</span>' : ''; }
+function jcKairoEdited(key){
+  const d = jobDraft; if(!d || !d.kairoFilled || !d.kairoFilled[key]) return;
+  delete d.kairoFilled[key];
+  const el = document.getElementById('kf-'+key); if(el) el.remove();
 }
 
 /* ---- Step 2: Basic Job Information ---- */
@@ -6502,7 +6670,7 @@ function jcExperienceHTML(){
 }
 // Typing never repaints the boxes - only the error line and borders change.
 function jcSetExp(key, v){
-  jobDraft[key] = v;
+  jobDraft[key] = v; jcKairoEdited('experience');
   jobDraft.experience = jcExpText(jobDraft);
   const err = jcExpError(jobDraft), line = document.getElementById('jc-exp-err');
   if(line){ line.textContent = err; line.classList.toggle('hidden', !err); }
@@ -6797,7 +6965,7 @@ function jcSalaryBlockHTML(){
 }
 // Typing never repaints the boxes - only the error line, borders and preview change.
 function jcSetComp(key, v, idx){
-  const d = jobDraft, c = jcComp(d);
+  const d = jobDraft, c = jcComp(d); jcKairoEdited('salary');
   if(idx==null) c[key] = v; else c.bonuses[idx][key] = v;
   d.salary = jcSalaryText(d);
   const err = jcSalaryError(d), line = document.getElementById('jc-sal-err'), prev = document.getElementById('jc-sal-preview');
@@ -6892,7 +7060,7 @@ function jcS2LocationHTML(){
       { hint: remote ? 'Where candidates can work from.' : null })+
   '</div>';
 }
-function jcSetWorkMode(m){ if(!jobDraft || jobDraft.workMode===m) return; jobDraft.workMode = m; jcRefreshLocation(); jcRefreshOptional(); }
+function jcSetWorkMode(m){ if(!jobDraft || jobDraft.workMode===m) return; jobDraft.workMode = m; jcKairoEdited('workMode'); jcKairoEdited('locations'); jcRefreshLocation(); jcRefreshOptional(); }
 
 /* Priority sits under the role as a single optional checkbox; compensation and client
    contact are always-open sections marked Optional. */
@@ -6904,7 +7072,7 @@ function jcSetPriorityMarked(on){
   d.priority = on ? (d.priority==='Medium' ? 'High' : d.priority) : 'Medium';
   jcRefreshPriority();
 }
-function jcSetPriority(p){ jobDraft.priority = p; jobDraft.priorityMarked = true; jcRefreshPriority(); }
+function jcSetPriority(p){ jcKairoEdited('priority'); jobDraft.priority = p; jobDraft.priorityMarked = true; jcRefreshPriority(); }
 function jcPriorityHTML(){
   const d = jobDraft, marked = jcPriorityMarked(d);
   return '<div id="jc-priority" class="flex flex-wrap items-center gap-x-4 gap-y-2 min-h-[44px] mt-4">'+
@@ -7040,28 +7208,47 @@ function jcOnHiringTypeChange(){
   if(!jobDraft.salaryNotDisclosed || !jobDraft.isHmPost) jobDraft.salary = jcSalaryText(jobDraft);
   jcRefreshSalary();
 }
+const JC_NOTICE_OPTIONS = ['Immediate','< 15 Days','< 30 Days','30 Days','60 Days','90 Days','Flexible'];
+/* A titled section on the A3 steps (24px apart). */
+function jcSection(title, body, sub){
+  return '<section class="jc-sec" aria-label="'+escapeHtml(title)+'"><h3 class="jc-sec__title">'+title+'</h3>'+(sub ? '<p class="jc-sec__sub">'+sub+'</p>' : '')+body+'</section>';
+}
+/* ---- Step 2: Basic info. Every original field, in three sections: the role, where and how, experience and pay. ---- */
 function jobCreateStep2HTML(){
   const d = jobDraft;
   const title = '<input id="jc-title" type="text" value="'+escapeHtml(d.title||'')+'" oninput="updateJobDraft(\'title\', this.value); refreshJobCreateSidebar();" placeholder="e.g. Senior Backend Engineer" '+
     'class="w-full h-11 border border-zinc-200 rounded-xl px-4 text-[15px] font-medium text-ink placeholder:font-normal bg-white focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent" />';
-  return '<div class="card p-6 sm:p-8 mb-5">'+
-    jcS2Group('Role',
-      '<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5">'+
-        jcS2Field('Job title', title, { forId:'jc-title' })+
-        jcClientFieldHTML()+
-      '</div>'+jcPriorityHTML())+
-    jcS2Group('Location', jcS2LocationHTML())+
-    jcS2Group('Employment',
-      '<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5">'+
-        jcS2Field('Employment type', jdSelect('employmentType', ['Full-time','Contract','Part-time']), { tip:'How the hire works day to day — full-time, part-time or on contract.' })+
-        jcS2Field('Hiring type', jdSelect('hiringType', ['Permanent','Contract','Hourly','Freelance','Internship','Temporary'], 'jcOnHiringTypeChange()'), { tip:'How the role is engaged and paid. It sets the pay options under Compensation.' })+
-        jcS2Field('Experience', jcExperienceHTML())+
-        jcS2Field('Openings', '<div class="max-w-[8rem]">'+jdInput('openings', '', 'number')+'</div>')+
-      '</div>')+
-    jcS2Group('Compensation', jcSalaryBlockHTML(), true)+
-    jcS2Group('Hiring contact', jcClientContactHTML(), true)+
-  '</div>'+
-  '<div class="lg:hidden mb-4">'+jcStep2StatusLineHTML('jc-mobile-status')+'</div>';
+  const notice = '<select id="jc-notice" onchange="updateJobDraft(\'noticePeriod\', this.value)" class="w-full h-11 border border-zinc-200 rounded-xl px-3.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500">'+
+    '<option value="">Not set</option>'+JC_NOTICE_OPTIONS.concat(d.noticePeriod && JC_NOTICE_OPTIONS.indexOf(d.noticePeriod)<0 ? [d.noticePeriod] : []).map(function(o){ return '<option'+(o===d.noticePeriod?' selected':'')+'>'+escapeHtml(o)+'</option>'; }).join('')+'</select>';
+  const role = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5">'+
+      jcS2Field('Job title '+jcKairoTag('title'), title, { forId:'jc-title' })+
+      '<div>'+jcClientFieldHTML()+
+        (canI('clients','Create') ? '<button type="button" onclick="openNewClientPage(\'job\')" class="jc-link mt-1.5">'+icon('plus','w-3.5 h-3.5')+'Add client</button>' : '')+'</div>'+
+    '</div>'+
+    '<div class="mt-5">'+jcClientContactHTML()+'</div>'+
+    '<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5 mt-5">'+
+      jcS2Field('Employment type '+jcKairoTag('employmentType'), jdSelect('employmentType', ['Full-time','Contract','Part-time']), { tip:'How the hire works day to day — full-time, part-time or on contract.' })+
+      jcS2Field('Hiring type '+jcKairoTag('hiringType'), jdSelect('hiringType', ['Permanent','Contract','Hourly','Freelance','Internship','Temporary'], 'jcOnHiringTypeChange(); refreshJobCreate()'), { tip:'How the role is engaged and paid. It sets the pay options below.' })+
+      jcS2Field('Openings '+jcKairoTag('openings'), '<div class="max-w-[8rem]">'+jdInput('openings', '', 'number')+'</div>')+
+      '<div>'+jcPriorityHTML()+'</div>'+
+    '</div>'+
+    '<label class="flex items-start gap-2.5 mt-5 text-sm text-zinc-700 cursor-pointer"><input type="checkbox"'+(d.replacementHiring?' checked':'')+' onchange="updateJobDraft(\'replacementHiring\', this.checked)" class="w-4 h-4 mt-0.5 rounded border-zinc-300 text-accent-600 focus:ring-accent-500" />'+
+      '<span><span class="font-medium">Replacement hiring</span><span class="block text-xs text-zinc-500">This job replaces someone who left within the client’s replacement period.</span></span></label>';
+  const contract = d.hiringType==='Contract'
+    ? jcS2Field('Contract duration', '<div class="flex items-center gap-2 max-w-[12rem]"><input id="jc-contract-months" type="number" min="1" max="60" value="'+escapeHtml(String(d.contractMonths||''))+'" oninput="updateJobDraft(\'contractMonths\', this.value)" placeholder="e.g. 6" class="w-24 h-11 border border-zinc-200 rounded-xl px-3.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500" /><span class="text-sm text-zinc-500">months</span></div>', { forId:'jc-contract-months', hint:'Pay below is per month or per hour.' })
+    : '';
+  const exp = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5">'+
+      jcS2Field('Experience '+jcKairoTag('experience'), jcExperienceHTML())+
+      jcS2Field('Notice period '+jcKairoTag('noticePeriod'), notice, { forId:'jc-notice' })+
+      contract+
+    '</div>'+
+    '<div class="mt-5">'+jcS2Field('Pay '+jcKairoTag('salary'), jcSalaryBlockHTML())+'</div>';
+  return '<div class="card p-6 sm:p-8 mb-5 jc-secs">'+
+      jcSection('The role', role)+
+      jcSection('Where and how '+jcKairoTag('locations'), jcS2LocationHTML())+
+      jcSection('Experience and pay', exp)+
+    '</div>'+
+    '<div class="lg:hidden mb-4">'+jcStep2StatusLineHTML('jc-mobile-status')+'</div>';
 }
 
 /* ---- Step 3: Job Details (accordions, progressive disclosure) ---- */
@@ -7069,11 +7256,12 @@ function toggleJobCreateSection(key){
   if(jobCreateOpenSections.has(key)) jobCreateOpenSections.delete(key); else jobCreateOpenSections.add(key);
   refreshJobCreate();
 }
-function jobCreateAccordion(key, title, contentHtml, badge){
+function jobCreateAccordion(key, title, contentHtml, badge, summary){
   const open = jobCreateOpenSections.has(key);
   return '<div class="card rounded-2xl overflow-hidden mb-3">'+
-    '<button onclick="toggleJobCreateSection(\''+key+'\')" class="w-full flex items-center justify-between px-5 py-4 text-left">'+
-      '<span class="flex items-center gap-2 font-medium text-sm text-zinc-900">'+title+(badge?'<span class="text-[10px] font-semibold text-accent-600 bg-accent-50 px-2 py-0.5 rounded-full">'+badge+'</span>':'')+'</span>'+
+    '<button onclick="toggleJobCreateSection(\''+key+'\')" aria-expanded="'+open+'" class="w-full flex items-center justify-between gap-3 px-5 py-4 text-left">'+
+      '<span class="flex items-center gap-2 font-medium text-sm text-zinc-900 min-w-0">'+title+(badge?'<span class="text-[10px] font-semibold text-accent-600 bg-accent-50 px-2 py-0.5 rounded-full">'+badge+'</span>':'')+
+        (!open && summary ? '<span class="font-normal text-zinc-500 truncate">· '+summary+'</span>' : '')+'</span>'+
       '<span class="inline-block chevron-rotate text-zinc-400" style="transform:rotate('+(open?'-90deg':'90deg')+')">'+icon('chevronRight','w-4 h-4')+'</span>'+
     '</button>'+
     (open ? '<div class="expand-panel px-5 pb-5 border-t border-zinc-100 pt-4">'+contentHtml+'</div>' : '')+
@@ -7132,6 +7320,7 @@ function recruiterRowHTML(r, recommended){
     '<span class="min-w-0 flex-1">'+
       '<span class="flex items-center gap-1.5"><span class="text-sm font-medium text-zinc-900">'+r.name+'</span><span class="text-xs text-zinc-400">'+r.id+'</span>'+(recommended?'<span class="text-gold-500 text-xs">\u2b50</span>':'')+'</span>'+
       '<span class="text-xs text-zinc-400 block">'+r.loc+' \u00b7 '+r.dept+'</span>'+
+      jcWorkloadChipHTML(r)+
     '</span>'+
     (recommended ? '<span class="text-[10px] font-semibold text-accent-600 bg-accent-100 px-2 py-0.5 rounded-full shrink-0">'+r.successRate+'% closure</span>' : '<span class="text-[11px] text-zinc-400 shrink-0">'+r.successRate+'%</span>')+
   '</button>';
@@ -7235,13 +7424,19 @@ function shiftHoursHTML(){
 }
 function jobCreateStep3HTML(){
   const d = jobDraft;
+  const n = function(x, one, many){ return x+' '+(x===1 ? one : many); };
+  const resp = (d.responsibilities||'').split('\n').filter(function(x){ return x.trim(); }).length;
+  const reqBits = [d.education ? 'education' : '', d.certifications ? 'certifications' : '', d.industryExperience.length ? n(d.industryExperience.length,'industry','industries') : '',
+    d.domainExperience.length ? n(d.domainExperience.length,'domain','domains') : '', (d.language||[]).length ? n(d.language.length,'language','languages') : '', d.workingSchedule ? d.workingSchedule+' shift' : '', d.travel ? 'travel '+d.travel : ''].filter(Boolean);
   return kairoInsightsPanelHTML(d)+
-    jobCreateAccordion('summary','Role Summary', jdTextarea('roleSummary', 4, 'Describe the purpose of the role, business impact, reporting structure and what success looks like.', 250, 750))+
-    jobCreateAccordion('resp','Responsibilities', jdTextarea('responsibilities', 4, 'Describe day-to-day responsibilities, ownership areas, collaboration expectations and key deliverables.', 200, 750))+
-    jobCreateAccordion('skills','Required Skills', chipTagFieldHTML('requiredSkills','e.g. Java, AWS')+kairoSkillSuggestionsHTML()+
-      '', d.extracted?'Auto-filled':null)+
-    jobCreateAccordion('pref','Preferred Skills', chipTagFieldHTML('preferredSkills','e.g. Docker, GraphQL'))+
-    jobCreateAccordion('req','Candidate Requirements', '<div class="grid grid-cols-2 gap-4">'+
+    jobCreateAccordion('summary','Role summary '+jcKairoTag('roleSummary'), jdTextarea('roleSummary', 4, 'Describe the purpose of the role, business impact, reporting structure and what success looks like.', 250, 750), null,
+      d.roleSummary.trim() ? d.roleSummary.trim().length+' characters' : 'Not written yet')+
+    jobCreateAccordion('resp','Responsibilities '+jcKairoTag('responsibilities'), jdTextarea('responsibilities', 4, 'Describe day-to-day responsibilities, ownership areas, collaboration expectations and key deliverables.', 200, 750), null,
+      resp ? n(resp,'item','items') : 'Not written yet')+
+    jobCreateAccordion('skills','Skills '+jcKairoTag('requiredSkills'), '<p class="text-xs font-medium text-zinc-600 mb-1.5">Must-have</p>'+chipTagFieldHTML('requiredSkills','e.g. Java, AWS')+kairoSkillSuggestionsHTML()+
+      '<p class="text-xs font-medium text-zinc-600 mt-4 mb-1.5">Nice to have</p>'+chipTagFieldHTML('preferredSkills','e.g. Docker, GraphQL'), null,
+      d.requiredSkills.length+' must-have, '+d.preferredSkills.length+' nice-to-have')+
+    jobCreateAccordion('req','Candidate requirements', '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">'+
       jdField('Education', jdInput('education','e.g. B.Tech / B.E.'))+
       jdField('Certifications', jdInput('certifications',''))+
       jdField('Industry', masterPickerHTML('industryExperience', INDUSTRY_DATA, 'Search industries\u2026'))+
@@ -7250,11 +7445,203 @@ function jobCreateStep3HTML(){
       '<div id="shift-hours-wrap">'+shiftHoursHTML()+'</div>'+
       jdField('Travel', jdInput('travel','e.g. Up to 20%'))+
       jdField('Language', masterPickerHTML('language', LANGUAGE_DATA, 'Search languages\u2026'))+
-    '</div>')+
-    jobCreateAccordion('workflow','Interview Workflow', workflowBuilderHTML())+
-    jobCreateAccordion('hiring','Internal Recruitment Team', '<p class="text-xs text-zinc-400 mb-3">Assign recruiters \u2014 Kairo\u2019s recommendation appears first. Interviewers for each round are managed separately inside Interview Workflow.</p>'+
-      recruiterAssignHTML()+
-      '<div class="mt-4">'+jdField('Internal Notes', jdTextarea('internalNotes', 2, 'Visible only to your internal team \u2014 never shown to clients or candidates.'))+'</div>');
+    '</div>', null, reqBits.length ? reqBits.join(', ') : 'Nothing added yet')+
+    jobCreateAccordion('notes','Internal notes', jdField('Internal notes', jdTextarea('internalNotes', 2, 'Visible only to your internal team \u2014 never shown to clients or candidates.')), null,
+      d.internalNotes && d.internalNotes.trim() ? 'Added' : 'None');
+}
+
+/* ---- Step 4: Hiring process. Stage cards built from the interview stages; job.hiringProcess is the source every
+   interview reads (interviewWorkflow keeps the names in step for the pipeline). ---- */
+const JC_STAGE_DEFAULTS = {
+  'Client HR':['Screening','Phone','Client panel','Standard'], 'Technical Round':['Interview','Video','Client panel','Technical'],
+  'Hiring Manager':['Interview','Video','Client panel','Standard'], 'Final Discussion':['Interview','In person','Client panel','Culture fit'],
+  'Offer':['Offer','Phone','','None'], 'Joining':['Joining','In person','','None']
+};
+let jcStageSeq = 1;
+function jcStage(name, type, mode, interviewer, form){ return { id:'st-'+(jcStageSeq++), name:name, type:type, mode:mode, interviewer:interviewer, feedbackForm:form }; }
+function jcStagesFromNames(names){
+  return (names||[]).map(function(nm){ const x = JC_STAGE_DEFAULTS[nm] || [/offer/i.test(nm) ? 'Offer' : /join/i.test(nm) ? 'Joining' : /assess|test/i.test(nm) ? 'Assessment' : /screen|hr/i.test(nm) ? 'Screening' : 'Interview','Video','Client panel','Standard'];
+    return jcStage(nm, x[0], x[1], x[2], x[3]); });
+}
+function jcCloneStages(list){ return (list||[]).map(function(x){ return jcStage(x.name, x.type, x.mode, x.interviewer, x.feedbackForm); }); }
+/* A client's saved process, as stage cards (saved stages, else the names it already had). */
+function jcClientStages(name){
+  const c = typeof findClientByName==='function' ? findClientByName(name) : null;
+  if(c && c.hiringProcessStages && c.hiringProcessStages.length) return jcCloneStages(c.hiringProcessStages);
+  const names = clientHiringProcess(name);
+  return names && names.length ? jcStagesFromNames(names) : null;
+}
+function jcSyncWorkflow(d){
+  if(!d || d.isHmPost) return;
+  if(!d.hiringProcess || !d.hiringProcess.length) d.hiringProcess = jcStagesFromNames(d.interviewWorkflow && d.interviewWorkflow.length ? d.interviewWorkflow : DEFAULT_JOB_WORKFLOW);
+  d.interviewWorkflow = d.hiringProcess.map(function(x){ return x.name.trim() || 'Untitled stage'; });
+}
+let jcStageConfirm = null;   // stage id waiting for "Remove this stage?"
+function jcStageHasData(st){ return !!(st.interviewer && st.interviewer!=='Client panel') || (jobDraft.editingJobId && (function(){
+  const j = jobById(jobDraft.editingJobId); if(!j) return false;
+  const i = jobDraft.hiringProcess.indexOf(st);
+  return submissionsForJob(j.id).some(function(x){ return subProcessIndex(j, x)===i; });
+})()); }
+function jcStageSet(id, key, v, rerender){
+  const st = jobDraft.hiringProcess.find(function(x){ return x.id===id; }); if(!st) return;
+  st[key] = v; jobDraft.workflowIsCustom = true;
+  if(rerender) jcRefreshStages(); else { jcSyncWorkflow(jobDraft); refreshJobCreateSidebar(); }
+}
+function jcStageMove(i, dir){
+  const list = jobDraft.hiringProcess, j = i+dir;
+  if(j<0 || j>=list.length) return;
+  const x = list.splice(i, 1)[0]; list.splice(j, 0, x);
+  jobDraft.workflowIsCustom = true; jcRefreshStages();
+  setTimeout(function(){ const b = document.getElementById('jc-stage-'+(dir<0 ? 'up' : 'down')+'-'+j) || document.getElementById('jc-stage-name-'+j); if(b) b.focus(); }, 10);
+}
+function jcStageRemove(id, confirmed){
+  const list = jobDraft.hiringProcess, i = list.findIndex(function(x){ return x.id===id; }); if(i<0) return;
+  if(!confirmed && jcStageHasData(list[i])){ jcStageConfirm = id; jcRefreshStages(); return; }
+  list.splice(i, 1); jcStageConfirm = null; jobDraft.workflowIsCustom = true; jcRefreshStages();
+}
+function jcStageAdd(){
+  jobDraft.hiringProcess.push(jcStage('', 'Interview', 'Video', 'Client panel', 'Standard'));
+  jobDraft.workflowIsCustom = true; jcRefreshStages();
+  setTimeout(function(){ const el = document.getElementById('jc-stage-name-'+(jobDraft.hiringProcess.length-1)); if(el) el.focus(); }, 10);
+}
+function jcUseClientProcess(){ const st = jcClientStages(jobDraft.client); if(st){ jobDraft.hiringProcess = st; jobDraft.workflowIsCustom = false; jobDraft.processChoice = 'client'; jcRefreshStages(); toast('Using '+jobDraft.client+'’s hiring process.'); } }
+function jcBuildNewProcess(){ jobDraft.processChoice = 'new'; jobDraft.hiringProcess = jcStagesFromNames(DEFAULT_JOB_WORKFLOW); jobDraft.workflowIsCustom = true; jcRefreshStages(); }
+function jcResetProcess(){ const st = jcClientStages(jobDraft.client); jobDraft.hiringProcess = st || jcStagesFromNames(DEFAULT_JOB_WORKFLOW); jobDraft.workflowIsCustom = false; jcRefreshStages(); }
+/* Drag to reorder (the up/down buttons do the same for keyboards). */
+function jcStageDragStart(e, i){ e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.effectAllowed = 'move'; e.currentTarget.classList.add('is-dragging'); }
+function jcStageDragEnd(e){ e.currentTarget.classList.remove('is-dragging'); }
+function jcStageDrop(e, i){
+  e.preventDefault();
+  const from = parseInt(e.dataTransfer.getData('text/plain'), 10); if(isNaN(from) || from===i) return;
+  const list = jobDraft.hiringProcess, x = list.splice(from, 1)[0]; list.splice(i, 0, x);
+  jobDraft.workflowIsCustom = true; jcRefreshStages();
+}
+function jcRefreshStages(){ jcSyncWorkflow(jobDraft); const el = document.getElementById('jc-stages'); if(el) el.outerHTML = jcStagesHTML(); refreshJobCreateSidebar(); }
+function jcInterviewerOptions(){
+  const cl = jobCreateClient(), pocs = (cl && cl.pocs) || [];
+  return ['Client panel'].concat(pocs.map(function(p){ return p.name; })).concat(RECRUITER_ROSTER.slice(0, 6).map(function(r){ return r.name; }));
+}
+function jcStagesHTML(){
+  const d = jobDraft, list = d.hiringProcess, people = jcInterviewerOptions();
+  const sel = function(id, key, opts, val, label){
+    return '<label class="jc-stage__field"><span>'+label+'</span><select onchange="jcStageSet(\''+id+'\',\''+key+'\', this.value)" class="jc-input">'+
+      opts.map(function(o){ return '<option'+(o===val?' selected':'')+'>'+escapeHtml(o)+'</option>'; }).join('')+'</select></label>';
+  };
+  return '<div id="jc-stages">'+
+    '<ol class="jc-stage-list">'+list.map(function(st, i){
+      const confirm = jcStageConfirm===st.id;
+      const ppl = people.indexOf(st.interviewer)<0 && st.interviewer ? [st.interviewer].concat(people) : people;
+      return '<li class="jc-stage" draggable="true" ondragstart="jcStageDragStart(event,'+i+')" ondragend="jcStageDragEnd(event)" ondragover="event.preventDefault()" ondrop="jcStageDrop(event,'+i+')">'+
+        '<div class="jc-stage__head">'+
+          '<span class="jc-stage__grip" aria-hidden="true" title="Drag to reorder">\u2630</span>'+
+          '<span class="jc-stage__num">'+(i+1)+'</span>'+
+          '<label class="sr-only" for="jc-stage-name-'+i+'">Stage '+(i+1)+' name</label>'+
+          '<input id="jc-stage-name-'+i+'" value="'+escapeHtml(st.name)+'" oninput="jcStageSet(\''+st.id+'\',\'name\', this.value)" placeholder="Stage name" class="jc-input jc-stage__name" />'+
+          '<button type="button" id="jc-stage-up-'+i+'" onclick="jcStageMove('+i+',-1)"'+(i===0?' disabled':'')+' aria-label="Move '+escapeHtml(st.name||'stage')+' up" class="jc-icon-btn">\u2191</button>'+
+          '<button type="button" id="jc-stage-down-'+i+'" onclick="jcStageMove('+i+',1)"'+(i===list.length-1?' disabled':'')+' aria-label="Move '+escapeHtml(st.name||'stage')+' down" class="jc-icon-btn">\u2193</button>'+
+          '<button type="button" onclick="jcStageRemove(\''+st.id+'\')" aria-label="Remove '+escapeHtml(st.name||'stage')+'" class="jc-icon-btn jc-icon-btn--danger">'+icon('x','w-4 h-4')+'</button>'+
+        '</div>'+
+        (confirm ? '<div class="jc-stage__confirm" role="alert"><span>Remove this stage? '+(st.interviewer && st.interviewer!=='Client panel' ? escapeHtml(st.interviewer)+' is set as the interviewer.' : 'Candidates are at this stage.')+'</span>'+
+          '<button type="button" onclick="jcStageRemove(\''+st.id+'\', true)" class="app-btn app-btn--sm app-btn--danger">Remove</button><button type="button" onclick="jcStageConfirm=null; jcRefreshStages()" class="btn-quiet text-sm">Keep</button></div>' : '')+
+        '<div class="jc-stage__grid">'+
+          sel(st.id, 'type', JC_STAGE_TYPES, st.type, 'Type')+
+          '<div class="jc-stage__field"><span>Mode</span>'+jcSegHTMLGeneric(JC_STAGE_MODES, st.mode, "jcStageSet('"+st.id+"','mode', this.dataset.v, true)", 'Mode for '+(st.name||'stage'))+'</div>'+
+          sel(st.id, 'interviewer', ppl, st.interviewer || 'Client panel', 'Interviewer')+
+          sel(st.id, 'feedbackForm', JC_FEEDBACK_FORMS, st.feedbackForm, 'Feedback form')+
+        '</div>'+
+      '</li>';
+    }).join('')+'</ol>'+
+    '<button type="button" onclick="jcStageAdd()" class="jc-add">'+icon('plus','w-4 h-4')+'Add stage</button>'+
+  '</div>';
+}
+function jcSegHTMLGeneric(options, value, onPick, label){
+  return '<div class="seg jc-seg" role="group" aria-label="'+escapeHtml(label)+'">'+options.map(function(o){
+    const on = o===value;
+    return '<button type="button" data-v="'+escapeHtml(o)+'" aria-pressed="'+on+'" onclick="'+onPick+'" class="seg__btn'+(on?' is-on':'')+'">'+escapeHtml(o)+'</button>';
+  }).join('')+'</div>';
+}
+function jcHiringProcessStepHTML(){
+  const d = jobDraft, saved = d.client ? jcClientStages(d.client) : null;
+  const c = typeof findClientByName==='function' ? findClientByName(d.client) : null;
+  const usingClient = saved && !d.workflowIsCustom;
+  const note = saved && d.processChoice!=='client' && d.processChoice!=='new' && !d.editingJobId
+    ? kairoNoteHTML(escapeHtml(d.client)+' has a saved hiring process ('+saved.length+' stage'+(saved.length===1?'':'s')+').', [{ label:'Use it', onclick:'jcUseClientProcess()' }, { label:'Build a new one', onclick:'jcBuildNewProcess()' }])
+    : '';
+  return note+
+    '<div class="card p-6 sm:p-8 mb-5">'+
+      '<div class="flex items-start justify-between gap-3 mb-4">'+
+        '<div><h3 class="jc-sec__title">Stages</h3><p class="jc-sec__sub">'+(usingClient ? 'Using '+escapeHtml(d.client)+'’s hiring process.' : 'Customised for this job.')+' Drag \u2630 or use the arrows to reorder.</p></div>'+
+        (d.workflowIsCustom ? '<button type="button" onclick="jcResetProcess()" class="btn-quiet text-sm">Reset to client default</button>' : '')+
+      '</div>'+
+      jcStagesHTML()+
+      (d.client ? '<label class="flex items-center gap-2.5 mt-6 pt-5 border-t border-zinc-100 text-sm text-zinc-700 cursor-pointer"><input type="checkbox"'+(d.saveProcessToClient?' checked':'')+' onchange="updateJobDraft(\'saveProcessToClient\', this.checked)" class="w-4 h-4 rounded border-zinc-300 text-accent-600 focus:ring-accent-500" />'+
+        'Save this as '+escapeHtml(d.client)+'’s hiring process</label>' : '')+
+    '</div>';
+}
+
+/* ---- Step 5: Rules and team. Submission rules, who works on the job (moved here from Job details), and how new
+   applicants are shared. ---- */
+function jcRule(key, title, desc){
+  const on = !!jobDraft.rules[key];
+  return '<div class="jc-row"><div class="min-w-0"><p class="jc-row__title" id="jc-rule-'+key+'-l">'+title+'</p><p class="jc-row__desc" id="jc-rule-'+key+'-d">'+desc+'</p></div>'+
+    '<button type="button" role="switch" aria-checked="'+on+'" aria-labelledby="jc-rule-'+key+'-l" aria-describedby="jc-rule-'+key+'-d" class="app-switch'+(on?' is-on':'')+'" onclick="jcSetRule(\''+key+'\', '+!on+')"><span></span></button></div>';
+}
+function jcSetRule(key, v){ jobDraft.rules[key] = v; refreshJobCreate(); }
+function jcToggleRequired(v){ const r = jobDraft.rules.required, i = r.indexOf(v); if(i>-1) r.splice(i, 1); else r.push(v); refreshJobCreate(); }
+/* A recruiter's workload: jobs and open applicants, read as Available, Busy or Overloaded. */
+function jcWorkload(r){
+  const jobs = JOBS.filter(function(j){ return (j.assignedRecruiters||[]).indexOf(r.id)>-1 && (j.status==='Active' || j.status==='On Hold'); });
+  const open = SUBMISSIONS.filter(function(x){ return jobs.some(function(j){ return j.id===x.jobId; }) && ['Joined','Withdrawn','Rejected'].indexOf(x.stage)<0 && x.status!=='rejected' && x.status!=='withdrawn'; }).length;
+  const level = jobs.length>=6 || open>=30 ? 'Overloaded' : jobs.length>=4 || open>=15 ? 'Busy' : 'Available';
+  return { jobs:jobs.length, open:open, level:level };
+}
+function jcWorkloadChipHTML(r){
+  const w = jcWorkload(r), tone = { Available:'jc-load--ok', Busy:'jc-load--busy', Overloaded:'jc-load--over' }[w.level];
+  return '<span class="jc-load '+tone+'">'+w.jobs+' job'+(w.jobs===1?'':'s')+' · '+w.open+' open applicant'+(w.open===1?'':'s')+' · '+w.level+'</span>';
+}
+function jcRecruiterSuggestion(){
+  const d = jobDraft; if(!d.client) return '';
+  const fake = { title:d.title, client:d.client, skills:d.requiredSkills };
+  const best = suggestedRecruitersForJob(fake, RECRUITER_ROSTER).filter(function(x){ return x.placements>0 && d.assignedRecruiters.indexOf(x.recruiter.id)<0; })[0];
+  if(!best) return '';
+  const first = best.recruiter.name.split(' ')[0];
+  return kairoNoteHTML(escapeHtml(first)+' filled '+best.placements+' similar role'+(best.placements===1?'':'s')+' for '+escapeHtml(d.client)+'. Add '+escapeHtml(first)+'?',
+    [{ label:'Add '+escapeHtml(first), onclick:"toggleRecruiterAssign('"+best.recruiter.id+"'); refreshJobCreate()" }]);
+}
+function jcRulesTeamStepHTML(){
+  const d = jobDraft, r = d.rules;
+  if(!d.jobLeadId) d.jobLeadId = (currentActingUser()||{}).id || '';
+  const conf = function(key, label){ const on = !!d.confidential[key];
+    return '<label class="jc-check"><input type="checkbox"'+(on?' checked':'')+' onchange="updateJobDraftNested(\'confidential\',\''+key+'\', this.checked); refreshConfidentialPreview()" class="w-4 h-4 rounded border-zinc-300 text-accent-600 focus:ring-accent-500" />'+label+'</label>'; };
+  const rules = jcRule('approvalBeforeClient', 'Approval before sending to the client', 'A manager checks each profile before it goes to the client.')+
+    jcRule('hideContacts', 'Hide candidate contact details from the client', 'The client sees the profile, not the phone number or email.')+
+    '<div class="jc-row"><div class="min-w-0"><label for="jc-max-profiles" class="jc-row__title">Max profiles per submission</label><p class="jc-row__desc">How many profiles can go to the client in one send.</p></div>'+
+      '<input id="jc-max-profiles" type="number" min="1" max="50" value="'+escapeHtml(String(r.maxProfiles))+'" oninput="jobDraft.rules.maxProfiles=Math.max(1, parseInt(this.value,10)||1)" class="jc-input w-20" /></div>'+
+    '<div class="pt-4"><p class="jc-row__title">Required before submitting</p><p class="jc-row__desc mb-2">Recruiters fill these in for every candidate they submit.</p>'+
+      '<div class="flex flex-wrap gap-2" role="group" aria-label="Required before submitting">'+JC_REQUIRED_OPTIONS.map(function(o){
+        const on = r.required.indexOf(o)>-1;
+        return '<button type="button" aria-pressed="'+on+'" onclick="jcToggleRequired(\''+o+'\')" class="nc-role'+(on?' is-on':'')+'">'+(on?icon('check','w-3 h-3'):'')+o+'</button>'; }).join('')+'</div></div>'+
+    '<div class="pt-5"><p class="jc-row__title">Hide from candidates</p><p class="jc-row__desc mb-2">These stay internal on the job post and in messages to candidates.</p>'+
+      '<div class="grid grid-cols-2 gap-2">'+conf('companyName','Company name')+conf('clientPOC','Client contact')+conf('interviewer','Interviewer')+conf('compensation','Compensation')+'</div>'+confidentialPreviewHTML()+'</div>';
+  const people = RECRUITER_ROSTER.filter(function(x){ return tmStatus ? tmStatus(x)==='Active' || !x.userStatus : true; });
+  const lead = '<div class="jc-row"><div class="min-w-0"><label for="jc-lead" class="jc-row__title">Job lead</label><p class="jc-row__desc">Accountable for this job.</p></div>'+
+    '<select id="jc-lead" onchange="updateJobDraft(\'jobLeadId\', this.value)" class="jc-input w-60">'+people.map(function(p){ return '<option value="'+p.id+'"'+(p.id===d.jobLeadId?' selected':'')+'>'+escapeHtml(p.name)+'</option>'; }).join('')+'</select></div>';
+  const team = lead+
+    '<div class="pt-4"><p class="jc-row__title mb-2">Recruiters</p>'+jcRecruiterSuggestion()+recruiterAssignHTML()+'</div>'+
+    '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">'+
+      jdCheckbox('autoMapRecruiters','Auto-map recruiters','Kairo maps a recruiter if you don’t pick one.')+
+      jdCheckbox('allowRecruiterRequests','Allow recruiter requests','Recruiters can ask to work on this job.')+
+    '</div>';
+  const routing = '<div class="jc-routing" role="radiogroup" aria-label="How new applicants are shared">'+JC_ROUTING.map(function(o){
+      const on = d.applicantRouting===o[0];
+      return '<label class="jc-route'+(on?' is-on':'')+'"><input type="radio" name="jc-routing" value="'+o[0]+'"'+(on?' checked':'')+' onchange="updateJobDraft(\'applicantRouting\', this.value); refreshJobCreate()" class="sr-only" />'+
+        '<span class="jc-route__title">'+o[1]+'</span><span class="jc-route__desc">'+o[2]+'</span></label>'; }).join('')+'</div>'+
+    '<p class="jc-sec__sub mt-3">A recruiter’s personal link always sends the applicant to that recruiter.</p>';
+  return '<div class="card p-6 sm:p-8 mb-5 jc-secs">'+
+    jcSection('Submission rules', rules)+
+    jcSection('Who works on this job', team)+
+    jcSection('How new applicants are shared', routing)+
+  '</div>';
 }
 
 function confidentialPreviewHTML(){
@@ -7312,7 +7699,7 @@ function jobCreateStep5HTML(){
   const exp = d.experience || 'Any experience';
   const hero = '<div class="mb-6">'+
     '<p class="text-[11px] font-semibold tracking-[0.14em] text-accent-600 uppercase mb-2">'+(d.editingJobId?'Review your changes':'Review before publishing')+'</p>'+
-    '<h2 class="font-serif text-[28px] leading-tight font-semibold tracking-tight text-ink flex items-center gap-2 flex-wrap">'+escapeHtml(d.title||'Untitled Role')+idChip(ojId('j'+(JOBS.length+1)))+'</h2>'+
+    '<h2 class="jc-title flex items-center gap-2 flex-wrap">'+escapeHtml(d.title||'Untitled role')+'</h2>'+
     '<div class="flex flex-wrap gap-2 mt-4">'+
       jcRvFact('building', escapeHtml(d.client), hidden.indexOf('companyName')>-1)+
       jcRvFact('globe', escapeHtml((locs.join(', ')||'No location')+' · '+jobWorkModeLabel(d)))+
@@ -7349,21 +7736,40 @@ function jobCreateStep5HTML(){
       tagRow('Languages', Array.isArray(d.language) ? d.language : [])+
     '</div>'+
   '</div>';
-  const process = '<div class="space-y-6">'+
-    '<div><p class="text-xs text-zinc-400 mb-2.5">Interview stages <span class="text-zinc-300">·</span> '+d.interviewWorkflow.length+'</p>'+
-      '<ol class="flex flex-wrap gap-2">'+d.interviewWorkflow.map(function(st,i){
-        return '<li class="inline-flex items-center gap-2 h-8 pl-1 pr-3 rounded-full bg-zinc-50 border border-zinc-200 text-[13px] text-zinc-700"><span class="w-6 h-6 rounded-full bg-white border border-zinc-200 text-[11px] font-semibold text-zinc-500 flex items-center justify-center">'+(i+1)+'</span>'+escapeHtml(st)+'</li>'; }).join('')+'</ol></div>'+
+  const process = jcStageListReadHTML(d.hiringProcess)+
+    (d.saveProcessToClient ? '<p class="text-xs text-zinc-500 mt-3">Saved as '+escapeHtml(d.client)+'’s hiring process when the job opens.</p>' : '');
+  const lead = RECRUITER_ROSTER.find(function(x){ return x.id===d.jobLeadId; });
+  const routing = (JC_ROUTING.find(function(o){ return o[0]===d.applicantRouting; }) || JC_ROUTING[0]);
+  const rulesTeam = '<div class="space-y-6">'+
+    '<dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-5">'+
+      jcRvItem('Approval before sending', d.rules.approvalBeforeClient ? 'On' : 'Off')+
+      jcRvItem('Candidate contact details', d.rules.hideContacts ? 'Hidden from the client' : 'Shared with the client')+
+      jcRvItem('Max profiles per submission', escapeHtml(String(d.rules.maxProfiles)))+
+      jcRvItem('Required before submitting', escapeHtml(d.rules.required.join(', ')))+
+      jcRvItem('Job lead', lead ? escapeHtml(lead.name) : null)+
+      jcRvItem('New applicants', escapeHtml(routing[1]))+
+    '</dl>'+
     '<div><p class="text-xs text-zinc-400 mb-2.5">Recruiters</p>'+
       (d.assignedRecruiters.length ? '<div class="flex flex-wrap gap-3">'+d.assignedRecruiters.map(function(id){ const r = RECRUITER_ROSTER.find(function(x){ return x.id===id; }); return r ?
         '<span class="inline-flex items-center gap-2"><span class="w-8 h-8 rounded-full bg-accent-600 text-white text-[11px] font-semibold flex items-center justify-center">'+initials(r.name)+'</span><span class="text-sm"><span class="block font-medium text-ink">'+escapeHtml(r.name)+'</span><span class="block text-xs text-zinc-500">'+escapeHtml(r.dept)+'</span></span></span>' : ''; }).join('')+'</div>'
-        : '<p class="text-sm text-zinc-500">None yet — '+escapeHtml(kairoRecommendedRecruiter(d).name)+' is assigned on publish.</p>')+'</div>'+
+        : '<p class="text-sm text-zinc-500">None yet — '+escapeHtml(kairoRecommendedRecruiter(d).name)+' is assigned when the job opens.</p>')+'</div>'+
   '</div>';
   return hero+
+    (d.editingJobId ? '' : jobPublishPolicyNoteHTML())+
     '<div class="card p-0 overflow-hidden mb-5">'+
-      jcRvGroup('Details', 'briefcase', 2, details)+
-      jcRvGroup('Role', 'doc', 3, role)+
-      jcRvGroup('Hiring process', 'users', 3, process)+
+      jcRvGroup('Basic info', 'briefcase', 2, details)+
+      jcRvGroup('Job details', 'doc', 3, role)+
+      jcRvGroup('Hiring process', 'users', 4, process)+
+      jcRvGroup('Rules and team', 'shield', 5, rulesTeam)+
     '</div>';
+}
+/* Stages, read-only (Review and the job's Hiring process tab). */
+function jcStageListReadHTML(list){
+  if(!list || !list.length) return '<p class="text-sm text-zinc-400">No stages set.</p>';
+  return '<ol class="jc-read-stages">'+list.map(function(st, i){
+    return '<li><span class="jc-stage__num">'+(i+1)+'</span><span class="min-w-0"><span class="block text-sm font-semibold text-ink">'+escapeHtml(st.name)+'</span>'+
+      '<span class="block text-xs text-zinc-500">'+escapeHtml([st.type, st.mode, st.interviewer || '', st.feedbackForm && st.feedbackForm!=='None' ? st.feedbackForm+' feedback' : 'No feedback form'].filter(Boolean).join(' · '))+'</span></span></li>';
+  }).join('')+'</ol>';
 }
 
 /* ---- Review side panel: Job strength ----
@@ -7710,7 +8116,9 @@ function jobCreateChannelCard(key, label, iconName){
 function jobCreateStep6HTML(){
   const d = jobDraft;
   const link = d.publicLinkCode ? ('oontu.ai/jobs/'+d.publicLinkCode) : null;
-  return '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-3">WHERE SHOULD THIS JOB BE PUBLISHED?</p>'+
+  const made = d.createdJobId ? jobById(d.createdJobId) : null;
+  return (made ? '<div class="jc-made" role="status">'+icon('check','w-4 h-4')+'<span>'+escapeHtml(made.title)+' is '+(made.status==='Pending Approval' ? 'waiting for approval. It’s posted to these places once it’s approved.' : 'open in Oontu. Choose where to post it.')+'</span></div>' : '')+
+    '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-3">WHERE SHOULD THIS JOB BE PUBLISHED?</p>'+
     '<div class="grid grid-cols-2 gap-3 mb-6">'+
       jobCreateChannelCard('career','Career Page','building')+
       jobCreateChannelCard('linkedin','LinkedIn','users')+
@@ -7719,7 +8127,7 @@ function jobCreateStep6HTML(){
       jobCreateChannelCard('internal','Internal Talent Pool','users')+
       jobCreateChannelCard('publicLink','Shareable Public Link','send')+
     '</div>'+
-    jobPublishPolicyNoteHTML()+
+    (d.createdJobId ? '' : jobPublishPolicyNoteHTML())+
     (d.channels.publicLink ? (
       '<div class="card p-5 mb-6">'+
         '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-2">PUBLIC JOB LINK</p>'+
@@ -7800,7 +8208,7 @@ function jobCreateSidebarHTML(){
   const d = jobDraft;
   if(d.step===1 && !d.isHmPost) return jcStep1PanelHTML();
   if(d.step===2 && !d.isHmPost) return jcStep2ReadinessHTML();
-  if(d.step===5 && !d.isHmPost) return jcReviewReadinessHTML();
+  if(d.step===JOB_STEP_REVIEW && !d.isHmPost) return jcReviewReadinessHTML();
   const intel = jobIntelligence(d);
   const readinessMap = { green:['\ud83d\udfe2','Ready to Publish','text-forest-600'], yellow:['\ud83d\udfe1','Needs Minor Improvements','text-gold-700'], red:['\ud83d\udd34','Missing Required Information','text-terracotta-600'] };
   const rd = readinessMap[intel.readiness];
@@ -7849,22 +8257,27 @@ function refreshJobCreateSidebar(){
 function renderJobCreate(){
   if(!jobDraft) jobDraft = jobCreateDefaults();
   const d = jobDraft;
+  jcSyncWorkflow(d);
   const stepBody = d.step===1 ? jobCreateStep1HTML()
     : d.step===2 ? jobCreateStep2HTML()
     : d.step===3 ? jobCreateStep3HTML()
-    : d.step===5 ? jobCreateStep5HTML()
+    : d.step===4 ? jcHiringProcessStepHTML()
+    : d.step===5 ? jcRulesTeamStepHTML()
+    : d.step===JOB_STEP_REVIEW ? jobCreateStep5HTML()
     : jobCreateStep6HTML();
   const editJob = d.editingJobId ? jobById(d.editingJobId) : null;
   return '<div class="max-w-6xl">'+
     (editJob
       ? breadcrumbHTML([{label:'Jobs', onclick:"showView('jobs')"}, {label:editJob.title, onclick:"cancelJobCreate()"}, {label:'Edit'}], "cancelJobCreate()")+
         sectionTitle('Edit job', 'Changes apply to '+escapeHtml(editJob.title)+' ('+ojId(editJob.id)+'). Candidates, pipeline and history stay as they are.')
-      : breadcrumbHTML([{label:'Jobs', onclick:"showView('jobs')"}, {label:'New Job'}], "cancelJobCreate()")+
-        sectionTitle('New Job', 'A guided, intelligent workflow — upload a JD or start manually. Kairo assists quietly throughout.'))+
+      : breadcrumbHTML([{label:'Jobs', onclick:"showView('jobs')"}, {label:'New job'}], "cancelJobCreate()")+
+        sectionTitle('New job', 'Start from a JD, a past job or a blank form. Kairo helps along the way.'))+
+    jobCreateStepperHTML()+
     '<div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">'+
-      '<div class="min-w-0">'+jobCreateStepperHTML()+stepBody+jobCreateNavButtonsHTML()+'</div>'+
+      '<div class="min-w-0">'+stepBody+'</div>'+
       '<div class="hidden lg:block">'+jobCreateSidebarHTML()+'</div>'+
     '</div>'+
+    jobCreateNavButtonsHTML()+
   '</div>';
 }
 /* ---- Edit job ----
@@ -7882,7 +8295,12 @@ function canEditJob(j){
 function jobStoredFieldsFromDraft(d){
   return { education:d.education||'', certifications:d.certifications||'', industryExperience:(d.industryExperience||[]).slice(), domainExperience:(d.domainExperience||[]).slice(),
     languages: Array.isArray(d.language) ? d.language.slice() : (d.language ? [d.language] : []), travel:d.travel||'', salaryNotDisclosed:!!d.salaryNotDisclosed,
-    officeDays: d.workMode==='Hybrid' && parseInt(d.officeDays,10) ? parseInt(d.officeDays,10) : null, internalNotes:d.internalNotes||'', shiftBlocks:(d.shiftBlocks||[]).slice() };
+    officeDays: d.workMode==='Hybrid' && parseInt(d.officeDays,10) ? parseInt(d.officeDays,10) : null, internalNotes:d.internalNotes||'', shiftBlocks:(d.shiftBlocks||[]).slice(),
+    // Flow A3
+    hiringProcess:(d.hiringProcess||[]).map(function(x){ return { name:x.name, type:x.type, mode:x.mode, interviewer:x.interviewer, feedbackForm:x.feedbackForm }; }),
+    submissionRules:JSON.parse(JSON.stringify(d.rules || {})), jobLeadId:d.jobLeadId || null, applicantRouting:d.applicantRouting || 'round_robin',
+    autoMapRecruiters:!!d.autoMapRecruiters, allowRecruiterRequests:!!d.allowRecruiterRequests, replacementHiring:!!d.replacementHiring,
+    contractMonths: d.hiringType==='Contract' && parseInt(d.contractMonths,10) ? parseInt(d.contractMonths,10) : null, updatedAt:nowTimestamp() };
 }
 function jobDraftFromJob(j){
   const d = jobCreateDefaults();
@@ -7893,7 +8311,7 @@ function jobDraftFromJob(j){
   const notDisclosed = !!(j.salaryNotDisclosed || (j.confidential && j.confidential.compensation) || j.salary==='Not Disclosed');
   const cl = CLIENTS.find(function(c){ return c.name===j.client; });
   Object.assign(d, {
-    step:2, maxStep:5, editingJobId:j.id, extracted:false,
+    step:2, maxStep:JOB_STEP_REVIEW, editingJobId:j.id, extracted:false,
     title:j.title||'', client:j.client||'', pocId: j.clientContactId || jobDefaultPocId(cl),
     employmentType:j.employmentType||'Full-time', workMode:j.workMode||'On-site', hiringType:j.hiringType||'Permanent',
     locations: remote ? [] : locs, remoteLocations: remote ? locs.map(function(x){ return x.replace(/^Remote\s*[–-]\s*/,''); }) : [],
@@ -7912,14 +8330,19 @@ function jobDraftFromJob(j){
     language:(j.languages||[]).slice(), travel:j.travel||'', workingSchedule:j.workingSchedule||'Day', workingHours:j.workingHours||'', shiftBlocks:(j.shiftBlocks||[]).slice(),
     assignedRecruiters:(j.assignedRecruiters||[]).slice(), internalNotes:j.internalNotes||'',
     confidential:Object.assign({ companyName:false, clientPOC:false, interviewer:false, compensation:false }, j.confidential||{}, { compensation:notDisclosed }),
-    channels: Object.assign({}, d.channels, (j.publishChannels||[]).reduce(function(o,k){ o[k]=true; return o; }, {})), publicLinkCode:j.publicLinkCode||null
+    channels: Object.assign({}, d.channels, (j.publishChannels||[]).reduce(function(o,k){ o[k]=true; return o; }, {})), publicLinkCode:j.publicLinkCode||null,
+    hiringProcess: j.hiringProcess && j.hiringProcess.length ? jcCloneStages(j.hiringProcess) : jcStagesFromNames(j.interviewWorkflow && j.interviewWorkflow.length ? j.interviewWorkflow : DEFAULT_JOB_WORKFLOW),
+    rules: Object.assign({}, d.rules, JSON.parse(JSON.stringify(j.submissionRules || {}))), jobLeadId: j.jobLeadId || (j.createdById || d.jobLeadId), applicantRouting: j.applicantRouting || 'round_robin',
+    autoMapRecruiters: j.autoMapRecruiters!=null ? j.autoMapRecruiters : true, allowRecruiterRequests: j.allowRecruiterRequests!=null ? j.allowRecruiterRequests : true,
+    replacementHiring: !!j.replacementHiring, contractMonths: j.contractMonths ? String(j.contractMonths) : ''
   });
   return d;
 }
-function openJobEdit(id){
+function openJobEdit(id, step){
   const j = jobById(id);
   if(!canEditJob(j)){ toast('You can’t edit this job.'); return; }
   jobDraft = jobDraftFromJob(j);
+  if(step) jobDraft.step = step;
   jobCreateOpenSections = new Set(['summary','skills']);
   const main = document.getElementById('main-content');
   main.innerHTML = renderJobCreate();
@@ -7928,6 +8351,7 @@ function openJobEdit(id){
 }
 function saveJobEdits(){
   const d = jobDraft, j = d && jobById(d.editingJobId);
+  if(d) jcSyncWorkflow(d);
   if(!j || !canEditJob(j)){ toast('You can’t edit this job.'); return; }
   if(!d.title.trim() || !d.client || !jobDraftLocations(d).length){ toast('A job needs a title, client and location.'); jobCreateGoStep(2); return; }
   if(!jobCreateStepValid(2)){ toast('Fix the highlighted fields in Basic Info first.'); jobCreateGoStep(2); return; }
@@ -7960,6 +8384,7 @@ function saveJobEdits(){
     was.forEach(function(id){ if(d.assignedRecruiters.indexOf(id)<0) delete j.mappedBy[id]; });
     if(d.assignedRecruiters.length){ j.assignedRecruiters = d.assignedRecruiters.slice(); const first = RECRUITER_ROSTER.find(function(r){ return r.id===j.assignedRecruiters[0]; }); if(first) j.recruiter = first.name; }
   }
+  jcSaveProcessToClient(d);
   const after = JSON.stringify({ t:j.title, c:j.client, l:j.locations||j.loc, p:j.priority, s:j.salary, sk:j.skills, sum:j.summary, w:j.workMode });
   const editChanges = recordJobEdit(j, editSnap);
   logAudit('Jobs', 'Job edited', (editChanges.length ? 'Changed: '+editChanges.map(function(c){ return c.field; }).join(', ')+' \u00b7 ' : '')+j.title+' — '+j.client, { entityType:'Job', entityId:j.id, jobId:j.id, previousState:null, newState:before===after?'No core change':'Updated' });
@@ -7967,9 +8392,11 @@ function saveJobEdits(){
   toast('Changes saved to '+j.title+'.');
   openJob(j.id);
 }
-function publishJob(){
+function publishJob(opts){
+  opts = opts || {};
   if(verifyBlocked('publish')) return;
   const d = jobDraft;
+  jcSyncWorkflow(d);
   if(!d.title.trim() || !d.client || !jobDraftLocations(d).length){ toast('Please add at least a job title, client and a location before publishing.'); jobCreateGoStep(2); return; }
   if(d.roleSummary.trim().length<250 || d.responsibilities.trim().length<200){ toast('Role Summary and Responsibilities must meet the minimum length before publishing.'); jobCreateGoStep(3); return; }
   // Phase 1 fix: this created a real JOBS[] record with zero permission check and
@@ -7993,7 +8420,9 @@ function publishJob(){
   }
   const responsibilities = d.responsibilities.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
   const candidateRequirements = [d.education?('Education: '+d.education):null, d.certifications?('Certifications: '+d.certifications):null, d.domainExperience.length?('Domain: '+d.domainExperience.join(', ')):null, d.industryExperience.length?('Industry: '+d.industryExperience.join(', ')):null].filter(Boolean);
-  const n = JOBS.length+1;
+  // A saved draft becomes this job (same record, now opened).
+  if(d.draftJobId){ const old = jobById(d.draftJobId); if(old && old.status==='Draft') JOBS.splice(JOBS.indexOf(old), 1); }
+  let n = JOBS.length+1; while(jobById('j'+n)) n++;
   const channelsChosen = Object.keys(d.channels).filter(function(k){ return d.channels[k]; });
   const poc = jobCreateSelectedPOC();
   // Recruiters picked in the form are mapped by the creator; with none picked, Kairo maps its
@@ -8027,10 +8456,12 @@ function publishJob(){
     confidential: Object.assign({}, d.confidential), publishChannels: channelsChosen, publicLinkCode: d.publicLinkCode,
     candidateIds:[], interested:[], recs:[], organizationId: CURRENT_ORGANIZATION_ID };
   Object.assign(newJob, jobStoredFieldsFromDraft(d));
-  newJob.publication = { path:pubPath.path, mode:JOB_APPROVAL_POLICY.mode, why:pubPath.why, createdBy:creator ? creator.id : null, createdAt:nowTimestamp(), approval: pubPath.path==='review' ? 'Pending' : 'Approved' };
+  newJob.publication = { path:pubPath.path, mode:JOB_APPROVAL_POLICY.mode, why:pubPath.why, createdBy:creator ? creator.id : null, createdAt:nowTimestamp(), approval: pubPath.path==='review' ? 'Pending' : 'Approved', flow: opts.inFlow ? 'A3' : null };
   newJob.channelDelivery = {};
+  newJob.createdAt = nowTimestamp(); newJob.updatedAt = newJob.createdAt;
   JOBS.push(newJob);
-  jobDraft = null;
+  jcSaveProcessToClient(d);
+  if(opts.inFlow){ d.createdJobId = newJob.id; d.draftJobId = null; } else jobDraft = null;
   const reqBase = { id:'appr-'+(approvalRequestIdSeq++), chainId:null, entityType:'JobApproval', entityId:newJob.id,
     organizationId: (creator&&creator.organizationId)||CURRENT_ORGANIZATION_ID, requestedByRole: currentUserRoleId(),
     requestedByUserId: creator?creator.id:null, requestedByName: creator?creator.name:'Unknown', context:{ jobId:newJob.id }, createdAt: nowTimestamp() };
@@ -8043,16 +8474,82 @@ function publishJob(){
     logAudit('Jobs', 'Job submitted for approval', newJob.title+' · '+newJob.client+' · reviewer: '+(rv.user ? rv.user.name : 'Tenant Admin')+(rv.fellBack ? ' (configured reviewer unavailable)' : ''), {
       entityType:'Job', entityId:newJob.id, jobId:newJob.id, previousState:null, newState:'Pending Approval' });
     toast(newJob.title+' sent to '+(rv.user ? rv.user.name : 'the Tenant Admin')+' for approval. It goes live in Oontu once approved.');
-    openJob(newJob.id);
-    return;
+    if(!opts.inFlow) openJob(newJob.id);
+    return newJob;
   }
   if(pubPath.selfApproved){
     APPROVAL_REQUESTS.push(Object.assign(reqBase, { approverRoleId:CUSTOM_ROLES[0].id, approverUserId:creator ? creator.id : null, approverName:creator ? creator.name : 'Tenant Admin',
       status:'Approved', decidedAt:nowTimestamp(), decidedByName:creator ? creator.name : 'Tenant Admin', decisionReason:'Created by the Tenant Admin, the approver under this policy' }));
   }
   jobGoLive(newJob, {});
-  toast(newJob.title+' is live in Oontu. '+jobChannelSummary(newJob));
-  openJob(newJob.id);
+  toast(opts.inFlow ? newJob.title+' is open. Choose where to post it.' : newJob.title+' is live in Oontu. '+jobChannelSummary(newJob));
+  if(!opts.inFlow) openJob(newJob.id);
+  return newJob;
+}
+/* Review: open the job (or send it for approval), then choose where to post it. */
+function jcNeedsApproval(){ const d = jobDraft; return !!d && !d.editingJobId && jobPublicationPath(currentActingUser(), d.publishChoice).path==='review'; }
+function jcOpenJob(){
+  const d = jobDraft; if(!d) return;
+  const job = publishJob({ inFlow:true });   // checks the required fields and permissions, and says why if it can't
+  if(!job) return;
+  d.step = JOB_STEP_PUBLISH; d.maxStep = JOB_STEP_PUBLISH;
+  refreshJobCreate();
+  document.getElementById('main-content').scrollTop = 0;
+}
+/* Publish: post the open job to the chosen places (a job waiting for approval is posted once approved). */
+function jcFinishPublish(post){
+  const d = jobDraft, job = d && d.createdJobId ? jobById(d.createdJobId) : null;
+  if(!job){ jobDraft = null; showView('jobs'); return; }
+  if(post){
+    job.publishChannels = Object.keys(d.channels).filter(function(k){ return d.channels[k]; });
+    job.publicLinkCode = d.publicLinkCode;
+    if(job.status==='Active') deliverJobChannels(job);
+    logAudit('Jobs', 'Job channels chosen', job.title+' · '+job.publishChannels.map(channelLabel).join(', '), { entityType:'Job', entityId:job.id, jobId:job.id });
+  }
+  jobDraft = null;
+  openJob(job.id);
+  toast(post ? (job.status==='Active' ? job.title+': '+jobChannelSummary(job) : 'Saved. It’s posted to these places once it’s approved.') : job.title+' is '+(job.status==='Active' ? 'open' : 'waiting for approval')+'. You can post it later from the job.');
+}
+/* Save draft: the job is kept as a Draft (not open, not posted) and opens again from the Drafts list. */
+function saveJobDraft(){
+  const d = jobDraft; if(!d) return;
+  if(!d.title.trim()){ toast('Add a job title first, so you can find the draft later.'); jobCreateGoStep(2); return; }
+  jcSyncWorkflow(d);
+  const me = currentActingUser(), now = nowTimestamp();
+  let j = d.draftJobId ? jobById(d.draftJobId) : null;
+  if(!j){
+    let n = JOBS.length+1; while(jobById('j'+n)) n++;
+    j = { id:'j'+n, status:'Draft', candidateIds:[], interested:[], recs:[], submitted:0, recommended:0, daysOpen:0, assignedRecruiters:[], organizationId:CURRENT_ORGANIZATION_ID, createdAt:now, createdById:me ? me.id : null, createdByName:me ? me.name : null };
+    JOBS.push(j); d.draftJobId = j.id;
+  }
+  const locs = jobDraftLocations(d);
+  Object.assign(j, { title:d.title.trim(), client:d.client, loc:locs.join(', '), locations:locs, workMode:d.workMode, priority:d.priority, positions:parseInt(d.openings,10)||1,
+    salary:d.salary || '', skills:d.requiredSkills.slice(), interviewWorkflow:d.interviewWorkflow.slice(), hiringProcess:JSON.parse(JSON.stringify(d.hiringProcess)),
+    updatedAt:now, draftState:JSON.parse(JSON.stringify(Object.assign({}, d, { draftJobId:j.id }))) });
+  logAudit('Jobs', 'Job draft saved', j.title+' — '+j.client, { entityType:'Job', entityId:j.id, jobId:j.id, newState:'Draft' });
+  toast('Draft saved. Find it under Drafts in Jobs.');
+}
+/* A Draft opens again in the creation flow where it was left. */
+function openJobDraft(id){
+  const j = jobById(id); if(!j || j.status!=='Draft') return false;
+  jobDraft = j.draftState ? JSON.parse(JSON.stringify(j.draftState)) : Object.assign(jobDraftFromJob(j), { editingJobId:null, step:2, maxStep:2 });
+  jobDraft.draftJobId = j.id; jobDraft.editingJobId = null; jobDraft.createdJobId = null;
+  if(j.rejectReason){ jobDraft.step = JOB_STEP_REVIEW; jobDraft.maxStep = JOB_STEP_REVIEW; }
+  jobCreateOpenSections = new Set(['summary','skills']);
+  const main = document.getElementById('main-content');
+  main.innerHTML = renderJobCreate();
+  state.activeNav = 'jobs';
+  document.getElementById('topbar-title').textContent = 'New job';
+  main.scrollTop = 0;
+  return true;
+}
+/* "Save this as <client>'s hiring process": the client's default next time. */
+function jcSaveProcessToClient(d){
+  if(!d.saveProcessToClient || !d.client) return;
+  const c = typeof findClientByName==='function' ? findClientByName(d.client) : null; if(!c) return;
+  c.hiringProcessStages = d.hiringProcess.map(function(x){ return { name:x.name, type:x.type, mode:x.mode, interviewer:x.interviewer, feedbackForm:x.feedbackForm }; });
+  c.hiringProcess = c.hiringProcessStages.map(function(x){ return x.name; });
+  logAudit('Clients', 'Client hiring process saved', c.name+' — '+c.hiringProcess.join(' → '));
 }
 
 function recommendedListHTML(j){
@@ -9936,9 +10433,12 @@ function jobDetailStateBannerHTML(j){
       '<div class="min-w-0 flex-1"><p class="text-sm font-semibold">'+title+'</p>'+(sub?'<p class="text-xs opacity-80 mt-0.5">'+sub+'</p>':'')+'</div>'+(actions||'')+'</div>';
   };
   const btn = function(label, fn, primary){ return '<button type="button" onclick="'+fn+'" class="h-9 px-3.5 rounded-lg text-xs font-medium '+(primary?'btn-primary':'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50')+'">'+label+'</button>'; };
+  if(j.status==='Draft') return j.rejectReason
+    ? bar('red','x','Sent back to draft', 'Reason: “'+escapeHtml(j.rejectReason)+'”. Make the changes and send it again.', btn('Continue editing', "openJobDraft('"+j.id+"')", true))
+    : bar('zinc','edit','Draft', 'Not open yet and not posted anywhere.', btn('Continue', "openJobDraft('"+j.id+"')", true));
   if(j.status==='Pending Approval'){
     const req = APPROVAL_REQUESTS.find(function(r){ return r.entityType==='JobApproval' && r.entityId===j.id && r.status==='Pending'; });
-    return bar('gold','clock','Waiting for Super Admin approval', 'Created by '+escapeHtml(j.createdByName||'a team member')+'. It isn’t live yet.',
+    return bar('gold','clock','Waiting for '+escapeHtml(req && req.approverName ? req.approverName : 'approval'), 'Created by '+escapeHtml(j.createdByName||'a team member')+'. It isn’t open yet.',
       hasOrgWideAuthority() && req ? btn('Decline', "jobDetailDecide('"+req.id+"','Rejected')")+btn('Approve & publish', "jobDetailDecide('"+req.id+"','Approved')", true) : '');
   }
   if(j.status==='Declined') return bar('red','x','Declined by the Super Admin', 'This job was not published.');
@@ -10260,7 +10760,9 @@ function jdTeamModalHTML(){
     '</div></div>';
 }
 document.addEventListener('keydown', function(e){ if(e.key==='Escape' && document.getElementById('jd-team-modal')) closeJobTeam(); });
+let jdDetailTab = 'overview', jdDetailTabFor = null;
 function renderJobDetail(id){
+  if(jdDetailTabFor!==id){ jdDetailTab = 'overview'; jdDetailTabFor = id; }   // each job opens on Overview
   currentJobDetailId = id;
   const j = jobById(id);
   const tags = jobDetailTags(j), conf = j.confidential || {};
@@ -10273,17 +10775,14 @@ function renderJobDetail(id){
   // Header
   const head = '<div class="flex flex-wrap items-start justify-between gap-4 mb-5">'+
     '<div class="min-w-0">'+
-      '<h1 class="font-serif text-[28px] leading-tight font-semibold tracking-tight text-ink flex items-center gap-2 flex-wrap">'+escapeHtml(j.title)+idChip(ojId(j.id))+'</h1>'+
-      '<div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-zinc-500">'+
-        '<span class="inline-flex items-center gap-1.5">'+icon('building','w-4 h-4 text-zinc-400')+escapeHtml(j.client)+(conf.companyName?'<span class="text-zinc-400" title="Company name not disclosed to candidates">'+icon('eyeOff','w-3.5 h-3.5')+'</span>':'')+'</span>'+
-        '<span class="inline-flex items-center gap-1.5">'+icon('globe','w-4 h-4 text-zinc-400')+escapeHtml(locs||'')+'</span>'+
-        (j.workMode ? '<span class="inline-flex items-center gap-1.5">'+icon('briefcase','w-4 h-4 text-zinc-400')+escapeHtml(workModeTxt)+'</span>' : '')+
-      '</div>'+
+      '<div class="flex items-center gap-3 flex-wrap"><h1 class="jc-title">'+escapeHtml(j.title)+'</h1>'+jobStatusPillHTML(j.status)+
+        '<span class="text-xs font-mono text-zinc-400">'+jcJobRef(j)+'</span></div>'+
+      '<p class="mt-1.5 text-sm text-zinc-500">'+escapeHtml([j.client, locs, workModeTxt].filter(Boolean).join(' · '))+
+        (conf.companyName?' <span class="inline-flex align-middle text-zinc-400" title="Company name not disclosed to candidates">'+icon('eyeOff','w-3.5 h-3.5')+'</span>':'')+'</p>'+
       (tags.length ? '<div class="flex flex-wrap gap-1.5 mt-3">'+tags.map(function(t){
         return '<span class="text-[10px] font-medium px-2 py-0.5 rounded-full '+({forest:'bg-forest-50 text-forest-600',terracotta:'bg-terracotta-50 text-terracotta-600',gold:'bg-gold-100 text-gold-700'}[t.tone])+'">'+t.label+'</span>'; }).join('')+'</div>' : '')+
     '</div>'+
     '<div class="flex items-center gap-2">'+
-      '<span class="text-[11px] font-medium px-2.5 py-1 rounded-full '+jobStatusClasses(j.status)+'">'+(j.status==='Active'?'Open':j.status)+'</span>'+
       (jobCanWorkOn(j) ? '<button type="button" onclick="openJobShare(\''+j.id+'\')" class="h-9 px-3.5 rounded-xl text-sm font-medium border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 inline-flex items-center gap-1.5">'+icon('send','w-4 h-4')+'Share</button>' : '')+
       edit+jobsRowMenuHTML(j)+
     '</div>'+
@@ -10335,6 +10834,11 @@ function renderJobDetail(id){
     (extras.length ? '<div class="flex flex-wrap gap-1.5 mt-3">'+extras.map(function(b){ return '<span class="text-xs px-2.5 py-1 rounded-full bg-zinc-50 border border-zinc-200 text-zinc-600">'+escapeHtml(b.type==='bonus'?b.kind:(JC_EXTRA_PAY[b.type]||{}).label||b.type)+'</span>'; }).join('')+'</div>' : '')+
     ((conf.compensation||j.salaryNotDisclosed) && pay ? '<p class="text-xs text-zinc-500 mt-3 flex items-center gap-1.5">'+icon('eyeOff','w-3.5 h-3.5')+'Not disclosed to candidates — your team sees the real range.</p>' : ''));
   const flow = j.interviewWorkflow||[];
+  const stages = j.hiringProcess && j.hiringProcess.length ? j.hiringProcess : jcStagesFromNames(flow);
+  const processTab = '<div class="px-6 py-6"><div class="flex items-center justify-between gap-3 mb-4"><div><h3 class="text-[15px] font-semibold text-ink">Hiring process</h3>'+
+      '<p class="text-xs text-zinc-500 mt-0.5">'+stages.length+' stage'+(stages.length===1?'':'s')+'. Every interview on this job follows these stages.</p></div>'+
+      (canEditJob(j) ? '<button type="button" onclick="openJobEdit(\''+j.id+'\', 4)" class="btn-quiet text-sm">Edit</button>' : '')+'</div>'+
+    jcStageListReadHTML(stages)+'</div>';
   const process = jdSection('Hiring process','users',
     flow.length ? '<ol class="flex flex-wrap gap-2">'+flow.map(function(st,i){ return '<li class="inline-flex items-center gap-2 h-8 pl-1 pr-3 rounded-full bg-zinc-50 border border-zinc-200 text-[13px] text-zinc-700"><span class="w-6 h-6 rounded-full bg-white border border-zinc-200 text-[11px] font-semibold text-zinc-500 flex items-center justify-center">'+(i+1)+'</span>'+escapeHtml(st)+'</li>'; }).join('')+'</ol>'
       : '<p class="text-sm text-zinc-400">No interview stages set.</p>',
@@ -10354,8 +10858,12 @@ function renderJobDetail(id){
     breadcrumbHTML([{label:'Jobs', onclick:"showView('jobs')"}, {label:j.title}], "showView('jobs')")+
     head+jobDetailStateBannerHTML(j)+facts+jdPipelineHTML(j)+nba+
     '<div class="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5 items-start mb-6">'+
-      '<div class="card p-0 overflow-hidden min-w-0">'+role+skills+work+comp+process+
-        '<div class="px-6 py-4 border-t border-zinc-100">'+jobDetailJdSectionHTML(j)+'</div></div>'+
+      '<div class="card p-0 overflow-hidden min-w-0">'+
+        '<div class="jd-tabs" role="tablist" aria-label="Job sections">'+[['overview','Overview'],['process','Hiring process']].map(function(t){
+          const on = (jdDetailTab||'overview')===t[0];
+          return '<button type="button" role="tab" aria-selected="'+on+'" onclick="jdDetailTab=\''+t[0]+'\'; openJob(\''+j.id+'\')" class="jd-tab'+(on?' is-on':'')+'">'+t[1]+'</button>'; }).join('')+'</div>'+
+        ((jdDetailTab||'overview')==='process' ? processTab
+          : role+skills+work+comp+process+'<div class="px-6 py-4 border-t border-zinc-100">'+jobDetailJdSectionHTML(j)+'</div>')+'</div>'+
       '<div class="space-y-4 lg:sticky lg:top-0">'+jdTeamPanelHTML(j)+jobPublicationCardHTML(j)+jobSourcesCardHTML(j)+contact+vis+'</div>'+
     '</div>'+
     jobFollowUpsPanelHTML(j)+
@@ -10391,7 +10899,7 @@ function kairoForJob(j){
   if(queue.length) out.doNext.push({ key:'review', icon:'clock', tone:'gold', title:queue.length+' submission'+(queue.length===1?'':'s')+' waiting for your review',
     why:'They can’t reach '+j.client+' until you approve or send them back.', action:{ label:'Open Approvals', onclick:"showView('approval-center')" } });
   const best = jobWsMatches(j).filter(function(x){ return x.pct>=60 && !jobWsActiveSub(j, x.c.id); })[0];
-  if(best && canSubmit) out.doNext.push({ key:'match:'+best.c.id, icon:'sparkles', tone:'accent', title:'Submit '+best.c.name+' — '+best.pct+'% match',
+  if(best && canSubmit && j.status!=='Draft' && j.status!=='Pending Approval') out.doNext.push({ key:'match:'+best.c.id, icon:'sparkles', tone:'accent', title:'Submit '+best.c.name+' — '+best.pct+'% match',
     why:'Has '+best.hit.join(', ')+' · '+(best.c.avail||'')+(best.c.notice&&best.c.notice!=='—'?' · notice '+best.c.notice:'')+'. Not submitted by anyone yet.',
     action:{ label:'Submit', onclick:"openSubmitModal("+best.c.id+", '"+j.id+"', null, 'Kairo Match')" } });
   const phases = subs.map(function(x){ return { sub:x, ph:subPhase(x) }; });
@@ -27952,7 +28460,7 @@ const WS_ITEMS = {
   'first-client':{ title:'Add your first client', noun:'first client', cta:'Add a client', kairo:'Add your first client. Jobs and submissions belong to a client.', open:function(){ openNewClientPage(); },
     isDone:function(w){ return CLIENTS.length>w.baseClients; } },
   'first-job':{ title:'Open your first job', noun:'first job', cta:'Open a job', kairo:'Open your first job and I’ll suggest people from your talent pool.', open:function(){ openJobCreate(); },
-    isDone:function(w){ return JOBS.length>w.baseJobs; } },
+    isDone:function(w){ return JOBS.slice(w.baseJobs).some(function(j){ return j.status && j.status!=='Draft'; }); } },
   'corp-setup':{ title:'Company setup', noun:'company setup', meta:'One company or several', kairo:'Start with your company setup: one company, or a group with several. It takes a minute.', screen:'corp-setup' },
   'org-basics':{ title:'Company profile', noun:'company profile', kairo:'Add your company profile next, so candidates know who’s hiring.', screen:'org-basics' },
   'corp-entities':{ title:'Entities and salary bands', noun:'entities and salary bands', kairo:'Add your entities and salary bands, so offers stay in range.', screen:'corp-entities', show:function(w){ return w.enterprise; } },
@@ -28320,10 +28828,10 @@ const DEFAULT_JOB_WORKFLOW = ['Client HR','Technical Round','Hiring Manager','Fi
      3. Candidate-job journey        (SUBMISSIONS)         one per candidate and job
 ============================================================ */
 const JOB_APPROVAL_MODES = ['mandatory','optional','direct'];
-const JOB_REVIEWER_TYPES = ['admin','team_manager','designated'];
+const JOB_REVIEWER_TYPES = ['admin','team_manager','designated','reports_to'];
 /* Set by the Tenant Admin in Settings. Default keeps the behaviour the prototype already had: jobs from
    anyone but the Tenant Admin wait for the Tenant Admin. */
-const JOB_APPROVAL_POLICY = { mode:'mandatory', reviewer:'admin', designatedReviewerId:null };
+const JOB_APPROVAL_POLICY = { mode:'direct', reviewer:'reports_to', designatedReviewerId:null };   // "New jobs need approval" is off by default
 
 function intakeOrgOf(x){ return (x && x.organizationId) || CURRENT_ORGANIZATION_ID; }
 function intakeRoleId(actor){
@@ -28356,6 +28864,7 @@ function jobReviewerFor(creator){
   const want = JOB_APPROVAL_POLICY.reviewer, admin = superAdminUser();
   let user = null;
   if(want==='team_manager') user = creator ? managerOf(creator.id) : null;
+  else if(want==='reports_to'){ const mid = creator && typeof tmManagerIdOf==='function' ? tmManagerIdOf(creator) : null; user = mid ? RECRUITER_ROSTER.find(function(r){ return r.id===mid; }) || null : (creator ? managerOf(creator.id) : null); }
   else if(want==='designated') user = RECRUITER_ROSTER.find(function(r){ return r.id===JOB_APPROVAL_POLICY.designatedReviewerId && intakeOrgOf(r)===intakeOrgOf(creator); }) || null;
   let fellBack = false;
   if(!user || (creator && user.id===creator.id)){ user = admin; fellBack = want!=='admin'; }
@@ -28371,6 +28880,7 @@ function jobPublicationPath(creator, choice){
   }
   // Mandatory. The Tenant Admin is the approver under the default policy, so an admin's own job needs no second person.
   if(intakeIsAdmin(creator) && JOB_APPROVAL_POLICY.reviewer==='admin') return { path:'direct', selfApproved:true, why:'Created by the Tenant Admin, who is the approver under this policy.' };
+  if(JOB_APPROVAL_POLICY.reviewer==='reports_to' && creator && !(typeof tmManagerIdOf==='function' && tmManagerIdOf(creator)) && intakeIsAdmin(creator)) return { path:'direct', selfApproved:true, why:'No one above the creator to approve.' };
   return { path:'review', why:'Mandatory approval.' };
 }
 
@@ -28450,7 +28960,10 @@ function jobApprovalDecided(job, decision, reason){
   job.publication.approval = decision==='Approved' ? 'Approved' : 'Declined';
   job.publication.decidedAt = nowTimestamp();
   if(decision==='Approved') jobGoLive(job, { previous:'Pending Approval' });
-  else {
+  else if(job.publication.flow==='A3'){
+    job.status = 'Draft'; job.rejectReason = reason || 'No reason given';
+    logAudit('Jobs', 'Job sent back to draft', job.title+' · '+job.client+(reason ? ' ('+reason+')' : ''), { entityType:'Job', entityId:job.id, jobId:job.id, previousState:'Pending Approval', newState:'Draft' });
+  } else {
     job.status = 'Declined';
     logAudit('Jobs', 'Job declined', job.title+' · '+job.client+(reason ? ' ('+reason+')' : ''), { entityType:'Job', entityId:job.id, jobId:job.id, previousState:'Pending Approval', newState:'Declined' });
   }
@@ -29026,6 +29539,7 @@ function jobPublicationCardHTML(j){
   const reviewer = p.reviewerId ? RECRUITER_ROSTER.find(function(r){ return r.id===p.reviewerId; }) : null;
   const oontu = live ? { t:'Live in Oontu', tone:'bg-forest-50 text-forest-700', d:'Since '+intakeWhen(j.liveAt)+'.' }
     : j.status==='Declined' ? { t:'Declined', tone:'bg-terracotta-50 text-terracotta-700', d:'This job will not go live.' }
+    : j.status==='Draft' ? { t:'Draft', tone:'bg-zinc-100 text-zinc-600', d:'Not live and not posted anywhere. Open it again to send it for approval.' }
     : { t:'Waiting for approval', tone:'bg-gold-100 text-gold-700', d:'Not live and not posted anywhere until '+(reviewer ? reviewer.name : 'the reviewer')+' approves.' };
   const names = { live:['Live','bg-forest-50 text-forest-700'], failed:['Failed','bg-terracotta-50 text-terracotta-700'], not_connected:['Not connected','bg-zinc-100 text-zinc-600'], not_started:['Not sent','bg-zinc-100 text-zinc-600'] };
   const canRetry = live && (canI('jobs','Edit') || canI('jobs','Create'));
@@ -29075,7 +29589,11 @@ function jobPolicyPanelHTML(){
   const p = JOB_APPROVAL_POLICY;
   const radio = function(v, t, sub){ return '<label class="flex items-start gap-2 text-sm text-zinc-800 mb-2"><input type="radio" name="jp-mode" value="'+v+'" '+(p.mode===v ? 'checked ' : '')+'onchange="jobPolicyChange()" class="mt-1" /><span><span class="font-medium">'+t+'</span><br><span class="text-xs text-zinc-500">'+sub+'</span></span></label>'; };
   const reviewers = RECRUITER_ROSTER.filter(function(r){ return roleHasPermission(r.assignedRoleId, 'approvals', 'Approve'); });
+  const needs = p.mode!=='direct';
   return '<div id="job-policy-panel" class="bg-white border border-zinc-200 rounded-2xl p-6 mb-5">'+
+    '<div class="flex items-start justify-between gap-4 mb-5 pb-5 border-b border-zinc-100"><div><p id="jp-switch-l" class="text-sm font-semibold text-zinc-900">New jobs need approval</p>'+
+      '<p id="jp-switch-d" class="text-xs text-zinc-500 mt-1">When on, a new job waits for the creator’s reports-to manager before it opens.</p></div>'+
+      '<button type="button" role="switch" aria-checked="'+needs+'" aria-labelledby="jp-switch-l" aria-describedby="jp-switch-d" class="app-switch'+(needs?' is-on':'')+'" onclick="setJobsNeedApproval('+!needs+')"><span></span></button></div>'+
     '<p class="text-sm font-semibold text-zinc-900 mb-1">Job approval</p>'+
     '<p class="text-xs text-zinc-500 mb-4">Anyone who can create jobs can publish them. This setting decides whether a job needs a reviewer first.</p>'+
     '<fieldset class="mb-4"><legend class="sr-only">Approval policy</legend>'+
@@ -29084,11 +29602,17 @@ function jobPolicyPanelHTML(){
       radio('direct','No approval','Jobs go live as soon as they are published.')+'</fieldset>'+
     '<label for="jp-reviewer" class="text-xs font-medium text-zinc-700">Who reviews</label>'+
     '<select id="jp-reviewer" onchange="jobPolicyChange()" class="mt-1 block w-full max-w-xs h-10 border border-zinc-200 rounded-lg px-3 text-sm">'+
-      [['admin','Tenant Admin'],['team_manager','The creator’s Team Manager'],['designated','A designated reviewer']].map(function(o){ return '<option value="'+o[0]+'"'+((jobPolicyPick || p.reviewer)===o[0] ? ' selected' : '')+'>'+o[1]+'</option>'; }).join('')+'</select>'+
+      [['reports_to','The creator’s reports-to manager'],['admin','Tenant Admin'],['team_manager','The creator’s Team Manager'],['designated','A designated reviewer']].map(function(o){ return '<option value="'+o[0]+'"'+((jobPolicyPick || p.reviewer)===o[0] ? ' selected' : '')+'>'+o[1]+'</option>'; }).join('')+'</select>'+
     ((jobPolicyPick || p.reviewer)==='designated' ? '<label for="jp-designated" class="block text-xs font-medium text-zinc-700 mt-3">Designated reviewer</label><select id="jp-designated" onchange="jobPolicyChange()" class="mt-1 block w-full max-w-xs h-10 border border-zinc-200 rounded-lg px-3 text-sm"><option value="">Choose a person</option>'+
       reviewers.map(function(r){ return '<option value="'+r.id+'"'+(p.designatedReviewerId===r.id ? ' selected' : '')+'>'+escapeHtml(r.name)+'</option>'; }).join('')+'</select>' : '')+
     '<p class="text-[11px] text-zinc-400 mt-3">If the chosen reviewer is the creator, or a team has no manager, the Tenant Admin reviews instead.</p>'+
     '<p id="jp-error" role="alert" class="hidden text-xs text-terracotta-600 mt-2"></p></div>';
+}
+function setJobsNeedApproval(on){
+  const res = setJobApprovalPolicy({ mode: on ? 'mandatory' : 'direct', reviewer: on ? 'reports_to' : JOB_APPROVAL_POLICY.reviewer, designatedReviewerId:JOB_APPROVAL_POLICY.designatedReviewerId }, currentActingUser());
+  if(!res.ok){ toast('Only the Tenant Admin can change this.'); return; }
+  renderSettingsScreen();
+  toast(on ? 'New jobs now need approval' : 'New jobs open straight away', { undo:function(){ setJobsNeedApproval(!on); } });
 }
 function jobPolicyChange(){
   const mode = (document.querySelector('input[name="jp-mode"]:checked') || {}).value, reviewer = (document.getElementById('jp-reviewer') || {}).value;
@@ -35308,7 +35832,7 @@ function ncLeave(){
 }
 /* Back to the job being created (its draft is kept), optionally with the new client chosen. */
 function ncBackToJob(clientName){
-  if(clientName) jobDraft.client = clientName;
+  if(clientName){ jobDraft.client = clientName; jobDraft.pocId = jobDefaultPocId(CLIENTS.find(function(c){ return c.name===clientName; })); }
   state.activeNav = 'jobs';
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.toggle('active', n.getAttribute('data-nav')==='jobs'); });
   const t = document.getElementById('topbar-title'); if(t) t.textContent = 'New Job';

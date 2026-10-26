@@ -13,7 +13,9 @@
   function assert(c, m){ if(!c) throw new Error(m || 'assertion failed'); }
   function eq(a, b, m){ if(a!==b) throw new Error((m ? m+': ' : '')+'expected '+JSON.stringify(b)+', got '+JSON.stringify(a)); }
   const base = { jobs:JOBS.length, cands:CANDIDATES.length, subs:SUBMISSIONS.length, appr:APPROVAL_REQUESTS.length };
-  const POLICY0 = JSON.stringify(JOB_APPROVAL_POLICY);
+  // The product default is now "no approval" (Settings → Policies → New jobs need approval, off).
+  // These tests exercise the approval rules, so they start from approval on, reviewed by the Tenant Admin.
+  const POLICY0 = JSON.stringify(Object.assign({}, JOB_APPROVAL_POLICY, { mode:'mandatory', reviewer:'admin' }));
   let seq = 0;
 
   function reset(){
