@@ -9,6 +9,8 @@
      live      : calls the Oontu auth API, e.g. { mode: 'live', apiBase: 'https://app.example.com/api' }.
      Never put secrets here: this file is public. -->
 <script>window.OONTU_AUTH_CONFIG = window.OONTU_AUTH_CONFIG || { mode: 'prototype' };</script>
+<!-- Kairo is an optional add-on. Set window.OONTU_AGENTS = false to remove every Kairo surface; every screen stays complete without it. -->
+<script>window.OONTU_AGENTS = window.OONTU_AGENTS !== false;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -63,7 +65,7 @@
     --accent-blue: #2F313F;
     --accent-purple: #2F313F;
     --accent-purple-dark: #2F313F;
-    --linkedin-blue: #0A66C2;
+    --linkedin-blue: #424553;
     --gold: #c9a35a;
     --terracotta: #c65f3f;
     --forest: #3c6b52;
@@ -371,7 +373,7 @@
   background:linear-gradient(180deg, rgba(47,49,63,.03) 0%, rgba(47,49,63,.09) 100%);
   transition:height .55s cubic-bezier(.22,.9,.32,1); }
 .jdp-line { height:6px; border-radius:3px; background:#ececf1; transition:background .45s ease; }
-.jdp-hit .jdp-line { background:#c7d2fe; }
+.jdp-hit .jdp-line { background:#D2D5DD; }
 @keyframes jdpPop { 0% { opacity:0; transform:translateY(-50%) scale(.85); } 100% { opacity:1; transform:translateY(-50%) scale(1); } }
 .jdp-tag { position:absolute; right:6px; top:50%; z-index:3; transform:translateY(-50%); animation:jdpPop .4s cubic-bezier(.22,.9,.32,1) both; }
 @keyframes jdpStamp { 0% { opacity:0; transform:scale(.6); } 70% { transform:scale(1.08); } 100% { opacity:1; transform:scale(1); } }
@@ -400,7 +402,7 @@
   .bk-scan { animation:none; top:50%; } .bk-field, .bk-drop, .bk-pulse { animation:none; opacity:1; }
 }
 /* Import: the intake orb (a slow light ring) and the live-activity pill that follows you around the app. */
-.bk-orb { position:relative; width:72px; height:72px; border-radius:9999px; background:conic-gradient(from 0deg, #2F313F, #2F313F, #BF5AF2, #64D2FF, #2F313F); animation:bkSpin 7s linear infinite; }
+.bk-orb { position:relative; width:72px; height:72px; border-radius:9999px; background:#2F313F; }
 .bk-orb::after { content:''; position:absolute; inset:3px; border-radius:inherit; background:#fff; }
 .bk-orb > * { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:1; animation:bkSpin 7s linear infinite reverse; }
 @keyframes bkSpin { to { transform:rotate(360deg); } }
@@ -481,7 +483,7 @@ html[data-theme="comfort"] input::placeholder, html[data-theme="comfort"] textar
 html[data-theme="comfort"] input:focus, html[data-theme="comfort"] select:focus, html[data-theme="comfort"] textarea:focus { box-shadow:0 0 0 3px rgba(156,176,247,.25); }
 /* buttons, overlays, loading */
 html[data-theme="comfort"] .btn-primary { background:#2F313F; color:#2F313F; box-shadow:none; }
-html[data-theme="comfort"] .btn-primary:hover { background:#B6C4FA; filter:none; }
+html[data-theme="comfort"] .btn-primary:hover { background:#D2D5DD; filter:none; }
 html[data-theme="comfort"] .btn-secondary { background:#262B34; color:#E4E6EB; border-color:#434A59; backdrop-filter:none; -webkit-backdrop-filter:none; }
 html[data-theme="comfort"] .btn-secondary:hover { background:#2A2F3A; }
 html[data-theme="comfort"] .shadow-sm, html[data-theme="comfort"] .shadow-lg,
@@ -494,7 +496,7 @@ html[data-theme="comfort"] .empty-state { color:#8F96A5; }
 /* ============================================================
    SIGN IN / SIGN UP / VERIFY EMAIL
    Built on the Oontu brand tokens: Indigo #2F313F accent, Ink #2F313F,
-   the logo gradient #1A6DF0 -> #5048E5, Marigold #E59A00 for the one item
+   the logo gradient #2F313F -> #2F313F, Marigold #E59A00 for the one item
    that needs a person, Plus Jakarta Sans for display type. Every colour is
    a custom property, so Eye Comfort re-skins these screens in one place.
 ============================================================ */
@@ -509,7 +511,7 @@ html[data-theme="comfort"] {
   --au-page:#1A1D24; --au-sunken:#15181E; --au-card:#22262F; --au-subtle:#262B34; --au-selected:#2B3346;
   --au-text:#E4E6EB; --au-text-2:#A8AEBA; --au-text-3:#8F96A5;
   --au-border:#383E4B; --au-border-2:#434A59; --au-field:#7A8191;
-  --au-accent:#2F313F; --au-accent-hover:#B6C4FA; --au-on-accent:#2F313F; --au-focus:#2F313F;
+  --au-accent:#2F313F; --au-accent-hover:#D2D5DD; --au-on-accent:#2F313F; --au-focus:#2F313F;
   --au-error-text:#EC9C88; --au-error-fill:#2E1E1A; --au-attention:#E59A00;
 }
 .au-quiet { color:inherit; } .au-quiet:hover { color:var(--au-text); }
@@ -887,7 +889,7 @@ html[data-theme="comfort"] .wz .au-input { background-color:var(--au-sunken) !im
 .qz-combo__sep { margin:6px 10px 4px; padding-top:8px; border-top:1px solid #F2F3F6; font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#8C90A0; }
 .qz-combo__empty { padding:10px; font-size:14px; color:#8C90A0; }
 input[list]::-webkit-calendar-picker-indicator { display:none !important; }   /* city suggestions open as you type */
-.qz-primary:disabled:not([aria-busy]) { background:#A9B6F2; cursor:not-allowed; }
+.qz-primary:disabled:not([aria-busy]) { background:#B3B7C3; cursor:not-allowed; }
 /* team size chips: one row of five (two rows on a phone), styled like the workspace type cards */
 .qz-sizes { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:10px; margin:0; padding:0; border:0; }
 .qz-size { position:relative; display:flex; align-items:center; justify-content:center; height:56px; border:1px solid #E9EBEF; border-radius:12px; background:#FFFFFF; font-size:16px; font-weight:600; color:var(--au-text, #2F313F); cursor:pointer; font-variant-numeric:tabular-nums; transition:border-color .12s, background-color .12s, box-shadow .12s; }
@@ -942,10 +944,17 @@ input[list]::-webkit-calendar-picker-indicator { display:none !important; }   /*
 .resume-btn { flex:none; height:40px; padding:0 18px; border-radius:8px; background:#2F313F; color:#FFFFFF; font-size:14px; font-weight:600; }
 .resume-btn:hover { background:#2F313F; }
 .nav-count { margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:#FDEEEC; color:#B42318; font-size:11px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; }
-.seg { display:inline-flex; padding:3px; border-radius:10px; background:#F2F3F6; }
-.seg__btn { height:30px; padding:0 14px; border-radius:8px; font-size:13px; font-weight:500; color:#555968; }
-.seg__btn.is-on { background:#2F313F; color:#FFFFFF; }
-.seg__btn:focus-visible { outline:2px solid #2F313F; outline-offset:2px; }
+
+/* segmented control: a #F2F3F6 track and one white thumb that slides (the thumb is added by oEnhanceSegs; until then the active button is white) */
+.seg{ position:relative; display:inline-flex; align-items:center; padding:3px; border-radius:10px; background:var(--n-50); max-width:100%; }
+.seg__btn{ position:relative; z-index:1; height:30px; padding:0 12px; border:0; border-radius:7px; background:transparent; font:600 13px var(--font); color:var(--n-500); display:inline-flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap; cursor:pointer; transition:color var(--t-fast); }
+.seg__btn:hover{ color:var(--n-800); }
+.seg__btn.is-on, .seg__btn[aria-pressed="true"], .seg__btn[aria-selected="true"]{ color:var(--n-800); }
+.seg:not(.is-slid) .seg__btn.is-on, .seg:not(.is-slid) .seg__btn[aria-pressed="true"], .seg:not(.is-slid) .seg__btn[aria-selected="true"]{ background:#FFFFFF; box-shadow:0 1px 2px rgba(47,49,63,.08); }
+.seg__thumb{ position:absolute; top:0; left:0; border-radius:7px; background:#FFFFFF; box-shadow:0 1px 2px rgba(47,49,63,.08); pointer-events:none; z-index:0; transition:transform var(--t-slide) var(--ease), width var(--t-slide) var(--ease); }
+.seg__btn span.seg__n{ font-size:12px; font-weight:600; color:var(--n-400); font-variant-numeric:tabular-nums; }
+.jc-seg .seg__btn{ padding:0 10px; }
+@media (prefers-reduced-motion: reduce){ .seg__thumb{ transition:opacity var(--t-fast) !important; } }
 .lead-tl { margin:0; padding:0 0 0 18px; list-style:none; border-left:1px solid #E9EBEF; }
 .lead-tl__item { position:relative; padding:0 0 14px; }
 .lead-tl__item::before { content:""; position:absolute; left:-23px; top:5px; width:9px; height:9px; border-radius:999px; background:#FFFFFF; border:2px solid #D2D5DD; }
@@ -1026,8 +1035,8 @@ html:not([data-theme="comfort"]) .btn-secondary:hover { background:#F2F3F6; }
 .content-shell > .sec-head:first-child .sec-title, .content-shell > .crumb + .sec-head .sec-title,
 .content-shell > :first-child > .sec-head:first-child .sec-title, .content-shell > .crumb + * > .sec-head:first-child .sec-title,
 .content-shell > :first-child > :first-child > .sec-head:first-child .sec-title,
-.home .sec-head .sec-title { font-size:28px; line-height:36px; font-weight:700; letter-spacing:-.02em; }
-.content-shell > .sec-head:first-child .sec-sub, .content-shell > .crumb + .sec-head .sec-sub, .home .sec-head .sec-sub { font-size:15px; }
+.home .sec-head .sec-title { font-size:32px; line-height:40px; font-weight:700; letter-spacing:-.03em; }
+.content-shell > .sec-head:first-child .sec-sub, .content-shell > .crumb + .sec-head .sec-sub, .home .sec-head .sec-sub { font-size:15px; line-height:22px; }
 html[data-theme="comfort"] .sec-title { color:#E4E6EB; }
 html[data-theme="comfort"] .sec-sub { color:#A8AEBA; }
 /* page frame: 32px padding, content up to 1200px */
@@ -1210,7 +1219,7 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 .jc-step button:focus-visible { outline:2px solid #2F313F; outline-offset:2px; }
 .jc-foot { position:sticky; bottom:-24px; z-index:10; display:flex; align-items:center; gap:10px; margin:8px -32px -24px; padding:12px 32px 16px; background:#FFFFFF; border-top:1px solid #E9EBEF; }
 @media (max-width:899px){ .jc-foot { margin:8px -16px -24px; padding:12px 16px 16px; } }
-.jc-title { font-family:'Plus Jakarta Sans', Inter, sans-serif; font-size:28px; line-height:34px; font-weight:700; letter-spacing:-.01em; color:#2F313F; }
+.jc-title { font-family:"Plus Jakarta Sans", Inter, sans-serif; font-size:32px; line-height:40px; font-weight:700; letter-spacing:-.01em; color:#2F313F; }
 .jc-starts { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; margin:0 0 16px; padding:0; border:0; }
 @media (max-width:640px){ .jc-starts { grid-template-columns:1fr; } }
 .jc-start { display:flex; flex-direction:column; gap:4px; padding:16px; border:1px solid #E9EBEF; border-radius:12px; background:#FFFFFF; cursor:pointer; }
@@ -1476,7 +1485,7 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 .oa-c__person{display:flex;align-items:center;gap:12px}
 .oa-c__person b{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em} .oa-c__person small{display:block;font-size:12px;color:var(--oa-ink-3)}
 .oa-face{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex:none}
-.oa-face--lav{background:#ECE9FB;color:#4F44B5} .oa-face--cor{background:#FBE6DF;color:#A2412A} .oa-face--ink{background:var(--oa-ink);color:#F9FAFB}
+.oa-face--lav{background:#ECE9FB;color:#2F313F} .oa-face--cor{background:#FBE6DF;color:#A2412A} .oa-face--ink{background:var(--oa-ink);color:#F9FAFB}
 .oa-face--xs{width:26px;height:26px;font-size:9px;border:2px solid #fff} .oa-face--xs + .oa-face--xs{margin-left:-8px}
 .oa-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
 .oa-tags span{padding:4px 10px;border-radius:999px;background:var(--oa-subtle);font-size:12px;font-weight:600}
@@ -1886,6 +1895,56 @@ button:active:not(:disabled){ transform:none; }
   .o-sb-sel, .o-seg__thumb, .o-tabs__line, #sidebar.o-sidebar{ transition:opacity var(--t-fast) !important; }
   .o-menu, #role-menu, .dropdown-anim{ animation:none !important; }
 }
+
+/* ---------- the rest of the product: shared screens inherit the same tokens ---------- */
+html .rounded-lg, html .rounded-xl{ border-radius:var(--r-control); }
+html .rounded-2xl{ border-radius:var(--r-card); }
+html .rounded-3xl{ border-radius:var(--r-panel); }
+html .sec-title{ color:var(--n-800); }
+html .sec-sub{ color:var(--n-600); }
+html .tracking-widest{ font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.08em; }
+/* focus: 2 px mint-700 ring, instantly, on every control */
+html *:focus{ --tw-ring-color:var(--mint-700); }
+html input:focus-visible, html select:focus-visible, html textarea:focus-visible, html button:focus-visible, html a:focus-visible, html [tabindex]:focus-visible{ outline:2px solid var(--mint-700); outline-offset:2px; }
+html .app-input:focus, html .ws-form .au-input:focus{ border-color:var(--mint-700); box-shadow:none; outline:2px solid var(--mint-700); outline-offset:0; }
+html input[type="checkbox"], html input[type="radio"]{ accent-color:var(--mint); }
+.app-switch.is-on{ background:var(--mint); }
+.ws-bar > span, .ws-bar{ transition:none; }
+.ws-bar > span{ background:var(--charcoal); }
+/* tables: real tables read the same everywhere */
+html:not([data-theme="comfort"]) #main-content table thead tr{ background:var(--n-50); }
+html #main-content table thead th{ height:36px; font-size:12px; font-weight:600; color:var(--n-600); letter-spacing:0; text-transform:none; }
+html #main-content table tbody td{ height:52px; font-size:14px; }
+html:not([data-theme="comfort"]) #main-content table tbody tr{ border-color:var(--n-50); }
+html:not([data-theme="comfort"]) #main-content table tbody tr.cursor-pointer:hover, html:not([data-theme="comfort"]) #main-content table tbody tr:hover{ background:var(--n-25); }
+/* sliding tab underline (added by oEnhanceTabs to any role="tablist") */
+.o-tabline{ position:absolute; left:0; bottom:-1px; height:2px; background:var(--charcoal); pointer-events:none; transition:transform var(--t-slide) var(--ease), width var(--t-slide) var(--ease); z-index:2; }
+[role="tablist"].is-slid{ position:relative; }
+[role="tablist"].is-slid > [role="tab"], [role="tablist"].is-slid > * > [role="tab"]{ border-bottom-color:transparent !important; }
+.jd-tabs.is-slid, .cd-tabs.is-slid, .cand-tabs.is-slid{ position:relative; }
+.jd-tabs.is-slid .jd-tab.is-on::after, .cd-tabs.is-slid .cd-tab.is-on::after{ display:none; }
+.cand-tabs.is-slid .cand-tab-btn{ border-bottom-color:transparent !important; }
+/* kairo: one flag hides every Kairo surface */
+html.no-agents .kairo-note, html.no-agents #ai-fab-container, html.no-agents #kairo-chat-root, html.no-agents #ask-kairo-btn, html.no-agents [data-agent]{ display:none !important; }
+@media (prefers-reduced-motion: reduce){ .o-tabline{ transition:opacity var(--t-fast) !important; } }
+/* status pills drawn with utility classes get the same shape as .o-badge: 24 px, a 6 px dot, a label */
+span.rounded-full[class*="text-[11px]"][class*="px-"][class*="bg-"]:not([class*="w-"]):not(.o-badge):not(:has(> [class*="rounded-full"])):not(:has(> svg)),
+span.rounded-full[class*="text-xs"][class*="px-"][class*="py-"][class*="bg-"]:not([class*="w-"]):not(.o-badge):not(:has(> [class*="rounded-full"])):not(:has(> svg)){ display:inline-flex; align-items:center; gap:6px; height:24px; padding-top:0; padding-bottom:0; padding-left:8px; padding-right:8px; font-size:12px; font-weight:600; line-height:1; white-space:nowrap; }
+span.rounded-full[class*="text-[11px]"][class*="px-"][class*="bg-"]:not([class*="w-"]):not(.o-badge):not(:has(> [class*="rounded-full"])):not(:has(> svg))::before,
+span.rounded-full[class*="text-xs"][class*="px-"][class*="py-"][class*="bg-"]:not([class*="w-"]):not(.o-badge):not(:has(> [class*="rounded-full"])):not(:has(> svg))::before{ content:""; width:6px; height:6px; border-radius:50%; flex:none; background:currentColor; opacity:.9; }
+.status-pill{ height:24px; font-size:12px; font-weight:600; }
+/* page titles: 32/40/700 on every screen; card titles 16/24/700 */
+#main-content h1:not(.o-page-head__title):not(.oa-h1):not(.jc-title){ font-size:32px; line-height:40px; font-weight:700; letter-spacing:-.03em; color:var(--n-800); }
+#main-content h2.text-base, #main-content h2.text-lg, #main-content h2.text-\[17px\], #main-content h2.text-\[19px\]{ font-size:16px; line-height:24px; font-weight:700; color:var(--n-800); }
+@media (max-width:860px){ #main-content h1:not(.o-page-head__title):not(.oa-h1){ font-size:28px; line-height:36px; } .sec-title{ font-size:28px !important; line-height:36px !important; } }
+.seg--chips{ flex-wrap:wrap; gap:2px; border-radius:12px; }
+.seg--chips > .seg__btn{ background:transparent !important; border-color:transparent !important; color:var(--n-500) !important; border-radius:7px !important; height:30px; padding:0 12px; box-shadow:none !important; font-size:13px; font-weight:600; }
+.seg--chips > .seg__btn.is-on{ color:var(--n-800) !important; }
+.seg--chips:not(.is-slid) > .seg__btn.is-on{ background:#FFFFFF !important; box-shadow:0 1px 2px rgba(47,49,63,.08) !important; }
+/* more entrance and looping effects removed (decorative only) */
+.bk-scan, .bk-orb > *, .chip-pop, .msg-bubble-in, .jdp-tag, .jdp-stamp, .bk-drop, .bk-pill, .expand-panel{ animation:none !important; }
+.bk-scan{ display:none; }
+.bk-field{ opacity:1; animation:none !important; }
 </style>
 </head>
 <body class="text-zinc-900 antialiased">
@@ -2341,7 +2400,7 @@ function intentClasses(intent){
 }
 
 function gauge(value, label, tone){
-  const ring = tone==='dark' ? '#18181b' : '#0071e3';
+  const ring = tone==='dark' ? '#18181b' : '#2F313F';
   const deg = Math.max(0, Math.min(100, value)) * 3.6;
   return '<div class="flex flex-col items-center gap-2">'+
     '<div class="relative w-[76px] h-[76px] rounded-full" style="background: conic-gradient('+ring+' '+deg+'deg, #e4e4e7 0deg)">'+
@@ -2358,7 +2417,7 @@ function gauge(value, label, tone){
 // page, per the redesign: skills/experience/pipeline are what a recruiter
 // scans first, not five decorative rings.
 function gaugeCompact(value, label, tone){
-  const ring = tone==='dark' ? '#18181b' : '#0071e3';
+  const ring = tone==='dark' ? '#18181b' : '#2F313F';
   const deg = Math.max(0, Math.min(100, value)) * 3.6;
   return '<div class="flex flex-col items-center gap-1.5">'+
     '<div class="relative w-14 h-14 rounded-full" style="background: conic-gradient('+ring+' '+deg+'deg, #e4e4e7 0deg)">'+
@@ -2590,6 +2649,15 @@ function filterNavForOrgType(items){
 /* Nav items that need a permission to be shown: { navId: [module, action] }.
    Hides the entry instead of leading the user to a screen they can't use. */
 const NAV_PERMISSIONS = { 'manager-team': ['team','View Team'] };
+/* With agents off, the Kairo / Cowork entry leaves the sidebar. */
+function filterNavForAgents(items){
+  if(oAgentsOn()) return items;
+  const hide = ['kairo-team'];
+  if(items.length && items[0].items){
+    return items.map(function(g){ return Object.assign({}, g, { items:g.items.filter(function(i){ return hide.indexOf(i.id)===-1; }) }); }).filter(function(g){ return g.items.length>0; });
+  }
+  return items.filter(function(i){ return hide.indexOf(i.id)===-1; });
+}
 function filterNavForPermissions(items){
   const allowed = function(i){ const p = NAV_PERMISSIONS[i.id]; return !p || canI(p[0], p[1]); };
   if(items.length && items[0].items){
@@ -2612,7 +2680,7 @@ function sentenceCase(s){
 }
 function renderSidebar(){
   renderSidebarLogo();
-  const items = filterNavForPermissions(filterNavForOrgType(NAV[state.role]));
+  const items = filterNavForAgents(filterNavForPermissions(filterNavForOrgType(NAV[state.role])));
   const nav = document.getElementById('sidebar-nav');
   const navItemHTML = function(item){
     const label = sentenceCase(item.label), n = typeof item.count==='function' ? item.count() : 0;
@@ -2717,7 +2785,7 @@ function messagesChannelRailHTML(){
   const all = liUniBoxConversations();
   const counts = { whatsapp:all.filter(function(c){return c.channel==='whatsapp' && !c.replied;}).length, email:all.filter(function(c){return c.channel==='email' && !c.replied;}).length, linkedin:all.filter(function(c){return c.channel==='linkedin' && !c.replied;}).length };
   const teamUnread = dmContacts().filter(function(c){ return (DM_THREADS[c.id]||[]).some(function(m){ return m.from==='them'; }); }).length;
-  const chans = [['team','Team','users','#2F313F',teamUnread],['whatsapp','WhatsApp','whatsapp','#25D366',counts.whatsapp],['email','Email','mail','#2F313F',counts.email],['linkedin','LinkedIn','link','#0A66C2',counts.linkedin]];
+  const chans = [['team','Team','users','#2F313F',teamUnread],['whatsapp','WhatsApp','whatsapp','#25D366',counts.whatsapp],['email','Email','mail','#2F313F',counts.email],['linkedin','LinkedIn','link','#424553',counts.linkedin]];
   return '<div class="w-[72px] border-r border-zinc-100 flex flex-col items-center py-4 gap-2 shrink-0 bg-zinc-50/60">'+
     chans.map(function(t){
       const active = messagesActiveChannel===t[0];
@@ -3390,9 +3458,9 @@ function interviewsBodyHTML(){
     '<p class="text-sm text-zinc-500 mb-5">'+todayCount+' today'+(needsActionCount?' \u00b7 <span class="text-terracotta-600 font-medium">'+needsActionCount+' need'+(needsActionCount===1?'s':'')+' attention</span>':' \u00b7 nothing needs attention right now')+'</p>'+
 
     '<div class="flex items-center justify-between flex-wrap gap-3 mb-4">'+
-      '<div class="flex items-center gap-1 bg-zinc-100 rounded-xl p-1">'+
-        [['all','All'],['needs-action','Needs Action'],['today','Today'],['upcoming','Upcoming']].map(function(v){
-          return '<button onclick="setInterviewsView(\''+v[0]+'\')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition '+(interviewsView===v[0]?'bg-white text-ink shadow-sm':'text-zinc-500 hover:text-zinc-700')+'">'+v[1]+'</button>';
+      '<div class="seg" role="group" aria-label="Interviews">'+
+        [['all','All'],['needs-action','Needs action'],['today','Today'],['upcoming','Upcoming']].map(function(v){
+          return '<button type="button" onclick="setInterviewsView(\''+v[0]+'\')" aria-pressed="'+(interviewsView===v[0])+'" class="seg__btn'+(interviewsView===v[0]?' is-on':'')+'">'+v[1]+'</button>';
         }).join('')+
       '</div>'+
       '<div class="flex items-center gap-2">'+
@@ -3838,15 +3906,16 @@ const QUALITY_RATIO = 84;
 let completedActions = new Set();
 
 function iconChip(name, tone, cls){
+  // Status tones only: amber = waiting, red = risk, green = done (rare); everything else is grey.
   const map = {
-    navy: 'bg-ios-blue text-white',
-    gold: 'bg-ios-orange text-white',
-    terracotta: 'bg-ios-pink text-white',
-    forest: 'bg-ios-green text-white',
-    purple: 'bg-ios-purple text-white',
-    neutral: 'bg-white/50 text-zinc-500 backdrop-blur-xl border border-white/60'
+    navy: 'bg-zinc-100 text-zinc-700',
+    gold: 'bg-gold-100 text-gold-700',
+    terracotta: 'bg-terracotta-50 text-terracotta-600',
+    forest: 'bg-forest-50 text-forest-600',
+    purple: 'bg-zinc-100 text-zinc-700',
+    neutral: 'bg-zinc-100 text-zinc-500'
   };
-  return '<div class="'+(cls||'w-11 h-11 rounded-2xl')+' flex items-center justify-center shrink-0 shadow-sm '+(map[tone]||map.navy)+'">'+icon(name,'w-5 h-5')+'</div>';
+  return '<div class="'+(cls||'w-11 h-11 rounded-2xl')+' flex items-center justify-center shrink-0 '+(map[tone]||map.navy)+'">'+icon(name,'w-5 h-5')+'</div>';
 }
 function sparkline(values, color){
   const w=140, h=36;
@@ -4040,15 +4109,11 @@ function offerStatusClasses(status){
   return 'bg-ios-pink/15 text-ios-pink';
 }
 function summaryCard(iconName, tone, label, value, total, onclick){
-  const pct = Math.round(value/total*100);
-  const barColor = tone==='gold' ? 'bg-ios-orange' : tone==='accent' ? 'bg-ios-blue' : tone==='terracotta' ? 'bg-ios-pink' : 'bg-zinc-300';
-  return '<div'+(onclick?' onclick="'+onclick+'" role="button"':'')+' class="card p-4'+(onclick?' cursor-pointer card-hover':'')+'">'+
-    '<div class="flex items-center justify-between mb-3">'+
-      iconChip(iconName, tone, 'w-9 h-9 rounded-xl')+
-      '<span class="text-2xl font-bold text-ink">'+value+'</span>'+
-    '</div>'+
-    '<p class="text-xs font-medium text-zinc-500 mb-2">'+label+'</p>'+
-    '<div class="h-1.5 bg-black/5 rounded-full overflow-hidden"><div class="h-full '+barColor+' rounded-full" style="width:'+pct+'%"></div></div>'+
+  const pct = Math.round(value/Math.max(total,1)*100);
+  return '<div'+(onclick?' onclick="'+onclick+'" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){ event.preventDefault(); this.click(); }"':'')+' class="o-card o-num'+(onclick?' cursor-pointer':'')+'">'+
+    '<p class="o-num__label">'+label+'</p>'+
+    '<p class="o-num__value">'+value+'<span class="o-num__of"> of '+total+'</span></p>'+
+    '<span class="o-num__bar"><i style="width:'+pct+'%"></i></span>'+
   '</div>';
 }
 let perfPeriod = 'monthly';
@@ -4388,8 +4453,8 @@ function greetingHorizonHTML(hour){
   const progress = isDay ? (hour-6)/12 : (hour<6 ? (hour+6)/12 : (hour-18)/12);
   const cx = 14 + progress*84;
   const cy = 42 - Math.sin(progress*Math.PI)*26;
-  const bodyColor = hour<5 ? '#C7D2FE' : hour<8 ? '#FBBF24' : hour<12 ? '#FDE047'
-    : hour<17 ? '#FBBF24' : hour<21 ? '#FB923C' : '#C7D2FE';
+  const bodyColor = hour<5 ? '#D2D5DD' : hour<8 ? '#FBBF24' : hour<12 ? '#FDE047'
+    : hour<17 ? '#FBBF24' : hour<21 ? '#FB923C' : '#D2D5DD';
   const glowColor = isDay ? 'rgba(251,191,36,0.35)' : 'rgba(199,210,254,0.35)';
   return '<svg width="96" height="48" viewBox="0 0 112 56" class="shrink-0" aria-hidden="true">'+
     '<line x1="6" y1="42" x2="106" y2="42" stroke="rgba(82,82,91,0.25)" stroke-width="2" stroke-linecap="round"/>'+
@@ -5054,8 +5119,70 @@ function oTabPick(id, i, fnName){
   if(fnName && typeof window[fnName]==='function') window[fnName](i);
 }
 function oPostRender(root){
-  (root || document).querySelectorAll('.o-tabs').forEach(function(el){ oTabPlace(el, true); });
+  (root || document).querySelectorAll('.o-tabs').forEach(function(el){ oTabPlace(el, true); }); oEnhanceTabs(root);
 }
+/* Any role="tablist" gets the same sliding 2 px underline as the sidebar's selection. The previous position is remembered, so a tab bar
+   that is redrawn when you pick a tab still slides from where it was instead of jumping. */
+const O_TAB_MEMORY = {};
+const O_ON = '[aria-selected="true"], [aria-pressed="true"], [aria-current="true"], .is-on';
+/* Slide one indicator under the active child of a group. `make` builds the indicator the first time. The last position is remembered by
+   group, so a bar that is redrawn when you pick an option still slides from where it was instead of jumping. */
+function oSlideTo(group, key, active, indicator, box){
+  const lr = group.getBoundingClientRect(), br = active.getBoundingClientRect();
+  const x = Math.round(br.left-lr.left+group.scrollLeft), y = box ? Math.round(br.top-lr.top+group.scrollTop) : 0, w = Math.round(br.width), h = Math.round(br.height), prev = O_TAB_MEMORY[key];
+  const keep = prev && prev.nav===state.activeNav;
+  const set = function(px, py, pw, ph){ indicator.style.width = pw+'px'; if(box) indicator.style.height = ph+'px'; indicator.style.transform = 'translate('+px+'px,'+py+'px)'; };
+  indicator.style.transition = 'none';
+  if(keep){ set(prev.x, prev.y, prev.w, prev.h); void indicator.offsetWidth; indicator.style.transition = ''; }
+  set(x, y, w, h);
+  if(!keep){ void indicator.offsetWidth; indicator.style.transition = ''; }
+  O_TAB_MEMORY[key] = { x:x, y:y, w:w, h:h, nav:state.activeNav };
+}
+/* single-select chip rows (one dark chip, the rest light) become the same sliding segmented control */
+function oEnhanceChips(root){
+  const isOn = function(b){ return /(^|\s)(bg-ink|bg-\[#2F313F\]|bg-zinc-900)(\s|$)/.test(b.className) && /(^|\s)text-white(\s|$)/.test(b.className); };
+  (root || document).querySelectorAll('button[class*="rounded-full"]').forEach(function(b){
+    const p = b.parentElement;
+    if(!p || p.classList.contains('seg') || p.dataset.oChips || !isOn(b)) return;
+    const kids = Array.prototype.slice.call(p.children);
+    if(kids.length<2 || kids.length>10 || kids.some(function(k){ return k.tagName!=='BUTTON' || k.className.indexOf('rounded-full')<0; })) return;
+    if(kids.filter(isOn).length!==1) return;
+    p.dataset.oChips = '1'; p.classList.add('seg', 'seg--chips'); p.setAttribute('role', p.getAttribute('role') || 'group');
+    kids.forEach(function(k){ k.classList.add('seg__btn'); if(isOn(k)){ k.classList.add('is-on'); k.setAttribute('aria-pressed','true'); } else if(!k.hasAttribute('aria-pressed')) k.setAttribute('aria-pressed','false'); });
+  });
+}
+function oEnhanceTabs(root){
+  (root || document).querySelectorAll('[role="tablist"]:not(.o-tabs), .jd-tabs, .cd-tabs, .cand-tabs').forEach(function(list, idx){
+    if(list.classList.contains('seg')) return;
+    const on = list.querySelector(O_ON);
+    if(!on || !list.offsetWidth || !on.offsetWidth) return;
+    let line = list.querySelector(':scope > .o-tabline');
+    if(!line){ line = document.createElement('span'); line.className = 'o-tabline'; line.setAttribute('aria-hidden','true'); list.appendChild(line); }
+    list.classList.add('is-slid');
+    oSlideTo(list, list.id || (state.activeNav+':tab:'+idx), on, line);
+  });
+  oEnhanceSegs(root);
+}
+function oEnhanceSegs(root){
+  oEnhanceChips(root);
+  (root || document).querySelectorAll('.seg').forEach(function(seg, idx){
+    const on = seg.querySelector(O_ON);
+    if(!on || !seg.offsetWidth || !on.offsetWidth) return;
+    let thumb = seg.querySelector(':scope > .seg__thumb');
+    if(!thumb){ thumb = document.createElement('span'); thumb.className = 'seg__thumb'; thumb.setAttribute('aria-hidden','true'); seg.insertBefore(thumb, seg.firstChild); }
+    seg.classList.add('is-slid');
+    oSlideTo(seg, seg.id || (state.activeNav+':seg:'+idx), on, thumb, true);
+  });
+}
+let oTabRaf = 0;
+function oWatchContent(){
+  const main = document.getElementById('main-content');
+  if(!main || main.dataset.oWatch) return;
+  main.dataset.oWatch = '1';
+  new MutationObserver(function(){ if(oTabRaf) return; oTabRaf = requestAnimationFrame(function(){ oTabRaf = 0; oEnhanceTabs(main); }); }).observe(main, { childList:true, subtree:true });
+}
+/* Kairo is an optional add-on: window.OONTU_AGENTS = false removes it everywhere. */
+function oApplyAgentFlag(){ document.documentElement.classList.toggle('no-agents', !oAgentsOn()); }
 /* the main table of a dashboard: card, header, optional sliding control, real <table> */
 function oTableCard(o){
   const head = '<tr>'+o.cols.map(function(c){ return '<th scope="col"'+(c.right ? ' class="num" style="text-align:right"' : '')+'>'+oEsc(c.label)+'</th>'; }).join('')+'</tr>';
@@ -5082,6 +5209,10 @@ function oKairoCard(lines, o){
       return '<li class="o-att" style="align-items:flex-start"><span class="o-kairo" style="flex:1;min-width:0">'+oIcon('spark',14,1.75)+'<span><b>'+oEsc(l.text)+'</b><br><span class="o-kairo__why">'+oEsc(l.why)+'</span></span></span>'+
         (l.onclick ? '<button type="button" class="o-btn" style="flex:none" onclick="'+l.onclick+'">'+oEsc(l.cta || 'Open')+'</button>' : '')+'</li>';
     }).join('')+'</ul><p class="o-card__sub" style="margin-top:8px">Kairo only suggests. It never sends or approves anything by itself.</p></section>';
+}
+/* the number card for any screen: label, 28/700 number, one grey note; no icon tile, no colour */
+function oNumCard(label, value, note){
+  return '<div class="o-card o-num"><p class="o-num__label">'+label+'</p><p class="o-num__value">'+value+'</p>'+(note ? '<p class="o-num__note">'+note+'</p>' : '')+'</div>';
 }
 function oDashShell(parts){ return '<div class="content-shell o-page">'+parts.filter(Boolean).join('')+'</div>'; }
 function oWeekRange(){
@@ -5775,7 +5906,7 @@ function jobStatusLabel(s){
   return { Active:'Open', 'Pending Approval':'Pending approval', 'On Hold':'On hold', Paused:'On hold', Declined:'Closed · declined' }[s] || s || 'Draft';
 }
 function jobStatusPillHTML(s){
-  const tone = { Active:['#EBF8F1','#186442'], 'Pending Approval':['#FEF6E6','#94570A'], 'On Hold':['#FEF6E6','#94570A'], Paused:['#FEF6E6','#94570A'], Draft:['#F2F3F6','#555968'],
+  const tone = { Active:['#F2F3F6','#424553'], 'Pending Approval':['#FEF6E6','#94570A'], 'On Hold':['#FEF6E6','#94570A'], Paused:['#FEF6E6','#94570A'], Draft:['#F2F3F6','#555968'],
     Filled:['#F2F3F6','#2F313F'], Closed:['#F2F3F6','#555968'], Declined:['#FDEEEC','#B42318'] }[s] || ['#F2F3F6','#555968'];
   return '<span class="status-pill" style="background:'+tone[0]+';color:'+tone[1]+'"><span class="status-pill__dot" style="background:'+tone[1]+'"></span>'+escapeHtml(jobStatusLabel(s))+'</span>';
 }
@@ -5953,10 +6084,10 @@ function switchAssignJobTab(tab){
 function assignJobSubTabsHTML(candidate){
   const kairoCount = candidate ? recommendedJobsForCandidate(candidate).length : 0;
   const tabs = [ {id:'recommended', label:'Kairo Suggested', count:kairoCount}, {id:'all', label:'All Jobs', count:null} ];
-  return '<div class="flex flex-wrap gap-1 mb-5 bg-white/50 border border-white/60 backdrop-blur-xl rounded-2xl p-1.5 w-fit">'+
+  return '<div class="seg mb-5" role="group" aria-label="Jobs to add">'+
     tabs.map(function(t){
       const active = assignJobTab===t.id;
-      return '<button onclick="switchAssignJobTab(\''+t.id+'\')" class="px-4 py-2 rounded-xl text-sm font-medium transition '+(active?'bg-zinc-900 text-white shadow-sm':'text-zinc-500 hover:text-zinc-900 hover:bg-white/70')+'">'+t.label+(t.count!==null?' <span class="opacity-60">'+t.count+'</span>':'')+'</button>';
+      return '<button type="button" onclick="switchAssignJobTab(\''+t.id+'\')" aria-pressed="'+active+'" class="seg__btn'+(active?' is-on':'')+'">'+t.label+(t.count!==null?'<span class="seg__n">'+t.count+'</span>':'')+'</button>';
     }).join('')+
   '</div>';
 }
@@ -6144,10 +6275,9 @@ function refreshJobsPage(){
 }
 function jobsScopeHTML(){
   const cur = jobsCurrentScope();
-  return '<div id="jobs-scope" class="inline-flex p-1 rounded-xl bg-zinc-100" role="tablist" aria-label="Which jobs">'+jobsScopeOptions().map(function(o){
+  return '<div id="jobs-scope" class="seg" role="group" aria-label="Which jobs">'+jobsScopeOptions().map(function(o){
     const on = o[0]===cur, n = jobsInScope(o[0]).length;
-    return '<button type="button" role="tab" aria-selected="'+on+'" onclick="setJobsScope(\''+o[0]+'\')" class="h-9 px-3.5 rounded-lg text-[13px] font-medium transition flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 '+(on?'bg-white text-ink shadow-sm':'text-zinc-500 hover:text-zinc-800')+'">'+
-      o[1]+'<span class="text-[11px] '+(on?'text-zinc-500':'text-zinc-400')+'">'+n+'</span></button>';
+    return '<button type="button" aria-pressed="'+on+'" onclick="setJobsScope(\''+o[0]+'\')" class="seg__btn'+(on?' is-on':'')+'">'+o[1]+'<span class="seg__n">'+n+'</span></button>';
   }).join('')+'</div>';
 }
 // Kairo mentions the one thing that needs attention, instead of number cards.
@@ -9794,7 +9924,7 @@ const JOB_SOURCE_PLATFORMS = [
   { id:'Indeed', label:'Indeed' }, { id:'Naukri', label:'Naukri' }, { id:'LinkedIn', label:'LinkedIn Jobs' }, { id:'Shine', label:'Shine' }
 ];
 const SHARE_CHANNELS = [
-  { id:'linkedin', label:'LinkedIn', medium:'social', color:'#0A66C2', glyph:'in', action:'Open LinkedIn post',
+  { id:'linkedin', label:'LinkedIn', medium:'social', color:'#424553', glyph:'in', action:'Open LinkedIn post',
     hint:'LinkedIn opens with a new post ready \u2014 caption and link already in. Review and click Post.',
     url:function(l,t){ return 'https://www.linkedin.com/feed/?shareActive=true&text='+encodeURIComponent(t+'\n\n'+l); } },
   { id:'whatsapp', label:'WhatsApp', medium:'social', color:'#25D366', glyph:'W', action:'Open WhatsApp',
@@ -9806,7 +9936,7 @@ const SHARE_CHANNELS = [
   { id:'instagram', label:'Instagram', medium:'social', color:'#E1306C', glyph:'IG', action:'Copy caption & link',
     hint:'Instagram can\u2019t be opened with a ready post from the web. Copy, then paste into your post caption, a story link sticker or your bio link.',
     url:null },
-  { id:'facebook', label:'Facebook', medium:'social', color:'#1877F2', glyph:'f', action:'Open Facebook',
+  { id:'facebook', label:'Facebook', medium:'social', color:'#424553', glyph:'f', action:'Open Facebook',
     hint:'Facebook opens its share window with the job link.',
     url:function(l,t){ return 'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(l)+'&quote='+encodeURIComponent(t); } },
   { id:'email', label:'Email', medium:'email', color:'#2F313F', glyph:'@', action:'Open email',
@@ -12160,13 +12290,13 @@ function renderTalentPool(){
   return '<div class="content-shell max-w-6xl">'+
     '<div id="tp-head" class="tp-head">'+
     sectionTitle('Talent Pool', CANDIDATES.length+' people across your active pipeline')+
-    '<div class="flex flex-wrap gap-1 bg-white/50 border border-white/60 backdrop-blur-xl rounded-2xl p-1.5 w-fit">'+
+    '<div class="seg" role="group" aria-label="Talent pool">'+
       TALENT_POOL_TABS.map(function(t){
         const active = talentPoolTab===t.id;
         return '<span class="relative inline-flex">'+
-          '<button onclick="switchTalentPoolTab(\''+t.id+'\')" class="flex items-center gap-1.5 '+(t.tip?'pl-4 pr-6':'px-4')+' py-2 rounded-xl text-sm font-medium transition '+(active?'bg-zinc-900 text-white shadow-sm':'text-zinc-500 hover:text-zinc-900 hover:bg-white/70')+'">'+icon(t.icon,'w-4 h-4')+t.label+'</button>'+
-          (t.tip ? '<span class="absolute top-1.5 right-1.5"><span class="group/tip relative">'+
-            '<span class="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-semibold cursor-help select-none '+(active?'text-white/50 hover:text-white':'text-zinc-300 hover:text-accent-600')+'" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">i</span>'+
+          '<button type="button" aria-pressed="'+active+'" onclick="switchTalentPoolTab(\''+t.id+'\')" class="seg__btn'+(active?' is-on':'')+'" style="'+(t.tip?'padding-right:26px':'')+'">'+icon(t.icon,'w-4 h-4')+t.label+'</button>'+
+          (t.tip ? '<span class="absolute top-1.5 right-1.5" style="z-index:2"><span class="group/tip relative">'+
+            '<span class="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-semibold cursor-help select-none text-zinc-400 hover:text-zinc-700" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">i</span>'+
             '<span class="hidden group-hover/tip:block absolute left-1/2 -translate-x-1/2 top-5 w-56 bg-ink text-white text-[11px] leading-relaxed rounded-lg px-3 py-2 shadow-xl z-30 pointer-events-none text-left normal-case font-normal">'+t.tip+'</span>'+
           '</span></span>' : '')+
         '</span>';
@@ -12363,10 +12493,7 @@ function avatarHash(str){
   return h>>>0;
 }
 const AVATAR_PALETTES = [
-  ['#eef0f6','#b7bfda','#2e3760'], ['#FDEEEC','#ecd9ad','#c65f3f'], ['#e8f3ee','#b9d8c8','#2f6b52'],
-  ['#f1ecf7','#cfc3e3','#5b4a8b'], ['#eaf2fb','#b4cfee','#1f5f9e'], ['#f7efe6','#e2c9a6','#7a4e2d'],
-  ['#eef5f5','#b3d4d6','#2c6770'], ['#f6eef2','#dcbccb','#8a3f5f'],
-];
+['#F2F3F6','#D2D5DD','#2F313F'], ['#E9EBEF','#B3B7C3','#424553'], ['#F9FAFB','#DFE1E7','#555968'], ['#F2F3F6','#B3B7C3','#2F313F'],  ['#E9EBEF','#D2D5DD','#555968'], ['#F9FAFB','#B3B7C3','#424553'], ['#F2F3F6','#DFE1E7','#2F313F'], ['#E9EBEF','#B3B7C3','#555968'],
 const AVATAR_SKIN = ['#e7b48c','#d9a374','#c68a5c','#f0c8a4','#b67a4e'];
 const AVATAR_HAIR = ['#1f1710','#2e2119','#3b2a1e','#151515'];
 function avatarSVG(gender, seed){
@@ -14344,7 +14471,7 @@ function bulkActivity(){
   const onPage = !!document.getElementById('bulk-upload-panel');
   if(!bulk || onPage || (bulk.stage!=='parsing' && !(bulk.stage==='done' && bulk.notify))){ if(pill) pill.remove(); if(onPage && bulk) bulk.notify = false; return; }
   const total = (bulk.queue||[]).length, done = bulk.rows.length, pct = total ? Math.round(done/total*100) : 0, fin = bulk.stage==='done';
-  const ring = '<svg class="w-7 h-7 -rotate-90" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="3"/><circle cx="18" cy="18" r="15" fill="none" stroke="'+(fin?'#7fd1a2':'#7aa7ff')+'" stroke-width="3" stroke-linecap="round" stroke-dasharray="'+(94.2*pct/100).toFixed(1)+' 94.2"/></svg>';
+  const ring = '<svg class="w-7 h-7 -rotate-90" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="3"/><circle cx="18" cy="18" r="15" fill="none" stroke="'+(fin?'#7fd1a2':'#8C90A0')+'" stroke-width="3" stroke-linecap="round" stroke-dasharray="'+(94.2*pct/100).toFixed(1)+' 94.2"/></svg>';
   const html = '<span class="relative">'+ring+'<span class="absolute inset-0 flex items-center justify-center text-white">'+(fin?icon('check','w-3.5 h-3.5'):icon('sparkles','w-3 h-3'))+'</span></span>'+
     '<span class="text-sm font-medium">'+(fin ? 'Import ready to review' : 'Kairo is importing')+'</span><span class="text-sm text-white/60 tabular-nums">'+(fin ? bulkFmt(done)+' '+(bulk.kind==='sheet'?'rows':'resumes') : bulkFmt(done)+' / '+bulkFmt(total))+'</span>'+
     '<span class="text-xs font-semibold text-white/90 bg-white/10 rounded-full px-2.5 py-1">'+(fin?'Review':'Open')+'</span>';
@@ -16045,7 +16172,7 @@ function matchLabel(pct){
 }
 function matchRingSVG(pct){
   const size=56, r=(size/2)-4, c=2*Math.PI*r, offset=c-(pct/100)*c;
-  const color = pct>=90?'#30D158':pct>=75?'#2F313F':pct>=60?'#2F313F':'#8b96bd';
+  const color = pct>=90?'#30D158':pct>=75?'#2F313F':pct>=60?'#2F313F':'#8C90A0';
   return '<svg viewBox="0 0 '+size+' '+size+'" class="shrink-0" style="width:'+size+'px;height:'+size+'px">'+
     '<circle cx="'+(size/2)+'" cy="'+(size/2)+'" r="'+r+'" fill="none" stroke="rgba(47,49,63,0.08)" stroke-width="4"/>'+
     '<circle cx="'+(size/2)+'" cy="'+(size/2)+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+offset+'" transform="rotate(-90 '+(size/2)+' '+(size/2)+')" style="transition: stroke-dashoffset .6s ease"/>'+
@@ -16149,7 +16276,7 @@ let tsScoreSeq = 0;
 function tsScoreHTML(x, size){
   if(x.pct==null) return '';
   const p = x.pct, big = size==='lg', D = big ? 64 : 56, sw = big ? 5 : 4.5, r = (D-sw)/2-1, C = 2*Math.PI*r, id = 'tsg'+(++tsScoreSeq);
-  const t = p>=90 ? { l:'Excellent match', a:'#34d399', b:'#059669', pill:'bg-forest-50 text-forest-700' } : p>=75 ? { l:'Strong match', a:'#60a5fa', b:'#2F313F', pill:'bg-accent-50 text-accent-700' }
+  const t = p>=90 ? { l:'Excellent match', a:'#34d399', b:'#059669', pill:'bg-forest-50 text-forest-700' } : p>=75 ? { l:'Strong match', a:'#8C90A0', b:'#2F313F', pill:'bg-accent-50 text-accent-700' }
     : p>=55 ? { l:'Good match', a:'#fbbf24', b:'#f97316', pill:'bg-gold-50 text-gold-700' } : { l:'Partial match', a:'#d4d4d8', b:'#a1a1aa', pill:'bg-zinc-100 text-zinc-600' };
   const why = (x.reasons||[]).length ? 'Matched: '+x.reasons.join(', ')+((x.missing||[]).length ? ' · Missing: '+x.missing.join(', ') : '') : t.l;
   return '<div class="flex flex-col items-center gap-1.5 shrink-0" title="'+escapeHtml(why)+'" data-score="'+p+'">'+
@@ -16862,12 +16989,12 @@ function tsFiltersHTML(){
   '</div>';
 }
 function tsPanelHTML(){
-  const seg = function(id, label, ic){ const on = ts.mode===id; return '<button type="button" role="tab" aria-selected="'+on+'" onclick="tsSetMode(\''+id+'\')" class="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg text-xs font-semibold '+(on?'bg-white text-ink shadow-sm':'text-zinc-500 hover:text-zinc-800')+'">'+icon(ic,'w-3.5 h-3.5')+label+'</button>'; };
+  const seg = function(id, label, ic){ const on = ts.mode===id; return '<button type="button" aria-pressed="'+on+'" onclick="tsSetMode(\''+id+'\')" class="seg__btn'+(on?' is-on':'')+'">'+icon(ic,'w-3.5 h-3.5')+label+'</button>'; };
   return '<div id="ts-panel" class="card p-5 mb-5">'+
     '<datalist id="ts-skill-list">'+tsSkillVocab().slice().sort().map(function(x){ return '<option value="'+escapeHtml(x)+'">'; }).join('')+'</datalist>'+
     '<datalist id="ts-place-list">'+tsPlaceVocab().map(function(x){ return '<option value="'+escapeHtml(x)+'">'; }).join('')+'</datalist>'+
     '<datalist id="acf-lang-list">'+LANGUAGE_DATA.map(function(x){ return '<option value="'+escapeHtml(x[0])+'">'; }).join('')+'</datalist>'+
-    '<div class="flex flex-wrap items-center gap-3 mb-4"><div class="inline-flex p-1 rounded-xl bg-zinc-100" role="tablist" aria-label="Search mode">'+seg('prompt','Ask Kairo','sparkles')+seg('filters','Classic Search','filter')+'</div>'+
+    '<div class="flex flex-wrap items-center gap-3 mb-4"><div class="seg" role="group" aria-label="Search mode">'+seg('prompt','Ask Kairo','sparkles')+seg('filters','Classic Search','filter')+'</div>'+
       '<p class="text-xs text-zinc-400 flex-1">'+(ts.mode==='prompt' ? 'Describe who you need in your own words, or attach a JD or a resume.' : 'Search by the same details you capture when adding a candidate.')+'</p></div>'+
     (ts.mode==='prompt'
       ? '<textarea id="talent-ai-query" rows="6" oninput="tsOnType(this.value)" onkeydown="if(event.key===\'Enter\' && (event.metaKey||event.ctrlKey)){ event.preventDefault(); tsRun(); }" placeholder="e.g. Senior React developer in Pune, 5+ years, immediate joiner" class="w-full min-h-[168px] border border-zinc-200 rounded-xl px-4 py-3.5 text-[15px] leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent resize-y">'+escapeHtml(talentSearchAiQuery)+'</textarea>'+
@@ -18965,7 +19092,7 @@ function wfComposerPreviewBodyHTML(){
   const def = step ? (WF_ACTIONS.find(function(x){ return x.key===step.type; }) || WF_ACTIONS[0]) : WF_ACTIONS[0];
   const isLinkedIn = def.channel==='linkedin' || def.channel==='linkedinConnect' || def.channel==='linkedinComment';
   if(isLinkedIn){
-    return '<div class="bg-[#DDEBFF] text-zinc-900 rounded-2xl rounded-tr-sm px-3.5 py-2.5 inline-block max-w-[85%]">'+
+    return '<div class="bg-[#F2F3F6] text-zinc-900 rounded-2xl rounded-tr-sm px-3.5 py-2.5 inline-block max-w-[85%]">'+
       '<p class="text-sm">'+text+'</p>'+
       (wfComposerDraft.attachment ? '<div class="mt-2 inline-flex items-center gap-1.5 text-xs bg-white/70 rounded-lg px-2 py-1.5">'+icon('doc','w-3.5 h-3.5')+wfComposerDraft.attachment.name+'</div>' : '')+
     '</div>'+
@@ -19328,11 +19455,11 @@ function liWizardProspectsHTML(wf){
         '<p class="text-xs font-semibold text-zinc-900">Talent Pool</p>'+
       '</button>'+
       '<button onclick="liWizardSetProspectSource(\'linkedin\')" class="p-5 rounded-2xl border-2 text-center transition '+(wf.prospectSource==='linkedin'?'border-accent-500 bg-accent-50':'border-zinc-200 hover:border-zinc-300')+'">'+
-        '<span class="w-10 h-10 rounded-full bg-[#0A66C2]/10 text-[#0A66C2] flex items-center justify-center mx-auto mb-2">'+icon('send','w-4 h-4')+'</span>'+
+        '<span class="w-10 h-10 rounded-full bg-[#424553]/10 text-[#424553] flex items-center justify-center mx-auto mb-2">'+icon('send','w-4 h-4')+'</span>'+
         '<p class="text-xs font-semibold text-zinc-900">Basic Search</p>'+
       '</button>'+
       '<button onclick="liWizardSetProspectSource(\'salesNav\')" class="p-5 rounded-2xl border-2 text-center transition '+(wf.prospectSource==='salesNav'?'border-accent-500 bg-accent-50':'border-zinc-200 hover:border-zinc-300')+'">'+
-        '<span class="w-10 h-10 rounded-full bg-[#0A66C2]/10 text-[#0A66C2] flex items-center justify-center mx-auto mb-2">'+icon('bell','w-4 h-4')+'</span>'+
+        '<span class="w-10 h-10 rounded-full bg-[#424553]/10 text-[#424553] flex items-center justify-center mx-auto mb-2">'+icon('bell','w-4 h-4')+'</span>'+
         '<p class="text-xs font-semibold text-zinc-900">Sales Navigator</p>'+
       '</button>'+
       '<button onclick="liWizardSetProspectSource(\'csv\')" class="p-5 rounded-2xl border-2 text-center transition '+(wf.prospectSource==='csv'?'border-accent-500 bg-accent-50':'border-zinc-200 hover:border-zinc-300')+'">'+
@@ -19421,7 +19548,7 @@ let liUniBoxReplyFromOpen = false;
 let liUniBoxFilter = 'all';
 let liUniBoxChannelFilter = 'all';
 const LI_CHANNEL_META = {
-  linkedin: { icon:'link', color:'#0A66C2', label:'LinkedIn' },
+  linkedin: { icon:'link', color:'#424553', label:'LinkedIn' },
   whatsapp: { icon:'whatsapp', color:'#25D366', label:'WhatsApp' },
   email: { icon:'mail', color:'#2F313F', label:'Email' },
 };
@@ -19561,18 +19688,18 @@ function liUniBoxMetaHTML(c){
 function liUniBoxLinkedInThreadHTML(c){
   const extraMessages = UNI_BOX_EXTRA_MESSAGES[uniBoxThreadKey(c)] || [];
   return '<div class="mx-8 mt-4 mb-2 bg-[#F3F2EF] rounded-2xl overflow-hidden border border-zinc-200">'+
-    '<div class="bg-white px-4 py-2.5 border-b border-zinc-200 flex items-center gap-2"><span class="w-7 h-7 rounded-full bg-[#0A66C2] text-white flex items-center justify-center text-[10px] font-bold">in</span><p class="text-xs font-semibold text-zinc-800">'+c.candidateName+'</p><span class="w-1.5 h-1.5 rounded-full bg-forest-500 ml-auto"></span><span class="text-[10px] text-zinc-400">Active now</span></div>'+
+    '<div class="bg-white px-4 py-2.5 border-b border-zinc-200 flex items-center gap-2"><span class="w-7 h-7 rounded-full bg-[#424553] text-white flex items-center justify-center text-[10px] font-bold">in</span><p class="text-xs font-semibold text-zinc-800">'+c.candidateName+'</p><span class="w-1.5 h-1.5 rounded-full bg-forest-500 ml-auto"></span><span class="text-[10px] text-zinc-400">Active now</span></div>'+
     '<div class="p-6 space-y-3 min-h-[360px]">'+
-      '<div class="flex justify-end"><div class="bg-[#DDEBFF] text-zinc-900 rounded-2xl rounded-tr-sm px-3.5 py-2.5 max-w-[80%]"><p class="text-sm">'+wfEscapeHtml(c.lastMessage)+'</p></div></div>'+
+      '<div class="flex justify-end"><div class="bg-[#F2F3F6] text-zinc-900 rounded-2xl rounded-tr-sm px-3.5 py-2.5 max-w-[80%]"><p class="text-sm">'+wfEscapeHtml(c.lastMessage)+'</p></div></div>'+
       '<p class="text-right text-[10px] text-zinc-400">Sent \u00b7 via '+c.senderName+'</p>'+
       (c.replied ? '<div class="flex justify-start"><div class="bg-white border border-zinc-200 rounded-2xl rounded-tl-sm px-3.5 py-2.5 max-w-[80%]"><p class="text-sm text-zinc-700">Thanks for reaching out \u2014 I\u2019d be happy to learn more.</p></div></div><p class="text-[10px] text-zinc-400">'+c.candidateName+' \u00b7 '+c.respProb+'% response probability</p>' : '<p class="text-xs text-zinc-400 text-center py-2">No reply yet</p>')+
-      extraMessages.map(function(m){ return '<div class="flex justify-end"><div class="bg-[#DDEBFF] text-zinc-900 rounded-2xl rounded-tr-sm px-3.5 py-2.5 max-w-[80%]"><p class="text-sm">'+wfEscapeHtml(m.text)+'</p></div></div><p class="text-right text-[10px] text-zinc-400">Sent \u00b7 '+m.at+'</p>'; }).join('')+
+      extraMessages.map(function(m){ return '<div class="flex justify-end"><div class="bg-[#F2F3F6] text-zinc-900 rounded-2xl rounded-tr-sm px-3.5 py-2.5 max-w-[80%]"><p class="text-sm">'+wfEscapeHtml(m.text)+'</p></div></div><p class="text-right text-[10px] text-zinc-400">Sent \u00b7 '+m.at+'</p>'; }).join('')+
     '</div>'+
   '</div>';
 }
 function liUniBoxWhatsAppThreadHTML(c){
   const extraMessages = UNI_BOX_EXTRA_MESSAGES[uniBoxThreadKey(c)] || [];
-  const dbl = icon('check','w-3 h-3 inline text-[#53bdeb]');
+  const dbl = icon('check','w-3 h-3 inline text-[#8C90A0]');
   return '<div class="mx-8 mt-4 mb-2 rounded-2xl overflow-hidden border border-zinc-200">'+
     '<div class="bg-[#005c4b] px-4 py-2.5 flex items-center gap-2"><span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">'+icon('whatsapp','w-3.5 h-3.5')+'</span><p class="text-sm font-medium text-white">'+c.candidateName+'</p></div>'+
     '<div class="p-6 space-y-2.5 min-h-[360px]" style="background-color:#EFEAE2;">'+
@@ -19783,7 +19910,7 @@ function renderDesignSystem(){
   const root = getComputedStyle(document.documentElement);
   const tok = function(name){ return root.getPropertyValue(name).trim(); };
   const colorGroups = [
-    { name:'Accent (primary actions, links)', shades:[['50','#F2F3F6',null],['200','#c7d2fe',null],['500',tok('--accent-blue'),'--accent-blue'],['600',tok('--accent-purple'),'--accent-purple'],['700',tok('--accent-purple-dark'),'--accent-purple-dark']] },
+    { name:'Accent (primary actions, links)', shades:[['50','#F2F3F6',null],['200','#D2D5DD',null],['500',tok('--accent-blue'),'--accent-blue'],['600',tok('--accent-purple'),'--accent-purple'],['700',tok('--accent-purple-dark'),'--accent-purple-dark']] },
     { name:'Gold (status, premium, priority)', shades:[['100','#f6ecd6',null],['400','#d1a95f',null],['500',tok('--gold'),'--gold'],['700','#96773a',null]] },
     { name:'Forest (success, positive states)', shades:[['50','#eaf1ec',null],['100','#d3e5da',null],['500',tok('--forest'),'--forest'],['600','#2f5d44',null]] },
     { name:'Terracotta (warnings, destructive)', shades:[['50','#FDEEEC',null],['100','#f6ded4',null],['500',tok('--terracotta'),'--terracotta'],['700','#B42318',null]] },
@@ -20014,7 +20141,7 @@ function liWizardProspectResultsHTML(wf){
         const checked = (wf.prospectCandidateIds||[]).indexOf(c.id)>-1;
         const expanded = liMatchReasoningOpenFor===c.id;
         return '<div class="rounded-lg hover:bg-zinc-50">'+
-          '<label class="flex items-center gap-3 p-2.5 cursor-pointer"><input type="checkbox" '+(checked?'checked':'')+' onchange="liWizardToggleProspect('+c.id+')" class="w-4 h-4 rounded border-zinc-300 text-accent-600 focus:ring-accent-500" /><span class="text-sm text-zinc-700 flex-1">'+c.name+'</span><span class="text-xs text-zinc-400">'+c.role+'</span><span class="text-[11px] font-semibold text-accent-600">'+r.pct+'% match</span><button onclick="event.preventDefault(); liToggleMatchReasoning('+c.id+')" class="text-[10px] font-medium text-zinc-400 hover:text-accent-600 underline">why?</button><span class="text-[10px] text-[#0A66C2] bg-[#0A66C2]/10 px-1.5 py-0.5 rounded">'+icon('link','w-2.5 h-2.5 inline')+' Linked</span></label>'+
+          '<label class="flex items-center gap-3 p-2.5 cursor-pointer"><input type="checkbox" '+(checked?'checked':'')+' onchange="liWizardToggleProspect('+c.id+')" class="w-4 h-4 rounded border-zinc-300 text-accent-600 focus:ring-accent-500" /><span class="text-sm text-zinc-700 flex-1">'+c.name+'</span><span class="text-xs text-zinc-400">'+c.role+'</span><span class="text-[11px] font-semibold text-accent-600">'+r.pct+'% match</span><button onclick="event.preventDefault(); liToggleMatchReasoning('+c.id+')" class="text-[10px] font-medium text-zinc-400 hover:text-accent-600 underline">why?</button><span class="text-[10px] text-[#424553] bg-[#424553]/10 px-1.5 py-0.5 rounded">'+icon('link','w-2.5 h-2.5 inline')+' Linked</span></label>'+
           (expanded ? '<div class="px-2.5 pb-3 pl-10">'+matchReasoningHTML(c, job)+'</div>' : '')+
         '</div>';
       }).join('') : '<p class="text-xs text-zinc-400 py-4 text-center">No LinkedIn-eligible candidates match this job well enough right now.</p>')+
@@ -20116,7 +20243,7 @@ function waBusinessSettingsHTML(){
 function liSenderProfilesSettingsHTML(){
   return '<div class="bg-white border border-zinc-200 rounded-2xl p-6 mb-5">'+
     '<div class="flex items-center justify-between mb-1">'+
-      '<div class="flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-[#0A66C2]/10 text-[#0A66C2] flex items-center justify-center">'+icon('link','w-4 h-4')+'</span><p class="font-medium text-zinc-900">Connected Accounts</p>'+
+      '<div class="flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-[#424553]/10 text-[#424553] flex items-center justify-center">'+icon('link','w-4 h-4')+'</span><p class="font-medium text-zinc-900">Connected Accounts</p>'+
         '<button onclick="aiOpenInfo(\'linkit\')" class="text-zinc-300 hover:text-accent-600" title="What is a connected account?">'+icon('bell','w-3.5 h-3.5')+'</button></div>'+
     '</div>'+
     '<p class="text-sm text-zinc-500 mb-4">Connect any LinkedIn or email account for Linkit to send on its behalf and stay live-synced \u2014 not limited to your internal team.</p>'+
@@ -20573,7 +20700,7 @@ function liWizardCheckupHTML(wf, steps){
   return '<div class="max-w-2xl">'+
     '<h1 class="text-2xl font-bold text-zinc-900 mb-6">Your campaign is ready to be launched! \ud83d\ude80</h1>'+
     '<div class="space-y-3">'+
-      '<div class="flex items-center justify-between p-4 rounded-xl border border-zinc-200"><div class="flex items-center gap-3"><span class="w-10 h-10 rounded-xl bg-[#0A66C2] text-white flex items-center justify-center">'+icon('link','w-4 h-4')+'</span><div><p class="text-sm font-semibold text-zinc-900">Sender profile</p><p class="text-xs text-zinc-500">'+(hasSenderProfile?(liSenderProfileRecruiter(senderProfile)||{}).name+' will send this':'You must assign a LinkedIn sender profile')+'</p></div></div>'+(hasSenderProfile?icon('check','w-5 h-5 text-forest-500'):icon('x','w-5 h-5 text-terracotta-500'))+'</div>'+
+      '<div class="flex items-center justify-between p-4 rounded-xl border border-zinc-200"><div class="flex items-center gap-3"><span class="w-10 h-10 rounded-xl bg-[#424553] text-white flex items-center justify-center">'+icon('link','w-4 h-4')+'</span><div><p class="text-sm font-semibold text-zinc-900">Sender profile</p><p class="text-xs text-zinc-500">'+(hasSenderProfile?(liSenderProfileRecruiter(senderProfile)||{}).name+' will send this':'You must assign a LinkedIn sender profile')+'</p></div></div>'+(hasSenderProfile?icon('check','w-5 h-5 text-forest-500'):icon('x','w-5 h-5 text-terracotta-500'))+'</div>'+
       '<div class="flex items-center justify-between p-4 rounded-xl border border-zinc-200"><div class="flex items-center gap-3"><span class="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center">'+icon('send','w-4 h-4')+'</span><div><p class="text-sm font-semibold text-zinc-900">Your sequence</p><p class="text-xs text-zinc-500">'+steps.length+' step'+(steps.length===1?'':'s')+' configured'+(hasSequence && !hasOutreachAction?' \u2014 needs at least one real action, not just a delay':'')+'</p></div></div>'+(hasSequence && hasOutreachAction?icon('check','w-5 h-5 text-forest-500'):icon('x','w-5 h-5 text-terracotta-500'))+'</div>'+
       '<div class="flex items-center justify-between p-4 rounded-xl border border-zinc-200"><div class="flex items-center gap-3"><span class="w-10 h-10 rounded-xl bg-forest-500 text-white flex items-center justify-center">'+icon('users','w-4 h-4')+'</span><div><p class="text-sm font-semibold text-zinc-900">Your prospect(s)</p><p class="text-xs text-zinc-500">'+(hasProspects?(wf.prospectSource==='linkedin'?wfSimulatedImportCount(wf.linkedinImportUrl)+' from LinkedIn':wf.prospectSource==='csv'?wfSimulatedImportCount(wf.csvFileName)+' from CSV':(wf.prospectCandidateIds||[]).length+' selected'):'You must select prospects')+'</p></div></div>'+(hasProspects?icon('check','w-5 h-5 text-forest-500'):icon('x','w-5 h-5 text-terracotta-500'))+'</div>'+
       '<div class="flex items-center justify-between p-4 rounded-xl border border-zinc-200"><div class="flex items-center gap-3"><span class="w-10 h-10 rounded-xl bg-accent-500 text-white flex items-center justify-center">'+icon('link','w-4 h-4')+'</span><div><p class="text-sm font-semibold text-zinc-900">Your content(s)</p><p class="text-xs text-zinc-500">'+messageSteps.length+' message step'+(messageSteps.length===1?'':'s')+', '+(contentComplete?'all drafted':'some still empty')+'</p></div></div>'+(contentComplete?icon('check','w-5 h-5 text-forest-500'):icon('x','w-5 h-5 text-terracotta-500'))+'</div>'+
@@ -21263,7 +21390,7 @@ function renderRecruiterAnalytics(){
        ['Interview Conversion', myScore.interviewConversion+'%', 'calendar','navy'],
        ['SLA Score', myScore.slaScore, 'clock','gold'],
        ['Revenue Contribution', '\u20b9'+myScore.revenue.toLocaleString('en-IN'), 'trending','purple']].map(function(s){
-        return '<div class="card p-5"><div class="flex items-center justify-between mb-3">'+iconChip(s[2],s[3],'w-9 h-9 rounded-xl')+'</div><p class="text-xl font-semibold text-ink">'+s[1]+'</p><p class="text-xs text-zinc-500 mt-1">'+s[0]+'</p></div>';
+        return oNumCard(s[0], s[1]);
       }).join('')+
     '</div>'+
     '<p class="text-[11px] text-zinc-400 mb-6">Submission Quality and Interview Conversion are org-wide today \u2014 the current data model doesn\u2019t attribute a decision or interview to the specific recruiter who sourced it. SLA and Revenue are genuinely yours.</p>'+
@@ -21325,10 +21452,7 @@ function renderReports(){
     sectionTitle('Reports', 'Your performance, at a glance.')+
     '<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">'+
       [['16','Placements (Q2)','check','forest'],['1.8 days','Avg Time to Submit','send','navy'],['21 days','Avg Time to Hire','clock','gold'],['91%','Efficiency Score','sparkles','purple']].map(function(s){
-        return '<div class="card p-5">'+
-          '<div class="flex items-center justify-between mb-3">'+iconChip(s[2],s[3],'w-9 h-9 rounded-xl')+'</div>'+
-          '<p class="text-xl font-semibold text-ink">'+s[0]+'</p><p class="text-xs text-zinc-500 mt-1">'+s[1]+'</p>'+
-        '</div>';
+        return oNumCard(s[1], s[0]);
       }).join('')+
     '</div>'+
     revenueAnalyticsHTML()+
@@ -21638,7 +21762,7 @@ function payTrackKpiHTML(){
     [[String(activeCases),'Active Lock-in Cases','users','navy'],
      [String(expiringSoon),'Lock-in Expiring Soon (\u22647d)','clock','gold'],
      [String(billingEligible),'Billing Eligible, Unpaid','doc','purple']].map(function(s){
-      return '<div class="card p-4"><div class="flex items-center justify-between mb-2">'+iconChip(s[2],s[3],'w-8 h-8 rounded-lg')+'</div><p class="text-lg font-semibold text-ink leading-tight">'+s[0]+'</p><p class="text-[11px] text-zinc-500 mt-0.5">'+s[1]+'</p></div>';
+      return oNumCard(s[1], s[0]);
     }).join('')+'</div>';
   return '<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 stagger">'+realizedCard+riskCard+'</div>'+opsStrip;
 }
@@ -21842,7 +21966,7 @@ function payTrackRecruiterBodyHTML(){
       [[String(PAYTRACK_JOINED.length),'Lock-in Active','users','navy'],
        [String(PAYTRACK_COMPLETED.length),'Lock-in Completed','check','forest'],
        [String(PAYTRACK_JOINED.filter(function(j){ return ptReplacementInfo(j).remaining<=7; }).length),'Expiring Soon (\u22647d)','clock','gold']].map(function(s){
-        return '<div class="card p-4"><div class="flex items-center justify-between mb-2">'+iconChip(s[2],s[3],'w-8 h-8 rounded-lg')+'</div><p class="text-lg font-semibold text-ink leading-tight">'+s[0]+'</p><p class="text-[11px] text-zinc-500 mt-0.5">'+s[1]+'</p></div>';
+        return oNumCard(s[1], s[0]);
       }).join('')+'</div>'+
     '<div class="flex gap-2 mb-4">'+
       ['active','completed'].map(function(t){
@@ -29630,6 +29754,7 @@ function enterApp(){
   document.getElementById('onboarding').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('app').classList.add('flex');
+  oApplyAgentFlag(); oWatchContent();
   renderSidebar();
   renderTopbarDate();
   applySidebarVisibility();
@@ -35468,12 +35593,11 @@ function tmStatsHTML(){
   '</div>';
 }
 function tmFiltersHTML(){
-  return '<div id="tm-filters" class="inline-flex items-center bg-zinc-100 rounded-xl p-1">'+
+  return '<div id="tm-filters" class="seg" role="group" aria-label="Team status">'+
     ['All'].concat(TM_STATUSES).map(function(f){
       const n = f==='All' ? tmListedMembers().length : tmListedMembers().filter(function(u){ return tmStatus(u)===f; }).length;
       const on = tmFilter===f;
-      return '<button onclick="tmSetFilter(\''+f+'\')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition '+(on?'bg-white text-zinc-900 shadow-sm':'text-zinc-500 hover:text-zinc-700')+'">'+f+
-        ' <span class="'+(on?'text-zinc-400':'text-zinc-400')+' font-medium">'+n+'</span></button>';
+      return '<button type="button" onclick="tmSetFilter(\''+f+'\')" aria-pressed="'+on+'" class="seg__btn'+(on?' is-on':'')+'">'+f+'<span class="seg__n">'+n+'</span></button>';
     }).join('')+
   '</div>';
 }
