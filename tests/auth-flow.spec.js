@@ -541,7 +541,7 @@
       eq((await authApi.passwordSignIn({ email:'dana@startup.example', password:'Harbor-Lights-42' })).error, 'invalid_credentials', 'no password was ever set');
       await click('[data-act=su-enter]'); await settle();
       assert(appVisible()); eq(state.role, 'admin', 'the owner'); eq(state.activeNav, 'admin-dashboard', 'Home');
-      eq(document.querySelector('#main-content .sec-title').textContent, 'Welcome to Oontu, Dana.', 'welcome line');
+      eq(document.querySelector('#main-content .o-page-head__title').textContent, 'Welcome to Oontu, Dana.', 'welcome line');
       assert(!emailVerifyLocked() && !q('#verify-banner-root .vb'), 'no verification banner: the code did it');
       eq(authApi._verifyMailCount('dana@startup.example'), 0, 'no verification link is needed');
       assert(document.getElementById('ws-card'), 'Complete your workspace card');
@@ -552,7 +552,7 @@
       showView('setup-hub'); assert(/Team size21–50Edit/.test(document.getElementById('ws-defaults').textContent), 'Settings > Workspace: Team size with Edit');
       wsOpenSheet('team-size'); document.getElementById('ws-size-4').click(); await saveSheet();
       eq(ORG_STRUCTURE.profile.teamSize, '200+');
-      wsSessionSeq++; showView('admin-dashboard'); assert(/^Good /.test(document.querySelector('#main-content .sec-title').textContent), 'the welcome line is for the first visit');
+      wsSessionSeq++; showView('admin-dashboard'); assert(/^Good /.test(document.querySelector('#main-content .o-page-head__title').textContent), 'the welcome line is for the first visit');
     });
 
     await test('02b Each question checks its answer: red field, message; nothing is created', async function(){
