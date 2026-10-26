@@ -1949,6 +1949,11 @@ span.rounded-full[class*="text-xs"][class*="px-"][class*="py-"][class*="bg-"]:no
 .modal-backdrop{ animation:modalFadeIn 320ms var(--ease); background-color:rgba(47,49,63,.40) !important; }
 .modal-panel{ border-radius:var(--r-panel); animation:modalPopIn 320ms var(--ease); box-shadow:0 24px 48px -12px rgba(47,49,63,.25), 0 2px 6px rgba(47,49,63,.06); }
 @media (prefers-reduced-motion: reduce){ .modal-backdrop, .modal-panel, .app-sheet{ animation:none !important; } }
+.o-nav-count[hidden], .o-nav-dot[hidden]{ display:none !important; }
+.o-ctx{ margin:0 0 4px; font-size:14px; font-weight:600; color:var(--n-500); }
+html .o-pagehead .sec-title{ font-size:32px; line-height:40px; font-weight:700; letter-spacing:-.03em; color:var(--n-800); }
+html .o-pagehead .sec-sub{ font-size:15px; line-height:22px; color:var(--n-600); }
+@media (max-width:860px){ html .o-pagehead .sec-title{ font-size:28px; line-height:36px; } }
 </style>
 </head>
 <body class="text-zinc-900 antialiased">
@@ -2490,15 +2495,15 @@ const NAV = {
   recruiter: [
     { group:'', items:[
       {id:'dashboard', label:'Home', icon:'home'},
-      {id:'jobs', label:'Jobs', icon:'briefcase'},
+      {id:'jobs', label:'Jobs', icon:'briefcase', count:function(){ const me = currentActingUser(); return JOBS.filter(function(j){ return j.status==='Active' && me && isRecruiterMappedToJob(j.id, me.id); }).length; }},
       {id:'talent-pool', label:'Candidates', icon:'users'},
-      {id:'interviews', label:'Interviews', icon:'calendar'},
+      {id:'interviews', label:'Interviews', icon:'calendar', count:function(){ const me = currentActingUser(); return tpInterviewRows().filter(function(r){ return r.kind!=='upcoming' && me && isRecruiterMappedToJob(r.j.id, me.id); }).length; }, urgent:true},
     ]},
     { group:'', items:[
       {id:'settings', label:'Settings', icon:'cog'},
     ]},
     { group:'More', collapsible:true, items:[
-      {id:'my-todo', label:'To do', icon:'bell'},
+      {id:'my-todo', label:'To do', icon:'bell', count:function(){ return PERSONAL_TASKS.filter(function(x){ return !x.completed; }).length; }},
       {id:'intelligence', label:'Intelligence', icon:'sparkles'},
       {id:'kairo-team', label:'Cowork', icon:'zap'},
       {id:'li-uni-box', label:'LinkIt', icon:'chat'},
@@ -2512,7 +2517,7 @@ const NAV = {
       {id:'talent-pool', label:'Candidates', icon:'users'},
       {id:'client-management', label:'Clients', icon:'building'},
       {id:'interviews', label:'Interviews', icon:'calendar'},
-      {id:'approval-center', label:'Approvals', icon:'check'},
+      {id:'approval-center', label:'Approvals', icon:'check', count:function(){ return pendingApprovalsForApprover().length; }, urgent:true},
       {id:'manager-team', label:'Team', icon:'user'},
     ]},
     { group:'More', collapsible:true, items:[
@@ -2528,7 +2533,7 @@ const NAV = {
       {id:'talent-pool', label:'Candidates', icon:'users'},
       {id:'client-management', label:'Clients', icon:'building'},
       {id:'interviews', label:'Interviews', icon:'calendar'},
-      {id:'approval-center', label:'Approvals', icon:'check'},
+      {id:'approval-center', label:'Approvals', icon:'check', count:function(){ return pendingApprovalsForApprover().length; }, urgent:true},
     ]},
     { group:'Workspace', items:[
       {id:'team-members', label:'Team', icon:'user'},
@@ -2626,6 +2631,18 @@ function renderSidebarLogo(){
 }
 /* One sliding highlight behind the selected nav item - the product's single motion language (240 ms, --ease).
    The first placement is instant so it does not slide in from the top on load. */
+/* Counts are read again after every screen change, so they follow the work without redrawing the sidebar (the selection keeps sliding). */
+function refreshNavCounts(){
+  const items = filterNavForAgents(filterNavForPermissions(filterNavForOrgType(NAV[state.role])));
+  const flat = []; items.forEach(function(g){ if(g.items) g.items.forEach(function(i){ flat.push(i); }); else flat.push(g); });
+  flat.forEach(function(item){
+    if(typeof item.count!=='function') return;
+    const btn = document.querySelector('.nav-item[data-nav="'+item.id+'"]'); if(!btn) return;
+    const n = item.count(), num = btn.querySelector('.o-nav-count'), dot = btn.querySelector('.o-nav-dot');
+    if(num){ num.textContent = n; num.hidden = !n; }
+    if(dot) dot.hidden = !n;
+  });
+}
 function positionNavSel(instant){
   const nav = document.getElementById('sidebar-nav');
   const sel = document.getElementById('sb-sel');
@@ -2687,14 +2704,12 @@ function renderSidebar(){
   const items = filterNavForAgents(filterNavForPermissions(filterNavForOrgType(NAV[state.role])));
   const nav = document.getElementById('sidebar-nav');
   const navItemHTML = function(item){
-    const label = sentenceCase(item.label), n = typeof item.count==='function' ? item.count() : 0;
-    const urgent = !!n && !!item.urgent;
+    const label = sentenceCase(item.label), hasCount = typeof item.count==='function', n = hasCount ? item.count() : 0;
     const on = state.activeNav===item.id;
     return '<button type="button" onclick="navigateWithSkeleton(\''+item.id+'\')" data-nav="'+item.id+'" title="'+label+'" aria-label="'+label+(n ? ', '+n : '')+'"'+(on ? ' aria-current="page"' : '')+' class="nav-item o-nav-item'+(on ? ' active' : '')+'">'+
       '<span class="nav-icon o-nav-item__icon">'+icon(item.icon,'w-[18px] h-[18px]')+'</span>'+
       '<span class="sidebar-label o-nav-item__label">'+label+'</span>'+
-      (n ? '<span class="sidebar-label o-nav-count'+(urgent ? ' is-urgent' : '')+'">'+n+'</span>' : '')+
-      (urgent ? '<i class="o-nav-dot" aria-hidden="true"></i>' : '')+
+      (hasCount ? '<span class="sidebar-label o-nav-count'+(item.urgent ? ' is-urgent' : '')+'"'+(n ? '' : ' hidden')+'>'+n+'</span>'+(item.urgent ? '<i class="o-nav-dot" aria-hidden="true"'+(n ? '' : ' hidden')+'></i>' : '') : '')+
     '</button>';
   };
   // NAV comes in two shapes: a flat list (hm/candidate) or a list of {group, items}
@@ -3359,9 +3374,6 @@ document.addEventListener('click', function(e){
   const menu = document.getElementById('role-menu');
   const trigger = document.getElementById('role-trigger');
   if(!menu.contains(e.target) && !trigger.contains(e.target)) toggleRoleMenu(true);
-  const qaMenu = document.getElementById('qa-menu');
-  const qaTrigger = document.getElementById('qa-trigger-btn');
-  if(qaMenu && qaTrigger && !qaMenu.contains(e.target) && !qaTrigger.contains(e.target)) closeQuickActionsMenu();
 });
 
 /* ============================================================
@@ -3844,7 +3856,7 @@ function showView(viewId, navOverride){
   main.scrollTop = scrollCache[navId] || 0;
   state.activeNav = navId;
   document.querySelectorAll('.nav-item').forEach(function(n){ const on = n.getAttribute('data-nav')===navId; n.classList.toggle('active', on); if(on) n.setAttribute('aria-current','page'); else n.removeAttribute('aria-current'); });
-  positionNavSel();
+  positionNavSel(); refreshNavCounts();
   document.getElementById('topbar-title').textContent = sentenceCase(PAGE_TITLES[viewId] || 'Oontu');
   document.getElementById('topbar-subtitle').textContent = ROLE_META[state.role].title;
   // Pages that show their own title hide the top bar's title row; the others use it.
@@ -4422,152 +4434,6 @@ function applySavedFilter(idx){
   showView(f.channel);
 }
 let greetingRefreshTimer = null;
-function setupGreetingScrollReact(){
-  const scrollEl = document.getElementById('main-content');
-  const box = document.getElementById('greeting-box');
-  if(!scrollEl || !box || scrollEl.dataset.greetScrollBound) return;
-  scrollEl.dataset.greetScrollBound = '1';
-  scrollEl.addEventListener('scroll', function(){
-    const b = document.getElementById('greeting-box');
-    if(!b){ return; } // navigated away — listener stays bound to main-content but simply no-ops
-    b.classList.toggle('greeting-compact', scrollEl.scrollTop > 24);
-  });
-}
-function startGreetingRefresh(){
-  if(greetingRefreshTimer) clearInterval(greetingRefreshTimer);
-  greetingRefreshTimer = setInterval(function(){
-    const box = document.getElementById('greeting-box');
-    const content = document.getElementById('greeting-content');
-    if(!box || !content){ clearInterval(greetingRefreshTimer); greetingRefreshTimer = null; return; } // left the dashboard — stop cleanly, don't leak the timer
-    box.setAttribute('style', greetingBoxStyleAttr());
-    content.innerHTML = dashboardGreetingHTML(); // only the text refreshes — the Quick Actions button beside it must survive untouched
-  }, 30000);
-}
-function greetingColorForHour(hour){
-  // Real color temperature by hour - the background genuinely shifts with time, not a fixed brand tint regardless of when you open the app.
-  if(hour<5) return { from:'rgba(49,46,129,0.10)', to:'rgba(30,27,75,0.14)' };      // midnight — deep indigo
-  if(hour<8) return { from:'rgba(251,191,36,0.07)', to:'rgba(244,114,182,0.08)' };  // dawn — soft gold to pink
-  if(hour<12) return { from:'rgba(56,189,248,0.08)', to:'rgba(20,127,250,0.10)' };  // morning — cool clear blue
-  if(hour<17) return { from:'rgba(56,189,248,0.06)', to:'rgba(251,191,36,0.09)' };  // afternoon — blue to warm gold
-  if(hour<21) return { from:'rgba(251,146,60,0.08)', to:'rgba(219,39,119,0.07)' };  // evening — sunset orange to rose
-  return { from:'rgba(91,33,182,0.09)', to:'rgba(30,27,75,0.12)' };                 // late — deep dusk
-}
-function greetingHorizonHTML(hour){
-  const isDay = hour>=6 && hour<18;
-  const progress = isDay ? (hour-6)/12 : (hour<6 ? (hour+6)/12 : (hour-18)/12);
-  const cx = 14 + progress*84;
-  const cy = 42 - Math.sin(progress*Math.PI)*26;
-  const bodyColor = hour<5 ? '#D2D5DD' : hour<8 ? '#FBBF24' : hour<12 ? '#FDE047'
-    : hour<17 ? '#FBBF24' : hour<21 ? '#FB923C' : '#D2D5DD';
-  const glowColor = isDay ? 'rgba(251,191,36,0.35)' : 'rgba(199,210,254,0.35)';
-  return '<svg width="96" height="48" viewBox="0 0 112 56" class="shrink-0" aria-hidden="true">'+
-    '<line x1="6" y1="42" x2="106" y2="42" stroke="rgba(82,82,91,0.25)" stroke-width="2" stroke-linecap="round"/>'+
-    (!isDay ? [1,2,3,4].map(function(i){ return '<circle cx="'+(14+i*24)+'" cy="'+(8+i*3)+'" r="1"  fill="rgba(226,232,240,0.7)"/>'; }).join('') : '')+
-    '<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="16" fill="'+glowColor+'"/>'+
-    '<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="8.5" fill="'+bodyColor+'"/>'+
-  '</svg>';
-}
-function staggerWordsHTML(text, cls){
-  return text.split(' ').map(function(w,i){ return '<span class="greet-word '+(cls||'')+'" style="--wi:'+i+'">'+w+'</span>'; }).join(' ');
-}
-function pickVariant(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function dashboardGreetingHTML(){
-  const hour = new Date().getHours();
-  const me = currentActingUser();
-  const firstName = me ? me.name.split(' ')[0] : 'there';
-
-  const variants = hour<5 ? [ // midnight — forward to tomorrow, never a scolding
-      'Up this late, {n}? Tomorrow\u2019s already got something good lined up for you.',
-      'Midnight hours, {n}. Get some rest \u2014 you\u2019ll want to be sharp for what\u2019s next.',
-      'It\u2019s late, {n}. Whatever\u2019s waiting tomorrow, you\u2019ll be ready for it.',
-    ] : hour<8 ? [ // before shift hours
-      'Up before the shift starts, {n}? That\u2019s real dedication.',
-      'Early start today, {n} \u2014 the desk is quiet and the day is yours.',
-      'Morning, {n}. Getting ahead before the noise begins.',
-    ] : hour<12 ? [ // morning
-      'Good morning, {n}. Fresh pipeline, fresh moves.',
-      'Morning, {n} \u2014 let\u2019s turn today\u2019s list into tomorrow\u2019s wins.',
-      'Good morning, {n}. Every placement starts with a first move.',
-    ] : hour<17 ? [ // afternoon
-      'Good afternoon, {n}. Keep the momentum going.',
-      'Afternoon, {n} \u2014 halfway through, still on it.',
-      'Good afternoon, {n}. The pipeline doesn\u2019t pause, and neither do you.',
-    ] : hour<21 ? [ // evening — natural sign-off undertone
-      'Good evening, {n}. Solid day\u2019s work behind you.',
-      'Evening, {n} \u2014 a good stopping point, if you want one.',
-      'Good evening, {n}. Whatever\u2019s left can wait for tomorrow too.',
-    ] : [ // late working
-      'Still here, {n}? That\u2019s real commitment showing.',
-      'Working late, {n} \u2014 just don\u2019t forget to rest too.',
-      'Burning the evening oil, {n}. Tomorrow will thank you.',
-    ];
-  const greeting = pickVariant(variants).replace('{n}', firstName);
-
-  const revenueInMotion = OFFERED_CANDIDATES.filter(function(o){ return o.status==='Offer Extended' || o.status==='Offer Accepted'; })
-    .reduce(function(sum,o){ return sum + o.ctc*100000*0.0833; }, 0);
-  const jobsLosingMomentum = JOBS.filter(function(j){ return j.status==='Active' && (j.daysOpen>21 || submissionsForJob(j.id).length<2); }).length;
-  const interviewsUnconfirmed = hmInterviews.filter(function(i){ return i.status==='Pending confirmation'; }).length;
-  const myPlacements = me ? PAYTRACK_JOINED.filter(function(p){ return p.recruiter===me.name; }).length : 0;
-  const myScore = me ? computeRecruiterScore(me.name).composite : 0;
-
-  let subtitle;
-  if(interviewsUnconfirmed>0) subtitle = interviewsUnconfirmed+' interview'+(interviewsUnconfirmed===1?'':'s')+' still '+(interviewsUnconfirmed===1?'needs':'need')+' confirming';
-  else if(jobsLosingMomentum>0) subtitle = jobsLosingMomentum+' job'+(jobsLosingMomentum===1?'':'s')+' losing momentum \u2014 worth a look';
-  else if(revenueInMotion>0) subtitle = '\u20b9'+(revenueInMotion/100000).toFixed(1)+'L sitting in live offers right now';
-  else if(myScore>=70) subtitle = 'Your performance score is '+myScore+' right now \u2014 genuinely strong work';
-  else if(myPlacements>0) subtitle = myPlacements+' real placement'+(myPlacements===1?'':'s')+' made so far \u2014 that\u2019s the number that counts';
-  else subtitle = 'Your desk is clear \u2014 nothing urgent waiting';
-
-  return '<div class="min-w-0 flex items-center gap-3">'+greetingHorizonHTML(hour)+
-    '<div class="min-w-0"><p class="text-sm font-semibold text-ink truncate" title="'+greeting+'">'+staggerWordsHTML(greeting)+'</p>'+
-    '<p class="greeting-subtitle text-xs text-zinc-600 mt-0.5 truncate greet-word" style="--wi:'+(greeting.split(' ').length+2)+'" title="'+subtitle+'">'+subtitle+'</p></div></div>';
-}
-function greetingBoxStyleAttr(){
-  const c = greetingColorForHour(new Date().getHours());
-  return 'background:#FFFFFF; border:1px solid #E9EBEF;';   // App UI rules: no gradient or glass
-}
-function commandBarHTML(){
-  return '<div class="sticky top-0 z-30 pt-4 pb-3 mb-2 bg-transparent">'+
-    '<div id="greeting-box" class="live-sheen rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative shadow-sm" style="'+greetingBoxStyleAttr()+'">'+
-      '<div class="sheen-layer"></div>'+
-      '<div id="greeting-content" class="min-w-0 relative">'+dashboardGreetingHTML()+'</div>'+
-      '<div class="relative shrink-0 self-end sm:self-auto">'+
-        '<button onclick="toggleQuickActionsMenu()" id="qa-trigger-btn" class="flex items-center gap-1.5 pl-3 pr-3.5 py-2 rounded-xl bg-white text-zinc-800 text-xs font-semibold hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.97] transition-all duration-200 shadow-md ring-1 ring-black/5">'+
-          '<span id="qa-trigger-icon" class="transition-transform duration-300">'+icon('plus','w-3.5 h-3.5')+'</span>Quick Actions'+
-        '</button>'+
-        '<div id="qa-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-white border border-zinc-100 rounded-2xl shadow-xl shadow-zinc-900/10 p-2 z-30">'+
-          quickActionItemHTML('briefcase', 'Create Job', 'Open a new mandate', "openJobCreate()")+
-          quickActionItemHTML('users', 'Add Candidate', 'Add to your talent pool', "showView('talent-pool')")+
-          quickActionItemHTML('zap', 'Start Campaign', 'Launch an automation', "showView('kairo-team')")+
-        '</div>'+
-      '</div>'+
-    '</div>'+
-  '</div>';
-}
-function quickActionItemHTML(iconName, title, subtitle, onclick){
-  return '<button onclick="closeQuickActionsMenu(); '+onclick+'" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-zinc-50 transition text-left group">'+
-    '<span class="w-9 h-9 rounded-lg bg-accent-50 text-accent-600 flex items-center justify-center shrink-0 group-hover:bg-accent-100 transition">'+icon(iconName,'w-4 h-4')+'</span>'+
-    '<div class="min-w-0"><p class="text-sm font-medium text-ink truncate">'+title+'</p><p class="text-xs text-zinc-400 truncate">'+subtitle+'</p></div>'+
-  '</button>';
-}
-function toggleQuickActionsMenu(){
-  const menu = document.getElementById('qa-menu');
-  const iconWrap = document.getElementById('qa-trigger-icon');
-  const isHidden = menu.classList.contains('hidden');
-  if(isHidden){
-    menu.classList.remove('hidden');
-    menu.classList.add('fade-slide-enter');
-    if(iconWrap) iconWrap.style.transform = 'rotate(45deg)';
-  } else {
-    closeQuickActionsMenu();
-  }
-}
-function closeQuickActionsMenu(){
-  const menu = document.getElementById('qa-menu');
-  const iconWrap = document.getElementById('qa-trigger-icon');
-  if(menu) menu.classList.add('hidden');
-  if(iconWrap) iconWrap.style.transform = '';
-}
 function computeTodaysBriefing(){
   const critical = [], attention = [], wins = [];
   const pendingApprovals = APPROVAL_REQUESTS.filter(function(r){ return r.status==='Pending'; }).length;
@@ -4596,155 +4462,6 @@ function computeTodaysBriefing(){
   if(totalPlacements) wins.push({ icon:'check', text:totalPlacements+' placement'+(totalPlacements===1?'':'s')+' made so far.', onclick:"showView('paytrack')" });
   return { critical:critical, attention:attention, wins:wins };
 }
-function briefingGroupHTML(title, items, tone, startIndex){
-  if(!items.length) return '';
-  const dotMap = { red:'bg-terracotta-500', amber:'bg-gold-500', green:'bg-forest-500' };
-  return '<div class="mb-4 last:mb-0">'+
-    '<p class="text-[10px] font-semibold text-zinc-400 tracking-widest mb-2">'+title+'</p>'+
-    '<div class="space-y-2">'+items.map(function(i, idx){
-      return '<button onclick="'+i.onclick+'" class="briefing-item-in w-full flex items-start gap-2.5 text-left group" style="animation-delay:'+((startIndex+idx)*45)+'ms">'+
-        '<span class="w-1.5 h-1.5 rounded-full '+dotMap[tone]+' mt-1.5 shrink-0"></span>'+
-        '<span class="text-sm text-zinc-600 group-hover:text-accent-700 transition">'+i.text+'</span>'+
-      '</button>';
-    }).join('')+'</div>'+
-  '</div>';
-}
-function briefingReportHTML(b){
-  const total = b.critical.length + b.attention.length + b.wins.length;
-  if(!total) return '<p class="text-sm text-zinc-400 py-2 briefing-item-in">Nothing needs your attention right now \u2014 genuinely clear.</p>';
-  return briefingGroupHTML('NEEDS A DECISION', b.critical, 'red', 0)+
-    briefingGroupHTML('WORTH ACTING ON', b.attention, 'amber', b.critical.length)+
-    briefingGroupHTML('GOING WELL', b.wins, 'green', b.critical.length+b.attention.length);
-}
-let briefingExpanded = false;
-function runKairoInsights(){
-  briefingExpanded = true;
-  const area = document.getElementById('briefing-report-area');
-  const runBtn = document.getElementById('briefing-run-btn');
-  const collapseBtn = document.getElementById('briefing-collapse-btn');
-  if(!area) return;
-  area.innerHTML = briefingReportHTML(computeTodaysBriefing());
-  area.classList.remove('hidden');
-  if(runBtn) runBtn.classList.add('hidden');
-  if(collapseBtn) collapseBtn.classList.remove('hidden');
-}
-function collapseBriefing(){
-  briefingExpanded = false;
-  const area = document.getElementById('briefing-report-area');
-  const runBtn = document.getElementById('briefing-run-btn');
-  const collapseBtn = document.getElementById('briefing-collapse-btn');
-  if(area) area.classList.add('hidden');
-  if(runBtn) runBtn.classList.remove('hidden');
-  if(collapseBtn) collapseBtn.classList.add('hidden');
-}
-function todaysBriefingHTML(){
-  briefingExpanded = false;
-  const b = computeTodaysBriefing();
-  const allItems = b.critical.concat(b.attention, b.wins);
-  const topItem = allItems[0];
-  const summaryLine = topItem ? topItem.text : 'Nothing needs your attention right now.';
-  return sectionTitle('Kairo Pulse')+
-    '<div class="border border-zinc-200 rounded-2xl bg-white mb-8 overflow-hidden">'+
-      '<div class="flex items-center justify-between gap-3 px-5 py-4">'+
-        '<div class="flex items-center gap-3 min-w-0">'+
-          '<span class="relative w-1.5 h-1.5 shrink-0" title="Prepared for you, continuously">'+
-            '<span class="absolute inset-0 rounded-full bg-forest-500 sonar-ring"></span>'+
-            '<span class="absolute inset-0 rounded-full bg-forest-500"></span>'+
-          '</span>'+
-          '<div class="min-w-0"><p class="text-sm text-zinc-700 truncate">'+summaryLine+'</p>'+(allItems.length>1?'<p class="text-xs text-zinc-400 mt-0.5">+'+(allItems.length-1)+' more, already prepared</p>':'')+'</div>'+
-        '</div>'+
-        '<button id="briefing-run-btn" onclick="runKairoInsights()" class="flex items-center gap-1.5 text-xs font-medium text-zinc-500 border border-zinc-200 rounded-lg px-3 py-1.5 hover:border-zinc-300 hover:text-zinc-700 transition shrink-0">'+icon('zap','w-3.5 h-3.5')+'Run Insights</button>'+
-        '<button id="briefing-collapse-btn" onclick="collapseBriefing()" class="hidden text-xs font-medium text-zinc-400 hover:text-zinc-600 transition shrink-0 px-2 py-1.5">Hide</button>'+
-      '</div>'+
-      '<div id="briefing-report-area" class="hidden px-5 pb-5 pt-2 border-t border-zinc-100"></div>'+
-    '</div>';
-}
-function pipelineHealthHTML(){
-  const sourced = CANDIDATES.length;
-  const screened = JOBS.reduce(function(s,j){ return s+(j.recommended||0); }, 0);
-  const shortlisted = JOBS.reduce(function(s,j){ return s+(j.submitted||0); }, 0);
-  const interview = hmInterviews.length;
-  const offer = OFFERED_CANDIDATES.length;
-  const joined = OFFERED_CANDIDATES.filter(function(o){ return o.status==='Joined'; }).length;
-  const stages = [['Sourced',sourced],['Screened',screened],['Shortlisted',shortlisted],['Interview',interview],['Offer',offer],['Joined',joined]];
-  const max = Math.max.apply(null, stages.map(function(s){ return s[1]; })) || 1;
-  let worstDrop = { from:'', to:'', pct:0 };
-  for(let i=0;i<stages.length-1;i++){
-    const a = stages[i][1], b = stages[i+1][1];
-    if(a>0){ const drop = Math.round(((a-b)/a)*100); if(drop>worstDrop.pct) worstDrop = { from:stages[i][0], to:stages[i+1][0], pct:drop }; }
-  }
-  return sectionTitle('Pipeline Health', 'Your whole desk, sourced to joined')+
-    '<div class="border border-zinc-200 rounded-2xl bg-white p-6 mb-8">'+
-      '<div class="flex items-end gap-1">'+stages.map(function(s){
-        const h = Math.max(8, Math.round((s[1]/max)*72));
-        return '<div class="flex-1 flex flex-col items-center gap-2">'+
-          '<span class="text-xs font-bold text-ink">'+s[1]+'</span>'+
-          '<div class="w-full rounded-t-md bg-accent-500" style="height:'+h+'px;"></div>'+
-          '<span class="text-[10px] text-zinc-400 text-center">'+s[0]+'</span>'+
-        '</div>';
-      }).join('<div class="pb-6 text-zinc-300 text-xs">\u2192</div>')+'</div>'+
-      (worstDrop.pct>0 ? '<div class="mt-5 pt-4 border-t border-zinc-100 flex items-center gap-2 text-xs">'+icon('bell','w-3.5 h-3.5 text-terracotta-500')+'<span class="text-zinc-600">'+worstDrop.from+' \u2192 '+worstDrop.to+' conversion dropped '+worstDrop.pct+'% \u2014 the biggest leak in your pipeline right now.</span></div>' : '')+
-    '</div>';
-}
-let workQueueTab = 'followup';
-function setWorkQueueTab(t){ workQueueTab = t; const el = document.getElementById('recruiter-work-queue'); if(el) el.outerHTML = recruiterWorkQueueCardHTML(); }
-function workQueueBodyHTML(){
-  const tabs = {
-    screening: CANDIDATES.filter(function(c){ return c.intent==='High'; }).slice(0,6).map(function(c){ return { name:c.name, sub:c.role, meta:'High intent \u2014 ready to screen', id:c.id }; }),
-    interviews: hmInterviews.map(function(i){ return { name:i.candidate, sub:i.role, meta:i.date+' \u00b7 '+i.mode+' \u00b7 '+i.status, id:i.candidateId||null }; }),
-    offers: OFFERED_CANDIDATES.filter(function(o){ return o.status==='Offer Extended'; }).map(function(o){ return { name:o.name, sub:o.role+' \u2014 '+o.client, meta:'\u20b9'+o.ctc+' LPA \u00b7 Extended '+o.date, id:o.candidateId||null, offerId:o.id }; }),
-    approval: PENDING_FEEDBACK.filter(function(p){ return !hmFeedbackDone.includes(p.id); }).map(function(p){ return { name:p.candidate, sub:p.role, meta:'Awaiting hiring manager feedback \u00b7 '+p.daysWaiting+'d waiting', id:p.candidateId||null }; }),
-  };
-  if(workQueueTab==='followup') return '<div id="work-queue-body">'+workQueueFollowUpBodyHTML()+'</div>';
-  const rows = tabs[workQueueTab] || [];
-  return '<div id="work-queue-body">'+
-    (rows.length ? '<div class="divide-y divide-zinc-50">'+rows.map(function(r){
-      return '<div class="flex items-center gap-3 py-3.5">'+
-        candidateAvatarForRef(r.id, r.name, 'w-9 h-9')+
-        '<div class="min-w-0 flex-1"><p class="text-sm font-medium text-ink truncate">'+r.name+'</p><p class="text-xs text-zinc-400 truncate">'+r.sub+' \u00b7 '+r.meta+'</p></div>'+
-        (r.id ? '<div class="flex items-center gap-1.5 shrink-0">'+
-          '<button onclick="openMessages(\'whatsapp\')" title="WhatsApp" class="w-8 h-8 rounded-lg border border-zinc-200 flex items-center justify-center hover:border-zinc-300 transition">'+icon('whatsapp','w-3.5 h-3.5 text-forest-600')+'</button>'+
-          '<button onclick="openMessages(\'email\')" title="Email" class="w-8 h-8 rounded-lg border border-zinc-200 flex items-center justify-center hover:border-zinc-300 transition">'+icon('mail','w-3.5 h-3.5 text-zinc-500')+'</button>'+
-          '<button onclick="connectCall('+r.id+')" title="Call" class="w-8 h-8 rounded-lg border border-zinc-200 flex items-center justify-center hover:border-zinc-300 transition">'+icon('phone','w-3.5 h-3.5 text-zinc-500')+'</button>'+
-        '</div>' : '')+
-        (r.offerId ? '<div class="flex items-center gap-1.5 shrink-0">'+
-          '<button onclick="recordOfferDecision(\''+r.offerId+'\',\'Offer Accepted\')" class="text-xs font-semibold text-forest-600 hover:text-forest-800">Accepted</button>'+
-          '<button onclick="recordOfferDecision(\''+r.offerId+'\',\'Rejected\')" class="text-xs font-semibold text-terracotta-600 hover:text-terracotta-800">Declined</button>'+
-        '</div>' : '')+
-      '</div>';
-    }).join('')+'</div>' : '<p class="text-sm text-zinc-400 text-center py-8">Nothing in this queue right now.</p>')+
-  '</div>';
-}
-function recruiterWorkQueueTabDefs(){
-  return [
-    ['followup','Follow up','Follow-ups you\u2019ve scheduled, overdue first \u2014 plus candidates going quiet who have nothing scheduled yet.'],
-    ['screening','Screening','Candidates marked High intent who haven\u2019t been screened yet \u2014 ready for a first real conversation.'],
-    ['interviews','Interviews','Every real interview across your candidates, whatever its status \u2014 pending confirmation, confirmed, or completed.'],
-    ['offers','Offers','Offers currently extended and awaiting the candidate\u2019s decision \u2014 accept or decline right from here.'],
-    ['approval','Approval needed','Feedback still awaited from the hiring manager after an interview. Note: this is feedback pending, not an offer awaiting approval \u2014 that lives in Talent Pool \u2192 Lineup.'],
-  ];
-}
-function recruiterWorkQueueHTML(){
-  return '<div id="recruiter-work-queue-anchor"></div>'+
-    sectionTitle('Recruiter Work Queue', 'What you\u2019re actually working through today')+
-    recruiterWorkQueueCardHTML();
-}
-function recruiterWorkQueueCardHTML(){
-  const tabDefs = recruiterWorkQueueTabDefs();
-  const dueFollowUps = myPendingFollowUps().filter(function(f){ const st = followUpDueState(f); return st==='overdue' || st==='today'; }).length;
-  return '<div id="recruiter-work-queue" class="border border-zinc-200 rounded-2xl p-5 mb-8 bg-white">'+
-      '<div class="flex items-center gap-1 flex-wrap border-b border-zinc-100 pb-3 mb-1">'+tabDefs.map(function(t){
-        return '<span class="relative inline-flex">'+
-          '<button onclick="setWorkQueueTab(\''+t[0]+'\')" class="pl-3 pr-6 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition '+(workQueueTab===t[0]?'bg-ink text-white':'text-zinc-500 hover:bg-zinc-100')+'">'+t[1]+(t[0]==='followup' && dueFollowUps ? ' <span class="ml-1 px-1.5 rounded-full text-[10px] '+(workQueueTab===t[0]?'bg-white/20':'bg-terracotta-50 text-terracotta-600')+'">'+dueFollowUps+'</span>' : '')+'</button>'+
-          '<span class="absolute top-1 right-1"><span class="group/tip relative">'+
-            '<span class="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-semibold cursor-help select-none '+(workQueueTab===t[0]?'text-white/50 hover:text-white':'text-zinc-300 hover:text-accent-600')+'" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">i</span>'+
-            '<span class="hidden group-hover/tip:block absolute left-1/2 -translate-x-1/2 top-5 w-56 bg-ink text-white text-[11px] leading-relaxed rounded-lg px-3 py-2 shadow-xl z-30 pointer-events-none text-left normal-case">'+t[2]+'</span>'+
-          '</span></span>'+
-        '</span>';
-      }).join('')+'</div>'+
-      workQueueBodyHTML()+
-    '</div>';
-}
 function computeRecruiterRevenue(name){
   const joined = PAYTRACK_JOINED.filter(function(p){ return p.recruiter===name; });
   const revenue = joined.reduce(function(sum,p){ return sum + (p.joiningSalary||0)*100000*0.0833; }, 0);
@@ -4761,60 +4478,6 @@ function computeRecruiterQualityFunnel(name){
     accepted: reached(['Offer Accepted','Joined','Lock-in Completed']),
   };
 }
-function leaderboardRowHTML(rank, name, isMe, metricHTML){
-  return '<div class="flex items-center gap-3 py-3 '+(isMe?'bg-accent-50/40 -mx-5 px-5 rounded-lg':'')+'">'+
-    '<span class="text-xs font-bold text-zinc-400 w-5">'+rank+'</span>'+
-    '<span class="w-7 h-7 rounded-full bg-zinc-900 text-white text-[10px] font-semibold flex items-center justify-center shrink-0">'+initials(name)+'</span>'+
-    '<span class="text-sm font-medium text-ink flex-1 truncate">'+name+(isMe?' (you)':'')+'</span>'+
-    metricHTML+
-  '</div>';
-}
-let perfBoardTab = 'revenue';
-function setPerfBoardTab(t){ perfBoardTab = t; refreshPerfBoard(); }
-function refreshPerfBoard(){
-  const el = document.getElementById('perf-board-body');
-  if(el) el.outerHTML = perfBoardBodyHTML();
-}
-function perfBoardBodyHTML(){
-  const names = RECRUITER_ROSTER.slice(0,5).map(function(r){ return r.name; });
-  if(!names.includes('Priya Sharma')) names.unshift('Priya Sharma');
-  if(perfBoardTab==='revenue'){
-    const ranked = names.map(function(n){ return { name:n, r:computeRecruiterRevenue(n) }; }).sort(function(a,b){ return b.r.revenue-a.r.revenue; });
-    return '<div id="perf-board-body" class="divide-y divide-zinc-50">'+ranked.map(function(s,i){
-      return leaderboardRowHTML(i+1, s.name, s.name==='Priya Sharma',
-        '<div class="text-right shrink-0"><p class="text-sm font-bold text-ink">\u20b9'+(s.r.revenue/100000).toFixed(1)+'L</p><p class="text-[10px] text-zinc-400">'+s.r.joinedCount+' joined</p></div>');
-    }).join('')+'</div>';
-  }
-  const ranked = names.map(function(n){ return { name:n, f:computeRecruiterQualityFunnel(n) }; }).sort(function(a,b){ return b.f.accepted-a.f.accepted; });
-  return '<div id="perf-board-body" class="divide-y divide-zinc-50">'+ranked.map(function(s,i){
-    const f = s.f;
-    return leaderboardRowHTML(i+1, s.name, s.name==='Priya Sharma',
-      '<div class="flex items-center gap-1.5 text-[11px] text-zinc-400 shrink-0">'+
-        '<span class="font-semibold text-zinc-700">'+f.submissions+'</span> sub'+icon('arrowLeft','w-2.5 h-2.5 rotate-180 text-zinc-300')+
-        '<span class="font-semibold text-zinc-700">'+f.shortlisted+'</span> short'+icon('arrowLeft','w-2.5 h-2.5 rotate-180 text-zinc-300')+
-        '<span class="font-semibold text-zinc-700">'+f.interviewed+'</span> int'+icon('arrowLeft','w-2.5 h-2.5 rotate-180 text-zinc-300')+
-        '<span class="font-semibold text-forest-600">'+f.accepted+'</span> accepted'+
-      '</div>');
-  }).join('')+'</div>';
-}
-function recruiterPerformanceHTML(){
-  return sectionTitle('Recruiter Performance', 'Where you stand this month \u2014 quietly, not a scoreboard shouting at you')+
-    '<div class="border border-zinc-200 rounded-2xl bg-white p-5 mb-8">'+
-      '<div class="flex items-center gap-5 mb-3 border-b border-zinc-100 pb-3">'+
-        '<button onclick="setPerfBoardTab(\'revenue\')" class="relative pb-2 text-sm font-medium transition '+(perfBoardTab==='revenue'?'text-ink':'text-zinc-400 hover:text-zinc-600')+'">'+
-          '<span class="flex items-center gap-1.5">Revenue'+infoTip('Ranked by real revenue from joined candidates \u2014 each joiner\u2019s offered annual CTC \u00d7 8.33%, the standard placement fee.')+'</span>'+
-          (perfBoardTab==='revenue'?'<span class="absolute left-0 right-0 -bottom-px h-0.5 rounded-full" style="background:#2F313F;"></span>':'')+
-        '</button>'+
-        '<button onclick="setPerfBoardTab(\'quality\')" class="relative pb-2 text-sm font-medium transition '+(perfBoardTab==='quality'?'text-ink':'text-zinc-400 hover:text-zinc-600')+'">'+
-          '<span class="flex items-center gap-1.5">Quality'+infoTip('Ranked by candidates actually accepted \u2014 shown alongside real submissions, shortlists and interviews so you can see the whole funnel, not just the final number.')+'</span>'+
-          (perfBoardTab==='quality'?'<span class="absolute left-0 right-0 -bottom-px h-0.5 rounded-full" style="background:#2F313F;"></span>':'')+
-        '</button>'+
-      '</div>'+
-      perfBoardBodyHTML()+
-    '</div>';
-}
-let dashNoteText = '';
-function saveDashNote(v){ dashNoteText = v; }
 // ===== Personal To Do — genuinely user-authored tasks/reminders, distinct from
 // the AI-suggested candidate-specific ACTIONS the existing Tasks screen covers. =====
 let PERSONAL_TASKS = [
@@ -4929,48 +4592,6 @@ function renderToDo(){
     '</div>'+
     '<div class="border border-zinc-200 rounded-2xl bg-white overflow-hidden">'+toDoListHTML()+'</div>'+
   '</div>';
-}
-function personalProductivityHTML(){
-  const tasksDue = pendingTasks().length;
-  const pendingApprovals = PENDING_FEEDBACK.filter(function(p){ return !hmFeedbackDone.includes(p.id); }).length;
-  const recentWorkflows = WORKFLOWS.slice(0,3);
-  return sectionTitle('Personal Productivity', 'Your own workspace \u2014 nobody else sees this panel')+
-    '<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">'+
-      '<div class="border border-zinc-200 rounded-2xl bg-white p-5">'+
-        '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-3">TASKS &amp; APPROVALS</p>'+
-        '<button onclick="showView(\'all-tasks\')" class="w-full flex items-center justify-between py-2 text-left hover:bg-zinc-50 -mx-2 px-2 rounded-lg transition"><span class="text-sm text-zinc-700">Tasks due</span><span class="text-sm font-bold text-ink">'+tasksDue+'</span></button>'+
-        '<button onclick="toast(\'Opening pending approvals\')" class="w-full flex items-center justify-between py-2 text-left hover:bg-zinc-50 -mx-2 px-2 rounded-lg transition"><span class="text-sm text-zinc-700">Pending approvals</span><span class="text-sm font-bold text-ink">'+pendingApprovals+'</span></button>'+
-        '<p class="text-xs font-semibold text-zinc-400 tracking-widest mt-4 mb-2">SAVED SEARCHES</p>'+
-        (SAVED_SEARCHES.length ? SAVED_SEARCHES.slice(0,3).map(function(s){ return '<button onclick="runSavedSearch(\''+s.id+'\')" class="w-full text-left py-1.5 text-xs text-accent-600 hover:text-accent-800">'+s.query+'</button>'; }).join('') : '<p class="text-xs text-zinc-400">None saved yet \u2014 save one from search.</p>')+
-      '</div>'+
-      '<div class="border border-zinc-200 rounded-2xl bg-white p-5">'+
-        '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-3">RECENT WORKFLOWS</p>'+
-        (recentWorkflows.length ? recentWorkflows.map(function(w){ return '<button onclick="openWorkflowBuilder(\''+w.id+'\')" class="w-full flex items-center justify-between py-2 text-left hover:bg-zinc-50 -mx-2 px-2 rounded-lg transition"><span class="text-sm text-zinc-700 truncate">'+w.name+'</span>'+icon('arrowLeft','w-3.5 h-3.5 text-zinc-300 rotate-180 shrink-0')+'</button>'; }).join('') : '<p class="text-xs text-zinc-400">No workflows yet.</p>')+
-        '<p class="text-xs font-semibold text-zinc-400 tracking-widest mt-4 mb-2">NOTES</p>'+
-        '<textarea onblur="saveDashNote(this.value)" placeholder="Jot a quick reminder\u2026" rows="2" class="w-full text-xs border border-zinc-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-accent-500">'+dashNoteText+'</textarea>'+
-      '</div>'+
-    '</div>';
-}
-function revenueIntelligenceHTML(){
-  const expectedThisMonth = computeRevenue();
-  const atRisk = PAYTRACK_AT_RISK.reduce(function(s,p){ return s+p.placementFee*100000; }, 0);
-  const lockInExpiring = PAYTRACK_JOINED.filter(function(p){ return p.replacementDays<=30; }).length;
-  const pendingJoining = OFFERED_CANDIDATES.filter(function(o){ return o.status==='Offer Accepted'; }).length;
-  const placementsCompleted = PAYTRACK_COMPLETED.length;
-  const tiles = [
-    ['Expected This Month', formatINR(expectedThisMonth), 'forest'],
-    ['Revenue at Risk', formatINR(atRisk), 'terracotta'],
-    ['Lock-in Expiring (30d)', lockInExpiring, 'gold'],
-    ['Offers Pending Joining', pendingJoining, 'navy'],
-    ['Placements Completed', placementsCompleted, 'zinc'],
-  ];
-  return sectionTitle('Revenue Intelligence', 'Oontu is a business operating system, not just a hiring tool')+
-    '<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">'+tiles.map(function(t){
-      return '<button onclick="showView(\'paytrack\')" class="border border-zinc-200 rounded-2xl p-4 bg-white text-left hover:border-zinc-300 transition">'+
-        '<p class="text-xl font-bold text-ink">'+t[1]+'</p>'+
-        '<p class="text-[11px] text-zinc-500 mt-1">'+t[0]+'</p>'+
-      '</button>';
-    }).join('')+'</div>';
 }
 /* ============================================================
    OONTU BRAND SYSTEM 1.0 — DASHBOARDS
@@ -5122,8 +4743,15 @@ function oTabPick(id, i, fnName){
   oTabPlace(el, false);
   if(fnName && typeof window[fnName]==='function') window[fnName](i);
 }
+/* every screen's header gets the same small grey context line above its title (the date), like the dashboards */
+function oEnhancePage(root){
+  const head = (root || document).querySelector('.sec-head');
+  if(!head || head.closest('.o-page') || head.closest('[role="dialog"]')) return;
+  head.classList.add('o-pagehead');
+  if(!head.querySelector('.o-ctx')) head.insertAdjacentHTML('afterbegin', '<p class="o-ctx">'+oEsc(oDateLine())+'</p>');
+}
 function oPostRender(root){
-  (root || document).querySelectorAll('.o-tabs').forEach(function(el){ oTabPlace(el, true); }); oEnhanceTabs(root);
+  (root || document).querySelectorAll('.o-tabs').forEach(function(el){ oTabPlace(el, true); }); oEnhancePage(root); oEnhanceTabs(root);
 }
 /* Any role="tablist" gets the same sliding 2 px underline as the sidebar's selection. The previous position is remembered, so a tab bar
    that is redrawn when you pick a tab still slides from where it was instead of jumping. */
@@ -5217,6 +4845,13 @@ function oKairoCard(lines, o){
 /* the number card for any screen: label, 28/700 number, one grey note; no icon tile, no colour */
 function oNumCard(label, value, note){
   return '<div class="o-card o-num"><p class="o-num__label">'+label+'</p><p class="o-num__value">'+value+'</p>'+(note ? '<p class="o-num__note">'+note+'</p>' : '')+'</div>';
+}
+/* A change made from a dialog or another panel (a follow-up, an interview outcome) redraws the dashboard in place, keeping the scroll position. */
+function oRefreshDashboard(){
+  const v = state.activeNav, fn = RENDERERS[v];
+  if(!fn || !/(^|-)dashboard$|^candidate-home$/.test(v)) return;
+  const main = document.getElementById('main-content'); if(!main) return;
+  const top = main.scrollTop; main.innerHTML = fn(); main.scrollTop = top; oPostRender(main);
 }
 function oDashShell(parts){ return '<div class="content-shell o-page">'+parts.filter(Boolean).join('')+'</div>'; }
 function oWeekRange(){
@@ -24692,7 +24327,6 @@ function renderSettings(){
    figures match the Billing / PayTrack screens exactly.
 ============================================================ */
 let odShowAllAttention = false;
-function odToggleAttention(){ odShowAllAttention = !odShowAllAttention; showView('admin-dashboard'); }
 
 function odFmtL(lakhs){ return '\u20b9'+(Math.round(lakhs*10)/10).toFixed(1)+'L'; }
 function odPlural(n, word){ return n+' '+word+(n===1?'':'s'); }
@@ -24779,141 +24413,6 @@ function odAttentionItems(){
   return items.sort(function(a,b){ return rank[a.tone]-rank[b.tone]; });
 }
 
-function odMoneyTile(label, value, sub, tone, action){
-  const valueColor = tone==='red' ? 'text-terracotta-600' : 'text-ink';
-  const dot = { green:'bg-forest-500', blue:'bg-accent-500', amber:'bg-gold-500', red:'bg-terracotta-500' }[tone];
-  return '<button onclick="'+action+'" class="card card-hover p-5 text-left">'+
-    '<p class="flex items-center gap-2 text-xs font-medium text-zinc-500"><span class="w-2 h-2 rounded-full '+dot+'"></span>'+label+'</p>'+
-    '<p class="text-[26px] font-bold tracking-tight mt-2 '+valueColor+' kpi-pop">'+value+'</p>'+
-    '<p class="text-xs text-zinc-400 mt-1">'+sub+'</p>'+
-  '</button>';
-}
-function odAttentionHTML(items){
-  const toneCls = {
-    red:   { bar:'bg-terracotta-500', chip:'bg-terracotta-50 text-terracotta-600' },
-    amber: { bar:'bg-gold-500',       chip:'bg-gold-100 text-gold-700' },
-    blue:  { bar:'bg-accent-500',     chip:'bg-accent-50 text-accent-600' }
-  };
-  if(!items.length){
-    return '<div class="card p-6 flex items-center gap-4 mb-8">'+
-      '<div class="w-10 h-10 rounded-xl bg-forest-50 text-forest-600 flex items-center justify-center shrink-0">'+icon('check','w-5 h-5')+'</div>'+
-      '<div><p class="text-sm font-semibold text-ink">All clear</p><p class="text-xs text-zinc-500 mt-0.5">No approvals, at-risk clients or stuck jobs right now.</p></div>'+
-    '</div>';
-  }
-  const LIMIT = 5;
-  const shown = odShowAllAttention ? items : items.slice(0, LIMIT);
-  return '<div class="card overflow-hidden mb-8">'+
-    shown.map(function(it, i){
-      const t = toneCls[it.tone];
-      return '<div class="relative flex items-center gap-4 px-5 py-4'+(i?' border-t border-zinc-100':'')+'">'+
-        '<span class="absolute left-0 top-3 bottom-3 w-1 rounded-r-full '+t.bar+'"></span>'+
-        '<div class="hidden sm:flex w-9 h-9 rounded-xl items-center justify-center shrink-0 '+t.chip+'">'+icon(it.icon,'w-[18px] h-[18px]')+'</div>'+
-        '<div class="flex-1 min-w-0"><p class="text-sm font-semibold text-ink">'+it.text+'</p><p class="text-xs text-zinc-500 mt-0.5 truncate">'+it.sub+'</p></div>'+
-        '<button onclick="'+it.action+'" class="shrink-0 px-3.5 py-2 rounded-lg border border-zinc-200 bg-white text-xs font-semibold text-zinc-700 hover:border-accent-300 hover:text-accent-700 transition">'+it.cta+'</button>'+
-      '</div>';
-    }).join('')+
-    (items.length>LIMIT ? '<button onclick="odToggleAttention()" class="w-full border-t border-zinc-100 px-5 py-3 text-xs font-semibold text-accent-600 hover:bg-zinc-50 transition">'+
-      (odShowAllAttention ? 'Show less' : 'Show '+(items.length-LIMIT)+' more')+'</button>' : '')+
-  '</div>';
-}
-function odPanelHeader(title, meta, linkLabel, action){
-  return '<div class="flex items-center justify-between px-5 pt-5 pb-3">'+
-    '<p class="text-sm font-semibold text-ink">'+title+(meta?' <span class="font-normal text-zinc-400">\u00b7 '+meta+'</span>':'')+'</p>'+
-    '<button onclick="'+action+'" class="text-xs font-semibold text-accent-600 hover:text-accent-800">'+linkLabel+' \u2192</button>'+
-  '</div>';
-}
-function odClientsHTML(){
-  const rows = CLIENTS.map(function(c){
-    const pl = odPlacementsFor(function(x){ return x.client===c.name; });
-    return {
-      c:c,
-      revenue: pl.reduce(function(s,p){ return s+p.fee; }, 0),
-      inProcess: SUBMISSIONS.filter(function(s){ return s.clientId===c.id && odIsLiveSubmission(s); }).length
-    };
-  }).sort(function(a,b){ return b.revenue-a.revenue || b.c.health-a.c.health; });
-  const healthPill = function(h){
-    const cls = h>=80 ? 'bg-forest-50 text-forest-600' : h>=70 ? 'bg-gold-100 text-gold-700' : 'bg-terracotta-50 text-terracotta-600';
-    return '<span class="inline-block min-w-[2.25rem] text-center text-xs font-semibold px-2 py-0.5 rounded-full '+cls+'">'+h+'</span>';
-  };
-  return '<div class="card overflow-hidden">'+
-    odPanelHeader('Clients', odPlural(CLIENTS.length,'client'), 'All clients', "showView('client-management')")+
-    '<div class="grid grid-cols-[1fr_auto_auto_auto] gap-x-5 px-5 pb-2 text-[11px] font-medium text-zinc-400">'+
-      '<span>Client</span><span class="text-right">Open roles</span><span class="text-right">Revenue</span><span class="text-right">Health</span></div>'+
-    rows.map(function(r){
-      return '<button onclick="odOpenClient(\''+r.c.id+'\')" class="w-full grid grid-cols-[1fr_auto_auto_auto] gap-x-5 items-center px-5 py-3 border-t border-zinc-100 text-left hover:bg-zinc-50 transition">'+
-        '<span class="min-w-0"><span class="block text-sm font-medium text-ink truncate">'+escapeHtml(r.c.name)+'</span>'+
-          '<span class="block text-xs text-zinc-400 truncate">'+escapeHtml(r.c.industry)+' \u00b7 '+odPlural(r.inProcess,'candidate')+' in process</span></span>'+
-        '<span class="text-sm text-zinc-700 text-right">'+r.c.openRoles+'</span>'+
-        '<span class="text-sm font-medium text-ink text-right">'+(r.revenue ? odFmtL(r.revenue) : '<span class="text-zinc-300">\u2014</span>')+'</span>'+
-        '<span class="text-right">'+healthPill(r.c.health)+'</span>'+
-      '</button>';
-    }).join('')+
-  '</div>';
-}
-function odTeamHTML(){
-  const LIMIT = 6;
-  const rows = RECRUITER_ROSTER.map(function(r){
-    const pl = odPlacementsFor(function(x){ return x.recruiter===r.name; });
-    const role = CUSTOM_ROLES.find(function(x){ return x.id===r.assignedRoleId; });
-    return { r:r, role: role ? role.name : 'Recruiter', jobs: odActiveJobsFor(r.id).length,
-      placements: pl.length, revenue: pl.reduce(function(s,p){ return s+p.fee; }, 0) };
-  }).sort(function(a,b){ return b.revenue-a.revenue || b.jobs-a.jobs || b.r.successRate-a.r.successRate; });
-  const seatsIncluded = ORG_STRUCTURE.subscription.seatsIncluded;
-  return '<div class="card overflow-hidden">'+
-    odPanelHeader('Team', RECRUITER_ROSTER.length+(seatsIncluded?' of '+seatsIncluded+' seats':' people'), 'All people', "showView('admin-recruiters')")+
-    '<div class="grid grid-cols-[1fr_auto_auto_auto] gap-x-5 px-5 pb-2 text-[11px] font-medium text-zinc-400">'+
-      '<span>Person</span><span class="text-right">Active jobs</span><span class="text-right">Revenue</span><span class="text-right">Closure</span></div>'+
-    rows.slice(0, LIMIT).map(function(x){
-      const sub = x.jobs ? escapeHtml(x.role)+(x.placements?' \u00b7 '+odPlural(x.placements,'placement'):'')
-        : escapeHtml(x.role)+' \u00b7 <span class="text-gold-700">no active jobs</span>';
-      return '<button onclick="openManagerRecruiterDetail(\''+x.r.id+'\')" class="w-full grid grid-cols-[1fr_auto_auto_auto] gap-x-5 items-center px-5 py-3 border-t border-zinc-100 text-left hover:bg-zinc-50 transition">'+
-        '<span class="flex items-center gap-3 min-w-0">'+
-          '<span class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold text-white shrink-0" style="background:#2F313F;">'+initials(x.r.name)+'</span>'+
-          '<span class="min-w-0"><span class="block text-sm font-medium text-ink truncate">'+escapeHtml(x.r.name)+'</span><span class="block text-xs text-zinc-400 truncate">'+sub+'</span></span>'+
-        '</span>'+
-        '<span class="text-sm text-zinc-700 text-right">'+x.jobs+'</span>'+
-        '<span class="text-sm font-medium text-ink text-right">'+(x.revenue ? odFmtL(x.revenue) : '<span class="text-zinc-300">\u2014</span>')+'</span>'+
-        '<span class="text-sm text-zinc-700 text-right">'+x.r.successRate+'%</span>'+
-      '</button>';
-    }).join('')+
-    (rows.length>LIMIT ? '<button onclick="showView(\'admin-recruiters\')" class="w-full border-t border-zinc-100 px-5 py-3 text-xs font-semibold text-accent-600 hover:bg-zinc-50 transition">View all '+rows.length+' people</button>' : '')+
-  '</div>';
-}
-function odPipelineHTML(){
-  const liveSubs = SUBMISSIONS.filter(odIsLiveSubmission);
-  const steps = [
-    ['Open jobs',     JOBS.filter(function(j){ return j.status==='Active'; }).length,                                           "showView('jobs')"],
-    ['In process',    liveSubs.length,                                                                                          "showView('talent-pool')"],
-    ['Interviews',    hmInterviews.filter(function(i){ return ['Completed','Cancelled'].indexOf(i.status)===-1; }).length,     "showView('interviews')"],
-    ['Offers out',    OFFERED_CANDIDATES.filter(function(o){ return o.status==='Offer Extended' || o.status==='Offer Accepted'; }).length, "showView('talent-pool')"],
-    ['In guarantee',  PAYTRACK_JOINED.length,                                                                                   "showView('payroll-billing')"]
-  ];
-  return '<div class="card p-2 mb-8 grid grid-cols-2 md:grid-cols-5">'+
-    steps.map(function(s, i){
-      return '<button onclick="'+s[2]+'" class="relative text-left px-4 py-4 rounded-xl hover:bg-zinc-50 transition">'+
-        '<p class="text-[26px] font-bold tracking-tight text-ink">'+s[1]+'</p>'+
-        '<p class="text-xs text-zinc-500 mt-0.5">'+s[0]+'</p>'+
-        (i<steps.length-1 ? '<span class="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 text-zinc-300">'+icon('chevronRight','w-4 h-4')+'</span>' : '')+
-      '</button>';
-    }).join('')+
-  '</div>';
-}
-function odSetupFooterHTML(){
-  const teams = ORG_STRUCTURE.departments.reduce(function(s,d){ return s+d.teams.length; }, 0);
-  const connected = INTEGRATION_CATEGORIES.reduce(function(s,cat){ return s+cat.providers.filter(function(p){ return p.status==='connected'; }).length; }, 0);
-  const total = INTEGRATION_CATEGORIES.reduce(function(s,cat){ return s+cat.providers.length; }, 0);
-  const bits = [
-    odPlural(ORG_STRUCTURE.branches.length,'branch').replace('branchs','branches'),
-    odPlural(teams,'team'),
-    connected+'/'+total+' integrations',
-    '2FA '+(SECURITY_SETTINGS.twoFactor?'on':'off'),
-    'SSO '+(SECURITY_SETTINGS.sso?'on':'off')
-  ];
-  return '<div class="flex flex-wrap items-center justify-between gap-3 px-1 text-xs text-zinc-400">'+
-    '<span>'+icon('cog','w-3.5 h-3.5 inline -mt-0.5 mr-1.5')+'Workspace \u00b7 '+bits.join(' \u00b7 ')+'</span>'+
-    '<button onclick="showView(\'setup-hub\')" class="font-semibold text-accent-600 hover:text-accent-800">Open setup \u2192</button>'+
-  '</div>';
-}
 
 /* ============================================================
    HOME — the calm landing page for each agency role (App UI rules).
@@ -24929,114 +24428,12 @@ function kairoNoteHTML(text, buttons){
       ((buttons||[]).length ? '<div class="kairo-note__actions">'+buttons.slice(0,2).map(function(b){ return '<button type="button" class="btn-quiet" onclick="'+b.onclick+'">'+b.label+'</button>'; }).join('')+'</div>' : '')+
     '</div></div>';
 }
-function homeGreetingHTML(){
-  const h = new Date().getHours(), first = String((ROLE_META[state.role] || {}).name || '').split(' ')[0];
-  if(state.role==='admin' && wsSetup && wsSetup.welcomeSession===wsSessionSeq)   // the first visit after sign-up
-    return '<div class="sec-head mb-6"><h1 class="sec-title">Welcome to Oontu'+(first ? ', '+escapeHtml(first) : '')+'.</h1>'+
-      '<p class="sec-sub">'+escapeHtml(ORG_STRUCTURE.profile.brandName || '')+'</p></div>';
-  const date = new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  return '<div class="sec-head mb-6"><h1 class="sec-title">'+(h<12 ? 'Good morning' : h<17 ? 'Good afternoon' : 'Good evening')+(first ? ', '+escapeHtml(first) : '')+'</h1>'+
-    '<p class="sec-sub">'+date+' · '+escapeHtml(ORG_STRUCTURE.profile.brandName || '')+'</p></div>';
-}
 /* The jobs this person looks after: everything for the Owner, their team's for a Recruiter Manager, their own for a Recruiter. */
-function homeJobs(){
-  if(state.role==='manager'){
-    const me = currentActingUser(), team = me ? recruitersManagedBy(me.id).map(function(r){ return r.id; }).concat([me.id]) : [];
-    return JOBS.filter(function(j){ return (j.assignedRecruiters||[]).some(function(r){ return team.indexOf(r)>-1; }); });
-  }
-  if(state.role==='recruiter'){ const me = currentActingUser(); return JOBS.filter(function(j){ return me && isRecruiterMappedToJob(j.id, me.id); }); }
-  return JOBS.slice();
-}
-function homeIsOpenJob(j){ return j.status==='Active' || j.status==='Open'; }
-function homeTodaysInterviews(){
-  const list = state.role==='admin' ? hmInterviews.slice() : interviewsForCurrentUser();
-  return list.filter(function(i){ return interviewIsToday(i) && i.status!=='Cancelled' && i.status!=='Completed'; });
-}
-function homeTime(iv){ const p = String(iv.date||'').split(', '); return p[1] || p[0] || ''; }
 function homeApprovalText(r){
   const c = r.context || {}, cand = c.candidateId ? byId(c.candidateId) : null, job = c.jobId ? jobById(c.jobId) : (r.entityType==='Job' ? jobById(r.entityId) : null);
   if(r.entityType==='ClientApproval'){ const cl = clientById(r.entityId); return { title:'Approve new client'+(cl ? ' \u00b7 '+cl.name : ''), meta:r.requestedByName ? 'from '+r.requestedByName : '' }; }
   const what = { Offer:'Approve offer', JobMappingRequest:'Job access request', SubmissionReview:'Review submission', Job:'Approve new job', JobCreation:'Approve new job' }[r.entityType] || 'Approval needed';
   return { title: what+(cand ? ' · '+cand.name : ''), meta: [job ? job.title : '', r.requestedByName ? 'from '+r.requestedByName : ''].filter(Boolean).join(' · ') };
-}
-function homeRowHTML(o){
-  return '<li><button type="button" class="home-row" onclick="'+o.onclick+'">'+
-    '<span class="home-row__icon home-row__icon--'+(o.tone||'blue')+'" aria-hidden="true">'+icon(o.icon,'w-4 h-4')+'</span>'+
-    '<span class="home-row__text"><span class="home-row__title">'+o.title+'</span>'+(o.meta ? '<span class="home-row__meta">'+o.meta+'</span>' : '')+'</span>'+
-    (o.side ? '<span class="home-row__side">'+o.side+'</span>' : '')+
-  '</button></li>';
-}
-function homeListCardHTML(title, rows, empty, more){
-  return '<section class="card home-card">'+
-    '<div class="home-card__head"><h3 class="home-card__title">'+title+'</h3>'+(more ? '<button type="button" class="btn-quiet text-sm" onclick="'+more.onclick+'">'+more.label+'</button>' : '')+'</div>'+
-    (rows.length ? '<ul class="home-list">'+rows.join('')+'</ul>' : '<p class="home-empty">'+empty+'</p>')+
-  '</section>';
-}
-function renderLeadHome(){
-  const jobs = homeJobs(), jobIds = jobs.map(function(j){ return j.id; });
-  const open = jobs.filter(homeIsOpenJob);
-  const weekAgo = Date.now() - 7*864e5, month = new Date().toISOString().slice(0,7);
-  const subs = SUBMISSIONS.filter(function(s){ return jobIds.indexOf(s.jobId)>-1; });
-  const submitted = subs.filter(function(s){ return new Date(s.createdAt).getTime()>=weekAgo && ['Pending Review','Ready to Send'].indexOf(s.stage)<0; }).length;
-  const joined = subs.filter(function(s){ return s.stage==='Joined' && String(s.updatedAt||'').slice(0,7)===month; }).length;
-  const stale = open.filter(function(j){ return (j.daysOpen||0)>=5 && !submissionsForJob(j.id).length; });
-  const approvals = pendingApprovalsForApprover();
-  const todays = homeTodaysInterviews();
-  const attention = approvals.slice(0,4).map(function(r){ const a = homeApprovalText(r); return homeRowHTML({ icon:'check', tone:'amber', title:escapeHtml(a.title), meta:escapeHtml(a.meta), onclick:"showView('approval-center')" }); })
-    .concat(stale.slice(0, Math.max(2, 6-Math.min(approvals.length,4))).map(function(j){
-      return homeRowHTML({ icon:'briefcase', tone:'red', title:escapeHtml(j.title)+' has no candidates', meta:escapeHtml(j.client||'')+' · open '+j.daysOpen+' days', onclick:"openJob('"+j.id+"')" });
-    }));
-  const ivRows = todays.slice(0,6).map(function(i){ const job = i.jobId ? jobById(i.jobId) : null;
-    return homeRowHTML({ icon:'calendar', title:escapeHtml(i.candidate)+(i.round ? ' · '+escapeHtml(i.round) : ''), meta:escapeHtml(i.role)+(job ? ', '+escapeHtml(job.client) : ''), side:escapeHtml(homeTime(i)), onclick:"showView('interviews')" }); });
-  const note = stale.length
-    ? kairoNoteHTML(stale.length+(stale.length===1 ? ' job has' : ' jobs have')+' had no candidates for 5 days or more. I can suggest people from your talent pool for '+(stale.length===1 ? 'it.' : 'them.'),
-        [{ label:'Review jobs', onclick:"showView('jobs')" }])
-    : approvals.length ? kairoNoteHTML(approvals.length+(approvals.length===1 ? ' approval is' : ' approvals are')+' waiting for you. Everything else is moving.', [{ label:'Open approvals', onclick:"showView('approval-center')" }])
-    : kairoNoteHTML('Nothing is stuck right now. Your jobs are moving.', []);
-  const card = function(label, value, caption, onclick){
-    return '<button type="button" class="card home-stat" onclick="'+onclick+'"><span class="home-stat__label">'+label+'</span><span class="home-stat__value">'+value+'</span><span class="home-stat__caption">'+caption+'</span></button>';
-  };
-  return '<div class="content-shell max-w-6xl home">'+
-    homeGreetingHTML()+
-    wsSetupCardHTML('home')+
-    note+
-    '<div class="home-stats">'+
-      card('Open jobs', open.length, jobs.length-open.length ? (jobs.length-open.length)+' not open' : 'All your jobs', "showView('jobs')")+
-      card('Submitted this week', submitted, 'Candidates sent to clients', "showView('talent-pool')")+
-      card('Joined this month', joined, joined===1 ? '1 placement' : joined+' placements', "showView('talent-pool')")+
-    '</div>'+
-    '<div class="home-cols">'+
-      homeListCardHTML('Needs your attention', attention, 'Nothing needs you right now.', approvals.length>4 ? { label:'View all', onclick:"showView('approval-center')" } : null)+
-      homeListCardHTML('Today’s interviews', ivRows, 'No interviews today.', { label:'All interviews', onclick:"showView('interviews')" })+
-    '</div>'+
-  '</div>';
-}
-function renderRecruiterHome(){
-  const me = currentActingUser();
-  const jobIds = homeJobs().map(function(j){ return j.id; });
-  const followUps = pendingTasks().filter(function(a){ return a.type!=='submit'; }).slice(0,5);
-  const screening = SUBMISSIONS.filter(function(s){ return jobIds.indexOf(s.jobId)>-1 && ['Pending Review','Shortlisted','Applied Directly'].indexOf(s.stage)>-1; }).slice(0,5);
-  const todays = homeTodaysInterviews();
-  const group = function(title, rows, empty){ return '<div class="home-group"><p class="home-group__title">'+title+' <span>'+rows.length+'</span></p>'+(rows.length ? '<ul class="home-list">'+rows.join('')+'</ul>' : '<p class="home-empty">'+empty+'</p>')+'</div>'; };
-  const fRows = followUps.map(function(a){ return homeRowHTML({ icon: a.type==='call' ? 'phone' : a.type==='whatsapp' ? 'whatsapp' : a.type==='email' ? 'mail' : 'bell', title:escapeHtml(a.title), meta:escapeHtml(a.subtitle||''),
-    onclick: a.candidateId ? "openCandidate("+JSON.stringify(a.candidateId).replace(/"/g,"'")+")" : "showView('my-todo')" }); });
-  const sRows = screening.map(function(s){ const c = byId(s.candidateId), j = jobById(s.jobId);
-    return homeRowHTML({ icon:'doc', title:'Screen '+escapeHtml(c ? c.name : 'candidate'), meta:escapeHtml(j ? j.title+' · '+j.client : ''), side:escapeHtml(s.stage), onclick:"openCandidate("+JSON.stringify(s.candidateId).replace(/"/g,"'")+")" }); });
-  const iRows = todays.map(function(i){ const job = i.jobId ? jobById(i.jobId) : null;
-    return homeRowHTML({ icon:'calendar', title:escapeHtml(i.candidate)+(i.round ? ' · '+escapeHtml(i.round) : ''), meta:escapeHtml(i.role)+(job ? ', '+escapeHtml(job.client) : ''), side:escapeHtml(homeTime(i)), onclick:"showView('interviews')" }); });
-  const total = followUps.length + screening.length + todays.length;
-  const first = followUps[0] ? followUps[0].title : screening[0] ? 'screening '+((byId(screening[0].candidateId)||{}).name||'') : '';
-  return '<div class="content-shell max-w-6xl home">'+
-    homeGreetingHTML()+
-    (total ? kairoNoteHTML('You have '+followUps.length+' follow-up'+(followUps.length===1 ? '' : 's')+', '+screening.length+' to screen and '+todays.length+' interview'+(todays.length===1 ? '' : 's')+' today.'+(first ? ' Start with '+escapeHtml(first)+'.' : ''), [{ label:'Open my jobs', onclick:"showView('jobs')" }])
-      : kairoNoteHTML('Your list is clear for today.', []))+
-    '<section class="card home-card">'+
-      '<div class="home-card__head"><h3 class="home-card__title">My work today</h3><button type="button" class="btn-quiet text-sm" onclick="showView(\'my-todo\')">To do list</button></div>'+
-      group('Follow-ups', fRows, 'No follow-ups due.')+
-      group('Screening', sRows, 'Nobody waiting to be screened.')+
-      group('Interviews', iRows, 'No interviews today.')+
-    '</section>'+
-  '</div>';
 }
 RENDERERS['admin-dashboard'] = renderAdminDashboard;
 RENDERERS['manager-dashboard'] = renderManagerDashboard;
@@ -31330,8 +30727,7 @@ function refreshFollowUpSurfaces(){
   if(nba){ const cid = parseInt(nba.getAttribute('data-cid'),10); const c = byId(cid); if(c) nba.outerHTML = candidateNbaWrapHTML(c); }
   const journey = document.getElementById('cand-journey-wrap');
   if(journey){ const cid = parseInt(journey.getAttribute('data-cid'),10); const c = byId(cid); if(c) journey.outerHTML = candidateJourneyWrapHTML(c); }
-  const wq = document.getElementById('recruiter-work-queue');
-  if(wq) wq.outerHTML = recruiterWorkQueueCardHTML();
+  oRefreshDashboard();
   const jobPanel = document.getElementById('job-followups-panel');
   if(jobPanel){ const j = jobById(jobPanel.getAttribute('data-jid')); if(j) jobPanel.outerHTML = jobFollowUpsPanelHTML(j); }
   const jobList = document.getElementById('job-cand-list');
@@ -31339,8 +30735,6 @@ function refreshFollowUpSurfaces(){
   if(typeof refreshAllTasks==='function') refreshAllTasks();
   const suggestion = document.getElementById('ai-suggestion-card');
   if(suggestion) suggestion.outerHTML = aiSuggestionHTML();
-  const briefingArea = document.getElementById('briefing-report-area');
-  if(briefingArea && !briefingArea.classList.contains('hidden')) briefingArea.innerHTML = briefingReportHTML(computeTodaysBriefing());
   if(followUpModalState) refreshFollowUpModal();
   if(typeof refreshNotifications==='function') refreshNotifications();
   if(typeof renderQuickActions==='function') renderQuickActions();
@@ -31646,51 +31040,6 @@ function jobFollowUpsPanelHTML(j){
 }
 
 /* ---- Recruiter Work Queue: Follow-up tab now lists real FOLLOW_UPS ---- */
-function workQueueFollowUpBodyHTML(){
-  const mine = myPendingFollowUps();
-  const groups = [['overdue','Overdue'],['today','Due today'],['upcoming','Upcoming']];
-  const coveredIds = new Set(FOLLOW_UPS.filter(function(f){ return f.status==='Pending'; }).map(function(f){ return f.candidateId; }));
-  const quiet = CANDIDATES.filter(function(c){ return c.respProb<=45 && !coveredIds.has(c.id); });
-  const me = currentActingUser();
-  const doneToday = FOLLOW_UPS.filter(function(f){ return f.status==='Completed' && me && f.ownerId===me.id && fuSameDay(new Date(f.completedAt), new Date()); }).length;
-  const rowHTML = function(fu){
-    const c = byId(fu.candidateId);
-    return '<div class="flex items-center gap-3 py-3.5" data-followup-id="'+fu.id+'">'+
-      candidateAvatarHTML(c, 'w-9 h-9', {onclick:'openCandidate('+c.id+')'})+
-      '<div class="min-w-0 flex-1">'+
-        '<div class="flex flex-wrap items-center gap-2"><button onclick="openCandidate('+c.id+')" class="text-sm font-medium text-ink hover:underline truncate">'+c.name+'</button>'+followUpDueChipHTML(fu)+'</div>'+
-        '<p class="text-xs text-zinc-500 truncate">'+followUpContextLabel(fu)+(fu.notes?' \u00b7 '+escapeHtml(fu.notes):'')+'</p>'+
-      '</div>'+
-      '<div class="flex items-center gap-1.5 shrink-0">'+
-        '<button onclick="openMessages(\'whatsapp\')" title="WhatsApp" class="w-8 h-8 rounded-lg border border-zinc-200 flex items-center justify-center hover:border-zinc-300 transition">'+icon('whatsapp','w-3.5 h-3.5 text-forest-600')+'</button>'+
-        '<button onclick="connectCall('+c.id+')" title="Call" class="w-8 h-8 rounded-lg border border-zinc-200 flex items-center justify-center hover:border-zinc-300 transition">'+icon('phone','w-3.5 h-3.5 text-zinc-500')+'</button>'+
-      '</div>'+
-      followUpRowActionsHTML(fu)+
-    '</div>';
-  };
-  let html = '';
-  groups.forEach(function(g){
-    const items = mine.filter(function(fu){ return followUpDueState(fu)===g[0]; });
-    if(!items.length) return;
-    html += '<p class="text-[11px] font-semibold '+(g[0]==='overdue'?'text-terracotta-600':'text-zinc-400')+' mt-3">'+g[1]+' ('+items.length+')</p>'+
-      '<div class="divide-y divide-zinc-50">'+items.map(rowHTML).join('')+'</div>';
-  });
-  if(!mine.length) html += '<p class="text-sm text-zinc-400 text-center py-6">No follow-ups scheduled. Schedule one from any candidate profile.</p>';
-  if(doneToday) html += '<p class="text-[11px] text-forest-600 mt-2 flex items-center gap-1">'+icon('check','w-3 h-3')+doneToday+' completed today</p>';
-  if(quiet.length){
-    html += '<div class="mt-4 pt-3 border-t border-zinc-100">'+
-      '<p class="text-[11px] font-semibold text-zinc-400 mb-1">Going quiet \u2014 no follow-up scheduled ('+quiet.length+')</p>'+
-      '<div class="divide-y divide-zinc-50">'+quiet.map(function(c){
-        return '<div class="flex items-center gap-3 py-3">'+
-          candidateAvatarHTML(c, 'w-8 h-8', {onclick:'openCandidate('+c.id+')'})+
-          '<div class="min-w-0 flex-1"><button onclick="openCandidate('+c.id+')" class="text-sm font-medium text-ink hover:underline truncate">'+c.name+'</button><p class="text-xs text-zinc-400 truncate">'+c.role+' \u00b7 response signal '+c.respProb+'%</p></div>'+
-          (canManageFollowUps() ? '<button onclick="openFollowUpModal({candidateId:'+c.id+'})" class="text-xs font-semibold text-accent-700 hover:text-accent-900 shrink-0">Schedule</button>' : '')+
-        '</div>';
-      }).join('')+'</div>'+
-    '</div>';
-  }
-  return html;
-}
 
 /* ---- Migration: fold the legacy follow-up paths into FOLLOW_UPS ---- */
 function migrateLegacyFollowUps(){
@@ -31925,7 +31274,7 @@ function refreshCandidatePhotoUI(candidateId){
   if(provEl) provEl.outerHTML = candidatePhotoProvenanceHTML(c);
   if(photoModalState) refreshPhotoModal();
   // Other open surfaces that show this candidate re-read the same record.
-  const wq = document.getElementById('recruiter-work-queue'); if(wq) wq.outerHTML = recruiterWorkQueueCardHTML();
+  oRefreshDashboard();
   const fuPanel = document.getElementById('job-followups-panel'); if(fuPanel){ const j = jobById(fuPanel.getAttribute('data-jid')); if(j) fuPanel.outerHTML = jobFollowUpsPanelHTML(j); }
 }
 function candidateHeaderPhotoHTML(c){
@@ -32354,7 +31703,7 @@ function confirmScheduleInterview(){
   toast('Interview scheduled with '+c.name);
   const journeyWrap = document.getElementById('cand-journey-wrap');
   if(journeyWrap){ const cc = byId(sub.candidateId); if(cc) journeyWrap.outerHTML = candidateJourneyWrapHTML(cc); }
-  const wq = document.getElementById('work-queue-body'); if(wq) wq.outerHTML = workQueueBodyHTML();
+  oRefreshDashboard();
 }
 function scheduleInterviewModalHTML(){
   const st = scheduleInterviewState; if(!st) return '';
@@ -35430,7 +34779,6 @@ function performLogout(){
   resetSessionPanelFlags();
   toggleRoleMenu(true);
   closeMobileSidebar();
-  if(typeof closeQuickActionsMenu==='function'){ try { closeQuickActionsMenu(); } catch(e){} }
   if(typeof clearProspectSelection==='function'){ try { clearProspectSelection(); } catch(e){} }
 
   // 2. Drop in-flight session selections so nothing leaks into the next sign-in.

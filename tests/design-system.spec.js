@@ -1,0 +1,79 @@
+/* Design system checks: sidebar width and collapse, the sliding selection, one-thumb segmented control, no blue/indigo/purple colour, the Kairo switch, the corporate owner variant and 32/40/700 page titles. Run: & .\tests\run-auth-tests.ps1 -Spec tests\design-system.spec.js */
+(function(){
+  var results = [];
+  var sleep = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+  var q = function(s){ return document.querySelector(s); };
+  async function t(name, fn){ try { await fn(); results.push({ name:name, pass:true }); } catch(e){ results.push({ name:name, pass:false, error:e.message }); } }
+  function ok(c, m){ if(!c) throw new Error(m || 'assertion failed'); }
+  window.addEventListener('load', function(){ setTimeout(async function(){
+    var ob = document.getElementById('onboarding'); if(ob) ob.classList.add('hidden');
+    state.role = 'recruiter'; enterApp(); await sleep(100);
+
+    await t('sidebar: 240 px expanded, 64 px collapsed, state remembered in state.sidebarOpen', async function(){
+      var sb = q('#sidebar');
+      ok(Math.round(sb.getBoundingClientRect().width)===240, 'expanded width ' + sb.getBoundingClientRect().width);
+      toggleSidebar(); await sleep(400);
+      ok(state.sidebarOpen===false && Math.round(sb.getBoundingClientRect().width)===64, 'collapsed width ' + sb.getBoundingClientRect().width);
+      ok(q('#logo-wrap svg') && q('#logo-wrap svg').getBoundingClientRect().height<=30, 'the box symbol shows when collapsed');
+      toggleSidebar(); await sleep(400);
+      ok(state.sidebarOpen===true && Math.round(sb.getBoundingClientRect().width)>=236, 'expanded again ' + sb.getBoundingClientRect().width);
+      ok(Math.round(q('#logo-wrap svg').getBoundingClientRect().height)===40, 'the logo is 40 px tall: ' + q('#logo-wrap svg').getBoundingClientRect().height);
+    });
+    await t('sidebar: the selection slides (transform, 240 ms)', async function(){
+      var sel = q('#sb-sel'); var before = sel.style.transform;
+      ok(getComputedStyle(sel).transitionDuration.indexOf('0.24s')>-1, 'duration ' + getComputedStyle(sel).transitionDuration);
+      showView('jobs'); await sleep(50);
+      ok(sel.style.transform!==before, 'moved: ' + before + ' -> ' + sel.style.transform);
+      ok(q('.nav-item.active').getAttribute('data-nav')==='jobs', 'jobs is selected');
+    });
+    await t('segmented control: one thumb slides under the picked option', async function(){
+      showView('dashboard'); await sleep(60);
+      var seg = q('#rec-jobs-seg'); ok(seg, 'segmented control present');
+      var thumb = seg.querySelector('.o-seg__thumb'); var before = thumb.style.transform;
+      oSegPick('rec-jobs-seg', 1); await sleep(30);
+      ok(thumb.style.transform!==before, 'thumb moved'); ok(getComputedStyle(thumb).transitionDuration.indexOf('0.24s')>-1, 'thumb transition 240 ms');
+      oSegPick('rec-jobs-seg', 0);
+    });
+    await t('no blue, indigo or purple colour anywhere on the dashboards', async function(){
+      var bad = [];
+      ['recruiter','manager','admin','hm','candidate','oontu'].forEach(function(r){
+        state.role = r; renderSidebar(); showView(DEFAULT_VIEW[r] || 'dashboard');
+        document.querySelectorAll('#main-content *, #sidebar *').forEach(function(el){
+          var cs = getComputedStyle(el);
+          [cs.color, cs.backgroundColor, cs.borderTopColor].forEach(function(c){
+            var m = /rgba?\((\d+), (\d+), (\d+)/.exec(c); if(!m) return;
+            var R = +m[1], G = +m[2], B = +m[3];
+            if(B>R+28 && B>G+28 && /rgba?\(\d+, \d+, \d+\)/.test(c)) bad.push(r + ' ' + el.className + ' ' + c);
+          });
+        });
+      });
+      ok(!bad.length, bad.slice(0,5).join(' | '));
+    });
+    await t('Kairo can be switched off: nothing Kairo remains on the recruiter dashboard', async function(){
+      window.OONTU_AGENTS = false; oApplyAgentFlag(); state.role = 'recruiter'; renderSidebar(); showView('dashboard'); await sleep(50);
+      ok(!q('[data-agent]'), 'no Kairo card');
+      ok(getComputedStyle(q('#ai-fab-container')).display==='none', 'the launcher is hidden');
+      ok(!q('.nav-item[data-nav=kairo-team]'), 'no Cowork entry in the sidebar');
+      ok(!/Kairo/.test(q('#main-content').textContent), 'no "Kairo" text on the screen');
+      window.OONTU_AGENTS = true; oApplyAgentFlag();
+    });
+    await t('corporate owner: the corporate cards, no Clients table', async function(){
+      var prev = ORG_STRUCTURE.profile.orgType; ORG_STRUCTURE.profile.orgType = 'Corporate';
+      state.role = 'admin'; renderSidebar(); showView('admin-dashboard'); await sleep(50);
+      var txt = q('#main-content').textContent;
+      ok(/Hires this quarter/.test(txt) && /Offer acceptance/.test(txt), 'corporate cards'); ok(!/Revenue earned/.test(txt), 'no agency revenue card');
+      ok(!q('#own-clients-h'), 'no Clients table');
+      ORG_STRUCTURE.profile.orgType = prev;
+    });
+    await t('every screen has the page title at 32/40/700', async function(){
+      state.role = 'admin'; renderSidebar();
+      var bad = [];
+      ['jobs','talent-pool','interviews','settings','reports','team-members','client-management','integrations'].forEach(function(v){
+        showView(v); var h = q('#main-content .sec-head .sec-title') || q('#main-content h1'); if(!h){ bad.push(v + ' (no title)'); return; }
+        var cs = getComputedStyle(h); if(cs.fontSize!=='32px' || cs.fontWeight!=='700') bad.push(v + ' ' + cs.fontSize + '/' + cs.fontWeight);
+      });
+      ok(!bad.length, bad.join(', '));
+    });
+    var pre = document.createElement('pre'); pre.id = 'auth-test-results'; pre.textContent = JSON.stringify(results); document.body.appendChild(pre);
+  }, 800); });
+})();
