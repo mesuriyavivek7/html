@@ -18,7 +18,7 @@
   function eq(a, b, m){ if(a!==b) throw new Error((m ? m+': ' : '')+'expected '+JSON.stringify(b)+', got '+JSON.stringify(a)); }
   function appVisible(){ return !document.getElementById('app').classList.contains('hidden'); }
   function authVisible(){ return !document.getElementById('onboarding').classList.contains('hidden'); }
-  function screenText(){ const el = document.querySelector('.au-form-wrap'); return el ? el.textContent : ''; }   // the .au-* screens: invitation, recovery, help, workspace choice
+  function screenText(){ const el = document.querySelector('.oa-legacy'); return el ? el.textContent : ''; }   // the .au-* screens: invitation, recovery, help, workspace choice
   function wrongCode(code){ return String((parseInt(code,10)+1) % 1000000).padStart(code.length,'0'); }
   const move = function(){ return sleep(230); };   // a screen leaving and the next arriving
   const q = function(s, el){ return (el || document).querySelector(s); };
@@ -427,7 +427,7 @@
 
     await test('14 Every auth screen has one heading, labelled fields and named buttons', async function(){
       function check(label, root){
-        const shell = root || q('.oa-root, .au-shell, .wz');
+        const shell = root || q('.oa-root, .wz');
         eq(qa(root ? 'h2' : 'h1', shell).length, 1, label+' heading count');   // a sheet inside the app is titled with an h2
         qa('input', shell).forEach(function(i){
           assert((i.id && q('label[for="'+i.id+'"]', shell)) || i.closest('label'), label+': no label for '+(i.id||i.type));
