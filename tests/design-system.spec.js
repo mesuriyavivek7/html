@@ -14,10 +14,10 @@
       ok(Math.round(sb.getBoundingClientRect().width)===240, 'expanded width ' + sb.getBoundingClientRect().width);
       toggleSidebar(); await sleep(400);
       ok(state.sidebarOpen===false && Math.round(sb.getBoundingClientRect().width)===64, 'collapsed width ' + sb.getBoundingClientRect().width);
-      ok(q('#logo-wrap svg') && q('#logo-wrap svg').getBoundingClientRect().height<=30, 'the box symbol shows when collapsed');
+      ok(q('#logo-wrap svg') && q('#logo-wrap svg').getBoundingClientRect().height<=36, 'the box symbol shows when collapsed');
       toggleSidebar(); await sleep(400);
       ok(state.sidebarOpen===true && Math.round(sb.getBoundingClientRect().width)>=236, 'expanded again ' + sb.getBoundingClientRect().width);
-      ok(Math.round(q('#logo-wrap svg').getBoundingClientRect().height)===40, 'the logo is 40 px tall: ' + q('#logo-wrap svg').getBoundingClientRect().height);
+      ok(Math.round(q('#logo-wrap svg').getBoundingClientRect().height)===52, 'the logo is 52 px tall: ' + q('#logo-wrap svg').getBoundingClientRect().height);
     });
     await t('sidebar: the selection slides (transform, 240 ms)', async function(){
       var sel = q('#sb-sel'); var before = sel.style.transform;

@@ -1658,10 +1658,12 @@ html:not([data-theme="comfort"]) :focus-visible{ outline:2px solid var(--mint-70
   transition:width var(--t-slide) var(--ease), flex-basis var(--t-slide) var(--ease); }
 #sidebar.o-sidebar.rail{ flex-basis:64px; width:64px; }
 #sidebar.o-sidebar.menu-open{ overflow:visible; }
-.o-sb-top{ display:flex; align-items:center; justify-content:space-between; height:52px; padding:0 0 0 6px; flex:none; }
+.o-sb-top{ position:relative; display:flex; align-items:center; justify-content:center; height:64px; padding:0; flex:none; }
+.o-sb-top .o-icon-btn{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
 .o-sb-logo{ display:inline-flex; align-items:center; min-width:0; }
 .o-sb-logo svg{ max-width:100%; }
 #sidebar.rail .o-sb-top{ flex-direction:column; justify-content:center; gap:12px; height:auto; padding:6px 0 4px; }
+#sidebar.rail .o-sb-top .o-icon-btn{ position:static; transform:none; }
 #sidebar.rail .sidebar-toggle-btn svg{ transform:none; }
 .o-icon-btn{ width:32px; height:32px; padding:0; border:0; border-radius:var(--r-control); background:transparent; color:var(--n-600); display:inline-flex; align-items:center; justify-content:center; flex:none; cursor:pointer; position:relative; transition:background var(--t-fast), color var(--t-fast); }
 .o-icon-btn:hover{ background:var(--n-50); color:var(--n-800); }
@@ -2626,7 +2628,7 @@ function renderSidebarLogo(){
   if(!logoWrap) return;
   const mode = state.sidebarOpen ? 'full' : 'rail';
   if(logoWrap.dataset.rendered === mode) return;
-  logoWrap.innerHTML = mode === 'full' ? oontuBrandLogoHTML(40, true) : oontuSymbolHTML(28);
+  logoWrap.innerHTML = mode === 'full' ? oontuBrandLogoHTML(52, true) : oontuSymbolHTML(34);
   logoWrap.dataset.rendered = mode;
 }
 /* One sliding highlight behind the selected nav item - the product's single motion language (240 ms, --ease).
