@@ -1653,18 +1653,29 @@ html:not([data-theme="comfort"]) :focus-visible{ outline:2px solid var(--mint-70
 ::-webkit-scrollbar-thumb{ background:rgba(47,49,63,.18); }
 
 /* ---------- shell: sidebar ---------- */
-#sidebar.o-sidebar{ flex:0 0 240px; width:240px; box-sizing:border-box; position:relative; z-index:10; height:100vh; margin:0; padding:12px; display:flex; flex-direction:column; gap:12px;
+#sidebar.o-sidebar{ flex:0 0 240px; width:240px; box-sizing:border-box; position:relative; z-index:10; height:100vh; margin:0; padding:0 12px 12px; display:flex; flex-direction:column; gap:12px;
   background:#FFFFFF; border:0; border-right:1px solid var(--n-100); border-radius:0; box-shadow:none; overflow:hidden;
   transition:width var(--t-slide) var(--ease), flex-basis var(--t-slide) var(--ease); }
 #sidebar.o-sidebar.rail{ flex-basis:64px; width:64px; }
 #sidebar.o-sidebar.menu-open{ overflow:visible; }
-.o-sb-top{ position:relative; display:flex; align-items:center; justify-content:center; height:64px; padding:0; flex:none; }
-.o-sb-top .o-icon-btn{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
-.o-sb-logo{ display:inline-flex; align-items:center; min-width:0; }
-.o-sb-logo svg{ max-width:100%; }
-#sidebar.rail .o-sb-top{ flex-direction:column; justify-content:center; gap:12px; height:auto; padding:6px 0 4px; }
-#sidebar.rail .o-sb-top .o-icon-btn{ position:static; transform:none; }
-#sidebar.rail .sidebar-toggle-btn svg{ transform:none; }
+/* sidebar header: 64 px, the same line as the content top bar */
+.sb-head{ position:relative; height:64px; flex:none; display:flex; align-items:center; justify-content:space-between; margin:0 -12px; padding:0 12px 0 24px; border-bottom:1px solid #E9EBEF; box-sizing:border-box; }
+.sb-brand{ display:inline-flex; align-items:center; margin-left:-2px; border-radius:8px; }
+.sb-logo-full{ height:34px; width:auto; display:block; }
+.sb-toggle{ width:32px; height:32px; padding:0; border:0; border-radius:8px; background:transparent; color:#555968; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transition:opacity 120ms, background 120ms, color 120ms; }
+#sidebar:hover .sb-toggle, #sidebar:focus-within .sb-toggle, .sb-toggle:focus-visible{ opacity:1; }
+.sb-toggle:hover{ background:#F2F3F6; color:#2F313F; }
+.sb-rail-btn{ display:none; position:relative; width:40px; height:40px; margin:0 auto; padding:0; border:0; border-radius:10px; background:transparent; cursor:pointer; align-items:center; justify-content:center; color:#2F313F; }
+.sb-logo-mark{ height:28px; width:auto; display:block; transition:opacity 120ms; }
+.sb-rail-icon{ position:absolute; inset:0; margin:auto; opacity:0; transition:opacity 120ms; }
+.sb-rail-btn:hover, .sb-rail-btn:focus-visible{ background:#F2F3F6; }
+.sb-rail-btn:hover .sb-logo-mark, .sb-rail-btn:focus-visible .sb-logo-mark{ opacity:0; }
+.sb-rail-btn:hover .sb-rail-icon, .sb-rail-btn:focus-visible .sb-rail-icon{ opacity:1; }
+#sidebar.rail .sb-head{ justify-content:center; padding:0; }
+#sidebar.rail .sb-brand, #sidebar.rail .sb-toggle{ display:none; }
+#sidebar.rail .sb-rail-btn{ display:flex; }
+/* collapsing: the labels fade out first, then the width animates */
+#sidebar.is-collapsing .sidebar-label{ opacity:0; transition:opacity 120ms; }
 .o-icon-btn{ width:32px; height:32px; padding:0; border:0; border-radius:var(--r-control); background:transparent; color:var(--n-600); display:inline-flex; align-items:center; justify-content:center; flex:none; cursor:pointer; position:relative; transition:background var(--t-fast), color var(--t-fast); }
 .o-icon-btn:hover{ background:var(--n-50); color:var(--n-800); }
 .o-sb-search{ display:flex; align-items:center; gap:10px; height:36px; padding:0 10px; flex:none; border:1px solid var(--n-100); border-radius:var(--r-control); background:var(--n-25); color:var(--n-500); font:500 14px var(--font); cursor:pointer; transition:background var(--t-fast), border-color var(--t-fast); }
@@ -1724,7 +1735,7 @@ html:not([data-theme="comfort"]) .o-nav-item:hover:not(.active){ background:var(
 @keyframes oMenuIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
 
 /* ---------- shell: content top bar ---------- */
-.o-topbar{ position:sticky; top:0; z-index:30; flex:none; display:flex; align-items:center; gap:8px; height:64px; padding:0 32px; box-sizing:border-box; background:rgba(249,250,251,.92); border-bottom:1px solid var(--n-100); }
+.o-topbar{ position:sticky; top:0; z-index:30; flex:none; display:flex; align-items:center; gap:8px; height:64px; box-sizing:border-box; padding:0 32px; box-sizing:border-box; background:rgba(249,250,251,.92); border-bottom:1px solid var(--n-100); }
 .o-topbar__title{ margin:0; flex:1; min-width:0; display:block; font-size:14px; color:var(--n-500); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .o-topbar__title #topbar-title{ color:var(--n-800); font-weight:700; }
 .o-topbar__verify{ margin-left:12px; vertical-align:middle; }
@@ -1745,13 +1756,11 @@ html:not([data-theme="comfort"]) .o-nav-item:hover:not(.active){ background:var(
   #sidebar.rail .o-nav-item{ justify-content:flex-start; padding:0 10px; }
   #sidebar.rail .o-nav-count{ display:inline-flex; }
   #sidebar.rail .o-nav-dot{ display:none; }
-  #sidebar.rail .o-sb-top{ flex-direction:row; justify-content:space-between; height:52px; padding:0 0 0 6px; }
   #sidebar.rail .o-nav-head{ background:none; padding:16px 10px 0; }
   #sidebar.rail .o-nav-head .sidebar-label{ display:inline; }
   #sidebar.rail .o-sb-acct{ justify-content:flex-start; padding:8px; border-color:var(--n-100); }
   #sidebar.rail .o-sb-search{ justify-content:flex-start; padding:0 10px; }
   #sidebar.rail .o-role-menu{ position:absolute; left:0; right:0; width:auto; bottom:calc(100% + 8px); }
-  #sidebar-toggle-btn{ display:none; }
 }
 
 /* ---------- components (.o-*) ---------- */
@@ -1894,6 +1903,7 @@ button:active:not(:disabled){ transform:none; }
 .home-stat__value{ font-size:28px; line-height:32px; letter-spacing:-.02em; }
 .sec-title{ letter-spacing:-.01em; }
 @media (prefers-reduced-motion: reduce){
+  #sidebar.o-sidebar, #sidebar.o-sidebar *{ transition:none !important; }
   .o-sb-sel, .o-seg__thumb, .o-tabs__line, #sidebar.o-sidebar{ transition:opacity var(--t-fast) !important; }
   .o-menu, #role-menu, .dropdown-anim{ animation:none !important; }
 }
@@ -1956,6 +1966,12 @@ span.rounded-full[class*="text-xs"][class*="px-"][class*="py-"][class*="bg-"]:no
 html .o-pagehead .sec-title{ font-size:32px; line-height:40px; font-weight:700; letter-spacing:-.03em; color:var(--n-800); }
 html .o-pagehead .sec-sub{ font-size:15px; line-height:22px; color:var(--n-600); }
 @media (max-width:860px){ html .o-pagehead .sec-title{ font-size:28px; line-height:36px; } }
+@media (max-width:767px){
+  .sb-toggle{ display:none; }
+  #sidebar.rail .sb-brand{ display:inline-flex; }
+  #sidebar.rail .sb-rail-btn{ display:none; }
+  #sidebar.rail .sb-head{ justify-content:space-between; padding:0 12px 0 24px; }
+}
 </style>
 </head>
 <body class="text-zinc-900 antialiased">
@@ -1972,10 +1988,16 @@ html .o-pagehead .sec-sub{ font-size:15px; line-height:22px; color:var(--n-600);
   <!-- Sidebar -->
   <div id="mobile-sidebar-backdrop" onclick="toggleMobileSidebar()" class="hidden fixed inset-0 bg-zinc-900/40 z-[55]"></div>
   <aside id="sidebar" class="o-sidebar" aria-label="Main navigation">
-    <div class="o-sb-top">
-      <a id="logo-wrap" class="o-sb-logo" href="#" onclick="showView(DEFAULT_VIEW[state.role]); return false;" aria-label="Oontu home"></a>
-      <button id="sidebar-toggle-btn" type="button" onclick="toggleSidebar()" title="Collapse sidebar" aria-label="Collapse sidebar" aria-expanded="true" class="o-icon-btn sidebar-toggle-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M9.5 4.5v15"></path></svg>
+    <div class="sb-head">
+      <!-- expanded: the full logo is drawn into .sb-brand by renderSidebarLogo() from the brand SVG constants -->
+      <a href="#" class="sb-brand" aria-label="Oontu home" onclick="showView(DEFAULT_VIEW[state.role]);return false;"></a>
+      <button type="button" id="sidebar-toggle-btn" class="sb-toggle" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar Â· Ctrl \" onclick="toggleSidebar()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/></svg>
+      </button>
+      <!-- collapsed: the symbol; hovering it shows the expand icon -->
+      <button type="button" class="sb-rail-btn" aria-label="Expand sidebar" aria-expanded="false" title="Expand sidebar Â· Ctrl \" onclick="toggleSidebar()">
+        <span class="sb-mark-slot"></span>
+        <svg class="sb-rail-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/><path d="m13.5 10 2 2-2 2"/></svg>
       </button>
     </div>
 
@@ -2593,10 +2615,26 @@ const PAGE_TITLES = {
 
 let state = { role:'recruiter', activeNav:'dashboard', sidebarOpen:true };
 
+/* Remembered across reloads. */
+(function(){ try { const v = localStorage.getItem("oontu.sidebar"); if(v) state.sidebarOpen = v !== "collapsed"; } catch(e){} })();
 function toggleSidebar(){
   state.sidebarOpen = !state.sidebarOpen;
+  try { localStorage.setItem("oontu.sidebar", state.sidebarOpen ? "open" : "collapsed"); } catch(e){}
+  const sb = document.getElementById("sidebar");
+  const reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(!state.sidebarOpen && sb && !reduced && window.innerWidth>=768){
+    // labels fade first (120 ms), then the width shrinks, so text never wraps or squashes
+    sb.classList.add("is-collapsing");
+    setTimeout(function(){ sb.classList.remove("is-collapsing"); if(!state.sidebarOpen) applySidebarVisibility(); }, 120);
+    document.querySelectorAll(".sb-toggle,.sb-rail-btn").forEach(function(b){ b.setAttribute("aria-expanded", "false"); });
+    return;
+  }
   applySidebarVisibility();
 }
+document.addEventListener("keydown", function(e){
+  const t = e.target, typing = t && (t.tagName==="INPUT" || t.tagName==="TEXTAREA" || t.tagName==="SELECT" || t.isContentEditable);
+  if(!typing && (e.ctrlKey || e.metaKey) && e.key==="\\" && document.getElementById("app") && !document.getElementById("app").classList.contains("hidden")){ e.preventDefault(); toggleSidebar(); }
+});
 function toggleMobileSidebar(){
   const sidebar = document.getElementById('sidebar');
   const backdrop = document.getElementById('mobile-sidebar-backdrop');
@@ -2610,28 +2648,21 @@ function closeMobileSidebar(){
 }
 function applySidebarVisibility(){
   const sidebar = document.getElementById('sidebar');
-  const toggleBtn = document.getElementById('sidebar-toggle-btn');
   const main = document.getElementById('main-content');
   toggleRoleMenu(true);
   sidebar.classList.toggle('rail', !state.sidebarOpen);
-  if(toggleBtn){
-    const label = state.sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar';
-    toggleBtn.title = label; toggleBtn.setAttribute('aria-label', label); toggleBtn.setAttribute('aria-expanded', String(state.sidebarOpen));
-  }
+  document.querySelectorAll(".sb-toggle,.sb-rail-btn").forEach(function(b){ b.setAttribute("aria-expanded", String(state.sidebarOpen)); });
   if(main) main.classList.toggle('sidebar-is-collapsed', !state.sidebarOpen);
   renderSidebarLogo();
   positionNavSel(true);
 }
-/* The full lockup when expanded, the box symbol when collapsed. */
+/* Brand SVGs, inline so they never blur: the full lockup (expanded, 34 px) and the symbol (collapsed, 28 px). */
+const OONTU_SYMBOL_MARK = `<svg class="sb-logo-mark" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="-1.99 -32.50 188.93 140.05"><g transform="translate(-338.3531,-259.0504) scale(0.741840)"><path d="M542.12,491.12 C535.43,490.41 526.31,488.53 521.12,486.79 C516.20,485.14 508.85,482.09 505.25,480.21 C496.98,475.89 486.11,467.67 480.61,461.58 C478.51,459.26 474.69,454.54 472.69,451.80 C471.16,449.70 466.74,442.58 465.82,440.74 C464.28,437.66 460.44,428.08 459.76,425.62 C458.08,419.59 457.60,417.33 456.71,411.38 C455.96,406.40 455.90,395.07 456.59,390.50 C457.82,382.34 459.62,375.55 462.35,368.74 C465.91,359.88 466.38,358.91 470.23,352.75 C480.54,336.20 494.86,324.03 513.62,315.87 C521.93,312.26 529.34,310.22 540.12,308.58 C544.48,307.92 558.24,307.92 562.75,308.58 C579.27,311.00 593.28,316.46 606.24,325.51 C617.77,333.56 628.02,345.05 634.71,357.43 C635.70,359.25 636.50,360.78 636.50,360.85 C636.50,360.91 636.95,361.74 637.50,362.69 C638.57,364.55 640.30,369.20 642.28,375.50 C645.40,385.47 646.67,397.49 645.65,407.25 C644.05,422.40 639.33,436.01 631.62,447.67 C625.95,456.27 621.19,461.66 613.50,468.22 C606.64,474.07 596.22,480.59 589.69,483.11 C588.83,483.44 587.06,484.15 585.75,484.69 C579.36,487.34 572.86,489.07 563.62,490.61 C558.11,491.52 548.16,491.76 542.12,491.12 Z  M556.62,449.99 C560.52,449.53 564.99,448.49 568.88,447.13 C572.95,445.71 573.69,445.38 577.25,443.30 C583.34,439.76 589.90,434.09 593.22,429.50 C596.46,425.03 599.65,419.18 600.96,415.37 C602.44,411.01 603.67,402.58 603.38,398.75 C603.02,394.12 601.81,387.40 600.84,384.67 C599.94,382.15 596.75,375.69 595.44,373.75 C592.38,369.21 591.61,368.20 589.61,366.06 C588.42,364.78 586.94,363.39 586.33,362.97 C585.71,362.54 584.67,361.72 584.01,361.14 C581.61,359.01 574.72,354.83 572.00,353.87 C571.11,353.55 569.11,352.83 567.56,352.27 C562.22,350.35 554.11,349.42 547.51,349.98 C540.77,350.55 533.41,352.54 527.95,355.26 C523.72,357.37 516.42,362.75 513.49,365.92 C511.47,368.10 507.94,372.87 506.47,375.42 C502.39,382.49 500.90,387.10 499.88,395.88 C499.26,401.27 499.43,404.34 500.76,411.24 C501.50,415.07 501.65,415.57 503.15,418.92 C505.20,423.51 506.39,425.52 509.54,429.71 C512.27,433.35 514.62,435.71 518.43,438.68 C524.40,443.33 527.79,445.17 534.65,447.46 C541.21,449.66 544.15,450.16 550.62,450.22 C552.69,450.23 555.39,450.13 556.62,449.99 Z " fill="#2F313F" fill-rule="evenodd"/><circle cx="680.9000000000001" cy="450.0" r="24.5" fill="#32BB78"/></g></svg>`;
 function renderSidebarLogo(){
-  const logoWrap = document.getElementById('logo-wrap');
-  if(!logoWrap) return;
-  const mode = state.sidebarOpen ? 'full' : 'rail';
-  if(logoWrap.dataset.rendered === mode) return;
-  logoWrap.innerHTML = mode === 'full' ? oontuBrandLogoHTML(52, true) : oontuSymbolHTML(34);
-  logoWrap.dataset.rendered = mode;
-}
-/* One sliding highlight behind the selected nav item - the product's single motion language (240 ms, --ease).
+  const brand = document.querySelector('.sb-brand'), slot = document.querySelector('.sb-mark-slot');
+  if(brand && !brand.firstChild) brand.innerHTML = OONTU_LOGO_PRIMARY.replace('<svg ', '<svg class="sb-logo-full" ');
+  if(slot && !slot.firstChild) slot.innerHTML = OONTU_SYMBOL_MARK;
+}/* One sliding highlight behind the selected nav item - the product's single motion language (240 ms, --ease).
    The first placement is instant so it does not slide in from the top on load. */
 /* Counts are read again after every screen change, so they follow the work without redrawing the sidebar (the selection keeps sliding). */
 function refreshNavCounts(){

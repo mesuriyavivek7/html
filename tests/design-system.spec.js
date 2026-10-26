@@ -14,10 +14,25 @@
       ok(Math.round(sb.getBoundingClientRect().width)===240, 'expanded width ' + sb.getBoundingClientRect().width);
       toggleSidebar(); await sleep(400);
       ok(state.sidebarOpen===false && Math.round(sb.getBoundingClientRect().width)===64, 'collapsed width ' + sb.getBoundingClientRect().width);
-      ok(q('#logo-wrap svg') && q('#logo-wrap svg').getBoundingClientRect().height<=36, 'the box symbol shows when collapsed');
+      ok(Math.round(q('.sb-logo-mark').getBoundingClientRect().height)===28, 'the symbol is 28 px tall when collapsed: ' + q('.sb-logo-mark').getBoundingClientRect().height);
       toggleSidebar(); await sleep(400);
       ok(state.sidebarOpen===true && Math.round(sb.getBoundingClientRect().width)>=236, 'expanded again ' + sb.getBoundingClientRect().width);
-      ok(Math.round(q('#logo-wrap svg').getBoundingClientRect().height)===52, 'the logo is 52 px tall: ' + q('#logo-wrap svg').getBoundingClientRect().height);
+      ok(Math.round(q('.sb-logo-full').getBoundingClientRect().height)===34, 'the logo is 34 px tall: ' + q('.sb-logo-full').getBoundingClientRect().height);
+    });
+    await t('sidebar header: 64 px like the top bar, one shared line; logo over the nav icons; toggle on hover; Ctrl+\ and memory', async function(){
+      var h = q('.sb-head').getBoundingClientRect(), tb = q('#topbar').getBoundingClientRect();
+      ok(Math.round(h.height)===64 && Math.round(tb.height)===64, 'heights ' + h.height + ' / ' + tb.height);
+      ok(Math.round(h.bottom)===Math.round(tb.bottom), 'borders meet: ' + h.bottom + ' vs ' + tb.bottom);
+      var lx = q('.sb-logo-full').getBoundingClientRect().left, ix = q('.nav-item .nav-icon').getBoundingClientRect().left;
+      ok(Math.abs(lx-ix)<=2, 'logo x ' + lx + ' vs icon x ' + ix);
+      ok(getComputedStyle(q('.sb-toggle')).opacity==='0', 'toggle is hidden until hover');
+      q('.sb-toggle').focus(); await sleep(200);
+      ok(getComputedStyle(q('.sb-toggle')).opacity==='1', 'toggle shows on focus');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key:String.fromCharCode(92), ctrlKey:true, bubbles:true })); await sleep(500);
+      ok(state.sidebarOpen===false && localStorage.getItem('oontu.sidebar')==='collapsed', 'Ctrl+\ collapsed and remembered');
+      ok(q('.sb-rail-btn').getAttribute('aria-expanded')==='false', 'aria-expanded false');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key:String.fromCharCode(92), ctrlKey:true, bubbles:true })); await sleep(500);
+      ok(state.sidebarOpen===true && localStorage.getItem('oontu.sidebar')==='open', 'Ctrl+\ expanded again');
     });
     await t('sidebar: the selection slides (transform, 240 ms)', async function(){
       var sel = q('#sb-sel'); var before = sel.style.transform;
