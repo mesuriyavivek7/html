@@ -105,7 +105,7 @@ Also: apply organisation scoping in every query (not in application code alone),
 ## 8. Manual check, job to Applicants
 
 1. Sign in as the Tenant Admin, open Settings > Job approval, choose "Approval required" with the Tenant Admin as reviewer.
-2. Switch to a Recruitment Manager, create a job, select LinkedIn and Naukri, publish. The job page shows "Waiting for approval" and no channel is Live.
+2. Switch to a Recruiter Manager, create a job, select LinkedIn and Naukri, publish. The job page shows "Waiting for approval" and no channel is Live.
 3. Switch to the Tenant Admin, open the Jobs list, and approve. The job page shows "Live in Oontu"; LinkedIn and Naukri show "Not connected" with a Retry button (no integration exists), not Live.
 4. Open the job > Share job link > Preview, submit an application. It appears under Applicants with its source.
 5. Submit the same email again. Applicants still shows one row, now flagged "2 applications".

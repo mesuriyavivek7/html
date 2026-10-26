@@ -28,12 +28,21 @@
     state.role = 'recruiter'; obMode = 'signup'; obScreenIndex = 0;
     authAppSession = { method:'', email:'' };
     authFlow = authInitialState(); authFocusNext = null;
+    suWiz = suWizInitial(); signupActiveLeadId = null; authSignupPwDraft = '';
+    wsSheet = null; wsSheetRender(); wsSetup = null; WS_SETUPS = {}; qzMoving = false; qzEnter = ''; qzShakeNext = false; suProgShown = 0;
+    qzReduced = function(){ return true; };   // the shortest motion, so the tests run quickly
+    ob.companyName = ''; ob.website = ''; ob.linkedin = '';
+    EXISTING_WORKSPACES = EXISTING_WORKSPACES.filter(function(w){ return w.sample; });   // workspaces claimed by earlier tests
     renderOnboardingScreen();
   }
   // Sign-in asks for the email first. Choosing the code path means Continue sends a code; sign-up always does.
   async function enterEmail(email){ authFlow.email = email; if(authFlow.intent!=='signup') authFlow.method = 'code'; authSubmitEmail(); await idle(); }
-  // The first answer moves the screen on to the password question.
-  async function toPasswordQuestion(email){ authFlow.email = email; authSubmitEmail(); await idle(); assert(document.getElementById('auth-password'), 'the password question appeared'); }
+  // Email and password share one form: fill in the email; the password field is already beside it.
+  async function toPasswordQuestion(email){
+    authFlow.email = email; authFlow.method = 'password'; authFlow.stage = 'email'; renderOnboardingScreen();
+    document.getElementById('auth-email').value = email;
+    assert(document.getElementById('auth-password'), 'the password field is on the same form');
+  }
   // Create-workspace asks name, then workspace, then password.
   function answerCreate(name, ws){ authFlow.name = name; authCreateNext(); authFlow.workspaceName = ws; authCreateNext(); }
   async function enterCode(code){ const el = document.getElementById('auth-code'); el.value = code; authCodeInput(el); await idle(); }
@@ -80,47 +89,627 @@
       assert(appVisible()); eq(state.role, 'admin'); eq(authAppSession.method, 'email_code');
     });
 
-    await test('02 New user verifies email, then creates a workspace with a password and becomes owner', async function(){
+    /* ---- sign-up: five short questions, one per screen, then straight into the product ---- */
+    const move = function(){ return sleep(230); };   // a question leaving and the next arriving (tests run with reduced motion: 150 ms)
+    async function waitFor(cond, ms){ for(let i=0; i<(ms||4000)/20; i++){ if(cond()) return true; await sleep(20); } return false; }
+    async function pickTypeOnly(type){ if(authFlow.step!=='su-type') authSwitchIntent('signup'); suTypeChoose(type); await sleep(330); await idle(); await move(); await idle(); }
+    async function answerSize(size){ suSizeChoose(size); await sleep(150); await idle(); await move(); await idle(); }
+    async function answerLocation(iso, city){ if(iso) suCountryPick(iso, true); suWiz.city = city || 'Mumbai'; suLocationSubmit(); await move(); await idle(); }
+    async function pickType(type, size, iso, city){ await pickTypeOnly(type); await answerSize(size || '6\u201320'); await answerLocation(iso, city); }   // the first three questions
+    async function answerName(name){ authFlow.name = name; suNameSubmit(); await move(); await idle(); }
+    async function answerEmail(email){ authFlow.email = email; suEmailSubmit(); await idle(); await move(); await idle(); }
+    async function answerMobile(mobile){ authFlow.mobile = mobile; suMobileSubmit(); await move(); await idle(); }
+    async function answerPassword(pw){ document.getElementById('auth-password').value = pw; suPasswordSubmit(); await move(); }
+    async function intoProduct(){ assert(await waitFor(appVisible, 4000), 'opens the product after the last answer'); await idle(); await settle(); }
+    async function signUpAll(type, name, email, mobile, pw, size){
+      await pickType(type || 'Staffing agency', size); await answerName(name || 'Dana Lee'); await answerEmail(email || 'dana@startup.example');
+      await answerMobile(mobile || '98250 41207'); await answerPassword(pw || 'Harbor-Lights-42'); await intoProduct();
+    }
+    async function googleUp(type, outcome){
+      await pickType(type || 'Staffing agency'); authFlow.name = 'Taylor Kim';
+      suOAuthStart('google'); await idle(); await move();
+      suOAuthPick(outcome || 'new'); await idle(); await move(); await idle();
+    }
+    function qTitle(){ return document.querySelector('.qz-title').textContent; }
+    function qCount(){ const c = document.querySelector('.qz-count'); return c ? c.textContent : ''; }
+    function qText(){ const el = document.querySelector('.qz-main'); return el ? el.textContent : ''; }
+    function roleOptions(id){ return Array.from(document.getElementById(id).options).map(function(o){ return o.text; }).join(','); }
+    function sheetTitle(){ const h = document.getElementById('ws-sheet-h'); return h ? h.textContent : ''; }
+    async function saveSheet(){ wsSaveSheet(); await idle(); await settle(); await sleep(20); }
+    function cardText(){ const c = document.getElementById('ws-card'); return c ? c.textContent : ''; }
+    function backToSignIn(){
+      authResetForSignOut(); obMode = 'signup'; obScreenIndex = 0;
+      const app = document.getElementById('app'); app.classList.add('hidden'); app.classList.remove('flex');
+      document.getElementById('onboarding').classList.remove('hidden');
+      renderOnboardingScreen();
+    }
+
+    await test('02 Agency sign-up: six questions, then straight to Home with the welcome line, banner, bell and checklist', async function(){
       authSwitchIntent('signup');
-      await signInWithCode('dana@startup.example');
-      eq(authFlow.step, 'create');
-      answerCreate('Dana Lee', 'Startup Talent');
-      document.getElementById('auth-password').value = 'Harbor-Lights-42';
-      authCreateWorkspace(); await idle();
-      eq(obMode, 'setup', 'goes to workspace onboarding');
-      eq(ob.companyName, 'Startup Talent');
-      eq(state.role, 'admin');
-      eq((await authApi.session()).workspaces[0].role, 'owner', 'server-assigned role');
+      eq(qTitle(), 'How will you use Oontu?'); eq(qCount(), '1 of 7');
+      await pickTypeOnly('Staffing agency');
+      eq(authFlow.step, 'su-size'); eq(qTitle(), 'How many people will use Oontu?'); eq(qCount(), '2 of 7');
+      assert(/Recruiters and managers in your agency\./.test(qText()), 'agency hint');
+      eq(Array.from(document.querySelectorAll('.qz-size')).map(function(e){ return e.textContent; }).join('|'), '1–5|6–20|21–50|51–200|200+');
+      eq(getComputedStyle(document.querySelector('.qz-size')).height, '56px'); eq(getComputedStyle(document.querySelector('.qz-size')).borderRadius, '12px');
+      await answerSize('21–50');
+      eq(authFlow.step, 'su-location'); eq(qTitle(), 'Where is your company based?'); eq(qCount(), '3 of 7');
+      eq(document.getElementById('su-country').value, 'India', 'India by default'); assert(document.querySelector('.qz-primary').disabled, 'OK waits for the city');
+      await answerLocation('', 'Pune');
+      eq(authFlow.step, 'su-name'); eq(qTitle(), 'What’s your name?'); eq(qCount(), '4 of 7');
+      await answerName('Dana Lee');
+      eq(qTitle(), 'What’s your email?'); eq(qCount(), '5 of 7');
+      await answerEmail('dana@startup.example');
+      eq(qTitle(), 'What’s your mobile number?'); eq(qCount(), '6 of 7');
+      await answerMobile('98250 41207');
+      eq(qTitle(), 'Create a password.'); eq(qCount(), '7 of 7');
+      eq(authApi._verifyMailCount('dana@startup.example'), 0, 'nothing is created until the last answer');
+      document.getElementById('auth-password').value = 'Harbor-Lights-42'; suPasswordSubmit();
+      eq(authFlow.step, 'su-password', 'no screen in between: the OK button shows the wait');
+      assert(/Creating your workspace/.test(document.querySelector('.qz-primary').textContent));
+      await intoProduct();
+      eq(state.role, 'admin', 'the owner'); eq(state.activeNav, 'admin-dashboard', 'Home');
+      eq(document.querySelector('#main-content .sec-title').textContent, 'Welcome to Oontu, Dana.', 'welcome line');
+      eq(authApi._verifyMailCount('dana@startup.example'), 1, 'the verification link went out');
+      assert(emailVerifyLocked(), 'unverified until the link is opened');
+      const vb = document.querySelector('#verify-banner-root .vb');
+      eq(vb.querySelector('.vb__text').textContent, 'We sent a verification link to dana@startup.example. Verify it to invite people, publish jobs and send to clients.');
+      eq(vb.offsetHeight, 44, 'one slim line'); assert(vb.querySelector('.vb__icon svg'), 'mail icon');
+      assert(/^Resend in \d+s\|Change email\|I’ve verified$/.test(Array.from(vb.querySelectorAll('button')).map(function(b){ return b.textContent; }).join('|')), 'Resend (counting down: a link just went), Change email, I’ve verified');
+      assert(!/close|dismiss/i.test(vb.innerHTML), 'cannot be closed');
+      const top = document.getElementById('topbar'); assert(top.compareDocumentPosition(document.getElementById('verify-banner-root')) & Node.DOCUMENT_POSITION_FOLLOWING, 'under the top bar');
+      assert(document.querySelector('#quick-actions-bar .qa-dot'), 'unread dot on the bell');
+      assert(computeNotifications().some(function(n){ return n.text==='Verification email sent to dana@startup.example'; }), 'bell notification');
+      assert(document.getElementById('ws-card'), 'Complete your workspace card');
+      eq(ORG_STRUCTURE.profile.teamSize, '21–50', 'team size on the workspace');
+      const s = await authApi.session();
+      eq(s.workspaces[0].role, 'owner', 'server-assigned role'); eq(s.user.setupPending, false, 'setup complete on the server');
+      eq(CUSTOM_ROLES.map(function(r){ return r.name; }).join(','), 'Owner,Recruiter Manager,Recruiter', 'starter roles for the type');
+      showView('setup-hub'); assert(/Team size21–50Edit/.test(document.getElementById('ws-defaults').textContent), 'Settings > Workspace: Team size with Edit');
+      wsOpenSheet('team-size'); document.getElementById('ws-size-4').click(); await saveSheet();
+      eq(ORG_STRUCTURE.profile.teamSize, '200+'); eq(SIGNUP_LEADS[SIGNUP_LEADS.length-1].teamSize, '200+', 'and on the lead');
+      wsSessionSeq++; showView('admin-dashboard'); assert(/^Good /.test(document.querySelector('#main-content .sec-title').textContent), 'the welcome line is for the first visit');
       await authApi.signOut();
       eq((await authApi.passwordSignIn({ email:'dana@startup.example', password:'Harbor-Lights-42' })).ok, true, 'the password works later');
     });
 
-    await test('02b Workspace creation needs a valid password', async function(){
-      authSwitchIntent('signup');
-      await signInWithCode('dana@startup.example');
-      answerCreate('Dana Lee', 'Startup Talent');
-      authCreateNext(); eq(authFlow.errorField, 'auth-password');
-      document.getElementById('auth-password').value = 'short';
-      authCreateNext(); assert(/at least 10/i.test(authFlow.error), 'length message');
-      assert(!appVisible() && obMode==='signup', 'nothing created');
+    await test('02v Verification inside the product: Resend, Change email, I’ve verified, locks, bell, sign out and back', async function(){
+      await signUpAll('Staffing agency', 'Dana Lee', 'dana@startup.example');
+      assert(/^Resend in \d+s$/.test(document.getElementById('verify-banner-resend').textContent), 'a link just went, so the 30 s wait shows');
+      authApi._advance(31*1000); verifyBannerResendAt = 0; verifyBannerSentUntil = 0; renderVerifyBanner();
+      document.getElementById('verify-banner-resend').click(); await settle();
+      eq(document.getElementById('verify-banner-resend').textContent, 'Sent'); assert(document.getElementById('verify-banner-resend').disabled);
+      eq(authApi._verifyMailCount('dana@startup.example'), 2, 'a new link');
+      verifyBannerSentUntil = 0; renderVerifyBanner(); assert(/^Resend in \d+s$/.test(document.getElementById('verify-banner-resend').textContent), 'then the 30 s countdown');
+      await verifyBannerResend(); eq(authApi._verifyMailCount('dana@startup.example'), 2, 'not during the cooldown');
+      // Change email
+      Array.from(document.querySelectorAll('.vb__btn')).find(function(b){ return b.textContent==='Change email'; }).click();
+      assert(document.getElementById('vb-email') && document.getElementById('vb-dialog-h'), 'a small dialog');
+      vbDialog.value = 'alex@northstar.example'; await vbChangeEmailSave(); await settle();
+      assert(/already uses this email/.test(document.getElementById('vb-email-err').textContent), 'an address in use is refused');
+      vbDialog.value = 'dana.lee@startup.example'; await vbChangeEmailSave(); await settle();
+      assert(!document.getElementById('vb-email'), 'closed');
+      eq(authAppSession.email, 'dana.lee@startup.example');
+      assert(/dana\.lee@startup\.example/.test(document.querySelector('.vb__text').textContent), 'the banner shows the new address');
+      eq(authApi._verifyMailCount('dana.lee@startup.example'), 1, 'a link to the new address');
+      assert(WS_SETUPS['dana.lee@startup.example'] && wsSetup.email==='dana.lee@startup.example', 'the checklist follows');
+      // locks keep the reason, with Resend link
+      wsOpenItem('agency-team'); wsSetup.team[0].email = 'asha@startup-one.example'; await saveSheet();
+      wsSetup.team[0].email = 'ravi@startup-one.example'; wsOpenItem('agency-team'); wsSetup.team[0].email = 'ravi@startup-one.example'; await saveSheet();
+      showView('team-members'); await idle(); await settle();
+      const inv = document.querySelector('button[onclick*="tmOpenInvite("]');
+      assert(inv && inv.disabled, 'invite locked');
+      assert(inv.parentElement.querySelector('.vlock-resend'), 'the reason line has Resend link');
+      // bell: reading clears the dot
+      openNotifications(); assert(!document.querySelector('#quick-actions-bar .qa-dot'), 'read'); closeNotifications();
+      // sign out and back in before verifying: the banner comes back
+      backToSignIn(); await signInWithPassword('dana.lee@startup.example', 'Harbor-Lights-42');
+      assert(appVisible() && document.querySelector('#verify-banner-root .vb'), 'banner again after signing in');
+      // verify
+      await verifyBannerConfirm(); await idle(); await settle();
+      assert(!emailVerifyLocked());
+      assert(/Email verified\. Your 2 invites have been sent\./.test(document.querySelector('.app-toasts').textContent), 'toast counts the invites');
+      await sleep(260); eq(document.getElementById('verify-banner-root').innerHTML, '', 'banner faded away');
+      assert(!document.querySelector('[data-vlocked], [data-vlock-reason]'), 'locks removed');
+      assert(computeNotifications().some(function(n){ return n.text==='Email verified: dana.lee@startup.example'; }), 'bell notification marked done');
+      eq(authApi._inviteMail().filter(function(m){ return /startup-one\.example$/.test(m.to); }).length, 2, 'both queued invites sent');
     });
 
-    await test('03 Sign-up asks one question at a time: email, code, name, workspace, then password', async function(){
-      const ids = function(){ return Array.from(document.querySelectorAll('.au-shell input')).map(function(i){ return i.id; }).join(','); };
+    await test('02L Where is your company based: country picker, city, and the defaults it drives', async function(){
+      SIGNUP_LEADS.length = 0;
+      await pickTypeOnly('Staffing agency'); await answerSize('6–20');
+      eq(qTitle(), 'Where is your company based?'); eq(qCount(), '3 of 7');
+      assert(/We use this for your currency, timezone and phone code\. You can change it later\./.test(qText()));
+      const input = document.getElementById('su-country');
+      eq(input.value, 'India'); eq(document.getElementById('su-country-flag').textContent, '🇮🇳', 'with the flag');
+      eq(input.getAttribute('role'), 'combobox');
+      suCountryOpen();
+      const optNames = function(){ return Array.from(document.querySelectorAll('#su-country-list [role=option]')).map(function(o){ return o.lastChild.textContent; }); };
+      const names = optNames();
+      eq(names.slice(0, 8).join('|'), 'India|United States|United Kingdom|United Arab Emirates|Singapore|Australia|Canada|Germany', 'the common countries first');
+      const rest = names.slice(8); eq(rest.join('|'), rest.slice().sort().join('|'), 'then A to Z');
+      assert(/All countries/.test(document.getElementById('su-country-list').textContent));
+      input.value = 'king'; suCountryInput(input);
+      eq(optNames().join(), 'United Kingdom', 'type to filter');
+      eq(document.querySelector('.qz-primary').disabled, true, 'OK waits for both answers');
+      input.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', bubbles:true, cancelable:true }));
+      eq(suWiz.country, 'GB'); eq(input.value, 'United Kingdom'); eq(authFlow.mobileCode, '+44', 'the phone code follows');
+      eq(document.activeElement.id, 'su-city', 'then the city');
+      eq(Array.from(document.querySelectorAll('#su-city-list option')).map(function(o){ return o.value; }).slice(0, 2).join(), 'London,Manchester', 'suggestions for the country');
+      const city = document.getElementById('su-city'); city.value = 'Leeds'; city.dispatchEvent(new Event('input'));
+      eq(document.querySelector('.qz-primary').disabled, false, 'enabled once both are filled');
+      suWiz.city = ''; suLocationSubmit(); eq(authFlow.errorField, 'su-city', 'city required');
+      suWiz.city = 'Leeds'; renderOnboardingScreen(); document.getElementById('wz-form').requestSubmit(); await move(); await idle();
+      eq(authFlow.step, 'su-name', 'Enter moves on');
+      const l = SIGNUP_LEADS[0]; eq(l.stepReached, 'location'); eq(l.country, 'United Kingdom'); eq(l.city, 'Leeds');
+      await answerName('Sam Patel'); await answerEmail('sam@talentuk.example');
+      eq(document.getElementById('auth-mobile-code').value, '+44', '+44 on the mobile question');
+      await answerMobile('98250 4120'); eq(authFlow.errorField, 'auth-mobile'); assert(/10-digit mobile number for the UK/.test(authFlow.error), 'the UK number length');
+      await answerMobile('7700 900123'); eq(authFlow.step, 'su-password');
+      await answerPassword('Harbor-Lights-42'); await intoProduct();
+      const p = ORG_STRUCTURE.profile;
+      eq(p.country, 'United Kingdom'); eq(p.city, 'Leeds'); eq(p.currency, 'GBP (£)'); eq(p.timezone, 'Europe/London (GMT, UTC+0)');
+      eq(p.dateFormat, 'DD MMM YYYY'); eq(p.dataRegion, 'EU'); eq(p.taxIdLabel, 'VAT number');
+      wsOpenItem('agency-profile');
+      eq(document.getElementById('su-ws-country').value, 'GB'); eq(document.getElementById('su-ws-city').value, 'Leeds');
+      eq(document.getElementById('su-tz').value, 'Europe/London'); eq(document.getElementById('su-currency').value, 'GBP');
+      eq(document.querySelector('label[for="su-gst"]').textContent, 'VAT number', 'the tax ID label for the country');
+      wsCloseSheet();
+      wsOpenRegion('ws-reg-currency'); eq(document.activeElement.id, 'ws-reg-currency', 'Edit opens at that field');
+      wsRegionCountry('US');
+      eq(document.getElementById('ws-reg-currency').value, 'USD'); eq(document.getElementById('ws-reg-date').value, 'MMM DD, YYYY', 'US dates');
+      wsRegionDraft.city = 'Austin'; await saveSheet();
+      eq(p.country, 'United States'); eq(p.taxIdLabel, 'EIN'); eq(p.dataRegion, 'EU', 'the data region stays: contact us to change');
+      // India by default: +91 and INR
+      reset(); await pickType('Staffing agency'); eq(authFlow.mobileCode, '+91');
+      await answerName('Dana Lee'); await answerEmail('dana@in-default.example'); await answerMobile('98250 41207'); await answerPassword('Harbor-Lights-42'); await intoProduct();
+      eq(ORG_STRUCTURE.profile.currency, 'INR (₹)'); eq(ORG_STRUCTURE.profile.taxIdLabel, 'GSTIN');
+      // a phone code chosen on the mobile question is kept when the country changes later
+      reset(); await pickTypeOnly('Staffing agency'); await answerSize('1–5'); authFlow.mobileCodeTouched = true; authFlow.mobileCode = '+971';
+      suCountryPick('SG', true); eq(authFlow.mobileCode, '+971', 'not overwritten');
+      // Super Admin: country column and filter
+      SIGNUP_LEADS.length = 0; seedSignupLeads();
+      state.role = 'oontu'; const app = document.getElementById('app'); app.classList.remove('hidden'); app.classList.add('flex'); document.getElementById('onboarding').classList.add('hidden');
+      suLeadFilter = 'All'; suLeadCountry = ''; showView('oontu-signups'); await idle();
+      assert(Array.from(document.querySelectorAll('#oontu-signups-table th')).some(function(th){ return th.textContent==='Country'; }), 'Country column');
+      const sel = document.querySelector('select[aria-label="Country"]'); assert(sel && /India/.test(sel.textContent), 'country filter');
+      suLeadCountry = 'India'; refreshOontuSignups();
+      assert(oontuSignupsRows().length && oontuSignupsRows().every(function(x){ return x.country==='India'; }), 'filters by country');
+      suLeadCountry = '';
+    });
+
+    await test('02a The lead moves with every answer: type_chosen, name, email, mobile, password, in_product', async function(){
+      SIGNUP_LEADS.length = 0;
+      await pickTypeOnly('Staffing agency');
+      const l = SIGNUP_LEADS[0];
+      eq(SIGNUP_LEADS.length, 1); eq(l.stepReached, 'type_chosen'); eq(l.email, '', 'no contact details yet'); eq(l.workspaceType, 'Staffing agency');
+      await answerSize('51\u2013200'); eq(l.stepReached, 'team_size'); eq(l.teamSize, '51\u2013200');
+      await answerName('Dana Lee'); eq(l.stepReached, 'name'); eq(l.name, 'Dana Lee');
+      await answerEmail('bad'); eq(l.stepReached, 'name', 'not while the answer is invalid');
+      await answerEmail('dana@startup.example'); eq(l.stepReached, 'email'); eq(l.email, 'dana@startup.example'); eq(l.method, 'email'); eq(l.emailVerified, false);
+      await answerMobile('9825041207'); eq(l.stepReached, 'mobile'); eq(l.mobile, '+91 98250 41207', 'stored in Indian format');
+      suQBack(); await move(); eq(authFlow.step, 'su-mobile', 'Back');
+      await answerMobile('9825041207'); eq(l.stepReached, 'mobile', 'going back never moves the lead back');
+      eq(l.currentStep, 'su-password', 'the question on screen is on the lead');
+      await answerPassword('Harbor-Lights-42'); await intoProduct();
+      eq(SIGNUP_LEADS.length, 1, 'the same lead throughout');
+      eq(l.stepReached, 'in_product'); eq(l.status, 'in_product'); eq(l.resume, null, 'nothing left to resume');
+      assert(l.stepTimes.type_chosen && l.stepTimes.team_size && l.stepTimes.name && l.stepTimes.email && l.stepTimes.mobile && l.stepTimes.password && l.stepTimes.in_product, 'a time for each');
+      eq(SIGNUP_STEPS_REACHED.join(), 'type_chosen,team_size,location,name,email,mobile,password,in_product,verified');
+    });
+
+    await test('02b Each question checks its answer: red field, message, shake; nothing is created', async function(){
+      await pickType('Staffing agency');
+      qzReduced = function(){ return false; };
+      try { suNameSubmit(); } finally { qzReduced = function(){ return true; }; }
+      eq(authFlow.errorField, 'auth-name'); eq(authFlow.error, 'Enter your full name.');
+      eq(document.getElementById('auth-name').getAttribute('aria-invalid'), 'true', 'red field');
+      assert(document.querySelector('.qz-fields .qz-shake'), 'the field shakes (not with reduced motion)');
+      await answerName('Dana Lee');
+      await answerEmail('not-an-email'); eq(authFlow.errorField, 'auth-email'); eq(authFlow.step, 'su-email');
+      await answerEmail('dana@gmail.com'); eq(authFlow.step, 'su-mobile', 'an agency can use Gmail');
+      await answerMobile(''); eq(authFlow.errorField, 'auth-mobile');
+      await answerMobile('12345 67890'); assert(/10-digit Indian/.test(authFlow.error), 'Indian number rule');
+      await answerMobile('98250 4120'); eq(authFlow.errorField, 'auth-mobile', 'nine digits');
+      await answerMobile('Harbor'); eq(authFlow.errorField, 'auth-mobile', 'letters');
+      eq(authMobileProblem('+44', '7700 900123'), '', 'other countries: 6 to 15 digits');
+      await answerMobile('98250 41207'); eq(authFlow.step, 'su-password');
+      document.getElementById('auth-password').value = 'short'; suPasswordSubmit();
+      eq(authFlow.errorField, 'auth-password'); assert(/at least 10/i.test(authFlow.error), 'length message'); eq(authFlow.step, 'su-password');
+      eq(document.getElementById('auth-password').value, 'short', 'the typed password survives the error');
+      assert(!appVisible() && !(await authApi.session()).authenticated, 'nothing created');
+      eq((await authApi.signUp({ name:'x', email:'x@y.example', mobileCode:'+91', mobile:'123', password:'Cedar-Harbor-77' })).error, 'mobile_invalid_in', 'the server checks too');
+    });
+
+    await test('02c One question per screen: header, progress parts, counter, Back, big title, OK and press Enter', async function(){
       authSwitchIntent('signup');
-      eq(ids(), 'auth-email', 'email question');
-      await signInWithCode('min@data.example');
-      eq(ids(), 'auth-name', 'name question');
-      authCreateNext(); eq(authFlow.errorField, 'auth-name', 'an empty answer does not move on');
-      authFlow.name = 'Min Park'; authCreateNext();
-      eq(ids(), 'auth-workspace', 'workspace question');
-      assert(/Min Park/.test(document.querySelector('.au-answer').textContent), 'the name stays visible as an answered row');
-      authCreateNext(); eq(authFlow.errorField, 'auth-workspace');
-      authFlow.workspaceName = 'Data Co'; authCreateNext();
-      eq(ids(), 'auth-password', 'password question');
-      eq(document.querySelectorAll('.au-answer').length, 2, 'both earlier answers are shown');
-      authCreateEdit(0);
-      eq(ids(), 'auth-name', 'an earlier answer can be changed'); eq(authFlow.name, 'Min Park');
+      assert(document.querySelector('.wz-top .wz-logo') && document.querySelector('.wz-top .wz-exit'), 'logo left, Save and exit right');
+      eq(document.querySelectorAll('.qz-prog .qz-seg').length, 7, 'a thin line in seven equal parts');
+      assert(!document.querySelector('.wz-steps, .wz-step'), 'no step labels');
+      assert(!document.querySelector('button.qz-back'), 'no Back on the first question');
+      eq(document.querySelectorAll('.qz-choice').length, 2);
+      eq(Array.from(document.querySelectorAll('.wz-choice__title')).map(function(e){ return e.textContent; }).join('|'), 'Staffing agency|Corporate');
+      eq(document.querySelectorAll('.qz-choice input[type=radio][name="su-type"]').length, 2, 'one radio group, so the arrow keys move between cards');
+      assert(!document.querySelector('.qz-primary'), 'choosing a card moves on by itself');
+      await pickTypeOnly('Corporate');
+      assert(/Your TA team, hiring managers and interviewers\./.test(qText()), 'corporate hint on team size');
+      await answerSize('6\u201320'); await answerLocation('', 'Pune');
+      eq(document.querySelector('.qz-prog').getAttribute('aria-valuenow'), '4');
+      assert(document.querySelector('button.qz-back'), 'Back from the second question');
+      eq(getComputedStyle(document.querySelector('.qz-title')).fontSize, '32px', 'title 32px');
+      eq(getComputedStyle(document.getElementById('auth-name')).height, '52px', 'field 52px');
+      eq(getComputedStyle(document.getElementById('auth-name')).fontSize, '17px');
+      eq(document.querySelector('.qz-primary').textContent, 'OK'); assert(/press Enter/.test(document.querySelector('.qz-enter').textContent));
+      assert(document.querySelector('label[for="auth-name"]').classList.contains('sr-only'), 'the title asks the question; the label is for screen readers');
+      eq(document.getElementById('auth-name').getAttribute('autocomplete'), 'name');
+      eq(Array.from(document.querySelectorAll('.qz-alt .qz-textbtn')).map(function(b){ return b.textContent; }).join(), 'Google,Microsoft', 'or sign up with Google / Microsoft');
+      await answerName('Mira Shah');
+      eq(qTitle(), 'What’s your work email?'); assert(/Use your company email\./.test(qText()), 'corporate hint');
+      eq(document.getElementById('auth-email').placeholder, 'you@company.com');
+      await answerEmail('mira@startup.example');
+      eq(document.getElementById('auth-mobile-code').value, '+91', '+91 by default');
+      assert(/We’ll only call if you get stuck while setting up\./.test(qText()));
+      await answerMobile('98250 41207');
+      assert(document.querySelector('.au-trail') && document.getElementById('auth-password-strength'), 'show/hide and the strength bar');
+      assert(/By continuing you agree to the terms and privacy notice\./.test(qText()));
+      eq(document.getElementById('auth-password').getAttribute('autocomplete'), 'new-password');
+      reset(); await pickType('Staffing agency'); await answerName('Dana Lee');
+      eq(qTitle(), 'What’s your email?'); assert(/A personal email works for agencies\./.test(qText()), 'agency hint');
+      authSwitchIntent('signin'); eq(document.querySelector('.au-h1').textContent, 'Welcome', 'sign-in is unchanged');
+    });
+
+    await test('02d Motion: up and out, in from below, focus after; Back reverses; Shift+Tab and Enter; the arrow keys only move', async function(){
+      authSwitchIntent('signup');
+      const r = document.getElementById('su-type-1');
+      r.checked = true; r.dispatchEvent(new Event('change', { bubbles:true }));
+      await sleep(400); eq(authFlow.step, 'su-type', 'an arrow key changes the choice without moving on');
+      assert(document.querySelectorAll('.qz-choice')[1].classList.contains('is-on'), 'highlighted');
+      r.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', bubbles:true }));
+      assert(document.querySelectorAll('.qz-choice')[1].classList.contains('is-picked'), 'a short highlight first');
+      eq(authFlow.step, 'su-type', 'then it moves, 300 ms later');
+      await sleep(330);
+      assert(document.getElementById('qz-step').classList.contains('qz-out'), 'the question leaves upward');
+      await move();
+      eq(authFlow.step, 'su-size'); assert(document.getElementById('qz-step').classList.contains('qz-in'), 'the next one rises in');
+      await sleep(200); eq(document.activeElement.id, 'su-size-0', 'focus once it has arrived');
+      const c = document.getElementById('su-size-2');
+      c.checked = true; c.dispatchEvent(new Event('change', { bubbles:true }));
+      await sleep(200); eq(authFlow.step, 'su-size', 'arrow keys move between chips without moving on');
+      c.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', bubbles:true }));
+      assert(document.querySelectorAll('.qz-size')[2].classList.contains('is-picked'), '120 ms highlight');
+      await sleep(140); await move();
+      eq(authFlow.step, 'su-location'); eq(suWiz.teamSize, '21\u201350');
+      await answerLocation('', 'Pune');
+      eq(authFlow.step, 'su-name');
+      await sleep(200); eq(document.activeElement.id, 'auth-name');
+      authFlow.name = 'Dana Lee'; document.getElementById('wz-form').requestSubmit();
+      assert(document.getElementById('qz-step').classList.contains('qz-out'), 'Enter is OK'); await move();
+      eq(authFlow.step, 'su-email');
+      document.getElementById('auth-email').dispatchEvent(new KeyboardEvent('keydown', { key:'Tab', shiftKey:true, bubbles:true, cancelable:true }));
+      assert(document.getElementById('qz-step').classList.contains('qz-out-back'), 'Shift+Tab from the field goes back, downward');
+      await move();
+      eq(authFlow.step, 'su-name'); assert(document.getElementById('qz-step').classList.contains('qz-in-back'), 'in from above');
+      eq(document.getElementById('auth-name').value, 'Dana Lee', 'answers kept');
+      document.querySelector('button.qz-back').click(); await move();
+      eq(authFlow.step, 'su-location'); eq(document.getElementById('su-city').value, 'Pune', 'the city kept');
+      document.querySelector('button.qz-back').click(); await move();
+      eq(authFlow.step, 'su-size'); assert(document.getElementById('su-size-2').checked, 'the chip kept');
+      document.querySelector('button.qz-back').click(); await move();
+      eq(authFlow.step, 'su-type'); assert(document.getElementById('su-type-1').checked, 'the choice kept');
+      assert(/prefers-reduced-motion: reduce\)\{[^}]*\.qz-in, \.qz-in-back \{ animation:qzFade \.15s/.test(document.querySelector('style').textContent.replace(/\n\s*/g,'')), 'reduced motion: a 150 ms cross-fade');
+    });
+
+    await test('03b An email that already has an account offers sign-in on the email question', async function(){
+      await pickType('Staffing agency'); await answerName('Alex M');
+      await answerEmail('alex@northstar.example');
+      eq(authFlow.step, 'su-email'); eq(authFlow.errorField, 'auth-email'); assert(/already uses this email/.test(authFlow.error));
+      eq((await authApi.passwordSignIn({ email:'alex@northstar.example', password:'Harbor-Lights-42' })).error, 'invalid_credentials', 'existing password untouched');
+    });
+
+    await test('03d Google: four questions, the provider gives the email and no password is asked', async function(){
+      SIGNUP_LEADS.length = 0;
+      await pickType('Staffing agency'); authFlow.name = 'Taylor Kim';
+      suOAuthStart('google'); await idle(); await move();
+      eq(authFlow.step, 'oauth-sim'); eq(qCount(), '4 of 5', 'the chooser belongs to the name question'); eq(document.querySelectorAll('.qz-seg').length, 5, 'five questions: type, team size, location, name, mobile');
+      suOAuthPick('new'); await idle(); await move(); await idle();
+      eq(authFlow.step, 'su-mobile'); eq(qCount(), '5 of 5');
+      assert(/Signed up with Google as taylor\.kim@gmail\.com/.test(qText()));
+      await sleep(200); eq(document.activeElement.id, 'auth-mobile');
+      suQBack(); await move(); eq(authFlow.step, 'su-name', 'Back goes to the name'); await answerName('Taylor Kim'); eq(authFlow.step, 'su-mobile', 'and forward skips the email');
+      authFlow.mobile = '98250 41207'; suMobileSubmit();
+      assert(/Creating your workspace/.test(document.querySelector('.qz-primary').textContent), 'the mobile number is the last question');
+      await intoProduct();
+      assert(!emailVerifyLocked() && !document.querySelector('#verify-banner-root .vb'), 'the provider verified the email');
+      eq(authApi._verifyMailCount('taylor.kim@gmail.com'), 0, 'no link needed');
+      const l = SIGNUP_LEADS[0];
+      eq(l.method, 'google'); eq(l.emailVerified, true); eq(l.email, 'taylor.kim@gmail.com'); eq(l.stepReached, 'in_product');
+      reset(); await pickType('Staffing agency'); authFlow.name = 'Alex';
+      suOAuthStart('google'); await idle(); await move(); suOAuthPick('approve'); await idle(); await settle();
+      assert(appVisible(), 'someone already on Oontu is signed in, not signed up');
+      reset(); await pickType('Staffing agency');
+      suOAuthStart('microsoft'); await idle(); await move(); suOAuthPick('cancel'); await idle(); await move();
+      eq(authFlow.step, 'su-name'); assert(/cancelled/i.test(authFlow.notice));
+    });
+
+    await test('03e Corporate needs a company email on the email question; an agency accepts any', async function(){
+      await pickType('Corporate'); await answerName('Dana Lee');
+      await answerEmail('dana@gmail.com');
+      eq(authFlow.errorField, 'auth-email'); eq(authFlow.error, 'Use your company email. Gmail and other personal addresses can’t create a company workspace.');
+      eq(authFlow.step, 'su-email');
+      eq((await authApi.signUp({ name:'Dana', email:'dana@yahoo.com', mobileCode:'+91', mobile:'9825041207', password:'Harbor-Lights-42', type:'Corporate' })).error, 'personal_email', 'the server checks too');
+      ['gmail.com','yahoo.com','outlook.com','hotmail.com','live.com','icloud.com','rediffmail.com','proton.me','protonmail.com','aol.com','zoho.com','yandex.com','gmx.com','mail.com'].forEach(function(d){ assert(isFreeEmailDomain(d), d); });
+    });
+
+    await test('03f Corporate with a personal Google account goes to the email question; a work account continues', async function(){
+      await googleUp('Corporate', 'new');
+      eq(authFlow.step, 'su-email'); assert(/Use your company email/.test(authFlow.error), 'the same message');
+      eq((await authApi.session()).authenticated, false, 'the personal account is signed out');
+      reset(); await googleUp('Corporate', 'new_work');
+      eq(authFlow.step, 'su-mobile');
+      await answerMobile('98250 41207'); await intoProduct();
+      eq(ORG_STRUCTURE.profile.orgType, 'Corporate'); eq(ORG_STRUCTURE.profile.verification, 'unverified'); eq(ORG_STRUCTURE.profile.domain, 'brightpath.in');
+    });
+
+    await test('03g Corporate on a domain that already has a workspace: Request to join, in the same layout', async function(){
+      SIGNUP_LEADS.length = 0;
+      await pickType('Corporate'); await answerName('Ravi Iyer');
+      await answerEmail('ravi@infosys.com');
+      eq(authFlow.step, 'su-join'); eq(qTitle(), 'Join Infosys?'); eq(qCount(), '5 of 7', 'in place of the email question');
+      assert(/Infosys already has an Oontu workspace\. Ask its owner, Anita Rao, to let you in\./.test(qText()));
+      assert(document.querySelector('.qz-prog') && document.querySelector('.wz-exit') && document.querySelector('button.qz-back'), 'same header, line and Back');
+      eq(document.querySelector('.qz-primary').textContent, 'Request to join');
+      suJoinBack(); await move(); eq(authFlow.step, 'su-email'); eq(document.getElementById('auth-email').value, 'ravi@infosys.com', 'Back keeps the email');
+      await answerEmail('ravi@infosys.com');
+      suJoinRequest(); await idle();
+      assert(/We sent your request to Anita Rao\./.test(qText()));
+      eq(SIGNUP_LEADS[0].stepReached, 'join_requested');
+      suJoinApprove(); await idle();
+      eq(authFlow.step, 'invite', 'the approval emails an invitation'); eq(authFlow.invite.orgName, 'Infosys');
+      authFlow.name = 'Ravi Iyer'; authInviteNext(); document.getElementById('auth-password').value = 'Harbor-Lights-42'; authInviteNext(); await idle();
+      assert(appVisible(), 'in the company workspace'); eq(state.role, 'recruiter');
+    });
+
+    await test('03h Corporate on a new domain: Unverified company, corporate roles; the next person from it is asked to join', async function(){
+      await signUpAll('Corporate', 'Dana Lee', 'dana@startup.example');
+      eq(ORG_STRUCTURE.profile.orgType, 'Corporate'); eq(ORG_STRUCTURE.profile.verification, 'unverified'); eq(ORG_STRUCTURE.profile.domain, 'startup.example');
+      eq(CUSTOM_ROLES.map(function(r){ return r.name; }).join(','), 'Owner,TA Head,Recruiter,Hiring Manager,Interviewer,Approver');
+      const pill = document.querySelector('#org-verify-slot .org-pill');
+      assert(pill && /Unverified company/.test(pill.textContent), 'pill in the header');
+      assert(!filterNavForOrgType([{id:'client-management'},{id:'jobs'}]).some(function(i){ return i.id==='client-management'; }), 'corporate hides Clients');
+      backToSignIn();
+      await pickType('Corporate'); await answerName('Mira Shah'); await answerEmail('mira@startup.example');
+      eq(authFlow.step, 'su-join', 'the next person from that domain is asked to join');
+      reset(); await signUpAll('Corporate', 'Kiran Rao', 'kiran@bigco.example', null, null, '200+');
+      wsOpenItem('corp-setup'); assert(document.getElementById('ws-struct-1').checked, '200+: Several entities or countries is pre-selected'); wsCloseSheet();
+      eq(roleTemplatesForOrgType('Staffing agency').map(function(r){ return r.name; }).join(','), 'Owner,Recruiter Manager,Recruiter');
+      assert(roleTemplatesForOrgType('Staffing agency')[0].protected, 'owner is locked');
+    });
+
+    await test('05y Unverified: banner with Resend and I’ve verified, locks in place; invites written now are queued and sent on verifying', async function(){
+      await signUpAll();
+      assert(emailVerifyLocked());
+      const banner = document.querySelector('#verify-banner-root .vb');
+      assert(/Resend/.test(banner.textContent) && /Change email/.test(banner.textContent) && /I’ve verified/.test(banner.textContent));
+      wsOpenItem('agency-team');
+      eq(sheetTitle(), 'Invite your team'); assert(/We’ll send the invites once you verify your email\./.test(document.querySelector('.ws-sheet').textContent));
+      eq(roleOptions('su-inv-role-0'), 'Recruiter Manager,Recruiter', 'agency roles');
+      wsSetup.team[0].email = 'priya@startup.example'; await saveSheet();
+      const r = RECRUITER_ROSTER.filter(function(x){ return x.email==='priya@startup.example'; }).pop();
+      eq(r.inviteState, 'queued'); eq(authApi._inviteMail().length, 0, 'nothing sent while unverified');
+      assert(/1 queued/.test(cardText()), 'shown as queued on the card');
+      showView('team-members'); await idle();
+      const inv = document.querySelector('button[onclick*="tmOpenInvite("]');
+      assert(inv && inv.disabled && inv.classList.contains('vlock'), 'the usual invite stays locked');
+      const jobs = JOBS.length; publishJob(); eq(JOBS.length, jobs, 'no job published');
+      await verifyBannerConfirm(); await idle(); await settle();
+      assert(!emailVerifyLocked()); await sleep(260); eq(document.getElementById('verify-banner-root').innerHTML, '', 'banner gone');
+      eq(r.inviteState, 'sent'); eq(authApi._inviteMail().filter(function(m){ return m.to==='priya@startup.example'; }).length, 1, 'the queued invite goes out');
+      verifyBannerResendAt = 0;
+      backToSignIn(); await signInWithPassword('dana@startup.example', 'Harbor-Lights-42');
+      assert(appVisible() && !emailVerifyLocked(), 'verified for good');
+    });
+
+    await test('06d Save and exit reopens the exact question with the answers filled in', async function(){
+      await pickType('Staffing agency'); await answerName('Riya Sen'); await answerEmail('riya@hirefast.in');
+      authFlow.mobile = '98111 22233'; renderOnboardingScreen();
+      document.querySelector('.wz-exit').click(); await idle();
+      eq(authFlow.intent, 'signin'); eq(document.querySelector('.au-h1').textContent, 'Welcome', 'back on sign-in');
+      assert(/Your progress is saved\. Sign in to pick up where you left off\./.test(screenText()));
+      eq(document.getElementById('auth-email').value, 'riya@hirefast.in');
+      document.getElementById('auth-password').value = 'anything-at-all'; authSubmitPassword(); await idle(); await move();
+      eq(authFlow.step, 'su-mobile', 'the same question'); eq(qCount(), '6 of 7');
+      eq(document.getElementById('auth-mobile').value, '98111 22233', 'answer kept');
+      eq(authFlow.name, 'Riya Sen'); eq(suWiz.type, 'Staffing agency');
+      // the reminder email's resume link
+      document.querySelector('.wz-exit').click(); await idle();
+      const link = Array.from(document.querySelectorAll('.au-proto-link button')).find(function(b){ return /open resume link/.test(b.textContent); });
+      link.click(); await idle(); await move(); eq(authFlow.step, 'su-mobile');
+      // someone who left at the first question comes back through Create an account
+      reset(); SIGNUP_LEADS.length = 0;
+      await pickType('Corporate'); suSaveAndExit(); await idle();
+      authSwitchIntent('signup'); await idle(); await move();
+      eq(authFlow.step, 'su-name'); eq(suWiz.type, 'Corporate');
+      // Restart onboarding closes the lead and starts at the first question
+      await restartOnboarding(); await idle();
+      eq(authFlow.step, 'su-type'); eq(SIGNUP_LEADS[0].status, 'restarted'); eq(suUnfinishedLead(''), null, 'nothing left to resume');
+    });
+
+    await test('06k Oontu team creates a tenant; the owner sets a password and lands in the product with the checklist', async function(){
+      const start = PLATFORM_TENANTS.length;
+      state.role = 'oontu'; const app = document.getElementById('app'); app.classList.remove('hidden'); app.classList.add('flex'); document.getElementById('onboarding').classList.add('hidden');
+      showView('oontu-tenants'); await idle();
+      const btn = Array.from(document.querySelectorAll('#main-content button')).find(function(b){ return b.textContent.trim()==='Create tenant'; });
+      btn.click();
+      ctSheet.company = 'Kite Hiring'; ctSheet.name = 'Ravi Menon'; ctSheet.email = 'ravi@gmail.com'; ctSheet.mobile = '98250 41207'; ctPickType('Corporate');
+      ctSubmit(); eq(document.getElementById('ct-email-err').textContent, AUTH_MESSAGES.personal_email, 'corporate work-email rule'); eq(PLATFORM_TENANTS.length, start);
+      ctPickType('Staffing agency'); ctSheet.email = 'ravi@kitehiring.example';
+      ctSubmit(); await idle();
+      const tn = PLATFORM_TENANTS[PLATFORM_TENANTS.length-1];
+      eq(tn.status, 'invited');
+      document.getElementById('create-tenant-modal-root').querySelector('.ct-primary').click(); await idle(); await move();
+      eq(authFlow.step, 'su-owner'); eq(qTitle(), 'Set your password');
+      assert(/The Oontu team has set up Kite Hiring for you\./.test(qText()));
+      assert(!document.querySelector('.qz-count') && !document.querySelector('.qz-prog'), 'one question: no counter or line');
+      document.getElementById('auth-password').value = 'Harbor-Lights-42'; document.getElementById('auth-password-confirm').value = 'Harbor-Lights-4';
+      suOwnerSetPassword(); assert(document.getElementById('auth-password-confirm-err'), 'passwords must match');
+      document.getElementById('auth-password-confirm').value = 'Harbor-Lights-42'; suOwnerSetPassword(); await idle(); await settle();
+      assert(appVisible(), 'straight into the product'); eq(state.role, 'admin'); assert(!emailVerifyLocked(), 'the invite link proved the email');
+      assert(/Complete your workspace/.test(cardText()), 'the same checklist card');
+      eq(tn.status, 'active', 'tenant is Active');
+      wsOpenItem('agency-profile'); eq(document.getElementById('su-company').value, 'Kite Hiring', 'the company name carries over'); wsCloseSheet();
+      eq((await authApi.acceptOwnerInvite({ token:tn.inviteToken, password:'Other-Pass-9876' })).error, 'invite_used', 'the link works once');
+    });
+
+    await test('06l Incomplete sign-ups: question names, Setup not finished, call outcomes, assisted sign-up with permission and audit', async function(){
+      state.role = 'oontu'; const app = document.getElementById('app'); app.classList.remove('hidden'); app.classList.add('flex'); document.getElementById('onboarding').classList.add('hidden');
+      SIGNUP_LEADS.length = 0; seedSignupLeads();
+      renderSidebar(); suLeadFilter = 'All'; suLeadSearch = ''; suLeadShowClosed = false;
+      showView('oontu-signups'); await idle();
+      const rows = function(){ return Array.from(document.querySelectorAll('#oontu-signups-table tbody tr')); };
+      eq(rows().length, 7, 'seven sign-ups still answering questions');
+      eq(LEAD_STOP_STEPS.join('|'), 'Workspace type|Team size|Location|Name|Email|Mobile|Password');
+      assert(Array.from(document.querySelectorAll('#oontu-signups-table th')).some(function(th){ return th.textContent==='Team size'; }), 'Team size column');
+      const calls = oontuSignupsRows().filter(leadNeedsCall).map(function(l){ return teamSizeRank(l.teamSize); });
+      assert(calls.length>1 && calls.every(function(r, i){ return i===0 || r<=calls[i-1]; }), 'leads that need a call: bigger teams first');
+      assert(oontuSignupsRows().slice(0, calls.length).every(leadNeedsCall), 'and they come first');
+      assert(/Bigger teams are called first\./.test(document.getElementById('main-content').textContent));
+      eq(leadStoppedAt(signupLeadById('lead-s1')), 'Password'); eq(leadStoppedAt(signupLeadById('lead-s2')), 'Mobile'); eq(leadStoppedAt(signupLeadById('lead-s7')), 'Workspace type');
+      const stops = document.getElementById('oontu-signups-stops').textContent;
+      assert(/Workspace type/.test(stops) && /Name/.test(stops) && /Mobile/.test(stops) && /Password/.test(stops) && !/Workspace setup|Verify email/.test(stops), 'Where people stop uses the question names');
+      assert(Array.from(document.querySelectorAll('[data-lead-filter]')).some(function(b){ return b.textContent==='Setup not finished'; }), 'separate filter');
+      setSignupFilter('Setup not finished');
+      eq(rows().length, 2); assert(rows().every(function(r){ return /Setup \d of \d/.test(r.textContent) && /In product/.test(r.textContent); }), 'owners in the product, with checklist progress');
+      setSignupFilter('Corporate'); assert(rows().every(function(r){ return /Corporate/.test(r.textContent); }), 'Corporate filter');
+      setSignupFilter('All');
+      openSignupSheet('lead-s3'); assignSignupLead('Farhan Ali'); eq(leadFollowUp(signupLeadById('lead-s3')).label, 'Assigned');
+      suLeadSheet.call = { outcome:'will_finish', reason:'Too many steps', nextDate:'', note:'' }; logSignupCall(); eq(leadFollowUp(signupLeadById('lead-s3')).label, 'Resume link sent');
+      openSignupSheet('lead-s6'); suLeadSheet.call = { outcome:'needs_help', reason:'Too many steps', nextDate:'', note:'' }; logSignupCall();
+      assert(document.getElementById('lead-assist').disabled, 'needs permission first');
+      document.getElementById('lead-permission').click();
+      await startAssistedSetup('lead-s6'); await idle(); await move();
+      eq(authFlow.step, 'su-mobile', 'opens at the question where they stopped');
+      assert(/You’re setting this up for Kavya Reddy, with their permission/.test(document.querySelector('.wz-assist').textContent), 'banner');
+      eq(qCount(), '6 of 6', 'the customer sets their own password later');
+      await answerMobile('90000 52413');
+      assert(await waitFor(function(){ return state.activeNav==='oontu-signups' && appVisible(); }, 4000), 'back on Incomplete sign-ups');
+      const l = signupLeadById('lead-s6');
+      eq(l.status, 'in_product'); eq(leadFollowUp(l).label, 'In product');
+      assert(authApi._latestReset && authApi._latestReset('kavya@brightminds.in'), 'a set-password email went to the customer');
+      const audit = AUDIT_LOG.filter(function(a){ return a.action==='Assisted setup by Meera Krishnan for Kavya Reddy'; });
+      assert(audit.some(function(a){ return /permission/.test(a.detail); }) && audit.some(function(a){ return /Finished sign-up/.test(a.detail); }), 'every action audited');
+    });
+
+    await test('06i Agency checklist: seven items in side sheets, Kairo, Hide for now, reminder, ready for one session, Settings', async function(){
+      SIGNUP_LEADS.length = 0;
+      await signUpAll('Staffing agency', 'Dana Lee', 'dana@startup.example');
+      const items = function(){ return Array.from(document.querySelectorAll('#ws-card .ws-item__title')).map(function(e){ return e.textContent; }).join('|'); };
+      eq(items(), 'Agency profile|Connect your tools|Invite your team|Marketplace listing|Oontu jobs website|Add your first client|Open your first job');
+      assert(/0 of 7 done/.test(cardText()));
+      assert(/Kairo Start with your agency profile\. It takes a minute\./.test(cardText()), 'Kairo suggests the next item');
+      eq(document.querySelectorAll('#ws-card .first-run__check').length, 7, 'a circle for each');
+      document.querySelector('#ws-card .ws-item').click();
+      eq(sheetTitle(), 'Agency profile');
+      assert(document.querySelector('.app-sheet.ws-sheet .app-sheet__foot'), 'side sheet with the footer');
+      eq(getComputedStyle(document.querySelector('.ws-sheet')).maxWidth, '560px');
+      assert(!document.querySelector('label[for="su-company"]').classList.contains('sr-only'), 'labels above the fields');
+      eq(Array.from(document.querySelectorAll('.ws-sheet .app-sheet__foot button')).map(function(b){ return b.textContent; }).join('|'), 'Cancel|Save');
+      await saveSheet(); assert(document.getElementById('su-company-err'), 'agency name required'); assert(wsSheet, 'stays open');
+      document.getElementById('su-company').value = 'Startup Talent'; ob.companyName = 'Startup Talent';
+      const gst = document.getElementById('su-gst'); gst.value = '24AAACC1206'; suAgency().gst = gst.value; suGstBlur(gst);
+      eq(document.getElementById('su-gst-err').textContent, 'Check your GST number. It should be 15 characters, like 24AAACC1206D1ZM.', 'checked on blur');
+      const g2 = document.getElementById('su-gst'); g2.value = '24aaacc1206d1zm'; g2.dispatchEvent(new Event('input'));
+      const br = document.getElementById('su-chips-branches');
+      br.value = 'Pune'; br.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', bubbles:true }));
+      const br2 = document.getElementById('su-chips-branches'); br2.value = 'Mumbai, Delhi'; br2.dispatchEvent(new KeyboardEvent('keydown', { key:',', bubbles:true }));
+      eq(suAgency().branches.join(), 'Pune,Mumbai,Delhi', 'Enter and comma make chips');
+      await saveSheet();
+      assert(!wsSheet, 'closed'); eq(ORG_STRUCTURE.profile.brandName, 'Startup Talent'); eq(ORG_STRUCTURE.profile.gstin, '24AAACC1206D1ZM');
+      eq((await authApi.session()).workspaces[0].name, 'Startup Talent', 'renamed on the server');
+      assert(/1 of 7 done/.test(cardText()) && document.querySelector('#ws-card .ws-item.is-done'), 'ticked');
+      assert(/Agency profile saved/.test(document.querySelector('.app-toasts').textContent), 'toast');
+      wsOpenItem('agency-tools'); suConnect('calendar'); await sleep(600);
+      assert(/Connected/.test(document.querySelector('.ws-sheet').textContent)); await saveSheet();
+      wsOpenItem('agency-marketplace'); document.getElementById('su-market').click();
+      assert(document.getElementById('su-chips-specialisations'), 'chips once listed'); suAgency().specialisations.push('Fintech hiring'); await saveSheet();
+      eq(ORG_STRUCTURE.profile.marketplaceListed, true); eq(ORG_STRUCTURE.profile.marketplaceSpecialisations.join(), 'Fintech hiring');
+      wsOpenItem('jobs-site'); eq(document.getElementById('su-jobsite').getAttribute('aria-checked'), 'false', 'off by default'); await saveSheet();
+      eq(ORG_STRUCTURE.profile.jobsWebsiteAllowed, false);
+      wsOpenItem('agency-team'); await saveSheet(); eq(document.getElementById('su-inv-email-0-err').textContent, 'Add at least one email to invite.');
+      wsSetup.team[0].email = 'dana@startup.example'; await saveSheet(); assert(/your own email/.test(document.getElementById('su-inv-email-0-err').textContent));
+      wsSetup.team[0].email = 'meena@talent-one.example'; wsSetup.team[0].roleId = 'role_recmgr'; suTeamAdd();
+      eq(roleOptions('su-inv-rep-1'), 'You,meena@talent-one.example', 'a Recruiter Manager can be reported to');
+      wsSetup.team[1].email = 'arun@talent-one.example'; wsSetup.team[1].reportsTo = 'meena@talent-one.example'; await saveSheet();
+      const newest = function(email){ return RECRUITER_ROSTER.filter(function(x){ return x.email===email; }).pop(); };
+      eq(newest('arun@talent-one.example').inviteState, 'queued'); eq(tmManagerIdOf(newest('arun@talent-one.example')), newest('meena@talent-one.example').id, 'reports to Meena');
+      assert(/5 of 7 done/.test(cardText()));
+      wsSimulateDays();
+      assert(/Kairo 2 setup items left\. Want to finish your first client now\?/.test(cardText()), 'the reminder after three days');
+      wsHideForNow(); assert(!document.getElementById('ws-card'), 'Hide for now'); showView('admin-dashboard'); assert(!document.getElementById('ws-card'), 'for this session');
+      showView('setup-hub'); assert(document.querySelector('#ws-setup-section #ws-card'), 'still in Settings > Workspace setup');
+      const defs = document.getElementById('ws-defaults');
+      eq(Array.from(defs.querySelectorAll('.ws-defs__row')).map(function(r){ return r.querySelector('dt').textContent+'='+r.querySelector('dd').textContent; }).join('|'),
+        'Team size=6\u201320|Country=\ud83c\uddee\ud83c\uddf3 India|City (head office)=Mumbai|Currency=INR (\u20b9)|Timezone=Asia/Kolkata (IST, UTC+5:30)|Date format=DD MMM YYYY|Data region=India|Roles=Owner, Recruiter Manager, Recruiter|Approvals=Follow the reporting line|New applicants=Shared round-robin across the job team|Client duplicate window=90 days|Submission reply time=48 hours', 'Your defaults, read-only');
+      eq(defs.querySelectorAll('button').length, 11, 'each with Edit or Change, except data region');
+      assert(/Data regionIndiaContact us to change/.test(defs.textContent), 'data region needs Oontu');
+      wsSessionSeq++; showView('admin-dashboard'); assert(document.getElementById('ws-card'), 'back next session');
+      wsOpenItem('first-client'); await idle();
+      eq(state.activeNav, 'client-management'); assert(document.getElementById('nc-display'), 'the full-page client form');
+      ncForm.displayName = 'Zeta Fintech'; ncForm.companyName = 'Zeta Fintech Pvt Ltd'; ncForm.firstName = 'Rahul'; ncForm.lastName = 'Mehta'; ncForm.email = 'rahul@zetafin.example'; ncForm.treatment = 'business_none'; ncForm.place = 'Maharashtra'; ncSave('add');
+      JOBS.push(Object.assign({}, JOBS[0], { id:'j-test-first', title:'Backend Engineer' }));   // the job form is long; a new job is what ticks the item
+      showView('admin-dashboard');
+      assert(/Your workspace is ready/.test(cardText()), 'all done');
+      eq(SIGNUP_LEADS[0].status, 'completed', 'the Super Admin list stops counting it');
+      wsSessionSeq++; showView('admin-dashboard'); assert(!document.getElementById('ws-card'), 'gone after one session');
+      JOBS.pop();
+    });
+
+    await test('06m Corporate checklist: company setup, entities only for a group, how people join, careers page, vendors', async function(){
+      await signUpAll('Corporate', 'Neha Rao', 'neha@acmeworks.example');
+      const items = function(){ return wsItems().map(function(k){ return WS_ITEMS[k].title; }).join('|'); };
+      eq(items(), 'Company setup|Company profile|How people join|Careers page|Oontu jobs website|Vendor agencies');
+      assert(/0 of 6 done/.test(cardText()));
+      wsOpenItem('corp-setup');
+      assert(document.getElementById('ws-struct-0').checked, 'team size 6\u201320: One company is pre-selected');
+      eq(document.querySelector('label[for="ws-struct-1"] .wz-choice__title').textContent, 'Several entities or countries');
+      document.getElementById('ws-struct-1').click(); await saveSheet();
+      eq(items(), 'Company setup|Company profile|Entities and salary bands|How people join|Careers page|Oontu jobs website|Vendor agencies', 'a group adds entities');
+      assert(/1 of 7 done/.test(cardText()));
+      wsOpenItem('org-basics'); document.getElementById('su-company').value = 'Acme Works'; ob.companyName = 'Acme Works'; await saveSheet();
+      eq(ORG_STRUCTURE.profile.brandName, 'Acme Works');
+      wsOpenItem('corp-entities'); await saveSheet(); eq(document.getElementById('su-chips-entities-err').textContent, 'Add at least one entity.');
+      suAgency().entities.push('Acme Works India'); wsSetup.corp.bands[0] = { name:'L1', min:'10', max:'6' }; await saveSheet();
+      assert(/can’t be lower/.test(document.getElementById('ws-band-max-0-err').textContent), 'band range');
+      wsSetup.corp.bands[0].max = '14'; await saveSheet(); eq(ORG_STRUCTURE.profile.salaryBands[0].max, 14);
+      wsOpenItem('corp-join'); assert(/@acmeworks\.example/.test(document.querySelector('.ws-sheet').textContent), 'the company domain');
+      document.getElementById('ws-join-1').click(); await saveSheet(); eq(ORG_STRUCTURE.profile.joinPolicy, 'auto');
+      wsOpenItem('corp-careers'); document.getElementById('ws-careers').click();
+      eq(document.getElementById('ws-careers-slug').value, 'acme-works', 'address from the company name');
+      wsSetup.corp.careersSlug = 'Bad Slug!'; await saveSheet(); assert(document.getElementById('ws-careers-slug-err'), 'address checked');
+      wsSetup.corp.careersSlug = 'acme-works'; await saveSheet(); eq(ORG_STRUCTURE.profile.careersPage.slug, 'acme-works');
+      wsOpenItem('jobs-site'); assert(/Oontu will verify your company/.test(document.querySelector('.ws-sheet').textContent), 'unverified company note'); await saveSheet();
+      wsOpenItem('corp-vendors'); suAgency().vendors.push('not-an-email'); await saveSheet(); assert(document.getElementById('su-chips-vendors-err'), 'emails checked');
+      suAgency().vendors = ['hello@talentbridge.example']; await saveSheet();
+      eq(wsSetup.vendorInvites[0].state, 'queued', 'queued until verified');
+      assert(/Your workspace is ready/.test(cardText()), 'seven of seven');
+    });
+
+    await test('06h Password helper on the password question', async function(){
+      await pickType('Staffing agency'); await answerName('Dana Lee'); await answerEmail('dana@startup.example'); await answerMobile('98250 41207');
+      const pw = document.getElementById('auth-password'), box = document.getElementById('auth-password-strength');
+      const lvl = function(v){ pw.value = v; authPwStrength(pw); return box.getAttribute('data-level')+' '+box.querySelector('.su-pw__text').textContent; };
+      eq(lvl(''), '0 Use 10 or more characters');
+      eq(lvl('short'), '1 Use 10 or more characters');
+      eq(lvl('password123'), '1 Too easy to guess');
+      eq(lvl('harborlights'), '3 Good');
+      eq(lvl('Harbor-Lights-42'), '4 Strong');
+    });
+
+    await test('06g Recruiter Manager is the role name everywhere', async function(){
+      const old = 'Recruitment'+' Manager';   // split so this test's own source doesn't match
+      eq(document.getElementById('app').innerHTML.indexOf(old), -1, 'old name gone from the app shell');
+      eq(document.querySelector('[onclick="switchRole(\'manager\')"]').firstChild.textContent.trim(), 'Recruiter Manager', 'role switcher');
+      assert(roleTemplatesForOrgType('Staffing agency').some(function(r){ return r.name==='Recruiter Manager'; }));
+      eq(ROLE_META.manager.label, 'Recruiter Manager');
     });
 
     /* ---- one-time codes ---- */
@@ -226,7 +815,7 @@
       eq(localStorage.getItem(AUTH_REMEMBER_KEY), 'alex@northstar.example');
       performLogout(); await idle();
       eq(authFlow.email, 'alex@northstar.example', 'email pre-filled after sign-out');
-      eq(document.activeElement.id, 'auth-email', 'cursor starts on the email question');
+      eq(document.activeElement.id, 'auth-password', 'a remembered email puts the cursor on the password');
       await toPasswordQuestion('alex@northstar.example');
       assert(document.querySelector('.au-check input').checked, 'box ticked');
       await signInWithPassword('alex@northstar.example', SAMPLE_PW, false);
@@ -402,7 +991,7 @@
     });
 
     await test('28 Workspace roles map to account roles', async function(){
-      const names = { 'Recruiter':'recruiter', 'Recruitment Manager':'manager', 'Admin':'admin' };
+      const names = { 'Recruiter':'recruiter', 'Recruiter Manager':'manager', 'Admin':'admin' };
       Object.keys(names).forEach(function(n){
         const id = customRoleId(n);
         if(id) eq(authRoleForCustomRole(id), names[n], n);
@@ -433,7 +1022,7 @@
       assert(appVisible());
       performLogout(); await idle();
       assert(authVisible() && !appVisible(), 'back on sign-in');
-      eq(authFlow.step, 'email'); assert(document.getElementById('auth-email') && !document.getElementById('auth-password'), 'sign-in starts again at the email question');
+      eq(authFlow.step, 'email'); assert(document.getElementById('auth-email') && document.getElementById('auth-password'), 'sign-in starts again on the email and password form');
       eq((await authApi.session()).authenticated, false, 'server session ended');
       await apiSignIn('alex@northstar.example');
       authApi._idleOutSession();
@@ -452,9 +1041,9 @@
     });
 
     await test('14 Every auth screen has one heading, labelled fields, named buttons and no long dashes', async function(){
-      async function check(label){
-        const shell = document.querySelector('.au-shell');
-        eq(shell.querySelectorAll('h1').length, 1, label+' h1 count');
+      async function check(label, root){
+        const shell = root || document.querySelector('.au-shell, .wz');
+        eq(shell.querySelectorAll(root ? 'h2' : 'h1').length, 1, label+' heading count');   // a sheet inside the app is titled with an h2
         shell.querySelectorAll('input').forEach(function(i){
           assert((i.id && shell.querySelector('label[for="'+i.id+'"]')) || i.closest('label'), label+': no label for '+(i.id||i.type));
         });
@@ -465,13 +1054,23 @@
       await toPasswordQuestion('alex@northstar.example'); await check('sign-in password');
       authSetMethod('code'); await idle(); await check('sign-in with code');
       authSetMethod('password'); authForgot(); await idle(); await check('forgot password');
-      reset(); authSwitchIntent('signup'); await check('sign-up');
-      authGo('help'); await check('help');
+      document.getElementById('auth-reset-email').value = 'alex@northstar.example'; authFlow.resetEmail = 'alex@northstar.example';
+      authResetSend(); await idle(); await check('reset link sent');
+      authOpenReset(authApi._latestReset('alex@northstar.example').token); await idle(); await check('set a new password');
+      reset(); authSwitchIntent('signup'); await check('workspace type');
+      await pickTypeOnly('Corporate'); await check('team size');
+      await answerSize('200+'); await check('location');
+      await answerLocation('', 'Pune'); await check('name');
+      await answerName('Ravi Iyer'); await check('work email');
+      await answerEmail('ravi@infosys.com'); await check('request to join');
+      reset(); await pickType('Staffing agency'); await answerName('Dana Lee'); await answerEmail('dana@startup.example'); await check('mobile');
+      await answerMobile('98250 41207'); await check('password');
+      document.getElementById('auth-password').value = 'Harbor-Lights-42'; suPasswordSubmit();
+      await intoProduct(); vbChangeEmailOpen(); await check('change email', document.querySelector('#vb-dialog-root [role=dialog]')); vbChangeEmailClose(); wsOpenItem('agency-profile'); await check('setup sheet', document.querySelector('.ws-sheet')); wsCloseSheet();
+      reset(); await pickType('Staffing agency'); authFlow.name = 'Taylor'; suOAuthStart('microsoft'); await idle(); await move(); await check('provider');
+      suOAuthPick('new'); await idle(); await move(); await check('add mobile');
+      reset(); authGo('help'); await check('help');
       authGo('join'); await check('join');
-      reset(); authSwitchIntent('signup'); await enterEmail('dana@startup.example'); await check('sign-up code');
-      await enterCode(authApi._latestEmail('dana@startup.example').code); await check('create name');
-      authFlow.name = 'Dana Lee'; authCreateNext(); await check('create workspace');
-      authFlow.workspaceName = 'Startup Talent'; authCreateNext(); await check('create password');
       reset(); authLoadInvite('inv-valid-3f9a2c7d'); await idle(); await check('activate name');
       authFlow.name = 'Jordan Blake'; authInviteNext(); await check('activate password');
       reset(); authLoadInvite('inv-existing-9c4d17b3'); await idle(); await check('accept');
@@ -541,15 +1140,23 @@
       assert(authFlow.codePending && authFlow.step==='email', 'non-SSO email gets a code on the same screen');
     });
 
-    await test('21 Google and LinkedIn sign-in: existing user, new user, cancel', async function(){
-      assert(document.querySelectorAll('.au-pair .au-btn').length===2, 'both buttons shown');
+    await test('21 Google and Microsoft sign-in: existing user, new user, cancel', async function(){
+      const btns = Array.from(document.querySelectorAll('.au-social__btn'));
+      eq(btns.map(function(b){ return b.getAttribute('aria-label'); }).join(), 'Continue with Google,Continue with Microsoft', 'both round buttons shown');
+      assert(btns.every(function(b){ return !b.textContent.trim() && b.getAttribute('title'); }), 'icon only, named by aria-label and title');
       authOAuth('google'); await idle();
       eq(authFlow.step, 'oauth-sim'); assert(/Google/.test(screenText()));
       authOAuthSim('approve'); await idle();
       assert(appVisible()); eq(state.role, 'admin');
-      reset();
-      authOAuth('linkedin'); await idle(); authOAuthSim('new'); await idle();
-      eq(authFlow.step, 'create', 'a new person goes to workspace creation'); assert(!appVisible());
+      reset(); SIGNUP_LEADS.length = 0;   // an unfinished sign-up for this email would (rightly) be resumed instead
+      authOAuth('microsoft'); await idle(); assert(/Microsoft/.test(screenText())); authOAuthSim('new'); await idle();
+      eq(authFlow.step, 'su-type', 'a new person starts sign-up at the first question'); eq(authFlow.intent, 'signup'); assert(!appVisible());
+      suTypeChoose('Staffing agency'); await sleep(330); await idle(); await move(); await idle();
+      eq(authFlow.step, 'su-size', 'then team size');
+      await answerSize('1\u20135'); await answerLocation('', 'Pune');
+      eq(authFlow.step, 'su-mobile', 'the provider gave the name and email, so the mobile number is next');
+      await answerMobile('98250 41207'); await intoProduct();
+      eq(state.role, 'admin', 'then the product');
       reset();
       authOAuth('google'); await idle(); authOAuthSim('cancel'); await idle();
       eq(authFlow.step, 'email'); assert(/cancelled/i.test(authFlow.notice)); assert(!appVisible());
@@ -558,25 +1165,28 @@
     await test('22 Social buttons only appear for providers that are configured', async function(){
       eq(authResolveConfig({ mode:'live', apiBase:'https://x.example' }).oauth.length, 0);
       eq(authResolveConfig({ mode:'live', oauth:['google','facebook'] }).oauth.join(), 'google');
-      eq(authResolveConfig({ mode:'prototype' }).oauth.join(), 'google,linkedin');
-      authFlow.step = 'email'; authFlow.intent = 'signup'; renderOnboardingScreen();
-      assert(document.querySelectorAll('.au-pair .au-btn').length===2, 'shown on sign-up too');
+      eq(authResolveConfig({ mode:'prototype' }).oauth.join(), 'google,microsoft');
+      eq(authResolveConfig({ mode:'live', oauth:['microsoft','linkedin'] }).oauth.join(), 'microsoft', 'LinkedIn is no longer offered');
+      authSwitchIntent('signup'); suWiz.type = 'Staffing agency'; suWiz.done.type = true; authGo('su-name');
+      eq(document.querySelectorAll('.qz-alt .qz-textbtn').length, 2, 'shown on sign-up too');
+      AUTH_CONFIG.oauth = ['google'];
+      try { renderOnboardingScreen(); eq(document.querySelectorAll('.qz-alt .qz-textbtn').length, 1, 'only the configured ones'); }
+      finally { AUTH_CONFIG.oauth = ['google','microsoft']; }
       eq((await authApi.oauthStart({ provider:'facebook' })).error, 'oauth_unavailable');
     });
 
     /* ---- the page itself ---- */
     await test('23 The sign-in page is the familiar one: email, password, forgot, remember me, no passkey', async function(){
-      eq(document.querySelector('.au-h1').textContent, 'Sign in to Oontu');
-      assert(document.getElementById('auth-email') && !document.getElementById('auth-password'), 'only the email is asked first');
-      eq(document.querySelector('.au-btn--primary').textContent, 'Continue');
+      eq(document.querySelector('.au-h1').textContent, 'Welcome');
+      assert(document.getElementById('auth-email') && document.getElementById('auth-password'), 'email and password on one form');
+      assert(document.getElementById('auth-email').closest('form')===document.getElementById('auth-password').closest('form'), 'same form, so password managers fill both');
       assert(/Create an account/.test(screenText()), 'create account link');
-      await toPasswordQuestion('alex@northstar.example');
-      assert(!document.getElementById('auth-email') && /alex@northstar\.example/.test(document.querySelector('.au-answer').textContent), 'the email becomes an answered row');
-      eq(document.activeElement.id, 'auth-password', 'cursor moves to the new question');
+      assert(/Forgot password\?/.test(screenText()), 'forgot link on the first screen');
+      assert(!/Trouble signing in/.test(screenText()) && /Trouble signing in/.test(document.querySelector('.au-main__foot').textContent), 'help link sits in the footer, not the form');
       assert(document.querySelector('.au-label-row button').textContent==='Forgot password?', 'forgot link beside the password label');
       assert(document.querySelector('.au-check input[type=checkbox]'), 'remember me');
       eq(document.querySelector('.au-btn--primary').textContent, 'Sign in');
-      assert(/Use a one-time code instead/.test(screenText()), 'code alternative');
+      assert(/Email me a code/.test(document.querySelector('.au-check-row').textContent), 'code alternative sits beside Remember me');
       assert(!/passkey/i.test(document.querySelector('.au-shell').textContent), 'no passkey anywhere on the page');
       assert(/English \(UK\)/.test(document.querySelector('.au-main__foot').textContent), 'language footer');
     });
@@ -593,9 +1203,9 @@
       assert(rise().length>0 && rise().every(function(n){ return !n.classList.contains('au-seen'); }), 'first paint animates');
       renderOnboardingScreen();
       assert(rise().every(function(n){ return n.classList.contains('au-seen'); }), 'a repaint does not replay it');
-      await toPasswordQuestion('alex@northstar.example');
-      const pw = document.getElementById('auth-password').closest('[data-rise]');
-      assert(pw && !pw.classList.contains('au-seen'), 'the new question animates');
+      authFlow.email = 'alex@northstar.example'; authSetMethod('code'); await idle(); authSubmitEmail(true); await idle();
+      const code = document.getElementById('auth-code').closest('[data-rise]');
+      assert(code && !code.classList.contains('au-seen'), 'the new question animates');
       assert(document.querySelector('.au-h1').classList.contains('au-seen'), 'the heading stays still');
       authChangeEmail();
       assert(!document.getElementById('auth-email').closest('[data-rise]').classList.contains('au-seen'), 'going back animates the email question again');
@@ -606,6 +1216,9 @@
       authSetMethod('code'); await idle();
       assert(!document.getElementById('auth-password'), 'password field is gone');
       eq(authFlow.step, 'email', 'still the same screen');
+      eq(document.querySelector('.au-btn--primary').textContent, 'Send code');
+      eq(authApi._outboxCount('alex@northstar.example'), 0, 'nothing sent until they ask');
+      authSubmitEmail(true); await idle();
       assert(document.getElementById('auth-code'), 'code field appeared');
       assert(!document.getElementById('auth-email') && document.querySelector('.au-answer'), 'email is locked while a code is pending');
       eq(authApi._outboxCount('alex@northstar.example'), 1, 'choosing the code sent exactly one');
@@ -616,21 +1229,39 @@
       assert(document.getElementById('auth-password') && !document.getElementById('auth-code'), 'back to the password field');
     });
 
-    await test('25 Forgot password uses the one-time code, then Settings lets them set a new password', async function(){
+    await test('25 Forgot password: reset link by email, set a new password, sign in with it', async function(){
       await toPasswordQuestion('alex@northstar.example');
       authForgot(); await idle();
-      assert(authFlow.method==='code' && authFlow.forgot && authFlow.codePending, 'switched to the code path and sent a code');
-      assert(/set a new password in Settings/.test(document.querySelector('.au-lede').textContent), 'explains what happens next');
-      await signInWithCode('alex@northstar.example');
-      assert(appVisible(), 'signed in');
-      assert(document.getElementById('auth-pw-panel'), 'Settings opens on the password card');
-      assert(!document.getElementById('auth-pw-current'), 'no current password is asked after a code sign-in');
-      document.getElementById('auth-pw-new').value = 'Willow-Anchor-3318';
-      authChangePassword(); await settle();
-      assert(/has been updated/.test(document.getElementById('auth-pw-panel').textContent), 'confirmation shown');
-      await authApi.signOut();
+      eq(authFlow.step, 'forgot'); eq(document.querySelector('.au-h1').textContent, 'Reset your password');
+      eq(document.getElementById('auth-reset-email').value, 'alex@northstar.example', 'email carried over');
+      authResetSend(); await idle();
+      eq(document.querySelector('.au-h1').textContent, 'Check your email');
+      const tok = authApi._latestReset('alex@northstar.example').token;
+      authOpenReset(tok); await idle();
+      eq(document.querySelector('.au-h1').textContent, 'Set a new password');
+      document.getElementById('auth-reset-pw').value = 'Willow-Anchor-3318'; document.getElementById('auth-reset-confirm').value = 'Willow-Anchor-3319';
+      authResetSubmit(); await idle();
+      eq(authFlow.errorField, 'auth-reset-confirm', 'mismatch caught');
+      document.getElementById('auth-reset-pw').value = 'Willow-Anchor-3318'; document.getElementById('auth-reset-confirm').value = 'Willow-Anchor-3318';
+      authResetSubmit(); await idle();
+      eq(document.querySelector('.au-h1').textContent, 'Password updated');
+      eq((await authApi.resetPassword({ token:tok, password:'Other-Anchor-4410' })).error, 'reset_invalid', 'the link works once');
+      authResetBackToSignIn();
+      assert(document.getElementById('auth-password'), 'back on the password question for the same email');
       eq((await authApi.passwordSignIn({ email:'alex@northstar.example', password:'Willow-Anchor-3318' })).ok, true, 'new password works');
       eq((await authApi.passwordSignIn({ email:'alex@northstar.example', password:SAMPLE_PW })).error, 'invalid_credentials', 'old password no longer works');
+    });
+
+    await test('25b Reset requests do not reveal accounts; expired links are refused', async function(){
+      const known = await authApi.requestPasswordReset({ email:'alex@northstar.example' });
+      const unknown = await authApi.requestPasswordReset({ email:'nobody@nowhere.example' });
+      eq(JSON.stringify(known), JSON.stringify(unknown), 'same reply either way');
+      eq(authApi._latestReset('nobody@nowhere.example'), null, 'no email for an unknown address');
+      eq((await authApi.requestPasswordReset({ email:'alex@northstar.example' })).error, 'resend_cooldown');
+      const tok = authApi._latestReset('alex@northstar.example').token;
+      authApi._expireReset(tok);
+      authOpenReset(tok); await idle();
+      eq(authFlow.fstage, 'request'); assert(/expired/.test(authFlow.error), 'explains the link expired');
     });
 
     await test('26 After a password sign-in, changing the password needs the current one', async function(){
@@ -664,7 +1295,7 @@
     await test('30 "Create an account" only appears where self-registration is allowed', async function(){
       assert(/Create an account/.test(screenText()), 'shown by default');
       AUTH_CONFIG.selfRegister = false;
-      try { renderOnboardingScreen(); assert(!/Create an account/.test(screenText()), 'hidden when switched off'); assert(/Trouble signing in/.test(screenText())); }
+      try { renderOnboardingScreen(); assert(!/Create an account/.test(screenText()), 'hidden when switched off'); assert(/Trouble signing in/.test(document.querySelector('.au-main__foot').textContent)); }
       finally { AUTH_CONFIG.selfRegister = true; }
     });
   }

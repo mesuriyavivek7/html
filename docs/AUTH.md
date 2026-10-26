@@ -7,11 +7,12 @@ Status, architecture and the backend contract for sign-in, account activation, w
 Signing in and activating an account are separate journeys.
 
 **Signing in** (the familiar page)
-- Work email and password, with a show/hide control, "Forgot password?" and "Remember me". **Continue** is the primary action.
-- **Use a one-time code instead** swaps the password field for a code field on the same screen. It shows the expiry and has a resend control with a cooldown.
-- **Forgot password?** is the same code path. After signing in with the code, the person lands on Settings > Password and can set a new password there. There is no separate reset screen.
+- The heading is just **Welcome** (the logo already says Oontu). Work email and password sit together in one form (so password managers fill both), with a show/hide control, "Forgot password?" beside the password label and "Remember me". **Sign in** is the primary action. A remembered email puts the cursor straight on the password.
+- **Sign in with a one-time code** swaps the password field for **Send code**, then a code field on the same screen. It shows the expiry and has a resend control with a cooldown.
+- **Forgot password?** opens its own reset flow: enter work email → "Check your email" (resend with cooldown) → the emailed link opens "Set a new password" (new + confirm) → "Password updated" → back to sign in with the email filled in.
+- **Trouble signing in?** sits in the page footer, not in the form.
 - **Create an account** is for organisations that allow self-registration (`selfRegister`). Invited people never use it; they activate through their invitation link.
-- Google and LinkedIn buttons appear only for providers the deployment configures. Single sign-on is not a button: after **Continue**, an organisation that uses it takes over automatically.
+- Google and Microsoft appear as small round icon buttons under "or continue with", only for providers the deployment configures. Microsoft replaced LinkedIn: recruiting teams sign in with work accounts (Google Workspace, Microsoft 365 / Entra ID), and LinkedIn sign-in gives personal identities. Single sign-on is not a button: after **Continue**, an organisation that uses it takes over automatically.
 - There is no passkey option for now. It would add a concept people don't know and needs enrolment and recovery flows. It can come later as an optional setting.
 
 **Activating an account** (invited people)
@@ -28,7 +29,7 @@ This repository is a single static file, `recruitment-os-prototype.html`. It has
 |---|---|---|
 | Sign-in, sign-up, activation, workspace choice, recovery screens, Settings > Password | Built, with loading, error, expired and retry states | UI yes |
 | Flow logic: step machine, back/forward, duplicate-submit guard, return-destination checks | Built and tested | Yes |
-| Team members and the setup wizard send invitations through the adapter | Built | Needs the server to send the email |
+| Team members and the in-product setup checklist send invitations through the adapter | Built | Needs the server to send the email |
 | Live adapter (`createHttpAuthAdapter`): API calls and CSRF header | Written to the contract below | **Untested: no API exists to call** |
 | Passwords, codes, SSO, social sign-in, sessions, invitations, memberships | **Simulated** in prototype mode by `createAuthSimulator` | **No. Needs the auth service below** |
 
@@ -49,7 +50,7 @@ Set at the top of the HTML file, before the app script:
 | `mode: 'live'` without a valid `apiBase` | Shows "Sign-in isn't available" with a developer note. Nobody gets in. |
 | `selfRegister: false` | Hides **Create an account**. Default is on. |
 | `sso: false` | Stops the single sign-on check after **Continue**. Turn it off until the server supports it, otherwise every sign-in waits on a missing endpoint. |
-| `oauth: ['google','linkedin']` | Shows those social buttons. Prototype mode shows both; live mode shows **none** until listed, so a button is never decorative. |
+| `oauth: ['google','microsoft']` | Shows those social buttons. Prototype mode shows both; live mode shows **none** until listed, so a button is never decorative. |
 | `links: { terms, privacy }` | `https://` URLs for the terms and privacy notice links. |
 
 Never put secrets in this config; the HTML is public.
@@ -82,8 +83,23 @@ All requests use `credentials: 'include'`. Every non-GET request sends `X-CSRF-T
 | `POST /auth/email/start` | `{ email, intent }` | `{ codeLength, expiresInSec, resendInSec }`, **identical for known and unknown emails** | `invalid_email`, `resend_cooldown`, `rate_limited` |
 | `POST /auth/email/verify` | `{ email, code }` | `{ status: 'signed_in'\|'new_user', method, user, workspaces }` + session cookie | `invalid_code` (+`attemptsLeft`), `expired_code`, `too_many_attempts` |
 | `POST /auth/sso/start` | `{ email, returnTo }` | `{ redirectUrl }` (https only). Called after **Continue**: `sso_unavailable` means "no SSO for this email" and the app carries on | `sso_unavailable`, `invalid_email` |
-| `POST /auth/oauth/start` | `{ provider: 'google'\|'linkedin', returnTo }` | `{ redirectUrl }` (https only) | `oauth_unavailable` |
-| `POST /workspaces` | `{ name, workspaceName, password }` | `{ workspace, role:'owner', roleLabel, method, user }` | `unauthenticated`, `invalid_input` (+`field`), `password_*` (+`field:'password'`) |
+| `POST /auth/password/forgot` | `{ email }` | `{ expiresInSec, resendInSec }`, **identical for known and unknown emails**. Emails a reset link to known accounts only | `invalid_email`, `resend_cooldown`, `rate_limited` |
+| `GET /auth/password/reset/:token` | none | `{ email }` | `reset_invalid`, `reset_expired` |
+| `POST /auth/password/reset` | `{ token, password }` | `{ email }`. Sets the password, ends all sessions, clears sign-in lockout. Does **not** sign in | `reset_invalid`, `reset_expired`, `password_*` |
+| `POST /auth/oauth/start` | `{ provider: 'google'\|'microsoft', returnTo }` | `{ redirectUrl }` (https only) | `oauth_unavailable` |
+| `POST /auth/sign-up/check-email` | `{ email, type }` | `{ ok:true }`. Checked on the email question, before any account exists (any type) | `invalid_email`, `account_exists`, `personal_email`, `domain_taken` (+`company`, `ownerName`) |
+| `POST /auth/sign-up` | `{ name, email, mobileCode, mobile, password, type }` (`workspaceName` optional) | `{ workspace:{ id, name, type, domain, verification }, role:'owner', roleLabel, method, user }` and a fresh session. The account starts unverified with `setupPending:true`; the client asks for the link straight after (`POST /auth/email/verification`) | `name_required`, `invalid_email`, `mobile_*`, `password_*` (each with `field`), `personal_email`, `domain_taken` (Corporate), `account_exists`, `rate_limited` |
+| `POST /auth/email/verification` | `{}` | `{ resendInSec }`. Sends the verification link (right after sign-up, and "Resend link" on the banner in the product); only the newest link works | `already_verified`, `resend_cooldown`, `unauthenticated` |
+| `POST /auth/email/verification/confirm` | `{ token }` | `{ user }` with `emailVerified:true`. Single use, expires in 24 hours | `verify_invalid`, `verify_expired` |
+| `PATCH /auth/email` | `{ email }` | `{ user, resendInSec }`. "Change email" on the verification banner: moves an unverified account to a new address (Corporate: same domain rules) and sends a new link there; the old link stops working | `already_verified`, `same_email`, `invalid_email_any`, `account_exists`, `personal_email`, `domain_taken`, `unauthenticated` |
+| `POST /auth/sign-up/cancel` | `{}` | Removes the just-created account while setup is unfinished (unverified, or `setupPending`), so the person can correct their details or use another email. Releases a claimed Corporate domain | `forbidden`, `unauthenticated` |
+| `POST /workspaces/current/type` | `{ type: 'Staffing agency' \| 'Corporate' }` | `{ workspace:{ type, domain, verification } }`. Changes the type while setup is unfinished (a Google or Microsoft person going back to step 1). Corporate: work email only; a new domain gets `verification:'unverified'` | `personal_email`, `domain_taken` (+`company`, `ownerName`), `type_locked` (after setup), `forbidden` |
+| `PATCH /workspaces/current` | `{ name }` | The membership result with the renamed workspace. The Agency profile / Company profile item of the setup checklist | `workspace_required` (+`field`), `forbidden`, `unauthenticated` |
+| `POST /workspaces/current/setup-complete` | `{}` | The membership result; clears `setupPending`. Called straight after the account is created ("Setting up your workspace"), and after the owner of an Oontu-created tenant sets their password | `forbidden`, `unauthenticated` |
+| `POST /workspaces/join-requests` | `{ domain, name, email }` (`email` only without a session) | `{ request:{ id, company, ownerName, status:'pending' } }`. Asked from the sign-up form before any account exists. Approval emails the person an invitation (which proves the email and sets the password); a signed-in Google or Microsoft person is added directly as a Recruiter | `invalid_email`, `invalid_input` |
+| `GET /invitations/owner/{token}` | | `{ invite:{ email, name, company, type } }`. The owner link from "Create tenant" (Oontu Super Admin). Single use, expires in 7 days | `invite_invalid`, `invite_used`, `invite_expired` |
+| `POST /invitations/owner/{token}/accept` | `{ password }` | The membership result and a fresh session. Creates the owner's account already verified (the link proved the email) with `setupPending:true`; `setup-complete` follows at once, the tenant moves from Invited to Active, and the owner lands in the product with the setup checklist | `invite_*`, `password_*` (+`field`), `account_exists` |
+| `POST /workspaces` | `{ name, workspaceName, password, type, mobileCode, mobile }` | `{ workspace, role:'owner', roleLabel, method, user }`. A Google or Microsoft session needs no password | `unauthenticated`, `invalid_input` (+`field`), `password_*` (+`field:'password'`), `mobile_*`, `personal_email`, `domain_taken` |
 | `GET /invitations/:token` | none | `{ invitation: { orgName, role, roleLabel, inviterName, email, expiresAt, isNewUser } }` | `invite_invalid`, `invite_expired`, `invite_revoked`, `invite_used` |
 | `POST /invitations/:token/accept` | `{ name?, password? }` (both required when `isNewUser`) | `{ workspace, role, roleLabel, method:'invitation', user }` + session cookie. **No prior session needed** | the invite errors, `name_required`, `password_*` |
 | `POST /invitations` | `{ email, name, role }` | `{}`. Sends the email. Admins and owners only | `unauthenticated`, `forbidden`, `invalid_email`, `invalid_input` |
@@ -93,7 +109,7 @@ All requests use `credentials: 'include'`. Every non-GET request sends `X-CSRF-T
 
 Password error codes: `password_short`, `password_long`, `password_common`, `password_email`.
 
-After SSO or social sign-in, the server redirects back to the app at `#/auth/sso?result=ok|cancelled|failed` or `#/auth/oauth?result=…`. The app never trusts that value; it calls `GET /auth/session`. Invitation links look like `https://app.example.com/#/invite/<token>`. Keeping the token in the fragment keeps it out of server logs and `Referer` headers.
+After SSO or social sign-in, the server redirects back to the app at `#/auth/sso?result=ok|cancelled|failed` or `#/auth/oauth?result=…`. The app never trusts that value; it calls `GET /auth/session`. Invitation links look like `https://app.example.com/#/invite/<token>`; password reset links look like `https://app.example.com/#/reset-password/<token>` (the app swaps the address to `#/auth/forgot` once it has read the token). Keeping the token in the fragment keeps it out of server logs and `Referer` headers.
 
 ## 6. Server rules the prototype imitates (and the server must enforce)
 
@@ -111,16 +127,21 @@ After SSO or social sign-in, the server redirects back to the app at `#/auth/sso
 - 10-minute expiry, single use, one active code per email (a new code invalidates the old one). Maximum 5 wrong attempts, then the code is burned.
 - 30-second resend cooldown and at most 5 sends per 15 minutes per email. Also rate-limit per IP and add bot protection on `/auth/email/start` if abuse appears.
 - Same response and similar timing whether or not the account exists.
-- Forgot password is this same path, so it needs no reset email or token of its own.
+
+**Password reset links**
+- Token from a CSPRNG (at least 128 bits); store only a hash. Single use, 60-minute expiry, one live link per account (a new request invalidates older ones).
+- Same response and timing whether or not the account exists; 30-second resend cooldown plus per-email and per-IP rate limits.
+- A successful reset ends every session for the account and clears any sign-in lockout. The person then signs in normally.
 
 **SSO**
 - OIDC with PKCE, `state` and `nonce`. SAML via a maintained library or provider.
 - Per-organisation configuration, verified domains, and a default role for just-in-time members.
 - If an organisation enforces SSO, refuse password and email-code sign-in for its domain. Oontu never sees SSO passwords.
 
-**Social sign-in (Google, LinkedIn)**
+**Social sign-in (Google, Microsoft)**
 - OIDC authorization-code flow with PKCE, `state` and `nonce`; the server exchanges the code and the browser never sees tokens.
 - Accept the identity **only if the provider marks the email as verified**. Never link to an existing Oontu account on an unverified email (account takeover).
+- Microsoft: use the `common` or `organizations` endpoint, and validate the `tid` (tenant) and `iss` claims; accept the email only from `email` with a verified domain, never from `preferred_username`.
 - Request only name and email scopes. A new person is sent to workspace creation, never given a workspace or role.
 
 **Sessions**
@@ -167,6 +188,9 @@ These controls support compliance work, but **they do not make Oontu compliant o
 - **India: DPDP Act 2023 and the DPDP Rules.** Confirm which provisions are in force on your launch date. Covers notice content and language, consent for any optional data, grievance contact, breach notification, and data processor contracts.
 - **UK: UK GDPR, Data Protection Act 2018 and the Data (Use and Access) Act 2025.** Covers lawful basis for account data, the privacy notice, international transfer mechanisms, and records of processing.
 - **US: state privacy laws** (California CCPA/CPRA and others) and FTC Act section 5 on security claims. Covers state breach-notification laws, and notices for California residents if applicable.
+- **Sign-up in seven questions.** "Create an account" asks one question per screen: how you will use Oontu, team size (stored as `teamSize` on the lead and the workspace), where the company is based (country and city; sets the phone code, currency, timezone, date format, data region and tax ID label), name, email (Corporate: a company email on an unclaimed domain), mobile number, password. Google or Microsoft replace the email and password questions. Each answer updates the lead (`stepReached`: `type_chosen`, `team_size`, `location`, `name`, `email`, `mobile`, `password`, then `in_product`). After the last answer one `POST /auth/sign-up` (or `POST /workspaces` for Google / Microsoft) creates the account and workspace, `setup-complete` follows, the verification link is sent, and the person lands straight on Home (no screen in between), where a banner that can't be closed asks them to verify. Everything else (profile, tools, team, marketplace, careers page, vendors) is a checklist inside the product. Because people are in before verifying, the server must limit what an unconfirmed account can do: no invitations, job publishing or sending candidates to clients until confirmed; invites written before then are stored as queued and sent after verification. `account_exists` (from `check-email` and `sign-up`) reveals that an address is registered, so rate-limit both per IP and per email. "Save and exit" signs out; the lead keeps the question and answers (never the password) so signing in or the reminder link reopens that question.
+- **Unverified email.** Until the link is opened, the server refuses invitations, job publishing and submitting or sending candidates to clients. The app shows a banner and dims those buttons, but the server check is what counts.
+- **Workspace type.** Chosen first in sign-up (Staffing agency or Corporate) and locked once setup is complete. A Corporate workspace is tied to the sign-up email's domain: personal providers (gmail.com, outlook.com and similar) are refused, and a second person from a claimed domain must request to join. New Corporate workspaces stay `unverified` until Oontu checks the company.
 - **Data minimisation.** Sign-up collects only email, name, workspace name and a password. Company size, phone and organisation type moved to the post-sign-up setup. Keep it that way, or document why more is needed.
 - **Browser storage.** "Remember me" stores the email address in this browser's local storage. Decide whether your cookie and storage notice needs to mention it.
 - **Recruitment-specific.** Candidate data is processed on behalf of customers, so a data processing agreement is needed with each customer.
@@ -202,5 +226,5 @@ It covers screens, flow logic and adapter rules against the **simulator**. Befor
 - No email is sent from this repo. Invitation and code emails need the server and a mail provider, and the invitation email template still has to be written.
 - Passkeys are deferred. Next: an optional "Add a passkey" setting after sign-in, with a recovery path.
 - No organisation switcher inside the app. A multi-workspace user picks a workspace at sign-in; switching later means signing out.
-- Invitations sent from Team members map the workspace role (for example "Recruitment Manager") to one of five account roles. The permission model in the prototype is richer, so the server needs a matching role table.
+- Invitations sent from Team members map the workspace role (for example "Recruiter Manager") to one of five account roles. The permission model in the prototype is richer, so the server needs a matching role table.
 - The recruitment data in this prototype is shared demo data. Real tenant isolation needs the backend.

@@ -27,7 +27,7 @@
   function user(name){ return RECRUITER_ROSTER.find(function(r){ return r.name===name; }); }
   const ADMIN = function(){ return user('Priya Sharma'); }, MANAGER = function(){ return user('Arjun Kapoor'); }, RECRUITER = function(){ return user('Divya Menon'); };
   const OTHER_ORG = { id:'RP-X1', name:'Outside Admin', assignedRoleId:'role_founder', organizationId:'org-other' };
-  function as(role){ state.role = role; }     // admin -> Priya (Tenant Admin), manager -> Arjun (Recruitment Manager)
+  function as(role){ state.role = role; }     // admin -> Priya (Tenant Admin), manager -> Arjun (Recruiter Manager)
 
   function liveJob(over){
     seq++;
