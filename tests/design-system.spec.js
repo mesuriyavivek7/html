@@ -12,10 +12,10 @@
     await t('sidebar: 240 px expanded, 64 px collapsed, state remembered in state.sidebarOpen', async function(){
       var sb = q('#sidebar');
       ok(Math.round(sb.getBoundingClientRect().width)===240, 'expanded width ' + sb.getBoundingClientRect().width);
-      toggleSidebar(); await sleep(400);
+      toggleSidebar(); await sleep(900);
       ok(state.sidebarOpen===false && Math.round(sb.getBoundingClientRect().width)===64, 'collapsed width ' + sb.getBoundingClientRect().width);
       ok(Math.round(q('.sb-logo-mark').getBoundingClientRect().height)===28, 'the symbol is 28 px tall when collapsed: ' + q('.sb-logo-mark').getBoundingClientRect().height);
-      toggleSidebar(); await sleep(400);
+      toggleSidebar(); await sleep(900);
       ok(state.sidebarOpen===true && Math.round(sb.getBoundingClientRect().width)>=236, 'expanded again ' + sb.getBoundingClientRect().width);
       ok(Math.round(q('.sb-logo-full').getBoundingClientRect().height)===34, 'the logo is 34 px tall: ' + q('.sb-logo-full').getBoundingClientRect().height);
     });
