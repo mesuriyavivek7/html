@@ -2309,6 +2309,105 @@ details.pmenu > .tp-menu{ position:absolute; right:0; top:calc(100% + 4px); widt
 .ap-panel .o-tabs-host{ overflow-x:auto; } #ap-tabs{ min-width:max-content; }
 @media (max-width:640px){ .ap-page{ overflow-x:clip; } .ap-phone, .ap-pcard, .ap-pcard .ap-pid, .ap-pcard .ap-pbody{ min-width:0; max-width:100%; } .ap-pcard .ap-pid__links .o-btn{ flex:1 1 auto; } .ap-head{ gap:12px; } .ap-nums{ width:100%; justify-content:space-between; } .ap-viewrow{ overflow-x:auto; } .ap-pcard .ap-vitals{ grid-template-columns:repeat(2, minmax(0,1fr)); } .ap-pcard .o-tabs-host{ margin:0; } }
 /* ==AP-CSS-END== */
+/* ==IV-CSS-BEGIN== */.iv-page{ max-width:1240px; margin:0 auto; padding-bottom:48px; min-width:0; }
+.iv-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+.iv-h1{ font:700 24px/1.2 var(--font); color:var(--text-1); letter-spacing:-.01em; margin:0; }
+.iv-sub{ margin:4px 0 0; font:500 14px/1.4 var(--font); color:var(--text-3); }
+.iv-head__r{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.iv-sel{ height:36px; min-width:150px; }
+.iv-week{ display:flex; align-items:center; gap:8px; margin-bottom:16px; min-width:0; }
+.iv-week__days{ position:relative; display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; flex:1; min-width:0; padding:4px; background:var(--bg-subtle); border-radius:14px; }
+.iv-arrow{ width:32px; height:32px; border:1px solid var(--line); background:#fff; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; color:var(--text-2); cursor:pointer; flex:none; }
+.iv-arrow:hover{ background:var(--bg-hover); }
+.iv-wd{ position:relative; z-index:1; border:0; background:transparent; border-radius:11px; padding:8px 4px; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; font-family:var(--font); color:var(--text-3); min-width:0; }
+.iv-wd__n{ font:600 12px var(--font); } .iv-wd__d{ font:700 17px var(--font); color:var(--text-1); font-variant-numeric:tabular-nums; }
+.iv-wd__c{ min-height:16px; font:600 12px var(--font); color:var(--text-3); display:inline-flex; align-items:center; gap:4px; }
+.iv-wd__c i{ width:6px; height:6px; border-radius:50%; background:var(--warn-dot); }
+.iv-wd.is-on .iv-wd__n{ color:var(--text-2); } .iv-wd.is-today .iv-wd__d{ text-decoration:underline; text-decoration-color:var(--warn-dot); text-underline-offset:4px; }
+.iv-wd:focus-visible,.iv-row:focus-visible,.iv-chip:focus-visible,.iv-dot:focus-visible,.iv-md:focus-visible{ outline:2px solid var(--mint); outline-offset:2px; }
+.iv-find{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; } .iv-find button{ border:1px dashed var(--line-strong); background:#fff; border-radius:8px; padding:6px 10px; font:600 13px var(--font); color:var(--text-2); cursor:pointer; }
+.iv-cols{ display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:16px; align-items:start; }
+.iv-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:16px; min-width:0; }
+.iv-card__h{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.iv-card__h h2{ font:700 15px var(--font); color:var(--text-1); margin:0; } .iv-card__h span{ font:600 13px var(--font); color:var(--text-3); }
+.iv-list{ list-style:none; margin:0; padding:0; }
+.iv-row{ display:grid; grid-template-columns:76px 14px minmax(0,1fr); gap:10px; padding:10px 8px; border-radius:11px; cursor:pointer; }
+.iv-row:hover{ background:var(--bg-hover); } .iv-row.is-live{ background:var(--bg-subtle); } .iv-row.is-off{ opacity:.55; }
+.iv-time{ text-align:right; } .iv-time b{ display:block; font:600 13px var(--mono); color:var(--text-1); } .iv-time span{ font:500 12px var(--font); color:var(--text-3); }
+.iv-rail{ position:relative; } .iv-rail::before{ content:""; position:absolute; left:6px; top:0; bottom:-10px; width:1px; background:var(--line); } .iv-rail i{ position:absolute; left:2px; top:5px; width:9px; height:9px; border-radius:50%; background:#fff; border:2px solid var(--line-strong); }
+.iv-row.is-live .iv-rail i{ border-color:var(--success-dot); background:var(--success-dot); }
+.iv-main{ min-width:0; } .iv-line1{ display:flex; align-items:center; gap:8px; justify-content:space-between; } .iv-cand{ font:700 14px var(--font); color:var(--text-1); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.iv-line2{ font:500 13px var(--font); color:var(--text-3); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.iv-line3{ font:600 13px var(--font); margin-top:4px; } .iv-line3 em{ font-style:normal; font-weight:500; color:var(--text-3); }
+.iv-tone--warn{ color:var(--warn-fg); } .iv-tone--risk{ color:var(--danger-fg); }
+.iv-prog{ height:3px; background:var(--line); border-radius:3px; margin-top:8px; overflow:hidden; } .iv-prog i{ display:block; height:100%; background:var(--success-dot); }
+.iv-now{ display:flex; align-items:center; gap:8px; padding:2px 8px; } .iv-now span{ font:600 11px var(--mono); color:var(--danger-fg); width:76px; text-align:right; } .iv-now hr{ flex:1; border:0; border-top:1px solid var(--danger-dot); margin:0; }
+.iv-pill{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:11px; font:600 12px var(--font); white-space:nowrap; flex:none; background:var(--neutral-bg); color:var(--neutral-fg); }
+.iv-pill--warn{ background:var(--warn-bg); color:var(--warn-fg); } .iv-pill--risk{ background:var(--danger-bg); color:var(--danger-fg); } .iv-pill--ok{ background:var(--success-bg); color:var(--success-fg); }
+.iv-pill--info{ background:var(--neutral-bg); color:var(--neutral-fg); } .iv-pill--idle{ background:transparent; color:var(--text-3); border:1px solid var(--line); }
+.iv-pill--live{ background:var(--success-bg); color:var(--success-fg); } .iv-pill--live i{ width:6px; height:6px; border-radius:50%; background:var(--success-dot); }
+.iv-more{ border:0; background:transparent; font:600 13px var(--font); color:var(--text-2); padding:8px; cursor:pointer; width:100%; border-radius:8px; } .iv-more:hover{ background:var(--bg-hover); }
+.iv-empty{ text-align:center; padding:36px 12px; color:var(--text-3); font:500 14px var(--font); } .iv-empty p{ margin:0 0 12px; }
+.iv-needs,.iv-by,.iv-issues{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.iv-need{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:11px; background:var(--bg-subtle); border-left:3px solid var(--line-strong); }
+.iv-need--warn{ border-left-color:var(--warn-dot); } .iv-need--risk{ border-left-color:var(--danger-dot); }
+.iv-need__b{ flex:1; min-width:0; text-align:left; background:transparent; border:0; padding:0; font-family:var(--font); cursor:pointer; display:flex; flex-direction:column; gap:2px; }
+div.iv-need__b{ cursor:default; }
+.iv-need__t{ font:700 13px var(--font); color:var(--text-1); } .iv-need__d{ font:500 12px var(--font); color:var(--text-3); overflow:hidden; text-overflow:ellipsis; }
+.iv-none{ margin:0; font:500 13px var(--font); color:var(--text-3); }
+.iv-by li{ display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:10px; align-items:center; font:600 13px var(--font); color:var(--text-1); } .iv-by li span{ display:flex; align-items:center; gap:8px; min-width:0; overflow:hidden; } .iv-by em{ font-style:normal; font-weight:500; color:var(--warn-fg); } .iv-by em.is-ok{ color:var(--text-3); }
+.iv-av{ width:28px; height:28px; border-radius:50%; background:var(--av-mist); color:var(--av-fg); font:700 11px var(--font); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+.iv-mgrid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; } .iv-mgrid > b{ font:600 12px var(--font); color:var(--text-3); text-align:center; padding:4px; }
+.iv-md{ position:relative; min-height:78px; border:1px solid var(--line); background:#fff; border-radius:11px; padding:8px; text-align:left; cursor:pointer; font-family:var(--font); } .iv-md span{ font:600 13px var(--font); color:var(--text-1); } .iv-md b{ display:block; margin-top:6px; font:600 12px var(--font); color:var(--text-3); } .iv-md i{ position:absolute; top:10px; right:10px; width:7px; height:7px; border-radius:50%; background:var(--warn-dot); } .iv-md.is-out{ opacity:.45; } .iv-md.is-today{ background:var(--bg-subtle); } .iv-md:hover{ background:var(--bg-hover); }
+.iv-scrim{ position:fixed; inset:0; background:rgba(47,49,63,.32); z-index:90; }
+.iv-sheet{ position:fixed; top:0; right:0; bottom:0; width:560px; max-width:100vw; background:#fff; z-index:91; display:flex; flex-direction:column; box-shadow:-8px 0 32px rgba(47,49,63,.14); outline:0; animation:ivin var(--t-slide) var(--ease); }
+@keyframes ivin{ from{ transform:translateX(24px); opacity:0 } to{ transform:none; opacity:1 } }
+.iv-sheet__h{ display:flex; align-items:center; gap:10px; padding:16px 20px; border-bottom:1px solid var(--line); } .iv-sheet__t{ flex:1; min-width:0; } .iv-sheet__t h2{ margin:0; font:700 18px var(--font); color:var(--text-1); } .iv-sheet__t p{ margin:2px 0 0; font:500 13px var(--font); color:var(--text-3); }
+.iv-x{ width:32px; height:32px; border:0; background:transparent; border-radius:8px; color:var(--text-2); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; } .iv-x:hover{ background:var(--bg-subtle); }
+.iv-sheet__body{ flex:1; overflow:auto; padding:16px 20px 24px; display:flex; flex-direction:column; gap:18px; }
+.iv-when{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:var(--bg-subtle); border-radius:14px; padding:14px 16px; } .iv-when b{ display:block; font:700 15px var(--font); color:var(--text-1); } .iv-when span{ font:500 13px var(--font); color:var(--text-3); } .iv-when.is-live{ box-shadow:inset 0 0 0 1px var(--success-dot); }
+.iv-sec h3{ margin:0 0 8px; font:700 13px var(--font); color:var(--text-2); letter-spacing:.02em; }
+.iv-ready,.iv-people{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; } .iv-ready li{ display:flex; align-items:center; gap:10px; font:500 14px var(--font); color:var(--text-2); }
+.iv-chk{ width:18px; height:18px; border-radius:6px; border:1.5px solid var(--line-strong); display:inline-flex; align-items:center; justify-content:center; flex:none; color:#fff; } .iv-ready .is-ok .iv-chk{ background:var(--mint); border-color:var(--mint); } .iv-ready .is-ok{ color:var(--text-1); }
+.iv-people li{ display:flex; align-items:center; gap:10px; } .iv-people li > div{ flex:1; min-width:0; } .iv-people b{ display:block; font:600 14px var(--font); color:var(--text-1); } .iv-people span{ font:500 12px var(--font); color:var(--text-3); } .iv-people em{ font:600 12px var(--font); font-style:normal; color:var(--warn-fg); } .iv-people em.is-ok{ color:var(--success-fg); }
+.iv-fb{ border:1px solid var(--line); border-radius:11px; padding:12px; margin-bottom:8px; } .iv-fb__h{ display:flex; align-items:center; justify-content:space-between; gap:8px; } .iv-fb p{ margin:8px 0 0; font:500 13px/1.5 var(--font); color:var(--text-2); } .iv-fb__w{ color:var(--warn-fg) !important; }
+.iv-note{ margin:0; font:500 13px/1.5 var(--font); color:var(--text-3); } .iv-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.iv-cmp{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; } .iv-cmp > div{ border:1px solid var(--line); border-radius:11px; padding:10px; } .iv-cmp h4{ margin:0 0 4px; font:700 13px var(--font); color:var(--text-1); } .iv-cmp p{ margin:2px 0; font:500 12px var(--font); color:var(--text-3); }
+.iv-steps{ list-style:none; margin:0; padding:0; display:flex; gap:6px; flex-wrap:wrap; } .iv-steps li{ display:inline-flex; align-items:center; gap:6px; font:600 12px var(--font); color:var(--text-3); padding:4px 10px 4px 4px; border:1px solid var(--line); border-radius:11px; } .iv-steps li span{ width:20px; height:20px; border-radius:50%; background:var(--bg-subtle); display:inline-flex; align-items:center; justify-content:center; font-size:11px; } .iv-steps .is-cur{ color:var(--text-1); border-color:var(--line-strong); } .iv-steps .is-done span{ background:var(--mint); color:#fff; }
+.iv-facts{ display:grid; grid-template-columns:120px 1fr; gap:6px 12px; margin:0; font:500 13px var(--font); } .iv-facts dt{ color:var(--text-3); } .iv-facts dd{ margin:0; color:var(--text-1); font-weight:600; }
+.iv-link{ font:600 13px var(--font); color:var(--text-1); text-decoration:underline; }
+.iv-doc h3{ margin:0; font:700 18px var(--font); } .iv-doc__s{ color:var(--text-3); font:500 13px var(--font); margin:2px 0 14px; } .iv-doc h4{ margin:16px 0 6px; font:700 13px var(--font); color:var(--text-2); } .iv-doc p,.iv-doc li{ font:500 14px/1.6 var(--font); color:var(--text-2); margin:0; } .iv-doc ul{ margin:4px 0 0 18px; padding:0; } .iv-doc__r{ margin-bottom:10px; } .iv-doc__r span{ display:block; font:500 12px var(--font); color:var(--text-3); }
+.iv-foot{ border-top:1px solid var(--line); padding:14px 20px; display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; background:#fff; align-items:center; }
+.iv-form{ flex-direction:column; align-items:stretch; justify-content:flex-start; max-height:62vh; overflow:auto; } .iv-form .iv-actions{ justify-content:flex-end; }
+.iv-lab{ display:block; margin:8px 0 4px; font:600 13px var(--font); color:var(--text-2); } .iv-ta{ width:100%; height:auto !important; padding:10px 12px; }
+.iv-err{ margin:4px 0 0; font:600 13px var(--font); color:#A93226; }
+.iv-chips{ display:flex; gap:6px; flex-wrap:wrap; } .iv-chip{ height:32px; padding:0 12px; border-radius:8px; border:1px solid var(--line-strong); background:#fff; font:600 13px var(--font); color:var(--text-2); cursor:pointer; } .iv-chip.is-on{ background:var(--bg-subtle); color:var(--text-1); border-color:var(--lean); box-shadow:inset 0 0 0 1px var(--lean); }
+.iv-check{ display:flex; align-items:center; gap:8px; font:500 14px var(--font); color:var(--text-2); margin-top:8px; } .iv-check input{ accent-color:var(--mint); }
+.iv-score{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 0; font:600 13px var(--font); color:var(--text-2); } .iv-score > div{ display:flex; gap:4px; }
+.iv-dot{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line-strong); background:#fff; font:600 13px var(--font); color:var(--text-2); cursor:pointer; } .iv-dot.is-on{ background:var(--bg-subtle); color:var(--text-1); border-color:var(--lean); box-shadow:inset 0 0 0 1px var(--lean); }
+.iv-prep{ margin:10px 0 0 18px; padding:0; font:500 14px/1.7 var(--font); color:var(--text-2); }
+body.sl-on > #app, body.sl-on > #onboarding, body.sl-on > #cs-root{ display:none !important; }
+#sl-root{ display:none; } body.sl-on #sl-root{ display:block; position:fixed; inset:0; z-index:200; overflow:auto; background:var(--bg-page); }
+.sl-page{ min-height:100%; display:flex; flex-direction:column; }
+.sl-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 20px; background:#fff; border-bottom:1px solid var(--line); flex-wrap:wrap; } .sl-brand b{ font:700 18px var(--font); color:var(--text-1); } .sl-who{ font:500 13px var(--font); color:var(--text-3); }
+.sl-linkbtn{ border:0; background:transparent; font:600 13px var(--font); color:var(--text-1); text-decoration:underline; cursor:pointer; padding:0 0 0 6px; }
+.sl-main{ width:100%; max-width:720px; margin:0 auto; padding:28px 16px 80px; min-width:0; box-sizing:border-box; }
+.sl-h1{ font:700 24px var(--font); color:var(--text-1); margin:0; } .sl-lead{ margin:4px 0 18px; font:500 14px/1.5 var(--font); color:var(--text-3); }
+.sl-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:12px; min-width:0; }
+.sl-card__h{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; } .sl-card h2{ margin:0; font:700 16px var(--font); color:var(--text-1); } .sl-card p{ margin:2px 0 0; font:500 13px var(--font); color:var(--text-3); }
+.sl-meta{ margin:10px 0 0 !important; } .sl-why{ margin:12px 0 0 !important; font:500 14px/1.6 var(--font) !important; color:var(--text-2) !important; } .sl-hl{ margin:6px 0 0 18px; padding:0; font:500 14px/1.6 var(--font); color:var(--text-2); }
+.sl-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; } .sl-actions--end{ justify-content:flex-end; margin-top:8px; padding-top:12px; border-top:1px solid var(--line); }
+.sl-center{ text-align:center; padding:40px 20px; } .sl-center h1{ margin:0 0 6px; font:700 22px var(--font); color:var(--text-1); } .sl-center .sl-actions{ justify-content:center; }
+.sl-tick{ width:40px; height:40px; border-radius:50%; background:var(--mint); color:#fff; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; }
+.sl-back{ border:0; background:transparent; font:600 13px var(--font); color:var(--text-2); display:inline-flex; align-items:center; gap:4px; cursor:pointer; padding:0; margin-bottom:12px; }
+.sl-tabs{ margin-bottom:14px; overflow-x:auto; } .sl-tabs [role="tab"]{ white-space:nowrap; }
+.sl-dev{ position:fixed; left:12px; bottom:12px; display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line); border-radius:11px; padding:6px 8px; font:600 12px var(--font); color:var(--text-3); box-shadow:0 4px 16px rgba(47,49,63,.1); } .sl-dev button{ border:0; background:var(--bg-subtle); border-radius:8px; padding:5px 10px; font:600 12px var(--font); color:var(--text-1); cursor:pointer; }
+@media (max-width:1100px){ .iv-cols{ grid-template-columns:minmax(0,1fr); } }
+@media (max-width:640px){ .iv-sheet{ width:100vw; } .iv-row{ grid-template-columns:58px 12px minmax(0,1fr); } .iv-wd__n{ font-size:11px; } .iv-cmp{ grid-template-columns:1fr; } .iv-facts{ grid-template-columns:100px 1fr; } .iv-md{ min-height:54px; padding:5px; } .iv-head__r{ width:100%; } }
+.sl-card p.iv-lab{ font:600 13px var(--font); color:var(--text-2); margin:12px 0 4px; }
+.sl-hl,.iv-doc ul,.iv-prep{ list-style:disc; } .sl-form .iv-chips{ margin-top:4px; } .sl-form .iv-score:first-child{ margin-top:0; }
+.iv-time b{ white-space:nowrap; } @media (max-width:640px){ .iv-row{ grid-template-columns:66px 12px minmax(0,1fr); } .iv-time b{ font-size:12px; } .iv-now span{ width:66px; } }
+/* ==IV-CSS-END== */
 </style>
 </head>
 <body class="text-zinc-900 antialiased">
@@ -42537,6 +42636,814 @@ function apPipeChipHTML(sb){
   return '';
 }
 (function hookPipeline(){ const o = window.tpStandsHTML; if(typeof o !== 'function') return; window.tpStandsHTML = function(sb){ const h = o.apply(this, arguments); let chip = ''; try { chip = apPipeChipHTML(sb); } catch(e){} return chip ? h.replace(/<\/span>$/, chip + '</span>') : h; }; })();
+
+</script>
+<script id="interviews-script">
+/* ---------- iv-core.js ---------- */
+/* ============================================================
+   INTERVIEWS: data, rules and actions. One function (interviewIssues) says what needs whom; every screen reads it.
+   Secure links let interviewers and client contacts answer without an account. A link is one person, one purpose.
+============================================================ */
+['chevL:m14.5 6-6 6 6 6', 'chevR:m9.5 6 6 6-6 6', 'x:M6 6l12 12M18 6 6 18'].forEach(function(s){ const i = s.indexOf(':'); if(!O_IC[s.slice(0, i)]) O_IC[s.slice(0, i)] = s.slice(i + 1); });
+const IV = { mode:'day', day:null, q:'', who:'', open:null, doc:null, form:null, shown:12, asInterviewer:null, resent:{}, stepOpen:false };
+const ie = function(s){ return escapeHtml(String(s == null ? '' : s)); };
+const IV_H = 3600000, IV_D = 86400000;
+INTERVIEW_TRANSITIONS['Finding a time'] = ['Confirmed', 'Cancelled']; INTERVIEW_TRANSITIONS['Completed'] = [];
+let IV_PROFILE = {}, SECURE_LINKS = [], DUPLICATE_CLAIMS = [], IV_REQS = [], ivSeq = 1, IV_NEXT_REQ = 1;
+function ivNowMs(){ return typeof APS === 'object' && APS.now ? APS.now() : Date.now(); }
+function ivStart(iv){ return ivTime(iv); }
+function ivEnd(iv){ return ivTime(iv) + (iv.duration || 60) * 60000; }
+function ivFmtT(ms){ return new Date(ms).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }); }
+function ivFmtD(ms, long){ return new Date(ms).toLocaleDateString('en-US', long ? { weekday:'long', month:'long', day:'numeric' } : { weekday:'short', month:'short', day:'numeric' }); }
+function ivMid(ms){ return new Date(ms).setHours(0, 0, 0, 0); }
+function ivFirst(n){ return String(n || '').split(' ')[0]; }
+function ivOrg(){ return ORG_STRUCTURE.profile.orgType === 'Corporate' ? 'corp' : 'agency'; }
+function ivRole(){
+  if(IV.asInterviewer) return 'interviewer';
+  const corp = ivOrg() === 'corp';
+  return state.role === 'recruiter' ? (corp ? 'ta' : 'recruiter') : state.role === 'manager' ? 'teammgr' : state.role === 'hm' ? 'hm' : 'owner';
+}
+function ivMe(){ return IV.asInterviewer || ((currentActingUser() || {}).name || ''); }
+function ivJob(iv){ return jobById(iv.jobId || (subById(iv.submissionId) || {}).jobId); }
+function ivSub(iv){ return subById(iv.submissionId) || (iv.jobId && iv.candidateId ? findSubmission(iv.jobId, iv.candidateId) : null); }
+function ivCand(iv){ return byId(iv.candidateId) || CANDIDATES.find(function(c){ return c.name === iv.candidate; }); }
+function ivRecruiter(iv){ const s = ivSub(iv), u = s && RECRUITER_ROSTER.find(function(r){ return r.id === s.recruiterId; }); return u ? u.name : (s && s.recruiterName) || 'Priya Sharma'; }
+function ivClientName(iv){ const j = ivJob(iv); return j ? j.client : ''; }
+function ivSource(iv){ const s = ivSub(iv), x = String((s && s.source) || ''); return /vendor/i.test(x) ? 'Vendors only' : /referral/i.test(x) ? 'Referral' : 'Direct'; }
+function ivModeName(iv){ return iv.mode === 'Onsite' ? 'In person' : iv.mode; }
+function ivProviderLine(iv){ return iv.mode === 'Phone' ? 'Phone call' : iv.mode === 'Onsite' ? ((iv.venue && iv.venue.address) || iv.venue || 'In person') : (iv.meetProvider || 'Google Meet'); }
+
+/* ---------- one normal shape for every interview ---------- */
+function ivDeriveOutcome(v){ const s = String(v || '').toLowerCase(); return !s ? null : /not cleared|reject/.test(s) ? 'notcleared' : /hold/.test(s) ? 'hold' : /clear|accept|pass/.test(s) ? 'cleared' : null; }
+function ivNorm(iv){
+  if(iv.__n) return iv; iv.__n = true;
+  const sb = subById(iv.submissionId), j = jobById(iv.jobId || (sb && sb.jobId));
+  if(!iv.candidateId && sb) iv.candidateId = sb.candidateId; if(!iv.jobId && sb) iv.jobId = sb.jobId;
+  if(!iv.at){ const t = ivTime(iv); if(t) iv.at = new Date(t).toISOString(); }
+  iv.duration = iv.duration || 60;
+  const total = j ? jobProcessStages(j).filter(function(x){ return pipeStageKind(x) === 'interview'; }).length : 3;
+  iv.roundsTotal = iv.roundsTotal || Math.max(total, 1);
+  if(!iv.roundNo){ const earlier = hmInterviews.filter(function(x){ return x !== iv && x.submissionId && x.submissionId === iv.submissionId && x.status !== 'Cancelled' && ivTime(x) < ivTime(iv); }).length; iv.roundNo = Math.min(earlier + 1, iv.roundsTotal); }
+  if(!iv.panel){ iv.panel = iv.interviewerName ? [{ name:iv.interviewerName, email:ivSlug(iv.interviewerName) + '@' + ivDomain(j), isUser:RECRUITER_ROSTER.some(function(r){ return r.name === iv.interviewerName; }), confirmed:!!iv.interviewerConfirmed, link:'none', linkAt:null, feedback:null }] : []; }
+  iv.panel.forEach(function(p){ if(p.link == null) p.link = 'none'; if(p.feedback === undefined) p.feedback = null; });
+  if(!iv.clientContact && ivOrg() === 'agency') iv.clientContact = ivClientContactFor(j);
+  iv.clientResult = iv.clientResult || { state:'none' };
+  if(iv.outcome && ['cleared', 'notcleared', 'hold'].indexOf(iv.outcome) < 0) iv.outcome = ivDeriveOutcome(iv.outcome);
+  if(!iv.outcome && iv.status === 'Completed' && sb && sb.steps && sb.steps[iv.stageIndex]) iv.outcome = ivDeriveOutcome(sb.steps[iv.stageIndex].outcome);
+  if(iv.mode === 'Onsite' && !iv.venue) iv.venue = null; if(iv.venue && typeof iv.venue === 'string') iv.venue = { address:iv.venue, mapLink:'', reception:'' };
+  return iv;
+}
+function ivSlug(n){ return String(n || '').toLowerCase().replace(/[^a-z\s]/g, '').trim().replace(/\s+/g, '.'); }
+function ivDomain(j){ return (j && j.client ? j.client.toLowerCase().replace(/[^a-z]/g, '') : 'client') + '.com'; }
+function ivClientContactFor(j){
+  if(!j) return null; const cl = findClientByName(j.client), p = cl && (clientPrimaryPoc(cl) || (cl.pocs || [])[0]);
+  const name = j.client === 'HealthAI' ? 'Ravi Menon' : (p ? p.name : 'Hiring contact');
+  return { name:name, email:ivSlug(name) + '@' + ivDomain(j) };
+}
+hmInterviews.forEach(ivNorm);
+
+/* ---------- who sees which interviews ---------- */
+function ivRecruitersFilterList(){ return RECRUITER_ROSTER.filter(function(r){ return hmInterviews.some(function(iv){ const s = ivSub(iv); return s && s.recruiterId === r.id; }); }); }
+function ivVisible(){
+  const role = ivRole(), org = ivOrg(), me = currentActingUser(); let list = hmInterviews.map(ivNorm).filter(function(iv){ return ivTime(iv); });
+  if(role === 'interviewer') return list.filter(function(iv){ return iv.panel.some(function(p){ return p.name === IV.asInterviewer; }); });
+  const own = function(iv){ const s = ivSub(iv), j = ivJob(iv); return !!me && ((s && s.recruiterId === me.id) || (j && isRecruiterMappedToJob(j.id, me.id))); };
+  if(role === 'recruiter') list = list.filter(own);
+  else if(role === 'teammgr' && org === 'agency'){ const team = recruitersManagedBy(me.id).map(function(r){ return r.id; }).concat([me.id]); list = list.filter(function(iv){ const s = ivSub(iv); return own(iv) || (s && team.indexOf(s.recruiterId) > -1); }); }
+  else if(role === 'hm'){ const cn = typeof hiringManagerClientName === 'function' ? hiringManagerClientName() : null; if(cn) list = list.filter(function(iv){ return ivClientName(iv) === cn; }); }
+  if(IV.who){ list = list.filter(function(iv){ if(org === 'agency'){ const s = ivSub(iv); return s && s.recruiterId === IV.who; } return ivSource(iv) === IV.who; }); }
+  return list;
+}
+
+/* ---------- needs-you rules: the single source ---------- */
+function ivClashes(list){
+  const out = {}, live = list.filter(function(iv){ return ['Cancelled', 'Finding a time', 'Completed', 'No Show'].indexOf(iv.status) < 0 && ivEnd(iv) > ivNowMs() - IV_D; });
+  for(let i = 0; i < live.length; i++) for(let j = i + 1; j < live.length; j++){
+    const a = live[i], b = live[j]; if(ivStart(a) >= ivEnd(b) || ivStart(b) >= ivEnd(a)) continue;
+    const shared = a.panel.map(function(p){ return p.name; }).filter(function(n){ return b.panel.some(function(q){ return q.name === n; }); })[0]; if(!shared) continue;
+    const later = ivStart(a) > ivStart(b) || (ivStart(a) === ivStart(b) && a.id > b.id) ? a : b, other = later === a ? b : a;
+    out[later.id] = { who:shared, other:other };
+  }
+  return out;
+}
+const IV_ORDER = ['client', 'feedback', 'decide', 'dup', 'confirm', 'clash', 'logistics', 'noshow'];
+function interviewIssues(iv, role, org, now, clashes){
+  ivNorm(iv); const out = [], st = iv.status; if(st === 'Cancelled' || st === 'Finding a time') return out;
+  role = role || ivRole(); org = org || ivOrg(); now = now || ivNowMs();
+  const t0 = ivStart(iv), t1 = ivEnd(iv), first = ivFirst(iv.candidate), ended = now >= t1, since = (now - t1) / IV_H, me = ivMe();
+  const add = function(o){ o.ivId = iv.id; out.push(o); };
+  if(st === 'No Show' && !(iv.noShow && iv.noShow.closed)) add({ key:'noshow', tone:'warn', title:(iv.noShow && iv.noShow.participant && iv.noShow.participant !== 'Candidate' ? iv.noShow.participant : first) + ' didn’t join', detail:'Reschedule so the round is not lost', action:'reschedule', actionLabel:'Reschedule', who:first });
+  else if(ended && !iv.outcome && st !== 'No Show'){
+    if(org === 'agency'){
+      const cr = iv.clientResult || {}, cc = iv.clientContact || { name:'the client' }, tone = since > 24 ? 'risk' : 'warn';
+      if(cr.state !== 'done') add({ key:'client', tone:tone, title:'Waiting on ' + ivClientName(iv) + '’s feedback', detail:cr.state === 'opened' ? cc.name + ' opened the link at ' + ivFmtT(cr.openedAt) : cr.state === 'sent' ? 'Link sent to ' + cc.name + ', not opened yet' : 'The feedback link has not been sent yet', action:'resendClient', actionLabel:cr.state === 'none' ? 'Send link' : 'Resend link', who:cc.name });
+    } else {
+      const missing = iv.panel.filter(function(p){ return !p.feedback; });
+      missing.forEach(function(p){ const mine = p.name === me; add({ key:'feedback', tone:since > 24 ? 'risk' : 'warn', title:mine ? 'Your feedback is ' + (since > 24 ? 'overdue' : 'due') : p.name + '’s feedback is ' + (since > 24 ? 'overdue' : 'due'), detail:'For ' + iv.candidate + ' · ' + (iv.round || 'Interview'), action:mine ? 'scorecard' : 'resendPanel', actionLabel:mine ? 'Give feedback' : 'Resend link', who:p.name, panelName:p.name }); });
+      if(iv.panel.length && !missing.length) add({ key:'decide', tone:'warn', title:'Decide the next step', detail:'All feedback is in for ' + iv.candidate, action:'outcome', actionLabel:'Decide', who:'Hiring manager' });
+    }
+  }
+  if(!ended && st !== 'Completed'){
+    const hrs = (t0 - now) / IV_H;
+    if(!iv.candidateConfirmed && hrs <= 24) add({ key:'confirm', tone:hrs <= 4 ? 'risk' : 'warn', title:first + ' hasn’t confirmed', detail:'Starts ' + ivFmtD(t0) + ', ' + ivFmtT(t0), action:'remindCand', actionLabel:'Remind', who:first });
+    iv.panel.forEach(function(p){ if(!p.confirmed && hrs <= 72){ const mine = p.name === me; add({ key:'confirm', tone:'warn', title:mine ? 'Confirm you can make it' : p.name + ' hasn’t confirmed', detail:'For ' + iv.candidate + ' · ' + ivFmtD(t0) + ', ' + ivFmtT(t0), action:mine ? 'confirmSelf' : 'resendPanel', actionLabel:mine ? 'Confirm' : 'Resend link', who:p.name, panelName:p.name }); } });
+    if(iv.mode === 'Onsite' && !(iv.venue && iv.venue.address)) add({ key:'logistics', tone:'warn', title:'No venue for ' + first, detail:'In person, ' + ivFmtD(t0) + ', ' + ivFmtT(t0), action:'venue', actionLabel:'Add venue', who:ivRecruiter(iv) });
+  }
+  const cl = (clashes || ivClashes(ivVisible()))[iv.id]; if(cl) add({ key:'clash', tone:'warn', title:'Interviewer double-booked', detail:cl.who + ' is also on ' + cl.other.candidate + ' at ' + ivFmtT(ivStart(cl.other)), action:'nextSlot', actionLabel:'Next free slot', who:cl.who });
+  const sb = ivSub(iv), claim = sb && DUPLICATE_CLAIMS.find(function(c){ return c.submissionId === sb.id && c.status === 'under_review'; });
+  if((claim || iv.dup) && !(iv.dup && iv.dup.resolved)) add({ key:'dup', tone:'warn', title:'Possible duplicate · ' + iv.candidate, detail:claim ? 'The client raised an ownership claim' : 'Another copy of this profile was submitted', action:'dup', actionLabel:'Review', who:ivRecruiter(iv) });
+  let res = out;
+  if(role === 'interviewer') res = out.filter(function(x){ return (x.key === 'feedback' || x.key === 'confirm') && x.panelName === me; });
+  else if(role === 'hm') res = out.filter(function(x){ return ['feedback', 'decide', 'clash'].indexOf(x.key) > -1; });
+  return res.sort(function(a, b){ const ra = a.tone === 'risk' ? 0 : 1, rb = b.tone === 'risk' ? 0 : 1; return ra - rb || IV_ORDER.indexOf(a.key) - IV_ORDER.indexOf(b.key); });
+}
+function ivLive(iv, now){ now = now || ivNowMs(); return ['Confirmed', 'Pending confirmation'].indexOf(iv.status) > -1 && ivStart(iv) <= now && now < ivEnd(iv); }
+/** one pill per row: [label, class] */
+function ivPill(iv, issues, now){
+  now = now || ivNowMs(); const st = iv.status;
+  if(st === 'Cancelled') return ['Cancelled', 'idle']; if(st === 'Finding a time') return ['Finding a time', 'info'];
+  if(iv.outcome === 'cleared') return ['Cleared', 'ok']; if(iv.outcome === 'notcleared') return ['Not cleared', 'info']; if(iv.outcome === 'hold') return ['On hold', 'info'];
+  if(ivLive(iv, now)) return ['Live', 'live'];
+  const top = issues[0];
+  if(top) return [({ client:'Awaiting client', feedback:'Feedback due', decide:'Decide', confirm:'Not confirmed', logistics:'No venue', clash:'Clash', dup:'Duplicate', noshow:'No-show' })[top.key], top.tone === 'risk' ? 'risk' : 'warn'];
+  if(ivEnd(iv) <= now) return [st === 'No Show' ? 'No-show' : 'Done', 'info'];
+  return (ivStart(iv) - now <= IV_D && iv.candidateConfirmed) ? ['Confirmed', 'ok'] : ['Scheduled', 'info'];
+}
+
+/* ---------- secure links ---------- */
+function slToken(){ let s = ''; const c = 'abcdefghijkmnpqrstuvwxyz23456789'; for(let i = 0; i < 18; i++) s += c[Math.floor(Math.random() * c.length)]; return s; }
+function slAdd(link){ link.token = link.token || slToken(); link.createdAt = link.createdAt || ivNowMs(); link.events = link.events || []; link.revoked = !!link.revoked; SECURE_LINKS.push(link); return link; }
+function slEvent(link, what){ link.events.push({ at:ivNowMs(), what:what }); link.lastUsedAt = ivNowMs(); }
+function slFind(token){ return SECURE_LINKS.find(function(l){ return l.token === token; }) || null; }
+function slUrl(l){ return location.href.split('#')[0] + '#/l/' + l.token; }
+/** one link per person and purpose: reuse it when the person already has one, and widen what it covers */
+function slFor(kind, name, email, scopes, orgName){
+  let l = SECURE_LINKS.find(function(x){ return x.kind === kind && x.personName === name && (kind === 'interviewer' || x.email === email) && !x.revoked; });
+  if(!l) l = slAdd({ kind:kind, personName:name, email:email, orgName:orgName, scopes:{ interviewIds:[], submissionIds:[], jobId:null } }); else if(l.orgName !== orgName) l.orgName = '';
+  (scopes.interviewIds || []).forEach(function(id){ if(l.scopes.interviewIds.indexOf(id) < 0) l.scopes.interviewIds.push(id); });
+  (scopes.submissionIds || []).forEach(function(id){ if(l.scopes.submissionIds.indexOf(id) < 0) l.scopes.submissionIds.push(id); });
+  if(scopes.jobId) l.scopes.jobId = scopes.jobId;
+  slExpire(l); return l;
+}
+function slExpire(l){ let last = 0; l.scopes.interviewIds.forEach(function(id){ const iv = findHmInterview(id); if(iv) last = Math.max(last, ivEnd(iv)); }); l.expiresAt = Math.max(l.createdAt + 7 * IV_D, last + 3 * IV_D); }
+function slValid(l){ return !!l && !l.revoked && ivNowMs() < l.expiresAt; }
+function ivReqOpen(link, iv, kind, who, owner){
+  const open = IV_REQS.find(function(r){ return r.ivId === iv.id && r.kind === kind && r.personName === who && r.status === 'Pending'; }); if(open) return open;
+  const r = { id:'lnk-' + (IV_NEXT_REQ++), token:link ? link.token : null, ivId:iv.id, kind:kind, personName:who, candidate:iv.candidate, status:'Pending', createdAt:new Date(ivNowMs()).toISOString(), decidedAt:null, ownerUserId:(RECRUITER_ROSTER.find(function(x){ return x.name === ivRecruiter(iv); }) || {}).id || 'RP-088' };
+  IV_REQS.push(r); return r;
+}
+function ivReqClose(ivId, kind, who){ IV_REQS.forEach(function(r){ if(r.ivId === ivId && r.kind === kind && (!who || r.personName === who) && r.status === 'Pending'){ r.status = 'Approved'; r.decidedAt = new Date(ivNowMs()).toISOString(); } }); }
+const IV_KIND_LABEL = { confirm:'Confirmation', feedback:'Feedback', outcome:'Client outcome', times:'Times' };
+(function registerWithAps(){
+  if(typeof APS !== 'object') return;
+  APS.config.policies.LinkRequest = APS.config.policies.LinkRequest || { label:'Link answers (interviewers and clients)', tatHours:24, remindAt:[4 / 24, 20 / 24], escalate:[{ afterDueHours:0, to:'owner' }], justifyBreach:false, extension:{ maxHours:0, times:0 }, autoDecide:false };
+  APS.adapter.sources.push({ key:'lnk', list:function(){ return IV_REQS; }, id:function(r){ return r.id; }, type:function(){ return 'LinkRequest'; }, entityId:function(r){ return r.ivId + ':' + r.kind + ':' + r.personName; }, status:function(r){ return r.status; }, createdAt:function(r){ return r.createdAt; }, decidedAt:function(r){ return r.decidedAt; }, decidedBy:function(r){ return r.personName; },
+    approver:function(r){ return { userId:r.ownerUserId, roleId:'role_recruiter', name:null }; }, requester:function(){ return { userId:null, roleId:null, name:'Oontu' }; } });
+  const d = APS.adapter.describe; APS.adapter.describe = function(src, r){ return src === 'lnk' ? (IV_KIND_LABEL[r.kind] || 'Answer') + ' from ' + r.personName + ' · ' + r.candidate : d(src, r); };
+  APS.adapter.openItem = (function(o){ return function(it){ return it && it.source === 'lnk' ? "showView('interviews')" : o(it); }; })(APS.adapter.openItem);
+})();
+
+/* ---------- actions: each one changes state, logs, and redraws ---------- */
+function ivChanged(){
+  try { if(typeof APS === 'object') APS.tick(); } catch(e){}
+  try { if(typeof ivDraw === 'function') ivDraw(); } catch(e){ console.error(e); }
+  try { if(typeof slDraw === 'function') slDraw(); } catch(e){ console.error(e); }
+  try { if(typeof pipeRefreshAll === 'function') pipeRefreshAll(); } catch(e){}
+  try { if(typeof oRefreshDashboard === 'function') oRefreshDashboard(); } catch(e){}
+}
+function ivLog(action, iv, extra){ logAudit('Interviews', action, iv.candidate + ' · ' + (iv.round || 'Interview') + (extra ? ' · ' + extra : ''), { entityType:'Interview', entityId:iv.id, submissionId:iv.submissionId || null, candidateId:iv.candidateId || null, jobId:iv.jobId || null }); }
+function ivLinkFor(iv, p){
+  const j = ivJob(iv), l = slFor('interviewer', p.name, p.email, { interviewIds:[iv.id], submissionIds:iv.submissionId ? [iv.submissionId] : [], jobId:iv.jobId }, ivOrg() === 'corp' ? ORG_STRUCTURE.profile.brandName || 'Talent team' : (j ? j.client : ''));
+  slExpire(l); return l;
+}
+function ivSendPanelLink(iv, p, why){
+  const l = ivLinkFor(iv, p); p.link = p.link === 'done' ? 'done' : 'sent'; p.linkAt = ivNowMs(); slEvent(l, 'Sent: ' + why);
+  const ended = ivEnd(iv) <= ivNowMs(); ivReqOpen(l, iv, ended ? 'feedback' : (iv.status === 'Finding a time' ? 'times' : 'confirm'), p.name);
+  ivLog('Link sent to ' + p.name, iv, why); return l;
+}
+function ivSendClientLink(iv, why){
+  const cc = iv.clientContact; if(!cc) return null; const j = ivJob(iv);
+  const subs = hmInterviews.filter(function(x){ return x.clientContact && x.clientContact.email === cc.email && x.jobId; }).map(function(x){ return x.submissionId; }).filter(Boolean);
+  const l = slFor('client', cc.name, cc.email, { interviewIds:hmInterviews.filter(function(x){ return x.clientContact && x.clientContact.email === cc.email; }).map(function(x){ return x.id; }), submissionIds:subs, jobId:iv.jobId }, j ? j.client : '');
+  const cr = iv.clientResult; cr.state = cr.state === 'done' ? 'done' : 'sent'; cr.sentAt = ivNowMs(); slEvent(l, 'Sent: ' + why);
+  if(ivEnd(iv) <= ivNowMs()) ivReqOpen(l, iv, 'outcome', cc.name); ivLog('Link sent to ' + cc.name, iv, why); return l;
+}
+function ivRemindCand(id){ const iv = findHmInterview(id); if(!iv) return; iv.candidateReminded = true; ivLog('Candidate reminded', iv, 'WhatsApp and email'); toast('Reminder sent to ' + ivFirst(iv.candidate) + ' by WhatsApp and email.'); IV.resent['c' + id] = 1; ivChanged(); }
+function ivResendPanel(id, name){ const iv = findHmInterview(id), p = iv && iv.panel.find(function(x){ return x.name === name; }); if(!p) return; ivSendPanelLink(iv, p, 'resent'); IV.resent[id + '|' + name] = 1; toast('Link sent again to ' + ivFirst(name) + '.'); ivChanged(); }
+function ivResendClient(id){ const iv = findHmInterview(id); if(!iv) return; ivSendClientLink(iv, 'resent'); IV.resent['cl' + id] = 1; toast('Link sent again to ' + ivFirst(iv.clientContact.name) + '.'); ivChanged(); }
+function ivConfirmSelf(id){ const iv = findHmInterview(id), p = iv && iv.panel.find(function(x){ return x.name === ivMe(); }); if(!p) return; p.confirmed = true; ivReqClose(id, 'confirm', p.name); ivLog('Interviewer confirmed', iv, p.name); toast('Confirmed. Thank you.'); ivChanged(); }
+function ivSetVenue(id, address, reception){
+  const iv = findHmInterview(id); if(!iv) return { ok:false, err:'Interview not found.' }; if(!String(address || '').trim()) return { ok:false, err:'Add the address so ' + ivFirst(iv.candidate) + ' knows where to go.' };
+  iv.venue = { address:address.trim(), mapLink:'https://maps.google.com/?q=' + encodeURIComponent(address.trim()), reception:(reception || '').trim() }; ivLog('Venue added', iv, address.trim()); toast('Venue added. ' + ivFirst(iv.candidate) + ' gets the address.'); ivChanged(); return { ok:true };
+}
+function ivReschedule(id, whenIso, reason){
+  const iv = findHmInterview(id); if(!iv) return { ok:false, err:'Interview not found.' }; const t = Date.parse(whenIso); if(isNaN(t)) return { ok:false, err:'Pick a valid date and time.' }; if(t < ivNowMs() - 60000) return { ok:false, err:'Pick a time in the future.' };
+  iv.rescheduleHistory = iv.rescheduleHistory || []; iv.rescheduleHistory.push({ from:iv.date, to:new Date(t).toISOString(), by:(currentActingUser() || {}).name || 'Unknown', at:new Date().toISOString(), reason:reason || null });
+  iv.at = new Date(t).toISOString(); iv.date = ivFmtD(t) + ', ' + ivFmtT(t); iv.status = 'Confirmed'; iv.candidateConfirmed = false; iv.noShow = null; iv.panel.forEach(function(p){ p.confirmed = false; });
+  iv.panel.forEach(function(p){ ivSendPanelLink(iv, p, 'new time'); }); ivLog('Interview rescheduled', iv, iv.date); toast('Rescheduled to ' + iv.date + '. Everyone is told.'); ivChanged(); return { ok:true };
+}
+function ivNextSlot(id){
+  const iv = findHmInterview(id); if(!iv) return; const all = ivVisible().filter(function(x){ return x.id !== id && x.status !== 'Cancelled'; }); let t = ivStart(iv);
+  for(let k = 0; k < 96; k++){ t += 30 * 60000; const d = new Date(t), h = d.getHours() + d.getMinutes() / 60; if(d.getDay() === 0 || h < 9.5 || h + (iv.duration || 60) / 60 > 18.5) continue; const clash = all.some(function(x){ return ivStart(x) < t + (iv.duration || 60) * 60000 && t < ivEnd(x) && x.panel.some(function(p){ return iv.panel.some(function(q){ return q.name === p.name; }); }); }); if(!clash) break; }
+  ivReschedule(id, new Date(t).toISOString(), 'Interviewer was double-booked');
+}
+function ivCancel(id, reason){
+  const iv = findHmInterview(id); if(!iv) return { ok:false, err:'Interview not found.' }; if(!reason) return { ok:false, err:'Pick a reason so everyone knows why.' };
+  iv.status = 'Cancelled'; iv.cancelReason = reason; IV_REQS.forEach(function(r){ if(r.ivId === id && r.status === 'Pending'){ r.status = 'Approved'; r.decidedAt = new Date(ivNowMs()).toISOString(); } });
+  const sb = ivSub(iv); if(sb && sb.stage === 'Interview Scheduled') moveSubmissionStage(sb.id, 'Shortlisted', 'Interview cancelled: ' + reason);
+  ivLog('Interview cancelled', iv, reason); toast('Cancelled. ' + ivFirst(iv.candidate) + ' and the panel are told.'); ivChanged(); return { ok:true };
+}
+function ivCloseNoShow(id){ const iv = findHmInterview(id); if(!iv) return; iv.noShow = Object.assign(iv.noShow || {}, { closed:true }); ivLog('No-show closed', iv); toast('Closed as no-show.'); ivChanged(); }
+function ivOutcome(id, choice, note, askNext, via){
+  const iv = findHmInterview(id); if(!iv) return { ok:false, err:'Interview not found.' }; if(!choice) return { ok:false, err:'Pick what happened.' };
+  const sb = ivSub(iv), j = ivJob(iv), map = { cleared:'Cleared', notcleared:'Not cleared', hold:'On hold', noshow:'Didn’t attend' };
+  if(sb && typeof ocSave === 'function'){ ocState = { subId:sb.id, at:iv.stageIndex != null ? iv.stageIndex : subProcessIndex(j, sb), kind:'interview', choice:map[choice], reason:choice === 'notcleared' ? STAGE_REJECT_REASONS[0] : '', note:note || '', tell:false, followOn:false, allJobs:false }; ocSave(); ocState = null; }
+  else { iv.status = choice === 'noshow' ? 'No Show' : 'Completed'; }
+  if(choice === 'noshow'){ iv.status = 'No Show'; iv.noShow = { participant:'Candidate', scheduledFor:iv.date, reason:note || null, recordedAt:nowTimestamp(), recordedBy:ivMe() }; }
+  else { iv.outcome = choice; if(iv.status !== 'Completed') iv.status = 'Completed'; }
+  iv.outcomeNote = note || ''; iv.outcomeAt = ivNowMs(); iv.outcomeVia = via || 'app';
+  ivReqClose(id, 'outcome'); IV_REQS.forEach(function(r){ if(r.ivId === id && r.kind === 'feedback') { r.status = 'Approved'; r.decidedAt = new Date(ivNowMs()).toISOString(); } });
+  if(iv.clientResult && iv.clientResult.state !== 'done'){ iv.clientResult = Object.assign(iv.clientResult, { state:'done', at:ivNowMs() }); }
+  if(choice === 'cleared' && askNext && iv.roundNo < iv.roundsTotal) ivMakeNextRound(iv);
+  ivLog('Outcome recorded: ' + map[choice], iv, via === 'link' ? 'from the secure link' : 'in Oontu'); toast(map[choice] + ' recorded for ' + ivFirst(iv.candidate) + '.'); ivChanged(); return { ok:true };
+}
+function ivMakeNextRound(prev){
+  const j = ivJob(prev), sb = ivSub(prev), id = 'int-' + (hmInterviewIdSeq++), t = ivMid(ivNowMs()) + 3 * IV_D + 10.5 * IV_H;
+  const stages = j ? jobProcessStages(j).filter(function(x){ return pipeStageKind(x) === 'interview'; }) : [];
+  const iv = { id:id, candidate:prev.candidate, role:prev.role, candidateId:prev.candidateId, jobId:prev.jobId, submissionId:prev.submissionId, stageIndex:(prev.stageIndex != null ? prev.stageIndex : 0) + 1, round:stages[prev.roundNo] || ('Round ' + (prev.roundNo + 1)), roundNo:prev.roundNo + 1, roundsTotal:prev.roundsTotal, date:ivFmtD(t) + ', ' + ivFmtT(t), at:new Date(t).toISOString(), duration:60, mode:prev.mode, meetProvider:prev.meetProvider, status:'Finding a time', candidateConfirmed:false, interviewerConfirmed:false, interviewerName:null, panel:prev.panel.map(function(p){ return { name:p.name, email:p.email, isUser:p.isUser, confirmed:false, link:'none', feedback:null }; }), clientContact:prev.clientContact, clientResult:{ state:'none' }, rescheduleHistory:[], noShow:null, outcome:null, __n:true };
+  hmInterviews.unshift(iv); iv.panel.forEach(function(p){ ivSendPanelLink(iv, p, 'availability for round ' + iv.roundNo); }); ivLog('Next round created', iv, 'Finding a time'); return iv;
+}
+function ivSubmitFeedback(id, name, data, via){
+  const iv = findHmInterview(id), p = iv && iv.panel.find(function(x){ return x.name === name; }); if(!p) return { ok:false, err:'This interview is no longer open.' }; if(!data || !data.rec) return { ok:false, err:'Pick whether you would take this person forward.' };
+  p.feedback = { rec:data.rec, scores:data.scores || {}, stoodOut:data.stoodOut || '', worried:data.worried || '', probeNext:data.probeNext || '', at:ivNowMs(), via:via || 'app' }; p.link = 'done'; p.linkAt = ivNowMs();
+  ivReqClose(id, 'feedback', name); const l = SECURE_LINKS.find(function(x){ return x.kind === 'interviewer' && x.personName === name && x.scopes.interviewIds.indexOf(id) > -1; }); if(l) slEvent(l, 'Feedback sent');
+  const sb = ivSub(iv); if(sb){ const fb = PENDING_FEEDBACK.find(function(x){ return x.interviewId === id; }); if(fb && iv.panel.every(function(x){ return x.feedback; })) fb.status = 'Submitted'; }
+  ivLog('Feedback received', iv, name + ' · ' + ({ sy:'Strong yes', y:'Yes', n:'No', sn:'Strong no' })[data.rec] + (via === 'link' ? ' · via link' : '')); toast('Feedback from ' + ivFirst(name) + ' saved.'); ivChanged(); return { ok:true };
+}
+const IV_REC = { sy:['Strong yes', 5], y:['Yes', 4], n:['No', 2], sn:['Strong no', 1] };
+function ivPanelDeclined(id, name, why){ const iv = findHmInterview(id), p = iv && iv.panel.find(function(x){ return x.name === name; }); if(!p) return; p.confirmed = false; iv.status = 'Finding a time'; ivReqClose(id, 'confirm', name); ivLog('Interviewer can’t make it', iv, name + (why ? ' · ' + why : '')); ivChanged(); }
+
+/* ---------- demo people and interviews, so every role has something real to see ---------- */
+(function seedInterviews(){
+  if(seedInterviews.done) return; seedInterviews.done = true;
+  const jobsBy = function(id){ return jobById(id); };
+  // people used by the links
+  const mkPeople = [
+    { name:'Diya Menon', role:'Backend Engineer', skills:['Java', 'Spring Boot', 'AWS'], exp:'6 yrs', loc:'Pune, IN', notice:'30 Days', co:'Pine Labs', exp$:2700000, cur:2200000 },
+    { name:'Aditya Nair', role:'DevOps Engineer', skills:['Kubernetes', 'Terraform', 'AWS'], exp:'6 yrs', loc:'Hyderabad, IN', notice:'45 Days', co:'Juspay', exp$:3000000, cur:2500000 },
+    { name:'Kunal Desai', role:'Full Stack Engineer', skills:['React', 'Node.js', 'PostgreSQL'], exp:'5 yrs', loc:'Bengaluru, IN', notice:'30 Days', co:'Groww', exp$:2600000, cur:2100000 },
+    { name:'Ritika Shah', role:'Full Stack Engineer', skills:['React', 'Node.js', 'PostgreSQL', 'AWS'], exp:'6 yrs', loc:'Bengaluru, IN', notice:'45 Days', co:'Cars24', exp$:2800000, cur:2300000 },
+    { name:'Mohit Agarwal', role:'Full Stack Engineer', skills:['React', 'Node.js', 'PostgreSQL'], exp:'4 yrs', loc:'Bengaluru, IN', notice:'30 Days', co:'Urban Company', exp$:2400000, cur:2000000 },
+    { name:'Kabir Sethi', role:'Backend Engineer', skills:['Java', 'Kafka', 'AWS'], exp:'7 yrs', loc:'Pune, IN', notice:'60 Days', co:'Razorpay', exp$:3200000, cur:2800000 },
+    { name:'Meera Pillai', role:'Frontend Engineer', skills:['React', 'TypeScript'], exp:'4 yrs', loc:'Bengaluru, IN', notice:'30 Days', co:'Swiggy', exp$:2200000, cur:1800000 },
+    { name:'Nikhil Rao', role:'Backend Engineer', skills:['Java', 'Spring Boot'], exp:'5 yrs', loc:'Pune, IN', notice:'45 Days', co:'PhonePe', exp$:2500000, cur:2100000 },
+    { name:'Ishaan Kulkarni', role:'Frontend Engineer', skills:['React', 'GraphQL'], exp:'6 yrs', loc:'Mumbai, IN', notice:'30 Days', co:'Nykaa', exp$:2700000, cur:2300000 },
+    { name:'Tara Bhatt', role:'Frontend Engineer', skills:['React', 'Next.js'], exp:'5 yrs', loc:'Bengaluru, IN', notice:'30 Days', co:'Meesho', exp$:2400000, cur:2000000 },
+  ];
+  const src = findCandidateByName('Rahul Shah'); const checks = function(){ return [{ k:'Contact', s:'ok', n:'Verified' }, { k:'Current employment', s:'ok', n:'Confirmed' }, { k:'Education', s:'ok', n:'On resume' }, { k:'Career gaps', s:'ok', n:'None' }, { k:'Duplicate', s:'ok', n:'None' }, { k:'Other-agency claim', s:'ok', n:'None' }, { k:'Consent to share', s:'ok', n:'Given' }]; };
+  mkPeople.forEach(function(p, i){
+    if(findCandidateByName(p.name)) return; const c = JSON.parse(JSON.stringify(src)); c.id = Math.max.apply(null, CANDIDATES.map(function(x){ return x.id; })) + 1; c.name = p.name; c.role = p.role; c.skills = p.skills; c.exp = p.exp; c.expYears = parseInt(p.exp, 10); c.loc = p.loc; c.city = p.loc.split(',')[0]; c.notice = p.notice; c.noticeDays = parseInt(p.notice, 10);
+    c.comp = { currency:'INR', period:'Annually', current:p.cur, expected:p['exp$'], negotiable:false }; delete c.photoUrl; CANDIDATES.push(c);
+    AP_SEED[p.name] = { company:p.co, pref:'Hybrid', active:'today', expected:p['exp$'], screening:{ summary:ivFirst(p.name) + ' was direct and clear about what they want next.', signals:{ interest:'High', other:'None', counter:'Low', assessment:'Not taken', communication:'Clear', reason:'Wants a bigger scope' }, availability:{ notice:p.notice.replace('Days', 'days'), buyout:'Possible' }, pitch:ivFirst(p.name) + ' has ' + p.exp + ' of hands-on work in ' + p.skills.join(', ') + '.' },
+      career:[{ role:p.role, co:p.co, from:'2021-03', to:null, hl:['Owns a core service in the team'] }, { role:'Engineer', co:'Previous employer', from:'2017-07', to:'2021-02', hl:[] }], edu:['B.Tech, Computer Science (2016)'], checks:checks(), proof:{}, docs:['Resume (2 pages)'] };
+  });
+  IV_PROFILE = { 'Kunal Desai':{ why:'Kunal has shipped two production React and Node features in the last year and matches the stack in the brief.', hl:['5 years of React and Node.js', 'Led a payments checkout rebuild at Groww', 'Comfortable with PostgreSQL at scale'], src:'25 OCT · 22 MIN' },
+    'Ritika Shah':{ why:'Ritika covers the full stack the role needs and has run a small team before.', hl:['6 years across React, Node and AWS', 'Led a team of three at Cars24', 'Strong on testing and releases'], src:'25 OCT · 28 MIN' },
+    'Mohit Agarwal':{ why:'Mohit is earlier in career but fast, and his notice is short.', hl:['4 years of React and Node.js', 'Built the booking flow at Urban Company', 'Available in 30 days'], src:'26 OCT · 18 MIN' } };
+  // Ravi Menon is the HealthAI contact who answers by link
+  const hc = findClientByName('HealthAI'); if(hc && !(hc.pocs || []).some(function(p){ return p.name === 'Ravi Menon'; })) (hc.pocs = hc.pocs || []).unshift({ name:'Ravi Menon', title:'Head of Engineering', dept:'Engineering' });
+  const tmpl = SUBMISSIONS.find(function(s){ return subPhase(s) === 'process' && s.stage === 'Interview Scheduled'; }) || SUBMISSIONS.find(function(s){ return subPhase(s) === 'process'; });
+  const now = ivNowMs(), today = ivMid(now);
+  const subFor = function(candName, jobId, patch){
+    const c = findCandidateByName(candName), j = jobById(jobId); if(!c || !j) return null; let sb = findSubmission(jobId, c.id);
+    if(!sb){ sb = JSON.parse(JSON.stringify(tmpl)); sb.id = 'sub-iv-' + (ivSeq++); sb.candidateId = c.id; sb.jobId = jobId; sb.recruiterId = (patch && patch.recruiterId) || 'RP-088'; sb.stage = 'Interview Scheduled'; sb.processStage = (patch && patch.processStage != null) ? patch.processStage : 1; sb.hold = null; sb.sent = Object.assign(sb.sent || {}, { to:[ivClientContactFor(j).name] }); sb.stageHistory = [{ stage:'Submitted', at:new Date(now - 6 * IV_D).toISOString(), reason:'Submitted to job', by:'Priya Sharma' }]; delete sb.clientFeedback; sb.steps = {}; SUBMISSIONS.push(sb); }
+    if(patch){ Object.assign(sb, patch); } return sb;
+  };
+  const mk = function(o){
+    const c = findCandidateByName(o.cand), j = jobById(o.job); if(!c || !j) return null; const sb = subFor(o.cand, o.job, { source:o.source || 'Talent Pool', recruiterId:o.rec || 'RP-088', processStage:Math.max(0, (o.round || 1) - 1) });
+    const t = today + (o.day || 0) * IV_D + Math.round((o.hr != null ? o.hr : 11) * 3600000); const id = 'int-' + (hmInterviewIdSeq++);
+    const stages = jobProcessStages(j).filter(function(x){ return pipeStageKind(x) === 'interview'; });
+    const iv = { id:id, candidate:c.name, role:j.title, candidateId:c.id, jobId:j.id, submissionId:sb.id, stageIndex:(o.round || 1) - 1, round:stages[(o.round || 1) - 1] || ('Round ' + (o.round || 1)), roundNo:o.round || 1, roundsTotal:Math.max(stages.length, o.rounds || 3), date:ivFmtD(t) + ', ' + ivFmtT(t), at:new Date(t).toISOString(), duration:o.dur || 60,
+      mode:o.mode || 'Video', meetProvider:o.mode === 'Phone' || o.mode === 'Onsite' ? null : (o.prov || 'Google Meet'), meetingLink:o.mode === 'Video' || !o.mode ? 'https://meet.google.com/' + id.replace(/\D/g, '').padStart(3, 'a') + '-oontu' : null, venue:o.venue || null,
+      status:o.status || 'Confirmed', candidateConfirmed:o.cc !== false, interviewerConfirmed:true, interviewerName:(o.panel[0] || {}).name, panel:o.panel.map(function(p){ return { name:p.name, email:ivSlug(p.name) + '@' + ivDomain(j), isUser:!!p.isUser, confirmed:p.c !== false, link:p.link || 'none', linkAt:p.linkAt || null, feedback:p.fb || null }; }),
+      clientResult:o.cr || { state:'none' }, rescheduleHistory:[], noShow:o.noShow || null, outcome:o.outcome || null, dup:o.dup || null, __n:true };
+    iv.clientContact = ivClientContactFor(j); hmInterviews.push(iv);
+    sb.stage = o.outcome === 'notcleared' ? sb.stage : 'Interview Scheduled';
+    return iv;
+  };
+  const H = 3600000, T = function(h, m){ return h + (m || 0) / 60; };
+  const fb = function(rec, ago, text){ return { rec:rec, scores:{ a:4, b:rec === 'y' ? 4 : 3, c:3, d:4 }, stoodOut:text, worried:'', probeNext:'', at:now - ago * H, via:'link' }; };
+  const tomorrow = 1, thu = ((4 - new Date(today).getDay() + 7) % 7) || 7;
+  // the three seeded interviews move to this week so every role has something to see today
+  [['int-1', 0, 10], ['int-2', 2, 15], ['int-3', 1, 11.5]].forEach(function(x){ const iv = findHmInterview(x[0]); if(!iv) return; const t = today + x[1] * IV_D + Math.round(x[2] * 3600000); iv.at = new Date(t).toISOString(); iv.date = ivFmtD(t) + ', ' + ivFmtT(t); delete iv.__n; });
+  const subProfile = function(cand, job){ const sb = subFor(cand, job, { source:'Talent Pool', recruiterId:'RP-088', processStage:0 }); if(sb){ delete sb.processStage; sb.stage = 'Submitted'; sb.sent = { at:new Date(now - 20 * H).toISOString(), by:'Priya Sharma', channel:'Email', to:['Ravi Menon'] }; sb.stageHistory = [{ stage:'Submitted', at:new Date(now - 20 * H).toISOString(), reason:'Sent to HealthAI', by:'Priya Sharma' }]; } return sb; };
+  ['Kunal Desai', 'Ritika Shah', 'Mohit Agarwal'].forEach(function(n){ subProfile(n, 'j4'); });
+  const items = [
+    mk({ cand:'Diya Menon', job:'j1', day:-4, hr:T(14), round:2, panel:[{ name:'Rohit Bansal', link:'sent', linkAt:now - 4 * IV_D }], status:'Completed' }),
+    mk({ cand:'Aditya Nair', job:'j3', day:thu, hr:T(13), round:1, panel:[{ name:'Rohit Bansal', link:'opened', linkAt:now - 20 * H, c:true }, { name:'Meera Kulkarni', c:false }], cc:true }),
+    mk({ cand:'Sneha Patel', job:'j4', day:0, hr:T(10), round:1, panel:[{ name:'Farhan Sheikh' }], cr:{ state:'sent', sentAt:now - 2 * H }, status:'Completed' }),
+    mk({ cand:'Vikram Rao', job:'j4', day:tomorrow, hr:T(15), round:2, panel:[{ name:'Farhan Sheikh' }], cc:true }),
+    mk({ cand:'Amit Verma', job:'j2', day:0, hr:T(16, 30), round:1, panel:[{ name:'Suresh Iyer', c:true }], cc:false }),
+    mk({ cand:'Priya Nair', job:'j2', day:0, hr:T(16, 30), round:1, panel:[{ name:'Suresh Iyer', c:true }], cc:true }),
+    mk({ cand:'Kabir Sethi', job:'j1', day:0, hr:T(17, 45), round:1, panel:[{ name:'Devika Rao', c:true }], cc:true, mode:'Phone' }),
+    mk({ cand:'Meera Pillai', job:'j2', day:2, hr:T(10), round:1, panel:[{ name:'Suresh Iyer' }], status:'Finding a time', cc:false }),
+    mk({ cand:'Nikhil Rao', job:'j1', day:-1, hr:T(12), round:1, panel:[{ name:'Meera Kulkarni' }], status:'No Show', noShow:{ participant:'Nikhil Rao', scheduledFor:'', reason:'Did not join and did not reply', recordedAt:new Date(now - IV_D).toISOString(), recordedBy:'Priya Sharma', closed:false } }),
+    mk({ cand:'Ishaan Kulkarni', job:'j2', day:-2, hr:T(15), round:1, panel:[{ name:'Rohit Bansal', link:'done', fb:fb('y', 40, 'Clear on system design trade-offs.') }, { name:'Devika Rao', link:'sent', linkAt:now - 46 * H }], status:'Completed' }),
+    mk({ cand:'Tara Bhatt', job:'j2', day:3, hr:T(10, 30), round:1, panel:[{ name:'Suresh Iyer' }], dup:{ firstOwner:'Priya Sharma', firstAt:'Mon 26 Oct, 11:40 AM', firstRef:'NS-4471', second:'TalentBridge Staffing', secondAt:'Mon 26 Oct, 3:15 PM', secondRef:'TB-2290', matched:'Same phone and email' } }),
+  ].filter(Boolean);
+  // Rohit's other existing interview: Neha Joshi tomorrow 10:00, waiting for his confirmation
+  hmInterviews.forEach(function(iv){ ivNorm(iv); if(iv.candidate === 'Neha Joshi' && iv.panel.some(function(p){ return p.name === 'Rohit Bansal'; })){ const t = today + IV_D + 10 * IV_H; iv.at = new Date(t).toISOString(); iv.date = ivFmtD(t) + ', ' + ivFmtT(t); iv.status = 'Confirmed'; iv.candidateConfirmed = true; iv.panel.forEach(function(p){ if(p.name === 'Rohit Bansal'){ p.confirmed = false; p.link = 'sent'; p.linkAt = now - 6 * H; } }); } });
+  // unfinished in-flight work gets its requests, so reminders and the "waiting" lists have something real
+  hmInterviews.forEach(function(iv){ ivNorm(iv); });
+  hmInterviews.forEach(function(iv){
+    if(iv.status === 'Cancelled') return; const ended = ivEnd(iv) <= now;
+    iv.panel.forEach(function(p){ if(iv.panel.length && (p.link === 'sent' || p.link === 'opened' || (!p.confirmed && !ended))){ const l = ivLinkFor(iv, p); if(p.link === 'none') { p.link = 'sent'; p.linkAt = now - 9 * H; } l.openedAt = p.link === 'opened' ? p.linkAt + H : l.openedAt; ivReqOpen(l, iv, ended ? 'feedback' : (iv.status === 'Finding a time' ? 'times' : 'confirm'), p.name).createdAt = new Date(p.linkAt || now - 5 * H).toISOString(); } });
+    if(ended && !iv.outcome && ivOrg() === 'agency' && iv.clientContact && iv.clientResult.state !== 'none'){ const l = slFor('client', iv.clientContact.name, iv.clientContact.email, { interviewIds:[iv.id], submissionIds:iv.submissionId ? [iv.submissionId] : [], jobId:iv.jobId }, ivClientName(iv)); ivReqOpen(l, iv, 'outcome', iv.clientContact.name).createdAt = new Date(iv.clientResult.sentAt || now - 3 * H).toISOString(); }
+  });
+})();
+
+
+/* ---------- iv-ui.js ---------- */
+/* ============================================================
+   INTERVIEWS: the screen. Day and month views, the right-hand "needs you" column and the detail sheet.
+============================================================ */
+const IV_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+function ivMonday(ms){ const d = new Date(ms); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); }
+function ivSame(a, b){ return ivMid(a) === ivMid(b); }
+function ivAvatar(name){ const i = String(name || '?').split(' ').map(function(x){ return x[0]; }).slice(0, 2).join(''); return '<span class="iv-av" aria-hidden="true">' + ie(i) + '</span>'; }
+function ivPillHTML(p){ return '<span class="iv-pill iv-pill--' + p[1] + '">' + (p[1] === 'live' ? '<i></i>' : '') + ie(p[0]) + '</span>'; }
+function ivCtx(){ const list = ivVisible(), cl = ivClashes(list), now = ivNowMs(), role = ivRole(), org = ivOrg(); const rows = list.map(function(iv){ return { iv:iv, issues:interviewIssues(iv, role, org, now, cl) }; }); rows.sort(function(a, b){ return ivStart(a.iv) - ivStart(b.iv); }); return { rows:rows, now:now, role:role, org:org }; }
+function ivCan(what){ return typeof canI !== 'function' || canI('interviews', what) || (typeof hasOrgWideAuthority === 'function' && hasOrgWideAuthority()); }
+
+/* ---------- header ---------- */
+function ivSummary(c){
+  const today = c.rows.filter(function(r){ return ivSame(ivStart(r.iv), c.now) && r.iv.status !== 'Cancelled'; }).length, need = c.rows.filter(function(r){ return r.issues.length; }).length;
+  const wait = c.rows.filter(function(r){ return r.issues.some(function(i){ return i.key === 'client' || (i.key === 'feedback' && i.action === 'resendPanel') || (i.key === 'confirm' && i.action !== 'confirmSelf'); }); }).length;
+  return today + ' interview' + (today === 1 ? '' : 's') + ' today' + (need ? ', ' + need + ' need' + (need === 1 ? 's' : '') + ' you' : ', nothing needs you') + (wait ? ', ' + wait + ' waiting on others' : '') + '.';
+}
+function ivHeaderHTML(c){
+  const filter = ivFilterHTML(c);
+  return '<header class="iv-head"><div><h1 class="iv-h1">Interviews</h1><p class="iv-sub" id="iv-sum">' + ie(ivSummary(c)) + '</p></div><div class="iv-head__r">' + filter +
+    '<div class="seg" id="iv-mode" role="group" aria-label="View"><button type="button" class="seg__btn" aria-pressed="' + (IV.mode === 'day') + '" onclick="ivSetMode(\'day\')">Day</button><button type="button" class="seg__btn" aria-pressed="' + (IV.mode === 'month') + '" onclick="ivSetMode(\'month\')">Month</button></div>' +
+    (ivCan('Schedule') && IV.mode !== 'x' && ivRole() !== 'interviewer' ? '<button type="button" class="o-btn o-btn--primary" onclick="ivSchedule()">Schedule interview</button>' : '') + '</div></header>';
+}
+function ivFilterHTML(c){
+  if(c.role === 'recruiter' || c.role === 'ta' || c.role === 'interviewer') return '';
+  const opts = c.org === 'agency' ? ivRecruitersFilterList().map(function(r){ return [r.id, r.name]; }) : [['Direct', 'Direct'], ['Referral', 'Referral'], ['Vendors only', 'Vendors only']];
+  return '<select class="app-input iv-sel" aria-label="' + (c.org === 'agency' ? 'Recruiter' : 'Source') + '" onchange="IV.who=this.value; ivDraw()"><option value="">' + (c.org === 'agency' ? 'All recruiters' : 'All sources') + '</option>' + opts.map(function(o){ return '<option value="' + ie(o[0]) + '"' + (IV.who === o[0] ? ' selected' : '') + '>' + ie(o[1]) + '</option>'; }).join('') + '</select>';
+}
+function ivSetMode(m){ IV.mode = m; ivDraw(); }
+function ivSchedule(){ const rows = ivCtx().rows; if(typeof openSchedulePicker === 'function') return openSchedulePicker(); const sb = SUBMISSIONS.find(function(s){ return subPhase(s) === 'process' && s.stage !== 'Interview Scheduled'; }) || SUBMISSIONS.find(function(s){ return subPhase(s) === 'process'; }); if(sb) openScheduleInterviewModal(sb.candidateId, sb.jobId); else toast('No candidate is ready to schedule.'); }
+
+/* ---------- week strip ---------- */
+function ivWeekHTML(c){
+  const day = IV.day || ivMid(c.now), mon = ivMonday(day); let h = '<div class="iv-week" id="iv-week" role="tablist" aria-label="Week">';
+  h += '<button type="button" class="iv-arrow" aria-label="Previous week" onclick="ivShiftWeek(-7)">' + oIcon('chevL', 16, 2) + '</button><div class="iv-week__days" id="iv-wdays">';
+  for(let i = 0; i < 7; i++){
+    const d = mon + i * IV_D, rs = c.rows.filter(function(r){ return ivSame(ivStart(r.iv), d) && r.iv.status !== 'Cancelled'; }), need = rs.some(function(r){ return r.issues.length; }), on = ivSame(d, day), today = ivSame(d, c.now);
+    h += '<button type="button" role="tab" class="iv-wd' + (on ? ' is-on' : '') + (today ? ' is-today' : '') + '" aria-selected="' + on + '" onclick="ivPickDay(' + d + ')"><span class="iv-wd__n">' + IV_DAYS[i] + '</span><span class="iv-wd__d">' + new Date(d).getDate() + '</span><span class="iv-wd__c">' + (rs.length ? rs.length + (need ? '<i title="Needs you"></i>' : '') : '') + '</span></button>';
+  }
+  return h + '</div><button type="button" class="iv-arrow" aria-label="Next week" onclick="ivShiftWeek(7)">' + oIcon('chevR', 16, 2) + '</button></div>';
+}
+function ivPickDay(d){ IV.day = d; ivDraw(); }
+function ivShiftWeek(n){ IV.day = (IV.day || ivMid(ivNowMs())) + n * IV_D; ivDraw(); }
+
+/* ---------- day agenda ---------- */
+function ivRowHTML(r, c){
+  const iv = r.iv, p = ivPill(iv, r.issues, c.now), t0 = ivStart(iv), live = ivLive(iv, c.now), prog = live ? Math.round((c.now - t0) / (ivEnd(iv) - t0) * 100) : 0;
+  const who = c.role === 'interviewer' ? ie(ivClientName(iv) || ivJob(iv).title) : iv.panel.map(function(x){ return ie(ivFirst(x.name)); }).join(', ');
+  const top = r.issues[0];
+  return '<li class="iv-row' + (live ? ' is-live' : '') + (iv.status === 'Cancelled' ? ' is-off' : '') + '" tabindex="0" role="button" onclick="ivOpen(\'' + iv.id + '\')" onkeydown="if(event.key===\'Enter\')ivOpen(\'' + iv.id + '\')" data-iv="' + iv.id + '">' +
+    '<div class="iv-time"><b>' + ivFmtT(t0) + '</b><span>' + (iv.duration || 60) + ' min</span></div><div class="iv-rail"><i></i></div>' +
+    '<div class="iv-main"><div class="iv-line1"><span class="iv-cand">' + ie(c.role === 'interviewer' ? ivFirst(iv.candidate) + ' · ' + (ivJob(iv) || {}).title : iv.candidate) + '</span>' + ivPillHTML(p) + '</div>' +
+    '<div class="iv-line2">' + ie(iv.round || 'Interview') + (iv.roundNo ? ' · round ' + iv.roundNo + ' of ' + iv.roundsTotal : '') + ' · ' + ie(ivModeName(iv)) + (who ? ' · ' + who : '') + '</div>' +
+    (top && c.role !== 'interviewer' ? '<div class="iv-line3 iv-tone--' + top.tone + '">' + ie(top.title) + (r.issues.length > 1 ? ' <em>+' + (r.issues.length - 1) + ' more</em>' : '') + '</div>' : '') +
+    (live ? '<div class="iv-prog" aria-hidden="true"><i style="width:' + prog + '%"></i></div>' : '') + '</div></li>';
+}
+function ivAgendaHTML(c){
+  const day = IV.day || ivMid(c.now), rows = c.rows.filter(function(r){ return ivSame(ivStart(r.iv), day) && r.iv.status !== 'Cancelled' && r.iv.status !== 'Finding a time' && (!IV.q || (r.iv.candidate + ' ' + ((ivJob(r.iv) || {}).title || '')).toLowerCase().indexOf(IV.q.toLowerCase()) > -1); });
+  const show = rows.slice(0, IV.shown), more = rows.length - show.length, isToday = ivSame(day, c.now);
+  let h = '<section class="iv-card iv-agenda" aria-label="Agenda"><div class="iv-card__h"><h2>' + (isToday ? 'Today' : ie(ivFmtD(day, true))) + '</h2><span>' + rows.length + ' interview' + (rows.length === 1 ? '' : 's') + '</span></div>';
+  if(!rows.length) return h + '<div class="iv-empty"><p>' + (isToday ? 'Nothing is scheduled for today.' : 'Nothing is scheduled on this day.') + '</p>' + (ivCan('Schedule') && c.role !== 'interviewer' ? '<button type="button" class="o-btn" onclick="ivSchedule()">Schedule interview</button>' : '') + '</div></section>';
+  let list = '', nowDone = !isToday;
+  show.forEach(function(r){ if(!nowDone && ivStart(r.iv) > c.now){ list += '<li class="iv-now" aria-label="Now"><span>' + ivFmtT(c.now) + '</span><hr></li>'; nowDone = true; } list += ivRowHTML(r, c); });
+  if(!nowDone) list += '<li class="iv-now" aria-label="Now"><span>' + ivFmtT(c.now) + '</span><hr></li>';
+  return h + '<ul class="iv-list">' + list + '</ul>' + (more > 0 ? '<button type="button" class="iv-more" onclick="IV.shown+=12; ivDraw()">Show ' + more + ' more</button>' : '') + '</section>';
+}
+
+/* ---------- right column ---------- */
+function ivNeedCard(r, i, c){
+  const iv = r.iv, is = i, key = iv.id + '|' + is.key + '|' + (is.panelName || '');
+  return '<li class="iv-need iv-need--' + is.tone + '"><button type="button" class="iv-need__b" onclick="ivOpen(\'' + iv.id + '\')"><span class="iv-need__t">' + ie(is.title) + '</span><span class="iv-need__d">' + ie(iv.candidate) + ' · ' + ie(is.detail) + '</span></button>' +
+    '<button type="button" class="o-btn o-btn--sm" onclick="ivDo(\'' + iv.id + '\',\'' + is.action + '\',\'' + ie(is.panelName || '').replace(/'/g, '’') + '\')">' + ie(IV.resent[iv.id + '|' + (is.panelName || '')] || IV.resent['cl' + iv.id] || (is.action === 'remindCand' && IV.resent['c' + iv.id]) ? 'Sent' : is.actionLabel) + '</button></li>';
+}
+function ivRightHTML(c){
+  const need = [], wait = []; c.rows.forEach(function(r){ r.issues.forEach(function(i){
+    const waiting = (i.key === 'client') || (i.key === 'feedback' && i.action === 'resendPanel') || (i.key === 'confirm' && i.action !== 'confirmSelf' && i.action !== 'remindCand');
+    (waiting ? wait : need).push([r, i]); }); });
+  const order = function(a, b){ return (a[1].tone === 'risk' ? 0 : 1) - (b[1].tone === 'risk' ? 0 : 1) || IV_ORDER.indexOf(a[1].key) - IV_ORDER.indexOf(b[1].key) || ivStart(a[0].iv) - ivStart(b[0].iv); };
+  need.sort(order); wait.sort(order);
+  const card = function(title, items, empty, more){ return '<section class="iv-card"><div class="iv-card__h"><h2>' + title + '</h2><span>' + items.length + '</span></div>' + (items.length ? '<ul class="iv-needs">' + items.slice(0, more).map(function(x){ return ivNeedCard(x[0], x[1], c); }).join('') + '</ul>' + (items.length > more ? '<button type="button" class="iv-more" onclick="IV.shownN=(IV.shownN||6)+6; ivDraw()">Show ' + (items.length - more) + ' more</button>' : '') : '<p class="iv-none">' + empty + '</p>') + '</section>'; };
+  const n = IV.shownN || 6;
+  let by = '';
+  if(c.role !== 'interviewer'){
+    const groups = {}; c.rows.filter(function(r){ return r.iv.status !== 'Cancelled' && ivEnd(r.iv) > c.now - IV_D; }).forEach(function(r){ const k = c.org === 'agency' ? ivRecruiter(r.iv) : (r.iv.panel[0] || {}).name || 'Unassigned'; (groups[k] = groups[k] || []).push(r); });
+    const names = Object.keys(groups).sort(function(a, b){ return groups[b].length - groups[a].length; });
+    if(c.role !== 'recruiter' && c.role !== 'ta' && names.length) by = '<section class="iv-card"><div class="iv-card__h"><h2>' + (c.org === 'agency' ? 'By recruiter' : 'By interviewer') + '</h2></div><ul class="iv-by">' + names.slice(0, 6).map(function(k){ const g = groups[k], flags = g.filter(function(r){ return r.issues.length; }).length; return '<li><span>' + ivAvatar(k) + ie(k) + '</span><b>' + g.length + '</b>' + (flags ? '<em>' + flags + ' need you</em>' : '<em class="is-ok">All clear</em>') + '</li>'; }).join('') + '</ul></section>';
+  }
+  return '<aside class="iv-right">' + card('Needs you', need, 'Nothing needs you right now.', n) + card('Waiting on others', wait, 'Nobody is holding anything up.', n) + by + '</aside>';
+}
+
+/* ---------- month ---------- */
+function ivMonthHTML(c){
+  const base = new Date(IV.day || ivMid(c.now)); base.setDate(1); const first = ivMonday(base.getTime()), month = base.getMonth(); let h = '<section class="iv-card iv-month"><div class="iv-card__h"><button type="button" class="iv-arrow" aria-label="Previous month" onclick="ivShiftMonth(-1)">' + oIcon('chevL', 16, 2) + '</button><h2>' + base.toLocaleDateString('en-US', { month:'long', year:'numeric' }) + '</h2><button type="button" class="iv-arrow" aria-label="Next month" onclick="ivShiftMonth(1)">' + oIcon('chevR', 16, 2) + '</button></div><div class="iv-mgrid">' + IV_DAYS.map(function(d){ return '<b>' + d + '</b>'; }).join('');
+  for(let i = 0; i < 42; i++){ const d = first + i * IV_D; if(i >= 35 && new Date(d).getMonth() !== month) break; const rs = c.rows.filter(function(r){ return ivSame(ivStart(r.iv), d) && r.iv.status !== 'Cancelled'; }), need = rs.filter(function(r){ return r.issues.length; }).length;
+    h += '<button type="button" class="iv-md' + (new Date(d).getMonth() !== month ? ' is-out' : '') + (ivSame(d, c.now) ? ' is-today' : '') + '" onclick="IV.day=' + d + '; IV.mode=\'day\'; ivDraw()"><span>' + new Date(d).getDate() + '</span>' + (rs.length ? '<b>' + rs.length + '</b>' : '') + (need ? '<i title="' + need + ' need you"></i>' : '') + '</button>'; }
+  return h + '</div></section>';
+}
+function ivShiftMonth(n){ const d = new Date(IV.day || ivMid(ivNowMs())); d.setDate(1); d.setMonth(d.getMonth() + n); IV.day = d.getTime(); ivDraw(); }
+
+/* ---------- page ---------- */
+function ivPageHTML(){
+  const c = ivCtx(), pending = c.rows.filter(function(r){ return r.iv.status === 'Finding a time'; });
+  const strip = pending.length && c.role !== 'interviewer' ? '<div class="iv-find">' + pending.map(function(r){ return '<button type="button" onclick="ivOpen(\'' + r.iv.id + '\')">' + ie(r.iv.candidate) + ' · finding a time</button>'; }).join('') + '</div>' : '';
+  return '<div class="content-shell o-page iv-page" id="iv-root">' + ivHeaderHTML(c) + (IV.mode === 'month' ? ivMonthHTML(c) : ivWeekHTML(c) + strip + '<div class="iv-cols">' + ivAgendaHTML(c) + ivRightHTML(c) + '</div>') + '</div>';
+}
+function ivPost(){
+  const m = document.getElementById('iv-mode'); if(m) oPill(m, '[aria-pressed="true"]', 'iv-mode', 'o-pill--lean');
+  const w = document.getElementById('iv-wdays'); if(w) oPill(w, '.iv-wd.is-on', 'iv-week', 'o-pill--lean');
+}
+window.renderInterviewsPage = function(){ IV.shown = 12; IV.shownN = 6; return ivPageHTML(); };
+RENDERERS['interviews'] = window.renderInterviewsPage;
+function ivDraw(){
+  const main = document.getElementById('main-content'), root = document.getElementById('iv-root');
+  if(main && root && state.activeNav === 'interviews'){ const top = main.scrollTop; main.innerHTML = ivPageHTML(); main.scrollTop = top; if(typeof oPostRender === 'function') oPostRender(main); ivPost(); }
+  ivDrawSheet();
+}
+document.addEventListener('showview', function(){ setTimeout(ivPost, 0); });
+(function hookShow(){ const o = window.showView; if(typeof o !== 'function' || o.__iv) return; window.showView = function(id){ const r = o.apply(this, arguments); if(id === 'interviews') setTimeout(ivPost, 30); return r; }; window.showView.__iv = true; })();
+
+/* ---------- actions from the lists ---------- */
+function ivDo(id, action, who){
+  const iv = findHmInterview(id); if(!iv) return;
+  if(action === 'resendClient') return ivResendClient(id);
+  if(action === 'resendPanel') return ivResendPanel(id, who);
+  if(action === 'remindCand') return ivRemindCand(id);
+  if(action === 'confirmSelf') return ivConfirmSelf(id);
+  if(action === 'nextSlot') return ivNextSlot(id);
+  IV.form = action === 'scorecard' ? 'scorecard' : action === 'outcome' ? 'outcome' : action === 'reschedule' ? 'reschedule' : action === 'venue' ? 'venue' : null; ivOpen(id, action === 'dup' ? 'dup' : null);
+}
+function ivOpen(id, focus){ IV.open = id; IV.doc = null; IV.focus = focus || null; if(!IV.form || IV.formFor !== id) IV.formFor = id; ivDrawSheet(); const s = document.getElementById('iv-sheet'); if(s) setTimeout(function(){ s.focus(); }, 30); }
+function ivClose(){ IV.open = null; IV.form = null; IV.doc = null; ivDrawSheet(); }
+
+/* ---------- detail sheet ---------- */
+function ivSheetRoot(){ let r = document.getElementById('iv-sheet-root'); if(!r){ r = document.createElement('div'); r.id = 'iv-sheet-root'; document.body.appendChild(r); } return r; }
+function ivDrawSheet(){
+  const root = ivSheetRoot(), iv = IV.open && findHmInterview(IV.open); if(!iv){ root.innerHTML = ''; return; }
+  const c = ivCtx(), r = c.rows.find(function(x){ return x.iv.id === iv.id; }) || { iv:iv, issues:interviewIssues(iv, c.role, c.org, c.now) }, was = root.querySelector('.iv-sheet__body'), top = was ? was.scrollTop : 0;
+  root.innerHTML = '<div class="iv-scrim" onclick="ivClose()"></div><aside class="iv-sheet" id="iv-sheet" tabindex="-1" role="dialog" aria-modal="true" aria-label="Interview details">' + ivSheetInner(r, c) + '</aside>';
+  const b = root.querySelector('.iv-sheet__body'); if(b){ b.scrollTop = top; if(IV.focus){ const t = b.querySelector('[data-sec="' + IV.focus + '"]'); if(t) t.scrollIntoView({ block:'start' }); IV.focus = null; } }
+}
+function ivSheetInner(r, c){
+  const iv = r.iv, p = ivPill(iv, r.issues, c.now), j = ivJob(iv) || {}, interviewer = c.role === 'interviewer';
+  if(IV.doc) return ivDocHTML(iv, c);
+  const t0 = ivStart(iv), live = ivLive(iv, c.now);
+  const when = iv.status === 'Finding a time' ? '<b>Finding a time</b><span>Waiting for the panel to share times</span>' : '<b>' + ie(ivFmtD(t0, true)) + '</b><span>' + ivFmtT(t0) + ' – ' + ivFmtT(ivEnd(iv)) + ' · ' + (iv.duration || 60) + ' min · ' + ie(ivModeName(iv)) + '</span>';
+  const meet = iv.status !== 'Cancelled' && iv.status !== 'Finding a time' ? (iv.mode === 'Onsite' ? (iv.venue ? '<a class="iv-link" target="_blank" rel="noopener" href="' + ie(iv.venue.mapLink || '#') + '">' + ie(iv.venue.address) + '</a>' : '') : iv.mode === 'Phone' ? '<span>Phone call</span>' : '<button type="button" class="o-btn o-btn--sm" onclick="toast(\'Opening the meeting link.\')">Join ' + ie(iv.meetProvider || 'meeting') + '</button>') : '';
+  return '<header class="iv-sheet__h"><div class="iv-sheet__t"><h2>' + ie(iv.candidate) + '</h2><p>' + ie(j.title || iv.role) + (j.client ? ' · ' + ie(j.client) : '') + '</p></div>' + ivPillHTML(p) + '<button type="button" class="iv-x" aria-label="Close" onclick="ivClose()">' + oIcon('x', 18, 2) + '</button></header>' +
+    '<div class="iv-sheet__body">' +
+    '<section class="iv-when' + (live ? ' is-live' : '') + '">' + '<div>' + when + '</div>' + meet + '</section>' +
+    (r.issues.length && iv.status !== 'Cancelled' ? '<section data-sec="issues" class="iv-sec"><h3>Needs attention</h3><ul class="iv-issues">' + r.issues.map(function(i){ return '<li class="iv-need iv-need--' + i.tone + '"><div class="iv-need__b"><span class="iv-need__t">' + ie(i.title) + '</span><span class="iv-need__d">' + ie(i.detail) + '</span></div>' + (i.key === 'dup' || i.key === 'decide' ? '' : '<button type="button" class="o-btn o-btn--sm" onclick="ivDo(\'' + iv.id + '\',\'' + i.action + '\',\'' + ie(i.panelName || '').replace(/'/g, '’') + '\')">' + ie(i.actionLabel) + '</button>') + '</li>'; }).join('') + '</ul></section>' : '') +
+    (iv.status !== 'Cancelled' && !interviewer ? ivReadyHTML(iv) : '') + ivPeopleHTML(iv, c) + ivFeedbackHTML(iv, c) + (interviewer ? '' : ivDupHTML(iv)) + ivRoundsHTML(iv) + ivFactsHTML(iv, c) + '</div>' + ivFooterHTML(r, c);
+}
+function ivReadyHTML(iv){
+  const items = [['Candidate confirmed', !!iv.candidateConfirmed], ['Interviewer' + (iv.panel.length === 1 ? '' : 's') + ' confirmed', iv.panel.length > 0 && iv.panel.every(function(p){ return p.confirmed; })], [iv.mode === 'Onsite' ? 'Venue added' : iv.mode === 'Phone' ? 'Phone number shared' : 'Meeting link ready', iv.mode === 'Onsite' ? !!(iv.venue && iv.venue.address) : true], ['Resume shared with the panel', !!iv.panel.length], ['No double-booking', !ivClashes(ivVisible())[iv.id]]];
+  return '<section class="iv-sec"><h3>Ready to go</h3><ul class="iv-ready">' + items.map(function(x){ return '<li class="' + (x[1] ? 'is-ok' : '') + '"><span class="iv-chk" aria-hidden="true">' + (x[1] ? oIcon('check', 12, 3) : '') + '</span>' + ie(x[0]) + '</li>'; }).join('') + '</ul></section>';
+}
+function ivLinkState(p){ return ({ none:'No link yet', sent:'Link sent', opened:'Link opened', done:'Answered' })[p.link] || 'No link yet'; }
+function ivPeopleHTML(iv, c){
+  const rows = [], ended = ivEnd(iv) <= c.now;
+  rows.push('<li>' + ivAvatar(iv.candidate) + '<div><b>' + ie(iv.candidate) + '</b><span>Candidate</span></div><em class="' + (iv.candidateConfirmed ? 'is-ok' : '') + '">' + (iv.candidateConfirmed ? 'Confirmed' : 'Not confirmed') + '</em></li>');
+  iv.panel.forEach(function(p){ rows.push('<li>' + ivAvatar(p.name) + '<div><b>' + ie(p.name) + '</b><span>Interviewer · ' + ie(ivLinkState(p)) + (p.linkAt ? ' · ' + ie(ivFmtD(p.linkAt)) : '') + '</span></div><em class="' + (p.confirmed ? 'is-ok' : '') + '">' + (p.feedback ? 'Feedback in' : p.confirmed ? 'Confirmed' : 'Not confirmed') + '</em>' + (c.role !== 'interviewer' && !p.feedback && iv.status !== 'Cancelled' ? '<button type="button" class="o-btn o-btn--sm" onclick="ivResendPanel(\'' + iv.id + '\',\'' + ie(p.name).replace(/'/g, '’') + '\')">' + (p.link === 'none' ? 'Send link' : 'Resend link') + '</button>' : '') + '</li>'); });
+  if(iv.clientContact && c.org === 'agency' && c.role !== 'interviewer'){ const cr = iv.clientResult || {}; rows.push('<li>' + ivAvatar(iv.clientContact.name) + '<div><b>' + ie(iv.clientContact.name) + '</b><span>Client contact · ' + ie(({ none:'No link yet', sent:'Link sent', opened:'Link opened', done:'Answered' })[cr.state] || 'No link yet') + '</span></div>' + (ended && cr.state !== 'done' && !iv.outcome ? '<button type="button" class="o-btn o-btn--sm" onclick="ivResendClient(\'' + iv.id + '\')">' + (cr.state === 'none' ? 'Send link' : 'Resend link') + '</button>' : '') + '</li>'); }
+  return '<section class="iv-sec" data-sec="people"><h3>People</h3><ul class="iv-people">' + rows.join('') + '</ul></section>';
+}
+function ivFeedbackHTML(iv, c){
+  const done = iv.panel.filter(function(p){ return p.feedback; }); if(!done.length) return '';
+  return '<section class="iv-sec" data-sec="feedback"><h3>Feedback received</h3>' + done.map(function(p){ const f = p.feedback; return '<div class="iv-fb"><div class="iv-fb__h"><b>' + ie(p.name) + '</b><span class="iv-pill iv-pill--' + (f.rec === 'sy' || f.rec === 'y' ? 'ok' : 'warn') + '">' + IV_REC[f.rec][0] + '</span></div>' + (f.stoodOut ? '<p>' + ie(f.stoodOut) + '</p>' : '') + (f.worried ? '<p class="iv-fb__w">Worry: ' + ie(f.worried) + '</p>' : '') + '</div>'; }).join('') + '</section>';
+}
+function ivDupOf(iv){ if(iv.dup) return iv.dup; const sb = ivSub(iv), c = sb && DUPLICATE_CLAIMS.find(function(x){ return x.submissionId === sb.id && x.status === 'under_review'; }); return c ? { firstOwner:ivRecruiter(iv), firstAt:ivFmtD(Date.parse((sb.sent || {}).at || '') || c.createdAt), firstRef:'Oontu', second:c.claimedBy + ' (client)', secondAt:c.claimDate, secondRef:c.proof || c.source, matched:'The client says they had this profile first', __claim:c } : null; }
+function ivDupHTML(iv){
+  const d = ivDupOf(iv); if(!d) return ''; const sb = ivSub(iv), claim = sb && DUPLICATE_CLAIMS.find(function(x){ return x.submissionId === sb.id && x.status === 'under_review'; });
+  if(d.resolved) return '<section class="iv-sec" data-sec="dup"><h3>Duplicate check</h3><p class="iv-note">Resolved: ' + ie(d.resolved) + '</p></section>';
+  const open = IV.form === 'dupcompare';
+  return '<section class="iv-sec" data-sec="dup"><h3>Duplicate check</h3><p class="iv-note">' + ie(d.matched || 'Same candidate') + '. ' + ie(d.firstOwner) + ' submitted first (' + ie(d.firstAt) + '). ' + ie(d.second) + ' submitted later (' + ie(d.secondAt) + ').</p>' +
+    (open ? '<div class="iv-cmp"><div><h4>' + ie(d.firstOwner) + '</h4><p>First submitted ' + ie(d.firstAt) + '</p><p>Reference ' + ie(d.firstRef) + '</p></div><div><h4>' + ie(d.second) + '</h4><p>Submitted ' + ie(d.secondAt) + '</p><p>Reference ' + ie(d.secondRef) + '</p></div></div>' : '') +
+    '<div class="iv-actions"><button type="button" class="o-btn o-btn--sm" onclick="IV.form=' + (open ? 'null' : '\'dupcompare\'') + '; ivDrawSheet()">' + (open ? 'Hide comparison' : 'Compare both') + '</button><button type="button" class="o-btn o-btn--sm" onclick="ivResolveDup(\'' + iv.id + '\',\'first\')">First submission stands</button><button type="button" class="o-btn o-btn--sm" onclick="ivResolveDup(\'' + iv.id + '\',\'second\')">Second submission stands</button></div></section>';
+}
+function ivResolveDup(id, which){ const iv = findHmInterview(id); if(!iv) return; if(!iv.dup) iv.dup = ivDupOf(iv); if(!iv.dup) return; iv.dup.resolved = which === 'first' ? iv.dup.firstOwner + ' keeps ownership' : iv.dup.second + ' keeps ownership'; const sb = ivSub(iv); DUPLICATE_CLAIMS.forEach(function(x){ if(sb && x.submissionId === sb.id && x.status === 'under_review') x.status = which === 'first' ? 'rejected' : 'accepted'; }); ivLog('Duplicate resolved', iv, iv.dup.resolved); IV.form = null; toast('Duplicate resolved.'); ivChanged(); }
+function ivRoundsHTML(iv){
+  const sb = ivSub(iv), all = hmInterviews.filter(function(x){ return x.submissionId === iv.submissionId && x.status !== 'Cancelled'; }), n = iv.roundsTotal;
+  let h = '<ol class="iv-steps">'; for(let i = 1; i <= n; i++){ const x = all.find(function(y){ return y.roundNo === i; }), done = x && x.outcome === 'cleared', cur = i === iv.roundNo; h += '<li class="' + (done ? 'is-done' : '') + (cur ? ' is-cur' : '') + '"><span>' + (done ? oIcon('check', 11, 3) : i) + '</span>' + ie(x ? x.round : 'Round ' + i) + '</li>'; }
+  return '<section class="iv-sec"><h3>Rounds</h3>' + h + '</ol></section>';
+}
+function ivFactsHTML(iv, c){
+  const cand = ivCand(iv) || {}, j = ivJob(iv) || {}, interviewer = c.role === 'interviewer', rec = [['Experience', cand.exp], ['Location', cand.loc]];
+  if(!interviewer){ rec.push(['Notice period', cand.notice], ['Source', ivSource(iv)], ['Recruiter', ivRecruiter(iv)]); if(c.org === 'agency') rec.push(['Client', j.client]); }
+  return '<section class="iv-sec" data-sec="facts"><h3>Candidate</h3><dl class="iv-facts">' + rec.filter(function(x){ return x[1]; }).map(function(x){ return '<dt>' + x[0] + '</dt><dd>' + ie(x[1]) + '</dd>'; }).join('') + '</dl><div class="iv-actions"><button type="button" class="o-btn o-btn--sm" onclick="IV.doc=\'resume\'; ivDrawSheet()">Resume</button><button type="button" class="o-btn o-btn--sm" onclick="IV.doc=\'jd\'; ivDrawSheet()">Job brief</button></div></section>';
+}
+function ivDocHTML(iv, c){
+  const cand = ivCand(iv) || {}, j = ivJob(iv) || {}, jd = IV.doc === 'jd';
+  return '<header class="iv-sheet__h"><button type="button" class="o-btn o-btn--sm" onclick="IV.doc=null; ivDrawSheet()">Back</button><div class="iv-sheet__t"><h2>' + (jd ? 'Job brief' : 'Resume') + '</h2><p>' + ie(jd ? j.title : iv.candidate) + '</p></div><button type="button" class="iv-x" aria-label="Close" onclick="ivClose()">' + oIcon('x', 18, 2) + '</button></header><div class="iv-sheet__body">' + (jd ? ivJdHTML(j) : ivResumeHTML(cand)) + '</div>';
+}
+function ivResumeHTML(cand){
+  const s = AP_SEED[cand.name] || {}, car = s.career || [{ role:cand.role, co:(cand.company || ''), from:'', to:null, hl:[] }];
+  return '<article class="iv-doc"><h3>' + ie(cand.name) + '</h3><p class="iv-doc__s">' + ie(cand.role || '') + ' · ' + ie(cand.loc || '') + ' · ' + ie(cand.exp || '') + '</p>' + (s.screening ? '<h4>Summary</h4><p>' + ie(s.screening.pitch || s.screening.summary) + '</p>' : '') +
+    '<h4>Skills</h4><p>' + ie((cand.skills || []).join(', ')) + '</p><h4>Experience</h4>' + car.map(function(x){ return '<div class="iv-doc__r"><b>' + ie(x.role) + '</b> · ' + ie(x.co) + '<span>' + ie(x.from) + (x.from ? ' – ' + (x.to || 'Present') : '') + '</span>' + (x.hl && x.hl.length ? '<ul>' + x.hl.map(function(h){ return '<li>' + ie(h) + '</li>'; }).join('') + '</ul>' : '') + '</div>'; }).join('') + (s.edu ? '<h4>Education</h4><p>' + s.edu.map(ie).join('<br>') + '</p>' : '') + '</article>';
+}
+function ivJdHTML(j){ return '<article class="iv-doc"><h3>' + ie(j.title || '') + '</h3><p class="iv-doc__s">' + ie(j.client || '') + ' · ' + ie(j.location || j.loc || '') + '</p>' + (j.summary || j.description ? '<h4>About the role</h4><p>' + ie(j.summary || j.description) + '</p>' : '') + (j.skills && j.skills.length ? '<h4>Must have</h4><p>' + ie(j.skills.join(', ')) + '</p>' : '') + (j.experience ? '<h4>Experience</h4><p>' + ie(j.experience) + '</p>' : '') + '</article>'; }
+
+/* ---------- footer and forms ---------- */
+function ivFooterHTML(r, c){
+  const iv = r.iv, id = iv.id, f = IV.form, ended = ivEnd(iv) <= c.now, me = ivMe();
+  if(f === 'scorecard') return ivScorecardHTML(iv, me);
+  if(f === 'outcome') return ivOutcomeFormHTML(iv);
+  if(f === 'reschedule') return '<footer class="iv-foot iv-form"><label class="iv-lab" for="iv-when">New date and time</label><input id="iv-when" type="datetime-local" class="app-input" value="' + new Date(ivStart(iv) + IV_D - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) + '"><p class="iv-err" id="iv-err" hidden></p><div class="iv-actions"><button type="button" class="o-btn" onclick="IV.form=null; ivDrawSheet()">Back</button><button type="button" class="o-btn o-btn--primary" onclick="ivSubmitReschedule(\'' + id + '\')">Reschedule</button></div></footer>';
+  if(f === 'venue') return '<footer class="iv-foot iv-form"><label class="iv-lab" for="iv-addr">Address</label><input id="iv-addr" class="app-input" placeholder="Street, area, city"><label class="iv-lab" for="iv-rec">Reception note</label><input id="iv-rec" class="app-input" placeholder="Ask for Anita at the front desk"><p class="iv-err" id="iv-err" hidden></p><div class="iv-actions"><button type="button" class="o-btn" onclick="IV.form=null; ivDrawSheet()">Back</button><button type="button" class="o-btn o-btn--primary" onclick="ivSubmitVenue(\'' + id + '\')">Add venue</button></div></footer>';
+  if(f === 'cancel') return '<footer class="iv-foot iv-form"><p class="iv-lab">Why is it cancelled?</p><div class="iv-chips" role="group" aria-label="Reason">' + ['Candidate withdrew', 'Client paused hiring', 'Interviewer unavailable', 'Role filled', 'Other'].map(function(x){ return '<button type="button" class="iv-chip' + (IV.cancelReason === x ? ' is-on' : '') + '" aria-pressed="' + (IV.cancelReason === x) + '" onclick="IV.cancelReason=\'' + x + '\'; ivDrawSheet()">' + x + '</button>'; }).join('') + '</div><p class="iv-err" id="iv-err" hidden></p><div class="iv-actions"><button type="button" class="o-btn" onclick="IV.form=null; ivDrawSheet()">Back</button><button type="button" class="o-btn o-btn--danger" onclick="ivSubmitCancel(\'' + id + '\')">Cancel interview</button></div></footer>';
+  let a = '';
+  if(c.role === 'interviewer'){ const p = iv.panel.find(function(x){ return x.name === me; }); if(p && !p.feedback && ended) a = '<button type="button" class="o-btn o-btn--primary" onclick="IV.form=\'scorecard\'; ivDrawSheet()">Give feedback</button>'; else if(p && !p.confirmed && !ended) a = '<button type="button" class="o-btn o-btn--primary" onclick="ivConfirmSelf(\'' + id + '\')">Confirm</button>'; }
+  else if(iv.status === 'Cancelled') a = '';
+  else if(iv.status === 'Finding a time') a = '<button type="button" class="o-btn" onclick="IV.form=\'reschedule\'; ivDrawSheet()">Pick a time myself</button>';
+  else if(iv.status === 'No Show' && !(iv.noShow && iv.noShow.closed)) a = '<button type="button" class="o-btn" onclick="ivCloseNoShow(\'' + id + '\')">Close as no-show</button><button type="button" class="o-btn o-btn--primary" onclick="IV.form=\'reschedule\'; ivDrawSheet()">Reschedule</button>';
+  else if(ended && !iv.outcome) a = (c.org === 'corp' || c.role === 'hm') && iv.panel.some(function(p){ return p.name === me && !p.feedback; }) ? '<button type="button" class="o-btn" onclick="IV.form=\'scorecard\'; ivDrawSheet()">Give feedback</button>' : '';
+  if(ended && !iv.outcome && iv.status !== 'No Show' && c.role !== 'interviewer') a += '<button type="button" class="o-btn o-btn--primary" onclick="IV.form=\'outcome\'; ivDrawSheet()">Record outcome</button>';
+  if(!ended && iv.status !== 'Cancelled' && iv.status !== 'Finding a time' && c.role !== 'interviewer' && ivCan('Reschedule')) a = '<button type="button" class="o-btn" onclick="IV.form=\'reschedule\'; ivDrawSheet()">Reschedule</button>' + (ivCan('Cancel') ? '<button type="button" class="o-btn o-btn--danger" onclick="IV.cancelReason=null; IV.form=\'cancel\'; ivDrawSheet()">Cancel</button>' : '') + a;
+  return '<footer class="iv-foot">' + (a || '<span class="iv-note">Nothing to do here right now.</span>') + '</footer>';
+}
+function ivErr(m){ const e = document.getElementById('iv-err'); if(e){ e.textContent = m; e.hidden = false; } }
+function ivSubmitReschedule(id){ const v = document.getElementById('iv-when').value; if(!v) return ivErr('Pick a date and time.'); const r = ivReschedule(id, new Date(v).toISOString(), 'Rescheduled by ' + ivMe()); if(!r.ok) return ivErr(r.err); IV.form = null; ivDrawSheet(); }
+function ivSubmitVenue(id){ const r = ivSetVenue(id, document.getElementById('iv-addr').value, document.getElementById('iv-rec').value); if(!r.ok) return ivErr(r.err); IV.form = null; ivDrawSheet(); }
+function ivSubmitCancel(id){ const r = ivCancel(id, IV.cancelReason); if(!r.ok) return ivErr(r.err); IV.form = null; IV.cancelReason = null; ivDrawSheet(); }
+const IV_CRIT = [['a', 'Technical depth'], ['b', 'Problem solving'], ['c', 'Communication'], ['d', 'Role fit']];
+function ivScoreHTML(prefix, cur){
+  return IV_CRIT.map(function(k){ return '<div class="iv-score"><span id="' + prefix + k[0] + '">' + k[1] + '</span><div role="radiogroup" aria-labelledby="' + prefix + k[0] + '">' + [1, 2, 3, 4, 5].map(function(n){ return '<button type="button" role="radio" class="iv-dot' + (cur.scores[k[0]] === n ? ' is-on' : '') + '" aria-checked="' + (cur.scores[k[0]] === n) + '" aria-label="' + n + ' of 5" onclick="' + prefix + 'Set(\'' + k[0] + '\',' + n + ')">' + n + '</button>'; }).join('') + '</div></div>'; }).join('');
+}
+const IV_DRAFT = { scores:{}, rec:null };
+function ivfSet(k, n){ IV_DRAFT.scores[k] = n; ivKeepText(); ivDrawSheet(); }
+function ivKeepText(){ ['stood', 'worry', 'probe'].forEach(function(k){ const e = document.getElementById('ivf-' + k); if(e) IV_DRAFT[k] = e.value; }); }
+function ivfRec(v){ ivKeepText(); IV_DRAFT.rec = v; ivDrawSheet(); }
+function ivScorecardHTML(iv, me){
+  return '<footer class="iv-foot iv-form iv-score-form"><p class="iv-lab">Feedback for ' + ie(iv.candidate) + '</p>' + ivScoreHTML('ivf', IV_DRAFT) +
+    '<p class="iv-lab">Would you take them forward?</p><div class="iv-chips" role="radiogroup" aria-label="Recommendation">' + Object.keys(IV_REC).map(function(k){ return '<button type="button" role="radio" class="iv-chip' + (IV_DRAFT.rec === k ? ' is-on' : '') + '" aria-checked="' + (IV_DRAFT.rec === k) + '" onclick="ivfRec(\'' + k + '\')">' + IV_REC[k][0] + '</button>'; }).join('') + '</div>' +
+    '<label class="iv-lab" for="ivf-stood">What stood out</label><textarea id="ivf-stood" class="app-input iv-ta" rows="2">' + ie(IV_DRAFT.stood || '') + '</textarea><label class="iv-lab" for="ivf-worry">What worried you</label><textarea id="ivf-worry" class="app-input iv-ta" rows="2">' + ie(IV_DRAFT.worry || '') + '</textarea>' +
+    '<p class="iv-err" id="iv-err" hidden></p><div class="iv-actions"><button type="button" class="o-btn" onclick="IV.form=null; ivDrawSheet()">Back</button><button type="button" class="o-btn o-btn--primary" onclick="ivSubmitScorecard(\'' + iv.id + '\')">Send feedback</button></div></footer>';
+}
+function ivSubmitScorecard(id){ ivKeepText(); const r = ivSubmitFeedback(id, ivMe(), { rec:IV_DRAFT.rec, scores:IV_DRAFT.scores, stoodOut:IV_DRAFT.stood, worried:IV_DRAFT.worry }, 'app'); if(!r.ok) return ivErr(r.err); IV_DRAFT.scores = {}; IV_DRAFT.rec = null; IV_DRAFT.stood = IV_DRAFT.worry = ''; IV.form = null; ivDrawSheet(); }
+const IV_OUT = { choice:null, note:'', next:true };
+function ivOutcomeFormHTML(iv){
+  const opts = [['cleared', 'Cleared'], ['notcleared', 'Not cleared'], ['hold', 'On hold'], ['noshow', 'Didn’t attend']], more = iv.roundNo < iv.roundsTotal;
+  return '<footer class="iv-foot iv-form"><p class="iv-lab">What happened?</p><div class="iv-chips" role="radiogroup" aria-label="Outcome">' + opts.map(function(o){ return '<button type="button" role="radio" class="iv-chip' + (IV_OUT.choice === o[0] ? ' is-on' : '') + '" aria-checked="' + (IV_OUT.choice === o[0]) + '" onclick="ivOutKeep(); IV_OUT.choice=\'' + o[0] + '\'; ivDrawSheet()">' + o[1] + '</button>'; }).join('') + '</div>' +
+    '<label class="iv-lab" for="ivo-note">Note</label><textarea id="ivo-note" class="app-input iv-ta" rows="2">' + ie(IV_OUT.note) + '</textarea>' +
+    (IV_OUT.choice === 'cleared' && more ? '<label class="iv-check"><input type="checkbox" id="ivo-next"' + (IV_OUT.next ? ' checked' : '') + '> Set up round ' + (iv.roundNo + 1) + ' now</label>' : '') +
+    '<p class="iv-err" id="iv-err" hidden></p><div class="iv-actions"><button type="button" class="o-btn" onclick="IV.form=null; ivDrawSheet()">Back</button><button type="button" class="o-btn o-btn--primary" onclick="ivSubmitOutcome(\'' + iv.id + '\')">Save outcome</button></div></footer>';
+}
+function ivOutKeep(){ const n = document.getElementById('ivo-note'); if(n) IV_OUT.note = n.value; const x = document.getElementById('ivo-next'); if(x) IV_OUT.next = x.checked; }
+function ivSubmitOutcome(id){ ivOutKeep(); const r = ivOutcome(id, IV_OUT.choice, IV_OUT.note, IV_OUT.next, 'app'); if(!r.ok) return ivErr(r.err); IV_OUT.choice = null; IV_OUT.note = ''; IV_OUT.next = true; IV.form = null; ivDrawSheet(); }
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && IV.open && document.getElementById('iv-sheet')) ivClose(); });
+
+/* ---------- iv-links.js ---------- */
+/* ============================================================
+   SECURE LINKS: #/l/<token>. A standalone page for one person, outside the app. No login.
+   Interviewer links answer confirmations and feedback. Client-contact links (agency only) decide profiles and outcomes.
+============================================================ */
+const SL = { token:null, tab:'profiles', sheet:null, form:null, done:null, draft:{}, notYou:false };
+function slRoot(){ let r = document.getElementById('sl-root'); if(!r){ r = document.createElement('div'); r.id = 'sl-root'; document.body.appendChild(r); } return r; }
+function slRoute(){
+  const m = /^#\/l\/([A-Za-z0-9_-]{6,64})$/.exec(String(location.hash || ''));
+  if(!m){ if(SL.token){ SL.token = null; document.body.classList.remove('sl-on'); slRoot().innerHTML = ''; } return; }
+  IV.open = null; IV.form = null; ivDrawSheet(); SL.token = m[1]; SL.sheet = null; SL.form = null; SL.done = null; SL.notYou = false; SL.tab = 'profiles';
+  const l = slFind(m[1]); if(l && slValid(l)){ if(!l.openedAt){ l.openedAt = ivNowMs(); } slEvent(l, 'Opened'); slMarkOpened(l); }
+  document.body.classList.add('sl-on'); slDraw();
+}
+function slMarkOpened(l){
+  l.scopes.interviewIds.forEach(function(id){ const iv = findHmInterview(id); if(!iv) return; ivNorm(iv);
+    if(l.kind === 'interviewer'){ const p = iv.panel.find(function(x){ return x.name === l.personName; }); if(p && p.link !== 'done' && p.link !== 'opened'){ p.link = 'opened'; p.linkAt = ivNowMs(); } }
+    else if(iv.clientResult && iv.clientResult.state === 'sent'){ iv.clientResult.state = 'opened'; iv.clientResult.openedAt = ivNowMs(); } });
+}
+window.addEventListener('hashchange', slRoute);
+function slBack(){ SL.token = null; history.replaceState(null, '', location.pathname + location.search); document.body.classList.remove('sl-on'); slRoot().innerHTML = ''; ivChanged(); if(typeof refreshNavCounts === 'function') try { refreshNavCounts(); } catch(e){} }
+function slDevOpen(kind){
+  const want = kind === 'client' ? ['client', 'Ravi Menon'] : ['interviewer', 'Rohit Bansal'];
+  let l = SECURE_LINKS.find(function(x){ return x.kind === want[0] && x.personName === want[1] && !x.revoked; });
+  if(!l && kind === 'client') l = slEnsureRavi(); if(!l){ toast('That link is not available.'); return; }
+  if(l.expiresAt < ivNowMs()) slExpire(l); location.hash = '#/l/' + l.token; if(typeof toggleRoleMenu === 'function') try { toggleRoleMenu(true); } catch(e){}
+}
+function slEnsureRavi(){
+  const cc = ivClientContactFor(jobById('j4')); const ivs = hmInterviews.filter(function(x){ return x.jobId === 'j4' && x.clientContact && x.clientContact.email === cc.email; }), subs = SUBMISSIONS.filter(function(s){ return s.jobId === 'j4'; });
+  const l = slFor('client', cc.name, cc.email, { interviewIds:ivs.map(function(x){ return x.id; }), submissionIds:subs.map(function(s){ return s.id; }), jobId:'j4' }, 'HealthAI'); l.openedAt = l.openedAt || null; return l;
+}
+function slExpireNow(l){ l.expiresAt = ivNowMs() - 1; }
+
+/* ---------- what each person sees ---------- */
+function slReqs(l){
+  const out = [], now = ivNowMs();
+  l.scopes.interviewIds.forEach(function(id){ const iv = findHmInterview(id); if(!iv || iv.status === 'Cancelled') return; ivNorm(iv);
+    const p = iv.panel.find(function(x){ return x.name === l.personName; }); if(!p) return; const ended = ivEnd(iv) <= now;
+    if(ended && !p.feedback) out.push({ type:'feedback', iv:iv, p:p, due:ivEnd(iv) });
+    else if(!ended && iv.status === 'Finding a time') out.push({ type:'times', iv:iv, p:p, due:ivStart(iv) });
+    else if(!ended && !p.confirmed) out.push({ type:'confirm', iv:iv, p:p, due:ivStart(iv) });
+    else if(!ended) out.push({ type:'prep', iv:iv, p:p, due:ivStart(iv) }); });
+  const order = { feedback:0, times:1, confirm:2, prep:3 };
+  return out.sort(function(a, b){ return order[a.type] - order[b.type] || a.due - b.due; });
+}
+function slShell(inner, l){
+  return '<div class="sl-page"><header class="sl-top"><span class="sl-brand"><b>Oontu</b></span>' + (l && slValid(l) ? '<span class="sl-who">Opened for ' + ie(l.personName) + (l.orgName ? ' · ' + ie(l.orgName) : '') + ' <button type="button" class="sl-linkbtn" onclick="SL.notYou=true; slDraw()">Not you?</button></span>' : '') + '</header><main class="sl-main">' + inner + '</main>' + slDevBar() + '</div>';
+}
+function slDevBar(){ return '<div class="sl-dev"><span>Prototype</span><button type="button" onclick="slBack()">Back to app</button></div>'; }
+function slInvalid(l){
+  const why = !l ? ['This link doesn’t work', 'It may have been mistyped. Ask the recruiter who sent it to send it again.'] : l.revoked ? ['This link was turned off', 'It was revoked, so it no longer opens anything. Ask the recruiter for a new one.'] : ['This link has expired', 'Links stop working a few days after the last interview they cover. Ask the recruiter for a new one.'];
+  return slShell('<section class="sl-card sl-center"><h1>' + why[0] + '</h1><p>' + why[1] + '</p></section>', null);
+}
+function slDraw(){
+  if(!SL.token) return; const l = slFind(SL.token), root = slRoot(), keep = root.querySelector('.sl-main'), top = keep ? keep.scrollTop : 0;
+  if(!slValid(l)){ root.innerHTML = slInvalid(l); return; }
+  if(SL.notYou){ root.innerHTML = slShell('<section class="sl-card sl-center"><h1>Turn this link off?</h1><p>If this link was meant for someone else, turn it off. Nobody can open it again, and the recruiter is told.</p><div class="sl-actions"><button type="button" class="o-btn" onclick="SL.notYou=false; slDraw()">Keep it</button><button type="button" class="o-btn o-btn--primary" onclick="slRevoke()">Turn it off</button></div></section>', l); return; }
+  root.innerHTML = slShell(l.kind === 'interviewer' ? slInterviewerPage(l) : slClientPage(l), l) + (SL.sheet ? slSheetHTML(l) : '');
+  const m = root.querySelector('.sl-main'); if(m) m.scrollTop = top;
+  const tabs = document.getElementById('sl-tabs'); if(tabs) oPill(tabs, '[aria-pressed="true"]', 'sl-tabs', 'o-pill--lean');
+}
+function slRevoke(){ const l = slFind(SL.token); if(!l) return; l.revoked = true; slEvent(l, 'Turned off by the person it was sent to'); l.scopes.interviewIds.forEach(function(id){ const iv = findHmInterview(id); if(iv) ivLog('Link turned off by ' + l.personName, iv, 'Not you'); }); toast('Link turned off.'); slDraw(); }
+
+/* ---------- interviewer page ---------- */
+function slDueText(ms){ const now = ivNowMs(), d = ms - now, h = Math.round(Math.abs(d) / IV_H); if(d < 0) return h < 24 ? h + ' hour' + (h === 1 ? '' : 's') + ' overdue' : Math.round(h / 24) + ' day' + (Math.round(h / 24) === 1 ? '' : 's') + ' overdue'; return h < 24 ? 'Starts in ' + h + ' hour' + (h === 1 ? '' : 's') : 'Starts ' + ivFmtD(ms) + ', ' + ivFmtT(ms); }
+function slInterviewerPage(l){
+  if(SL.done) return slDoneCard(); if(SL.form) return slInterviewerForm(l);
+  const reqs = slReqs(l), first = ivFirst(l.personName);
+  return '<h1 class="sl-h1">Hi ' + ie(first) + '</h1><p class="sl-lead">' + (reqs.length ? 'You have ' + reqs.length + ' thing' + (reqs.length === 1 ? '' : 's') + ' to do. Nothing here needs a login.' : 'You’re all caught up. Thank you.') + '</p>' +
+    reqs.map(function(q, i){ const iv = q.iv, j = ivJob(iv) || {}, late = q.type === 'feedback' && ivNowMs() - q.due > IV_D;
+      return '<section class="sl-card"><div class="sl-card__h"><div><h2>' + ie(iv.candidate) + '</h2><p>' + ie(j.title || iv.role) + (iv.roundNo ? ' · ' + ie(iv.round || 'Interview') + ', round ' + iv.roundNo + ' of ' + iv.roundsTotal : '') + '</p></div><span class="iv-pill iv-pill--' + (late ? 'risk' : q.type === 'prep' ? 'ok' : 'warn') + '">' + ({ feedback:'Feedback due', times:'Share a time', confirm:'Confirm', prep:'Get ready' })[q.type] + '</span></div>' +
+      '<p class="sl-meta">' + ie(slDueText(q.due)) + (q.type !== 'feedback' ? ' · ' + ivFmtT(ivStart(iv)) + '–' + ivFmtT(ivEnd(iv)) + ' · ' + ie(ivModeName(iv)) : '') + '</p>' +
+      '<div class="sl-actions"><button type="button" class="o-btn" onclick="SL.sheet={t:\'resume\',id:\'' + iv.id + '\'}; slDraw()">Resume</button><button type="button" class="o-btn" onclick="SL.sheet={t:\'jd\',id:\'' + iv.id + '\'}; slDraw()">Job brief</button><button type="button" class="o-btn" onclick="SL.sheet={t:\'earlier\',id:\'' + iv.id + '\'}; slDraw()">Earlier feedback</button>' +
+      (q.type === 'feedback' ? '<button type="button" class="o-btn o-btn--primary" onclick="slOpenForm(\'feedback\',\'' + iv.id + '\')">Give feedback</button>' : q.type === 'confirm' ? '<button type="button" class="o-btn o-btn--primary" onclick="slInvConfirm(\'' + iv.id + '\')">Confirm I can make it</button><button type="button" class="o-btn" onclick="slOpenForm(\'cant\',\'' + iv.id + '\')">I can’t make it</button>' : q.type === 'times' ? '<button type="button" class="o-btn o-btn--primary" onclick="slOpenForm(\'times\',\'' + iv.id + '\')">Share times</button>' : '<button type="button" class="o-btn o-btn--primary" onclick="slOpenForm(\'prep\',\'' + iv.id + '\')">Prepare</button><button type="button" class="o-btn" onclick="slOpenForm(\'cant\',\'' + iv.id + '\')">I can’t make it</button>') + '</div></section>'; }).join('');
+}
+function slOpenForm(kind, id){ SL.form = { kind:kind, id:id }; if(kind === 'feedback'){ IV_DRAFT.scores = {}; IV_DRAFT.rec = null; IV_DRAFT.stood = IV_DRAFT.worry = ''; } slDraw(); }
+function slDoneCard(){ const d = SL.done; return '<section class="sl-card sl-center sl-done"><span class="sl-tick" aria-hidden="true">' + oIcon('check', 20, 3) + '</span><h1>' + ie(d.title) + '</h1><p>' + ie(d.body) + '</p><div class="sl-actions"><button type="button" class="o-btn o-btn--primary" onclick="SL.done=null; SL.form=null; slDraw()">Back to my list</button></div></section>'; }
+function slInvConfirm(id){ const l = slFind(SL.token), iv = findHmInterview(id), p = iv && iv.panel.find(function(x){ return x.name === l.personName; }); if(!p) return; p.confirmed = true; p.link = 'opened'; ivReqClose(id, 'confirm', p.name); slEvent(l, 'Confirmed'); ivLog('Interviewer confirmed', iv, p.name + ' · via link'); SL.done = { title:'You’re confirmed', body:'We’ve told the recruiter. A reminder comes before the interview.' }; ivChanged(); }
+function slInterviewerForm(l){
+  const f = SL.form, iv = findHmInterview(f.id); if(!iv) return '';
+  const head = '<button type="button" class="sl-back" onclick="SL.form=null; slDraw()">' + oIcon('chevL', 14, 2) + ' Back</button><h1 class="sl-h1">' + ie(iv.candidate) + '</h1><p class="sl-lead">' + ie((ivJob(iv) || {}).title || iv.role) + ' · ' + ie(iv.round || 'Interview') + '</p>';
+  if(f.kind === 'feedback') return head + '<section class="sl-card sl-form">' + ivScoreHTML('slf', IV_DRAFT) + '<p class="iv-lab">Would you take them forward?</p><div class="iv-chips" role="radiogroup" aria-label="Recommendation">' + Object.keys(IV_REC).map(function(k){ return '<button type="button" role="radio" class="iv-chip' + (IV_DRAFT.rec === k ? ' is-on' : '') + '" aria-checked="' + (IV_DRAFT.rec === k) + '" onclick="slfRec(\'' + k + '\')">' + IV_REC[k][0] + '</button>'; }).join('') + '</div>' +
+    '<label class="iv-lab" for="ivf-stood">What stood out</label><textarea id="ivf-stood" class="app-input iv-ta" rows="3">' + ie(IV_DRAFT.stood || '') + '</textarea><label class="iv-lab" for="ivf-worry">What worried you</label><textarea id="ivf-worry" class="app-input iv-ta" rows="3">' + ie(IV_DRAFT.worry || '') + '</textarea><label class="iv-lab" for="ivf-probe">What should the next round probe</label><textarea id="ivf-probe" class="app-input iv-ta" rows="2">' + ie(IV_DRAFT.probe || '') + '</textarea>' +
+    '<p class="iv-err" id="sl-err" hidden></p><div class="sl-actions"><button type="button" class="o-btn o-btn--primary" onclick="slSubmitFeedback(\'' + iv.id + '\')">Send feedback</button></div></section>';
+  if(f.kind === 'cant') return head + '<section class="sl-card sl-form"><label class="iv-lab" for="sl-why">What came up?</label><textarea id="sl-why" class="app-input iv-ta" rows="3"></textarea><p class="iv-err" id="sl-err" hidden></p><div class="sl-actions"><button type="button" class="o-btn o-btn--primary" onclick="slCant(\'' + iv.id + '\')">Tell the recruiter</button></div></section>';
+  if(f.kind === 'times'){ const base = ivMid(ivNowMs()) + 2 * IV_D; const slots = [0, 1, 2].map(function(d){ return [10.5, 15].map(function(h){ return base + d * IV_D + h * IV_H; }); }).reduce(function(a, b){ return a.concat(b); }, []);
+    return head + '<section class="sl-card sl-form"><p class="iv-lab">Pick the times that work. The recruiter picks one.</p><div class="iv-chips" role="group" aria-label="Times">' + slots.map(function(s){ return '<button type="button" class="iv-chip' + ((SL.draft.times || []).indexOf(s) > -1 ? ' is-on' : '') + '" aria-pressed="' + ((SL.draft.times || []).indexOf(s) > -1) + '" onclick="slToggleTime(' + s + ')">' + ie(ivFmtD(s)) + ', ' + ivFmtT(s) + '</button>'; }).join('') + '</div><p class="iv-err" id="sl-err" hidden></p><div class="sl-actions"><button type="button" class="o-btn o-btn--primary" onclick="slSubmitTimes(\'' + iv.id + '\')">Share times</button></div></section>'; }
+  return head + '<section class="sl-card sl-form"><h2>' + ie(ivFmtD(ivStart(iv), true)) + '</h2><p class="sl-meta">' + ivFmtT(ivStart(iv)) + '–' + ivFmtT(ivEnd(iv)) + ' · ' + ie(ivModeName(iv)) + ' · ' + ie(ivProviderLine(iv)) + '</p><ul class="iv-prep"><li>Read the resume and the job brief before you start.</li><li>Check earlier feedback so you don’t repeat questions.</li><li>Open the meeting link five minutes early.</li></ul><div class="sl-actions"><button type="button" class="o-btn" onclick="slIcs(\'' + iv.id + '\')">Add to calendar</button><button type="button" class="o-btn" onclick="SL.sheet={t:\'resume\',id:\'' + iv.id + '\'}; slDraw()">Resume</button></div></section>';
+}
+function slfRec(v){ slKeepText(); IV_DRAFT.rec = v; slDraw(); }
+
+function slKeepText(){ ['stood', 'worry', 'probe'].forEach(function(k){ const e = document.getElementById('ivf-' + k); if(e) IV_DRAFT[k] = e.value; }); }
+function slfSet(k, n){ slKeepText(); IV_DRAFT.scores[k] = n; slDraw(); }
+function slToggleTime(s){ const a = SL.draft.times = SL.draft.times || []; const i = a.indexOf(s); if(i > -1) a.splice(i, 1); else a.push(s); slDraw(); }
+function slErr(m){ const e = document.getElementById('sl-err'); if(e){ e.textContent = m; e.hidden = false; } }
+function slSubmitFeedback(id){ slKeepText(); const l = slFind(SL.token); const r = ivSubmitFeedback(id, l.personName, { rec:IV_DRAFT.rec, scores:IV_DRAFT.scores, stoodOut:IV_DRAFT.stood, worried:IV_DRAFT.worry, probeNext:IV_DRAFT.probe }, 'link'); if(!r.ok) return slErr(r.err); SL.form = null; SL.done = { title:'Feedback sent', body:'Thank you. The recruiter and the hiring team can see it now.' }; slDraw(); }
+function slCant(id){ const l = slFind(SL.token), why = (document.getElementById('sl-why') || {}).value || ''; ivPanelDeclined(id, l.personName, why.trim()); slEvent(l, 'Can’t make it'); SL.form = null; SL.done = { title:'We’ve told the recruiter', body:'They will find another time and send you a new request.' }; slDraw(); }
+function slSubmitTimes(id){ const t = SL.draft.times || []; if(!t.length) return slErr('Pick at least one time.'); const l = slFind(SL.token), iv = findHmInterview(id), p = iv.panel.find(function(x){ return x.name === l.personName; }); p.offered = t.slice(); ivReqClose(id, 'times', p.name); SL.draft.times = []; ivLog('Interviewer shared times', iv, p.name + ' · ' + t.length); slEvent(l, 'Shared times'); const best = t.slice().sort()[0]; ivReschedule(id, new Date(best).toISOString(), 'Interviewer shared times'); SL.form = null; SL.done = { title:'Times shared', body:'The recruiter locks one in and you get a confirmation.' }; slDraw(); }
+function slIcs(id){ const iv = findHmInterview(id); if(!iv) return; const f = function(ms){ return new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); }; const text = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Oontu//Interviews//EN', 'BEGIN:VEVENT', 'UID:' + iv.id + '@oontu', 'DTSTAMP:' + f(ivNowMs()), 'DTSTART:' + f(ivStart(iv)), 'DTEND:' + f(ivEnd(iv)), 'SUMMARY:Interview with ' + iv.candidate, 'DESCRIPTION:' + (iv.round || 'Interview') + ' · ' + ivProviderLine(iv), 'END:VEVENT', 'END:VCALENDAR'].join('\r\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type:'text/calendar' })); a.download = 'interview-' + iv.id + '.ics'; document.body.appendChild(a); a.click(); a.remove(); toast('Calendar file downloaded.'); }
+
+/* ---------- slide-over documents ---------- */
+function slSheetHTML(l){
+  const s = SL.sheet, iv = findHmInterview(s.id) || slStubIv(s.id), cand = ivCand(iv) || {}, j = ivJob(iv) || {};
+  let body = '', title = '';
+  if(s.t === 'resume'){ title = 'Resume'; body = ivResumeHTML(cand); }
+  else if(s.t === 'jd'){ title = 'Job brief'; body = ivJdHTML(j); }
+  else if(s.t === 'full'){ title = 'Full profile'; body = slFullProfileHTML(cand, iv); }
+  else { title = 'Earlier feedback'; const prev = hmInterviews.filter(function(x){ return x.submissionId === iv.submissionId && x.id !== iv.id; }); const fb = []; prev.forEach(function(x){ ivNorm(x); x.panel.forEach(function(p){ if(p.feedback) fb.push([x, p]); }); }); body = fb.length ? fb.map(function(a){ const f = a[1].feedback; return '<div class="iv-fb"><div class="iv-fb__h"><b>' + ie(a[1].name) + ' · ' + ie(a[0].round || 'Interview') + '</b><span class="iv-pill iv-pill--' + (f.rec === 'sy' || f.rec === 'y' ? 'ok' : 'warn') + '">' + IV_REC[f.rec][0] + '</span></div><p>' + ie(f.stoodOut || '') + '</p></div>'; }).join('') : '<p class="iv-note">No earlier feedback. This is the first round.</p>'; }
+  return '<div class="iv-scrim" onclick="SL.sheet=null; slDraw()"></div><aside class="iv-sheet" role="dialog" aria-modal="true" aria-label="' + title + '"><header class="iv-sheet__h"><div class="iv-sheet__t"><h2>' + title + '</h2><p>' + ie(iv.candidate || cand.name || '') + '</p></div><button type="button" class="iv-x" aria-label="Close" onclick="SL.sheet=null; slDraw()">' + oIcon('x', 18, 2) + '</button></header><div class="iv-sheet__body">' + body + '</div></aside>';
+}
+function slFullProfileHTML(cand, iv){
+  const s = AP_SEED[cand.name] || {}, pr = IV_PROFILE[cand.name] || {}, sc = s.screening || {};
+  return '<article class="iv-doc"><h3>' + ie(cand.name) + '</h3><p class="iv-doc__s">' + ie(cand.role || '') + ' · ' + ie(cand.loc || '') + ' · ' + ie(cand.exp || '') + '</p>' + (pr.why ? '<h4>Why this profile</h4><p>' + ie(pr.why) + '</p>' : '') + (pr.hl ? '<ul>' + pr.hl.map(function(h){ return '<li>' + ie(h) + '</li>'; }).join('') + '</ul>' : '') +
+    (sc.summary ? '<h4>Screening note</h4><p>' + ie(sc.summary) + '</p>' : '') + (sc.availability ? '<h4>Availability</h4><p>Notice ' + ie(sc.availability.notice) + '. Buyout ' + ie(String(sc.availability.buyout || '').toLowerCase()) + '.</p>' : '') + (s.checks ? '<h4>Checks</h4><ul>' + s.checks.map(function(c){ return '<li>' + ie(c.k) + ': ' + ie(c.n) + '</li>'; }).join('') + '</ul>' : '') + '<h4>Consent</h4><p>Candidate agreed to be put forward. Reference ' + ie('RTR-' + (cand.id || 0) + '41') + '.</p></article>';
+}
+
+/* ---------- client contact page (agency only) ---------- */
+function slClientProfiles(l){ return l.scopes.submissionIds.map(subById).filter(function(s){ return s && s.jobId === l.scopes.jobId && subPhase(s) === 'client' && !s.slDecision; }); }
+function slClientOutcomes(l){ return l.scopes.interviewIds.map(findHmInterview).filter(function(iv){ return iv && iv.status !== 'Cancelled' && iv.status !== 'Finding a time' && ivEnd(iv) <= ivNowMs() && !iv.outcome && iv.status !== 'No Show'; }); }
+function slClientScheduled(l){ return l.scopes.interviewIds.map(findHmInterview).filter(function(iv){ return iv && iv.status !== 'Cancelled' && ivEnd(iv) > ivNowMs(); }).sort(function(a, b){ return ivStart(a) - ivStart(b); }); }
+function slClientPage(l){
+  if(SL.done) return slDoneCard(); if(SL.form) return slClientForm(l);
+  const P = slClientProfiles(l), O = slClientOutcomes(l), S = slClientScheduled(l), tabs = [['profiles', 'Profiles', P.length], ['outcomes', 'Interview outcomes', O.length], ['scheduled', 'Scheduled', S.length]];
+  let body = '';
+  if(SL.tab === 'profiles') body = P.length ? P.map(function(sb){ return slProfileCard(sb, l); }).join('') : '<section class="sl-card sl-center"><p>No profiles are waiting for you.</p></section>';
+  else if(SL.tab === 'outcomes') body = O.length ? O.map(function(iv){ return '<section class="sl-card"><div class="sl-card__h"><div><h2>' + ie(iv.candidate) + '</h2><p>' + ie(iv.round || 'Interview') + ', round ' + iv.roundNo + ' of ' + iv.roundsTotal + ' · ' + ie((ivJob(iv) || {}).title) + '</p></div><span class="iv-pill iv-pill--warn">Outcome due</span></div><p class="sl-meta">Interviewed ' + ie(ivFmtD(ivStart(iv))) + ', ' + ivFmtT(ivStart(iv)) + '</p><div class="sl-actions"><button type="button" class="o-btn" onclick="SL.sheet={t:\'resume\',id:\'' + iv.id + '\'}; slDraw()">Resume</button><button type="button" class="o-btn o-btn--primary" onclick="slOpenCForm(\'outcome\',\'' + iv.id + '\')">How did it go?</button></div></section>'; }).join('') : '<section class="sl-card sl-center"><p>No outcomes are due.</p></section>';
+  else body = S.length ? S.map(function(iv){ return '<section class="sl-card"><div class="sl-card__h"><div><h2>' + ie(iv.candidate) + '</h2><p>' + ie(iv.round || 'Interview') + ' · ' + ie((ivJob(iv) || {}).title) + '</p></div><span class="iv-pill iv-pill--ok">' + (iv.candidateConfirmed ? 'Confirmed' : 'Scheduled') + '</span></div><p class="sl-meta">' + ie(ivFmtD(ivStart(iv), true)) + ', ' + ivFmtT(ivStart(iv)) + '–' + ivFmtT(ivEnd(iv)) + ' · ' + ie(ivModeName(iv)) + '</p><div class="sl-actions"><button type="button" class="o-btn" onclick="SL.sheet={t:\'resume\',id:\'' + iv.id + '\'}; slDraw()">Resume</button></div></section>'; }).join('') : '<section class="sl-card sl-center"><p>Nothing is scheduled.</p></section>';
+  return '<h1 class="sl-h1">Hi ' + ie(ivFirst(l.personName)) + '</h1><p class="sl-lead">' + ie(l.orgName) + ' · profiles and interviews from ' + ie(ORG_STRUCTURE.profile.brandName) + '. Nothing here needs a login.</p><div class="seg sl-tabs" id="sl-tabs" role="group" aria-label="Sections">' + tabs.map(function(t){ return '<button type="button" class="seg__btn" aria-pressed="' + (SL.tab === t[0]) + '" onclick="SL.tab=\'' + t[0] + '\'; slDraw()">' + t[1] + (t[2] ? ' <span class="seg__n">' + t[2] + '</span>' : '') + '</button>'; }).join('') + '</div>' + body;
+}
+function slProfileCard(sb, l){
+  const c = byId(sb.candidateId) || {}, j = jobById(sb.jobId) || {}, pr = IV_PROFILE[c.name] || {}, iv0 = { candidate:c.name, candidateId:c.id, jobId:sb.jobId, submissionId:sb.id };
+  return '<section class="sl-card"><div class="sl-card__h"><div><h2>' + ie(c.name) + '</h2><p>' + ie(c.role || '') + ' · ' + ie(c.exp || '') + ' · ' + ie(c.loc || '') + '</p></div><span class="iv-pill iv-pill--info">For ' + ie(j.title) + '</span></div>' + (pr.why ? '<p class="sl-why">' + ie(pr.why) + '</p>' : '') + (pr.hl ? '<ul class="sl-hl">' + pr.hl.map(function(h){ return '<li>' + ie(h) + '</li>'; }).join('') + '</ul>' : '') +
+    '<div class="sl-actions"><button type="button" class="o-btn" onclick="SL.sheet={t:\'full\',id:\'' + slIvStub(sb) + '\'}; slDraw()">Full profile</button><button type="button" class="o-btn" onclick="SL.sheet={t:\'resume\',id:\'' + slIvStub(sb) + '\'}; slDraw()">Resume</button></div>' +
+    '<div class="sl-actions sl-actions--end"><button type="button" class="o-btn" onclick="slOpenCForm(\'dup\',\'' + sb.id + '\')">I already have this profile</button><button type="button" class="o-btn" onclick="slOpenCForm(\'hold\',\'' + sb.id + '\')">Hold</button><button type="button" class="o-btn" onclick="slOpenCForm(\'nofit\',\'' + sb.id + '\')">Not a fit</button><button type="button" class="o-btn o-btn--primary" onclick="slOpenCForm(\'book\',\'' + sb.id + '\')">Book interview</button></div></section>';
+}
+/** the document sheet works from an interview; a profile that has none yet gets a lightweight stand-in */
+function slIvStub(sb){ return sb.id; }
+function slOpenCForm(kind, id){ SL.form = { kind:kind, id:id }; SL.draft = { slot:null, own:'', reason:null, note:'', src:'', date:'', proof:'', choice:null, next:true }; slDraw(); }
+function slCDraft(){ const g = function(i){ const e = document.getElementById(i); return e ? e.value : undefined; }; ['own', 'note', 'src', 'date', 'proof'].forEach(function(k){ const v = g('slc-' + k); if(v !== undefined) SL.draft[k] = v; }); const n = document.getElementById('slc-next'); if(n) SL.draft.next = n.checked; }
+function slCSet(k, v){ slCDraft(); SL.draft[k] = v; slDraw(); }
+const SL_NOFIT = ['Skills don’t match', 'Too senior', 'Too junior', 'Salary expectation too high', 'Notice period too long', 'Location doesn’t work', 'Other'];
+const SL_SOURCES = ['Applied to us directly', 'Referred by an employee', 'Another agency sent it', 'Our own database', 'A job board'];
+function slClientForm(l){
+  const f = SL.form, d = SL.draft, back = '<button type="button" class="sl-back" onclick="SL.form=null; slDraw()">' + oIcon('chevL', 14, 2) + ' Back</button>', chip = function(k, v, label, on){ return '<button type="button" class="iv-chip' + (on ? ' is-on' : '') + '" aria-pressed="' + on + '" onclick="slCSet(\'' + k + '\',' + (typeof v === 'number' ? v : '\'' + v.replace(/'/g, '’') + '\'') + ')">' + ie(label) + '</button>'; };
+  const sb = subById(f.id), iv = findHmInterview(f.id), cand = byId((sb || iv).candidateId) || {};
+  const head = back + '<h1 class="sl-h1">' + ie(cand.name) + '</h1><p class="sl-lead">' + ie({ book:'Book an interview', nofit:'Not a fit', hold:'Put on hold', dup:'I already have this profile', outcome:'How did the interview go?' }[f.kind]) + '</p>';
+  const foot = function(label, fn){ return '<p class="iv-err" id="sl-err" hidden></p><div class="sl-actions"><button type="button" class="o-btn o-btn--primary" onclick="' + fn + '">' + label + '</button></div>'; };
+  if(f.kind === 'book'){ const base = ivMid(ivNowMs()) + 2 * IV_D, slots = [0, 1, 2].map(function(k){ return [11, 15.5].map(function(h){ return base + k * IV_D + h * IV_H; }); }).reduce(function(a, b){ return a.concat(b); }, []);
+    return head + '<section class="sl-card sl-form"><p class="iv-lab">Free times on the recruiter’s side</p><div class="iv-chips" role="group" aria-label="Free times">' + slots.map(function(s){ return chip('slot', s, ivFmtD(s) + ', ' + ivFmtT(s), d.slot === s); }).join('') + '</div><label class="iv-lab" for="slc-own">Or suggest your own time</label><input id="slc-own" type="datetime-local" class="app-input" value="' + ie(d.own || '') + '" onchange="SL.draft.own=this.value; SL.draft.slot=null">' + foot('Book interview', 'slBook(\'' + sb.id + '\')') + '</section>'; }
+  if(f.kind === 'nofit') return head + '<section class="sl-card sl-form"><div class="iv-chips" role="group" aria-label="Reason">' + SL_NOFIT.map(function(r){ return chip('reason', r, r, d.reason === r); }).join('') + '</div><label class="iv-lab" for="slc-note">Anything the recruiter should know</label><textarea id="slc-note" class="app-input iv-ta" rows="3">' + ie(d.note || '') + '</textarea>' + foot('Send', 'slDecide(\'' + sb.id + '\',\'nofit\')') + '</section>';
+  if(f.kind === 'hold') return head + '<section class="sl-card sl-form"><label class="iv-lab" for="slc-note">What are you waiting on?</label><textarea id="slc-note" class="app-input iv-ta" rows="3">' + ie(d.note || '') + '</textarea>' + foot('Put on hold', 'slDecide(\'' + sb.id + '\',\'hold\')') + '</section>';
+  if(f.kind === 'dup'){ const needsProof = d.src === 'Another agency sent it' || d.src === 'Our own database';
+    return head + '<section class="sl-card sl-form"><p class="iv-lab">Where did you first get it?</p><div class="iv-chips" role="group" aria-label="Source">' + SL_SOURCES.map(function(r){ return chip('src', r, r, d.src === r); }).join('') + '</div><label class="iv-lab" for="slc-date">Date you received it</label><input id="slc-date" type="date" class="app-input" max="' + new Date(ivNowMs()).toISOString().slice(0, 10) + '" value="' + ie(d.date || '') + '">' +
+      '<label class="iv-lab" for="slc-proof">' + (needsProof ? 'Proof (an email subject, a reference number or a file name)' : 'Reference, if you have one') + '</label><input id="slc-proof" class="app-input" value="' + ie(d.proof || '') + '"><p class="iv-note">If we don’t decide within 48 hours, the claim lapses and the first submission stays with the recruiter.</p>' + foot('Send claim', 'slDup(\'' + sb.id + '\')') + '</section>'; }
+  const more = iv.roundNo < iv.roundsTotal;
+  return head + '<section class="sl-card sl-form"><div class="iv-chips" role="radiogroup" aria-label="Outcome">' + [['cleared', 'Cleared'], ['notcleared', 'Not cleared'], ['hold', 'On hold'], ['noshow', 'Didn’t attend']].map(function(o){ return '<button type="button" role="radio" class="iv-chip' + (d.choice === o[0] ? ' is-on' : '') + '" aria-checked="' + (d.choice === o[0]) + '" onclick="slCSet(\'choice\',\'' + o[0] + '\')">' + o[1] + '</button>'; }).join('') + '</div><label class="iv-lab" for="slc-note">Note</label><textarea id="slc-note" class="app-input iv-ta" rows="3">' + ie(d.note || '') + '</textarea>' +
+    (d.choice === 'cleared' && more ? '<label class="iv-check"><input type="checkbox" id="slc-next"' + (d.next ? ' checked' : '') + '> Move it to round ' + (iv.roundNo + 1) + '</label>' : '') + foot('Send outcome', 'slOutcome(\'' + iv.id + '\')') + '</section>';
+}
+function slBook(subId){
+  slCDraft(); const l = slFind(SL.token), sb = subById(subId), j = jobById(sb.jobId), d = SL.draft; let t = d.slot || (d.own ? Date.parse(d.own) : NaN);
+  if(isNaN(t)) return slErr('Pick a free time or suggest your own.'); if(t < ivNowMs()) return slErr('Pick a time in the future.');
+  const c = byId(sb.candidateId), id = 'int-' + (hmInterviewIdSeq++), stages = jobProcessStages(j).filter(function(x){ return pipeStageKind(x) === 'interview'; });
+  const iv = { id:id, candidate:c.name, role:j.title, candidateId:c.id, jobId:j.id, submissionId:sb.id, stageIndex:0, round:stages[0] || 'Round 1', roundNo:1, roundsTotal:Math.max(stages.length, 1), date:ivFmtD(t) + ', ' + ivFmtT(t), at:new Date(t).toISOString(), duration:60, mode:'Video', meetProvider:'Google Meet', status:'Confirmed', candidateConfirmed:false, interviewerConfirmed:false, interviewerName:l.personName, panel:[{ name:l.personName, email:l.email, isUser:false, confirmed:true, link:'opened', feedback:null }], clientContact:{ name:l.personName, email:l.email }, clientResult:{ state:'none' }, rescheduleHistory:[], noShow:null, outcome:null, __n:true };
+  hmInterviews.unshift(iv); l.scopes.interviewIds.push(id); sb.slDecision = 'booked';
+  try { moveSubmissionStage(sb.id, 'Interview Scheduled', 'Interview booked by ' + l.personName + ' from the secure link'); } catch(e){}
+  ivReqOpen(null, iv, 'confirm', c.name); ivLog('Interview booked by client', iv, l.personName + ' · ' + iv.date); slEvent(l, 'Booked ' + c.name);
+  SL.form = null; SL.done = { title:'Interview booked', body: ivFmtD(t) + ', ' + ivFmtT(t) + '. ' + ivFirst(c.name) + ' is told and the recruiter sees it now.' }; ivChanged();
+}
+function slDecide(subId, kind){
+  slCDraft(); const l = slFind(SL.token), sb = subById(subId), d = SL.draft, c = byId(sb.candidateId);
+  if(kind === 'nofit' && !d.reason) return slErr('Pick a reason so the recruiter can find a better match.');
+  sb.slDecision = kind; const note = (kind === 'nofit' ? d.reason : 'Held') + (d.note ? '. ' + d.note : '');
+  if(kind === 'nofit'){ try { moveSubmissionStage(sb.id, 'Rejected', 'Not a fit (client): ' + note); } catch(e){} }
+  else sb.hold = { reason:note, by:l.personName, at:new Date(ivNowMs()).toISOString() };
+  logAudit('Interviews', kind === 'nofit' ? 'Client said not a fit' : 'Client put a profile on hold', c.name + ' · ' + note, { entityType:'Submission', entityId:sb.id, submissionId:sb.id, candidateId:c.id, jobId:sb.jobId }); slEvent(l, kind === 'nofit' ? 'Not a fit: ' + c.name : 'Hold: ' + c.name);
+  SL.form = null; SL.done = { title:kind === 'nofit' ? 'Thank you' : 'On hold', body:kind === 'nofit' ? 'The recruiter is told why and looks for a closer match.' : 'The recruiter will check back with you.' }; ivChanged();
+}
+function slDup(subId){
+  slCDraft(); const l = slFind(SL.token), sb = subById(subId), d = SL.draft, c = byId(sb.candidateId);
+  if(!d.src) return slErr('Pick where you first got this profile.'); if(!d.date) return slErr('Add the date you received it.'); if(Date.parse(d.date) > ivNowMs()) return slErr('The date can’t be in the future.');
+  const needsProof = d.src === 'Another agency sent it' || d.src === 'Our own database'; if(needsProof && !String(d.proof || '').trim()) return slErr('Add proof so the recruiter can check it: an email subject, a reference number or a file name.');
+  const sentAt = Date.parse((sb.sent || {}).at || '') || ivNowMs(); if(Date.parse(d.date) > sentAt + IV_D) return slErr('This only counts if you had it before we sent it.');
+  const claim = { id:'dc-' + (DUPLICATE_CLAIMS.length + 1), submissionId:sb.id, token:l.token, claimedBy:l.personName, source:d.src, claimDate:d.date, proof:(d.proof || '').trim(), createdAt:ivNowMs(), expiresAt:ivNowMs() + 48 * IV_H, status:'under_review' };
+  DUPLICATE_CLAIMS.push(claim); sb.slDecision = 'claim'; ivReqOpen(l, { id:'claim-' + sb.id, candidate:c.name, ownerUserId:null }, 'outcome', l.personName);
+  logAudit('Interviews', 'Duplicate claim raised', c.name + ' · ' + d.src + ' · ' + d.date, { entityType:'Submission', entityId:sb.id, submissionId:sb.id, candidateId:c.id, jobId:sb.jobId }); slEvent(l, 'Duplicate claim: ' + c.name);
+  SL.form = null; SL.done = { title:'Claim sent', body:'The recruiter has 48 hours to answer. If they don’t, the claim lapses and the first submission stays.' }; ivChanged();
+}
+function slOutcome(ivId){
+  slCDraft(); const l = slFind(SL.token), d = SL.draft, iv = findHmInterview(ivId); if(!d.choice) return slErr('Pick what happened.');
+  const r = ivOutcome(ivId, d.choice, d.note, d.next, 'link'); if(!r.ok) return slErr(r.err); slEvent(l, 'Outcome: ' + d.choice);
+  SL.form = null; SL.done = { title:'Outcome sent', body:d.choice === 'cleared' && d.next && iv.roundNo < iv.roundsTotal ? 'Thank you. The recruiter is finding a time for round ' + (iv.roundNo + 1) + '.' : 'Thank you. The recruiter can see it now.' }; slDraw();
+}
+
+/* ---------- lapse of claims and reminders (APS handles the chips; this makes the rest actually happen) ---------- */
+function ivBizHours(from, to){ let n = 0; for(let t = from; t < to; t += 15 * 60000){ const d = new Date(t), m = d.getHours() * 60 + d.getMinutes(); if(d.getDay() !== 0 && m >= 570 && m < 1110) n += 0.25; } return n; }
+function ivSweep(){
+  const now = ivNowMs(); let changed = false;
+  DUPLICATE_CLAIMS.forEach(function(c){ if(c.status === 'under_review' && now >= c.expiresAt){ c.status = 'lapsed'; changed = true; const sb = subById(c.submissionId); if(sb) logAudit('Interviews', 'Duplicate claim lapsed', (byId(sb.candidateId) || {}).name + ' · no answer in 48 hours, first submission stands', { entityType:'Submission', entityId:sb.id, submissionId:sb.id, jobId:sb.jobId }); } });
+  IV_REQS.forEach(function(r){ if(r.status !== 'Pending') return; const iv = findHmInterview(r.ivId); if(!iv || iv.status === 'Cancelled') return; const h = ivBizHours(Date.parse(r.createdAt), now);
+    [[4, 'rem4'], [20, 'rem20']].forEach(function(x){ if(h >= x[0] && !r[x[1]]){ r[x[1]] = now; const l = r.token && slFind(r.token); if(l) slEvent(l, 'Reminder after ' + x[0] + ' working hours'); ivLog('Reminder sent to ' + r.personName, iv, x[0] + ' working hours'); changed = true; } }); });
+  if(changed) ivChanged();
+}
+if(!window.__ivTimer) window.__ivTimer = setInterval(function(){ try { ivSweep(); } catch(e){ console.error(e); } }, 60000);
+
+/* ---------- wiring into the rest of the app ---------- */
+(function hookSendToClient(){
+  const o = window.csSend; if(typeof o !== 'function' || o.__iv) return;
+  window.csSend = function(){
+    const s = typeof csState !== 'undefined' ? csState : null, before = s ? s.subIds.slice() : [], job = s ? s.jobId : null, names = s ? csRecipients().map(function(p){ return p.name; }) : [];
+    const r = o.apply(this, arguments);
+    try { if(job && names.length && ivOrg() === 'agency'){ const first = names[0], j = jobById(job), email = ivSlug(first) + '@' + ivDomain(j); const l = slFor('client', first, email, { submissionIds:before, interviewIds:[], jobId:job }, j.client); slEvent(l, 'Sent with ' + before.length + ' profile' + (before.length === 1 ? '' : 's')); } } catch(e){ console.error(e); }
+    return r;
+  }; window.csSend.__iv = true;
+})();
+(function hookSchedule(){
+  const o = window.confirmScheduleInterview; if(typeof o !== 'function' || o.__iv) return;
+  window.confirmScheduleInterview = function(){
+    const before = hmInterviews.length, r = o.apply(this, arguments);
+    try { hmInterviews.slice(0, Math.max(0, hmInterviews.length - before)).concat(hmInterviews.filter(function(x){ return !x.__n; })).forEach(function(iv){ ivNorm(iv); iv.panel.forEach(function(p){ if(p.link === 'none') ivSendPanelLink(iv, p, 'new interview'); }); ivLog('Interview scheduled', iv, iv.date); }); ivChanged(); } catch(e){ console.error(e); }
+    return r;
+  }; window.confirmScheduleInterview.__iv = true;
+})();
+(function devButtons(){
+  const menu = document.getElementById('role-menu'); if(!menu || document.getElementById('iv-dev')) return;
+  const anchor = document.getElementById('ap-dev') || Array.prototype.find.call(menu.querySelectorAll('button'), function(b){ return /restartOnboarding/.test(b.getAttribute('onclick') || ''); });
+  const html = '<div id="iv-dev"><div class="o-menu__sep"></div><p class="o-menu__head">Secure links · prototype</p><button type="button" class="o-menu__item" onclick="slDevOpen(\'interviewer\')">Open interviewer link (Rohit)</button><button type="button" class="o-menu__item" onclick="slDevOpen(\'client\')">Open client link (Ravi, HealthAI)</button><button type="button" class="o-menu__item" onclick="slDevExpire()">Expire these links</button></div>';
+  if(anchor) anchor.insertAdjacentHTML('beforebegin', html); else menu.insertAdjacentHTML('beforeend', html);
+})();
+function slDevExpire(){ SECURE_LINKS.forEach(function(l){ if(l.personName === 'Rohit Bansal' || l.personName === 'Ravi Menon') slExpireNow(l); }); toast('Rohit’s and Ravi’s links are now expired.'); if(typeof toggleRoleMenu === 'function') try { toggleRoleMenu(true); } catch(e){} }
+slEnsureRavi();
+if(/^#\/l\//.test(location.hash)) setTimeout(slRoute, 0);
+function slStubIv(subId){ const sb = subById(subId); return sb ? { candidate:(byId(sb.candidateId) || {}).name, candidateId:sb.candidateId, jobId:sb.jobId, submissionId:sb.id } : {}; }
 
 </script>
 </body>
