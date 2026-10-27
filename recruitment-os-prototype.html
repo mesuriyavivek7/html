@@ -40447,5 +40447,170 @@ function cwTenantLiHTML(tenantId){
 })();
 
 </script>
+<style id="tp-refresh">
+/* =====================================================================
+   Oontu · Talent pool refresh
+   One rule: colour means something. Three signals, used sparingly.
+     Mint   = progress / on track      (brand)
+     Amber  = your move                (action sits with the recruiter)
+     Red    = overdue / SLA breached   (rare by design)
+   Everything else is warm neutral ink.
+   ===================================================================== */
+
+:root{
+  --rf-ink:#2F313F; --rf-ink-2:#565A66; --rf-ink-3:#8C90A0;
+  --rf-line:#ECEBE6; --rf-line-2:#DEDDD7; --rf-card:#FFFFFF; --rf-sunk:#F6F6F3;
+
+  --rf-mint:#2FA36B; --rf-mint-ink:#1E7F51; --rf-mint-bg:#EEF8F2;
+  --rf-amber:#D9921C; --rf-amber-ink:#8F5A0B; --rf-amber-bg:#FCF5E8; --rf-amber-line:#F1DFB8;
+  --rf-red:#D9534A; --rf-red-ink:#A93226; --rf-red-bg:#FCEFEE;
+
+  --rf-r-card:16px; --rf-r-ctl:10px;
+  --rf-ease:cubic-bezier(.2,.8,.2,1);
+}
+
+/* ---------- 1. Summary bar ---------- */
+.tp-bar__sum{color:var(--rf-ink-2)!important;font-size:13px!important}
+.tp-bar__sum b{color:var(--rf-ink)!important;font-weight:600!important}
+.tp-warn,.tp-bar__sum .tp-warn{
+  display:inline-flex;align-items:center;gap:6px;margin-left:6px;
+  padding:3px 10px;border-radius:999px;
+  background:var(--rf-amber-bg);color:var(--rf-amber-ink)!important;
+  font-weight:500!important;font-size:12px!important;
+}
+.tp-warn::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--rf-amber)}
+.tp-linkwarn{
+  border:1px solid var(--rf-line-2)!important;border-radius:999px!important;
+  background:var(--rf-card)!important;color:var(--rf-ink)!important;
+  padding:6px 14px!important;font-weight:500!important;
+  transition:background .2s var(--rf-ease),border-color .2s var(--rf-ease);
+}
+.tp-linkwarn:hover{background:var(--rf-sunk)!important;border-color:var(--rf-ink-3)!important}
+
+/* ---------- 2. Filter tabs → segmented control, no dots ---------- */
+#tp-pipe-tabs{
+  background:var(--rf-sunk)!important;border-radius:12px!important;
+  padding:4px!important;gap:2px!important;border:1px solid var(--rf-line)!important;
+}
+#tp-pipe-tabs .o-pill--under{display:none!important}
+#tp-pipe-tabs .tp-sdot{display:none!important}
+#tp-pipe-tabs [role="tab"]{
+  border-radius:9px!important;padding:7px 14px!important;
+  color:var(--rf-ink-2)!important;font-size:13px!important;font-weight:500!important;
+  background:transparent!important;box-shadow:none!important;text-decoration:none!important;
+  transition:background .2s var(--rf-ease),color .2s var(--rf-ease);
+}
+#tp-pipe-tabs [role="tab"]:hover{color:var(--rf-ink)!important}
+#tp-pipe-tabs [role="tab"][aria-selected="true"]{
+  background:var(--rf-card)!important;color:var(--rf-ink)!important;
+  box-shadow:0 1px 2px rgba(47,49,63,.08),0 0 0 1px var(--rf-line)!important;
+}
+#tp-pipe-tabs [role="tab"]::after{display:none!important}
+.tp-n{
+  margin-left:6px!important;font-size:11px!important;font-weight:500!important;
+  color:var(--rf-ink-3)!important;font-variant-numeric:tabular-nums;
+  background:transparent!important;padding:0!important;
+}
+#tp-pipe-tabs [aria-selected="true"] .tp-n{color:var(--rf-ink-2)!important}
+
+/* ---------- 3. Candidate rows ---------- */
+.tp-list{gap:10px!important}
+.tp-cand{
+  border:1px solid var(--rf-line)!important;border-radius:var(--rf-r-card)!important;
+  box-shadow:none!important;background:var(--rf-card)!important;
+  transition:border-color .2s var(--rf-ease),box-shadow .2s var(--rf-ease);
+}
+.tp-cand:hover{border-color:var(--rf-line-2)!important;box-shadow:0 4px 16px -8px rgba(47,49,63,.12)!important}
+.tp-cand__head:hover{background:transparent!important}
+.tp-cand__name{font-weight:600!important;color:var(--rf-ink)!important;letter-spacing:-.01em}
+.tp-cand__name .tp-sdot,.tp-cand__id .tp-sdot{display:none!important}
+.tp-cand__facts{color:var(--rf-ink-3)!important}
+
+/* job chips: neutral, status dots removed */
+.tp-chip{
+  background:var(--rf-sunk)!important;border:1px solid transparent!important;
+  border-radius:999px!important;color:var(--rf-ink-2)!important;
+}
+.tp-chip .tp-sdot{display:none!important}
+.tp-more{color:var(--rf-ink-3)!important}
+
+/* right summary: amber only when the move is yours */
+.tp-cand__sum b{color:var(--rf-ink)!important;font-weight:600!important}
+.tp-cand__sum .tp-warn{margin-left:0;margin-top:3px}
+
+/* ---------- 4. Job cards ---------- */
+.tp-job{
+  border:1px solid var(--rf-line)!important;border-radius:14px!important;
+  background:var(--rf-card)!important;box-shadow:none!important;
+}
+.tp-job:hover{border-color:var(--rf-line-2)!important}
+.tp-job.is-urgent{
+  background:linear-gradient(180deg,var(--rf-amber-bg),var(--rf-card) 70%)!important;
+  border-color:var(--rf-amber-line)!important;
+}
+.tp-job__title{font-weight:600!important;color:var(--rf-ink)!important}
+.tp-job__sub{color:var(--rf-ink-3)!important}
+.tp-logo{background:var(--rf-sunk)!important;color:var(--rf-ink-2)!important;border:none!important}
+
+/* badges: quiet by default, colour only for meaning */
+.tp-badges .o-badge{
+  background:transparent!important;border:none!important;
+  color:var(--rf-ink-2)!important;font-weight:500!important;padding:2px 0!important;
+}
+.tp-badges .o-badge--warn{
+  background:var(--rf-amber-bg)!important;color:var(--rf-amber-ink)!important;
+  padding:3px 10px!important;border-radius:999px!important;
+}
+.tp-badges .o-badge--danger{color:var(--rf-red-ink)!important}
+.tp-badges .o-badge--ok,.tp-badges .o-badge--success{color:var(--rf-mint-ink)!important}
+
+/* buttons */
+.tp-job__act .o-btn--primary{
+  background:var(--rf-ink)!important;color:#fff!important;border-radius:var(--rf-r-ctl)!important;
+  font-weight:500!important;box-shadow:0 1px 2px rgba(47,49,63,.2)!important;
+}
+.tp-job__act .o-btn:not(.o-btn--primary){border-radius:var(--rf-r-ctl)!important}
+.tp-morebtn{border:1px solid var(--rf-line)!important;color:var(--rf-ink-2)!important}
+
+/* ---------- 5. Stage tracker ---------- */
+.tp-line{background:var(--rf-line-2)!important;height:2px!important}
+.tp-line.on{background:var(--rf-mint)!important}
+.tp-dot{
+  width:10px!important;height:10px!important;background:var(--rf-card)!important;
+  border:2px solid var(--rf-line-2)!important;box-shadow:none!important;
+}
+.tp-step.is-done .tp-dot{background:var(--rf-mint)!important;border-color:var(--rf-mint)!important}
+.tp-step.is-here .tp-dot{
+  width:14px!important;height:14px!important;border-color:var(--rf-ink)!important;
+  box-shadow:0 0 0 4px rgba(47,49,63,.08)!important;
+}
+.tp-step.is-here .tp-dot b{background:var(--rf-ink)!important}
+.tp-step.is-warn .tp-dot{border-color:var(--rf-amber)!important;box-shadow:0 0 0 4px rgba(217,146,28,.15)!important}
+.tp-step.is-warn .tp-dot b{background:var(--rf-amber)!important}
+.tp-step.is-danger .tp-dot{border-color:var(--rf-red)!important;box-shadow:0 0 0 4px rgba(217,83,74,.14)!important}
+.tp-step.is-danger .tp-dot b{background:var(--rf-red)!important}
+.tp-step__name{color:var(--rf-ink-3)!important;font-size:11px!important}
+.tp-step.is-done .tp-step__name{color:var(--rf-ink-2)!important}
+.tp-step.is-here .tp-step__name{color:var(--rf-ink)!important;font-weight:600!important}
+.tp-job__cap{color:var(--rf-ink-3)!important}
+
+/* ---------- 6. Polish ---------- */
+.tp-warn{white-space:nowrap}
+.tp-badges .o-badge + .o-badge::before{content:none!important}
+.tp-badges .o-badge--danger{background:var(--rf-red-bg)!important;padding:3px 10px!important;border-radius:999px!important}
+
+/* "8 need action" in the summary line = the one amber call-out */
+.tp-bar__sum .tp-linkwarn{
+  background:var(--rf-amber-bg)!important;border-color:transparent!important;color:var(--rf-amber-ink)!important;
+  padding:4px 12px!important;display:inline-flex!important;align-items:center;gap:6px;margin-left:6px;
+}
+.tp-bar__sum .tp-linkwarn::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--rf-amber)}
+.tp-bar__sum .tp-linkwarn:hover{background:#F8EBD2!important}
+
+/* the empty-looking square was the "more" menu with an invisible icon */
+.tp-morebtn{display:inline-flex!important;align-items:center;justify-content:center;width:34px;height:34px;padding:0!important;background:var(--rf-card)!important}
+.tp-morebtn svg{width:16px!important;height:16px!important;color:var(--rf-ink-2)!important}
+.tp-morebtn svg path{stroke-width:3.2px}
+</style>
 </body>
 </html>
