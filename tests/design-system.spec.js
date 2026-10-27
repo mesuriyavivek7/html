@@ -84,7 +84,8 @@ ok(Array.prototype.some.call(document.styleSheets, function(ss){ try { return Ar
       var bad = [];
       ['jobs','talent-pool','interviews','settings','reports','team-members','client-management','integrations'].forEach(function(v){
         showView(v); var h = q('#main-content .sec-head .sec-title') || q('#main-content h1'); if(!h){ bad.push(v + ' (no title)'); return; }
-        var cs = getComputedStyle(h); if(cs.fontSize!=='30px' || cs.fontWeight!=='800') bad.push(v + ' ' + cs.fontSize + '/' + cs.fontWeight);
+        var cs = getComputedStyle(h), want = v==='client-management' ? ['28px','600'] : ['30px','800'];   /* the Clients screens use the calmer 28 / 600 title */
+        if(cs.fontSize!==want[0] || cs.fontWeight!==want[1]) bad.push(v + ' ' + cs.fontSize + '/' + cs.fontWeight);
       });
       ok(!bad.length, bad.join(', '));
     });

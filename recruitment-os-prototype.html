@@ -2408,6 +2408,94 @@ body.sl-on > #app, body.sl-on > #onboarding, body.sl-on > #cs-root{ display:none
 .sl-hl,.iv-doc ul,.iv-prep{ list-style:disc; } .sl-form .iv-chips{ margin-top:4px; } .sl-form .iv-score:first-child{ margin-top:0; }
 .iv-time b{ white-space:nowrap; } @media (max-width:640px){ .iv-row{ grid-template-columns:66px 12px minmax(0,1fr); } .iv-time b{ font-size:12px; } .iv-now span{ width:66px; } }
 /* ==IV-CSS-END== */
+/* ==CL-CSS-BEGIN== *//* Clients: calm, light, no dark fills, no red, no green. Weights 400 / 500, and 600 only for the page title and the lean button. */
+.cl-page{ max-width:1180px; margin:0 auto; padding:36px 40px; min-width:0; font-family:var(--font); color:#2F313F; }
+.cl-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:28px; }
+.cl-h1{ margin:0; font:600 28px/36px var(--font); letter-spacing:-.025em; color:#2F313F; }
+.cl-muted{ display:block; margin:2px 0 0; font:400 13px/1.5 var(--font); color:#6B6F80; }
+.cl-head__r{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.cl-search input{ width:340px; max-width:100%; height:40px; padding:0 14px; border:1px solid #E3E4E8; border-radius:11px; background:#fff; font:400 14px var(--font); color:#2F313F; }
+.cl-search input:focus,.cl-input:focus,.cl-select:focus{ outline:2px solid #8C90A0; outline-offset:1px; }
+.btn--go{ position:relative; display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 18px 0 24px; border:1px solid #DFE1E7; border-radius:11px; background:#FFFFFF; color:#2F313F; font:600 14px var(--font); cursor:pointer; box-shadow:0 1px 2px rgba(47,49,63,.08); transition:transform 600ms cubic-bezier(.32,.72,0,1), box-shadow 600ms cubic-bezier(.32,.72,0,1); }
+.btn--go::before{ content:""; position:absolute; left:11px; top:50%; width:3px; height:13px; margin-top:-6.5px; border-radius:1px; background:#5B6075; transform:skewX(-15deg); }
+.btn--go:hover{ transform:translateY(-1px); box-shadow:0 8px 18px -10px rgba(47,49,63,.3); }
+.btn--go:focus-visible,.cl-btn:focus-visible,.cl-chip:focus-visible,.cl-stat:focus-visible,.cl-tr:focus-visible,.cn-model:focus-visible{ outline:2px solid #8C90A0; outline-offset:2px; }
+.cl-btn{ display:inline-flex; align-items:center; height:40px; padding:0 16px; border:1px solid #E3E4E8; border-radius:11px; background:#fff; font:500 14px var(--font); color:#2F313F; cursor:pointer; }
+.cl-btn:hover{ background:#FAFAF8; }
+.cl-link{ border:0; background:transparent; padding:0 4px; font:500 13px var(--font); color:#6B6F80; cursor:pointer; text-decoration:none; } .cl-link:hover{ color:#2F313F; text-decoration:underline; } .cl-link:disabled{ opacity:.4; cursor:default; }
+.cl-back{ display:inline-block; margin-bottom:16px; font:500 13px var(--font); color:#6B6F80; cursor:pointer; } .cl-back:hover{ color:#2F313F; }
+.cl-card{ background:#fff; border:1px solid #ECECE8; border-radius:16px; }
+.cl-stats{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:28px; }
+.cl-stat{ position:relative; text-align:left; padding:18px 20px; background:#fff; border:1px solid #ECECE8; border-radius:16px; cursor:pointer; font-family:var(--font); transition:transform 600ms cubic-bezier(.32,.72,0,1), border-color 200ms; }
+.cl-stat:hover{ transform:translateY(-1px); }
+.cl-stat.is-on{ border-color:#D2D5DD; } .cl-stat.is-on::before{ content:""; position:absolute; left:0; top:50%; width:3px; height:16px; margin-top:-8px; border-radius:1px; background:#5B6075; transform:skewX(-15deg); }
+.cl-stat__l{ display:block; font:400 13px var(--font); color:#6B6F80; margin-bottom:6px; } .cl-stat__v{ font:500 26px/32px var(--font); letter-spacing:-.01em; color:#2F313F; font-variant-numeric:tabular-nums; }
+.cl-viewline{ display:flex; align-items:center; gap:14px; margin:-12px 0 16px; font:400 13px var(--font); color:#6B6F80; }
+.cl-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+.cl-toolbar .seg{ background:#F3F3F0; }
+.cl-select{ height:38px; padding:0 12px; border:1px solid #E3E4E8; border-radius:8px; background:#fff; font:400 14px var(--font); color:#2F313F; }
+.cl-tablewrap{ overflow:visible; } .cl-table{ width:100%; border-collapse:collapse; }
+.cl-table th{ text-align:left; padding:14px 20px; font:500 12px var(--font); color:#9A9EAB; border-bottom:1px solid #F4F4F1; }
+.cl-table td{ padding:16px 20px; font:400 14px var(--font); color:#2F313F; border-bottom:1px solid #F4F4F1; vertical-align:middle; }
+.cl-table tr:last-child td{ border-bottom:0; } .cl-tr{ cursor:pointer; } .cl-tr:hover td{ background:#FBFBF9; }
+.cl-name b{ display:block; font-weight:500; } .cl-name span{ display:block; margin-top:2px; font:400 13px var(--font); color:#6B6F80; }
+.cl-sub{ color:#6B6F80 !important; }
+.att{ display:inline-flex; align-items:center; gap:8px; font:500 13px var(--font); color:#94570A; } .att::before{ content:""; width:6px; height:6px; border-radius:50%; background:#E59A00; flex:none; }
+.cl-amber{ color:#94570A; }
+.cl-foot{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 4px; font:400 13px var(--font); color:#9A9EAB; } .cl-pager{ display:inline-flex; align-items:center; gap:10px; }
+.cl-empty{ padding:48px 16px; text-align:center; font:400 14px var(--font); color:#6B6F80; } .cl-empty p{ margin:0 0 14px; }
+.cl-tip{ position:relative; display:inline-block; outline:0; } .cl-tip__c{ position:absolute; z-index:60; left:0; top:calc(100% + 8px); min-width:200px; max-width:280px; padding:12px 14px; background:#fff; border:1px solid #ECECE8; border-radius:12px; box-shadow:0 16px 40px -16px rgba(47,49,63,.22); font:400 12px/1.5 var(--font); color:#565A66; opacity:0; visibility:hidden; transform:translateY(4px); transition:opacity 160ms, transform 160ms, visibility 160ms; text-align:left; white-space:normal; pointer-events:none; }
+.cl-tip__c b{ display:block; font-weight:500; color:#2F313F; margin-bottom:4px; } .cl-tip__c i{ display:block; font-style:normal; }
+.cl-tip:hover > .cl-tip__c,.cl-tip:focus > .cl-tip__c,.cl-tip:focus-within > .cl-tip__c{ opacity:1; visibility:visible; transform:none; }
+.cl-strip{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); margin-bottom:24px; } .cl-cell{ text-align:left; padding:18px 22px; border:0; background:transparent; cursor:pointer; font-family:var(--font); border-right:1px solid #F4F4F1; } .cl-cell:last-child{ border-right:0; } .cl-cell:hover{ background:#FBFBF9; }
+.cl-tabs{ position:relative; display:flex; gap:4px; margin-bottom:24px; border-bottom:1px solid #ECECE8; overflow-x:auto; }
+.cl-tabs [role="tab"]{ position:relative; z-index:1; border:0; background:transparent; padding:12px 14px; font:500 14px var(--font); color:#6B6F80; cursor:pointer; white-space:nowrap; } .cl-tabs [role="tab"][aria-selected="true"]{ color:#2F313F; }
+.cl-tabs .o-pill--under{ background:transparent; box-shadow:none; } .cl-tabs .o-pill--under::after{ background:rgba(47,49,63,.7); }
+.cl-two{ display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:40px; } .cl-two--terms{ grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); }
+.cl-sec{ margin-bottom:32px; } .cl-sec h2{ margin:0 0 12px; font:500 13px var(--font); color:#9A9EAB; } .cl-sechead{ display:flex; align-items:center; justify-content:space-between; } .cl-sechead h2{ margin:0 0 12px; }
+.cl-need,.cl-person,.cl-jobrow{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid #F4F4F1; } .cl-need p{ margin:2px 0 0; }
+.cl-jobrow{ cursor:pointer; } .cl-jobrow b,.cl-person b{ display:block; font-weight:500; font-size:14px; } .cl-jobrow span.cl-muted,.cl-person span.cl-muted{ display:block; }
+.cl-icons{ display:inline-flex; gap:6px; } .cl-ic{ width:32px; height:32px; border:0; border-radius:8px; background:#F4F4F1; color:#6B6F80; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; text-decoration:none; } .cl-ic:hover{ background:#ECECE8; color:#2F313F; }
+.cl-list{ padding:4px 20px; } .cl-locrow{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 0; border-bottom:1px solid #F4F4F1; } .cl-locrow:last-child{ border-bottom:0; } .cl-locrow b{ display:block; font-weight:500; font-size:14px; } .cl-locrow .cl-muted{ display:block; }
+.cl-contact{ display:flex; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid #F4F4F1; } .cl-contact__main{ flex:1; min-width:0; } .cl-contact__main b{ display:block; font-weight:500; font-size:14px; }
+.cl-kv{ display:flex; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid #F4F4F1; font:400 14px var(--font); } .cl-kv span{ color:#6B6F80; } .cl-kv b{ font-weight:500; }
+.cl-taxrow{ display:grid; grid-template-columns:150px minmax(0,1fr) auto; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid #F4F4F1; } .cl-taxrow__l b{ display:block; font-weight:500; font-size:14px; } .cl-taxrow__t{ font:400 14px var(--font); } .cl-taxrow__a{ display:inline-flex; gap:6px; } .cl-manual{ margin:-4px 0 8px !important; } .cl-foot2{ margin-top:12px !important; }
+.cl-calc{ padding:22px; position:sticky; top:84px; } .cl-calc__row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; } .cl-big{ display:inline-block; font:500 26px/32px var(--font); letter-spacing:-.01em; font-variant-numeric:tabular-nums; margin:2px 0 8px; }
+.cl-lab{ margin:14px 0 6px; font:500 13px var(--font); color:#6B6F80; }
+.cl-chips{ display:flex; gap:8px; flex-wrap:wrap; } .cl-chip{ height:34px; padding:0 14px; border:1px solid #E3E4E8; border-radius:8px; background:#fff; font:500 13px var(--font); color:#565A66; cursor:pointer; } .cl-chip:hover{ background:#FAFAF8; } .cl-chip.is-on{ background:#F2F3F6; border-color:#B3B7C3; color:#2F313F; }
+.cl-edit{ padding:14px 0 6px; } .cl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items:center; }
+.cl-field{ display:flex; flex-direction:column; gap:6px; min-width:0; } .cl-field > span:first-child{ font:500 13px var(--font); color:#6B6F80; }
+.cl-input{ width:100%; height:40px; padding:0 12px; border:1px solid #E3E4E8; border-radius:8px; background:#fff; font:400 14px var(--font); color:#2F313F; box-sizing:border-box; } .cl-input.has-err{ border-color:#E9C47A; background:#FEF6E6; } .cl-ta{ height:auto; padding:10px 12px; }
+.cl-suffix{ position:relative; display:flex; align-items:center; } .cl-suffix .cl-input{ padding-right:44px; } .cl-suffix i{ position:absolute; right:12px; font-style:normal; font:400 13px var(--font); color:#9A9EAB; }
+.cl-suffix--code .cl-input{ padding-right:12px; border-top-left-radius:0; border-bottom-left-radius:0; } .cl-code{ height:40px; border:1px solid #E3E4E8; border-right:0; border-radius:8px 0 0 8px; background:#F8F8F6; font:400 14px var(--font); padding:0 6px; color:#565A66; }
+.cl-err{ margin:4px 0 0; padding:6px 10px; border-radius:8px; background:#FEF6E6; color:#94570A; font:500 13px var(--font); } .cl-err[hidden]{ display:none; }
+.cl-more{ position:relative; } .cl-menu{ position:absolute; right:0; top:46px; z-index:70; min-width:170px; padding:6px; background:#fff; border:1px solid #ECECE8; border-radius:12px; box-shadow:0 16px 40px -16px rgba(47,49,63,.22); } .cl-menu button{ display:block; width:100%; text-align:left; border:0; background:transparent; padding:9px 12px; border-radius:8px; font:500 13px var(--font); color:#2F313F; cursor:pointer; } .cl-menu button:hover{ background:#F4F4F1; }
+.cl-pad{ padding:20px; }
+/* Add client */
+.cn-page{ max-width:980px; } .cn-card{ padding:24px; margin-bottom:20px; } .cn-h{ margin:0 0 16px; font:500 15px var(--font); color:#2F313F; }
+.cn-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:12px; } .cn-grid--3{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+.cn-results{ margin:-4px 0 12px; border:1px solid #ECECE8; border-radius:12px; overflow:hidden; background:#fff; } .cn-result{ display:block; width:100%; text-align:left; padding:12px 16px; border:0; border-bottom:1px solid #F4F4F1; background:#fff; cursor:pointer; font-family:var(--font); } .cn-result:last-child{ border-bottom:0; } .cn-result:hover{ background:#FBFBF9; } .cn-result b{ display:block; font-weight:500; font-size:14px; color:#2F313F; } .cn-result span{ font:400 13px var(--font); color:#6B6F80; } .cn-noresult{ margin:-4px 0 12px !important; }
+.cn-filled{ display:flex; align-items:center; gap:8px; margin:0 0 14px; font:400 13px var(--font); color:#6B6F80; } .cn-filled i{ width:6px; height:6px; border-radius:50%; background:#B3B7C3; }
+.cn-dup{ margin:0 0 16px; padding:14px 16px; border-radius:12px; background:#FEF6E6; color:#94570A; font:400 14px/1.5 var(--font); } .cn-dup p{ margin:0; } .cn-dup b{ font-weight:500; } .cn-dup .cl-btn{ height:36px; }
+.cn-keep{ display:flex; align-items:flex-end; } .cn-check{ display:flex; align-items:center; gap:8px; font:400 13px var(--font); color:#565A66; align-self:end; height:40px; } .cn-check input{ accent-color:#5B6075; }
+.cn-tabcard{ padding:0; } .cn-tabs{ margin:0; padding:0 16px; } .cn-panel{ padding:24px; }
+.cn-locs{ display:flex; flex-direction:column; gap:12px; margin-bottom:16px; } .cn-loc{ border:1px solid #ECECE8; border-radius:14px; background:#fff; } .cn-loc.is-open{ border-color:#D9D8D2; }
+.cn-lochead{ display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; padding:16px 18px; border:0; background:transparent; cursor:pointer; text-align:left; font-family:var(--font); } .cn-lochead b{ display:block; font-weight:500; font-size:14px; color:#2F313F; } .cn-lochead i{ display:block; font:400 13px var(--font); font-style:normal; color:#6B6F80; margin-top:2px; } .cn-lochead em{ font:400 13px var(--font); font-style:normal; color:#9A9EAB; }
+.cn-locbody{ padding:4px 18px 18px; } .cn-taxline{ margin:4px 0 0; font:400 13px/1.6 var(--font); color:#6B6F80; } .cn-pinhint{ margin:-4px 0 8px !important; } .cn-bill{ margin-top:10px; }
+.cn-models{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; } .cn-model{ height:48px; border:1px solid #E3E4E8; border-radius:11px; background:#fff; font:500 14px var(--font); color:#565A66; cursor:pointer; } .cn-model.is-on{ background:#F7F8FA; border-color:#B3B7C3; color:#2F313F; }
+.cn-below{ margin:12px 0 0; padding:10px 14px; border-radius:8px; background:#FEF6E6; color:#94570A; font:500 13px var(--font); } .cn-below[hidden]{ display:none; }
+.cn-errbar{ display:flex; gap:10px; width:100%; margin-bottom:16px; padding:12px 16px; border:0; border-radius:12px; background:#FEF6E6; text-align:left; cursor:pointer; font:400 14px var(--font); color:#94570A; } .cn-errbar i{ font-style:normal; }
+.cn-foot{ position:sticky; bottom:0; display:flex; align-items:center; gap:12px; padding:16px 0; margin-top:8px; background:#F8F8F6; } .cn-hint{ font:400 13px var(--font); color:#9A9EAB; } .cn-spacer{ flex:1; }
+.cn-done{ padding:32px; max-width:560px; } .cn-check-list{ list-style:none; margin:20px 0; padding:0; display:flex; flex-direction:column; gap:12px; } .cn-check-list li{ display:flex; align-items:center; gap:12px; font:400 14px var(--font); color:#565A66; } .cn-check-list li i{ width:8px; height:8px; border-radius:50%; background:#E59A00; flex:none; } .cn-check-list li.is-ok i{ background:#B3B7C3; }
+/* toasts on these screens: a quiet white card */
+body.cl-on .app-toast{ background:#fff !important; color:#2F313F !important; border:1px solid #ECECE8; box-shadow:0 16px 40px -16px rgba(47,49,63,.22); } body.cl-on .app-toast__icon{ color:#9A9EAB !important; } body.cl-on .app-toast__undo{ color:#2F313F !important; background:transparent !important; } .cl-toast-x{ border:0; background:transparent; font:500 13px var(--font); color:#6B6F80; cursor:pointer; margin-left:8px; }
+@media (max-width:1100px){ .cl-stats{ grid-template-columns:repeat(2,minmax(0,1fr)); } .cl-two,.cl-two--terms{ grid-template-columns:minmax(0,1fr); } .cl-calc{ position:static; } }
+@media (max-width:720px){ .cl-page{ padding:20px 16px; } .cl-stats{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .cl-strip{ grid-template-columns:repeat(2,minmax(0,1fr)); } .cn-grid,.cn-grid--3,.cn-models{ grid-template-columns:minmax(0,1fr); } .cl-search input{ width:100%; } .cl-tablewrap{ overflow-x:auto; } .cl-taxrow{ grid-template-columns:minmax(0,1fr); } .cn-foot{ flex-wrap:wrap; } .cn-hint{ display:none; } }
+.cl-tabs,.cl-tabs.o-tabs-host{ background:transparent !important; padding:0 !important; border-radius:0 !important; box-shadow:none !important; border-bottom:1px solid #ECECE8 !important; }
+.cl-page .cl-h1{ font-weight:600 !important; font-size:28px !important; line-height:36px !important; letter-spacing:-.025em !important; } .cl-page .seg__btn{ font-weight:500 !important; } .cl-page .seg__n{ font-weight:400 !important; }
+.cl-table th{ font-weight:500 !important; }
+.cl-page .cl-tabs [role="tab"],.cl-page .cl-tabs [role="tab"][aria-selected="true"]{ font-weight:500 !important; }
+/* ==CL-CSS-END== */
 </style>
 </head>
 <body class="text-zinc-900 antialiased">
@@ -42941,7 +43029,7 @@ function ivPanelDeclined(id, name, why){ const iv = findHmInterview(id), p = iv 
   const items = [
     mk({ cand:'Diya Menon', job:'j1', day:-4, hr:T(14), round:2, panel:[{ name:'Rohit Bansal', link:'sent', linkAt:now - 4 * IV_D }], status:'Completed' }),
     mk({ cand:'Aditya Nair', job:'j3', day:thu, hr:T(13), round:1, panel:[{ name:'Rohit Bansal', link:'opened', linkAt:now - 20 * H, c:true }, { name:'Meera Kulkarni', c:false }], cc:true }),
-    mk({ cand:'Sneha Patel', job:'j4', day:0, hr:T(10), round:1, panel:[{ name:'Farhan Sheikh' }], cr:{ state:'sent', sentAt:now - 2 * H }, status:'Completed' }),
+    mk({ cand:'Sneha Patel', job:'j4', day:(new Date(now).getHours() >= 3 ? 0 : -1), hr:T(new Date(now).getHours() >= 3 ? new Date(now).getHours() - 3 : 20), round:1, panel:[{ name:'Farhan Sheikh' }], cr:{ state:'sent', sentAt:now - 2 * H }, status:'Completed' }),
     mk({ cand:'Vikram Rao', job:'j4', day:tomorrow, hr:T(15), round:2, panel:[{ name:'Farhan Sheikh' }], cc:true }),
     mk({ cand:'Amit Verma', job:'j2', day:0, hr:T(16, 30), round:1, panel:[{ name:'Suresh Iyer', c:true }], cc:false }),
     mk({ cand:'Priya Nair', job:'j2', day:0, hr:T(16, 30), round:1, panel:[{ name:'Suresh Iyer', c:true }], cc:true }),
@@ -43444,6 +43532,919 @@ function slDevExpire(){ SECURE_LINKS.forEach(function(l){ if(l.personName === 'R
 slEnsureRavi();
 if(/^#\/l\//.test(location.hash)) setTimeout(slRoute, 0);
 function slStubIv(subId){ const sb = subById(subId); return sb ? { candidate:(byId(sb.candidateId) || {}).name, candidateId:sb.candidateId, jobId:sb.jobId, submissionId:sb.id } : {}; }
+
+</script>
+<script id="clients-script">
+/* ---------- cl-core.js ---------- */
+/* ============================================================
+   CLIENTS: data, tax engine, fees, money and PayTrack link.
+   Tax and compliance work in the backend. People choose; the rules apply, and update by themselves.
+============================================================ */
+const CL = { seg:'active', owner:'', q:'', card:null, page:1, tab:'overview', id:null, edit:null, taxEdit:null, calc:{ ctc:2400000, loc:null }, flash:null };
+const cle = function(s){ return escapeHtml(String(s == null ? '' : s)); };
+const CL_FY_START = new Date(2026, 3, 1);
+
+/* ---------- money ---------- */
+const CL_SYM = { INR:'₹', USD:'$', GBP:'£', EUR:'€', AED:'AED ', SGD:'S$', AUD:'A$', CAD:'C$', SAR:'SAR ' };
+function clCur(code){ return CL_SYM[code] != null ? CL_SYM[code] : (code || '') + ' '; }
+function clMoney(n, cur){ cur = cur || 'INR'; const v = Math.round(Number(n) || 0); return (v < 0 ? '−' : '') + clCur(cur) + Math.abs(v).toLocaleString(cur === 'INR' ? 'en-IN' : 'en-US'); }
+function clShort(n){ const a = Math.abs(n), t = function(x){ return String(+x.toFixed(2)); }; return '₹' + (a >= 1e7 ? t(n / 1e7) + 'Cr' : a >= 1e5 ? t(n / 1e5) + 'L' : Math.round(n).toLocaleString('en-IN')); }
+function clCountryCur(country){ return (ncCountryInfo(country) || {}).cur || 'INR'; }
+
+/* ---------- geography: states, cities, postal codes ---------- */
+// PROTOTYPE data. Production loads the full country → state → city dataset (e.g. country-state-city or GeoNames) lazily and caches it per country.
+const CL_CITIES_RAW = 'Jammu and Kashmir:Srinagar,Jammu|Himachal Pradesh:Shimla,Dharamshala,Solan|Punjab:Ludhiana,Amritsar,Mohali,Jalandhar|Chandigarh:Chandigarh|Uttarakhand:Dehradun,Haridwar,Haldwani|Haryana:Gurugram,Faridabad,Panipat,Ambala|Delhi:New Delhi,Dwarka,Rohini|Rajasthan:Jaipur,Jodhpur,Udaipur,Kota|Uttar Pradesh:Noida,Lucknow,Kanpur,Ghaziabad,Agra,Varanasi|Bihar:Patna,Gaya,Muzaffarpur|Sikkim:Gangtok|Arunachal Pradesh:Itanagar|Nagaland:Kohima,Dimapur|Manipur:Imphal|Mizoram:Aizawl|Tripura:Agartala|Meghalaya:Shillong|Assam:Guwahati,Dibrugarh,Silchar|West Bengal:Kolkata,Howrah,Siliguri,Durgapur|Jharkhand:Ranchi,Jamshedpur,Dhanbad|Odisha:Bhubaneswar,Cuttack,Rourkela|Chhattisgarh:Raipur,Bhilai,Bilaspur|Madhya Pradesh:Indore,Bhopal,Gwalior,Jabalpur|Gujarat:Ahmedabad,Surat,Vadodara,Rajkot,Gandhinagar|Dadra and Nagar Haveli and Daman and Diu:Silvassa,Daman,Diu|Maharashtra:Mumbai,Pune,Nagpur,Nashik,Thane,Aurangabad|Karnataka:Bengaluru,Mysuru,Mangaluru,Hubballi|Goa:Panaji,Margao,Vasco da Gama|Lakshadweep:Kavaratti|Kerala:Kochi,Thiruvananthapuram,Kozhikode,Thrissur|Tamil Nadu:Chennai,Coimbatore,Madurai,Tiruchirappalli,Salem|Puducherry:Puducherry|Andaman and Nicobar Islands:Port Blair|Telangana:Hyderabad,Warangal,Secunderabad|Andhra Pradesh:Visakhapatnam,Vijayawada,Tirupati|Ladakh:Leh,Kargil|Other Territory:Other';
+const CL_CITIES = {};
+CL_CITIES_RAW.split('|').forEach(function(s){ const i = s.indexOf(':'); CL_CITIES[s.slice(0, i)] = s.slice(i + 1).split(','); });
+Object.assign(CL_CITIES, { 'Dubai':['Dubai'], 'Abu Dhabi':['Abu Dhabi','Al Ain'], 'Sharjah':['Sharjah'], 'Ajman':['Ajman'], 'Ras Al Khaimah':['Ras Al Khaimah'], 'Fujairah':['Fujairah'], 'Umm Al Quwain':['Umm Al Quwain'],
+  'England':['London','Manchester','Birmingham','Leeds','Bristol'], 'Scotland':['Edinburgh','Glasgow'], 'Wales':['Cardiff'], 'Northern Ireland':['Belfast'],
+  'California':['San Francisco','Los Angeles','San Jose'], 'New York':['New York','Buffalo'], 'Texas':['Austin','Dallas','Houston'], 'Washington':['Seattle'], 'Massachusetts':['Boston'], 'Illinois':['Chicago'],
+  'Ontario':['Toronto','Ottawa'], 'British Columbia':['Vancouver'], 'Quebec':['Montreal'], 'Alberta':['Calgary'],
+  'New South Wales':['Sydney'], 'Victoria':['Melbourne'], 'Queensland':['Brisbane'],
+  'Bavaria':['Munich','Nuremberg'], 'Berlin':['Berlin'], 'Hesse':['Frankfurt'], 'Hamburg':['Hamburg'] });
+const CL_STATES_BY_COUNTRY = { 'India':GST_STATES.map(function(s){ return s[1]; }).filter(function(n){ return n !== 'Other Territory'; }), 'United Arab Emirates':UAE_EMIRATES, 'United States':US_STATES, 'Canada':CA_PROVINCES,
+  'United Kingdom':['England', 'Scotland', 'Wales', 'Northern Ireland'], 'Australia':['Australian Capital Territory', 'New South Wales', 'Northern Territory', 'Queensland', 'South Australia', 'Tasmania', 'Victoria', 'Western Australia'],
+  'Germany':['Baden-Württemberg', 'Bavaria', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hesse', 'Lower Saxony', 'Mecklenburg-Vorpommern', 'North Rhine-Westphalia', 'Rhineland-Palatinate', 'Saarland', 'Saxony', 'Saxony-Anhalt', 'Schleswig-Holstein', 'Thuringia'],
+  'Saudi Arabia':['Riyadh', 'Makkah', 'Eastern Province', 'Madinah'], 'Singapore':['Singapore'] };
+function clStates(country){ return CL_STATES_BY_COUNTRY[country] || []; }
+function clStateLabel(country){ return country === 'United Arab Emirates' ? 'Emirate' : country === 'United Kingdom' ? 'Nation' : country === 'Canada' ? 'Province' : country === 'India' || country === 'United States' || country === 'Australia' || country === 'Germany' ? 'State' : 'Region'; }
+function clPostalLabel(country){ return country === 'India' ? 'PIN code' : country === 'United Arab Emirates' ? 'P.O. box' : country === 'United Kingdom' ? 'Postcode' : country === 'United States' ? 'ZIP code' : 'Postal code'; }
+const CL_PIN_PREFIX = { 11:'Delhi', 12:'Haryana', 13:'Haryana', 14:'Punjab', 15:'Punjab', 16:'Chandigarh', 17:'Himachal Pradesh', 18:'Jammu and Kashmir', 19:'Jammu and Kashmir', 20:'Uttar Pradesh', 21:'Uttar Pradesh', 22:'Uttar Pradesh', 23:'Uttar Pradesh', 24:'Uttarakhand', 25:'Uttar Pradesh', 26:'Uttar Pradesh', 27:'Uttar Pradesh', 28:'Uttar Pradesh', 30:'Rajasthan', 31:'Rajasthan', 32:'Rajasthan', 33:'Rajasthan', 34:'Rajasthan', 36:'Gujarat', 37:'Gujarat', 38:'Gujarat', 39:'Gujarat', 40:'Maharashtra', 41:'Maharashtra', 42:'Maharashtra', 43:'Maharashtra', 44:'Maharashtra', 45:'Madhya Pradesh', 46:'Madhya Pradesh', 47:'Madhya Pradesh', 48:'Madhya Pradesh', 49:'Chhattisgarh', 50:'Telangana', 51:'Andhra Pradesh', 52:'Andhra Pradesh', 53:'Andhra Pradesh', 56:'Karnataka', 57:'Karnataka', 58:'Karnataka', 59:'Karnataka', 60:'Tamil Nadu', 61:'Tamil Nadu', 62:'Tamil Nadu', 63:'Tamil Nadu', 64:'Tamil Nadu', 67:'Kerala', 68:'Kerala', 69:'Kerala', 70:'West Bengal', 71:'West Bengal', 72:'West Bengal', 73:'West Bengal', 74:'West Bengal', 75:'Odisha', 76:'Odisha', 77:'Odisha', 78:'Assam', 79:'Assam', 80:'Bihar', 81:'Bihar', 82:'Bihar', 83:'Jharkhand', 84:'Bihar', 85:'Bihar' };
+const CL_PIN_CITY = { '560103':'Bengaluru', '560001':'Bengaluru', '560066':'Bengaluru', '400001':'Mumbai', '400051':'Mumbai', '411001':'Pune', '411057':'Pune', '380001':'Ahmedabad', '380009':'Ahmedabad', '395007':'Surat', '110001':'New Delhi', '600001':'Chennai', '600034':'Chennai', '500001':'Hyderabad', '500081':'Hyderabad', '700001':'Kolkata', '122001':'Gurugram', '122002':'Gurugram', '201301':'Noida', '682001':'Kochi', '302001':'Jaipur', '452001':'Indore', '440001':'Nagpur', '641001':'Coimbatore' };
+/** PROTOTYPE stand-in for the India Post PIN API (api.postalpincode.in) and the postcode services of other countries. */
+function clLookupPostal(country, code){
+  code = String(code || '').trim();
+  if(country === 'India' && /^[1-9]\d{5}$/.test(code)){ const st = CL_PIN_PREFIX[+code.slice(0, 2)]; return st ? { state:st, city:CL_PIN_CITY[code] || '' } : null; }
+  if(country === 'United Kingdom' && /^[A-Z]{1,2}\d/i.test(code)){ const k = code.toUpperCase().replace(/\s/g, ''); return /^(EC|WC|SW|SE|NW|N|E|W)\d/.test(k) ? { state:'England', city:'London' } : null; }
+  return null;
+}
+const CL_NAMES_BY_STATE = { 'Gujarat':'Hiral Patel', 'Maharashtra':'Sneha Kulkarni', 'Karnataka':'Kiran Gowda', 'Tamil Nadu':'Karthik Raman', 'Delhi':'Rohit Sharma', 'Telangana':'Sravani Reddy', 'Kerala':'Anjali Nair', 'West Bengal':'Ananya Banerjee', 'Punjab':'Harpreet Gill', 'Rajasthan':'Vikram Rathore', 'Uttar Pradesh':'Ankit Verma', 'Haryana':'Deepak Malik', 'Madhya Pradesh':'Priyanka Joshi', 'Andhra Pradesh':'Venkat Rao', 'Bihar':'Rakesh Kumar', 'Odisha':'Smita Mohanty', 'Assam':'Bhaskar Das', 'Goa':'Fernanda Dias' };
+const CL_NAMES_BY_COUNTRY = { 'United Arab Emirates':'Ahmed Al Mansoori', 'United Kingdom':'James Carter', 'United States':'Emily Johnson', 'Singapore':'Wei Ling Tan', 'Saudi Arabia':'Faisal Al Harbi', 'Australia':'Olivia Smith', 'Canada':'Liam Tremblay', 'Germany':'Lena Müller', 'India':'Rohit Sharma' };
+function clPlaceholderName(country, state){ return (country === 'India' && CL_NAMES_BY_STATE[state]) || CL_NAMES_BY_COUNTRY[country] || 'Alex Morgan'; }
+const CL_MOBILE_PH = { 'India':'98765 43210', 'United Arab Emirates':'50 123 4567', 'United Kingdom':'7700 900123', 'United States':'415 555 0132', 'Singapore':'8123 4567', 'Saudi Arabia':'50 123 4567', 'Australia':'412 345 678', 'Canada':'416 555 0198', 'Germany':'151 2345 6789' };
+function clPlaceholderEmail(name, site){ const f = String(name || 'name').toLowerCase().split(' ')[0].replace(/[^a-z]/g, ''); return f + '@' + (clientDomain(site) || 'company.com'); }
+
+/* ---------- industries ---------- */
+function clIndustries(){ return INDUSTRY_DATA.map(function(i){ return i.name; }).filter(Boolean).sort(function(a, b){ return a.localeCompare(b); }); }
+function clKeepIndustry(name){ name = String(name || '').trim(); if(!name) return ''; const hit = INDUSTRY_DATA.find(function(i){ return i.name.toLowerCase() === name.toLowerCase(); }); if(hit) return hit.name; INDUSTRY_DATA.push({ id:'I' + Date.now(), name:name, aliases:[] }); logAudit('Clients', 'Industry added to the list', name); return name; }
+
+/* ---------- rule packs (the compliance desk's registry) ---------- */
+// VERIFY BEFORE GO-LIVE: every value below must be confirmed by a CA.
+const CL_PACKS = [
+  { id:'IN-GST', country:'India', label:'India · GST', domain:'indirect-tax', version:'2026.3', effectiveFrom:'2026-04-01', reviewedAt:'2026-10-14', source:'CBIC, cbic-gst.gov.in',
+    rules:{ sac:{ '998511':'Executive search', '998512':'Permanent placement', '998513':'Contract staffing', '998514':'Temporary staffing' }, rate:18, eInvoiceAbove:50000000 } },   // VERIFY BEFORE GO-LIVE
+  { id:'IN-TDS', country:'India', label:'India · income-tax', domain:'withholding', version:'2026.1', effectiveFrom:'2026-04-01', reviewedAt:'2026-10-14', source:'Income-tax Act, 2025',
+    rules:{ section:'194J', rate:10, thresholdYear:50000, note:'TDS u/s 194J' } },   // VERIFY BEFORE GO-LIVE: section 393(1) of the 2025 Act from 1 Apr 2026
+  { id:'IN-FEMA', country:'India', label:'India · foreign exchange', domain:'forex', version:'2026.1', effectiveFrom:'2026-04-01', reviewedAt:'2026-09-30', source:'RBI, FEMA', rules:{ realisation:true } },
+  { id:'IN-LAB', country:'India', label:'India · labour codes', domain:'labour', version:'2025.11', effectiveFrom:'2025-11-21', reviewedAt:'2026-09-30', source:'Ministry of Labour', rules:{ monthlyPack:true } },
+  { id:'IN-DPDP', country:'India', label:'India · data protection', domain:'data-protection', version:'2026.1', effectiveFrom:'2026-04-01', reviewedAt:'2026-09-30', source:'DPDP Act', rules:{ consent:true } },
+  { id:'AE-VAT', country:'United Arab Emirates', label:'UAE · VAT', domain:'indirect-tax', version:'2026.1', effectiveFrom:'2026-01-01', reviewedAt:'2026-10-01', source:'Federal Tax Authority', rules:{ rate:5 } },
+  { id:'GB-VAT', country:'United Kingdom', label:'UK · VAT', domain:'indirect-tax', version:'2026.1', effectiveFrom:'2026-01-01', reviewedAt:'2026-10-01', source:'HMRC', rules:{ rate:20, reverseNote:'Reverse charge: customer to account for VAT' } },
+  { id:'EU-VAT', country:'EU', label:'EU · VAT', domain:'indirect-tax', version:'2026.1', effectiveFrom:'2026-01-01', reviewedAt:'2026-10-01', source:'European Commission, VIES', rules:{ reverse:true } },
+  { id:'US-ST', country:'United States', label:'US · sales tax', domain:'indirect-tax', version:'2026.1', effectiveFrom:'2026-01-01', reviewedAt:'2026-10-01', source:'State revenue departments', rules:{ placementsTaxed:false } },
+  { id:'SG-GST', country:'Singapore', label:'Singapore · GST', domain:'indirect-tax', version:'2026.1', effectiveFrom:'2026-01-01', reviewedAt:'2026-10-01', source:'IRAS', rules:{ rate:9 } }
+];
+const CL_FEED = [   // what the compliance desk publishes; syncRulePacks() applies it silently
+  { id:'f1', pack:'IN-TDS', version:'2026.2', effectiveFrom:'2026-11-01', kind:'wording', summary:'Invoice wording only', apply:function(p){ p.rules.note = 'TDS u/s 393(1)'; p.rules.section = '393(1)'; } },
+  { id:'f2', pack:'GB-VAT', version:'2026.2', effectiveFrom:'2026-12-01', kind:'wording', summary:'Reverse-charge wording', apply:function(p){ p.rules.reverseNote = 'Reverse charge: the customer accounts for VAT'; } }
+];
+const CL_APPLIED_FEED = {};
+function clPack(id){ return CL_PACKS.find(function(p){ return p.id === id; }); }
+function clPackAt(id, date){ const p = clPack(id); if(!p) return null; const d = clIso(date || ivNowMsSafe()); const hist = (p.history || []).concat([{ version:p.version, effectiveFrom:p.effectiveFrom, rules:p.rules }]).sort(function(a, b){ return a.effectiveFrom < b.effectiveFrom ? 1 : -1; }); const hit = hist.find(function(h){ return h.effectiveFrom <= d; }) || hist[hist.length - 1]; return { id:id, version:hit.version, rules:hit.rules, effectiveFrom:hit.effectiveFrom }; }
+function ivNowMsSafe(){ return typeof ivNowMs === 'function' ? ivNowMs() : Date.now(); }
+function clIso(t){ const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+/** Apply published updates. Silent; each affected client gets one Activity line. A change that touches a manually set line waits for the owner. */
+function syncRulePacks(now){
+  const date = clIso(now || ivNowMsSafe()); let applied = 0;
+  CL_FEED.forEach(function(u){
+    if(CL_APPLIED_FEED[u.id] || u.effectiveFrom > date) return; const p = clPack(u.pack); if(!p) return;
+    p.history = (p.history || []); p.history.push({ version:p.version, effectiveFrom:p.effectiveFrom, rules:JSON.parse(JSON.stringify(p.rules)) });
+    u.apply(p); p.version = u.version; p.effectiveFrom = u.effectiveFrom; p.reviewedAt = date; CL_APPLIED_FEED[u.id] = true; applied++;
+    CLIENTS.forEach(function(c){ if(!clientEnsure(c).locations.some(function(l){ return clLocPack(l, u.pack); })) return;
+      clientActivity(c, 'Tax rules updated automatically · ' + p.label + ' · ' + u.summary.toLowerCase());
+      (c.locations || []).forEach(function(l){ if(l.taxOverride && l.taxOverride.status === 'active' && clLocPack(l, u.pack)) l.taxOverride.ruleMoved = u.summary; }); });
+    logAudit('Clients', 'Rule pack updated automatically', p.label + ' to ' + p.version + ' · ' + u.summary);
+  });
+  return applied;
+}
+function clLocPack(l, packId){ const p = clPack(packId); return !!p && (l.country === p.country || (p.country === 'EU' && (ncCountryInfo(l.country).iso in NC_EU_VAT))); }
+
+/* ---------- tax resolution (pure) ---------- */
+function clOurEntity(){ const e = (ORG_STRUCTURE.legalEntities || [])[0] || {}; return { id:e.id || 'le1', name:e.name || '', country:e.country || 'India', state:e.state || 'Gujarat', gstin:e.gstin || e.taxId || '', lut:e.lut || { arn:'AD240326012345X', fy:'2026-27', validTill:'2027-03-31' } }; }
+const CL_OVERRIDES = [
+  ['igst', 'IGST 18%', [{ label:'IGST', rate:18 }]], ['cgst_sgst', 'CGST 9% + SGST 9%', [{ label:'CGST', rate:9 }, { label:'SGST', rate:9 }]],
+  ['export_lut', '0% export under LUT', [{ label:'Export', rate:0 }]], ['sez_lut', '0% supply to an SEZ unit', [{ label:'SEZ', rate:0 }]], ['none', 'Don’t add tax', []]
+];
+function clOverrideLabel(v){ const o = CL_OVERRIDES.find(function(x){ return x[0] === v; }); return o ? o[1] : v; }
+function clTaxText(r){ if(r.key === 'export_lut' && r.taxes.length && r.taxes[0].rate === 0) return '0% export under LUT'; if(r.key === 'sez_lut' || r.key === 'sez') return '0% supply to an SEZ unit'; if(r.key === 'gb_export') return 'Outside the scope of UK VAT'; if(r.key === 'ae_export') return 'UAE VAT 0%, export'; return r.taxes.length ? r.taxes.map(function(t){ return t.label + ' ' + t.rate + '%'; }).join(' + ') : 'No tax'; }
+/** resolveTax: what an invoice to this billing location carries. Pure; the same function checks vendor invoices in corporate mode. */
+function resolveTax(p){
+  const sup = p.supplierEntity || clOurEntity(), loc = p.location || {}, date = p.date || ivNowMsSafe(), cur = loc.currency || clCountryCur(loc.country), packs = [];
+  const gst = clPackAt('IN-GST', date), tds = clPackAt('IN-TDS', date), rate = (gst && gst.rules.rate) || 18;
+  const out = function(key, taxes, why, extra){ return Object.assign({ key:key, taxes:taxes, withholding:null, currency:cur, note:'', why:why, packs:packs, eInvoice:false }, extra || {}); };
+  const wh = function(){ packs.push('IN-TDS@' + tds.version); return { label:'TDS', rate:tds.rules.rate, text:tds.rules.note }; };
+  if(sup.country === 'India'){
+    packs.push('IN-GST@' + gst.version);
+    const supState = sup.state, eInv = !!(p.eInvoice !== false);
+    if(loc.country === 'India'){
+      if(loc.sez) return out('sez', [{ label:'SEZ', rate:0 }], 'Supply to an SEZ unit, 0% under the LUT', { withholding:wh(), eInvoice:eInv, note:'LUT ARN ' + (sup.lut && sup.lut.arn) });
+      const same = !loc.state || loc.state === supState;
+      const r = same ? out('cgst_sgst', [{ label:'CGST', rate:rate / 2 }, { label:'SGST', rate:rate / 2 }], 'Same state as your Gujarat company'.replace('Gujarat', supState)) : out('igst', [{ label:'IGST', rate:rate }], 'Interstate from ' + supState);
+      r.withholding = wh(); r.eInvoice = eInv; if(!loc.taxId) r.note = 'Client has no GSTIN'; return r;
+    }
+    packs.push('IN-FEMA@' + clPackAt('IN-FEMA', date).version);
+    const lutOk = !sup.lut || !sup.lut.validTill || sup.lut.validTill >= clIso(date);
+    const r = lutOk ? out('export_lut', [{ label:'Export', rate:0 }], 'Export of services, 0% under the LUT', { eInvoice:eInv }) : out('igst', [{ label:'IGST', rate:rate }], 'LUT has lapsed, so IGST applies', { eInvoice:eInv, lutLapsed:true });
+    if(loc.country === 'United Kingdom'){ packs.push('GB-VAT@' + clPackAt('GB-VAT', date).version); r.note = clPackAt('GB-VAT', date).rules.reverseNote; }
+    else if(ncCountryInfo(loc.country).iso in NC_EU_VAT){ packs.push('EU-VAT@' + clPackAt('EU-VAT', date).version); r.note = 'Reverse charge: customer to account for VAT'; }
+    return r;
+  }
+  if(sup.country === 'United Arab Emirates'){ const v = clPackAt('AE-VAT', date); packs.push('AE-VAT@' + v.version); return loc.country === sup.country ? out('ae_vat', [{ label:'VAT', rate:v.rules.rate }], 'Within the UAE') : out('ae_export', [{ label:'VAT', rate:0 }], 'Export of services from the UAE'); }
+  if(sup.country === 'United Kingdom'){ const v = clPackAt('GB-VAT', date); packs.push('GB-VAT@' + v.version); return loc.country === sup.country ? out('gb_vat', [{ label:'VAT', rate:v.rules.rate }], 'Within the UK') : out('gb_export', [], 'Outside the scope of UK VAT', { note:v.rules.reverseNote }); }
+  return out('manual', [], 'No rule pack for this country yet, so the tax is set by hand', { noPack:true });
+}
+/** The treatment actually used for a location: an approved manual line wins over the rule. */
+function clTaxFor(c, l, date){
+  const rule = resolveTax({ supplierEntity:clientSupplier(c, l), location:l, date:date }), o = l.taxOverride;
+  if(!o || o.status !== 'active') return Object.assign(rule, { rule:rule, manual:false });
+  const def = CL_OVERRIDES.find(function(x){ return x[0] === o.value; }) || CL_OVERRIDES[4];
+  return Object.assign({}, rule, { key:o.value, taxes:def[2].map(function(t){ return { label:t.label, rate:t.rate }; }), why:'Set by ' + (o.byName || 'you') + ': ' + o.reason, manual:true, rule:rule, note:rule.note });
+}
+function clientSupplier(c, l){ return clOurEntity(); }
+/** a snapshot stored on every invoice: later rule updates never change an issued invoice */
+function clSnapshot(c, l, date){ const r = clTaxFor(c, l, date); return { packs:r.packs.slice(), resolved:{ key:r.key, text:clTaxText(r), taxes:r.taxes, withholding:r.withholding, currency:r.currency, note:r.note || (r.withholding && r.withholding.text) || '' }, at:clIso(date || ivNowMsSafe()) }; }
+
+/* ---------- the client record: locations, contacts, commercials ---------- */
+const CL_ROUTE_BY_DEPT = { 'HR Team':['Profiles and feedback', 'Interview invites'], 'Recruitment':['Profiles and feedback', 'Interview invites'], 'Hiring Team (Business Unit)':['Profiles and feedback', 'Interview invites'], 'Vendor Support':['Invoices'], 'Billing Support':['Invoices'], 'Procurement':['Invoices'], 'Onboarding & Joining':['Joining updates'], 'Management / Leadership':['Escalations'] };
+const CL_ROUTES = ['Profiles and feedback', 'Interview invites', 'Invoices', 'Joining updates', 'Escalations'];
+const CL_GROUP_BY_DEPT = { 'HR Team':'Hiring', 'Recruitment':'Hiring', 'Hiring Team (Business Unit)':'Hiring', 'Onboarding & Joining':'Hiring', 'Vendor Support':'Invoices and payments', 'Billing Support':'Invoices and payments', 'Procurement':'Agreements and renewals', 'Management / Leadership':'Leadership' };
+function clGroupOf(p){ return CL_GROUP_BY_DEPT[p.dept] || (/(billing|accounts|finance)/i.test(p.title) ? 'Invoices and payments' : /(ceo|cto|cfo|director|head|vp|founder)/i.test(p.title) ? 'Leadership' : 'Hiring'); }
+function clCityState(hq){ const m = String(hq || '').split(',').map(function(x){ return x.trim(); }); return { city:m[0] || '', cc:m[1] || '' }; }
+function clStateOfCity(city){ const k = Object.keys(CL_CITIES).find(function(s){ return CL_CITIES[s].indexOf(city) > -1; }); return k || ''; }
+let clLocSeq = 1;
+function clBlankLocation(o){ return Object.assign({ id:'loc-' + (clLocSeq++), label:'', kind:'branch', country:'India', state:'', city:'', street:'', pin:'', uses:['Interviews', 'Joining'], billing:'hq', taxId:'', apEmail:'', sez:false, taxOverride:null }, o || {}); }
+function clientEnsure(c){
+  if(c.__cl) return c; c.__cl = true;
+  const country = c.country || (/,\s*IN$/.test(c.hq || '') ? 'India' : 'India'), cs = clCityState(c.hq), b = c.billingAddress || {}, o = c.officeAddress || {};
+  if(!c.locations){
+    const city = b.city || cs.city, state = b.state || clStateOfCity(city) || '';
+    const head = clBlankLocation({ id:'loc-hq-' + c.id, label:'Head office', kind:'head', country:(b.country || country), state:state, city:city, street:b.street1 || '', pin:b.pin || '', uses:['Billing', 'Interviews', 'Joining'], billing:'own', taxId:(c.tax && c.tax.taxId) || '', sez:!!(c.tax && /sez/i.test(c.tax.treatment || '')) });
+    c.locations = [head].concat((c.branches || []).map(function(br){ const a = br.address || {}; return clBlankLocation({ id:br.id, label:br.name, kind:'branch', country:br.country || country, state:a.state || '', city:a.city || '', street:a.street || '', pin:a.postalCode || '', uses:(br.billing && br.billing.mode === 'own') ? ['Billing', 'Interviews', 'Joining'] : ['Interviews', 'Joining'], billing:(br.billing && br.billing.mode === 'own') ? 'own' : 'hq', taxId:(br.billing && br.billing.taxId) || '', apEmail:br.invoiceEmail || '' }); }));
+  }
+  (c.pocs || []).forEach(function(p){ if(p.allLocations == null) p.allLocations = c.locations.length > 1 && !(p.branchIds || []).length; if(!p.routes) p.routes = (CL_ROUTE_BY_DEPT[p.dept] || ['Profiles and feedback']).slice(); });
+  if(!c.commercials){ const t = c.terms || {}; c.commercials = [{ version:1, effectiveFrom:(c.createdAt || new Date().toISOString()).slice(0, 10), model:t.model || 'contingency', feeType:t.feeType || 'percent', pct:t.feePercent, fixed:t.feeFixed, retainer:t.retainer, markup:t.markupPercent, success:t.success, replacementDays:t.replacementDays || 90, paymentDays:t.paymentDays || 30, currency:c.currency || clCountryCur(country) }]; }
+  if(!c.teamIds) c.teamIds = [];
+  if(!c.engagement) c.engagement = (c.commercials[0].model) || 'contingency';
+  return c;
+}
+function clCommercial(c, date){ clientEnsure(c); const d = clIso(date || ivNowMsSafe()); const list = c.commercials.slice().sort(function(a, b){ return a.effectiveFrom < b.effectiveFrom ? 1 : a.effectiveFrom > b.effectiveFrom ? -1 : b.version - a.version; }); return list.find(function(v){ return v.effectiveFrom <= d; }) || list[list.length - 1]; }
+function clAddCommercial(c, terms){ clientEnsure(c); const cur = clCommercial(c); const v = Object.assign({}, cur, terms, { version:c.commercials.reduce(function(m, x){ return Math.max(m, x.version); }, 0) + 1, effectiveFrom:clIso(ivNowMsSafe()) }); c.commercials.push(v); c.terms = Object.assign(c.terms || {}, { feeType:v.feeType, feePercent:v.feeType === 'percent' ? v.pct : null, feeFixed:v.feeType === 'fixed' ? v.fixed : null, replacementDays:v.replacementDays, paymentDays:v.paymentDays, markupPercent:v.markup, model:v.model }); c.paymentTerms = v.paymentDays ? 'Net ' + v.paymentDays : 'Due on Receipt'; return v; }
+function clBillingLocations(c){ clientEnsure(c); const head = c.locations[0]; return c.locations.filter(function(l){ return l.kind === 'head' ? (l.uses.indexOf('Billing') > -1 || !c.locations.some(function(x){ return x.uses.indexOf('Billing') > -1; })) : (l.uses.indexOf('Billing') > -1 && l.billing === 'own'); }).map(function(l){ return l.billing === 'own' || l.kind === 'head' ? l : Object.assign({}, l, { taxId:head.taxId }); }); }
+function clLocName(l){ return l.label || l.city || 'Office'; }
+function clBillName(l){ return l.kind === 'head' ? (l.city || 'Head office') : clLocName(l); }
+/** fee for one hire, in the location's currency. The version of terms is the one in force on the date (so an old placement keeps its own). */
+function clientFee(c, locId, ctc, date, version){
+  clientEnsure(c); const v = version ? (c.commercials.find(function(x){ return x.version === version; }) || clCommercial(c, date)) : clCommercial(c, date); const l = c.locations.find(function(x){ return x.id === locId; }) || c.locations[0];
+  let fee = 0; if(v.model === 'retained' || v.model === 'rpo') fee = 0; else if(v.model === 'contract') fee = ctc * ((v.markup || 0) / 100); else fee = v.feeType === 'fixed' ? (v.fixed || 0) : ctc * ((v.pct || 0) / 100);
+  return { fee:Math.round(fee), currency:l.currency || clCountryCur(l.country), version:v.version, terms:v };
+}
+/** "what one hire earns" at a location: fee, tax, invoice total, withholding, and what arrives */
+function clEarn(c, locId, ctc, date){
+  const l = c.locations.find(function(x){ return x.id === locId; }) || clBillingLocations(c)[0], f = clientFee(c, l.id, ctc, date), t = clTaxFor(c, l, date);
+  const taxes = t.taxes.map(function(x){ return { label:x.label, rate:x.rate, amount:Math.round(f.fee * x.rate / 100) }; }), tax = taxes.reduce(function(s, x){ return s + x.amount; }, 0), total = f.fee + tax;
+  const wh = t.withholding ? Math.round(f.fee * t.withholding.rate / 100) : 0;
+  return { loc:l, fee:f.fee, taxes:taxes, tax:tax, total:total, withheld:wh, receive:total - wh, currency:f.currency, treatment:t, version:f.version, terms:f.terms };
+}
+
+/* ---------- team, scope and routing ---------- */
+function clPocCovers(p, locId, c){ if(p.allLocations) return true; const head = c.locations[0] && c.locations[0].id; return locId === head ? p.atHeadOffice !== false : (p.branchIds || []).indexOf(locId) > -1; }
+/** who gets what: recipients for a kind of message at a location; the main contact when nobody is set for it */
+function clientRoute(c, kind, locId){
+  clientEnsure(c); const all = c.pocs || [], hit = all.filter(function(p){ return (p.routes || []).indexOf(kind) > -1; });
+  const here = locId ? hit.filter(function(p){ return clPocCovers(p, locId, c); }) : hit;
+  return here.length ? here : hit.length ? hit : (clMainContact(c) ? [clMainContact(c)] : []);
+}
+function clMainContact(c){ const p = c.pocs || []; return p.find(function(x){ return (x.roles || []).indexOf('main') > -1 || x.contactType === 'Primary Contact'; }) || p[0] || null; }
+function clStage(c){
+  if(c.status === 'Dormant' || c.status === 'Archived' || c.status === 'Paused' || c.paused) return 'paused';
+  if(c.status === 'Draft' || c.status === 'Pending approval') return 'prospect';
+  return (clientJobs(c).length || (c.agreement && (c.agreement.start || c.agreement.renewal)) || c.openRoles > 0) ? 'active' : 'prospect';
+}
+function clCanSeeMoney(){ return state.role !== 'recruiter' && state.role !== 'hm' && (typeof canI !== 'function' || canI('clients', 'View') || hasOrgWideAuthority()); }
+function clIsOwnerRole(){ return hasOrgWideAuthority(); }
+
+/* ---------- money from PayTrack: one selector ---------- */
+function clPayRecords(c){ return ptAllRecords().filter(function(r){ return r.clientId === c.id; }); }
+function clRecFee(r){ return r.feeAmount != null ? r.feeAmount : Math.round((r.placementFee || 0) * 100000); }
+function clRecDate(r){ return ptParseDate(r.doj || r.completedDate || r.dateFlagged); }
+function clRecDue(r, c){ const d = clRecDate(r), days = clCommercial(c).paymentDays || 30; return d ? new Date(d.getTime() + days * 86400000) : null; }
+const CL_MONEY_CACHE = {};
+function clientMoney(id, fyStart){
+  const key = id + '|' + ptAllRecords().length + '|' + JSON.stringify(ptAllRecords().map(function(r){ return [r.id, r.invoiceStatus, r.paymentStatus, r.feeAmount]; }));
+  if(CL_MONEY_CACHE[key]) return CL_MONEY_CACHE[key];
+  const c = clientById(id), fy = fyStart || CL_FY_START, out = { billed:0, collected:0, outstanding:0, overdue:0, notDue:0, placements:0, overdueClients:0, byCurrency:{} };
+  if(!c) return out;
+  clPayRecords(c).forEach(function(r){
+    if(r.reason) return;   // at risk, not revenue yet
+    const d = clRecDate(r); if(d && d < fy) return; const amt = clRecFee(r), raised = r.invoiceStatus === 'Raised' || r.invoiceStatus === 'Paid', paid = r.paymentStatus === 'Received';
+    out.placements++; if(!raised) return; out.billed += amt; if(paid) out.collected += amt; else { out.outstanding += amt; const due = clRecDue(r, c); if(due && due < PAYTRACK_TODAY) out.overdue += amt; else out.notDue += amt; }
+  });
+  CL_MONEY_CACHE[key] = out; return out;
+}
+function clAllMoney(){ return CLIENTS.filter(clientVisibleTo).reduce(function(s, c){ const m = clientMoney(c.id); s.billed += m.billed; s.collected += m.collected; s.outstanding += m.outstanding; s.overdue += m.overdue; s.notDue += m.notDue; s.placements += m.placements; if(m.overdue) s.overdueClients++; return s; }, { billed:0, collected:0, outstanding:0, overdue:0, notDue:0, placements:0, overdueClients:0 }); }
+const CL_TARGET = 4500000;
+
+/* ---------- one flag per client: the most urgent thing, or nothing ---------- */
+function clFlags(c){
+  clientEnsure(c); const out = [], m = clientMoney(c.id), today = new Date(ivNowMsSafe());
+  if(clCanSeeMoney() && m.overdue) out.push({ p:1, text:'Payment overdue', detail:clShort(m.overdue) + ' overdue', act:'Remind' });
+  const ag = c.agreement || {}, rn = ag.renewal ? Math.round((new Date(ag.renewal + 'T00:00:00') - today) / 86400000) : null;
+  if(rn != null && rn < 0) out.push({ p:2, text:'Agreement expired', detail:'It ended ' + (-rn) + ' days ago', act:'Start renewal' });
+  else if(rn != null && rn <= 30) out.push({ p:3, text:'Renewal due in ' + rn + ' days', detail:'Agreement renews ' + new Date(ag.renewal).toLocaleDateString('en-IN', { day:'numeric', month:'short' }), act:'Start renewal' });
+  c.locations.forEach(function(l){ if(l.taxOverride && l.taxOverride.status === 'pending') out.push({ p:3, text:'Tax change waiting for approval', detail:clLocName(l) + ': ' + clOverrideLabel(l.taxOverride.value), act:'Review', loc:l.id }); if(l.taxOverride && l.taxOverride.status === 'active' && l.taxOverride.ruleMoved) out.push({ p:4, text:'Rules changed; ' + clLocName(l) + ' is set by hand', detail:l.taxOverride.ruleMoved, act:'Review', loc:l.id }); });
+  if(c.engagement === 'contract' && clCanSeeMoney()){ out.push({ p:3, text:'Compliance pack due 15 Nov', detail:'PF and ESI challans, wage register', act:'Prepare' }); }
+  const slow = c.pocs && c.pocs.length && c.feedbackDays > 4; if(slow) out.push({ p:4, text:'Slow to give feedback', detail:'Average ' + c.feedbackDays + ' days', act:'Nudge ' + ivFirst(clMainContact(c).name) });
+  if(clCanSeeMoney() && clPayRecords(c).some(function(r){ return r.poRequired && !r.poNumber; })) out.push({ p:2, text:'Needs a PO number', detail:'An invoice is waiting for it', act:'Ask for PO' });
+  return out.sort(function(a, b){ return a.p - b.p; });
+}
+
+/* ---------- migration and seeds ---------- */
+(function seedClients(){
+  const le = (ORG_STRUCTURE.legalEntities || [])[0]; if(le){ le.state = le.state || 'Gujarat'; le.gstin = le.gstin || '24AAECN5521F1Z3'; le.lut = le.lut || { arn:'AD240326012345X', fy:'2026-27', validTill:'2027-03-31' }; }
+  const owners = { c1:'Priya Sharma', c2:'Arjun Kapoor', c3:'Priya Sharma', c4:'Divya Menon' };
+  const rid = function(n){ const r = RECRUITER_ROSTER.find(function(x){ return x.name === n; }); return r ? r.id : null; };
+  const d = function(n){ const t = new Date(); t.setDate(t.getDate() + n); return clientIsoDate(t); };
+  // Fintech Corp: Mumbai head office, a Bengaluru GSTIN, Pune for interviews, and a London company
+  if(typeof clientNextId === 'number') clientNextId = Math.max(clientNextId, 20);
+  const f = CLIENTS[0]; f.country = 'India'; f.billingAddress = Object.assign({}, f.billingAddress || {}, { street1:'Bandra Kurla Complex', city:'Mumbai', state:'Maharashtra', pin:'400051', country:'India' });
+  f.tax = Object.assign({}, f.tax || {}, { taxId:'27AACCF1234K1Z5', treatment:'business_gst', idLabel:'GSTIN', place:'Maharashtra' }); f.feedbackDays = 2;
+  f.locations = [
+    clBlankLocation({ id:'loc-hq-c1', label:'Head office', kind:'head', country:'India', state:'Maharashtra', city:'Mumbai', street:'Bandra Kurla Complex', pin:'400051', uses:['Billing', 'Interviews', 'Joining'], billing:'own', taxId:'27AACCF1234K1Z5' }),
+    clBlankLocation({ id:'loc-blr-c1', label:'Bengaluru office', country:'India', state:'Karnataka', city:'Bengaluru', street:'Embassy Tech Village', pin:'560103', uses:['Billing', 'Interviews', 'Joining'], billing:'own', taxId:'29AACCF1234K1Z1', apEmail:'ap.blr@fintechcorp.com' }),
+    clBlankLocation({ id:'loc-pune-c1', label:'Pune office', country:'India', state:'Maharashtra', city:'Pune', street:'Magarpatta City', pin:'411057', uses:['Interviews', 'Joining'], billing:'hq' }),
+    clBlankLocation({ id:'loc-ldn-c1', label:'London office', country:'United Kingdom', state:'England', city:'London', street:'1 Finsbury Avenue', pin:'EC2M 2PF', uses:['Billing', 'Interviews'], billing:'own', taxId:'GB284119307', currency:'GBP', apEmail:'ap@fintechcorp.co.uk' })
+  ];
+  // Other seeded clients, each showing a different case
+  const extra = [
+    { id:'c5', name:'Finvest Labs', legalName:'Finvest Labs Pvt. Ltd.', industry:'Financial Services', website:'finvestlabs.in', hq:'Ahmedabad, IN', owner:'Arjun Kapoor', pct:8.33, pay:30, open:2, st:'Gujarat', city:'Ahmedabad', pin:'380009', gst:'24AABCF4455J1Z8', contact:['Hiral Patel', 'TA Lead', 'HR Team'] },
+    { id:'c6', name:'Gulf Retail Group', legalName:'Gulf Retail Group LLC', industry:'Retail', website:'gulfretail.ae', hq:'Dubai, AE', owner:'Priya Sharma', pct:10, pay:45, open:3, country:'United Arab Emirates', st:'Dubai', city:'Dubai', pin:'', gst:'100234567800003', contact:['Ahmed Al Mansoori', 'Head of Talent', 'HR Team'] },
+    { id:'c7', name:'Meridian Health', legalName:'Meridian Health Ltd', industry:'Healthcare', website:'meridianhealth.co.uk', hq:'London, GB', owner:'Divya Menon', pct:12, pay:30, open:1, country:'United Kingdom', st:'England', city:'London', pin:'EC2M 2PF', gst:'GB284119355', contact:['James Carter', 'Talent Partner', 'Recruitment'] },
+    { id:'c8', name:'SwiftLog', legalName:'SwiftLog Logistics Pvt. Ltd.', industry:'Logistics', website:'swiftlog.in', hq:'Pune, IN', owner:'Arjun Kapoor', pct:null, markup:12, model:'contract', pay:30, open:4, st:'Maharashtra', city:'Pune', pin:'411001', gst:'27AAGCS9988K1Z2', contact:['Sneha Kulkarni', 'Operations Head', 'Management / Leadership'] },
+    { id:'c9', name:'Brightline Studios', legalName:'Brightline Studios Pvt. Ltd.', industry:'Media', website:'brightline.tv', hq:'Bengaluru, IN', owner:'Priya Sharma', pct:8.33, pay:30, open:0, st:'Karnataka', city:'Bengaluru', pin:'560066', gst:'', contact:['Kiran Gowda', 'Producer', 'Hiring Team (Business Unit)'], prospect:true }
+  ];
+  extra.forEach(function(x){
+    if(CLIENTS.some(function(c){ return c.id === x.id; })) return; const country = x.country || 'India';
+    const c = { id:x.id, name:x.name, legalName:x.legalName, industry:x.industry, openRoles:x.open, submissions:x.open * 2, health:80, contact:x.contact[0] + ', ' + x.contact[1], website:x.website, hq:x.hq, country:country, timezone:'Asia/Kolkata', status:x.prospect ? 'Active' : 'Active', tags:[], notes:'',
+      pocs:[{ id:x.id + '-poc-1', clientId:x.id, name:x.contact[0], title:x.contact[1], dept:x.contact[2], email:ivSlug(x.contact[0]) + '@' + x.website, mobile:'', roles:['main'], contactType:'Primary Contact', atHeadOffice:true, branchIds:[] }],
+      ownerId:rid(x.owner), createdAt:new Date(Date.now() - (x.prospect ? 8 : 300) * 86400000).toISOString(), terms:{ feeType:'percent', feePercent:x.pct, replacementDays:90, paymentDays:x.pay, model:x.model || 'contingency', markupPercent:x.markup || null },
+      tax:{ taxId:x.gst, idLabel:country === 'India' ? 'GSTIN' : country === 'United Kingdom' ? 'VAT' : 'TRN', treatment:country === 'India' ? (x.gst ? 'business_gst' : 'business_none') : 'overseas' },
+      agreement:x.prospect ? null : { start:d(-200), renewal:d(x.id === 'c8' ? 12 : 160) }, activity:[{ at:new Date().toISOString(), text:'Client added' }], engagement:x.model || 'contingency', feedbackDays:x.id === 'c7' ? 6 : 2 };
+    c.locations = [clBlankLocation({ id:'loc-hq-' + x.id, label:'Head office', kind:'head', country:country, state:x.st, city:x.city, pin:x.pin, uses:['Billing', 'Interviews', 'Joining'], billing:'own', taxId:x.gst, currency:clCountryCur(country) })];
+    CLIENTS.push(c);
+  });
+  CLIENTS.forEach(function(c){ if(owners[c.id]) c.ownerId = rid(owners[c.id]) || c.ownerId; clientEnsure(c); c.locations.forEach(function(l){ if(!l.currency) l.currency = clCountryCur(l.country); }); });
+  CLIENTS.find(function(c){ return c.id === 'c4'; }).feedbackDays = 5;
+  // two manual lines, so the Terms tab and the list have something real to show
+  const hyd = CLIENTS.find(function(c){ return c.id === 'c3'; }).locations[0]; hyd.taxOverride = { value:'sez_lut', reason:'Unit moved into the Hyderabad SEZ in September', byName:'Priya Sharma', at:'2026-09-12', status:'active', until:'changed' };
+  const bl = CLIENTS.find(function(c){ return c.id === 'c9'; }); if(bl) bl.locations[0].taxOverride = { value:'none', reason:'Exempt under a government film grant', byName:'Priya Sharma', at:'2026-10-02', status:'pending', until:'changed' };
+  // PayTrack: link by id, add demo records so money is real, and let the client name follow the client
+  const tagged = function(r, id){ if(!r.clientId) r.clientId = id || (findClientByName(r.client) || {}).id || null; return r; };
+  ptAllRecords().forEach(function(r){ tagged(r); });
+  const add = function(list, r){ r.id = payTrackNextId++; r.department = 'Recruitment Delivery'; r.teamManager = ptTeamManagerFor(r.recruiter); list.push(r); };
+  add(PAYTRACK_COMPLETED, { name:'Neeraj Sethi', role:'Platform Engineer', client:'Fintech Corp', clientId:'c1', recruiter:'Priya Sharma', placementFee:1.99, invoiceStatus:'Paid', paymentStatus:'Received', completedDate:'May 28', revenueEarned:1.99, recruiterIncentive:0.2, accountManager:'Priya Sharma', clientStatus:'Active' });
+  add(PAYTRACK_COMPLETED, { name:'Isha Bhandari', role:'Data Engineer', client:'Fintech Corp', clientId:'c1', recruiter:'Priya Sharma', placementFee:2.3, invoiceStatus:'Raised', paymentStatus:'Pending', completedDate:'Jun 20', revenueEarned:2.3, recruiterIncentive:0.23, accountManager:'Priya Sharma', clientStatus:'Active', doj:'Apr 6' });
+  add(PAYTRACK_COMPLETED, { name:'Tushar Nene', role:'SRE', client:'Finvest Labs', clientId:'c5', recruiter:'Arjun Kapoor', placementFee:2.2, invoiceStatus:'Paid', paymentStatus:'Received', completedDate:'Jun 8', revenueEarned:2.2, recruiterIncentive:0.22, accountManager:'Arjun Kapoor', clientStatus:'Active' });
+  add(PAYTRACK_COMPLETED, { name:'Mansi Desai', role:'QA Lead', client:'Finvest Labs', clientId:'c5', recruiter:'Arjun Kapoor', placementFee:1.7, invoiceStatus:'Raised', paymentStatus:'Pending', completedDate:'Jun 2', revenueEarned:1.7, recruiterIncentive:0.17, accountManager:'Arjun Kapoor', clientStatus:'Active', doj:'Apr 12' });
+  add(PAYTRACK_COMPLETED, { name:'Zaid Khan', role:'Store Planner', client:'Gulf Retail Group', clientId:'c6', recruiter:'Priya Sharma', placementFee:3.1, invoiceStatus:'Paid', paymentStatus:'Received', completedDate:'Jun 15', revenueEarned:3.1, recruiterIncentive:0.3, accountManager:'Priya Sharma', clientStatus:'Active' });
+  add(PAYTRACK_COMPLETED, { name:'Helen Brooks', role:'Clinical Lead', client:'Meridian Health', clientId:'c7', recruiter:'Divya Menon', placementFee:3.8, invoiceStatus:'Raised', paymentStatus:'Pending', completedDate:'Jul 1', revenueEarned:3.8, recruiterIncentive:0.38, accountManager:'Divya Menon', clientStatus:'Active', doj:'Apr 8' });
+  add(PAYTRACK_COMPLETED, { name:'Omkar Joshi', role:'Fleet Analyst', client:'SwiftLog', clientId:'c8', recruiter:'Arjun Kapoor', placementFee:0.9, invoiceStatus:'Paid', paymentStatus:'Received', completedDate:'Jun 25', revenueEarned:0.9, recruiterIncentive:0.09, accountManager:'Arjun Kapoor', clientStatus:'Active' });
+  add(PAYTRACK_JOINED, { name:'Rhea Pillai', role:'Backend Engineer', company:'Fintech Corp', client:'Fintech Corp', clientId:'c1', jobId:'j1', recruiter:'Priya Sharma', doj:'Jun 29', joiningSalary:24, placementFee:2, invoiceStatus:'Raised', paymentStatus:'Pending', replacementDays:90, notes:[] });
+  PAYTRACK_COMPLETED.concat(PAYTRACK_JOINED).concat(PAYTRACK_AT_RISK).forEach(function(r){ tagged(r); if(!r.locationId){ const c = clientById(r.clientId); if(c) r.locationId = clBillingLocations(clientEnsure(c))[0].id; } if(!r.termsVersion) r.termsVersion = 1; });
+  // the name on a record follows the client: renaming a client changes nothing in PayTrack
+  ptAllRecords().forEach(function(r){ if(Object.getOwnPropertyDescriptor(r, 'client') && Object.getOwnPropertyDescriptor(r, 'client').get) return; const fallback = r.client; Object.defineProperty(r, 'client', { enumerable:true, configurable:true, get:function(){ const c = clientById(r.clientId); return c ? c.name : fallback; }, set:function(v){ const c = findClientByName(v); if(c) r.clientId = c.id; } }); });
+})();
+function ptClients(){ const s = new Set(); ptAllRecords().forEach(function(x){ const c = clientById(x.clientId); s.add(c ? c.name : x.client); }); return Array.from(s); }
+(function hookPayTrack(){
+  const o = window.ptCreateJoinedRecord; if(typeof o !== 'function' || o.__cl) return;
+  window.ptCreateJoinedRecord = function(){
+    const r = o.apply(this, arguments); if(!r) return r;
+    try { const c = clientById(r.clientId) || findClientByName(r.client); if(c){ r.clientId = c.id; const loc = clBillingLocations(clientEnsure(c))[0], f = clientFee(c, loc.id, (r.joiningSalary || 0) * 100000, ivNowMsSafe()); r.locationId = loc.id; r.termsVersion = f.version; r.feeAmount = f.fee; r.feeCurrency = f.currency; r.placementFee = +(f.fee / 100000).toFixed(2); r.replacementDays = f.terms.replacementDays || r.replacementDays; } } catch(e){ console.error(e); }
+    return r;
+  }; window.ptCreateJoinedRecord.__cl = true;
+  const raise = window.ptRaiseInvoice; if(typeof raise === 'function' && !raise.__cl) window.ptRaiseInvoice = function(id){
+    const j = PAYTRACK_JOINED.find(function(x){ return x.id === id; }); const c = j && clientById(j.clientId);
+    if(c){ const loc = (c.locations || []).find(function(l){ return l.id === j.locationId; }) || clBillingLocations(clientEnsure(c))[0], hold = clInvoiceHold(c, loc, j); if(hold){ j.invoiceHold = hold; toast(hold + '. The invoice stays on hold.'); refreshPayTrack(); return; } j.invoiceHold = null; j.taxSnapshot = clSnapshot(c, loc, ivNowMsSafe()); }
+    return raise.apply(this, arguments);
+  }; if(typeof raise === 'function') window.ptRaiseInvoice.__cl = true;
+})();
+/** why an invoice cannot go out yet */
+function clInvoiceHold(c, loc, rec){
+  if(loc.country === 'India' && !(loc.taxId) && loc.kind !== 'head') return 'Needs billing registration';
+  const t = clTaxFor(c, loc, ivNowMsSafe()); if(t.lutLapsed) return 'LUT lapsed, renew or charge IGST'; if(t.noPack) return 'Tax not set';
+  if(rec && rec.poRequired && !rec.poNumber) return 'Needs PO number'; return '';
+}
+
+/* ---------- cl-ui.js ---------- */
+/* ============================================================
+   CLIENTS: the list and the client account. Calm, no dark fills, detail on hover.
+============================================================ */
+function clTip(label, title, lines, cls){ return '<span class="cl-tip' + (cls ? ' ' + cls : '') + '" tabindex="0">' + label + '<span class="cl-tip__c" role="tooltip"><b>' + cle(title) + '</b>' + (lines || []).map(function(l){ return '<i>' + l + '</i>'; }).join('') + '</span></span>'; }
+function clOwnerName(c){ const o = clientOwner(c); return o ? o.name : 'Unassigned'; }
+function clOpenJobsN(c){ const n = clientOpenJobs(c).length; return n || (clientJobs(c).length ? 0 : (c.openRoles || 0)); }
+function clPositions(c){ const js = clientOpenJobs(c); return js.length ? js.reduce(function(s, j){ return s + (j.positions || 1); }, 0) : (c.openRoles || 0); }
+function clCities(c){ clientEnsure(c); const cs = c.locations.map(function(l){ return l.city; }).filter(Boolean); const u = cs.filter(function(x, i){ return cs.indexOf(x) === i; }); return u.length > 1 ? u[0] + ' + ' + (u.length - 1) + ' more' : (u[0] || ''); }
+function clCityList(c){ clientEnsure(c); const cs = c.locations.map(function(l){ return l.city; }).filter(Boolean); return cs.filter(function(x, i){ return cs.indexOf(x) === i; }); }
+function clCorp(){ return typeof sIsCorporate === 'function' && sIsCorporate(); }
+function clWord(){ return clCorp() ? 'Vendors' : 'Clients'; }
+function clRecRole(){ return state.role === 'recruiter'; }
+function clInterviewsWeek(c){ const wk = ivNowMsSafe() + 7 * 86400000; return hmInterviews.filter(function(i){ const j = ivJob(i); return j && clientForJob(j) === c && ivStart(i) >= ivNowMsSafe() - 3600000 && ivStart(i) <= wk && i.status !== 'Cancelled'; }).length; }
+function clRow(c){ const m = clientMoney(c.id); return { c:c, m:m, flags:clFlags(c), pos:clPositions(c), jobs:clOpenJobsN(c), owner:clOwnerName(c), stage:clStage(c) }; }
+function clRows(){
+  let rows = CLIENTS.filter(clientVisibleTo).map(clRow);
+  const seg = CL.seg; if(seg !== 'all') rows = rows.filter(function(r){ return r.stage === (seg === 'prospects' ? 'prospect' : seg); });
+  if(CL.owner) rows = rows.filter(function(r){ return r.c.ownerId === CL.owner; });
+  const q = CL.q.trim().toLowerCase();
+  if(q) rows = rows.filter(function(r){ const c = r.c, ids = c.locations.map(function(l){ return l.taxId; }).join(' '); return (c.name + ' ' + (c.legalName || '') + ' ' + c.locations.map(function(l){ return l.city; }).join(' ') + ' ' + r.owner + ' ' + ids).toLowerCase().indexOf(q) > -1; });
+  const k = CL.card;
+  if(k === 'revenue') rows.sort(function(a, b){ return b.m.billed - a.m.billed; });
+  else if(k === 'outstanding'){ rows = rows.filter(function(r){ return r.m.outstanding > 0; }); rows.sort(function(a, b){ return b.m.overdue - a.m.overdue || b.m.outstanding - a.m.outstanding; }); }
+  else if(k === 'open'){ rows = rows.filter(function(r){ return r.pos > 0; }); rows.sort(function(a, b){ return b.pos - a.pos; }); }
+  else if(k === 'need'){ rows = rows.filter(function(r){ return r.flags.length; }); }
+  else if(k === 'feedback'){ rows.sort(function(a, b){ return (b.c.feedbackDays || 0) - (a.c.feedbackDays || 0); }); }
+  else if(k === 'interviews'){ rows = rows.filter(function(r){ return clInterviewsWeek(r.c) > 0; }); }
+  else if(k === 'shortlist'){ rows.sort(function(a, b){ return clShortlist(b.c) - clShortlist(a.c); }); }
+  else rows.sort(function(a, b){ return a.c.name.localeCompare(b.c.name); });
+  return rows;
+}
+function clShortlist(c){ const ids = clientJobs(c).map(function(j){ return j.id; }), subs = SUBMISSIONS.filter(function(s){ return ids.indexOf(s.jobId) > -1; }); const sl = subs.filter(function(s){ return /Shortlist|Interview|Offer|Joined/.test(s.stage); }).length; return subs.length ? Math.round(sl / subs.length * 100) : 0; }
+
+/* ---------- list ---------- */
+function clCardHTML(key, label, value, tip){
+  return '<button type="button" class="cl-stat' + (CL.card === key ? ' is-on' : '') + '" aria-pressed="' + (CL.card === key) + '" onclick="clCard(\'' + key + '\')"><span class="cl-stat__l">' + cle(label) + '</span>' + clTip('<span class="cl-stat__v">' + value + '</span>', tip[0], tip[1]) + '</button>';
+}
+function clStatsHTML(rows){
+  const vis = CLIENTS.filter(clientVisibleTo), all = vis.map(clRow), money = clAllMoney(), flagged = all.filter(function(r){ return r.flags.length; });
+  const pos = all.reduce(function(s, r){ return s + r.pos; }, 0), jobsN = all.reduce(function(s, r){ return s + r.jobs; }, 0), withJobs = all.filter(function(r){ return r.pos > 0; }).length;
+  if(clCorp()) return '<div class="cl-stats">' + clCardHTML('revenue', 'Spend this year', clShort(money.billed), ['Spend this year', [clShort(money.collected) + ' paid']]) + clCardHTML('outstanding', 'Payable', clShort(money.outstanding), ['Payable', [clShort(money.notDue) + ' not yet due', clShort(money.overdue) + ' overdue']]) + clCardHTML('open', 'Jobs released', String(jobsN), ['Jobs released', ['Across ' + withJobs + ' vendors']]) + clCardHTML('shortlist', 'Shortlist rate', Math.round(all.reduce(function(s, r){ return s + clShortlist(r.c); }, 0) / Math.max(1, all.length)) + '%', ['Shortlist rate', ['Profiles that reach a shortlist']]) + '</div>';
+  if(!clCanSeeMoney()){
+    const mine = all, slow = mine.filter(function(r){ return (r.c.feedbackDays || 0) > 3; }).length, iv = mine.reduce(function(s, r){ return s + clInterviewsWeek(r.c); }, 0);
+    return '<div class="cl-stats">' + clCardHTML('all', 'Your clients', String(mine.length), ['Your clients', ['Clients on jobs you work on']]) + clCardHTML('open', 'Open positions', String(pos), ['Open positions', ['Across ' + jobsN + ' jobs at ' + withJobs + ' clients']]) + clCardHTML('feedback', 'Awaiting feedback', String(slow), ['Awaiting feedback', [slow + ' clients are slow to reply']]) + clCardHTML('interviews', 'Interviews this week', String(iv), ['Interviews this week', ['Next seven days']]) + '</div>';
+  }
+  const pct = Math.round(money.billed / CL_TARGET * 100);
+  return '<div class="cl-stats">' + clCardHTML('revenue', 'Revenue this year', clShort(money.billed), ['Revenue this year', [pct + '% of the ' + clShort(CL_TARGET) + ' target', money.placements + ' placements']]) +
+    clCardHTML('outstanding', 'Outstanding', clShort(money.outstanding), ['Outstanding', [clShort(money.notDue) + ' not yet due', clShort(money.overdue) + ' overdue at ' + money.overdueClients + ' client' + (money.overdueClients === 1 ? '' : 's')]]) +
+    clCardHTML('open', 'Open positions', String(pos), ['Open positions', ['Across ' + jobsN + ' jobs at ' + withJobs + ' clients']]) +
+    clCardHTML('need', 'Need you', String(flagged.length), ['Need you', flagged.slice(0, 6).map(function(r){ return cle(r.c.name) + ': ' + cle(r.flags[0].text); })]) + '</div>';
+}
+function clViewLineHTML(){
+  const k = CL.card; if(!k || k === 'all') return '';
+  const t = { revenue:['Sorted by revenue, highest first', 'Open PayTrack', 'clOpenPay()'], outstanding:['Only clients with money due, overdue first', 'Open PayTrack', 'clOpenPay()'], open:['Only clients with open positions, most first', 'Open in Jobs', 'clOpenJobsView()'], need:['Only clients that need you', '', ''], feedback:['Slowest to give feedback first', '', ''], interviews:['Clients with interviews this week', 'Open Interviews', "showView('interviews')"], shortlist:['Sorted by shortlist rate', '', ''] }[k];
+  return '<p class="cl-viewline"><span>' + t[0] + '</span>' + (t[1] ? '<button type="button" class="cl-link" onclick="' + t[2] + '">' + t[1] + '</button>' : '') + '<button type="button" class="cl-link" onclick="clCard(null)">Show all</button></p>';
+}
+function clFlagCell(r){ const f = r.flags[0]; return f ? '<span class="att">' + cle(f.text) + '</span>' : ''; }
+function clRowHTML(r, mode){
+  const c = r.c, m = r.m, cities = clCityList(c);
+  const name = '<div class="cl-name"><b>' + cle(c.name) + '</b><span>' + cle([c.industry, cities.length ? cities[0] + (cities.length > 1 ? ' + ' + (cities.length - 1) + ' more' : '') : ''].filter(Boolean).join(' · ')) + '</span></div>';
+  let cells;
+  if(mode === 'rec'){ const mc = clMainContact(c); cells = '<td>' + name + '</td><td class="cl-sub">' + cle(mc ? mc.name : '') + '</td><td>' + r.jobs + '</td><td class="cl-sub">' + (c.feedbackDays ? c.feedbackDays + ' days' : '') + '</td><td>' + clFlagCell(r) + '</td>'; }
+  else if(mode === 'corp'){ cells = '<td>' + name + '</td><td class="cl-sub">' + cle(c.tier || 'Standard') + '</td><td>' + r.jobs + '</td><td>' + clShortlist(c) + '%</td><td>' + clTip(clShort(m.billed), 'Spend this year', [m.placements + ' placements']) + '</td><td>' + clFlagCell(r) + '</td>'; }
+  else cells = '<td>' + name + '</td><td class="cl-sub">' + cle(r.owner) + '</td><td>' + r.jobs + '</td><td>' + (m.billed ? clTip(clShort(m.billed), 'Revenue this year', [m.placements + ' placements', clShort(m.collected) + ' collected']) : '<span class="cl-sub">—</span>') + '</td><td>' + (m.outstanding ? clTip('<span class="' + (m.overdue ? 'cl-amber' : '') + '">' + clShort(m.outstanding) + '</span>', 'Outstanding', [clShort(m.notDue) + ' not yet due', clShort(m.overdue) + ' overdue']) : '<span class="cl-sub">—</span>') + '</td><td>' + clFlagCell(r) + '</td>';
+  return '<tr class="cl-tr" tabindex="0" role="link" onclick="openClientDetail(\'' + c.id + '\')" onkeydown="if(event.key===\'Enter\')openClientDetail(\'' + c.id + '\')">' + cells + '</tr>';
+}
+function clTableHTML(){
+  const rows = clRows(), mode = clCorp() ? 'corp' : !clCanSeeMoney() ? 'rec' : 'own', per = 25, pages = Math.max(1, Math.ceil(rows.length / per)); CL.page = Math.min(CL.page, pages);
+  const head = { own:['Client', 'Managed by', 'Open jobs', 'Revenue this year', 'Outstanding', ''], rec:['Client', 'Main contact', 'Open jobs', 'Feedback in', ''], corp:['Vendor', 'Tier', 'Jobs', 'Shortlist rate', 'Spend this year', ''] }[mode];
+  const slice = rows.slice((CL.page - 1) * per, CL.page * per);
+  if(!rows.length) return '<div class="cl-empty"><p>' + (CL.q ? 'No client matches “' + cle(CL.q) + '”.' : 'Nothing here yet. Add a client to begin.') + '</p></div>';
+  return '<div class="cl-card cl-tablewrap"><table class="cl-table"><thead><tr>' + head.map(function(h){ return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' + slice.map(function(r){ return clRowHTML(r, mode); }).join('') + '</tbody></table></div>' +
+    '<div class="cl-foot"><span>' + rows.length + ' ' + (rows.length === 1 ? (clCorp() ? 'vendor' : 'client') : (clCorp() ? 'vendors' : 'clients')) + (clCanSeeMoney() ? ' · amounts from PayTrack' : '') + '</span>' + (pages > 1 ? '<span class="cl-pager"><button type="button" class="cl-link" ' + (CL.page <= 1 ? 'disabled' : '') + ' onclick="CL.page--; clDraw()">Previous</button>' + CL.page + ' of ' + pages + '<button type="button" class="cl-link" ' + (CL.page >= pages ? 'disabled' : '') + ' onclick="CL.page++; clDraw()">Next</button></span>' : '') + '</div>';
+}
+function clToolbarHTML(){
+  const counts = { active:0, prospects:0, paused:0, all:0 }; CLIENTS.filter(clientVisibleTo).forEach(function(c){ const s = clStage(c); counts[s === 'prospect' ? 'prospects' : s]++; counts.all++; });
+  const owners = {}; CLIENTS.forEach(function(c){ if(c.ownerId) owners[c.ownerId] = clOwnerName(c); });
+  return '<div class="cl-toolbar"><div class="seg" id="cl-seg" role="group" aria-label="Show">' + [['active', 'Active'], ['prospects', 'Prospects'], ['paused', 'Paused'], ['all', 'All']].map(function(s){ return '<button type="button" class="seg__btn" aria-pressed="' + (CL.seg === s[0]) + '" onclick="CL.seg=\'' + s[0] + '\'; CL.page=1; clDraw()">' + s[1] + ' <span class="seg__n">' + counts[s[0]] + '</span></button>'; }).join('') + '</div>' +
+    (clCanSeeMoney() && Object.keys(owners).length > 1 ? '<select class="cl-select" aria-label="Managed by" onchange="CL.owner=this.value; CL.page=1; clDraw()"><option value="">Managed by: everyone</option>' + Object.keys(owners).map(function(id){ return '<option value="' + id + '"' + (CL.owner === id ? ' selected' : '') + '>' + cle(owners[id]) + '</option>'; }).join('') + '</select>' : '') + '</div>';
+}
+function clListBody(){ return clStatsHTML() + clViewLineHTML() + clToolbarHTML() + '<div id="cl-table">' + clTableHTML() + '</div>'; }
+function renderClientManagement(){
+  return '<div class="content-shell cl-page" id="cl-root"><header class="cl-head"><h1 class="cl-h1">' + clWord() + '</h1><div class="cl-head__r"><div class="cl-search"><input id="cl-q" type="search" value="' + cle(CL.q) + '" placeholder="Search by name, city, owner or registration number" aria-label="Search" oninput="clSearch(this.value)"></div>' +
+    (canI('clients', 'Create') ? '<button type="button" class="btn--go" onclick="openNewClientPage()">Add ' + (clCorp() ? 'vendor' : 'client') + '</button>' : '') + '</div></header><div id="cl-body">' + clListBody() + '</div></div>';
+}
+window.renderClientManagement = renderClientManagement; RENDERERS['client-management'] = renderClientManagement;
+function clPost(){ const s = document.getElementById('cl-seg'); if(s) oPill(s, '[aria-pressed="true"]', 'cl-seg', 'o-pill--flat'); }
+function clDraw(){ const b = document.getElementById('cl-body'); if(!b) return; b.innerHTML = clListBody(); clPost(); }
+let clTimer = null;
+function clSearch(v){ CL.q = v; CL.page = 1; clearTimeout(clTimer); clTimer = setTimeout(function(){ const t = document.getElementById('cl-table'); if(t) t.innerHTML = clTableHTML(); }, 150); }
+function clCard(k){ CL.card = CL.card === k ? null : k; CL.page = 1; clDraw(); }
+function clOpenPay(){ const r = state.role === 'admin' ? 'admin-paytrack' : 'paytrack'; if(CL.id){ const c = clientById(CL.id); if(c) payTrackClientFilter = c.name; } showView(r); }
+function clOpenJobsView(id){ jobSearch = id ? (clientById(id) || {}).name || '' : ''; showView('jobs'); }
+(function hookShow(){ const o = window.showView; if(typeof o !== 'function' || o.__cl) return; window.showView = function(id){ const r = o.apply(this, arguments); if(id === 'client-management') setTimeout(clPost, 30); return r; }; window.showView.__cl = true; })();
+
+/* ---------- account ---------- */
+function clStatCell(label, value, tip, go){ return '<button type="button" class="cl-cell" onclick="' + go + '"><span class="cl-stat__l">' + label + '</span>' + clTip('<span class="cl-stat__v">' + value + '</span>', tip[0], tip[1]) + '</button>'; }
+function clStatStrip(c){
+  const m = clientMoney(c.id), open = clPositions(c), jobs = clOpenJobsN(c), tabs = clCanSeeMoney();
+  const cells = [];
+  if(tabs){ cells.push(clStatCell('Revenue this year', clShort(m.billed), ['Revenue this year', [m.placements + ' placements', clShort(m.collected) + ' collected']], "clSetTab('billing')")); cells.push(clStatCell('Outstanding', m.outstanding ? clShort(m.outstanding) : '—', ['Outstanding', [clShort(m.notDue) + ' not yet due', clShort(m.overdue) + ' overdue']], "clSetTab('billing')")); }
+  cells.push(clStatCell('Open positions', String(open), ['Open positions', ['Across ' + jobs + ' job' + (jobs === 1 ? '' : 's')]], "clSetTab('jobs')"));
+  cells.push(clStatCell('Feedback in', c.feedbackDays ? c.feedbackDays + ' days' : '—', ['Feedback in', ['Average time to reply to a profile']], "clSetTab('jobs')"));
+  return '<div class="cl-card cl-strip">' + cells.join('') + '</div>';
+}
+function clTabs(){ const t = [['overview', 'Overview'], ['jobs', 'Jobs'], ['contacts', 'Contacts'], ['locations', 'Locations']]; if(clCanSeeMoney()){ t.push(['terms', 'Terms']); t.push(['billing', 'Billing']); } t.push(['documents', 'Documents'], ['activity', 'Activity']); return t; }
+function clSetTab(t){ clientDetailState.tab = t; CL.tab = t; CL.edit = null; CL.taxEdit = null; clientDetailState.contactEdit = null; clientDetailState.termsEdit = false; clAcctDraw(); }
+function clAcctDraw(){ const el = document.getElementById('cl-acct'); if(el) el.outerHTML = clAcctHTML(clientById(clientDetailState.id)); clPostAcct(); }
+function clPostAcct(){ const t = document.getElementById('cl-tabs'); if(t) oPill(t, '[aria-selected="true"]', 'cl-tabs', 'o-pill--under'); }
+function clAcctHTML(c){
+  clientEnsure(c); const tab = clientDetailState.tab || 'overview', tabs = clTabs(); if(!tabs.some(function(t){ return t[0] === tab; })) clientDetailState.tab = 'overview';
+  const cities = clCityList(c), own = clientOwner(c);
+  return '<div id="cl-acct"><a class="cl-back" role="button" tabindex="0" onclick="showView(\'client-management\')" onkeydown="if(event.key===\'Enter\')showView(\'client-management\')">← ' + clWord() + '</a>' +
+    '<header class="cl-head"><div><h1 class="cl-h1">' + cle(c.name) + '</h1><p class="cl-muted">' + cle([c.industry, cities.slice(0, 3).join(', '), own ? 'Owned by ' + own.name : ''].filter(Boolean).join(' · ')) + (clStage(c) === 'paused' ? ' · Paused' : clStage(c) === 'prospect' ? ' · Prospect' : '') + '</p></div>' +
+    '<div class="cl-head__r"><button type="button" class="cl-btn" onclick="clSendProfiles(\'' + c.id + '\')">Send profiles</button>' + (canI('jobs', 'Create') ? '<button type="button" class="btn--go" onclick="clientNewJob(\'' + c.id + '\')">New job</button>' : '') + clMoreHTML(c) + '</div></header>' +
+    clStatStrip(c) + '<div class="cl-tabs" id="cl-tabs" role="tablist">' + tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="' + (clientDetailState.tab === t[0]) + '" onclick="clSetTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
+    '<div class="cl-tabbody">' + clTabBody(c, clientDetailState.tab) + '</div></div>';
+}
+function clMoreHTML(c){
+  const open = clientDetailState.menuOpen;
+  return '<span class="cl-more"><button type="button" class="cl-btn" aria-haspopup="menu" aria-expanded="' + !!open + '" onclick="clientDetailState.menuOpen=!clientDetailState.menuOpen; clAcctDraw()">More</button>' + (open ? '<div class="cl-menu" role="menu">' + (canI('clients', 'Edit') ? '<button type="button" role="menuitem" onclick="clientDetailState.menuOpen=false; openClientPage(\'' + c.id + '\')">Edit details</button>' : '') + '<button type="button" role="menuitem" onclick="clPause(\'' + c.id + '\')">' + (clStage(c) === 'paused' ? 'Resume' : 'Pause') + '</button>' + (canI('clients', 'Delete') ? '<button type="button" role="menuitem" onclick="clientDetailState.menuOpen=false; clientArchive(\'' + c.id + '\', true)">Archive</button>' : '') + '</div>' : '') + '</span>';
+}
+function clPause(id){ const c = clientById(id); if(!c) return; c.paused = !c.paused; if(!c.paused && (c.status === 'Dormant' || c.status === 'Archived')) c.status = 'Active'; clientActivity(c, c.paused ? 'Paused, hiring stopped' : 'Resumed'); logAudit('Clients', c.paused ? 'Client paused' : 'Client resumed', c.name); clientDetailState.menuOpen = false; clAcctDraw(); toast(c.paused ? c.name + ' paused' : c.name + ' resumed'); }
+function clSendProfiles(id){ const c = clientById(id), ids = clientJobs(c).map(function(j){ return j.id; }), subs = SUBMISSIONS.filter(function(s){ return ids.indexOf(s.jobId) > -1 && subPhase(s) === 'ready'; }).map(function(s){ return s.id; }); if(!subs.length){ toast('Nothing for ' + c.name + ' is ready to send.'); return; } openSendToClient(subs); }
+function renderClientDetail(){ const c = clientById(clientDetailState.id); if(!c) return '<div class="content-shell cl-page"><p class="cl-muted">That client isn’t available.</p></div>'; CL.id = c.id; clientDetailState.tab = clientDetailState.tab || 'overview'; return '<div class="content-shell cl-page">' + clAcctHTML(c) + '</div>'; }
+window.renderClientDetail = renderClientDetail; RENDERERS['client-detail'] = renderClientDetail;
+function clientDetailRefresh(){ showView('client-detail', 'client-management'); setTimeout(clPostAcct, 30); }
+window.clientDetailRefresh = clientDetailRefresh;
+window.clientSetTab = clSetTab;
+(function hookOpen(){ const o = window.openClientDetail; if(typeof o !== 'function' || o.__cl) return; window.openClientDetail = function(){ const r = o.apply(this, arguments); setTimeout(clPostAcct, 40); return r; }; window.openClientDetail.__cl = true; })();
+
+function clTabBody(c, tab){
+  if(tab === 'jobs') return clJobsTab(c); if(tab === 'contacts') return clContactsTab(c); if(tab === 'locations') return clLocationsTab(c); if(tab === 'terms') return clTermsTab(c);
+  if(tab === 'billing') return clBillingTab(c); if(tab === 'documents') return clDocsTab(c); if(tab === 'activity') return clActivityTab(c); return clOverviewTab(c);
+}
+function clPipeTip(j){ const subs = submissionsForJob(j.id), by = {}; subs.forEach(function(s){ by[s.stage] = (by[s.stage] || 0) + 1; }); const lines = Object.keys(by).map(function(k){ return by[k] + ' ' + cle(k.toLowerCase()); }); return clTip(subs.length + ' candidates', j.title, lines.length ? lines : ['No candidates yet']); }
+function clJobRecs(j){ return (j.assignedRecruiters || []).map(function(id){ const r = RECRUITER_ROSTER.find(function(x){ return x.id === id; }); return r ? r.name : ''; }).filter(Boolean).join(', '); }
+function clOverviewTab(c){
+  const flags = clFlags(c), jobs = clientJobs(c).filter(function(j){ return j.status === 'Active' || j.status === 'Open'; }), mc = clMainContact(c);
+  const need = flags.length ? '<section class="cl-sec"><h2>Needs you</h2>' + flags.map(function(f){ return '<div class="cl-need"><div><span class="att">' + cle(f.text) + '</span><p class="cl-muted">' + cle(f.detail) + '</p></div><button type="button" class="cl-btn" onclick="clFlagAct(\'' + c.id + '\',\'' + (f.loc || '') + '\',\'' + cle(f.act).replace(/'/g, '’') + '\')">' + cle(f.act) + '</button></div>'; }).join('') + '</section>' : '';
+  const jobsH = '<section class="cl-sec"><h2>Open jobs</h2>' + (jobs.length ? jobs.map(function(j){ return '<div class="cl-jobrow" onclick="openJob(\'' + j.id + '\')" role="link" tabindex="0"><div><b>' + cle(j.title) + '</b><span class="cl-muted">' + cle([j.location || j.loc, j.workMode].filter(Boolean).join(' · ')) + '</span></div>' + clPipeTip(j) + '</div>'; }).join('') : '<p class="cl-muted">' + (c.openRoles ? c.openRoles + ' open positions are tracked outside Oontu.' : 'No open jobs. Start one with New job.') + '</p>') + '</section>';
+  const reach = clGroups(c).map(function(g){ const p = g[1][0]; return '<div class="cl-person"><div><b>' + cle(p.name) + '</b><span class="cl-muted">' + cle(g[0].split(' ')[0] + ' · ' + (p.title || '')) + '</span></div>' + clIcons(p) + '</div>'; }).join('') || '<p class="cl-muted">Add a contact to see who to reach.</p>';
+  const team = clTeam(c).map(function(t){ return '<div class="cl-person"><div><b>' + cle(t.name) + '</b><span class="cl-muted">' + cle(t.role) + '</span></div><span class="cl-icons"><button type="button" class="cl-ic" aria-label="Email ' + cle(t.name) + '" onclick="toast(\'Opening email to ' + cle(t.name).replace(/'/g, '’') + '.\')">' + oIcon('mail', 15, 1.7) + '</button></span></div>'; }).join('');
+  return '<div class="cl-two"><div>' + need + jobsH + '</div><div><section class="cl-sec"><h2>Who to reach</h2>' + reach + '</section><section class="cl-sec"><h2>Your team on this account</h2>' + team + '<button type="button" class="cl-link" onclick="toast(\'A secure link to this team is ready to share.\')">Share with client</button></section></div></div>';
+}
+function clTeam(c){ const own = clientOwner(c), out = []; if(own) out.push({ name:own.name, role:'Account owner' }); const rs = {}; clientJobs(c).forEach(function(j){ (j.assignedRecruiters || []).forEach(function(id){ rs[id] = 1; }); }); Object.keys(rs).forEach(function(id){ const r = RECRUITER_ROSTER.find(function(x){ return x.id === id; }); if(r && (!own || r.id !== own.id)) out.push({ name:r.name, role:'Recruiter' }); }); if(c.deliveryManager) out.push({ name:c.deliveryManager, role:'Delivery manager' }); return out.slice(0, 5); }
+function clGroups(c){ const order = ['Hiring', 'Invoices and payments', 'Agreements and renewals', 'Leadership'], by = {}; (c.pocs || []).forEach(function(p){ const g = clGroupOf(p); (by[g] = by[g] || []).push(p); }); return order.filter(function(g){ return by[g]; }).map(function(g){ return [g, by[g]]; }); }
+function clIcons(p){ const tel = (p.mobile || p.workPhone || '').replace(/[^\d+]/g, ''), wa = p.whatsapp || p.mobile; return '<span class="cl-icons">' + (tel ? '<a class="cl-ic" aria-label="Call ' + cle(p.name) + '" href="tel:' + cle(tel) + '">' + oIcon('phone', 15, 1.7) + '</a>' : '') + (wa ? '<a class="cl-ic" aria-label="WhatsApp ' + cle(p.name) + '" target="_blank" rel="noopener" href="' + cle(clientWaLink(wa)) + '">' + oIcon('chat', 15, 1.7) + '</a>' : '') + (p.email ? '<a class="cl-ic" aria-label="Email ' + cle(p.name) + '" href="mailto:' + cle(p.email) + '">' + oIcon('mail', 15, 1.7) + '</a>' : '') + '</span>'; }
+function clFlagAct(id, loc, act){ const c = clientById(id); if(/^(Remind|Nudge|Ask)/.test(act)){ const to = clientRoute(c, /Remind|Ask for PO/.test(act) ? 'Invoices' : 'Profiles and feedback')[0]; toast('Message sent to ' + (to ? to.name : 'the main contact') + '.'); clientActivity(c, act + (to ? ' · ' + to.name : '')); return; } if(act === 'Review' || act === 'Prepare' || act === 'Start renewal'){ clSetTab(act === 'Start renewal' ? 'documents' : 'terms'); return; } toast('Done.'); }
+function clJobsTab(c){
+  const jobs = clientJobs(c); if(!jobs.length) return '<div class="cl-empty"><p>This client’s jobs will appear here.</p>' + (canI('jobs', 'Create') ? '<button type="button" class="btn--go" onclick="clientNewJob(\'' + c.id + '\')">New job</button>' : '') + '</div>';
+  return '<div class="cl-card cl-tablewrap"><table class="cl-table"><thead><tr><th>Job</th><th>Recruiter</th><th>Candidates</th><th></th></tr></thead><tbody>' + jobs.map(function(j){ const late = j.status === 'On Hold'; return '<tr class="cl-tr" tabindex="0" role="link" onclick="openJob(\'' + j.id + '\')" onkeydown="if(event.key===\'Enter\')openJob(\'' + j.id + '\')"><td><div class="cl-name"><b>' + cle(j.title) + '</b><span>' + cle([j.location || j.loc, j.workMode].filter(Boolean).join(' · ')) + '</span></div></td><td class="cl-sub">' + cle(clJobRecs(j) || '—') + '</td><td>' + clPipeTip(j) + '</td><td>' + (late ? '<span class="att">On hold</span>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+}
+/* ----- contacts ----- */
+function clLooks(c, p){ if(p.allLocations || c.locations.length <= 1) return 'all locations'; const ns = []; if(p.atHeadOffice !== false) ns.push('Head office'); (p.branchIds || []).forEach(function(id){ const l = c.locations.find(function(x){ return x.id === id; }); if(l) ns.push(clLocName(l)); }); return ns.length ? ns.join(', ') : 'Head office'; }
+function clContactsTab(c){
+  const groups = clGroups(c), ed = CL.edit && CL.edit.kind === 'contact' ? CL.edit : null;
+  const rows = groups.map(function(g){ return '<section class="cl-sec"><h2>' + g[0] + '</h2>' + g[1].map(function(p){ const gets = (p.routes || []); const main = (p.roles || []).indexOf('main') > -1;
+    return '<div class="cl-contact"><div class="cl-contact__main"><b>' + cle(p.name) + (main ? ' <span class="cl-muted">· Main contact</span>' : '') + '</b><span class="cl-muted">' + cle([p.title, 'looks after ' + clLooks(c, p), p.email].filter(Boolean).join(' · ')) + '</span>' +
+      '<span class="cl-muted">Gets ' + clTip(cle(gets.slice(0, 2).join(', ').toLowerCase() + (gets.length > 2 ? ' and ' + (gets.length - 2) + ' more' : '')), 'Gets from Oontu', gets.map(cle)) + '</span></div>' + clIcons(p) + '<button type="button" class="cl-link" onclick="clEditContact(\'' + p.id + '\')">Edit</button></div>' + (ed && ed.id === p.id ? clContactEditor(c, p) : ''); }).join('') + '</section>'; }).join('');
+  return rows + (ed && ed.id === 'new' ? clContactEditor(c, null) : '<button type="button" class="cl-btn" onclick="clEditContact(\'new\')">Add contact</button>') || '';
+}
+function clEditContact(id){ const c = clientById(clientDetailState.id), p = id === 'new' ? null : c.pocs.find(function(x){ return x.id === id; }); CL.edit = { kind:'contact', id:id, looks:p ? (p.allLocations ? ['all'] : [(p.atHeadOffice !== false ? 'head' : null)].concat(p.branchIds || []).filter(Boolean)) : ['all'], gets:p ? (p.routes || []).slice() : ['Profiles and feedback', 'Interview invites'], err:'' }; clAcctDraw(); }
+function clContactEditor(c, p){
+  const e = CL.edit, locs = c.locations, chip = function(on, label, fn){ return '<button type="button" class="cl-chip' + (on ? ' is-on' : '') + '" aria-pressed="' + on + '" onclick="' + fn + '">' + cle(label) + '</button>'; };
+  const first = locs.find(function(l){ return e.looks[0] && e.looks[0] !== 'all' ? l.id === (e.looks[0] === 'head' ? locs[0].id : e.looks[0]) : l.kind === 'head'; }) || locs[0];
+  return '<div class="cl-edit"><p class="cl-lab">Looks after</p><div class="cl-chips">' + chip(e.looks.indexOf('all') > -1, 'All locations', 'clToggleLook(\'all\')') + locs.map(function(l, i){ const key = i === 0 ? 'head' : l.id; return chip(e.looks.indexOf(key) > -1 && e.looks.indexOf('all') < 0, i === 0 ? 'Head office' : clLocName(l), 'clToggleLook(\'' + key + '\')'); }).join('') + '</div>' +
+    '<p class="cl-lab">Gets from Oontu</p><div class="cl-chips">' + CL_ROUTES.map(function(r){ return chip(e.gets.indexOf(r) > -1, r, 'clToggleGet(\'' + r + '\')'); }).join('') + '</div>' +
+    (p ? '' : '<div class="cl-grid2"><label class="cl-field"><span>Name</span><input id="cle-name" class="cl-input" placeholder="' + cle(clPlaceholderName(first.country, first.state)) + '"></label><label class="cl-field"><span>Designation</span><input id="cle-title" class="cl-input" list="cl-desig" placeholder="HR Manager"></label><label class="cl-field"><span>Work email</span><input id="cle-email" type="email" class="cl-input" placeholder="' + cle(clPlaceholderEmail(clPlaceholderName(first.country, first.state), c.website)) + '"></label><label class="cl-field"><span>Mobile</span><input id="cle-mobile" class="cl-input" placeholder="' + cle(CL_MOBILE_PH[first.country] || '') + '"></label></div>') +
+    '<p class="cl-err" id="cle-err" hidden></p><div class="cl-actions"><button type="button" class="cl-btn" onclick="CL.edit=null; clAcctDraw()">Cancel</button><button type="button" class="btn--go" onclick="clSaveContact()">Save</button></div></div>';
+}
+function clToggleLook(k){ const e = CL.edit; if(k === 'all') e.looks = ['all']; else { e.looks = e.looks.filter(function(x){ return x !== 'all'; }); const i = e.looks.indexOf(k); if(i > -1) e.looks.splice(i, 1); else e.looks.push(k); const c = clientById(clientDetailState.id); if(e.looks.length >= c.locations.length) e.looks = ['all']; if(!e.looks.length) e.looks = ['head']; } clKeepFields(); clAcctDraw(); }
+function clToggleGet(r){ const g = CL.edit.gets, i = g.indexOf(r); if(i > -1) g.splice(i, 1); else g.push(r); clKeepFields(); clAcctDraw(); }
+function clKeepFields(){ const e = CL.edit; ['name', 'title', 'email', 'mobile'].forEach(function(k){ const el = document.getElementById('cle-' + k); if(el) e['v_' + k] = el.value; }); }
+function clSaveContact(){
+  clKeepFields(); const e = CL.edit, c = clientById(clientDetailState.id); const showErr = function(m){ const el = document.getElementById('cle-err'); if(el){ el.textContent = m; el.hidden = false; } };
+  let p = e.id === 'new' ? null : c.pocs.find(function(x){ return x.id === e.id; });
+  if(!p){ const name = (document.getElementById('cle-name') || {}).value || e.v_name || '', em = (document.getElementById('cle-email') || {}).value || e.v_email || '', mob = (document.getElementById('cle-mobile') || {}).value || e.v_mobile || '';
+    if(name.trim().split(/\s+/).length < 2) return showErr('Add the first and last name.'); if(!em.trim() && !mob.trim()) return showErr('Add an email or a mobile number.'); if(em.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.trim())) return showErr('That email doesn’t look right.');
+    p = { id:c.id + '-poc-' + (c.pocs.length + 1) + '-' + Date.now() % 1000, clientId:c.id, name:name.trim(), title:(document.getElementById('cle-title') || {}).value || e.v_title || 'Contact', dept:'Recruitment', email:em.trim(), mobile:mob.trim(), roles:[], contactType:'Contact', atHeadOffice:true, branchIds:[] }; c.pocs.push(p);
+    if(em.trim() && clientDomain(em.split('@')[1]) !== clientDomain(c.website)) toast('This email isn’t on ' + clientDomain(c.website) + '. Fine for now; feedback links are safest on a work email.'); }
+  p.routes = e.gets.slice(); p.allLocations = e.looks.indexOf('all') > -1; p.atHeadOffice = p.allLocations || e.looks.indexOf('head') > -1; p.branchIds = p.allLocations ? [] : e.looks.filter(function(k){ return k !== 'head'; });
+  clientActivity(c, 'Contact saved · ' + p.name); logAudit('Clients', 'Contact saved', c.name + ' · ' + p.name); CL.edit = null; clAcctDraw(); toast(p.name + ' saved');
+}
+/* ----- locations ----- */
+function clRegOf(c, l){ const id = l.billing === 'own' || l.kind === 'head' ? l.taxId : ''; if(!id) return l.uses.indexOf('Billing') > -1 ? 'Billed to head office' : ''; return ncTaxRegime(l.country).idShort + ' ' + id; }
+function clLocationsTab(c){
+  clientEnsure(c);
+  return '<div class="cl-card cl-list">' + c.locations.map(function(l){ const addr = [l.street, l.city, l.state, l.pin, l.country !== 'India' ? l.country : ''].filter(Boolean).join(', '); const reg = clRegOf(c, l);
+    return '<div class="cl-locrow"><div><b>' + cle(clLocName(l)) + '</b><span class="cl-muted">' + cle(addr) + '</span><span class="cl-muted">' + cle([l.uses.join(', ').toLowerCase().replace(/^./, function(m){ return m.toUpperCase(); }), reg].filter(Boolean).join(' · ')) + '</span></div><a class="cl-link" target="_blank" rel="noopener" href="https://maps.google.com/?q=' + encodeURIComponent(addr) + '">Map</a></div>'; }).join('') + '</div>' + (canI('clients', 'Edit') ? '<button type="button" class="cl-btn" onclick="openClientPage(\'' + c.id + '\')">Add or change a location</button>' : '');
+}
+/* ----- terms ----- */
+const CL_MODELS = [['contingency', 'Contingency'], ['retained', 'Retained'], ['rpo', 'RPO'], ['contract', 'Contract staffing']];
+function clFeeText(v){ if(v.model === 'contract') return (v.markup || 0) + '% markup on pay'; if(v.model === 'retained' || v.model === 'rpo') return clMoney(v.retainer || 0, v.currency) + ' a month' + (v.success ? ' + ' + v.success + '% on success' : ''); return v.feeType === 'fixed' ? clMoney(v.fixed || 0, v.currency) + ' per hire' : (v.pct == null ? 'Not set' : v.pct + '% of annual CTC'); }
+function clTermsTab(c){
+  clientEnsure(c); const v = clCommercial(c), ed = CL.edit && CL.edit.kind === 'terms', ag = c.agreement || {};
+  const row = function(k, val){ return '<div class="cl-kv"><span>' + k + '</span><b>' + val + '</b></div>'; };
+  const model = (CL_MODELS.find(function(m){ return m[0] === v.model; }) || CL_MODELS[0])[1];
+  const left = '<section class="cl-sec"><div class="cl-sechead"><h2>Commercial terms</h2>' + (canI('clients', 'Edit') && !ed ? '<button type="button" class="cl-link" onclick="clEditTerms()">Edit</button>' : '') + '</div>' + (ed ? clTermsEditor(c, v) :
+    row('How you work', model) + row('Fee', cle(clFeeText(v))) + row('Replacement', v.replacementDays ? v.replacementDays + ' days' : 'None') + row('Payment', v.paymentDays ? 'Net ' + v.paymentDays : 'Due on receipt') + row('Agreement', ag.start ? 'Signed · renews ' + new Date(ag.renewal || ag.start).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : 'Not signed yet') + (c.commercials.length > 1 ? '<p class="cl-muted">Version ' + v.version + ' from ' + v.effectiveFrom + '. Earlier placements keep their own terms.</p>' : '')) + '</section>' +
+    '<section class="cl-sec"><h2>Tax and invoicing</h2>' + clBillingLocations(c).map(function(l){ return clTaxRow(c, l); }).join('') + '<p class="cl-muted cl-foot2">Set from each billing location’s registration and kept current automatically. Issued invoices keep the rules they were raised under.</p></section>';
+  return '<div class="cl-two cl-two--terms"><div>' + left + '</div><div>' + clCalcHTML(c) + '</div></div>';
+}
+function clTaxRow(c, l){
+  const t = clTaxFor(c, l), o = l.taxOverride, ed = CL.taxEdit === l.id, canDirect = clIsOwnerRole();
+  const why = [t.why].concat(t.withholding ? ['Client deducts ' + t.withholding.text.replace('TDS ', 'TDS ') + ' ' + t.withholding.rate + '%'] : []).concat(t.note ? [t.note] : []);
+  const what = clTip(cle(clTaxText(t)), clLocName(l) + ': ' + clTaxText(t), why.filter(Boolean).map(cle));
+  return '<div class="cl-taxrow"><div class="cl-taxrow__l"><b>' + cle(clBillName(l)) + '</b><span class="cl-muted">' + cle(l.country !== 'India' ? l.country : l.state) + '</span></div><div class="cl-taxrow__t">' + what + (o && o.status === 'pending' ? ' <span class="att">Waiting for approval</span>' : '') + '</div><div class="cl-taxrow__a">' +
+    (o && o.status === 'active' ? '<button type="button" class="cl-link" onclick="clBackToRule(\'' + c.id + '\',\'' + l.id + '\')">Back to rule</button>' : '') + (o && o.status === 'pending' && canDirect ? '<button type="button" class="cl-link" onclick="clDecideTax(\'' + c.id + '\',\'' + l.id + '\',true)">Approve</button><button type="button" class="cl-link" onclick="clDecideTax(\'' + c.id + '\',\'' + l.id + '\',false)">Decline</button>' : '') + (canI('clients', 'Edit') ? '<button type="button" class="cl-link" onclick="CL.taxEdit=\'' + l.id + '\'; CL.taxDraft={value:\'\',why:\'\'}; clAcctDraw()">Change</button>' : '') + '</div></div>' +
+    (o && o.status === 'active' ? '<p class="cl-muted cl-manual">Set by ' + cle(o.byName || 'you') + ' · ' + cle(o.reason) + (o.ruleMoved ? ' · rules changed: ' + cle(o.ruleMoved) : '') + '</p>' : '') + (ed ? clTaxEditor(c, l) : '');
+}
+function clTaxEditor(c, l){
+  const d = CL.taxDraft || (CL.taxDraft = { value:'', why:'' }), rule = clTaxFor(Object.assign({}, c, {}), Object.assign({}, l, { taxOverride:null })).key;
+  return '<div class="cl-edit"><p class="cl-lab">Tax it as</p><div class="cl-chips" role="radiogroup" aria-label="Tax it as">' + CL_OVERRIDES.map(function(o){ return '<button type="button" role="radio" aria-checked="' + (d.value === o[0]) + '" class="cl-chip' + (d.value === o[0] ? ' is-on' : '') + '" onclick="clTaxPick(\'' + o[0] + '\')">' + o[1] + (o[0] === rule ? ' (suggested)' : '') + '</button>'; }).join('') + '</div>' +
+    '<label class="cl-field"><span>Why</span><input id="cl-why" class="cl-input" value="' + cle(d.why) + '" oninput="CL.taxDraft.why=this.value" placeholder="A few words, kept with every invoice it affects"></label><p class="cl-err" id="cl-tax-err" hidden></p><div class="cl-actions"><button type="button" class="cl-btn" onclick="CL.taxEdit=null; clAcctDraw()">Cancel</button><button type="button" class="btn--go" onclick="clSaveTax(\'' + c.id + '\',\'' + l.id + '\')">' + (clIsOwnerRole() ? 'Save' : 'Send for approval') + '</button></div></div>';
+}
+function clTaxPick(v){ const w = document.getElementById('cl-why'); if(w) CL.taxDraft.why = w.value; CL.taxDraft.value = v; clAcctDraw(); }
+function clSaveTax(id, locId){
+  const c = clientById(id), l = c.locations.find(function(x){ return x.id === locId; }), d = CL.taxDraft || {}, err = function(m){ const e = document.getElementById('cl-tax-err'); if(e){ e.textContent = m; e.hidden = false; } };
+  if(!d.value) return err('Pick how it should be taxed.'); const rule = resolveTax({ supplierEntity:clOurEntity(), location:l }).key;
+  if(d.value === rule){ l.taxOverride = null; CL.taxEdit = null; clAcctDraw(); return; }
+  if(String(d.why || '').trim().length < 12) return err('Say why in a few words. It’s kept with every invoice it affects.');
+  const me = currentActingUser(), direct = clIsOwnerRole(); l.taxOverride = { value:d.value, reason:d.why.trim(), byName:me ? me.name : 'You', byId:me ? me.id : null, at:clIso(ivNowMsSafe()), status:direct ? 'active' : 'pending', until:'changed' };
+  clientActivity(c, 'Tax for ' + clLocName(l) + ' set to ' + clOverrideLabel(d.value) + (direct ? '' : ', waiting for approval') + ' · ' + d.why.trim()); logAudit('Clients', direct ? 'Tax set by hand' : 'Tax change sent for approval', c.name + ' · ' + clLocName(l) + ' · ' + clOverrideLabel(d.value) + ' · ' + d.why.trim());
+  CL.taxEdit = null; clAcctDraw(); toast(direct ? 'Saved. ' + clLocName(l) + ' is set by hand.' : 'Sent to the owner for approval. The rule applies until then.');
+}
+function clBackToRule(id, locId){ const c = clientById(id), l = c.locations.find(function(x){ return x.id === locId; }); l.taxOverride = null; clientActivity(c, 'Tax for ' + clLocName(l) + ' is back to the rule'); logAudit('Clients', 'Tax back to rule', c.name + ' · ' + clLocName(l)); clAcctDraw(); toast('Back to the rule for ' + clLocName(l) + '.'); }
+function clDecideTax(id, locId, yes){ const c = clientById(id), l = c.locations.find(function(x){ return x.id === locId; }); if(!clIsOwnerRole()) return; if(yes){ l.taxOverride.status = 'active'; } else l.taxOverride = null; clientActivity(c, 'Tax change ' + (yes ? 'approved' : 'declined') + ' · ' + clLocName(l)); logAudit('Approvals', yes ? 'Tax change approved' : 'Tax change declined', c.name + ' · ' + clLocName(l)); clAcctDraw(); toast(yes ? 'Approved.' : 'Declined.'); }
+function clEditTerms(){ const c = clientById(clientDetailState.id), v = clCommercial(c); CL.edit = { kind:'terms', d:{ model:v.model, feeType:v.feeType || 'percent', pct:v.pct == null ? '' : String(v.pct), fixed:v.fixed == null ? '' : String(v.fixed), retainer:v.retainer == null ? '' : String(v.retainer), success:v.success == null ? '' : String(v.success), markup:v.markup == null ? '' : String(v.markup), replacementDays:String(v.replacementDays == null ? 90 : v.replacementDays), paymentDays:String(v.paymentDays == null ? 30 : v.paymentDays) } }; clAcctDraw(); }
+function clTermsEditor(c, v){
+  const d = CL.edit.d, set = function(k, val){ return 'clTermSet(\'' + k + '\',\'' + val + '\')'; }, opt = function(k, val, label, on){ return '<button type="button" class="cl-chip' + (on ? ' is-on' : '') + '" aria-pressed="' + on + '" onclick="' + set(k, val) + '">' + label + '</button>'; };
+  const num = function(k, label, suffix){ return '<label class="cl-field"><span>' + label + '</span><span class="cl-suffix"><input class="cl-input" inputmode="decimal" value="' + cle(d[k]) + '" oninput="CL.edit.d.' + k + '=this.value">' + (suffix ? '<i>' + suffix + '</i>' : '') + '</span></label>'; };
+  const rep = ['0', '30', '60', '90', '180'], pay = ['0', '15', '30', '45', '60'];
+  return '<p class="cl-lab">How you work</p><div class="cl-chips">' + CL_MODELS.map(function(m){ return opt('model', m[0], m[1], d.model === m[0]); }).join('') + '</div>' +
+    (d.model === 'contingency' ? '<p class="cl-lab">Fee is</p><div class="cl-chips">' + opt('feeType', 'percent', '% of annual CTC', d.feeType === 'percent') + opt('feeType', 'fixed', 'Fixed per hire', d.feeType === 'fixed') + '</div>' + (d.feeType === 'fixed' ? num('fixed', 'Fee', clCur(v.currency).trim() || '₹') : num('pct', 'Fee', '%')) : d.model === 'contract' ? num('markup', 'Markup on pay', '%') : num('retainer', 'Monthly fee', clCur(v.currency).trim() || '₹') + num('success', 'Success fee', '%')) +
+    '<p class="cl-lab">Replacement</p><div class="cl-chips">' + rep.map(function(r){ return opt('replacementDays', r, r === '0' ? 'None' : r + ' days', d.replacementDays === r); }).join('') + opt('replacementDays', 'custom', 'Custom…', rep.indexOf(d.replacementDays) < 0) + '</div>' + (rep.indexOf(d.replacementDays) < 0 ? num('replacementDays', 'Replacement days', 'days') : '') +
+    '<p class="cl-lab">Payment</p><div class="cl-chips">' + pay.map(function(r){ return opt('paymentDays', r, r === '0' ? 'Due on receipt' : 'Net ' + r, d.paymentDays === r); }).join('') + opt('paymentDays', 'custom', 'Custom…', pay.indexOf(d.paymentDays) < 0) + '</div>' + (pay.indexOf(d.paymentDays) < 0 ? num('paymentDays', 'Payment days', 'days') : '') +
+    '<p class="cl-err" id="cl-terms-err" hidden></p><div class="cl-actions"><button type="button" class="cl-btn" onclick="CL.edit=null; clAcctDraw()">Cancel</button><button type="button" class="btn--go" onclick="clSaveTerms()">Save as a new version</button></div>';
+}
+function clTermSet(k, val){ const d = CL.edit.d; d[k] = val === 'custom' ? (k === 'replacementDays' ? '120' : '40') : val; clAcctDraw(); }
+function clSaveTerms(){
+  const c = clientById(clientDetailState.id), d = CL.edit.d, err = function(m){ const e = document.getElementById('cl-terms-err'); if(e){ e.textContent = m; e.hidden = false; } };
+  const n = function(x){ return x === '' || x == null ? null : Number(x); };
+  if(d.model === 'contingency' && d.feeType === 'percent' && !(n(d.pct) >= 0 && n(d.pct) <= 100)) return err('Enter a fee between 0 and 100%.');
+  if(!/^\d+$/.test(String(d.replacementDays)) || Number(d.replacementDays) < 0 || Number(d.replacementDays) > 365) return err('Enter replacement days from 0 to 365.'); if(!/^\d+$/.test(String(d.paymentDays)) || Number(d.paymentDays) > 180) return err('Enter payment days from 0 to 180.');
+  const v = clAddCommercial(c, { model:d.model, feeType:d.feeType, pct:n(d.pct), fixed:n(d.fixed), retainer:n(d.retainer), success:n(d.success), markup:n(d.markup), replacementDays:Number(d.replacementDays), paymentDays:Number(d.paymentDays) }); c.engagement = d.model;
+  clientActivity(c, 'Terms changed (version ' + v.version + '): ' + clFeeText(v) + ', replacement ' + v.replacementDays + ' days, payment ' + v.paymentDays + ' days'); logAudit('Clients', 'Client terms changed', c.name + ' · version ' + v.version);
+  const below = d.model === 'contingency' && d.feeType === 'percent' && n(d.pct) != null && n(d.pct) < 8.33; CL.edit = null; clAcctDraw(); toast('Terms saved' + (below ? '. The fee is below your 8.33% standard and goes to the owner for approval before the first invoice.' : '.'));
+}
+function clCalcHTML(c){
+  const locs = clBillingLocations(c), sel = locs.find(function(l){ return l.id === CL.calc.loc; }) || locs[0], cur = sel.currency || clCountryCur(sel.country);
+  const opts = cur === 'INR' ? [1200000, 1800000, 2400000, 3600000, 4800000] : [40000, 60000, 80000, 100000, 140000];
+  const key = cur === 'INR' ? 'inr' : 'fx'; let ctc = CL.calc[key] || (cur === 'INR' ? 2400000 : 80000); if(opts.indexOf(ctc) < 0) ctc = opts[2];
+  const e = clEarn(c, sel.id, ctc), lbl = function(n){ return cur === 'INR' ? '₹' + (n / 1e5) + 'L' : clMoney(n, cur).replace(/,000$/, 'k'); };
+  const taxLines = e.taxes.map(function(t){ return t.label + ' ' + t.rate + '% ' + clMoney(t.amount, cur); });
+  return '<div class="cl-card cl-calc"><p class="cl-lab">One hire at</p><div class="cl-calc__row"><select class="cl-select" aria-label="Annual pay" data-k="' + key + '" onchange="CL.calc[this.dataset.k]=+this.value; clAcctDraw()">' + opts.map(function(o){ return '<option value="' + o + '"' + (o === ctc ? ' selected' : '') + '>' + lbl(o) + ' a year</option>'; }).join('') + '</select>' +
+    (locs.length > 1 ? '<select class="cl-select" aria-label="Billed to" onchange="CL.calc.loc=this.value; clAcctDraw()">' + locs.map(function(l){ return '<option value="' + l.id + '"' + (l.id === sel.id ? ' selected' : '') + '>Billed to ' + cle(clBillName(l)) + '</option>'; }).join('') + '</select>' : '<span class="cl-muted">Billed to ' + cle(clBillName(sel)) + '</span>') + '</div>' +
+    '<p class="cl-lab">You receive</p>' + clTip('<span class="cl-big">' + clMoney(e.receive, cur) + '</span>', 'How it adds up', ['Fee ' + clMoney(e.fee, cur)].concat(taxLines).concat(e.taxes.length ? [] : ['No tax on this invoice']).concat(['Invoice ' + clMoney(e.total, cur)]).concat(e.withheld ? ['TDS −' + clMoney(e.withheld, cur)] : []).concat([e.treatment.note || ''].filter(Boolean)).map(function(x){ return cle(x); })) +
+    '<p class="cl-muted">Invoice on the joining day, due in ' + (e.terms.paymentDays || 30) + ' days.' + (cur !== 'INR' ? ' PayTrack reports it in ₹ at the invoice-date rate.' : '') + '</p></div>';
+}
+/* ----- billing ----- */
+function clInvNo(r){ return r.invoiceNo || ('NS/26-27/' + String(1000 + (r.id || 0))); }
+function clBillingTab(c){
+  const m = clientMoney(c.id), recs = clPayRecords(c).filter(function(r){ return !r.reason; }), loc0 = clBillingLocations(c)[0];
+  if(!recs.length) return '<div class="cl-empty"><p>Placements and invoices for this client will appear here.</p></div>';
+  const rows = recs.map(function(r){ const raised = r.invoiceStatus === 'Raised' || r.invoiceStatus === 'Paid', paid = r.paymentStatus === 'Received', loc = c.locations.find(function(l){ return l.id === r.locationId; }) || loc0, fee = clRecFee(r), t = clTaxFor(c, loc, clRecDate(r) ? clRecDate(r).getTime() : undefined), cur = 'INR';
+    const tax = Math.round(fee * t.taxes.reduce(function(s, x){ return s + x.rate; }, 0) / 100), due = clRecDue(r, c), overdue = raised && !paid && due && due < PAYTRACK_TODAY, hold = r.invoiceHold || '';
+    const status = hold ? '<span class="att">' + cle(hold) + '</span>' : paid ? '<span class="cl-sub">Paid</span>' : overdue ? '<span class="att">Overdue</span>' : raised ? '<span class="cl-sub">Due ' + cle(ptFmtDate(due)) + '</span>' : '<span class="cl-sub">Not invoiced</span>';
+    const act = !raised ? '<button type="button" class="cl-link" onclick="ptRaiseInvoice(' + r.id + '); clAcctDraw()">Raise invoice</button>' : !paid ? '<button type="button" class="cl-link" onclick="ptMarkPaymentReceived(' + r.id + '); clAcctDraw()">Mark received</button>' : '';
+    return '<tr><td><div class="cl-name"><b>' + cle(r.name) + '</b><span>' + cle(r.role || '') + '</span></div></td><td class="cl-sub">' + cle(r.doj || r.completedDate || '') + '</td><td class="cl-sub">' + (raised ? cle(clInvNo(r)) : '—') + '</td><td>' + clTip(clMoney(fee + tax, cur), 'Invoice', ['Fee ' + clMoney(fee, cur), clTaxText(t) + ' ' + clMoney(tax, cur), 'Total ' + clMoney(fee + tax, cur)]) + '</td><td>' + status + '</td><td>' + act + '</td></tr>'; }).join('');
+  return '<div class="cl-card cl-tablewrap"><table class="cl-table"><thead><tr><th>Placement</th><th>Joined</th><th>Invoice</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div><div class="cl-foot"><span>Billed ' + clShort(m.billed) + ' this year · ' + clShort(m.collected) + ' collected</span><button type="button" class="cl-link" onclick="clOpenPay()">Open in PayTrack</button></div>';
+}
+/* ----- documents, activity ----- */
+function clDocsList(c){ clientEnsure(c); const idl = ncTaxRegime(c.locations[0].country).idShort; const docs = [['agreement', 'Signed agreement'], ['id', idl + ' certificate'], ['po', 'Purchase order format'], ['nda', 'NDA']]; if(c.locations.some(function(l){ return l.country !== c.locations[0].country; })) docs.push(['lut', 'Tax certificate for the other country']); return docs; }
+function clDocsTab(c){ c.docs = c.docs || {}; if(c.agreement && c.agreement.start && !c.docs.agreement) c.docs.agreement = { name:'Agreement.pdf', at:c.agreement.start };
+  return '<div class="cl-card cl-list">' + clDocsList(c).map(function(d){ const f = c.docs[d[0]]; return '<div class="cl-locrow"><div><b>' + cle(d[1]) + '</b><span class="cl-muted">' + (f ? cle(f.name) + ' · added ' + cle(f.at) : 'Needed before the first invoice. You’ll get a reminder.') + '</span></div><button type="button" class="cl-link" onclick="clDoc(\'' + c.id + '\',\'' + d[0] + '\')">' + (f ? 'View' : 'Upload') + '</button></div>'; }).join('') + '</div>'; }
+function clDoc(id, key){ const c = clientById(id); c.docs = c.docs || {}; if(c.docs[key]){ toast('Opening ' + c.docs[key].name + '.'); return; } c.docs[key] = { name:key + '-' + c.name.toLowerCase().replace(/\W+/g, '-') + '.pdf', at:clIso(ivNowMsSafe()) }; clientActivity(c, 'Document added · ' + key); clAcctDraw(); toast('Document added.'); }
+function clActivityTab(c){ const items = clientTimeline(c); return '<div class="cl-card cl-list">' + (items.length ? items.slice(0, 40).map(function(a){ return '<div class="cl-locrow"><div><b>' + cle(a.text) + '</b><span class="cl-muted">' + cle(new Date(a.at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })) + '</span></div></div>'; }).join('') : '<p class="cl-muted cl-pad">Nothing yet.</p>') + '</div>'; }
+document.addEventListener('click', function(e){ if(clientDetailState && clientDetailState.menuOpen && !e.target.closest('.cl-more')){ clientDetailState.menuOpen = false; if(document.getElementById('cl-acct')) clAcctDraw(); } });
+
+/* ---------- cl-add.js ---------- */
+/* ============================================================
+   ADD CLIENT: one calm page on the existing form state (ncForm). Tabs: Locations, Contacts, Commercial terms, Documents, Notes.
+   The old helpers (ncSave, ncValidate, duplicate check, country rules) still do the work; this is the surface.
+============================================================ */
+let CLN = null;
+function clnBlank(){ return { tab:'locations', open:'hq', q:'', results:[], picked:null, model:'contingency', retainer:'', success:'', indOther:false, otherName:'', tax:{}, taxEdit:null, taxDraft:null, hqUses:['Billing', 'Interviews', 'Joining'], gets:{}, mainGets:['Profiles and feedback', 'Interview invites', 'Escalations'], looks:{}, ctEdit:null, ctDraft:null, docs:{}, waSame:false, hqSez:false, hint:{}, done:null, feeApproval:false }; }
+function clnInit(){ CLN = clnBlank(); }
+(function wrapEntry(){
+  const a = window.openNewClientPage, b = window.openClientPage;
+  window.openNewClientPage = function(){ const r = a.apply(this, arguments); clnInit(); if(ncForm){ ncForm.billing.country = ncForm.country; } return r; };
+  window.openClientPage = function(id){
+    const r = b.apply(this, arguments); clnInit(); const c = clientById(id); if(!c || !ncForm) return r; clientEnsure(c);
+    const head = c.locations[0]; ncForm.billing.state = ncForm.billing.state || head.state; ncForm.billing.country = ncForm.billing.country || head.country; ncForm.place = ncForm.place || head.state; if(!ncForm.taxId) ncForm.taxId = head.taxId || '';
+    CLN.hqUses = head.uses.slice(); CLN.hqSez = !!head.sez; if(head.taxOverride) CLN.tax.hq = { value:head.taxOverride.value, reason:head.taxOverride.reason, status:head.taxOverride.status };
+    ncForm.branches.forEach(function(br){ const l = c.locations.find(function(x){ return x.id === br.id; }); if(l){ br.uses = l.uses.slice(); br.billing = l.billing; if(l.taxOverride) CLN.tax[br.id] = { value:l.taxOverride.value, reason:l.taxOverride.reason, status:l.taxOverride.status }; } });
+    CLN.model = c.engagement || (clCommercial(c).model) || 'contingency'; const v = clCommercial(c); CLN.retainer = v.retainer == null ? '' : String(v.retainer); CLN.success = v.success == null ? '' : String(v.success);
+    (c.pocs || []).forEach(function(p){ CLN.gets[p.id] = (p.routes || []).slice(); }); CLN.docs = Object.assign({}, c.docs || {});
+    CLN.mainGets = ((c.pocs || []).find(function(p){ return (p.roles || []).indexOf('main') > -1; }) || { routes:CLN.mainGets }).routes || CLN.mainGets;
+    return r;
+  };
+})();
+
+/* ---------- lookup: GST portal, registries (prototype stand-ins) ---------- */
+const CL_REGISTRY = {
+  'United Arab Emirates':[{ legalName:'Gulf Retail Group LLC', name:'Gulf Retail Group', website:'gulfretail.ae', id:'100234567800003', city:'Dubai', state:'Dubai', street:'DIFC Gate Avenue', industry:'Retail', source:'Federal Tax Authority' }, { legalName:'Marina Logistics FZ-LLC', name:'Marina Logistics', website:'marinalogistics.ae', id:'100345678900003', city:'Abu Dhabi', state:'Abu Dhabi', street:'Khalifa Park Road', industry:'Logistics', source:'Federal Tax Authority' }],
+  'United Kingdom':[{ legalName:'Meridian Health Ltd', name:'Meridian Health', website:'meridianhealth.co.uk', id:'GB284119355', city:'London', state:'England', street:'1 Finsbury Avenue', pin:'EC2M 2PF', industry:'Healthcare', source:'Companies House and HMRC' }, { legalName:'Northbridge Analytics Ltd', name:'Northbridge Analytics', website:'northbridge.io', id:'GB317662190', city:'Manchester', state:'England', street:'22 Deansgate', pin:'M3 2BW', industry:'Software & SaaS', source:'Companies House and HMRC' }],
+  'Singapore':[{ legalName:'Lion City Logistics Pte Ltd', name:'Lion City Logistics', website:'lioncity.sg', id:'201912345A', city:'Singapore', state:'Singapore', street:'8 Marina Boulevard', pin:'018981', industry:'Logistics', source:'ACRA' }],
+  'United States':[{ legalName:'Redwood Systems Inc.', name:'Redwood Systems', website:'redwoodsys.com', id:'12-3456789', city:'San Francisco', state:'California', street:'500 Howard Street', pin:'94105', industry:'Software & SaaS', source:'IRS' }],
+  'Saudi Arabia':[{ legalName:'Najd Industries Co.', name:'Najd Industries', website:'najd.com.sa', id:'300000000000003', city:'Riyadh', state:'Riyadh', street:'King Fahd Road', industry:'Manufacturing', source:'ZATCA' }],
+  'Australia':[{ legalName:'Harbour Bridge Partners Pty Ltd', name:'Harbour Bridge Partners', website:'harbourbridge.com.au', id:'51824753556', city:'Sydney', state:'New South Wales', street:'1 Martin Place', pin:'2000', industry:'Consulting', source:'ABN Lookup' }],
+  'Germany':[{ legalName:'Rheinwerk Software GmbH', name:'Rheinwerk Software', website:'rheinwerk.de', id:'DE123456789', city:'Frankfurt', state:'Hesse', street:'Taunusanlage 9', pin:'60329', industry:'Software & SaaS', source:'VIES' }]
+};
+/** PROTOTYPE stand-in for the real registries (GST portal, FTA, Companies House plus HMRC, ACRA, VIES and others). */
+function lookupCompany(country, q){
+  q = String(q || '').trim(); if(q.length < 2) return [];
+  const low = q.toLowerCase(), norm = ncNormId(q);
+  if(country === 'India'){
+    if(gstinFormatOk(norm)){ const r = ncLookupGstin(norm); return [r.found ? { legalName:r.legalName, name:r.tradeName || r.legalName, website:'', id:norm, city:r.address.city, state:r.state, street:r.address.street1, pin:r.address.pin, industry:'', source:'GST portal', taxpayerType:r.taxpayerType, pan:r.pan } : { legalName:'', name:'', id:norm, city:'', state:r.state, source:'GST portal', stateOnly:true, pan:r.pan }]; }
+    return Object.keys(GST_SAMPLE_REGISTRY).filter(function(g){ const r = GST_SAMPLE_REGISTRY[g]; return (r.legalName + ' ' + r.tradeName + ' ' + g).toLowerCase().indexOf(low) > -1; }).map(function(g){ const r = GST_SAMPLE_REGISTRY[g]; return { legalName:r.legalName, name:r.tradeName, website:'', id:g, city:r.address.city, state:gstStateName(g.slice(0, 2)), street:r.address.street1, pin:r.address.pin, industry:'', source:'GST portal', taxpayerType:r.taxpayerType, pan:g.slice(2, 12) }; });
+  }
+  return (CL_REGISTRY[country] || []).filter(function(r){ return (r.legalName + ' ' + r.website + ' ' + r.id).toLowerCase().indexOf(low) > -1; });
+}
+function clSearchLabel(country){ const k = { 'India':'GSTIN', 'United Arab Emirates':'TRN', 'United Kingdom':'Company number', 'Singapore':'UEN', 'Saudi Arabia':'VAT number', 'Australia':'ABN', 'Canada':'Business number', 'Germany':'VAT ID' }[country]; return (k ? k + ', ' : '') + (k ? 'company name or website' : 'Company name or website').replace(/^./, function(m){ return k ? m : m.toUpperCase(); }); }
+function clnLookup(v){ CLN.q = v; clearTimeout(CLN._t); CLN._t = setTimeout(function(){ CLN.results = lookupCompany(ncForm.country, v); const el = document.getElementById('cn-results'); if(el) el.innerHTML = clnResultsHTML(); }, 120); }
+function clnResultsHTML(){ if(!CLN.results.length) return CLN.q.trim().length > 1 ? '<p class="cl-muted cn-noresult">Nothing found. You can type the details below.</p>' : ''; return '<div class="cn-results" role="listbox">' + CLN.results.map(function(r, i){ return '<button type="button" role="option" class="cn-result" onclick="clnPick(' + i + ')"><b>' + cle(r.legalName || r.id) + '</b><span>' + cle([r.city, r.state, r.id].filter(Boolean).join(' · ')) + '</span></button>'; }).join('') + '</div>'; }
+function clnPick(i){
+  const r = CLN.results[i], f = ncForm; if(!r) return; CLN.results = []; CLN.q = '';
+  if(r.legalName){ f.companyName = r.legalName; if(!f.displayName.trim() || CLN.picked) f.displayName = r.name || r.legalName; } if(r.website) f.website = r.website;
+  if(r.industry && clIndustries().indexOf(r.industry) > -1) f.industry = r.industry;
+  f.billing = Object.assign(ncBlankAddress(), f.billing, { country:f.country, street1:r.street || '', city:r.city || '', state:r.state || '', pin:r.pin || '' }); f.place = r.state || f.place; f.taxId = r.id || f.taxId; if(r.pan) f.secondaryId = r.pan; f.gstFetchedFrom = r.id;
+  CLN.picked = { source:r.source, legal:r.legalName || r.id, city:r.city }; ['taxId', 'displayName', 'companyName'].forEach(function(k){ delete f.errors[k]; }); clnDup(); ncRender(); logAudit('Clients', 'Company details filled', r.source + ' · ' + (r.legalName || r.id));
+}
+function clnDup(){ const d = ncFindDuplicate(); ncForm.dup = d ? d.id : null; if(!d) ncForm.dupChoice = ''; }
+
+/* ---------- small helpers ---------- */
+function clnLoc(key){
+  const f = ncForm; if(key === 'hq') return { key:'hq', hq:true, name:'Head office', country:f.country, get state(){ return f.billing.state; }, set state(v){ f.billing.state = v; f.place = v; }, get city(){ return f.billing.city; }, set city(v){ f.billing.city = v; }, get street(){ return f.billing.street1; }, set street(v){ f.billing.street1 = v; }, get pin(){ return f.billing.pin; }, set pin(v){ f.billing.pin = v; }, get taxId(){ return f.taxId; }, set taxId(v){ f.taxId = v; }, get uses(){ return CLN.hqUses; }, billing:'own', get apEmail(){ return CLN.hqEmail || ''; }, set apEmail(v){ CLN.hqEmail = v; } };
+  const b = f.branches.find(function(x){ return x.id === key; }); if(!b) return null; if(!b.uses) b.uses = ['Interviews', 'Joining']; b.key = key; b.hq = false; return b;
+}
+function clnLocKeys(){ return ['hq'].concat(ncForm.branches.map(function(b){ return b.id; })); }
+function clnLocName(key){ return key === 'hq' ? 'Head office' : ((ncForm.branches.find(function(b){ return b.id === key; }) || {}).name || 'New location'); }
+function clnLocCountry(L){ return L.hq ? ncForm.country : L.country; }
+function clnPlaceholderFor(key){ const L = clnLoc(key) || clnLoc('hq'); return clPlaceholderName(clnLocCountry(L), L.state); }
+function clnField(label, inner, id, extra){ return '<label class="cl-field' + (extra ? ' ' + extra : '') + '"><span>' + label + '</span>' + inner + '</label>'; }
+function clnErr(path){ const e = ncForm.errors[path]; return '<p class="cl-err" id="cn-err-' + path.replace(/\./g, '-') + '"' + (e ? '' : ' hidden') + '>' + cle(e || '') + '</p>'; }
+function clnIn(path, ph, opts){ opts = opts || {}; const e = ncForm.errors[path]; return '<input class="cl-input' + (e ? ' has-err' : '') + '" id="' + (path === 'displayName' ? 'nc-display' : 'cn-' + path.replace(/\./g, '-')) + '" value="' + cle(ncGet(path)) + '" placeholder="' + cle(ph || '') + '"' + (opts.type ? ' type="' + opts.type + '"' : '') + (opts.list ? ' list="' + opts.list + '"' : '') + ' oninput="ncSet(\'' + path + '\', this.value);' + (opts.on || '') + '" onblur="' + (opts.blur || '') + '">'; }
+function clnChip(on, label, fn, role){ return '<button type="button" class="cl-chip' + (on ? ' is-on' : '') + '" ' + (role === 'radio' ? 'role="radio" aria-checked="' + on + '"' : 'aria-pressed="' + on + '"') + ' onclick="' + fn + '">' + cle(label) + '</button>'; }
+
+/* ---------- company and contact cards ---------- */
+function clnCompanyHTML(){
+  const f = ncForm, d = f.dup ? clientById(f.dup) : null, o = d && clientOwner(d), since = d && d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-GB', { month:'short', year:'numeric' }) : '';
+  const known = clIndustries(), isOther = CLN.indOther || (f.industry === 'Other');
+  const managers = ((typeof TEAM_MEMBERS !== 'undefined' && TEAM_MEMBERS) || RECRUITER_ROSTER).filter(function(m){ return m.status !== 'Inactive' && m.active !== false; });
+  const me = currentActingUser();
+  return '<section class="cl-card cn-card"><div class="cn-grid"><div class="cl-field"><span>Country</span>' + ncCountryPickerHTML('country', true) + '</div>' + clnField(cle(clSearchLabel(f.country)), '<input id="cn-q" class="cl-input" autocomplete="off" value="' + cle(CLN.q) + '" oninput="clnLookup(this.value)" placeholder="' + cle(f.country === 'India' ? '27AACCF1234K1Z5' : 'Start typing') + '">') + '</div><div id="cn-results">' + clnResultsHTML() + '</div>' +
+    (CLN.picked ? '<p class="cn-filled"><i></i>Filled from ' + cle(CLN.picked.source) + ' · ' + cle(CLN.picked.legal) + (CLN.picked.city ? ', ' + cle(CLN.picked.city) : '') + ' <button type="button" class="cl-link" onclick="CLN.picked=null; ncRender()">Change</button></p>' : '') +
+    (d ? '<div class="cn-dup" role="alert"><p><b>' + cle(d.name) + '</b> is already a client, owned by ' + cle(o ? o.name : 'a teammate') + (since ? ' since ' + since : '') + '. ' + cle(ncDupReasons(d).join(' · ')) + '.</p><div class="cl-actions"><button type="button" class="cl-btn" onclick="clnOpenDup(\'' + d.id + '\')">Open ' + cle(d.name) + '</button><button type="button" class="cl-link" onclick="ncDupDifferent()">It’s a different company</button></div></div>' : (f.dupChoice === 'different' && f.dupNote ? '<p class="cl-muted">' + cle(f.dupNote) + '</p>' : '')) +
+    '<div class="cn-grid cn-grid--3">' + clnField('Legal name', clnIn('companyName', 'Registered company name', { blur:'clnDupSoon()' })) + clnField('Call it', clnIn('displayName', 'The name your team uses', { blur:'clnDupSoon()' }) + clnErr('displayName')) +
+    clnField('Industry', '<select class="cl-input" aria-label="Industry" onchange="clnIndustry(this.value)"><option value="">Choose an industry</option>' + known.map(function(n){ return '<option' + (f.industry === n ? ' selected' : '') + '>' + cle(n) + '</option>'; }).join('') + '<option value="__other"' + (isOther ? ' selected' : '') + '>Other, I’ll type it</option></select>') + clnField('Website', clnIn('website', 'company.com', { blur:'clnDupSoon(); clnHints()' })) +
+    clnField('Managed by', '<select class="cl-input" aria-label="Managed by" onchange="ncSet(\'ownerId\', this.value)">' + managers.map(function(m){ const sel = (f.ownerId || (me && me.id)) === m.id; return '<option value="' + m.id + '"' + (sel ? ' selected' : '') + '>' + (me && m.id === me.id ? 'You · ' : '') + cle(m.name) + '</option>'; }).join('') + '</select>') + '</div>' +
+    (isOther ? '<div class="cn-grid"><label class="cl-field"><span>Name the industry</span><input class="cl-input' + (f.errors.industryOther ? ' has-err' : '') + '" id="cn-ind" value="' + cle(CLN.otherName) + '" placeholder="e.g. Marine engineering" oninput="CLN.otherName=this.value"></label><div class="cn-keep"><button type="button" class="cl-btn" onclick="clnKeepIndustry()">Keep it</button></div></div>' + clnErr('industryOther') : '') + '</section>';
+}
+function clnOpenDup(id){ const c = clientById(id); ncForm = null; ncEditId = null; ncReturnTo = ''; if(c) openClientDetail(id); }
+let clnDupT; function clnDupSoon(){ clearTimeout(clnDupT); clnDupT = setTimeout(function(){ if(!ncForm) return; const d = ncFindDuplicate(), cur = ncForm.dup; if((d && d.id) !== cur){ ncForm.dup = d ? d.id : null; ncForm.dupChoice = ''; ncRender(); } }, 60); }
+function clnIndustry(v){ if(v === '__other'){ CLN.indOther = true; ncForm.industry = 'Other'; ncRender(); setTimeout(function(){ const e = document.getElementById('cn-ind'); if(e) e.focus(); }, 20); return; } CLN.indOther = false; ncForm.industry = v; ncForm.industryOther = ''; delete ncForm.errors.industryOther; ncRender(); }
+function clnKeepIndustry(){ const n = String(CLN.otherName || '').trim(); if(n.length < 2){ ncForm.errors.industryOther = 'Name the industry, or pick one from the list.'; ncRender(); return; } const kept = clKeepIndustry(n); ncForm.industry = kept; ncForm.industryOther = ''; CLN.indOther = false; CLN.otherName = ''; delete ncForm.errors.industryOther; ncRender(); toast(kept + ' added to your industries.'); }
+function clnContactHTML(){
+  const f = ncForm, nm = clnPlaceholderFor('hq'), email = clPlaceholderEmail(nm, f.website), mob = CL_MOBILE_PH[f.country] || '';
+  const desig = [].concat.apply([], NC_CONTACT_DESIGNATIONS.map(function(g){ return g[1]; }));
+  return '<section class="cl-card cn-card"><h2 class="cn-h">Main contact</h2><div class="cn-grid cn-grid--3">' + clnField('First name', clnIn('firstName', nm.split(' ')[0])) + clnField('Last name', clnIn('lastName', nm.split(' ').slice(1).join(' '))) +
+    clnField('Designation', clnIn('designation', 'TA Lead', { list:'cn-desig' })) + clnField('Work email', clnIn('email', email, { type:'email', blur:'clnHints()' }) + clnErr('email')) +
+    clnField('Mobile', '<span class="cl-suffix cl-suffix--code"><select class="cl-code" aria-label="Country code" onchange="ncSet(\'mobileCode\', this.value)">' + ncCodeOpts().map(function(o){ return '<option' + (f.mobileCode === o[0] ? ' selected' : '') + '>' + o[0] + '</option>'; }).join('') + '</select><input class="cl-input" value="' + cle(f.mobile) + '" placeholder="' + cle(mob) + '" oninput="ncSet(\'mobile\', this.value); if(CLN.waSame) ncSet(\'whatsapp\', this.value)"></span>' + clnErr('mobile')) +
+    '<label class="cn-check"><input type="checkbox"' + (CLN.waSame ? ' checked' : '') + ' onchange="CLN.waSame=this.checked; if(this.checked){ ncForm.whatsapp=ncForm.mobile; ncForm.whatsappCode=ncForm.mobileCode; }"> Same number on WhatsApp</label></div><p class="cl-amber" id="cn-domain" hidden></p><datalist id="cn-desig">' + desig.map(function(d){ return '<option value="' + cle(d) + '">'; }).join('') + '</datalist></section>';
+}
+function clnHints(){ if(!ncForm) return; const f = ncForm, el = document.getElementById('cn-domain'); if(!el) return; const em = String(f.email || '').trim(), dom = clientDomain(f.website); if(em.indexOf('@') > 0 && dom && clientDomain(em.split('@')[1]) !== dom){ el.textContent = 'This email isn’t on ' + dom + '. Fine for now; feedback links are safest on a work email.'; el.hidden = false; } else el.hidden = true; }
+
+/* ---------- locations ---------- */
+function clnTaxVal(L, country){ const R = ncTaxRegime(country), id = ncNormId(L.taxId).replace(/[.\-\/]/g, ''); if(!id) return null; if(R.validateId && R.validateId(id)) return null; if(country === 'India'){ const code = ncStateCode(L.state); if(code && id.slice(0, 2) !== code) return null; } return id; }
+function clnTaxLine(key){
+  const L = clnLoc(key), country = clnLocCountry(L); if(!L || !(L.hq || L.billing === 'own')) return '';
+  const id = clnTaxVal(L, country); if(!id) return ''; const R = ncTaxRegime(country), o = CLN.tax[key], sez = key === 'hq' ? CLN.hqSez : false;
+  const r = resolveTax({ supplierEntity:clOurEntity(), location:{ country:country, state:L.state, taxId:id, sez:sez } }), cur = clCountryCur(country);
+  const text = function(x){ const t = x.taxes.length ? clTaxText(x) : 'no tax added'; return t.replace('Export 0%', '0% export under LUT').replace('SEZ 0%', '0% supply to an SEZ unit') + (x.withholding ? ', client deducts TDS ' + x.withholding.rate + '%' : '') + (country !== 'India' && cur !== 'INR' ? ', paid in ' + cur : ''); };
+  const edit = CLN.taxEdit === key, d = CLN.taxDraft || {};
+  let line;
+  if(o && o.value){ const def = CL_OVERRIDES.find(function(x){ return x[0] === o.value; }); line = 'Invoices: ' + (o.value === 'none' ? 'no tax added' : def[1]) + ' · set by you (' + cle(o.reason) + (o.status === 'pending' ? ', waiting for approval' : '') + ') <button type="button" class="cl-link" onclick="clnTaxUse(\'' + key + '\')">Use suggested</button>'; }
+  else line = 'Invoices: ' + cle(text(r)) + ' · from the ' + cle(R.idShort || 'registration') + ' <button type="button" class="cl-link" onclick="clnTaxOpen(\'' + key + '\')">Change</button>';
+  const editor = edit ? '<div class="cl-edit"><p class="cl-lab">Tax on invoices</p><div class="cl-chips" role="radiogroup" aria-label="Tax on invoices">' + CL_OVERRIDES.map(function(x){ return clnChip(d.value === x[0], x[1] + (x[0] === r.key ? ' (suggested)' : ''), 'clnTaxPick(\'' + x[0] + '\')', 'radio'); }).join('') + '</div><label class="cl-field"><span>Why</span><input class="cl-input" id="cn-taxwhy" value="' + cle(d.why || '') + '" oninput="CLN.taxDraft.why=this.value" placeholder="A few words, kept with every invoice"></label><p class="cl-err" id="cn-taxerr" hidden></p><div class="cl-actions"><button type="button" class="cl-btn" onclick="CLN.taxEdit=null; ncRender()">Cancel</button><button type="button" class="btn--go" onclick="clnTaxSave(\'' + key + '\',\'' + r.key + '\')">Save</button></div></div>' : '';
+  return '<p class="cn-taxline" id="cn-taxline-' + key + '">' + line + '</p>' + editor;
+}
+function clnTaxOpen(key){ CLN.taxEdit = key; CLN.taxDraft = { value:'', why:'' }; ncRender(); }
+function clnTaxPick(v){ const w = document.getElementById('cn-taxwhy'); if(w) CLN.taxDraft.why = w.value; CLN.taxDraft.value = v; ncRender(); }
+function clnTaxUse(key){ delete CLN.tax[key]; ncRender(); }
+function clnTaxSave(key, rule){ const d = CLN.taxDraft, err = function(m){ const e = document.getElementById('cn-taxerr'); if(e){ e.textContent = m; e.hidden = false; } }; if(!d.value) return err('Pick how it should be taxed.'); if(d.value === rule){ delete CLN.tax[key]; CLN.taxEdit = null; ncRender(); return; } if(String(d.why || '').trim().length < 8) return err('Say why the tax is different, in a few words. It’s kept with every invoice.'); CLN.tax[key] = { value:d.value, reason:d.why.trim(), status:clIsOwnerRole() ? 'active' : 'pending' }; CLN.taxEdit = null; ncRender(); }
+function clnRegText(key){ const L = clnLoc(key), R = ncTaxRegime(clnLocCountry(L)); return (R.idLabel || 'Tax ID') + (clnLocCountry(L) === 'India' && !L.hq ? ' for this state' : ''); }
+function clnLocSummary(key){ const L = clnLoc(key), country = clnLocCountry(L); return [L.city, L.state, country].filter(Boolean).join(', ') || 'Add the address'; }
+function clnLocRight(key){ const L = clnLoc(key), id = clnTaxVal(L, clnLocCountry(L)); if(L.hq) return id ? ncTaxRegime(clnLocCountry(L)).idShort + ' added' : 'Bills here'; return L.billing === 'own' ? (id ? ncTaxRegime(clnLocCountry(L)).idShort + ' added' : 'Bills here') : 'Billed to head office'; }
+function clnLocationCard(key){
+  const L = clnLoc(key), open = CLN.open === key, f = ncForm, country = clnLocCountry(L), states = clStates(country), cities = CL_CITIES[L.state] || [], i = f.branches.findIndex(function(b){ return b.id === key; }), kp = i < 0 ? 'hq' : 'branches.' + i;
+  const head = '<button type="button" class="cn-lochead" aria-expanded="' + open + '" onclick="CLN.open=' + (open ? 'null' : '\'' + key + '\'') + '; ncRender()"><span><b>' + cle(clnLocName(key)) + '</b><i>' + cle(clnLocSummary(key)) + '</i></span><em>' + cle(clnLocRight(key)) + '</em></button>';
+  if(!open) return '<div class="cn-loc">' + head + '</div>';
+  const errP = function(k){ return f.errors[(i < 0 ? '' : 'branches.' + i + '.') + k]; };
+  const text = function(label, k, val, ph, extra){ const err = errP(k); return clnField(label, '<input class="cl-input' + (err ? ' has-err' : '') + '" id="cn-' + key + '-' + k + '" value="' + cle(val) + '" placeholder="' + cle(ph || '') + '" oninput="clnLocSet(\'' + key + '\',\'' + k + '\',this.value)" ' + (extra || '') + '>' + (err ? '<p class="cl-err">' + cle(err) + '</p>' : '')); };
+  const stateField = states.length ? '<select class="cl-input" id="cn-' + key + '-state" aria-label="' + clStateLabel(country) + '" onchange="clnLocSet(\'' + key + '\',\'state\',this.value); ncRender()"><option value="">Choose</option>' + states.map(function(s){ return '<option' + (L.state === s ? ' selected' : '') + '>' + cle(s) + '</option>'; }).join('') + '</select>' : '<input class="cl-input" id="cn-' + key + '-state" value="' + cle(L.state) + '" oninput="clnLocSet(\'' + key + '\',\'state\',this.value)">';
+  const bills = L.hq || L.billing === 'own', R = ncTaxRegime(country), idErr = errP('taxId') || (L.hq ? f.errors.taxId : '');
+  const uses = L.uses || [];
+  return '<div class="cn-loc is-open">' + head + '<div class="cn-locbody">' +
+    (L.hq ? '' : text('Branch name', 'name', L.name, 'e.g. ' + (L.country === 'India' && L.city ? L.city + ' office' : 'Bengaluru office'), 'id="cn-branch-name-' + i + '"') + '<div class="cl-field"><span>Country</span>' + ncCountryPickerHTML('branches.' + i + '.country') + '</div>') +
+    '<div class="cn-grid cn-grid--3">' + text(clPostalLabel(country), 'pin', L.pin, country === 'India' ? '560103' : '', 'inputmode="text"') + clnField(clStateLabel(country), stateField) + clnField('City', '<input class="cl-input" list="cn-cities-' + key + '" id="cn-' + key + '-city" value="' + cle(L.city) + '" oninput="clnLocSet(\'' + key + '\',\'city\',this.value)" placeholder="' + cle(cities[0] || '') + '"><datalist id="cn-cities-' + key + '">' + cities.map(function(c){ return '<option value="' + cle(c) + '">'; }).join('') + '</datalist>' + (errP('city') ? '<p class="cl-err">' + cle(errP('city')) + '</p>' : '')) + '</div><p class="cl-muted cn-pinhint" id="cn-pinhint-' + key + '" hidden></p>' +
+    text('Street address', 'street', L.hq ? L.street : L.street, 'Building, street, area') +
+    '<p class="cl-lab">Used for</p><div class="cl-chips">' + (L.hq ? clnChip(true, 'Billing', 'void 0') : '') + ['Interviews', 'Joining'].map(function(u){ return clnChip(uses.indexOf(u) > -1, u, 'clnUse(\'' + key + '\',\'' + u + '\')'); }).join('') + '</div>' +
+    (L.hq ? '' : '<div class="cl-chips cn-bill" role="radiogroup" aria-label="Billing">' + clnChip(L.billing !== 'own', 'Bill to head office', 'clnBill(\'' + key + '\',\'hq\')', 'radio') + clnChip(L.billing === 'own', 'Bill this branch separately', 'clnBill(\'' + key + '\',\'own\')', 'radio') + '</div>' + (L.billing === 'hq' && ncBranchGstHint(L) ? '<p class="cl-muted">' + cle(ncBranchGstHint(L)) + '</p>' : '')) +
+    (bills ? '<div class="cn-grid">' + clnField(cle(clnRegText(key)), '<input class="cl-input' + (idErr ? ' has-err' : '') + '" id="cn-' + key + '-taxId" value="' + cle(L.taxId) + '" placeholder="' + cle(R.idPlaceholder || '') + '" oninput="clnLocSet(\'' + key + '\',\'taxId\',this.value)" onblur="clnCheckId(\'' + key + '\')"><p class="cl-err" id="cn-iderr-' + key + '"' + (idErr ? '' : ' hidden') + '>' + cle(idErr || '') + '</p>') + clnField('Invoice email', '<input class="cl-input" value="' + cle(L.apEmail || '') + '" placeholder="accounts@' + cle(clientDomain(f.website) || 'company.com') + '" oninput="clnLocSet(\'' + key + '\',\'apEmail\',this.value)">') + '</div><div id="cn-tax-' + key + '">' + clnTaxLine(key) + '</div>' : '') +
+    (L.hq ? '' : '<button type="button" class="cl-link" onclick="clnRemoveLoc(\'' + key + '\')">Remove this location</button>') + '</div></div>';
+}
+function clnLocSet(key, k, v){
+  const L = clnLoc(key); if(!L) return; if(L.hq){ if(k === 'name') return; L[k] = v; if(k === 'street') ncForm.billing.street1 = v; } else L[k] = v;
+  if(k === 'pin') clnPin(key, v); if(k === 'taxId' || k === 'state'){ const t = document.getElementById('cn-tax-' + key); if(t) t.innerHTML = clnTaxLine(key); const e = document.getElementById('cn-iderr-' + key); if(e && k === 'taxId') e.hidden = true; }
+  if(k === 'state' && L.hq){ ncForm.place = v; }
+}
+function clnPin(key, v){
+  const L = clnLoc(key), country = clnLocCountry(L), hit = String(v).trim().length >= 5 ? clLookupPostal(country, v) : null; if(!hit) return;
+  L.state = hit.state; if(hit.city) L.city = hit.city; if(L.hq) ncForm.place = hit.state;
+  const s = document.getElementById('cn-' + key + '-state'), c = document.getElementById('cn-' + key + '-city'), h = document.getElementById('cn-pinhint-' + key); if(s) s.value = hit.state; if(c && hit.city) c.value = hit.city; if(h){ h.textContent = 'City and state filled from the ' + clPostalLabel(country) + '.'; h.hidden = false; }
+  const t = document.getElementById('cn-tax-' + key); if(t) t.innerHTML = clnTaxLine(key);
+}
+function clnCheckId(key){
+  const L = clnLoc(key), country = clnLocCountry(L), R = ncTaxRegime(country), id = ncNormId(L.taxId).replace(/[.\-\/]/g, ''); let m = '';
+  if(id){ m = R.validateId ? R.validateId(id) : ''; if(!m && country === 'India'){ const code = ncStateCode(L.state); if(code && id.slice(0, 2) !== code) m = 'This GSTIN is registered in ' + (gstStateName(id.slice(0, 2)) || 'state ' + id.slice(0, 2)) + ', not ' + L.state + '. Use the GSTIN for this state.'; else if(!L.hq){ const pan = ncCompanyPan(); if(pan && id.slice(2, 12) !== pan) m = 'This GSTIN belongs to PAN ' + id.slice(2, 12) + '. A branch of the same company shares its PAN (' + pan + ').'; else if(id === ncNormId(ncForm.taxId)) m = 'That’s the head office GSTIN. Choose “Bill to head office” instead.'; } } }
+  const e = document.getElementById('cn-iderr-' + key); if(e){ e.textContent = m; e.hidden = !m; } const t = document.getElementById('cn-tax-' + key); if(t) t.innerHTML = clnTaxLine(key);
+}
+function clnUse(key, u){ const L = clnLoc(key), a = L.uses, i = a.indexOf(u); if(i > -1) a.splice(i, 1); else a.push(u); ncRender(); }
+function clnBill(key, v){ clnLoc(key).billing = v; ncRender(); }
+function clnAddLoc(){ const b = ncBlankBranch(); b.uses = ['Interviews', 'Joining']; ncForm.branches.push(b); CLN.open = b.id; ncRender(); setTimeout(function(){ const e = document.getElementById('cn-' + b.id + '-name'); if(e) e.focus(); }, 30); }
+function clnRemoveLoc(key){ const i = ncForm.branches.findIndex(function(b){ return b.id === key; }); if(i > -1) ncRemoveBranch(i); CLN.open = 'hq'; }
+function clnLocationsHTML(){ return '<div class="cn-locs">' + clnLocKeys().map(clnLocationCard).join('') + '</div><button type="button" class="cl-btn" onclick="clnAddLoc()">Add a location</button>'; }
+
+/* ---------- contacts ---------- */
+function clnNamed(){ return ncForm.contacts.filter(function(c){ return c.firstName.trim(); }); }
+function clnLooksText(ct){ const keys = clnLocKeys(); if(keys.every(function(k){ return ncInBranch(ct, k); })) return 'all locations'; return keys.filter(function(k){ return ncInBranch(ct, k); }).map(clnLocName).join(', ') || 'Head office'; }
+function clnContactsHTML(){
+  const f = ncForm, main = f.firstName.trim() ? ncContactDisplayName({ salutation:'', firstName:f.firstName, lastName:f.lastName }) : 'Main contact', named = clnNamed(), ed = CLN.ctEdit;
+  const row = function(name, sub, looks, id, isMain){ return '<div class="cl-contact"><div class="cl-contact__main"><b>' + cle(name) + '</b><span class="cl-muted">' + cle(sub) + '</span><span class="cl-muted">' + (isMain ? 'Main contact · ' : '') + 'Looks after ' + cle(looks) + '</span></div><button type="button" class="cl-link" onclick="clnEditContact(\'' + id + '\')">Edit</button></div>' + (ed === id ? clnContactEditor(id, isMain) : ''); };
+  let h = '<div class="cl-card cl-list cn-contacts">' + row(main, [f.designation, f.email].filter(Boolean).join(' · ') || 'Add their details above', 'all locations', 'main', true) + named.map(function(ct){ return row(ncContactDisplayName(ct), [ncContactValue(ct, 'designation'), ct.email].filter(Boolean).join(' · '), clnLooksText(ct), ct.id, false); }).join('') + '</div>';
+  h += ed === 'new' ? clnNewContact() : '<button type="button" class="cl-btn" onclick="clnEditContact(\'new\')">Add contact person</button>'; return h;
+}
+function clnGetsOf(id){ return id === 'main' ? CLN.mainGets : (CLN.gets[id] = CLN.gets[id] || (CL_ROUTE_BY_DEPT[((ncForm.contacts.find(function(c){ return c.id === id; }) || {}).department)] || ['Profiles and feedback']).slice()); }
+function clnEditContact(id){ CLN.ctEdit = id; if(id === 'new'){ const keys = clnLocKeys(); CLN.ctDraft = { looks:keys.slice(), gets:['Profiles and feedback', 'Interview invites'], name:'', designation:'', department:'', email:'', mobile:'', wa:true, err:'' }; } ncRender(); }
+function clnChips(id, isMain){
+  const keys = clnLocKeys(), gets = id === 'new' ? CLN.ctDraft.gets : clnGetsOf(id), looks = id === 'new' ? CLN.ctDraft.looks : (ncForm.contacts.find(function(c){ return c.id === id; }) || { branchIds:keys }).branchIds, all = keys.every(function(k){ return looks.indexOf(k) > -1; });
+  return (isMain ? '' : '<p class="cl-lab">Looks after</p><div class="cl-chips">' + clnChip(all, 'All locations', 'clnLook(\'' + id + '\',\'all\')') + keys.map(function(k){ return clnChip(!all && looks.indexOf(k) > -1, clnLocName(k), 'clnLook(\'' + id + '\',\'' + k + '\')'); }).join('') + '</div>') + '<p class="cl-lab">Gets from Oontu</p><div class="cl-chips">' + CL_ROUTES.map(function(r){ return clnChip(gets.indexOf(r) > -1, r, 'clnGet(\'' + id + '\',\'' + r + '\')'); }).join('') + '</div>';
+}
+function clnContactEditor(id, isMain){ return '<div class="cl-edit">' + clnChips(id, isMain) + '<div class="cl-actions"><button type="button" class="btn--go" onclick="CLN.ctEdit=null; ncRender()">Done</button></div></div>'; }
+function clnLook(id, k){ const keys = clnLocKeys(); const set = id === 'new' ? CLN.ctDraft : ncForm.contacts.find(function(c){ return c.id === id; }); const arr = id === 'new' ? set.looks : set.branchIds; let next; if(k === 'all') next = keys.slice(); else { next = arr.filter(function(x){ return x !== undefined; }); if(keys.every(function(x){ return next.indexOf(x) > -1; })) next = [k]; else { const i = next.indexOf(k); if(i > -1) next.splice(i, 1); else next.push(k); } if(!next.length) next = ['hq']; } if(id === 'new') set.looks = next; else set.branchIds = next; clnKeepDraft(); ncRender(); }
+function clnGet(id, r){ const g = id === 'new' ? CLN.ctDraft.gets : clnGetsOf(id), i = g.indexOf(r); if(i > -1) g.splice(i, 1); else g.push(r); clnKeepDraft(); ncRender(); }
+function clnKeepDraft(){ const d = CLN.ctDraft; if(!d) return; ['name', 'designation', 'department', 'email', 'mobile'].forEach(function(k){ const e = document.getElementById('cnc-' + k); if(e) d[k] = e.value; }); }
+function clnNewContact(){
+  const d = CLN.ctDraft, f = ncForm, first = clnLoc(d.looks[0] === 'hq' || !d.looks[0] ? 'hq' : d.looks[0]) || clnLoc('hq'), country = clnLocCountry(first), nm = clPlaceholderName(country, first.state);
+  return '<div class="cl-edit">' + clnChips('new', false) + '<div class="cn-grid cn-grid--3">' + clnField('Name', '<input class="cl-input" id="cnc-name" value="' + cle(d.name) + '" placeholder="' + cle(nm) + '">') + clnField('Designation', '<input class="cl-input" id="cnc-designation" list="cn-desig" value="' + cle(d.designation) + '" placeholder="HR Manager">') +
+    clnField('Department', '<select class="cl-input" id="cnc-department" onchange="clnKeepDraft(); clnDept(this.value)"><option value="">Choose</option>' + NC_CONTACT_DEPARTMENTS.map(function(x){ return '<option' + (d.department === x ? ' selected' : '') + '>' + cle(x) + '</option>'; }).join('') + '</select>' + (d.department && NC_DEPARTMENT_INFO[d.department] ? '<span class="cl-muted">' + cle(String(NC_DEPARTMENT_INFO[d.department].summary || NC_DEPARTMENT_INFO[d.department].desc || NC_DEPARTMENT_INFO[d.department])) + '</span>' : '')) +
+    clnField('Work email', '<input class="cl-input" id="cnc-email" type="email" value="' + cle(d.email) + '" placeholder="' + cle(clPlaceholderEmail(nm, f.website)) + '">') + clnField('Mobile', '<input class="cl-input" id="cnc-mobile" value="' + cle(d.mobile) + '" placeholder="' + cle(CL_MOBILE_PH[country] || '') + '">') + '<label class="cn-check"><input type="checkbox"' + (d.wa ? ' checked' : '') + ' onchange="CLN.ctDraft.wa=this.checked"> Same number on WhatsApp</label></div><p class="cl-err" id="cnc-err"' + (d.err ? '' : ' hidden') + '>' + cle(d.err) + '</p><div class="cl-actions"><button type="button" class="cl-btn" onclick="CLN.ctEdit=null; ncRender()">Cancel</button><button type="button" class="btn--go" onclick="clnSaveContact()">Add contact</button></div></div>';
+}
+function clnDept(v){ const d = CLN.ctDraft; d.department = v; if(CL_ROUTE_BY_DEPT[v]) d.gets = CL_ROUTE_BY_DEPT[v].slice(); ncRender(); }
+function clnSaveContact(){
+  clnKeepDraft(); const d = CLN.ctDraft, f = ncForm, err = function(m){ d.err = m; const e = document.getElementById('cnc-err'); if(e){ e.textContent = m; e.hidden = false; } };
+  const parts = d.name.trim().split(/\s+/); if(parts.length < 2) return err('Add the first and last name.'); if(!d.email.trim() && !d.mobile.trim()) return err('Add an email or a mobile number.'); if(d.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) return err('That email doesn’t look right.');
+  let ct = f.contacts.find(function(c){ return !c.firstName.trim() && !c.email.trim(); }); if(!ct){ ct = ncBlankContact(NC_HQ, ncCountryInfo(f.country).dial); f.contacts.push(ct); }
+  ct.firstName = parts[0]; ct.lastName = parts.slice(1).join(' '); ct.designation = d.designation.trim(); ct.department = d.department; ct.email = d.email.trim(); ct.mobile = d.mobile.trim(); ct.waSame = d.wa; ct.branchIds = d.looks.slice(); CLN.gets[ct.id] = d.gets.slice();
+  if(d.email.trim() && clientDomain(d.email.split('@')[1]) !== clientDomain(f.website) && clientDomain(f.website)) toast('This email isn’t on ' + clientDomain(f.website) + '. Fine for now.'); CLN.ctEdit = null; CLN.ctDraft = null; ncRender();
+}
+
+/* ---------- commercial terms ---------- */
+function clnTermsHTML(){
+  const f = ncForm, cur = f.currency, set = function(k, v){ return 'clnSetTerm(\'' + k + '\',\'' + v + '\')'; }, opt = function(on, label, fn, role){ return clnChip(on, label, fn, role); };
+  const sym = (clCur(cur).trim() || cur), num = function(path, label, suffix, ph){ return clnField(label, '<span class="cl-suffix"><input class="cl-input' + (f.errors[path] ? ' has-err' : '') + '" inputmode="decimal" value="' + cle(ncGet(path)) + '" placeholder="' + cle(ph || '') + '" oninput="ncSet(\'' + path + '\', this.value); clnBelow()"><i>' + cle(suffix) + '</i></span>' + clnErr(path)); };
+  const rep = ['0', '30', '60', '90', '180'], repv = String(f.replacementDays), pay = ['0', '15', '30', '45', '60'], payDays = (/\d+/.exec(f.paymentTerms) || ['0'])[0], payv = f.paymentTerms === 'Due on Receipt' ? '0' : payDays;
+  const m = CLN.model;
+  return '<div class="cn-terms"><p class="cl-lab">How you work with them</p><div class="cn-models" role="radiogroup" aria-label="How you work">' + CL_MODELS.map(function(x){ return '<button type="button" role="radio" aria-checked="' + (m === x[0]) + '" class="cn-model' + (m === x[0] ? ' is-on' : '') + '" onclick="CLN.model=\'' + x[0] + '\'; ncRender()">' + x[1] + '</button>'; }).join('') + '</div>' +
+    (m === 'contingency' ? '<p class="cl-lab">Fee is</p><div class="cl-chips" role="radiogroup" aria-label="Fee is">' + opt(f.feeType === 'percent', '% of annual CTC', 'ncSet(\'feeType\',\'percent\'); ncRender()', 'radio') + opt(f.feeType === 'fixed', 'Fixed per hire', 'ncSet(\'feeType\',\'fixed\'); ncRender()', 'radio') + '</div><div class="cn-grid">' + (f.feeType === 'fixed' ? num('feeFixed', 'Fee', sym, '150000') : num('feePercent', 'Fee', '%', '8.33')) + clnField('Currency', '<select class="cl-input" aria-label="Currency" onchange="ncSet(\'currency\', this.value); ncRender()">' + NC_CURRENCIES.map(function(c){ return '<option value="' + c[0] + '"' + (f.currency === c[0] ? ' selected' : '') + '>' + cle(c[1]) + '</option>'; }).join('') + '</select>') + '</div>'
+      : m === 'contract' ? '<div class="cn-grid">' + num('markup', 'Markup on pay', '%', '12') + '</div>' : '<div class="cn-grid">' + clnField('Monthly ' + (m === 'rpo' ? 'fee' : 'retainer'), '<span class="cl-suffix"><input class="cl-input" inputmode="decimal" value="' + cle(CLN.retainer) + '" oninput="CLN.retainer=this.value"><i>' + sym + '</i></span>') + clnField('Success fee', '<span class="cl-suffix"><input class="cl-input" inputmode="decimal" value="' + cle(CLN.success) + '" oninput="CLN.success=this.value"><i>%</i></span>') + '</div>') +
+    '<p class="cn-below" id="cn-below" hidden></p>' +
+    '<p class="cl-lab">Replacement</p><div class="cl-chips" role="radiogroup" aria-label="Replacement">' + rep.map(function(r){ return opt(repv === r, r === '0' ? 'No replacement' : r + ' days', set('replacementDays', r), 'radio'); }).join('') + opt(rep.indexOf(repv) < 0, 'Custom…', set('replacementDays', 'custom'), 'radio') + '</div>' + (rep.indexOf(repv) < 0 ? '<div class="cn-grid">' + num('replacementDays', 'Replacement days', 'days') + '</div>' : '') +
+    '<p class="cl-lab">Payment</p><div class="cl-chips" role="radiogroup" aria-label="Payment">' + pay.map(function(r){ return opt(payv === r, r === '0' ? 'Due on receipt' : 'Net ' + r, set('payment', r), 'radio'); }).join('') + opt(pay.indexOf(payv) < 0, 'Custom…', set('payment', 'custom'), 'radio') + '</div>' + (pay.indexOf(payv) < 0 ? '<div class="cn-grid">' + clnField('Payment days', '<span class="cl-suffix"><input class="cl-input" inputmode="numeric" value="' + cle(payv) + '" oninput="clnPayDays(this.value)"><i>days</i></span>' + '<p class="cl-err" id="cn-err-pay" hidden></p>') + '</div>' : '') +
+    '<p class="cl-lab">Agreement</p><div class="cn-grid cn-grid--3">' + clnField('Agreement signed', '<input class="cl-input" type="date" value="' + cle(f.agreementDate) + '" onchange="ncSet(\'agreementDate\', this.value)">') + clnField('Renews on', '<input class="cl-input" type="date" value="' + cle(f.renewalDate) + '" onchange="ncSet(\'renewalDate\', this.value)">' + clnErr('renewalDate')) + clnField('Signed copy', '<button type="button" class="cl-btn" onclick="clnDoc(\'agreement\')">' + (CLN.docs.agreement ? 'View ' + cle(CLN.docs.agreement.name) : 'Upload') + '</button>') + '</div></div>';
+}
+function clnSetTerm(k, v){ const f = ncForm; if(k === 'payment'){ f.paymentTerms = v === 'custom' ? 'Net 40' : v === '0' ? 'Due on Receipt' : 'Net ' + v; } else if(k === 'replacementDays'){ f.replacementDays = v === 'custom' ? '120' : v; } ncRender(); }
+function clnPayDays(v){ const e = document.getElementById('cn-err-pay'), n = Number(v); if(!/^\d+$/.test(String(v).trim()) || n < 1 || n > 180){ if(e){ e.textContent = 'Enter payment days from 1 to 180.'; e.hidden = false; } return; } if(e) e.hidden = true; ncForm.paymentTerms = 'Net ' + n; }
+function clnBelowText(){ const f = ncForm; if(!f) return ''; if(CLN.model !== 'contingency' || f.feeType !== 'percent' || f.feePercent === '' || isNaN(Number(f.feePercent))) return ''; const p = Number(f.feePercent); if(p >= 8.33 || p < 0) return ''; const own = clIsOwnerRole(); const o = clientOwner({ ownerId:f.ownerId }) || currentActingUser(); return p + '% is below your 8.33% standard. ' + (own ? 'You are the owner, so it applies now.' : 'The client saves now; the fee goes to ' + ((typeof clientApprover === 'function' && clientApprover()) ? clientApprover().name : 'the owner') + ' for approval before the first invoice.'); }
+function clnBelow(){ if(!ncForm) return; const e = document.getElementById('cn-below'), t = clnBelowText(); if(e){ e.textContent = t; e.hidden = !t; } const b = document.getElementById('cn-save'); if(b) b.textContent = clnSaveLabel(); }
+function clnSaveLabel(){ const c = ncEditId ? clientById(ncEditId) : null, adding = !c || c.status === 'Draft'; return !adding ? 'Save changes' : (clnBelowText() && !clIsOwnerRole() ? 'Add client and send fee for approval' : (clientNeedsApproval() ? 'Send for approval' : 'Add client')); }
+
+/* ---------- documents, notes ---------- */
+function clnDocs(){ const idl = ncTaxRegime(ncForm.country).idShort || 'Tax ID'; return [['agreement', 'Signed agreement'], ['id', idl + ' certificate'], ['po', 'Purchase order format'], ['nda', 'NDA']]; }
+function clnDoc(k){ if(CLN.docs[k]){ toast('Opening ' + CLN.docs[k].name + '.'); return; } CLN.docs[k] = { name:k + '.pdf', at:clIso(ivNowMsSafe()) }; ncForm.documents.push({ name:k + '.pdf', size:0, type:'application/pdf' }); ncRender(); }
+function clnDocsHTML(){ return '<div class="cl-card cl-list">' + clnDocs().map(function(d){ const f = CLN.docs[d[0]]; return '<div class="cl-locrow"><div><b>' + cle(d[1]) + '</b><span class="cl-muted">' + (f ? cle(f.name) : 'Needed before the first invoice. You’ll get a reminder.') + '</span></div><button type="button" class="cl-link" onclick="clnDoc(\'' + d[0] + '\')">' + (f ? 'View' : 'Upload') + '</button></div>'; }).join('') + '</div>'; }
+function clnNotesHTML(){
+  const f = ncForm;
+  return '<label class="cl-field"><span>Notes for the team</span><textarea class="cl-input cl-ta" rows="4" oninput="ncSet(\'remarks\', this.value)" placeholder="Anything the team should know about this client">' + cle(f.remarks) + '</textarea></label><p class="cl-lab">Your own fields</p>' +
+    f.customDefs.map(function(d, i){ return '<div class="cn-grid"><input class="cl-input" value="' + cle(d.label) + '" placeholder="Field name" oninput="ncForm.customDefs[' + i + '].label=this.value"><input class="cl-input" value="' + cle(f.custom[d.id] == null ? '' : f.custom[d.id]) + '" placeholder="Value" oninput="ncForm.custom[\'' + d.id + '\']=this.value"></div>'; }).join('') + '<button type="button" class="cl-btn" onclick="clnAddField()">Add a field</button>';
+}
+function clnAddField(){ const id = 'cf-' + (clientCustomFieldSeq++); ncForm.customDefs.push({ id:id, label:'', type:'text', required:false, options:[] }); ncForm.custom[id] = ''; ncRender(); }
+
+/* ---------- page ---------- */
+const CLN_TABS = [['locations', 'Locations'], ['contacts', 'Contacts'], ['terms', 'Commercial terms'], ['docs', 'Documents'], ['notes', 'Notes']];
+function clnErrorList(){ const e = ncForm.errors, keys = Object.keys(e).filter(function(k){ return e[k]; }); return keys; }
+function clnTabOfError(k){ return /^(branches\.|billing\.|taxId|place|country|locations)/.test(k) ? 'locations' : /^(contacts\.|firstName|lastName|email|mobile)/.test(k) ? 'contacts' : /^(fee|replacement|markup|renewal|agreement)/.test(k) ? 'terms' : 'locations'; }
+function clnErrorBar(){ const keys = clnErrorList(); if(!keys.length) return ''; const first = keys[0]; return '<button type="button" class="cn-errbar" onclick="clnJump(\'' + first + '\')"><span class="att">' + cle(ncForm.errors[first]) + '</span>' + (keys.length > 1 ? '<i>· ' + (keys.length - 1) + ' more to fix</i>' : '') + '</button>'; }
+function clnJump(k){ const tab = clnTabOfError(k); if(['firstName', 'lastName', 'email', 'mobile', 'displayName', 'country', 'companyName', 'industryOther'].indexOf(k) < 0){ CLN.tab = tab; const m = /^branches\.(\d+)\./.exec(k); if(m){ const b = ncForm.branches[+m[1]]; if(b) CLN.open = b.id; } else if(tab === 'locations') CLN.open = 'hq'; } ncRender(); const el = document.getElementById('cn-' + k.replace(/\./g, '-')) || (k === 'displayName' ? document.getElementById('nc-display') : null); if(el){ el.scrollIntoView({ block:'center' }); el.focus(); } }
+function ncBodyHTML(){
+  if(!CLN) clnInit(); const t = CLN.tab;
+  const panel = t === 'locations' ? clnLocationsHTML() : t === 'contacts' ? clnContactsHTML() : t === 'terms' ? clnTermsHTML() : t === 'docs' ? clnDocsHTML() : clnNotesHTML();
+  return '<div id="nc-root" class="cn-body">' + clnErrorBar() + clnCompanyHTML() + clnContactHTML() + '<section class="cl-card cn-card cn-tabcard"><div class="cl-tabs cn-tabs" id="cn-tabs" role="tablist">' + CLN_TABS.map(function(x){ return '<button type="button" role="tab" aria-selected="' + (t === x[0]) + '" onclick="CLN.tab=\'' + x[0] + '\'; ncRender()">' + x[1] + '</button>'; }).join('') + '</div><div class="cn-panel">' + panel + '</div></section></div>';
+}
+window.ncBodyHTML = ncBodyHTML;
+function ncRender(){ const el = document.getElementById('nc-root'); if(!el) return; const main = document.getElementById('main-content'), top = main ? main.scrollTop : 0, a = document.activeElement, id = a && a.id; el.outerHTML = ncBodyHTML(); if(main) main.scrollTop = top; clnPost(); clnBelow(); clnHints(); }
+window.ncRender = ncRender;
+function clnPost(){ const t = document.getElementById('cn-tabs'); if(t) oPill(t, '[aria-selected="true"]', 'cn-tabs', 'o-pill--under'); }
+function renderNewClient(){
+  if(!CLN) clnInit();
+  if(CLN.done) return clnDoneHTML();
+  if(!ncForm){ ncForm = ncBlank(); ncEditId = null; ncBaseline = ncStrip(ncForm); ncForm.billing.country = ncForm.country; }
+  const c = ncEditId ? clientById(ncEditId) : null, canSave = canI('clients', c ? 'Edit' : 'Create'), adding = !c || c.status === 'Draft';
+  return '<div class="content-shell cl-page cn-page"><a class="cl-back" role="button" tabindex="0" onclick="ncCancel()" onkeydown="if(event.key===\'Enter\')ncCancel()">← ' + clWord() + '</a><header class="cl-head"><h1 class="cl-h1">' + (c ? cle(c.name) : 'New ' + (clCorp() ? 'vendor' : 'client')) + '</h1></header>' + ncBodyHTML() +
+    '<div class="cn-foot"><button type="button" class="cl-btn" onclick="ncCancel()">' + (canSave ? 'Cancel' : 'Back') + '</button><span class="cn-hint">The ' + cle(ncTaxRegime(ncForm.country).idShort || 'registration number') + ' and agreement can come later. Oontu reminds you before the first invoice.</span><span class="cn-spacer"></span>' +
+    (canSave && adding ? '<button type="button" class="cl-btn" onclick="ncSave(\'draft\')">Save as draft</button>' : '') + (canSave ? '<button type="button" class="btn--go" id="cn-save" onclick="ncSave(\'add\')">' + clnSaveLabel() + '</button>' : '') + '</div></div>';
+}
+window.renderNewClient = renderNewClient; RENDERERS['client-new'] = renderNewClient;
+(function hookShowNew(){ const o = window.showView; if(typeof o !== 'function') return; window.showView = function(id){ const r = o.apply(this, arguments); if(id === 'client-new') setTimeout(function(){ clnPost(); clnBelow(); }, 30); return r; }; })();
+function clnDoneHTML(){
+  const d = CLN.done, c = clientById(d.id); if(!c) return '';
+  const row = function(ok, t){ return '<li class="' + (ok ? 'is-ok' : '') + '"><i></i>' + cle(t) + '</li>'; };
+  return '<div class="content-shell cl-page cn-page"><section class="cl-card cn-done"><h1 class="cl-h1">' + cle(c.name) + ' is ready</h1><ul class="cn-check-list">' + d.list.map(function(x){ return row(x[0], x[1]); }).join('') + '</ul><div class="cl-actions"><button type="button" class="btn--go" onclick="CLN.done=null; openClientDetail(\'' + c.id + '\')">Open the client</button><button type="button" class="cl-btn" onclick="CLN.done=null; openNewClientPage()">Add another</button></div></section></div>';
+}
+
+/* ---------- validation: the old rules plus what this page asks ---------- */
+function clnPrepare(){
+  const f = ncForm; if(!f) return; const R = ncTaxRegime(f.country), id = ncNormId(f.taxId).replace(/[.\-\/]/g, ''); f.billing.country = f.country; f.place = f.billing.state || f.place;
+  if(CLN.waSame){ f.whatsapp = f.mobile; f.whatsappCode = f.mobileCode; }
+  if(f.country === 'India' && id && gstinFormatOk(id)) f.secondaryId = id.slice(2, 12);
+  if(f.country === 'India'){ const reg = id && gstinFormatOk(id); const lk = reg ? ncLookupGstin(id) : null; f.treatment = !reg ? 'business_none' : CLN.hqSez || (lk && /sez/i.test(lk.taxpayerType || '')) ? 'sez' : (lk && lk.taxpayerType === 'Composition') ? 'business_registered_composition' : 'business_gst'; }
+  else f.treatment = 'overseas';
+  f.type = 'Business'; f.taxPref = 'Taxable'; f.exemptReason = ''; f.openingBalance = ''; f.portal = false; f.status = f.status || 'Active';
+  if(CLN.hqSez && f.country === 'India') f.treatment = 'sez';
+}
+(function wrapValidate(){
+  const o = window.ncValidate;
+  window.ncValidate = function(){
+    clnPrepare(); const f = ncForm, R = ncTaxRegime(f.country); const e = {}; const keep = o(); Object.keys(keep).forEach(function(k){ e[k] = keep[k]; });
+    ['treatment', 'place', 'secondaryId', 'openingBalance', 'exemptReason'].forEach(function(k){ delete e[k]; });
+    const id = ncNormId(f.taxId).replace(/[.\-\/]/g, '');
+    if(id && f.country !== 'India' && R.validateId){ const m = R.validateId(id); if(m) e.taxId = m; else delete e.taxId; }
+    if(id && f.country === 'India' && !e.taxId){ const code = ncStateCode(f.billing.state); if(code && id.slice(0, 2) !== code) e.taxId = 'This GSTIN is registered in ' + (gstStateName(id.slice(0, 2)) || 'state ' + id.slice(0, 2)) + ', not ' + f.billing.state + '. Use the GSTIN for this state.'; }
+    if(!id) delete e.taxId;
+    if(!f.firstName.trim()) e.firstName = 'Add the main contact’s first name.'; if(!f.lastName.trim()) e.lastName = 'Add the main contact’s last name.'; if(!f.email.trim()) e.email = 'Add the main contact’s work email.';
+    if(!f.billing.city.trim() && !f.billing.state && !f.place) e.locations = 'Add the head office city or state.';
+    if(f.billing.pin.trim() && f.country === 'India' && !/^[1-9][0-9]{5}$/.test(f.billing.pin.trim())) e['billing.pin'] = 'Indian PIN codes are 6 digits.';
+    if(!f.industry) delete e.industry;
+    return e;
+  };
+})();
+(function wrapSave(){
+  const o = window.ncSave;
+  window.ncSave = function(mode){
+    const f = ncForm; if(!f) return o.apply(this, arguments); const editId = ncEditId, before = CLIENTS.length, snap = clnSnapshot(f);
+    const wasEdit = !!editId; o.apply(this, arguments); if(ncForm === f || !snap) { if(ncForm === f) ncRender(); return; }
+    const c = editId ? clientById(editId) : (CLIENTS.length > before ? CLIENTS[CLIENTS.length - 1] : null); if(!c) return;
+    try { clnApply(c, snap, mode, wasEdit); } catch(e){ console.error(e); }
+  };
+})();
+function clnSnapshot(f){ return { loc:clnLocKeys().map(function(k){ const L = clnLoc(k); return { key:k, hq:!!L.hq, name:L.hq ? 'Head office' : L.name, country:clnLocCountry(L), state:L.state, city:L.city, street:L.hq ? f.billing.street1 : L.street, pin:L.pin, taxId:ncNormId(L.taxId), uses:(L.hq ? ['Billing'].concat(CLN.hqUses.filter(function(u){ return u !== 'Billing'; })) : (L.billing === 'own' ? ['Billing'] : []).concat((L.uses || []).filter(function(u){ return u !== 'Billing'; }))), billing:L.hq ? 'own' : L.billing, apEmail:L.apEmail || '', sez:L.hq ? CLN.hqSez : false, tax:CLN.tax[k] || null, id:L.hq ? null : L.id }; }),
+  contacts:f.contacts.filter(function(c){ return c.firstName.trim(); }).map(function(c){ return { name:(c.firstName.trim() + ' ' + c.lastName.trim()).trim(), id:c.id, branchIds:(c.branchIds || []).slice() }; }), model:CLN.model, retainer:CLN.retainer, success:CLN.success, gets:JSON.parse(JSON.stringify(CLN.gets)), mainGets:CLN.mainGets.slice(), docs:Object.assign({}, CLN.docs), main:(f.firstName.trim() + ' ' + f.lastName.trim()).trim(),
+  fee:{ type:f.feeType, pct:f.feePercent === '' ? null : Number(f.feePercent), fixed:f.feeFixed === '' ? null : Number(f.feeFixed), markup:f.markup === '' ? null : Number(f.markup), rep:Number(f.replacementDays) || 0, pay:(/\d+/.exec(f.paymentTerms) || [0])[0] * 1, currency:f.currency }, wasDraft:false }; }
+function clnApply(c, s, mode, wasEdit){
+  const existingLocs = c.locations || [], me = currentActingUser(), owner = clIsOwnerRole();
+  c.locations = s.loc.map(function(x, i){ const prev = existingLocs.find(function(l){ return (x.id && l.id === x.id) || (x.hq && l.kind === 'head'); }); const l = clBlankLocation({ id:x.hq ? (prev ? prev.id : 'loc-hq-' + c.id) : (x.id || (prev && prev.id)), label:x.name, kind:x.hq ? 'head' : 'branch', country:x.country, state:x.state, city:x.city, street:x.street, pin:x.pin, uses:x.uses, billing:x.billing, taxId:x.taxId, apEmail:x.apEmail, sez:x.sez, currency:clCountryCur(x.country) });
+    if(x.tax && x.tax.value){ l.taxOverride = { value:x.tax.value, reason:x.tax.reason, byName:me ? me.name : 'You', byId:me ? me.id : null, at:clIso(ivNowMsSafe()), status:owner ? 'active' : 'pending', until:'changed' }; } else if(prev && prev.taxOverride && !x.tax) l.taxOverride = null; else if(prev && prev.taxOverride) l.taxOverride = prev.taxOverride; return l; });
+  c.engagement = s.model; c.country = s.loc[0].country; c.currency = s.fee.currency;
+  (c.pocs || []).forEach(function(p){ const isMain = (p.roles || []).indexOf('main') > -1 || p.name === s.main; const ct = s.contacts.find(function(x){ return x.name === p.name; }); p.routes = isMain ? s.mainGets.slice() : ((ct && s.gets[ct.id]) || p.routes || (CL_ROUTE_BY_DEPT[p.dept] || ['Profiles and feedback'])).slice(); const keys = s.loc.map(function(x){ return x.key; }); const looks = isMain || !ct ? keys : ct.branchIds; p.allLocations = keys.every(function(k){ return looks.indexOf(k) > -1; }); p.atHeadOffice = p.allLocations || looks.indexOf('hq') > -1; p.branchIds = p.allLocations ? [] : looks.filter(function(k){ return k !== 'hq'; }); });
+  c.docs = Object.assign({}, c.docs || {}, s.docs);
+  const terms = { model:s.model, feeType:s.fee.type, pct:s.fee.pct, fixed:s.fee.fixed, retainer:s.retainer === '' ? null : Number(s.retainer), success:s.success === '' ? null : Number(s.success), markup:s.fee.markup, replacementDays:s.fee.rep, paymentDays:s.fee.pay, currency:s.fee.currency };
+  if(!c.commercials || !wasEdit || c.status === 'Draft'){ c.commercials = [Object.assign({ version:1, effectiveFrom:clIso(ivNowMsSafe()) }, terms)]; c.terms = Object.assign(c.terms || {}, { model:s.model, feeType:terms.feeType, feePercent:terms.feeType === 'percent' ? terms.pct : null, feeFixed:terms.feeType === 'fixed' ? terms.fixed : null, replacementDays:terms.replacementDays, paymentDays:terms.paymentDays, markupPercent:terms.markup }); }
+  else { const cur = clCommercial(c), keys = ['model', 'feeType', 'pct', 'fixed', 'retainer', 'success', 'markup', 'replacementDays', 'paymentDays']; if(keys.some(function(k){ return (cur[k] == null ? null : cur[k]) !== (terms[k] == null ? null : terms[k]); })){ const v = clAddCommercial(c, terms); clientActivity(c, 'Terms changed (version ' + v.version + ')'); } }
+  c.clientIndustry = c.industry; const below = s.model === 'contingency' && s.fee.type === 'percent' && s.fee.pct != null && s.fee.pct < 8.33;
+  if(below && !owner && !wasEdit){ c.feeApproval = { status:'pending', pct:s.fee.pct, by:me ? me.name : 'A teammate', at:clIso(ivNowMsSafe()) }; clientActivity(c, 'Fee ' + s.fee.pct + '% sent to the owner for approval'); }
+  if(!wasEdit && mode !== 'draft'){ c.paused = false; CLN.done = { id:c.id, list:[[true, 'Company details saved'], [s.loc.length > 1, s.loc.length + ' locations' + (s.loc.some(function(x){ return x.country !== s.loc[0].country; }) ? ' in ' + s.loc.map(function(x){ return x.country; }).filter(function(x, i, a){ return a.indexOf(x) === i; }).join(' and ') : '')], [!!clMainContact(c), 'Main contact ' + (clMainContact(c) ? clMainContact(c).name : 'to add')], [s.loc.some(function(x){ return x.taxId; }), s.loc.some(function(x){ return x.taxId; }) ? 'Registration added, tax set from the rules' : 'Registration number comes later. Oontu reminds you before the first invoice'], [!!(c.agreement && (c.agreement.start || c.agreement.renewal)), (c.agreement && (c.agreement.start || c.agreement.renewal)) ? 'Agreement dates saved' : 'Agreement can come later'], [!c.feeApproval, c.feeApproval ? 'Fee waiting for approval' : 'Fee terms version 1']] }; showView('client-new', 'client-management'); }
+  else clientDetailRefresh();
+  logAudit('Clients', wasEdit ? 'Client locations and terms saved' : 'Client locations and terms set', c.name + ' · ' + c.locations.length + ' location' + (c.locations.length === 1 ? '' : 's'));
+}
+document.addEventListener('mousedown', function(e){ if(typeof ncPickerPath !== 'undefined' && ncPickerPath && !(e.target.closest && e.target.closest('[data-nc-picker]'))){ ncPickerPath = null; if(document.getElementById('nc-root')) ncRender(); } }, true);
+
+/* ---------- cl-boot.js ---------- */
+/* ---------- boot: rule updates, toast close, scope the quiet toast to these screens ---------- */
+(function(){
+  try { syncRulePacks(); } catch(e){ console.error(e); }
+  setInterval(function(){ try { if(syncRulePacks()) { if(typeof clDraw === 'function' && document.getElementById('cl-body')) clDraw(); } } catch(e){} }, 3600000);
+  const o = window.showView; if(typeof o === 'function' && !o.__clOn){ window.showView = function(id){ document.body.classList.toggle('cl-on', id === 'client-management' || id === 'client-detail' || id === 'client-new'); return o.apply(this, arguments); }; window.showView.__clOn = true; }
+  const c = document.getElementById('toast-container');
+  if(c) new MutationObserver(function(){ if(!document.body.classList.contains('cl-on')) return; const t = c.querySelector('.app-toast'); if(t && !t.querySelector('.cl-toast-x')){ const b = document.createElement('button'); b.type = 'button'; b.className = 'cl-toast-x'; b.textContent = 'Close'; b.onclick = function(){ t.remove(); }; t.appendChild(b); } }).observe(c, { childList:true });
+})();
 
 </script>
 </body>
