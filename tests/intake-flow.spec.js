@@ -423,6 +423,7 @@
 
     /* ---- G. what people see ---- */
     await test('G1 Settings shows the approval policy to the Tenant Admin only, and saving it takes effect', async function(){
+      settingsSection = 'approvals';
       as('admin'); assert(/Job approval/.test(renderSettings()), 'admin sees it');
       as('manager'); assert(!/Job approval/.test(renderSettings()), 'a manager does not');
       as('admin'); document.getElementById('main-content').innerHTML = renderSettings();

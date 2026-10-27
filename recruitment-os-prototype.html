@@ -2051,6 +2051,70 @@ html .sec-title{ letter-spacing:-.02em; }
 .kairo-note__body, .o-kairo{ color:var(--text-2); }
 .o-kairo svg{ color:var(--kairo-fg); }
 html:not([data-theme="comfort"]) .kairo-note{ background:var(--kairo-bg); border-color:var(--kairo-line); }
+
+/* ============================================================
+   SETTINGS — layout only. Colours, type, radii and motion all come from the existing tokens and components.
+============================================================ */
+.s-search{ position:relative; max-width:420px; }
+.s-search .app-input{ padding-left:38px; }
+.s-search__ic{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-3); display:flex; pointer-events:none; }
+.s-layout{ display:grid; grid-template-columns:232px minmax(0,1fr); gap:24px; align-items:start; }
+.s-nav{ position:sticky; top:88px; }
+.s-nav__list{ position:relative; background:var(--bg-sidebar); border-radius:var(--r-card); padding:8px; max-height:calc(100vh - 120px); overflow-y:auto; }
+.s-nav__list .o-nav-head{ height:32px; padding:12px 12px 0; }
+.s-nav__list .o-nav-head:first-of-type{ padding-top:4px; height:24px; }
+.s-nav-item{ width:100%; border:0; padding-left:26px; }
+.s-ro{ margin-left:auto; display:inline-flex; color:var(--text-3); }
+.s-select{ display:none; }
+.s-content{ display:flex; flex-direction:column; gap:16px; min-width:0; }
+.s-sechead{ display:flex; align-items:center; gap:12px; }
+.s-title{ margin:0; font-size:20px; line-height:28px; font-weight:800; letter-spacing:-.01em; color:var(--text-1); }
+.s-rows{ margin-top:4px; }
+.s-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 0; border-top:1px solid var(--line); }
+.s-rows > .s-row:first-child, .s-rows > .s-row[hidden] + .s-row:first-of-type{ border-top:0; }
+.s-row[hidden]{ display:none; }
+.s-row__t{ min-width:0; flex:1 1 240px; }
+.s-row__l{ margin:0; font-size:14px; line-height:20px; font-weight:700; color:var(--text-1); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.s-row__h{ margin:2px 0 0; font-size:12px; line-height:16px; color:var(--text-3); }
+.s-row__c{ display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; flex:0 1 auto; max-width:64%; }
+.s-ctl{ width:220px; max-width:100%; }
+textarea.s-ctl{ width:300px; height:auto; padding:10px 12px; line-height:20px; resize:vertical; }
+.s-val{ font-size:14px; color:var(--text-2); font-variant-numeric:tabular-nums; }
+.s-lock{ display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--text-3); }
+.s-avatar{ width:40px; height:40px; border-radius:50%; background:var(--av-sand); color:var(--av-fg); font-size:13px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; }
+.s-code{ font:500 12px var(--mono); color:var(--text-2); background:var(--bg-subtle); border-radius:8px; padding:6px 10px; word-break:break-all; }
+.s-embed{ margin:0; }
+.s-embed > section, .s-embed > div{ margin-bottom:0 !important; }
+.s-warn{ font-size:12px; color:var(--warn-fg); max-width:300px; text-align:right; }
+.s-chips{ display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }
+.s-chip{ display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border-radius:999px; background:var(--bg-subtle); font-size:12px; font-weight:600; color:var(--text-2); }
+.s-chip button{ border:0; background:transparent; color:var(--text-3); cursor:pointer; font-size:14px; line-height:1; padding:0; }
+.s-chipadd{ width:130px; height:28px; padding:0 10px; }
+.s-chks{ display:flex; flex-wrap:wrap; gap:6px 14px; justify-content:flex-end; max-width:560px; }
+.s-chk{ display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--text-2); cursor:pointer; }
+.s-chk a{ color:var(--text-1); font-weight:600; }
+.s-roles{ display:grid; grid-template-columns:220px minmax(0,1fr); gap:16px; align-items:start; }
+.s-rolelist{ display:flex; flex-direction:column; gap:2px; margin-top:4px; }
+.s-rolebtn{ display:flex; align-items:center; gap:8px; width:100%; height:36px; padding:0 12px; border:0; border-radius:var(--r-control); background:transparent; text-align:left; font:600 14px var(--font); color:var(--text-2); cursor:pointer; transition:background var(--t-fast), color var(--t-fast); }
+.s-rolebtn:hover{ background:var(--bg-subtle); color:var(--text-1); }
+.s-rolebtn.is-on{ background:var(--bg-subtle); color:var(--text-1); font-weight:700; }
+.s-list{ margin:12px 0 0; padding:0 0 0 18px; font-size:14px; color:var(--text-2); }
+.s-line{ margin:0 0 6px; font-size:13px; color:var(--text-2); }
+.s-empty{ margin:0; padding:12px; font-size:13px; color:var(--text-3); }
+.o-tabs-host{ margin:4px 0 8px; }
+.density-compact .o-table td{ height:40px; }
+.density-compact .o-att, .density-compact .s-row{ padding-top:8px; padding-bottom:8px; }
+@media (max-width:860px){
+  .s-layout{ grid-template-columns:minmax(0,1fr); }
+  .s-nav{ display:none; }
+  .s-select{ display:block; width:100%; }
+  .s-roles{ grid-template-columns:minmax(0,1fr); }
+  .s-row{ flex-wrap:wrap; }
+  .s-row__c{ max-width:100%; justify-content:flex-start; }
+  .s-chks, .s-chips{ justify-content:flex-start; }
+  .s-ctl, textarea.s-ctl{ width:100%; }
+}
+
 </style>
 </head>
 <body class="text-zinc-900 antialiased">
@@ -2422,14 +2486,6 @@ const CLIENTS = [
 })();
 function clientIsoDate(t){ return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
 
-const AGENTS = [
-  { name:'Sourcing Agent', desc:'Continuously scans talent pools for mandate-fit candidates.', tasks:482, recs:128 },
-  { name:'Matching Agent', desc:'Scores every candidate against live mandates in real time.', tasks:1204, recs:341 },
-  { name:'Availability Agent', desc:'Tracks signals that indicate a candidate is open to move.', tasks:867, recs:96 },
-  { name:'Interview Agent', desc:'Coordinates scheduling and reduces interview drop-off.', tasks:214, recs:54 },
-  { name:'Joining Agent', desc:'Monitors offer-to-join risk and counter-offer signals.', tasks:158, recs:37 },
-  { name:'Learning Agent', desc:'Learns from every placement to sharpen future matches.', tasks:3021, recs:12 },
-];
 
 const RECRUITERS = [
   { name:'Priya Sharma', placements:14, revenue:42, efficiency:91, avgFill:16 },
@@ -2838,6 +2894,7 @@ function sentenceCase(s){
   }).join(' ');
 }
 function renderSidebar(){
+  if(typeof oApplyAgentFlag==='function') oApplyAgentFlag();
   renderSidebarLogo();
   const items = filterNavForAgents(filterNavForPermissions(filterNavForOrgType(NAV[state.role])));
   const nav = document.getElementById('sidebar-nav');
@@ -3960,6 +4017,7 @@ function errorStateHTML(viewId, err){
   '</div>';
 }
 function showView(viewId, navOverride){
+  if(typeof SETTINGS_REDIRECT!=='undefined' && SETTINGS_REDIRECT[viewId]){ settingsSection = SETTINGS_REDIRECT[viewId]; viewId = 'settings'; }   // the old setup screens live inside Settings now
   clearProspectSelection();
   const sb = document.getElementById('sidebar');
   if(sb && sb.classList.contains('mobile-open')) closeMobileSidebar();
@@ -5126,7 +5184,7 @@ function renderRecruiterDashboard(){
   const brief = computeTodaysBriefing();
   const whyIcon = { shield:'an approval is holding an offer back', calendar:'an unconfirmed interview can fall through', bell:'late feedback slows the client', clock:'overdue follow-ups go cold', briefcase:'a thin pipeline slows the job', users:'candidates go quiet without contact', trending:'it is revenue already in motion', sparkles:'they match the must-haves on your open jobs', check:'placements are what you are measured on' };
   const kLines = [];
-  ['critical','attention','wins'].forEach(function(k){ brief[k].forEach(function(b){ kLines.push({ text:b.text, why:'Suggested because '+(whyIcon[b.icon] || 'it affects your open jobs')+'.', onclick:b.onclick, cta:'Open' }); }); });
+  ['critical','attention','wins'].forEach(function(k){ brief[k].forEach(function(b){ if(oAgentLineOn(b.icon)) kLines.push({ text:b.text, why:'Suggested because '+(whyIcon[b.icon] || 'it affects your open jobs')+'.', onclick:b.onclick, cta:'Open' }); }); });
   const extra = oExtraRow([month, oKairoCard(kLines, { title:'Kairo suggests' })].filter(Boolean));
 
   const lede = attention.length ? oPlural(attention.length, 'thing')+' need you today. Everything else is moving.' : 'Your desk is clear. Nothing is waiting on you.';
@@ -20966,8 +21024,9 @@ function aiTeamSwitchTab(destId){ aiTeamActiveTab = destId; renderAiTeamHubScree
 function renderAiTeamHubScreen(){ const el = document.getElementById('main-content'); if(el) el.innerHTML = renderAiTeamHub(); }
 function renderAiTeamHub(){
   const order = ['talent-acquisition','engagement','interviews-ai','offers-ai','linkedin-outreach'].filter(function(id){
-    return id!=='linkedin-outreach' || TENANT_FEATURE_FLAGS.linkedinOutreach.enabled;
+    return aiDestAgentOn(id);
   });
+  if(!order.length) return '<div class="content-shell max-w-4xl">'+sectionTitle('Cowork', 'Your Kairo agents, working right now.')+'<div class="o-card">'+oEmpty('spark', 'No Kairo agents are on for you yet. Your Owner can add them in Settings â†’ Plan & billing.')+'</div></div>';
   if(order.indexOf(aiTeamActiveTab)===-1) aiTeamActiveTab = order[0];
   return '<div class="content-shell max-w-4xl">'+
     sectionTitle('Cowork', 'Your AI recruiters, working right now \u2014 tap into any of them below.')+
@@ -37587,6 +37646,1106 @@ function tpSyncHead(){
 (function(){ const main = document.getElementById('main-content'); if(main) main.addEventListener('scroll', tpSyncHead, { passive:true }); window.addEventListener('resize', tpSyncHead); })();
 migrateLegacyFollowUps();
 authBoot();
+</script>
+<script>
+/* ===== SETTINGS ===== */
+O_IC.search = 'M17.5 11a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0ZM20 20l-4.2-4.2'; O_IC.chev = 'M9 6l6 6-6 6';
+/* ============================================================
+   SETTINGS — the model behind the rebuilt Settings experience.
+   One permission model (module x action x data scope, plus approval powers), one Kairo agent model (catalog,
+   subscription, workspace configuration, user preference) and one access function per agent.
+   Loaded after the main script so it can extend its data; the old function names keep working as thin wrappers.
+============================================================ */
+
+/* ---------- 1. permissions: module x action x scope, plus approval powers ---------- */
+(function extendPermissionModules(){
+  const kairo = PERMISSION_MODULES.find(function(m){ return m.id==='ai'; });
+  if(kairo){ kairo.id = 'kairo'; kairo.label = 'Kairo'; kairo.actions = ['View','Use agents','Configure','Manage subscription','Prompt Library','Agent Access','Automation','Workflow Configuration']; }
+  const add = function(id, label, actions){ if(!PERMISSION_MODULES.find(function(m){ return m.id===id; })) PERMISSION_MODULES.push({ id:id, label:label, actions:actions }); };
+  const push = function(id, list){ const m = PERMISSION_MODULES.find(function(x){ return x.id===id; }); list.forEach(function(a){ if(m && m.actions.indexOf(a)<0) m.actions.push(a); }); };
+  push('team', ['Invite members','Deactivate members','Change reports to','Manage roles']);
+  push('security', ['Handle data requests']);
+  add('workspace', 'Workspace settings', ['View settings','View hiring rules','Use templates','Edit company profile','Edit hiring rules','Edit templates','Edit careers & publishing','Edit client terms / vendors','Manage integrations']);
+  add('billing', 'Billing', ['View','Manage plan & add-ons']);
+  add('requisitions', 'Requisitions', ['View','Create','Approve']);
+  add('vendors', 'Vendors', ['View','Add','Remove','Share jobs']);
+})();
+const PERMISSION_GROUPS = [
+  ['Jobs & hiring', ['jobs','candidates','talentpool','interviews','offers','approvals']],
+  ['Clients & vendors', ['clients','requisitions','vendors']],
+  ['People & reporting', ['team','reports']],
+  ['Kairo', ['kairo']],
+  ['Workspace', ['workspace','billing','security']]
+];
+const SCOPE_LABEL = { own:'Own', team:'My team', assigned:'Assigned jobs', all:'All', department:'My department', entity:'My entity' };
+const APPROVAL_ENTITIES = [['client','Client'],['job','Job'],['requisition','Requisition'],['submission','Submission'],['offer','Offer'],['vendor','Vendor']];
+function sIsCorporate(){ return ORG_STRUCTURE.profile.orgType==='Corporate'; }
+function sModulesForOrg(){ const skip = sIsCorporate() ? ['clients'] : ['requisitions','vendors']; return PERMISSION_MODULES.filter(function(m){ return skip.indexOf(m.id)===-1; }); }
+function relevantModulesForOrgType(orgType){ const skip = orgType==='Corporate' ? ['clients'] : ['requisitions','vendors']; return PERMISSION_MODULES.filter(function(m){ return skip.indexOf(m.id)===-1; }); }
+
+function defaultScope(r){
+  const all = {}; PERMISSION_MODULES.forEach(function(m){ all[m.id] = 'all'; });
+  if(r.protected || r.id==='role_admin') return all;
+  const s = {}; const corp = sIsCorporate();
+  PERMISSION_MODULES.forEach(function(m){ s[m.id] = r.id==='role_recmgr' ? 'team' : r.id==='role_hiring_manager' ? 'department' : r.id==='role_interviewer' ? 'assigned' : r.id==='role_approver' ? 'all' : (m.id==='jobs' || m.id==='interviews') ? 'assigned' : 'own'; });
+  if(!corp && r.id==='role_hiring_manager') PERMISSION_MODULES.forEach(function(m){ s[m.id] = 'assigned'; });
+  return s;
+}
+function defaultApproves(r){
+  if(r.protected || r.id==='role_admin') return { client:true, job:true, requisition:true, submission:true, offer:{}, vendor:true };
+  if(r.id==='role_recmgr') return { job:true, submission:true, offer:{ maxBand:'B3' } };
+  if(r.id==='role_hiring_manager') return { requisition:{ maxBudget:2500000 }, offer:{ maxBand:'B2' } };
+  if(r.id==='role_approver') return { requisition:true, offer:{} };
+  return {};
+}
+/* Brings any role (seeded here, by the sign-up wizard, or created by hand) onto the current model. Safe to call many times. */
+function migrateRole(role){
+  if(!role || role.__v2) return role;
+  role.__v2 = true;
+  const p = role.permissions = role.permissions || {};
+  if(p.ai){ p.kairo = Array.from(new Set((p.kairo||[]).concat(p.ai.map(function(a){ return a==='Agent Access' ? 'Use agents' : a; })))); delete p.ai; }
+  PERMISSION_MODULES.forEach(function(m){ if(!p[m.id]) p[m.id] = []; });
+  const set = function(m, list){ list.forEach(function(x){ if(p[m].indexOf(x)<0) p[m].push(x); }); };
+  if(role.protected){ Object.assign(p, fullPermSet()); }
+  else if(role.id==='role_admin'){ const f = fullPermSet(); f.billing = ['View']; f.kairo = f.kairo.filter(function(a){ return a!=='Manage subscription'; }); Object.assign(p, f); }
+  else if(role.id==='role_recmgr'){ set('workspace',['View settings','View hiring rules','Use templates']); set('kairo',['View','Use agents']); set('security',['View Audit Log']); set('team',['Change reports to']); set('requisitions',['View']); set('vendors',['View']); }
+  else if(role.id==='role_recruiter'){ set('workspace',['View hiring rules','Use templates']); set('kairo',['Use agents']); }
+  else if(role.id==='role_hiring_manager'){ set('kairo',['Use agents']); set('requisitions',['View','Create','Approve']); }
+  else if(role.id==='role_approver'){ set('requisitions',['View','Approve']); }
+  role.scope = role.scope || defaultScope(role);
+  role.approves = role.approves || defaultApproves(role);
+  return role;
+}
+function roleHasPermission(roleId, moduleId, action){
+  const role = CUSTOM_ROLES.find(function(r){ return r.id===roleId; });
+  if(!role) return false;
+  migrateRole(role);
+  if(moduleId==='ai') moduleId = 'kairo';
+  return (role.permissions[moduleId]||[]).indexOf(action)>-1;
+}
+/* data scope: does the current role's scope for this module cover this record? Records without the field a scope needs are allowed. */
+function canIOn(moduleId, action, record){
+  if(!canI(moduleId, action)) return false;
+  const role = migrateRole(CUSTOM_ROLES.find(function(r){ return r.id===effectiveRoleId(); }));
+  const scope = (role && role.scope && role.scope[moduleId]) || 'all';
+  if(scope==='all' || !record) return true;
+  const me = currentActingUser(); if(!me) return true;
+  if(scope==='own') return !(record.ownerId||record.recruiterId||record.createdBy) || [record.ownerId, record.recruiterId, record.createdBy].indexOf(me.id)>-1;
+  if(scope==='team'){ const team = recruitersManagedBy(me.id).map(function(r){ return r.id; }).concat([me.id]); const owner = record.ownerId||record.recruiterId; return !owner || team.indexOf(owner)>-1 || (record.assignedRecruiters||[]).some(function(x){ return team.indexOf(x)>-1; }); }
+  if(scope==='assigned') return !record.assignedRecruiters || record.assignedRecruiters.indexOf(me.id)>-1;
+  if(scope==='department') return !record.department || record.department===me.dept;
+  return true;
+}
+function hasAnyApprovalPower(){ const r = sRole(); return !!r && (canI('approvals','Approve') || Object.keys(r.approves||{}).some(function(k){ return r.approves[k]; })); }
+
+/* The role Settings should judge the person by. The demo reuses one person record for several personas, so the Hiring Manager persona is
+   judged by the Hiring Manager role (a built-in one if this workspace has none), never by the owner role that persona shares. */
+const HM_FALLBACK_ROLE = { id:'role_hiring_manager', name:'Hiring Manager', permissions:{ kairo:['Use agents'], workspace:[], requisitions:['View','Create','Approve'], approvals:['Request','View'] } };
+function sRole(){
+  if(state.role==='hm' && !previewAsRoleId){ const r = CUSTOM_ROLES.find(function(x){ return x.id==='role_hiring_manager'; }) || HM_FALLBACK_ROLE; return migrateRole(r); }
+  return migrateRole(CUSTOM_ROLES.find(function(r){ return r.id===effectiveRoleId(); }) || CUSTOM_ROLES[0]);
+}
+function sCan(moduleId, action){ const r = sRole(); if(!r) return false; if(moduleId==='ai') moduleId = 'kairo'; return (r.permissions[moduleId]||[]).indexOf(action)>-1; }
+function sIsOwner(){ const r = sRole(); return !!r && !!r.protected; }
+
+/* ---------- 2. Kairo agents as a subscription ---------- */
+let AGENT_CATALOG = [
+  { id:'talent-discovery', name:'Talent Discovery', employees:['sourcing','matching','screening'], does:'Finds, screens and ranks people for every open job.', status:'available',
+    price:{ amount:4999, currency:'INR', per:'workspace/month' }, includedActions:5000, trialDays:14, includedInPlans:['plan-enterprise'], dailyCap:2000,
+    steps:[ { id:'parse', label:'Parse, de-duplicate and score applicants', level:'auto' }, { id:'knockout', label:'Flag knock-outs', level:'suggest' },
+            { id:'push-matches', label:'Push matches when a job opens', level:'suggest' }, { id:'reject', label:'Reject an applicant', level:'person' } ] },
+  { id:'engagement', name:'Engagement', employees:['engagement'], does:'Keeps candidates warm and follows up when they go quiet.', status:'available',
+    price:{ amount:2999, currency:'INR', per:'workspace/month' }, includedActions:3000, trialDays:14, includedInPlans:['plan-enterprise'], dailyCap:1500,
+    steps:[ { id:'ack', label:'Acknowledge new applicants', level:'auto' }, { id:'followup', label:'Follow up twice, then mark Not reachable', level:'suggest' },
+            { id:'first-message', label:'Send the first outreach message', level:'suggest' } ] },
+  { id:'interviews', name:'Interviews', employees:['interview'], does:'Proposes slots, sends invites and reminders, handles reschedules.', status:'available',
+    price:{ amount:2999, currency:'INR', per:'workspace/month' }, includedActions:2000, trialDays:14, includedInPlans:['plan-enterprise'], dailyCap:1000,
+    steps:[ { id:'slots', label:'Propose slots and send invites', level:'auto' }, { id:'reminders', label:'Reminders 24 h and 1 h before', level:'auto' },
+            { id:'reschedule', label:'Offer reschedule options', level:'suggest' }, { id:'outcome', label:'Record the stage outcome', level:'person' } ] },
+  { id:'offers-joining', name:'Offer & Joining', employees:['offerJoining'], does:'Watches offers and pre-joining for risk; finds backups.', status:'available',
+    price:{ amount:2999, currency:'INR', per:'workspace/month' }, includedActions:1000, trialDays:14, includedInPlans:['plan-enterprise'], dailyCap:500,
+    steps:[ { id:'checkins', label:'Pre-joining check-ins and risk alerts', level:'auto' }, { id:'backups', label:'Suggest backup candidates', level:'suggest' },
+            { id:'terms', label:'Offer terms', level:'person' } ] },
+  { id:'linkit', name:'LinkIt LinkedIn outreach', employees:['linkit'], addOnOnly:true, does:'Runs LinkedIn connect-and-nurture sequences.', status:'available',
+    price:{ amount:1999, currency:'INR', per:'sender/month' }, includedActions:0, trialDays:7, includedInPlans:[], dailyCap:100,
+    steps:[ { id:'sequence', label:'Advance approved sequences', level:'auto' }, { id:'first-message', label:'Send the first message', level:'person' } ] },
+];
+const AGENT_DEST = { 'talent-acquisition':'talent-discovery', 'engagement':'engagement', 'interviews-ai':'interviews', 'offers-ai':'offers-joining', 'linkedin-outreach':'linkit' };
+function agentById(id){ return AGENT_CATALOG.find(function(a){ return a.id===id; }); }
+function sToday(offset){ const d = new Date(); d.setDate(d.getDate()+(offset||0)); return d.toISOString().slice(0,10); }
+let TENANT_AGENT_SUBSCRIPTIONS = {};
+TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID] = {
+  'talent-discovery': { state:'active', since:sToday(-120), renewsOn:sToday(240), usedThisMonth:1240 },
+  'engagement': { state:'none', usedThisMonth:0 },
+  'interviews': { state:'trial', since:sToday(-5), trialEndsOn:sToday(9), usedThisMonth:212 },
+  'offers-joining': { state:'active', since:sToday(-60), renewsOn:sToday(300), usedThisMonth:318 },
+  'linkit': { state:'active', since:sToday(-90), renewsOn:sToday(275), usedThisMonth:41 },
+};
+let TENANT_AGENT_CONFIG = {};
+AGENT_CATALOG.forEach(function(a){
+  const steps = {}; a.steps.forEach(function(s){ steps[s.id] = s.level; });
+  TENANT_AGENT_CONFIG[a.id] = { enabled:true, roles:['role_recruiter','role_recmgr','role_admin','role_founder'], steps:steps,
+    channels: a.id==='linkit' ? ['linkedin'] : ['email','whatsapp','calendar'], workingHours:'09:00-19:00', dailyCap:a.dailyCap };
+});
+let USER_AGENT_PREFS = {};
+let PLATFORM_ADDON_LEDGER = [];   // add-on starts, cancellations and platform grants, mirrored from the owner's actions
+const LEVEL_RANK = { person:0, off:1, suggest:2, auto:3 };
+const LEVEL_LABEL = { auto:'Automatic', suggest:'Suggest', off:'Off', person:'Always a person' };
+function currentUserId(){ const me = currentActingUser(); return me ? me.id : 'anon'; }
+function currentTenantPlanId(){
+  const sub = PLATFORM_SUBSCRIPTIONS.find(function(s){ return s.tenantId===CURRENT_ORGANIZATION_ID && ['active','trial'].indexOf(s.status)>-1; });
+  if(sub) return sub.planId;
+  const p = PLATFORM_PLANS.find(function(x){ return x.name===ORG_STRUCTURE.subscription.plan; });
+  return p ? p.id : 'plan-starter';
+}
+function agentSub(agentId){ return (TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID]||{})[agentId] || { state:'none', usedThisMonth:0 }; }
+function agentPlanIncludes(agentId){ const a = agentById(agentId); return !!a && a.includedInPlans.indexOf(currentTenantPlanId())>-1; }
+/* The single gate: may the current user use this agent right now? */
+function agentAccess(agentId, userId){
+  const a = agentById(agentId); if(!a || a.status==='disabled') return { on:false, why:'disabled-by-oontu' };
+  const sub = agentSub(agentId);
+  if(!agentPlanIncludes(agentId) && ['trial','active','cancelling'].indexOf(sub.state)===-1) return { on:false, why:'not-subscribed' };
+  if(sub.state==='paused' || sub.state==='suspended') return { on:false, why:sub.state };
+  const cfg = TENANT_AGENT_CONFIG[agentId]; if(!cfg || !cfg.enabled) return { on:false, why:'off-in-workspace' };
+  if(!sCan('kairo','Use agents')) return { on:false, why:'no-permission' };
+  const role = sRole();
+  if(cfg.roles && cfg.roles.length && role && cfg.roles.indexOf(role.id)===-1) return { on:false, why:'role-not-allowed' };
+  const pref = (USER_AGENT_PREFS[userId||currentUserId()]||{})[agentId];
+  if(pref && pref.enabled===false) return { on:false, why:'off-for-me' };
+  return { on:true };
+}
+/* The stricter of catalog, workspace and user levels. "Always a person" can never be loosened. */
+function agentStepLevel(agentId, stepId, userId){
+  const a = agentById(agentId); const step = a && a.steps.find(function(s){ return s.id===stepId; }); if(!step) return 'off';
+  if(step.level==='person') return 'person';
+  const cfg = TENANT_AGENT_CONFIG[agentId] || {}, pref = ((USER_AGENT_PREFS[userId||currentUserId()]||{})[agentId]||{}).steps || {};
+  const levels = [step.level, (cfg.steps||{})[stepId] || step.level, pref[stepId] || step.level];
+  return levels.reduce(function(lo, l){ return LEVEL_RANK[l] < LEVEL_RANK[lo] ? l : lo; });
+}
+function anyAgentOn(){ if(state.role==='candidate' || state.role==='oontu') return false; return AGENT_CATALOG.some(function(a){ return agentAccess(a.id).on; }); }
+function oAgentsOn(){ return window.OONTU_AGENTS !== false && anyAgentOn(); }
+/* a Kairo suggestion on the dashboard belongs to one agent; it only shows when that agent is on for this person */
+function oAgentLineOn(icon){ const id = ({ calendar:'interviews', bell:'engagement', clock:'engagement', users:'engagement', briefcase:'talent-discovery', sparkles:'talent-discovery', shield:'offers-joining', trending:'offers-joining', check:'offers-joining' })[icon] || 'talent-discovery'; return agentAccess(id).on; }
+function aiDestAgentOn(destId){ const id = AGENT_DEST[destId]; return !id || agentAccess(id).on; }
+function agentStateLabel(agentId){
+  const a = agentById(agentId), s = agentSub(agentId), inc = agentPlanIncludes(agentId);
+  if(a.status==='disabled') return ['risk','Paused by Oontu'];
+  if(s.state==='suspended' || s.state==='paused') return ['warn','Paused by Oontu'];
+  if(s.state==='trial'){ const d = Math.max(0, Math.ceil((new Date(s.trialEndsOn)-new Date())/86400000)); return ['warn','Trial · '+d+' days left']; }
+  if(s.state==='cancelling') return ['warn','Cancels '+(s.renewsOn||'at period end')];
+  if(s.state==='active') return ['ok','Active'];
+  return inc ? ['info','Included in your plan'] : ['info','Not subscribed'];
+}
+/* Owner: start a trial, subscribe or cancel an agent. Mirrors the change into the platform ledger and both audit logs. */
+function agentSubscribe(agentId, mode){
+  if(!sCan('billing','Manage plan & add-ons') || !sCan('kairo','Manage subscription')){ toast('Only the Owner can add or cancel agents.'); return false; }
+  const a = agentById(agentId); if(!a) return false;
+  const subs = TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID] = TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID] || {};
+  const prev = subs[agentId] || { state:'none', usedThisMonth:0 };
+  if(a.status==='disabled'){ toast(a.name+' is paused by Oontu.'); return false; }
+  let next;
+  if(mode==='trial') next = { state:'trial', since:sToday(0), trialEndsOn:sToday(a.trialDays), usedThisMonth:0 };
+  else if(mode==='subscribe') next = { state:'active', since:sToday(0), renewsOn:sToday(365), usedThisMonth:prev.usedThisMonth||0 };
+  else if(mode==='cancel') next = Object.assign({}, prev, { state:'cancelling' });
+  else if(mode==='resume') next = Object.assign({}, prev, { state:'active' });
+  else return false;
+  subs[agentId] = next;
+  PLATFORM_ADDON_LEDGER.push({ tenantId:CURRENT_ORGANIZATION_ID, agentId:agentId, mode:mode, at:nowTimestamp(), by:currentActingUser() ? currentActingUser().name : 'Owner' });
+  logAudit('Billing', 'Agent '+({ trial:'trial started', subscribe:'subscribed', cancel:'set to cancel at period end', resume:'resumed' }[mode]), a.name);
+  try { logAudit('Platform', 'Tenant agent '+mode, a.name+' · '+CURRENT_ORGANIZATION_ID, { entityType:'Platform', tenantId:CURRENT_ORGANIZATION_ID }); } catch(e){}
+  if(typeof renderSidebar==='function') renderSidebar();
+  return true;
+}
+/* Oontu Super Admin: the agent catalog and each tenant's subscription. Every change needs a reason and is audited. */
+function platformAgentSet(agentId, patch, reason){
+  if(!canPlatform('platform-subscription','update')){ toast('You do not have permission to change agents.'); return false; }
+  if(!String(reason||'').trim()){ toast('Add a reason first.'); return false; }
+  const a = agentById(agentId); if(!a) return false;
+  Object.assign(a, patch);
+  logPlatformAudit('Agent catalog changed', a.name+' · '+JSON.stringify(patch)+' · '+reason);
+  return true;
+}
+function platformTenantAgent(tenantId, agentId, action, reason){
+  if(!canPlatform('platform-subscription','update')){ toast('You do not have permission to change agents.'); return false; }
+  if(!String(reason||'').trim()){ toast('Add a reason first.'); return false; }
+  const a = agentById(agentId); if(!a) return false;
+  const subs = TENANT_AGENT_SUBSCRIPTIONS[tenantId] = TENANT_AGENT_SUBSCRIPTIONS[tenantId] || {};
+  const cur = subs[agentId] || { state:'none', usedThisMonth:0 };
+  if(action==='grant-trial') subs[agentId] = { state:'trial', since:sToday(0), trialEndsOn:sToday(a.trialDays), usedThisMonth:0 };
+  else if(action==='pause') subs[agentId] = Object.assign({}, cur, { state:'paused', before:cur.state });
+  else if(action==='suspend') subs[agentId] = Object.assign({}, cur, { state:'suspended', before:cur.state });
+  else if(action==='resume') subs[agentId] = Object.assign({}, cur, { state:(cur.before && cur.before!=='paused' && cur.before!=='suspended') ? cur.before : 'active' });
+  else return false;
+  PLATFORM_ADDON_LEDGER.push({ tenantId:tenantId, agentId:agentId, mode:action, at:nowTimestamp(), by:'Oontu', reason:reason });
+  logPlatformAudit('Tenant agent '+action, a.name+' · '+tenantId+' · '+reason);
+  if(tenantId===CURRENT_ORGANIZATION_ID) logAudit('Billing', 'Agent '+action+' by Oontu', a.name+' · '+reason);
+  return true;
+}
+Object.defineProperty(TENANT_FEATURE_FLAGS.linkedinOutreach, 'enabled', { get:function(){ return agentAccess('linkit').on; }, set:function(){}, enumerable:true, configurable:true });
+
+/* ---------- 3. plans and entitlements ---------- */
+[ ['agents-core','Kairo core','Plain-language explanations, the setup checklist and Ask Kairo. In every plan.'],
+  ['agent-talent-discovery','Kairo: Talent Discovery','Sourcing, matching and screening agent.'], ['agent-engagement','Kairo: Engagement','Follow-up agent.'],
+  ['agent-interviews','Kairo: Interviews','Scheduling and reminder agent.'], ['agent-offers-joining','Kairo: Offer & Joining','Offer and pre-joining risk agent.'],
+  ['linkit','LinkIt LinkedIn outreach','LinkedIn connect-and-nurture sequences.'], ['whatsapp-tiering','WhatsApp Business tiering','Tier-based daily caps.'],
+  ['advanced-analytics','Advanced analytics & forecasting','Bottleneck diagnosis and composite scoring.'], ['sso-scim','SSO & SCIM','Google, Azure AD and Okta.'],
+  ['ip-allowlist','IP allowlist','Restrict sign-in to approved networks.'], ['byo-model-key','Bring your own model key','Optional, Enterprise only.'],
+  ['oontu-jobs-website','Oontu jobs website','List jobs on the Oontu jobs website.'], ['marketplace-listing','Marketplace listing','Be found by companies.'], ['vendors','Vendors','Invite and manage vendors.']
+].forEach(function(e){ if(!ENTITLEMENT_CATALOG.find(function(x){ return x.id===e[0]; })) ENTITLEMENT_CATALOG.push({ id:e[0], label:e[1], description:e[2], relatedModule:null }); });
+(function(){
+  const plan = function(id){ return PLATFORM_PLANS.find(function(p){ return p.id===id; }); };
+  const grant = function(p, ids){ ids.forEach(function(i){ if(p && p.entitlements.indexOf(i)<0) p.entitlements.push(i); }); };
+  grant(plan('plan-starter'), ['agents-core']);
+  grant(plan('plan-growth'), ['agents-core','oontu-jobs-website','marketplace-listing','vendors']);
+  const ent = plan('plan-enterprise'); if(ent) ent.entitlements = ENTITLEMENT_CATALOG.map(function(e){ return e.id; });
+})();
+function planHasEntitlement(id){ const p = planById(currentTenantPlanId()); return !!p && p.entitlements.indexOf(id)>-1; }
+
+/* ============================================================
+   SETTINGS — shell, helpers and the "You" sections.
+   Same system as the rest of the product: .o-card / .o-btn / .o-badge / .o-table, and the lean pill (oPill) for the section list.
+============================================================ */
+const WSX = {
+  profile:{ title:'Senior recruiter', code:'+91', mobile:'98250 41207', tz:'Asia/Kolkata', hours:'09:00 to 18:00', signature:'Best,\nNorthstar Talent Partners' },
+  twoStep:true, linked:{ google:true, microsoft:false },
+  notifEvents:{}, digest:'08:30', quiet:'21:00 to 07:00',
+  accounts:{ mail:{ provider:'Gmail', account:'priya.sharma@northstartalent.com', status:'connected', last:'3 min ago' }, calendar:{ provider:'Google Calendar', account:'priya.sharma@northstartalent.com', status:'connected', last:'3 min ago' }, linkedin:{ provider:'LinkedIn', account:'Priya Sharma', status:'connected', last:'1 hour ago' } },
+  prefs:{ appearance:'light', density:'comfortable', language:'English (India)', home:'default' },
+  kairoMe:{ lang:'English (India)', tone:'Warm and brief' },
+  delegation:{ to:'', from:'', until:'' },
+  company:{ gst:'27AAACN1234F1Z5', address:'Ahmedabad HQ, Gujarat, India', grades:[ ['G1','Associate','₹4L to ₹8L'], ['G2','Senior','₹8L to ₹16L'], ['G3','Lead','₹16L to ₹28L'] ], bu:['Engineering','Operations'] },
+  approvals:{
+    client:{ mode:'condition', cond:'New client', source:'line', skip:'Owner', sla:24, escalate:true },
+    job:{ mode:'condition', cond:'New job', source:'line', skip:'Owner', sla:24, escalate:true },
+    requisition:{ mode:'condition', cond:'Requisition unbudgeted', source:'matrix', skip:'Owner', sla:48, escalate:true },
+    submission:{ mode:'always', cond:'', source:'line', skip:'Recruiter Manager', sla:8, escalate:true },
+    offer:{ mode:'condition', cond:'Offer above band', source:'line', skip:'Owner', sla:24, escalate:true },
+    vendor:{ mode:'always', cond:'', source:'matrix', skip:'Owner', sla:48, escalate:false } },
+  matrix:[ { cond:'Offer above band B3', chain:['Hiring Manager','TA Head','Owner'], mode:'sequential' }, { cond:'Requisition over budget', chain:['Department head','Owner'], mode:'sequential' } ],
+  hiring:{ distribute:'round-robin', slaHours:24, notifyManager:true, dupWindow:90, sameJobBlock:true, ownerLock:true, preApproval:true, maxProfiles:5, mandatory:'Notice period, current CTC, expected CTC', maskContacts:true, consent:true, replacementDays:90,
+    internalFirst:7, referralBonus:'₹25,000', vendorWindow:6, vendorConsent:48, vendorCap:20, hideScorecard:true },
+  templates:{ processes:[ 'Fintech Corp · 4 rounds','RetailX · 3 rounds','Default · 3 rounds' ], feedback:['Technical scorecard','Culture round','Client round'], offers:['India offer letter','Contract offer letter'],
+    messages:[ ['Application received','Email','Approved'], ['Interview invite','Email','Approved'], ['Interview reminder','WhatsApp','Approved'], ['Follow-up after a quiet week','WhatsApp','Pending approval'] ],
+    reasons:[], jd:['Engineering role','Sales role','Operations role'] },
+  careers:{ domain:'northstar.oontu.careers', languages:'English, Hindi', privacy:'India DPDP notice', jobsWebsite:false, hideClient:true, boards:{ naukri:true, indeed:false, linkedin:true },
+    market:{ listed:true, spec:'Engineering, Product, Fintech', ind:'Financial services, Retail', loc:'Pune, Bengaluru, Mumbai' }, vendors:{ on:false, browse:false, reveals:5 } },
+  terms:{ fee:8.33, replacement:90, payment:'Net 30', invoicePrefix:'NST-', gst:true, payTrack:'Raise invoice at joining', vendorTier:'Tier 2', vendorCap:20, linkExpiry:14, vendorFee:'Fixed 8.33% of annual CTC' },
+  security:{ retention:{ India:'3 years after last activity', EU:'2 years after last activity' }, consentText:'I agree that Northstar Talent Partners may store my profile and share it with employers for roles that match.', requests:[ { who:'Rahul Shah', type:'Export', at:'2 days ago', state:'Completed' } ], apiTokens:2, sessionTimeout:'8 hours' },
+  roleRules:{ hm:true, recruiter:true, interviewer:true },
+  billing:{ method:'Visa ending 4242', invoices:[ ['INV-2026-031','Oct 2026','USD 499','Paid'], ['INV-2026-018','Sep 2026','USD 499','Paid'] ] },
+  addons:{ whatsapp:true, analytics:true },
+  cand:{ visibility:'consent', whatsapp:true, email:true, calls:false, from:'09:00', to:'19:00', alerts:true, alertFreq:'Daily', notifs:{ interview:true, application:true, messages:true }, consents:[ ['Northstar Talent Partners','Agency','Given 12 Oct 2026'], ['RetailX','Employer','Given 20 Oct 2026'] ] }
+};
+WSX.templates.reasons = STAGE_REJECT_REASONS.slice();
+const SETTINGS_KEEP_TIMEZONES = ['Asia/Kolkata','Asia/Dubai','Europe/London','America/New_York','Asia/Singapore'];
+
+/* ---- small helpers ---- */
+let settingsSection = 'profile', settingsQuery = '', settingsRoleId = 'role_recruiter', settingsRoleTab = 'permissions', settingsIntTab = 'workspace';
+function sGet(path){ return path.split('.').reduce(function(o, k){ return o==null ? undefined : o[k]; }, WSX); }
+function sSetRaw(path, val){ const ks = path.split('.'); let o = WSX; ks.slice(0,-1).forEach(function(k){ o = o[k]; }); o[ks[ks.length-1]] = val; }
+function sLabelOf(path){ return path.replace(/^[a-z]+\./,'').replace(/\./g,' › '); }
+/* Every change: write, audit, toast with Undo, redraw. */
+function sSet(path, val, label){
+  const prev = sGet(path); if(prev===val) return;
+  sSetRaw(path, val);
+  logAudit('Settings', label || ('Changed '+sLabelOf(path)), sLabelOf(path)+': '+String(prev)+' → '+String(val), { entityType:'Settings', entityId:path });
+  toast('Saved', { undo:function(){ sSetRaw(path, prev); logAudit('Settings', 'Undid '+sLabelOf(path), String(val)+' → '+String(prev)); settingsRefresh(); } });
+  settingsRefresh();
+}
+function sTog(path){ sSet(path, !sGet(path)); }
+function sPick(path, el){ sSet(path, el.value); }
+function sNum(path, el){ const n = Number(el.value); if(isNaN(n) || n<0){ toast('Enter a number.'); settingsRefresh(); return; } sSet(path, n); }
+function sEsc(s){ return escapeHtml(String(s==null ? '' : s)); }
+function sCard(title, sub, body, aside){
+  return '<section class="o-card s-card"><div class="o-card__head"><div><h2 class="o-card__title">'+sEsc(title)+'</h2>'+(sub ? '<p class="o-card__sub">'+sEsc(sub)+'</p>' : '')+'</div>'+(aside||'')+'</div><div class="s-rows">'+body+'</div></section>';
+}
+function sRow(label, help, ctrl){
+  return '<div class="s-row" data-s="'+sEsc((label+' '+(help||'')).toLowerCase())+'"><div class="s-row__t"><p class="s-row__l">'+sEsc(label)+'</p>'+(help ? '<p class="s-row__h">'+sEsc(help)+'</p>' : '')+'</div><div class="s-row__c">'+ctrl+'</div></div>';
+}
+function sSwitch(on, path, ed, label){
+  return '<button type="button" role="switch" aria-checked="'+!!on+'" aria-label="'+sEsc(label||'Toggle')+'" class="app-switch'+(on ? ' is-on' : '')+'"'+(ed ? ' onclick="sTog(\''+path+'\')"' : ' disabled style="opacity:.5;cursor:not-allowed"')+'><span></span></button>';
+}
+function sSelect(opts, val, path, ed, label){
+  return '<select class="app-input app-select s-ctl" aria-label="'+sEsc(label||'Choose')+'"'+(ed ? ' onchange="sPick(\''+path+'\', this)"' : ' disabled')+'>'+opts.map(function(o){ const v = Array.isArray(o) ? o[0] : o, l = Array.isArray(o) ? o[1] : o; return '<option value="'+sEsc(v)+'"'+(String(v)===String(val) ? ' selected' : '')+'>'+sEsc(l)+'</option>'; }).join('')+'</select>';
+}
+function sInput(val, path, ed, opts){
+  opts = opts || {};
+  return '<input class="app-input s-ctl" type="'+(opts.type||'text')+'" value="'+sEsc(val)+'" aria-label="'+sEsc(opts.label||'Value')+'"'+(opts.ph ? ' placeholder="'+sEsc(opts.ph)+'"' : '')+(ed ? ' onchange="'+(opts.num ? 'sNum' : 'sPick')+'(\''+path+'\', this)"' : ' disabled')+' style="'+(opts.w ? 'width:'+opts.w : '')+'" />';
+}
+function sLock(who){ return '<span class="s-lock">'+oIcon('lock', 14, 1.75)+'Only '+sEsc(who)+' can change this</span>'; }
+function sBtn(label, onclick, kind){ return '<button type="button" class="o-btn'+(kind==='primary' ? ' o-btn--primary' : kind==='ghost' ? ' o-btn--ghost' : '')+'" onclick="'+onclick+'">'+sEsc(label)+'</button>'; }
+function sNote(text){ return '<div class="o-note" role="note">'+oIcon('alert', 16, 1.75)+'<span>'+sEsc(text)+'</span></div>'; }
+function sKairoLine(t){ return oAgentsOn() ? '<p class="o-kairo" data-agent="kairo" style="margin-top:10px">'+oIcon('spark', 14, 1.75)+'<span><b>Kairo</b> '+sEsc(t)+'</span></p>' : ''; }
+function sKind(){ return state.role==='candidate' ? 'candidate' : state.role==='oontu' ? 'oontu' : 'tenant'; }
+function sRoleKind(){ return ({ recruiter:'recruiter', manager:'manager', admin:'owner', hm:'hm', candidate:'candidate', oontu:'oontu' })[state.role] || 'recruiter'; }
+function sRoleName(){ const r = sRole(); return r ? r.name : ''; }
+function sMembersActive(){ return RECRUITER_ROSTER.filter(function(u){ return tmStatus(u)==='Active'; }); }
+
+/* ---- registry: what exists, who sees it, who may change it. Judged by permission, never by role name. ---- */
+const SETTINGS_SECTIONS = [
+  { id:'profile', group:'you', label:'Profile', kw:'name photo job title work email mobile timezone working hours signature job link', for:'tenant,oontu', can:function(){ return true; } },
+  { id:'signin', group:'you', label:'Sign-in & security', kw:'password two-step verification devices sessions google microsoft', for:'tenant,oontu,candidate', can:function(){ return true; } },
+  { id:'notifications', group:'you', label:'Notifications', kw:'email whatsapp desktop digest quiet hours events', for:'tenant,oontu', can:function(){ return true; } },
+  { id:'accounts', group:'you', label:'Connected accounts', kw:'mailbox gmail outlook calendar linkedin sender', for:'tenant', can:function(){ return true; } },
+  { id:'prefs', group:'you', label:'Preferences', kw:'appearance density language home keyboard shortcuts design', for:'tenant,oontu', can:function(){ return true; } },
+  { id:'kairo-me', group:'you', label:'Kairo for me', kw:'kairo agents autonomy automatic suggest tone', for:'tenant', can:function(){ return anyAgentOn(); } },
+  { id:'delegation', group:'you', label:'Delegation', kw:'out of office delegate approvals leave', for:'tenant', can:function(){ return hasAnyApprovalPower(); } },
+  { id:'overview', group:'workspace', label:'Overview', kw:'workspace name logo plan verification seats jobs used checklist defaults', for:'tenant', can:function(){ return sCan('workspace','View settings') && sCan('workspace','Edit company profile'); }, edit:function(){ return sCan('workspace','Edit company profile'); } },
+  { id:'company', group:'workspace', label:'Company profile', kw:'gst tax address branches locations departments legal entities cost centres grades salary bands', for:'tenant', can:function(){ return sCan('workspace','View settings'); }, edit:function(){ return sCan('workspace','Edit company profile'); } },
+  { id:'people', group:'workspace', label:'People', kw:'members invite deactivate reports to role rules seats csv', for:'tenant', can:function(){ return sCan('team','View Team'); }, edit:function(){ return sCan('team','Invite members'); } },
+  { id:'roles', group:'workspace', label:'Roles & permissions', kw:'role permission scope approval powers preview clone', for:'tenant', can:function(){ return sCan('team','View Team'); }, edit:function(){ return sCan('team','Manage roles'); } },
+  { id:'approvals', group:'workspace', label:'Approvals', kw:'approval sla escalation matrix requisition offer client job submission vendor', for:'tenant', can:function(){ return sCan('workspace','View settings') || hasAnyApprovalPower(); }, edit:function(){ return sCan('workspace','Edit hiring rules'); } },
+  { id:'hiring', group:'workspace', label:'Hiring rules', kw:'distribution sla duplicate ownership consent replacement internal first referral vendor window scorecard', for:'tenant', can:function(){ return sCan('workspace','View hiring rules') || sCan('workspace','View settings'); }, edit:function(){ return sCan('workspace','Edit hiring rules'); } },
+  { id:'templates', group:'workspace', label:'Templates', kw:'hiring process feedback form scorecard offer letter message whatsapp rejection reason job description skills industries locations', for:'tenant', can:function(){ return sCan('workspace','Use templates') || sCan('workspace','Edit templates'); }, edit:function(){ return sCan('workspace','Edit templates'); } },
+  { id:'careers', group:'workspace', label:'Careers & publishing', kw:'career page domain oontu jobs website job boards marketplace vendors reveal', for:'tenant', can:function(){ return sCan('workspace','View settings'); }, edit:function(){ return sCan('workspace','Edit careers & publishing'); } },
+  { id:'terms', group:'workspace', label:'Clients & billing terms', kw:'fee replacement payment terms invoice gst paytrack vendor defaults link expiry', for:'tenant', can:function(){ return sCan('workspace','View settings'); }, edit:function(){ return sCan('workspace','Edit client terms / vendors'); } },
+  { id:'integrations', group:'workspace', label:'Integrations', kw:'google microsoft whatsapp naukri indeed sso scim e-sign background accounting tally zoho storage api webhooks', for:'tenant', can:function(){ return sCan('workspace','Manage integrations'); }, edit:function(){ return sCan('workspace','Manage integrations'); } },
+  { id:'kairo-agents', group:'workspace', label:'Kairo agents', kw:'kairo agents subscription autonomy steps channels usage activity', for:'tenant', can:function(){ return sCan('kairo','View'); }, edit:function(){ return sCan('kairo','Configure'); } },
+  { id:'security', group:'workspace', label:'Security & compliance', kw:'sso two-step session timeout password policy ip allowlist retention consent data requests', for:'tenant', can:function(){ return sCan('security','Edit Security Settings'); }, edit:function(){ return sCan('security','Edit Security Settings'); } },
+  { id:'audit', group:'workspace', label:'Audit log', kw:'audit log history kairo for', for:'tenant', can:function(){ return sCan('security','View Audit Log'); }, edit:function(){ return false; } },
+  { id:'billing', group:'workspace', label:'Plan & billing', kw:'plan renewal seats usage add-ons invoices payment method upgrade trial', for:'tenant', can:function(){ return sCan('billing','View'); }, edit:function(){ return sCan('billing','Manage plan & add-ons'); } },
+  { id:'danger', group:'workspace', label:'Danger zone', kw:'transfer ownership export close workspace', for:'tenant', can:function(){ return sIsOwner(); }, edit:function(){ return sIsOwner(); } },
+  { id:'cand-visibility', group:'you', label:'Profile visibility', kw:'visible recruiters consent hidden', for:'candidate', can:function(){ return true; } },
+  { id:'cand-contact', group:'you', label:'Contact preferences', kw:'whatsapp email calls allowed hours', for:'candidate', can:function(){ return true; } },
+  { id:'cand-alerts', group:'you', label:'Job alerts', kw:'alerts frequency matching jobs', for:'candidate', can:function(){ return true; } },
+  { id:'cand-notifications', group:'you', label:'Notifications', kw:'interview application messages', for:'candidate', can:function(){ return true; } },
+  { id:'cand-consent', group:'you', label:'Consent & data', kw:'consent withdraw download delete account', for:'candidate', can:function(){ return true; } },
+  { id:'p-tenants', group:'platform', label:'Tenants', go:'oontu-tenants', kw:'workspaces', for:'oontu', can:function(){ return true; } },
+  { id:'p-signups', group:'platform', label:'Incomplete sign-ups', go:'oontu-signups', kw:'', for:'oontu', can:function(){ return true; } },
+  { id:'p-plans', group:'platform', label:'Plans', go:'oontu-plans', kw:'', for:'oontu', can:function(){ return true; } },
+  { id:'p-subs', group:'platform', label:'Subscriptions', go:'oontu-subscriptions', kw:'', for:'oontu', can:function(){ return true; } },
+  { id:'p-agents', group:'platform', label:'Agents catalog', go:'oontu-agents', kw:'kairo agents pricing kill switch usage', for:'oontu', can:function(){ return true; } },
+  { id:'p-users', group:'platform', label:'Platform users', go:'oontu-platform-users', kw:'', for:'oontu', can:function(){ return true; } },
+  { id:'p-features', group:'platform', label:'Feature controls', go:'oontu-feature-controls', kw:'', for:'oontu', can:function(){ return true; } },
+  { id:'p-audit', group:'platform', label:'Platform audit', go:'oontu-audit', kw:'', for:'oontu', can:function(){ return true; } },
+  { id:'p-ai', group:'platform', label:'AI models', kw:'provider keys model selection', for:'oontu', can:function(){ return true; } },
+];
+const SETTINGS_GROUPS = [['you','You'],['workspace','Workspace'],['platform','Platform']];
+/* the old screens now live inside Settings; their routes open the matching section */
+const SETTINGS_REDIRECT = { 'setup-hub':'overview', 'org-structure':'company', 'user-management':'people', 'roles-permissions':'roles', 'master-data':'templates', 
+  'integrations':'integrations', 'audit-center':'audit', 'security-settings':'security', 'feature-flags':'billing', 'scheduled-jobs':'kairo-agents' };
+function sVisible(){
+  const kind = sKind();
+  return SETTINGS_SECTIONS.filter(function(s){ return s.for.split(',').indexOf(kind)>-1 && s.can(); });
+}
+function sSectionById(id){ return SETTINGS_SECTIONS.find(function(s){ return s.id===id; }); }
+function sCanEdit(id){ const s = sSectionById(id); return !!s && (s.edit ? s.edit() : true); }
+function sCurrent(){
+  const vis = sVisible();
+  let cur = vis.find(function(s){ return s.id===settingsSection && !s.go; });
+  if(!cur) cur = vis.find(function(s){ return !s.go; });
+  settingsSection = cur ? cur.id : 'profile';
+  return cur;
+}
+function openSettings(id){ if(id) settingsSection = id; try { history.replaceState(null, '', '#settings/'+settingsSection); } catch(e){} showView('settings'); }
+function sGo(id){
+  const s = sSectionById(id); if(!s) return;
+  if(s.go){ showView(s.go); return; }
+  settingsSection = id; settingsQuery = settingsQuery;
+  try { history.replaceState(null, '', '#settings/'+id); } catch(e){}
+  document.querySelectorAll('#settings-nav .s-nav-item').forEach(function(b){ const on = b.getAttribute('data-sec')===id; b.classList.toggle('active', on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  const sel = document.getElementById('settings-select'); if(sel) sel.value = id;
+  oPill(document.getElementById('settings-nav'), '[aria-current="page"]', 'settings-nav', 'o-pill--lean');
+  settingsRefresh();
+  const main = document.getElementById('main-content'); if(main) main.scrollTop = 0;
+}
+function sSearch(v){
+  settingsQuery = v;
+  const nav = document.getElementById('settings-nav'); if(nav) nav.innerHTML = sNavItemsHTML();
+  oPill(nav, '[aria-current="page"]', 'settings-nav', 'o-pill--lean');
+  sFilterRows();
+}
+function sFilterRows(){
+  const q = settingsQuery.trim().toLowerCase();
+  document.querySelectorAll('#settings-content .s-row').forEach(function(r){ r.hidden = !!q && r.getAttribute('data-s').indexOf(q)===-1; });
+  document.querySelectorAll('#settings-content .s-card').forEach(function(c){ const rows = c.querySelectorAll('.s-row'); c.hidden = !!q && rows.length>0 && Array.prototype.every.call(rows, function(r){ return r.hidden; }); });
+}
+function sNavItemsHTML(){
+  const q = settingsQuery.trim().toLowerCase(), cur = sCurrent();
+  const vis = sVisible().filter(function(s){ return !q || (s.label+' '+s.kw).toLowerCase().indexOf(q)>-1; });
+  const parts = [];
+  SETTINGS_GROUPS.forEach(function(g){
+    const items = vis.filter(function(s){ return s.group===g[0]; });
+    if(!items.length) return;
+    parts.push('<p class="o-nav-head" style="padding-left:12px">'+g[1]+'</p>');
+    items.forEach(function(s){
+      const on = cur && s.id===cur.id, ro = !s.go && s.edit && !s.edit();
+      parts.push('<button type="button" class="o-nav-item s-nav-item'+(on ? ' active' : '')+'" data-sec="'+s.id+'"'+(on ? ' aria-current="page"' : '')+' onclick="sGo(\''+s.id+'\')"><span class="o-nav-item__label">'+sEsc(s.label)+'</span>'+(ro ? '<span class="s-ro" title="Read only">'+oIcon('lock', 13, 1.75)+'</span>' : s.go ? '<span class="s-ro">'+oIcon('chev', 13, 1.75)+'</span>' : '')+'</button>');
+    });
+  });
+  return parts.join('') || '<p class="s-empty">No settings match “'+sEsc(settingsQuery)+'”.</p>';
+}
+function settingsRefresh(){
+  const el = document.getElementById('settings-content'); if(!el) return;
+  const cur = sCurrent(); el.innerHTML = cur ? sSectionHTML(cur) : '';
+  sFilterRows();
+  const nav = document.getElementById('settings-nav'); if(nav) oPill(nav, '[aria-current="page"]', 'settings-nav', 'o-pill--lean');
+  if(typeof oEnhanceTabs==='function') oEnhanceTabs(document.getElementById('main-content'));
+}
+function sSectionHTML(sec){
+  const fn = ({ profile:sec_profile, signin:sec_signin, notifications:sec_notifications, accounts:sec_accounts, prefs:sec_prefs, 'kairo-me':sec_kairoMe, delegation:sec_delegation,
+    overview:sec_overview, company:sec_company, people:sec_people, roles:sec_roles, approvals:sec_approvals, hiring:sec_hiring, templates:sec_templates, careers:sec_careers, terms:sec_terms,
+    integrations:sec_integrations, 'kairo-agents':sec_kairoAgents, security:sec_security, audit:sec_audit, billing:sec_billing, danger:sec_danger,
+    'cand-visibility':sec_candVisibility, 'cand-contact':sec_candContact, 'cand-alerts':sec_candAlerts, 'cand-notifications':sec_candNotifications, 'cand-consent':sec_candConsent, 'p-ai':sec_platformAi })[sec.id];
+  const ed = sec.edit ? sec.edit() : true;
+  const head = '<div class="s-sechead"><h2 class="s-title">'+sEsc(sec.label)+'</h2>'+(!ed ? '<span class="o-badge">'+oIcon('lock', 12, 1.75)+' View only</span>' : '')+'</div>';
+  return head+(fn ? fn(ed) : sCard(sec.label, '', sRow('Coming soon','','')));
+}
+function renderSettings(){
+  const cur = sCurrent(), vis = sVisible().filter(function(s){ return !s.go; });
+  const lede = sKind()==='candidate' ? 'Your privacy, consent and how recruiters reach you.' : sKind()==='oontu' ? 'Your account, and the platform tools only Oontu can use.' : 'Your account, and the workspace settings you’re allowed to change.';
+  return '<div class="content-shell o-page" id="settings-root">'+
+    (typeof previewBannerHTML==='function' ? previewBannerHTML() : '')+
+    oPageHead({ title:'Settings', lede:lede })+
+    '<div class="s-search"><span class="s-search__ic">'+oIcon('search', 16, 1.75)+'</span><input id="settings-search" type="search" class="app-input" placeholder="Search settings" aria-label="Search settings" value="'+sEsc(settingsQuery)+'" oninput="sSearch(this.value)" /></div>'+
+    '<div class="s-layout">'+
+      '<nav class="s-nav" aria-label="Settings sections"><div id="settings-nav" class="s-nav__list">'+sNavItemsHTML()+'</div></nav>'+
+      '<select id="settings-select" class="app-input app-select s-select" aria-label="Settings section" onchange="sGo(this.value)">'+vis.map(function(s){ return '<option value="'+s.id+'"'+(cur && s.id===cur.id ? ' selected' : '')+'>'+sEsc(s.label)+'</option>'; }).join('')+'</select>'+
+      '<div id="settings-content" class="s-content">'+(cur ? sSectionHTML(cur) : '')+'</div>'+
+    '</div></div>';
+}
+function renderSettingsScreen(){ const el = document.getElementById('main-content'); if(el){ el.innerHTML = renderSettings(); oPostRender(el); } }
+RENDERERS['settings'] = renderSettings;
+Object.keys(SETTINGS_REDIRECT).forEach(function(k){ RENDERERS[k] = renderSettings; });
+
+/* ---------------- You ---------------- */
+function sec_profile(ed){
+  const me = currentActingUser(), p = WSX.profile, meta = ROLE_META[state.role] || {};
+  const jobLink = 'https://oontu.ai/jobs/r/'+(me ? me.id : 'me');
+  return sCard('Your profile', 'This is how teammates and candidates see you.',
+    sRow('Photo', 'Shown on messages and your job link.', '<span class="s-avatar">'+sEsc(initials(meta.name||'Me'))+'</span>'+sBtn('Change photo', "toast('Photo upload is simulated in this prototype.')"))+
+    sRow('Full name', '', sInput(meta.name||'', 'profile.name', false, { label:'Full name' })+sLock('your Admin'))+
+    sRow('Job title', '', sInput(p.title, 'profile.title', true, { label:'Job title' }))+
+    sRow('Work email', 'Used to sign in. Ask your Admin to change it.', '<span class="s-val">'+sEsc(me ? me.email : '')+'</span>')+
+    sRow('Mobile', 'With country code.', sInput(p.code, 'profile.code', true, { w:'72px', label:'Country code' })+sInput(p.mobile, 'profile.mobile', true, { label:'Mobile' }))+
+    sRow('Timezone', '', sSelect(SETTINGS_KEEP_TIMEZONES, p.tz, 'profile.tz', true, 'Timezone'))+
+    sRow('Working hours', 'Kairo and reminders respect these.', sInput(p.hours, 'profile.hours', true, { label:'Working hours' }))+
+    sRow('Email signature', 'Added to messages you send from Oontu.', '<textarea class="app-input s-ctl" rows="3" aria-label="Email signature" onchange="sSet(\'profile.signature\', this.value)">'+sEsc(p.signature)+'</textarea>')+
+    (state.role==='recruiter' ? sRow('My job link', 'The personal application link that carries your recruiter ID.', '<code class="s-code">'+sEsc(jobLink)+'</code>'+sBtn('Copy', "sCopy('"+jobLink+"')")) : ''));
+}
+function sCopy(t){ try { navigator.clipboard.writeText(t); } catch(e){} toast('Copied'); }
+function sec_signin(ed){
+  const sso = SECURITY_SETTINGS.sso, twoReq = SECURITY_SETTINGS.twoFactor;
+  const mine = DEVICE_HISTORY.filter(function(d){ const me = currentActingUser(); return !me || d.user===me.name || sKind()!=='tenant'; });
+  const devices = mine.length ? mine.map(function(d){
+    return '<div class="s-row" data-s="'+sEsc(('device '+d.device+' '+d.location).toLowerCase())+'"><div class="s-row__t"><p class="s-row__l">'+sEsc(d.device)+(d.current ? ' <span class="o-badge o-badge--success">This device</span>' : '')+'</p><p class="s-row__h">'+sEsc(d.location)+' · '+sEsc(d.lastActive)+'</p></div><div class="s-row__c">'+(d.current ? '' : sBtn('Sign out', "revokeDevice('"+d.id+"'); settingsRefresh();"))+'</div></div>';
+  }).join('') : sRow('No other devices','','');
+  return (sso ? sNote('Your workspace uses single sign-on, so the password is managed by your identity provider.') : sCard('Password', 'Change the password you use to sign in.', '<div class="s-embed">'+authPasswordPanelHTML()+'</div>'))+
+    sCard('Two-step verification', 'A second step when you sign in.', sRow('Require a code at sign-in', twoReq ? 'Your workspace requires this.' : 'Recommended for everyone.', sSwitch(twoReq || WSX.twoStep, 'twoStep', ed && !twoReq, 'Two-step verification')))+
+    sCard('Signed-in devices', 'Sign out of any device you do not recognise.', devices, mine.length>1 ? sBtn('Sign out of all others', "toast('Signed out of all other devices.'); logAudit('Security','Signed out other devices','Own account');") : '')+
+    sCard('Linked sign-in', 'Sign in with your Google or Microsoft account.', sRow('Google', WSX.linked.google ? 'Linked' : 'Not linked', sSwitch(WSX.linked.google, 'linked.google', true, 'Google sign-in'))+sRow('Microsoft', WSX.linked.microsoft ? 'Linked' : 'Not linked', sSwitch(WSX.linked.microsoft, 'linked.microsoft', true, 'Microsoft sign-in')));
+}
+function sNotifEvents(){
+  const k = sRoleKind();
+  const rec = [['new-applicant','New applicant assigned to me'],['sla','An application SLA is about to breach'],['client-fb','Client feedback received'],['iv-confirm','Interview confirmed or declined'],['offer-view','Offer viewed or accepted'],['approval-decided','An approval was decided']];
+  if(k==='manager') return [['approval-req','Approval requested'],['over-cap','A recruiter is over capacity'],['job-risk','A job is at risk']].concat(rec);
+  if(k==='owner') return [['approval-req','Approval requested'],['job-risk','A job is at risk'],['billing','Plan, billing and add-on alerts'],['security','Security alerts']];
+  if(k==='hm') return [['shared','Candidates shared for review'],['fb-due','Feedback is due'],['iv-confirm','Interview confirmed or declined']];
+  if(k==='oontu') return [['signup-stuck','A sign-up is stuck'],['trial-end','A trial is ending'],['payment-failed','A payment failed']];
+  return rec;
+}
+function sec_notifications(ed){
+  const cols = [['app','In-app'],['email','Email'],['whatsapp','WhatsApp'],['desktop','Desktop']];
+  const rows = sNotifEvents().map(function(e){
+    const cur = WSX.notifEvents[e[0]] = WSX.notifEvents[e[0]] || { app:true, email:true, whatsapp:false, desktop:false };
+    return '<tr data-s="'+sEsc(e[1].toLowerCase())+'"><td><b>'+sEsc(e[1])+'</b></td>'+cols.map(function(c){
+      return '<td style="text-align:center"><input type="checkbox" aria-label="'+sEsc(e[1]+' by '+c[1])+'"'+(cur[c[0]] ? ' checked' : '')+' onchange="sSet(\'notifEvents.'+e[0]+'.'+c[0]+'\', this.checked)" /></td>';
+    }).join('')+'</tr>';
+  }).join('');
+  return sCard('What to tell me', 'Pick the channel for each event.', '<div class="o-table-wrap" style="margin-top:0"><table class="o-table" style="min-width:520px"><thead><tr><th>Event</th>'+cols.map(function(c){ return '<th style="text-align:center">'+c[1]+'</th>'; }).join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>')+
+    sCard('Timing', '', sRow('Daily digest', 'One email with what needs you.', sInput(WSX.digest, 'digest', true, { type:'time', label:'Digest time' }))+sRow('Quiet hours', 'No WhatsApp or desktop alerts in this window.', sInput(WSX.quiet, 'quiet', true, { label:'Quiet hours' })));
+}
+function sec_accounts(ed){
+  const linkit = agentAccess('linkit').on;
+  const acct = function(key, label, used){
+    const a = WSX.accounts[key];
+    return sRow(label, used, '<span class="s-val">'+sEsc(a.provider)+' · '+sEsc(a.account)+'</span>'+oBadge(a.status==='connected' ? 'success' : 'neutral', a.status==='connected' ? 'Connected · synced '+a.last : 'Not connected')+
+      (a.status==='connected' ? sBtn('Reconnect', "sAccount('"+key+"','reconnect')")+sBtn('Disconnect', "sAccount('"+key+"','disconnect')") : sBtn('Connect', "sAccount('"+key+"','connect')", 'primary')));
+  };
+  return sCard('Mailbox and calendar', 'Connected once for you, not for the whole workspace.', acct('mail','Mailbox','Candidate and client emails are sent from your own address.')+acct('calendar','Calendar','Interview invites use your calendar and show your availability.'))+
+    (linkit ? sCard('LinkedIn sender', 'Needed for LinkIt outreach.', acct('linkedin','LinkedIn sender profile','LinkIt sends sequences as you, within daily caps.')) : '');
+}
+function sAccount(key, action){
+  const a = WSX.accounts[key];
+  if(action==='disconnect'){ a.status = 'not_connected'; logAudit('Settings','Disconnected '+a.provider,'Own account'); toast(a.provider+' disconnected. Features that used it will ask you to reconnect.'); }
+  else { a.status = 'connected'; a.last = 'just now'; logAudit('Settings', (action==='connect' ? 'Connected ' : 'Reconnected ')+a.provider, 'Own account'); toast(a.provider+' connected'); }
+  settingsRefresh();
+}
+function sec_prefs(ed){
+  const p = WSX.prefs;
+  return sCard('Appearance and layout', '', sRow('Appearance', 'Light is the default.', sSelect([['light','Light'],['system','Match my system'],['glare','Low glare']], p.appearance, 'prefs.appearance', true, 'Appearance'))+
+      sRow('Density', 'Compact tightens table rows.', sSelect([['comfortable','Comfortable'],['compact','Compact']], p.density, 'prefs.density', true, 'Density'))+
+      sRow('Language', '', sSelect(['English (India)','English (UK)','Hindi'], p.language, 'prefs.language', true, 'Language'))+
+      sRow('Default home view', 'Where Oontu opens after you sign in.', sSelect([['default','Home'],['jobs','Jobs'],['interviews','Interviews']], p.home, 'prefs.home', true, 'Default home')))+
+    sCard('Keyboard shortcuts', '', [['⌘ K','Search or jump to'],['Ctrl \\','Collapse or expand the sidebar'],['↑ ↓','Move through results'],['Esc','Close a panel']].map(function(k){ return sRow(k[1], '', '<span class="o-kbd">'+sEsc(k[0])+'</span>'); }).join(''))+
+    sCard('About this design', 'How Oontu looks and moves.', sRow('Design system', 'Colours, type, components and the lean pill.', sBtn('Open', "showView('design-system')")));
+}
+function sApplyPrefs(){
+  const p = WSX.prefs;
+  document.documentElement.classList.toggle('density-compact', p.density==='compact');
+  const glare = p.appearance==='glare' || (p.appearance==='system' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  if(typeof setEyeComfort==='function' && !!glare!==!!eyeComfortOn) setEyeComfort(!!glare);
+}
+const __sSetOrig = sSet;
+sSet = function(path, val, label){ __sSetOrig(path, val, label); if(path.indexOf('prefs.')===0) sApplyPrefs(); };
+function sec_kairoMe(ed){
+  const uid = currentUserId(), on = AGENT_CATALOG.filter(function(a){ return agentAccess(a.id, uid).on; });
+  const prefs = USER_AGENT_PREFS[uid] = USER_AGENT_PREFS[uid] || {};
+  if(!on.length) return sCard('Kairo for me', '', sRow('No agents available','Your workspace hasn’t added Kairo agents. Your Owner can add them in Plan & billing.',''));
+  return on.map(function(a){
+    const pref = prefs[a.id] = prefs[a.id] || { enabled:true, steps:{} };
+    const steps = a.steps.map(function(s){
+      const ws = (TENANT_AGENT_CONFIG[a.id].steps||{})[s.id] || s.level, cur = agentStepLevel(a.id, s.id, uid);
+      if(s.level==='person') return sRow(s.label, 'Always a person. Kairo never does this on its own.', '<span class="o-badge">'+oIcon('lock', 12, 1.75)+' Always a person</span>');
+      const opts = ['auto','suggest','off'].filter(function(l){ return LEVEL_RANK[l] <= LEVEL_RANK[ws]; });
+      if(opts.length===1) return sRow(s.label, 'Your workspace has switched this off.', '<span class="o-badge">'+oIcon('lock', 12, 1.75)+' Off in your workspace</span>');
+      return sRow(s.label, 'Your workspace allows up to '+LEVEL_LABEL[ws].toLowerCase()+'.', '<select class="app-input app-select s-ctl" aria-label="'+sEsc(s.label)+'" onchange="sUserStep(\''+a.id+'\',\''+s.id+'\',this.value)">'+opts.map(function(l){ return '<option value="'+l+'"'+(cur===l ? ' selected' : '')+'>'+LEVEL_LABEL[l]+'</option>'; }).join('')+'</select>');
+    }).join('');
+    return sCard(a.name, a.does, sRow('Use '+a.name+' for me', 'Turn it off to stop its suggestions and actions for you only.', sSwitch(pref.enabled!==false, 'userAgent:'+a.id, true, a.name))+steps, oBadge(agentStateLabel(a.id)[0]==='ok' ? 'success' : 'warn', agentStateLabel(a.id)[1]));
+  }).join('')+
+  sCard('How Kairo works for me', '', sRow('Working hours', 'Kairo acts within your working hours.', '<span class="s-val">'+sEsc(WSX.profile.hours)+'</span>')+
+    sRow('Language', '', sSelect(['English (India)','English (UK)','Hindi'], WSX.kairoMe.lang, 'kairoMe.lang', true, 'Draft language'))+
+    sRow('Tone of drafts', '', sSelect(['Warm and brief','Formal','Friendly and casual'], WSX.kairoMe.tone, 'kairoMe.tone', true, 'Tone'))+
+    sRow('What Kairo did today', 'Everything Kairo did for you, with the agent and step.', sBtn('Show activity', "document.getElementById('s-kairo-today').hidden = !document.getElementById('s-kairo-today').hidden"))+
+    '<div id="s-kairo-today" class="s-embed" hidden>'+sKairoActivity(uid, 6)+'</div>');
+}
+function sKairoActivity(uid, n){
+  const me = tmById(uid), name = me ? me.name : '';
+  const rows = AUDIT_LOG.filter(function(a){ return /^Kairo for /.test(a.actor||'') ? (!name || a.actor.indexOf(name)>-1) : false; }).slice(0, n);
+  if(!rows.length) return '<p class="s-empty">Nothing yet today. When Kairo acts for you, it shows here as “Kairo for '+sEsc(name||'you')+'”.</p>';
+  return rows.map(function(a){ return '<p class="s-line"><b>'+sEsc(a.actor)+'</b> · '+sEsc(a.action)+' · '+sEsc(a.detail||'')+'</p>'; }).join('');
+}
+function sUserStep(agentId, stepId, level){
+  const uid = currentUserId(), p = (USER_AGENT_PREFS[uid] = USER_AGENT_PREFS[uid] || {});
+  p[agentId] = p[agentId] || { enabled:true, steps:{} }; p[agentId].steps[stepId] = level;
+  logAudit('Settings', 'Kairo step changed for me', agentById(agentId).name+' · '+stepId+' · '+level);
+  toast('Saved'); settingsRefresh();
+}
+/* switch rows bound to the per-user agent preference use a path-like token */
+const __sTogOrig = sTog;
+sTog = function(path){
+  if(path.indexOf('userAgent:')===0){
+    const id = path.slice(10), uid = currentUserId(), p = (USER_AGENT_PREFS[uid] = USER_AGENT_PREFS[uid] || {});
+    p[id] = p[id] || { enabled:true, steps:{} }; p[id].enabled = p[id].enabled===false;
+    logAudit('Settings', 'Kairo agent '+(p[id].enabled ? 'turned on' : 'turned off')+' for me', agentById(id).name);
+    toast('Saved'); settingsRefresh(); if(typeof renderSidebar==='function') renderSidebar(); return;
+  }
+  __sTogOrig(path);
+};
+function sec_delegation(ed){
+  const d = WSX.delegation, me = currentActingUser();
+  const people = sMembersActive().filter(function(u){ return !me || u.id!==me.id; }).filter(function(u){ return roleHasPermission(u.assignedRoleId,'approvals','Approve'); });
+  return sCard('Out of office', 'While you are away, approvals sent to you go to your delegate.',
+    sRow('Delegate', 'Must be able to approve.', '<select class="app-input app-select s-ctl" aria-label="Delegate" onchange="sSet(\'delegation.to\', this.value)"><option value="">No delegate</option>'+people.map(function(u){ return '<option value="'+u.id+'"'+(d.to===u.id ? ' selected' : '')+'>'+sEsc(u.name)+'</option>'; }).join('')+'</select>')+
+    sRow('From', '', sInput(d.from, 'delegation.from', true, { type:'date', label:'From' }))+
+    sRow('Until', '', sInput(d.until, 'delegation.until', true, { type:'date', label:'Until' }))+
+    sRow('Right now', '', d.to && d.from ? oBadge('warn', 'Approvals go to '+((tmById(d.to)||{}).name||'your delegate')+' from '+d.from+(d.until ? ' to '+d.until : '')) : oBadge('neutral', 'No delegate set')))+
+    sNote('Everything your delegate decides is recorded as “decided for you”. The Owner stays the final fallback.');
+}
+
+/* ---------------- Candidate ---------------- */
+function sec_candVisibility(){ const c = WSX.cand; return sCard('Who can find me', 'Control whether recruiters can see your profile.', sRow('Profile visibility', 'Recruiters who hold your consent can always see it.', sSelect([['consent','Visible to recruiters who have my consent'],['hidden','Hidden from everyone']], c.visibility, 'cand.visibility', true, 'Profile visibility'))); }
+function sec_candContact(){ const c = WSX.cand; return sCard('How to reach me', '', sRow('WhatsApp', '', sSwitch(c.whatsapp, 'cand.whatsapp', true, 'WhatsApp'))+sRow('Email', '', sSwitch(c.email, 'cand.email', true, 'Email'))+sRow('Calls', '', sSwitch(c.calls, 'cand.calls', true, 'Calls'))+sRow('Allowed hours', 'Messages and calls only come in this window.', sInput(c.from, 'cand.from', true, { type:'time', label:'From' })+sInput(c.to, 'cand.to', true, { type:'time', label:'To' }))); }
+function sec_candAlerts(){ const c = WSX.cand; return sCard('Job alerts', '', sRow('Email me matching jobs', '', sSwitch(c.alerts, 'cand.alerts', true, 'Job alerts'))+sRow('How often', '', sSelect(['Daily','Weekly'], c.alertFreq, 'cand.alertFreq', c.alerts, 'Frequency'))); }
+function sec_candNotifications(){ const n = WSX.cand.notifs; return sCard('Notifications', '', sRow('Interview updates', '', sSwitch(n.interview, 'cand.notifs.interview', true, 'Interview updates'))+sRow('Application updates', '', sSwitch(n.application, 'cand.notifs.application', true, 'Application updates'))+sRow('Messages from recruiters', '', sSwitch(n.messages, 'cand.notifs.messages', true, 'Messages'))); }
+function sec_candConsent(){
+  const c = WSX.cand;
+  return sCard('Who holds my consent', 'You can withdraw at any time.', c.consents.length ? c.consents.map(function(x, i){ return sRow(x[0], x[1]+' · '+x[2], sBtn('Withdraw', "sWithdrawConsent("+i+")")); }).join('') : sRow('No one holds your consent','',''))+
+    sCard('My data', '', sRow('Download my data', 'A copy of everything Oontu holds about you.', sBtn('Download', "toast('Your data export is being prepared.'); logAudit('Privacy','Data export requested','Candidate');"))+
+      sRow('Delete my account', 'Removes your profile and withdraws all consent. This cannot be undone.', sBtn('Delete account…', "sConfirmDeleteAccount()", 'ghost')));
+}
+function sWithdrawConsent(i){ const x = WSX.cand.consents.splice(i,1)[0]; logAudit('Privacy','Consent withdrawn', x ? x[0] : ''); toast('Consent withdrawn'); settingsRefresh(); }
+function sConfirmDeleteAccount(){ if(window.confirm('Delete your account and withdraw all consent? This cannot be undone.')){ WSX.cand.consents = []; logAudit('Privacy','Account deletion requested','Candidate'); toast('Deletion requested. We will confirm by email.'); settingsRefresh(); } }
+
+/* ---------------- Workspace ---------------- */
+function sMeter(used, total){ const pct = total ? Math.min(100, Math.round(used/total*100)) : 0; return '<span class="o-num__bar" style="width:140px;margin:0"><i style="width:'+pct+'%"></i></span>'; }
+function sOrg(key, el){ const prev = ORG_STRUCTURE.profile[key]; ORG_STRUCTURE.profile[key] = el.value; logAudit('Organization','Company profile changed', key+': '+prev+' → '+el.value); toast('Saved', { undo:function(){ ORG_STRUCTURE.profile[key] = prev; settingsRefresh(); } }); if(key==='brandName' && typeof renderSidebar==='function') renderSidebar(); settingsRefresh(); }
+function sec_overview(ed){
+  const p = ORG_STRUCTURE.profile, sub = ORG_STRUCTURE.subscription, plan = planById(currentTenantPlanId()) || {}, seats = RECRUITER_ROSTER.length;
+  const unver = p.verification==='unverified';
+  return sCard('Your workspace', '', sRow('Workspace name', 'Shown in the sidebar and on emails.', '<input class="app-input s-ctl" value="'+sEsc(p.brandName||'')+'" aria-label="Workspace name"'+(ed ? ' onchange="sOrg(\'brandName\', this)"' : ' disabled')+' />')+
+      sRow('Logo', '', '<span class="s-avatar" style="border-radius:9px;background:var(--charcoal);color:#F9FAFB">'+sEsc((p.brandName||'W').split(' ').map(function(w){ return w[0]; }).slice(0,2).join(''))+'</span>'+sBtn('Upload logo', "toast('Logo upload is simulated in this prototype.')"))+
+      sRow('Type', 'Decides which settings, roles and rules apply.', oBadge('neutral', sIsCorporate() ? 'Corporate' : 'Staffing agency'))+
+      sRow('Plan', 'Renews '+sEsc(sub.renewalDate||'')+'.', oBadge('neutral', (plan.name||sub.plan)+' · '+sub.billingCycle)+(sCan('billing','View') ? sBtn('Plan & billing', "sGo('billing')") : ''))+
+      sRow('Verification', unver ? 'Until Oontu verifies your company there is no listing on the Oontu jobs website and no marketplace reveals.' : 'Your company is verified.', oBadge(unver ? 'warn' : 'success', unver ? 'Unverified' : 'Verified'))+
+      sRow('Seats used', 'Included in your plan.', '<span class="s-val">'+seats+' of '+(sub.seatsIncluded||'unlimited')+'</span>'+sMeter(seats, sub.seatsIncluded))+
+      sRow('Jobs used', 'Against your plan limit.', '<span class="s-val">'+JOBS.length+' / '+(plan.jobLimit||'unlimited')+' jobs used</span>'+sMeter(JOBS.length, plan.jobLimit)))+
+    (typeof wsSettingsSectionsHTML==='function' && wsSettingsSectionsHTML() ? '<div class="s-embed">'+wsSettingsSectionsHTML()+'</div>' : '');
+}
+function sec_company(ed){
+  const c = WSX.company, corp = sIsCorporate();
+  const ents = (ORG_STRUCTURE.legalEntities||[]).map(function(e){ return '<tr><td><b>'+sEsc(e.name)+'</b>'+(e.primary ? '<small>Primary</small>' : '')+'</td><td>'+sEsc(e.country)+'</td><td>'+sEsc(e.taxId)+'</td></tr>'; }).join('');
+  return sCard('Company details', '', sRow('GST or tax ID', '', sInput(c.gst, 'company.gst', ed, { label:'Tax ID' }))+sRow('Registered address', '', sInput(c.address, 'company.address', ed, { label:'Address', w:'260px' })))+
+    '<div class="s-embed">'+orgProfileSectionHTML()+'</div>'+
+    (corp ? sCard('Legal entities', 'Each entity has its own country, currency, tax ID, working week, holidays and data region.', '<div class="o-table-wrap" style="margin-top:0"><table class="o-table" style="min-width:420px"><thead><tr><th>Entity</th><th>Country</th><th>Tax ID</th></tr></thead><tbody>'+ents+'</tbody></table></div>')+
+      sCard('Business units and grades', '', sRow('Business units', '', '<span class="s-val">'+c.bu.map(sEsc).join(', ')+'</span>')+
+        '<div class="o-table-wrap" style="margin-top:8px"><table class="o-table" style="min-width:420px"><thead><tr><th>Grade</th><th>Name</th><th>Salary band</th></tr></thead><tbody>'+c.grades.map(function(g){ return '<tr><td><b>'+g[0]+'</b></td><td>'+g[1]+'</td><td>'+g[2]+'</td></tr>'; }).join('')+'</tbody></table></div>') : '')+
+    '<div class="s-embed">'+orgStructureBodyHTML()+'</div>';
+}
+/* People: the members table; invite, edit and reactivate reuse the existing flows; deactivate always starts with a hand-over. */
+function sPeopleScope(){
+  const me = currentActingUser();
+  if(sCan('team','Manage roles') || sIsOwner()) return tmListedMembers();
+  return me ? recruitersManagedBy(me.id).filter(function(u){ return u.id!==me.id; }) : [];
+}
+function sRoleScopeText(u){
+  const r = migrateRole(CUSTOM_ROLES.find(function(x){ return x.id===u.assignedRoleId; })); if(!r) return '—';
+  const short = function(k){ return ({ own:'own', team:'team', assigned:'assigned', all:'all', department:'department', entity:'entity' })[k] || 'all'; };
+  return 'Jobs: '+short((r.scope||{}).jobs)+' · Candidates: '+short((r.scope||{}).candidates);
+}
+function sec_people(ed){
+  const list = sPeopleScope(), canManage = sCan('team','Manage roles') || sIsOwner();
+  const rows = list.map(function(u){
+    const st = tmStatus(u), mgr = tmById(tmManagerIdOf(u)), team = teamForRecruiter(u.id);
+    return '<tr data-s="'+sEsc((u.name+' '+u.email+' '+tmRoleName(u.assignedRoleId)).toLowerCase())+'"><td><b>'+sEsc(u.name)+'</b><small>'+sEsc(u.email||'')+'</small></td><td>'+sEsc(tmRoleName(u.assignedRoleId))+'</td><td>'+sEsc(mgr ? mgr.name : '—')+(team ? '<small>'+sEsc(team.name)+'</small>' : '')+'</td><td style="color:var(--text-3)">'+sEsc(sRoleScopeText(u))+'</td>'+
+      '<td>'+oBadge(st==='Active' ? 'neutral' : st==='Invited' ? 'warn' : 'danger', st==='Invited' ? 'Invited · expires in 7 days' : st)+'</td>'+
+      '<td style="white-space:nowrap">'+(st==='Invited' ? sBtn('Resend', "tmResendInvite('"+u.id+"'); settingsRefresh();") : '')+(canManage||sCan('team','Change reports to') ? sBtn('Edit', "tmOpenEdit('"+u.id+"')") : '')+
+        (st==='Suspended' && (ed||canManage) ? sBtn('Reactivate', "tmReactivate('"+u.id+"'); settingsRefresh();") : (sCan('team','Deactivate members')||canManage) && st!=='Suspended' ? sBtn('Deactivate', "sHandover('"+u.id+"')", 'ghost') : '')+'</td></tr>';
+  }).join('') || '<tr><td colspan="7" style="height:auto;padding:28px;text-align:center;color:var(--text-3)">Nobody reports to you yet.</td></tr>';
+  const rec = list.filter(function(u){ return roleHasPermission(u.assignedRoleId,'jobs','Edit'); }).length, light = list.length-rec;
+  const seats = ORG_STRUCTURE.subscription.seatsIncluded;
+  const rules = !sIsCorporate() ? '' : sCard('Role rules', 'Roles that Oontu gives people automatically.',
+    [ ['hm','Anyone with direct reports becomes a Hiring Manager', RECRUITER_ROSTER.filter(function(u){ return tmDirectReports(u.id).length>0; }).length, 'Hiring Manager'],
+      ['recruiter','Anyone in the TA department becomes a Recruiter', RECRUITER_ROSTER.filter(function(u){ return /talent|\bta\b|recruit/i.test(u.dept||''); }).length, 'Recruiter'],
+      ['interviewer','Anyone named on an interview panel becomes an Interviewer for that job only', Array.from(new Set(hmInterviews.map(function(i){ return i.interviewerName; }).filter(Boolean))).length, 'Interviewer'] ].map(function(r){
+      return sRow(r[1], 'This rule gives '+r[2]+' '+(r[2]===1 ? 'person' : 'people')+' the '+r[3]+' role.', sSwitch(WSX.roleRules[r[0]], 'roleRules.'+r[0], canManage, r[1])); }).join('')+
+    sRow('Everyone else is an Employee', 'They can see internal jobs, refer and apply internally.', oBadge('neutral','Built in')));
+  return sCard('Members', canManage ? 'Everyone in the workspace.' : 'The people who report to you.', '<div class="o-table-wrap" style="margin-top:0"><table class="o-table" style="min-width:720px"><thead><tr><th>Member</th><th>Role</th><th>Reports to and team</th><th>Data scope</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>',
+      sCan('team','Invite members') ? '<span style="display:flex;gap:8px">'+(sIsCorporate() ? sBtn('Upload CSV', "toast('CSV upload is simulated in this prototype.')") : '')+sBtn('Invite by email or WhatsApp', 'tmOpenInvite()', 'primary')+'</span>' : '')+
+    sCard('Seats', '', sRow('Recruiter seats', 'People who work jobs and candidates.', '<span class="s-val">'+rec+(seats ? ' of '+seats : '')+'</span>'+sMeter(rec, seats))+sRow('Light seats', 'Hiring managers and interviewers, who only review and give feedback.', '<span class="s-val">'+light+'</span>'))+rules+
+    sNote('Anyone can report to any active member; reporting to yourself or in a loop is blocked. A role says what you can do, “reports to” says whose work you see, and the job team says who works on one job.');
+}
+let sHandoverFor = null;
+function sHandoverItems(u){
+  return { jobs:JOBS.filter(function(j){ return j.status==='Active' && (j.assignedRecruiters||[]).indexOf(u.id)>-1; }), subs:SUBMISSIONS.filter(function(s){ return s.recruiterId===u.id && ['Rejected','Withdrawn','Joined'].indexOf(s.stage)===-1; }),
+    approvals:APPROVAL_REQUESTS.filter(function(r){ return r.status==='Pending' && r.approverUserId===u.id; }), reports:tmDirectReports(u.id) };
+}
+function sHandover(id){
+  const u = tmById(id); if(!u) return;
+  const blocker = tmSuspendBlocker(u); if(blocker){ toast(blocker); return; }
+  sHandoverFor = id; sRenderHandover();
+}
+function sRenderHandover(){
+  let root = document.getElementById('settings-modal-root'); if(!root){ root = document.createElement('div'); root.id = 'settings-modal-root'; document.body.appendChild(root); }
+  if(!sHandoverFor){ root.innerHTML = ''; return; }
+  const u = tmById(sHandoverFor), it = sHandoverItems(u), others = sMembersActive().filter(function(x){ return x.id!==u.id; });
+  const line = function(n, one, many){ return '<li>'+n+' '+(n===1 ? one : many)+'</li>'; };
+  root.innerHTML = '<div class="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="ho-h"><div class="modal-backdrop absolute inset-0" onclick="sHandoverFor=null; sRenderHandover()"></div>'+
+    '<div class="modal-panel relative bg-white w-full max-w-md p-6"><h2 id="ho-h" class="o-card__title">Hand over before deactivating '+sEsc(u.name)+'</h2>'+
+    '<p class="o-card__sub" style="margin-top:4px">Nothing is left without an owner. Choose who takes over everything below.</p>'+
+    '<ul class="s-list">'+line(it.jobs.length,'open job','open jobs')+line(it.subs.length,'candidate journey they own','candidate journeys they own')+line(it.approvals.length,'pending approval','pending approvals')+line(it.reports.length,'direct report','direct reports')+'</ul>'+
+    '<label class="o-card__sub" for="ho-to" style="display:block;margin-top:12px">Hand over to</label><select id="ho-to" class="app-input app-select" style="width:100%;margin-top:4px">'+others.map(function(x){ return '<option value="'+x.id+'">'+sEsc(x.name)+' · '+sEsc(tmRoleName(x.assignedRoleId))+'</option>'; }).join('')+'</select>'+
+    '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">'+sBtn('Cancel', "sHandoverFor=null; sRenderHandover()")+sBtn('Hand over and deactivate', 'sConfirmHandover()', 'primary')+'</div></div></div>';
+  const first = root.querySelector('#ho-to'); if(first) first.focus();
+}
+function sConfirmHandover(){
+  const u = tmById(sHandoverFor), to = tmById((document.getElementById('ho-to')||{}).value); if(!u || !to) return;
+  const it = sHandoverItems(u);
+  it.jobs.forEach(function(j){ j.assignedRecruiters = (j.assignedRecruiters||[]).filter(function(x){ return x!==u.id; }); if(j.assignedRecruiters.indexOf(to.id)===-1) j.assignedRecruiters.push(to.id); if(j.recruiterId===u.id){ j.recruiterId = to.id; j.recruiter = to.name; } });
+  it.subs.forEach(function(s){ s.recruiterId = to.id; });
+  it.approvals.forEach(function(r){ r.approverUserId = to.id; r.approverName = to.name; });
+  it.reports.forEach(function(r){ tmPlaceUnderManager(r, tmCreatesCycle(r.id, to.id) ? null : to.id); });
+  u.userStatus = 'Suspended';
+  logAudit('User Management', 'Member deactivated after hand-over', u.name+' → '+to.name+' · '+it.jobs.length+' jobs, '+it.subs.length+' journeys, '+it.approvals.length+' approvals, '+it.reports.length+' reports');
+  toast(u.name+' deactivated. Their work now belongs to '+to.name+'.');
+  sHandoverFor = null; sRenderHandover(); settingsRefresh();
+}
+
+/* Roles & permissions: permissions, data scope and approval powers on one role. */
+function sRoleHolders(roleId){ return RECRUITER_ROSTER.filter(function(u){ return u.assignedRoleId===roleId; }).length; }
+function sec_roles(ed){
+  const me = currentActingUser(), mine = sRole();
+  const roles = (sCan('team','Manage roles') || sIsOwner()) ? CUSTOM_ROLES : CUSTOM_ROLES.filter(function(r){ return mine && r.id===mine.id; });
+  roles.forEach(migrateRole);
+  if(!roles.find(function(r){ return r.id===settingsRoleId; })) settingsRoleId = roles[0] ? roles[0].id : '';
+  const role = roles.find(function(r){ return r.id===settingsRoleId; }); if(!role) return sCard('Roles', '', sRow('No role','',''));
+  const locked = !!role.protected || !ed;
+  const list = '<div class="s-rolelist">'+roles.map(function(r){ return '<button type="button" class="s-rolebtn'+(r.id===role.id ? ' is-on' : '')+'" onclick="settingsRoleId=\''+r.id+'\'; settingsRefresh()">'+sEsc(r.name)+(r.protected ? oIcon('lock', 12, 1.75) : '')+'<span class="s-ro">'+sRoleHolders(r.id)+'</span></button>'; }).join('')+'</div>';
+  const mods = sModulesForOrg(), tabs = [['permissions','Permissions'],['scope','Data scope'],['approval','Approval powers']];
+  let body = '';
+  if(settingsRoleTab==='permissions'){
+    body = PERMISSION_GROUPS.map(function(g){
+      const ms = mods.filter(function(m){ return g[1].indexOf(m.id)>-1; }); if(!ms.length) return '';
+      return sCard(g[0], '', ms.map(function(m){
+        return sRow(m.label, '', '<div class="s-chks">'+m.actions.map(function(a){ const on = (role.permissions[m.id]||[]).indexOf(a)>-1; return '<label class="s-chk"><input type="checkbox"'+(on ? ' checked' : '')+(locked ? ' disabled' : '')+' onchange="sTogglePerm(\''+role.id+'\',\''+m.id+'\',\''+a.replace(/'/g,"\\'")+'\')" /> '+sEsc(a)+'</label>'; }).join('')+'</div>');
+      }).join(''));
+    }).join('');
+  } else if(settingsRoleTab==='scope'){
+    const opts = ['own','team','assigned','all'].concat(sIsCorporate() ? ['department','entity'] : []).map(function(k){ return [k, SCOPE_LABEL[k]]; });
+    body = sCard('Which records this role can see', 'Per module. “Own” is only their records; “All” is the whole workspace.', mods.map(function(m){
+      return sRow(m.label, '', '<select class="app-input app-select s-ctl" aria-label="'+sEsc(m.label+' scope')+'"'+(locked ? ' disabled' : ' onchange="sRoleScope(\''+role.id+'\',\''+m.id+'\', this.value)"')+'>'+opts.map(function(o){ return '<option value="'+o[0]+'"'+(((role.scope||{})[m.id]||'all')===o[0] ? ' selected' : '')+'>'+o[1]+'</option>'; }).join('')+'</select>'); }).join(''));
+  } else {
+    const ap = role.approves = role.approves || {};
+    body = sCard('What this role may approve', 'Approval powers are separate from permissions. Set a limit where it makes sense.', APPROVAL_ENTITIES.filter(function(e){ return sIsCorporate() ? e[0]!=='client' : (e[0]!=='requisition' && e[0]!=='vendor'); }).map(function(e){
+      const on = !!ap[e[0]], lim = e[0]==='offer' ? ['maxBand','Up to band',ap.offer&&ap.offer.maxBand||''] : e[0]==='requisition' ? ['maxBudget','Up to budget (₹)',ap.requisition&&ap.requisition.maxBudget||''] : null;
+      return sRow(e[1]+'s', on ? 'Can approve '+e[1].toLowerCase()+'s.' : 'Cannot approve '+e[1].toLowerCase()+'s.', sSwitchRole(role.id, 'approves:'+e[0], on, locked, e[1])+(lim && on ? '<input class="app-input s-ctl" aria-label="'+lim[1]+'" placeholder="'+lim[1]+'" value="'+sEsc(lim[2])+'" style="width:140px"'+(locked ? ' disabled' : ' onchange="sRoleLimit(\''+role.id+'\',\''+e[0]+'\',\''+lim[0]+'\', this.value)"')+' />' : '')); }).join(''));
+  }
+  const actions = '<div style="display:flex;gap:8px;flex-wrap:wrap">'+sBtn('Preview as this role', "startPreviewAsRole('"+role.id+"'); sGo('roles'); openSettings('roles')")+
+    (ed ? sBtn('Clone', "sCloneRole('"+role.id+"')")+(role.protected ? '' : sBtn('Rename', "sRenameRole('"+role.id+"')"))+(role.protected ? '' : sBtn(sRoleHolders(role.id) ? 'In use by '+sRoleHolders(role.id) : 'Delete', sRoleHolders(role.id) ? "toast('Move the "+sRoleHolders(role.id)+" people to another role first.')" : "sDeleteRole('"+role.id+"')", 'ghost')) : '')+'</div>';
+  return '<div class="s-roles">'+sCard('Roles', 'Owner is locked. Anyone can be given any other role.', list)+'<div>'+sCard(role.name, role.protected ? 'The Owner always keeps full access and is the final approval fallback.' : sRoleHolders(role.id)+' people hold this role.',
+    '<div class="o-tabs-host"><div role="tablist" aria-label="Role editor" id="role-tabs">'+tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="'+(settingsRoleTab===t[0])+'" onclick="settingsRoleTab=\''+t[0]+'\'; settingsRefresh()">'+t[1]+'</button>'; }).join('')+'</div></div>', actions)+body+'</div></div>';
+}
+function sSwitchRole(roleId, token, on, locked, label){ return '<button type="button" role="switch" aria-checked="'+on+'" aria-label="'+sEsc(label)+'" class="app-switch'+(on ? ' is-on' : '')+'"'+(locked ? ' disabled style="opacity:.5;cursor:not-allowed"' : ' onclick="sRoleApprove(\''+roleId+'\',\''+token.slice(9)+'\')"')+'><span></span></button>'; }
+function sTogglePerm(roleId, m, a){
+  const r = CUSTOM_ROLES.find(function(x){ return x.id===roleId; }); if(!r || r.protected || !sCanEdit('roles')) return;
+  togglePermission(roleId, m, a);
+  toast('Saved · affects '+sRoleHolders(roleId)+' '+(sRoleHolders(roleId)===1 ? 'person' : 'people'));
+  settingsRefresh();
+}
+function sRoleScope(roleId, m, v){ const r = CUSTOM_ROLES.find(function(x){ return x.id===roleId; }); if(!r || r.protected) return; r.scope[m] = v; logAudit('Permissions','Data scope changed', r.name+': '+m+' → '+v); toast('Saved · affects '+sRoleHolders(roleId)+' people'); settingsRefresh(); }
+function sRoleApprove(roleId, ent){ const r = CUSTOM_ROLES.find(function(x){ return x.id===roleId; }); if(!r || r.protected) return; r.approves[ent] = r.approves[ent] ? false : (ent==='offer'||ent==='requisition' ? {} : true); logAudit('Permissions','Approval power '+(r.approves[ent] ? 'granted' : 'removed'), r.name+': '+ent); toast('Saved · affects '+sRoleHolders(roleId)+' people'); settingsRefresh(); }
+function sRoleLimit(roleId, ent, key, v){ const r = CUSTOM_ROLES.find(function(x){ return x.id===roleId; }); if(!r) return; r.approves[ent] = r.approves[ent] && typeof r.approves[ent]==='object' ? r.approves[ent] : {}; r.approves[ent][key] = key==='maxBudget' ? Number(v)||0 : v; logAudit('Permissions','Approval limit changed', r.name+': '+ent+' '+key+' '+v); toast('Saved'); settingsRefresh(); }
+function sCloneRole(id){ const r = CUSTOM_ROLES.find(function(x){ return x.id===id; }); if(!r) return; const n = 'role_'+Date.now(); CUSTOM_ROLES.push({ id:n, name:r.name+' (copy)', __v2:true, permissions:JSON.parse(JSON.stringify(r.permissions)), scope:JSON.parse(JSON.stringify(r.scope||{})), approves:JSON.parse(JSON.stringify(r.approves||{})) }); if(r.protected){ const c = CUSTOM_ROLES[CUSTOM_ROLES.length-1]; c.protected = false; } settingsRoleId = n; logAudit('Permissions','Role cloned', r.name); toast('Role cloned'); settingsRefresh(); }
+function sRenameRole(id){ const r = CUSTOM_ROLES.find(function(x){ return x.id===id; }); const n = window.prompt('Role name', r.name); if(n && n.trim()){ logAudit('Permissions','Role renamed', r.name+' → '+n.trim()); r.name = n.trim(); settingsRefresh(); } }
+function sDeleteRole(id){ const r = CUSTOM_ROLES.find(function(x){ return x.id===id; }); if(!r || r.protected || sRoleHolders(id)) return; CUSTOM_ROLES.splice(CUSTOM_ROLES.indexOf(r), 1); logAudit('Permissions','Role deleted', r.name); settingsRoleId = CUSTOM_ROLES[0].id; toast('Role deleted'); settingsRefresh(); }
+
+/* Approvals: one row per entity; client and job rows drive the policies the product already enforces. */
+const APPROVAL_CONDITIONS = { client:['New client','Contract above a value'], job:['New job','Job above a budget'], requisition:['Requisition unbudgeted','Requisition over budget'], submission:['First submission to a client'], offer:['Offer above band','Offer above a limit'], vendor:['New vendor'] };
+function sApprovalsSync(){
+  const a = WSX.approvals;
+  a.client.mode = CLIENT_APPROVAL_POLICY.required ? (a.client.mode==='never' ? 'always' : a.client.mode) : 'never';
+  a.job.mode = JOB_APPROVAL_POLICY.mode==='mandatory' ? 'always' : JOB_APPROVAL_POLICY.mode==='optional' ? 'condition' : 'never';
+}
+function sOwnApprovalPowers(){
+  const r = sRole(), ap = r.approves || {}, corp = sIsCorporate();
+  const rows = APPROVAL_ENTITIES.filter(function(e){ return corp ? e[0]!=='client' : (e[0]!=='requisition' && e[0]!=='vendor'); }).map(function(e){
+    const v = ap[e[0]], lim = e[0]==='offer' && v && v.maxBand ? ' up to band '+v.maxBand : e[0]==='requisition' && v && v.maxBudget ? ' up to â‚¹'+Number(v.maxBudget).toLocaleString('en-IN') : '';
+    return sRow(e[1]+'s', v ? 'You can approve '+e[1].toLowerCase()+'s'+lim+'.' : 'You cannot approve '+e[1].toLowerCase()+'s.', oBadge(v ? 'success' : 'neutral', v ? 'Can approve'+lim : 'No'));
+  }).join('');
+  return sCard('Your approval powers', 'What your role lets you approve. Your Admin sets these.', rows+sRow('Going on leave?', 'Choose who approves for you.', sBtn('Set a delegate', "sGo('delegation')")))+sNote('If a request waits too long it moves up the reporting line, and the Owner is the final fallback.');
+}
+function sec_approvals(ed){
+  if(!sCan('workspace','View settings')) return sOwnApprovalPowers();
+  sApprovalsSync();
+  const corp = sIsCorporate(), chain = typeof findActiveOfferApprovalChain==='function' ? findActiveOfferApprovalChain() : null;
+  const rows = APPROVAL_ENTITIES.filter(function(e){ return corp ? e[0]!=='client' : (e[0]!=='requisition' && e[0]!=='vendor'); }).map(function(e){
+    const k = e[0], a = WSX.approvals[k];
+    const sel = function(opts, field){ return '<select class="app-input app-select" style="min-width:120px" aria-label="'+sEsc(e[1]+' '+field)+'"'+(ed ? ' onchange="sApprovalSet(\''+k+'\',\''+field+'\', this.value)"' : ' disabled')+'>'+opts.map(function(o){ return '<option value="'+o[0]+'"'+(String(a[field])===o[0] ? ' selected' : '')+'>'+o[1]+'</option>'; }).join('')+'</select>'; };
+    return '<tr data-s="'+sEsc((e[1]+' approval').toLowerCase())+'"><td><b>'+e[1]+'</b></td><td>'+sel([['always','Always'],['never','Never'],['condition','Only when…']], 'mode')+'</td>'+
+      '<td>'+(a.mode==='condition' ? sel((APPROVAL_CONDITIONS[k]||[]).map(function(c){ return [c,c]; }), 'cond')+(k==='offer' && chain ? '<small style="display:block;color:var(--text-3)">Now: '+sEsc(chain.trigger)+'</small>' : '') : '<span style="color:var(--text-3)">—</span>')+'</td>'+
+      '<td>'+sel(corp ? [['line','Reporting line'],['matrix','Approval matrix']] : [['line','Reporting line']], 'source')+'</td>'+
+      '<td>'+sel(['Owner','Admin','Recruiter Manager','Nobody'].map(function(c){ return [c,c]; }), 'skip')+'</td>'+
+      '<td><input class="app-input" type="number" min="1" style="width:76px" aria-label="'+sEsc(e[1]+' SLA hours')+'" value="'+a.sla+'"'+(ed ? ' onchange="sApprovalSet(\''+k+'\',\'sla\', this.value)"' : ' disabled')+' /></td>'+
+      '<td>'+sSwitch(a.escalate, 'approvals.'+k+'.escalate', ed, e[1]+' escalation')+'</td></tr>';
+  }).join('');
+  const matrix = !corp ? '' : sCard('Approval matrix', 'When a condition is met, the request goes along this chain.', WSX.matrix.map(function(m, i){
+      return sRow(m.cond, m.chain.join(' → ')+' · '+m.mode, ed ? sBtn('Remove', "sMatrixRemove("+i+")", 'ghost') : '');
+    }).join('')+(ed ? sRow('Add a rule', 'Condition, approvers in order (comma separated), and how they approve.', '<input id="mx-c" class="app-input" placeholder="Condition" style="width:170px" /><input id="mx-ch" class="app-input" placeholder="Hiring Manager, Owner" style="width:190px" /><select id="mx-m" class="app-input app-select"><option>sequential</option><option>parallel</option></select>'+sBtn('Add', 'sMatrixAdd()', 'primary')) : ''));
+  return sCard('When something needs approval', 'The policy says whether an entity needs approval; the approver comes from the reporting line or the matrix.',
+      '<div class="o-table-wrap" style="margin-top:0"><table class="o-table" style="min-width:880px"><thead><tr><th>Entity</th><th>Needs approval</th><th>Condition</th><th>Approver source</th><th>Can skip review</th><th>SLA (hours)</th><th>Escalate</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+
+    matrix+(ed && !corp ? '<div class="s-embed">'+jobPolicyPanelHTML()+'</div>' : '')+sNote('The Owner is the final fallback, so nothing gets stuck. When a request sits past its SLA, Kairo nudges the approver and then the request moves one level up. Approvers can set a delegate under You → Delegation.')+
+    sKairoLine('nudges approvers when a request is close to its SLA. It never approves anything.');
+}
+function sApprovalSet(k, field, v){
+  const a = WSX.approvals[k], prev = a[field]; a[field] = field==='sla' ? Math.max(1, Number(v)||1) : v;
+  if(k==='client' && field==='mode') CLIENT_APPROVAL_POLICY.required = v!=='never';
+  if(k==='job' && field==='mode') JOB_APPROVAL_POLICY.mode = ({ always:'mandatory', condition:'optional', never:'direct' })[v];
+  logAudit('Approvals','Approval rule changed', k+' · '+field+': '+prev+' → '+a[field]);
+  toast('Saved', { undo:function(){ a[field] = prev; if(k==='client' && field==='mode') CLIENT_APPROVAL_POLICY.required = prev!=='never'; if(k==='job' && field==='mode') JOB_APPROVAL_POLICY.mode = ({ always:'mandatory', condition:'optional', never:'direct' })[prev]; settingsRefresh(); } });
+  settingsRefresh();
+}
+function sMatrixAdd(){ const c = document.getElementById('mx-c').value.trim(), ch = document.getElementById('mx-ch').value.split(',').map(function(x){ return x.trim(); }).filter(Boolean); if(!c || !ch.length){ toast('Add a condition and at least one approver.'); return; } WSX.matrix.push({ cond:c, chain:ch, mode:document.getElementById('mx-m').value }); logAudit('Approvals','Matrix rule added', c+' → '+ch.join(', ')); toast('Saved'); settingsRefresh(); }
+function sMatrixRemove(i){ const m = WSX.matrix.splice(i,1)[0]; logAudit('Approvals','Matrix rule removed', m ? m.cond : ''); toast('Removed'); settingsRefresh(); }
+
+/* Hiring rules */
+function sec_hiring(ed){
+  const h = WSX.hiring, corp = sIsCorporate(), summary = !sCan('workspace','View settings');
+  const days = function(path, v){ return sInput(v, path, ed, { type:'number', num:true, w:'90px', label:path }); };
+  if(summary) return sCard('Rules that affect your work', 'Your Admin sets these. You can read them here.',
+    (corp ? '' : sRow('Application SLA', 'Respond within this time or the applicant is reassigned.', '<span class="s-val">'+h.slaHours+' hours</span>')+sRow('Client duplicate window', 'A candidate already submitted to a client is blocked for this long.', '<span class="s-val">'+h.dupWindow+' days</span>')+sRow('Right-to-represent consent', 'Required before you submit a candidate.', oBadge('neutral', h.consent ? 'Required' : 'Not required')))+
+    sRow('Same-job duplicates', 'The same person cannot enter the same job twice.', oBadge('neutral', h.sameJobBlock ? 'Blocked' : 'Allowed'))+sRow('Pre-submission approval', '', oBadge('neutral', h.preApproval ? 'Required' : 'Not required')));
+  if(!corp) return sCard('Applicants', '', sRow('How new applicants are shared', 'A recruiter’s personal link always wins.', sSelect([['round-robin','Round-robin'],['workload','By workload'],['skill','By skill match'],['manual','Manual']], h.distribute, 'hiring.distribute', ed, 'Distribution'))+
+      sRow('Application SLA (hours)', 'Reassign if nobody responds in time.', days('hiring.slaHours', h.slaHours))+sRow('Tell the manager on reassignment', '', sSwitch(h.notifyManager, 'hiring.notifyManager', ed, 'Notify manager')))+
+    sCard('Duplicates and ownership', '', sRow('Client duplicate window (days)', 'Default 90.', days('hiring.dupWindow', h.dupWindow))+sRow('Same-job duplicate', 'Hard block; a manager can approve an override.', sSwitch(h.sameJobBlock, 'hiring.sameJobBlock', ed, 'Same-job block'))+sRow('Ownership lock', 'The first recruiter to submit owns the journey.', sSwitch(h.ownerLock, 'hiring.ownerLock', ed, 'Ownership lock')))+
+    sCard('Submissions', '', sRow('Pre-submission approval', '', sSwitch(h.preApproval, 'hiring.preApproval', ed, 'Pre-submission approval'))+sRow('Maximum profiles per job', '', days('hiring.maxProfiles', h.maxProfiles))+sRow('Mandatory fields', '', sInput(h.mandatory, 'hiring.mandatory', ed, { w:'300px', label:'Mandatory fields' }))+sRow('Mask candidate contacts', 'Until the client shows interest.', sSwitch(h.maskContacts, 'hiring.maskContacts', ed, 'Mask contacts'))+
+      sRow('Right-to-represent consent before submission', '', sSwitch(h.consent, 'hiring.consent', ed, 'Consent'))+sRow('Replacement days at joining', 'Default 90.', days('hiring.replacementDays', h.replacementDays)));
+  return sCard('Internal hiring', '', sRow('Internal-first window (days)', 'Internal people see a job first for this long.', days('hiring.internalFirst', h.internalFirst))+sRow('Referral bonus', '', sInput(h.referralBonus, 'hiring.referralBonus', ed, { label:'Referral bonus' })))+
+    sCard('Vendors', '', sRow('Vendor ownership window (months)', 'Default 6.', days('hiring.vendorWindow', h.vendorWindow))+sRow('Vendor consent window (hours)', 'Default 48.', days('hiring.vendorConsent', h.vendorConsent))+sRow('Profile cap per vendor', '', days('hiring.vendorCap', h.vendorCap)))+
+    sCard('Interviews', '', sRow('Hide the scorecard until each panelist submits', 'Stops panelists influencing each other.', sSwitch(h.hideScorecard, 'hiring.hideScorecard', ed, 'Hide scorecard')));
+}
+
+/* Templates */
+function sListRow(label, items, path, ed){
+  return sRow(label, '', '<div class="s-chips">'+items.map(function(x, i){ return '<span class="s-chip">'+sEsc(Array.isArray(x) ? x.join(' · ') : x)+(ed && path ? '<button type="button" aria-label="Remove" onclick="sListRemove(\''+path+'\','+i+')">×</button>' : '')+'</span>'; }).join('')+(ed && path ? '<input class="app-input s-chipadd" placeholder="Add…" aria-label="Add to '+sEsc(label)+'" onkeydown="if(event.key===\'Enter\'){ sListAdd(\''+path+'\', this.value); }" />' : '')+'</div>');
+}
+function sListAdd(path, v){ v = String(v||'').trim(); if(!v) return; const list = sGet(path); list.push(v); logAudit('Settings','Template list changed', sLabelOf(path)+' + '+v); toast('Saved'); settingsRefresh(); }
+function sListRemove(path, i){ const list = sGet(path), v = list.splice(i,1)[0]; logAudit('Settings','Template list changed', sLabelOf(path)+' − '+v); toast('Removed'); settingsRefresh(); }
+function sec_templates(ed){
+  const t = WSX.templates, corp = sIsCorporate();
+  return sCard('Hiring processes', corp ? 'Stages with type, mode, interviewer and feedback form, saved per department.' : 'Stages with type, mode, interviewer and feedback form, saved per client.', sListRow(corp ? 'Per department' : 'Per client', t.processes, 'templates.processes', ed))+
+    sCard('Feedback and scorecards', '', sListRow('Feedback forms', t.feedback, 'templates.feedback', ed))+
+    (corp ? sCard('Offer letters', 'One template per legal entity.', sListRow('Templates', t.offers, 'templates.offers', ed)) : '')+
+    sCard('Messages', 'WhatsApp templates need WhatsApp approval before use.', t.messages.map(function(m){ return sRow(m[0], m[1], oBadge(m[2]==='Approved' ? 'success' : 'warn', m[2])); }).join(''))+
+    sCard('Reasons and descriptions', '', sListRow('Rejection and drop reasons', t.reasons, 'templates.reasons', ed)+sListRow('Job description templates', t.jd, 'templates.jd', ed))+
+    sCard('Skills, industries and locations', 'The pick lists used across jobs and candidates.', sRow('Skills', 'Used on jobs and candidate profiles.', '<span class="s-val">'+(typeof tsSkillVocab==='function' ? tsSkillVocab().length : 0)+' skills</span>')+sRow('Industries', '', '<span class="s-val">'+(typeof INDUSTRY_DATA!=='undefined' ? INDUSTRY_DATA.length : 0)+' industries</span>')+sRow('Locations', '', '<span class="s-val">'+(typeof tsPlaceVocab==='function' ? tsPlaceVocab().length : 0)+' places</span>'));
+}
+
+/* Careers & publishing */
+function sec_careers(ed){
+  const c = WSX.careers, corp = sIsCorporate(), unver = ORG_STRUCTURE.profile.verification==='unverified';
+  const board = function(k, n){ return sRow(n, 'Used when you publish a job.', sSwitch(c.boards[k], 'careers.boards.'+k, ed, n)+sBtn('Account', "sGo('integrations')")); };
+  return sCard('Career page', '', sRow('Domain', 'A subdomain or your own domain.', sInput(c.domain, 'careers.domain', ed, { w:'260px', label:'Domain' }))+sRow('Languages', '', sInput(c.languages, 'careers.languages', ed, { label:'Languages' }))+sRow('Privacy notice', 'Shown per country.', sInput(c.privacy, 'careers.privacy', ed, { label:'Privacy notice' })))+
+    sCard('Oontu jobs website', 'Off by default. You allow it here, and each job can still opt out when published.', sRow('List jobs on the Oontu jobs website', unver ? 'Not available while your company is unverified.' : planHasEntitlement('oontu-jobs-website') ? '' : 'Not on your plan.', sSwitch(c.jobsWebsite && !unver, 'careers.jobsWebsite', ed && !unver && planHasEntitlement('oontu-jobs-website'), 'Oontu jobs website'))+
+      (corp ? '' : sRow('Hide the client name', 'Agencies can list a job without naming the client.', sSwitch(c.hideClient, 'careers.hideClient', ed, 'Hide client name'))))+
+    sCard('Job boards', '', board('naukri','Naukri')+board('indeed','Indeed')+board('linkedin','LinkedIn Jobs'))+
+    (corp ? sCard('Vendors', '', sRow('Use vendors', 'Invite vendors to work your jobs.', sSwitch(c.vendors.on, 'careers.vendors.on', ed && planHasEntitlement('vendors'), 'Vendors'))+sRow('Browse the marketplace', '', sSwitch(c.vendors.browse, 'careers.vendors.browse', ed && c.vendors.on, 'Marketplace browsing'))+sRow('Reveal allowance on this plan', 'Contacts stay hidden until you reveal them.', '<span class="s-val">'+c.vendors.reveals+' reveals a month</span>'))
+      : sCard('Marketplace listing', 'Contacts stay hidden until a company reveals them, and each reveal notifies you.', sRow('List my agency', '', sSwitch(c.market.listed && !unver, 'careers.market.listed', ed && !unver && planHasEntitlement('marketplace-listing'), 'Marketplace listing'))+sRow('Specialisations', '', sInput(c.market.spec, 'careers.market.spec', ed, { w:'260px', label:'Specialisations' }))+sRow('Industries', '', sInput(c.market.ind, 'careers.market.ind', ed, { w:'260px', label:'Industries' }))+sRow('Locations', '', sInput(c.market.loc, 'careers.market.loc', ed, { w:'260px', label:'Locations' }))+
+        sRow('Client career-page widget', 'Paste this on a client’s site.', '<code class="s-code">&lt;script src="https://oontu.ai/w.js" data-agency="northstar"&gt;&lt;/script&gt;</code>')));
+}
+function sec_terms(ed){
+  const t = WSX.terms, corp = sIsCorporate();
+  if(corp) return sCard('Vendor defaults', '', sRow('Default vendor tier', '', sSelect(['Tier 1','Tier 2','Tier 3'], t.vendorTier, 'terms.vendorTier', ed, 'Tier'))+sRow('Profile cap per vendor', '', sInput(t.vendorCap, 'terms.vendorCap', ed, { type:'number', num:true, w:'90px', label:'Cap' }))+sRow('Fee terms', '', sInput(t.vendorFee, 'terms.vendorFee', ed, { w:'260px', label:'Fee terms' }))+sRow('Authorised job link expiry (days)', 'Each job link a vendor receives expires after this long.', sInput(t.linkExpiry, 'terms.linkExpiry', ed, { type:'number', num:true, w:'90px', label:'Link expiry' })));
+  return sCard('Fees and replacement', '', sRow('Default fee (% of annual CTC)', '', sInput(t.fee, 'terms.fee', ed, { type:'number', num:true, w:'90px', label:'Fee' }))+sRow('Replacement days', '', sInput(t.replacement, 'terms.replacement', ed, { type:'number', num:true, w:'90px', label:'Replacement days' }))+sRow('Payment terms', '', sSelect(['Net 15','Net 30','Net 45','On joining'], t.payment, 'terms.payment', ed, 'Payment terms')))+
+    sCard('Invoicing', 'Invoices themselves stay in PayTrack.', sRow('Invoice numbering prefix', '', sInput(t.invoicePrefix, 'terms.invoicePrefix', ed, { w:'110px', label:'Prefix' }))+sRow('GST on invoices', '', sSwitch(t.gst, 'terms.gst', ed, 'GST'))+sRow('PayTrack default', '', sSelect(['Raise invoice at joining','Raise invoice after lock-in','Manual'], t.payTrack, 'terms.payTrack', ed, 'PayTrack default'))+sRow('Open PayTrack', '', sBtn('Open', "showView('admin-paytrack')")));
+}
+
+/* Integrations: connected once per workspace; mail and calendar are per user. */
+let CONNECTORS = [
+  { id:'google', name:'Google Workspace', cat:'Google Workspace', desc:'Meet, Calendar and Gmail for interviews and email.', status:'connected', by:'Priya Sharma', health:'Healthy', last:'2 min ago', perms:'Calendar, Gmail send, Meet', used:['Interview invites','Interviews agent','Email'] },
+  { id:'microsoft', name:'Microsoft 365', cat:'Microsoft 365', desc:'Teams, Outlook and Calendar for interviews and email.', status:'not_connected', used:['Interview invites','Email'] },
+  { id:'whatsapp', name:'WhatsApp Business API', cat:'WhatsApp Business', desc:'Templates, replies and daily tiering for every agent.', status:'connected', by:'Priya Sharma', health:'Healthy', last:'2 min ago', perms:'Send and receive', used:['Engagement agent','Talent Discovery agent','Reminders'] },
+  { id:'naukri', name:'Naukri', cat:'Job boards', desc:'Publish jobs and receive applicants.', status:'connected', by:'Arjun Kapoor', health:'Healthy', last:'1 hour ago', perms:'Post jobs, read applicants', used:['Job publishing'] },
+  { id:'indeed', name:'Indeed', cat:'Job boards', desc:'Publish jobs and receive applicants.', status:'not_connected', used:['Job publishing'] },
+  { id:'linkedin-jobs', name:'LinkedIn Jobs', cat:'Job boards', desc:'Publish jobs to LinkedIn.', status:'not_connected', used:['Job publishing'] },
+  { id:'social', name:'Social share (UTM)', cat:'Social share', desc:'Share jobs with tracked links.', status:'connected', by:'Priya Sharma', health:'Healthy', last:'today', perms:'Create links', used:['Job sharing'] },
+  { id:'sso', name:'SSO and SCIM', cat:'SSO & SCIM', desc:'Google, Azure AD or Okta sign-in and user provisioning.', status:'not_connected', plan:'sso-scim', used:['Sign-in','People'] },
+  { id:'esign', name:'E-sign', cat:'E-sign', desc:'Send offer letters for signature.', status:'not_connected', corp:true, used:['Offers'] },
+  { id:'bgv', name:'Background checks', cat:'Background checks', desc:'Order checks from the candidate record.', status:'not_connected', used:['Pre-joining'] },
+  { id:'tally', name:'Tally', cat:'Accounting', desc:'Push invoices to Tally.', status:'not_connected', agency:true, used:['PayTrack'] },
+  { id:'zoho', name:'Zoho Books', cat:'Accounting', desc:'Push invoices to Zoho Books.', status:'not_connected', agency:true, used:['PayTrack'] },
+  { id:'quickbooks', name:'QuickBooks', cat:'Accounting', desc:'Push invoices to QuickBooks.', status:'not_connected', used:['PayTrack'] },
+  { id:'sap', name:'SAP', cat:'Accounting', desc:'Finance integration for large companies.', status:'not_connected', corp:true, used:['Requisitions'] },
+  { id:'attendance', name:'Attendance and time', cat:'Attendance and time', desc:'Contract hiring timesheets.', status:'not_connected', corp:true, used:['Contract hiring'] },
+  { id:'storage', name:'Cloud storage', cat:'Storage', desc:'Store CVs and documents in your own drive.', status:'connected', by:'Priya Sharma', health:'Healthy', last:'today', perms:'Read and write a folder', used:['Resumes','Documents'] },
+  { id:'api', name:'API keys and webhooks', cat:'Developer', desc:'Build your own integrations.', status:'connected', by:'Priya Sharma', health:'Healthy', last:'today', perms:'2 active tokens', used:['Your own systems'] },
+  { id:'byo', name:'Bring your own model key', cat:'Developer', desc:'Optional. Use your own AI provider key for Kairo.', status:'not_connected', plan:'byo-model-key', used:['Kairo'] },
+  { id:'hrms', name:'Oontu HRMS', cat:'HR systems', desc:'Coming later. Oontu does not connect to third-party HR systems.', status:'coming_soon', used:[] },
+];
+let sConnPending = null;
+function sConnVisible(){ return CONNECTORS.filter(function(c){ return sIsCorporate() ? !c.agency : !c.corp; }); }
+function sConnUsedByAgents(){ return AGENT_CATALOG; }
+function sec_integrations(ed){
+  const tabs = [['workspace','Workspace connections'],['personal','Personal connections']];
+  const tabbar = '<div class="o-tabs-host"><div role="tablist" aria-label="Integration scope" id="int-tabs">'+tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="'+(settingsIntTab===t[0])+'" onclick="settingsIntTab=\''+t[0]+'\'; settingsRefresh()">'+t[1]+'</button>'; }).join('')+'</div></div>';
+  if(settingsIntTab==='personal') return tabbar+sCard('Personal connections', 'Each person connects their own mailbox and calendar.', sRow('Mailbox and calendar', 'Candidate emails and interview invites come from each person’s own account.', sBtn('Open Connected accounts', "sGo('accounts')"))+sRow('LinkedIn sender', 'Only with the LinkIt add-on.', agentAccess('linkit').on ? sBtn('Open', "sGo('accounts')") : oBadge('neutral','LinkIt not active')));
+  const cats = []; sConnVisible().forEach(function(c){ if(cats.indexOf(c.cat)===-1) cats.push(c.cat); });
+  return tabbar+cats.map(function(cat){
+    return sCard(cat, '', sConnVisible().filter(function(c){ return c.cat===cat; }).map(function(c){
+      const gated = c.plan && !planHasEntitlement(c.plan), st = c.status;
+      const badge = gated ? oBadge('neutral','Not on your plan') : st==='connected' ? oBadge('success','Connected') : st==='coming_soon' ? oBadge('neutral','Coming later') : oBadge('neutral','Not connected');
+      const agents = AGENT_CATALOG.filter(function(a){ return (a.id==='linkit' && c.id==='linkedin-jobs') ? false : (TENANT_AGENT_CONFIG[a.id]||{}).channels && ((c.id==='whatsapp' && TENANT_AGENT_CONFIG[a.id].channels.indexOf('whatsapp')>-1) || ((c.id==='google'||c.id==='microsoft') && TENANT_AGENT_CONFIG[a.id].channels.indexOf('calendar')>-1)); });
+      const usedBy = c.used.concat(agents.map(function(a){ return a.name+' agent'; }).filter(function(x){ return c.used.indexOf(x)===-1; }));
+      const meta = st==='connected' ? '<p class="s-row__h">Connected by '+sEsc(c.by)+' · '+sEsc(c.health)+' · synced '+sEsc(c.last)+' · '+sEsc(c.perms)+'</p>' : '';
+      let btns = '';
+      if(gated) btns = sBtn('Upgrade', "sGo('billing')");
+      else if(st==='coming_soon') btns = '';
+      else if(st==='connected') btns = sConnPending===c.id ? '<span class="s-warn">'+sEsc(sConnWarn(c))+'</span>'+sBtn('Disconnect anyway', "sConn('"+c.id+"','disconnect')", 'primary')+sBtn('Keep', "sConnPending=null; settingsRefresh()") : sBtn('Reconnect', "sConn('"+c.id+"','reconnect')")+sBtn('Disconnect', "sConnPending='"+c.id+"'; settingsRefresh()", 'ghost');
+      else btns = sBtn('Connect', "sConn('"+c.id+"','connect')", 'primary');
+      return '<div class="s-row" data-s="'+sEsc((c.name+' '+c.desc+' '+c.cat).toLowerCase())+'"><div class="s-row__t"><p class="s-row__l">'+sEsc(c.name)+' '+badge+'</p><p class="s-row__h">'+sEsc(c.desc)+'</p>'+meta+(usedBy.length ? '<p class="s-row__h">Used by: '+usedBy.map(sEsc).join(', ')+'</p>' : '')+'</div><div class="s-row__c">'+(ed ? btns : sLock('an Admin'))+'</div></div>';
+    }).join(''));
+  }).join('');
+}
+function sConnWarn(c){ const agents = Object.keys(TENANT_AGENT_CONFIG).filter(function(id){ const ch = TENANT_AGENT_CONFIG[id].channels||[]; return (c.id==='whatsapp' && ch.indexOf('whatsapp')>-1) || ((c.id==='google'||c.id==='microsoft') && ch.indexOf('calendar')>-1); }).map(function(id){ return agentById(id).name; }); return 'This will stop: '+c.used.concat(agents).join(', ')+'.'; }
+function sConn(id, action){
+  const c = CONNECTORS.find(function(x){ return x.id===id; }); if(!c || !sCanEdit('integrations')) return;
+  if(action==='disconnect'){ c.status = 'not_connected'; sConnPending = null; }
+  else { c.status = 'connected'; c.by = (currentActingUser()||{}).name || 'You'; c.health = 'Healthy'; c.last = 'just now'; c.perms = c.perms || 'Standard access'; }
+  logAudit('Integrations', c.name+' '+action+'ed', c.name);
+  toast(c.name+' '+(action==='disconnect' ? 'disconnected' : 'connected')); settingsRefresh();
+}
+
+/* Kairo agents (the workspace view) */
+function sUsage(agentId){ const a = agentById(agentId), s = agentSub(agentId); return '<span class="s-val">'+(s.usedThisMonth||0).toLocaleString('en-IN')+' of '+(a.includedActions||0).toLocaleString('en-IN')+' actions this month</span>'+sMeter(s.usedThisMonth||0, a.includedActions); }
+function sAgentButtons(a){
+  const s = agentSub(a.id), canSub = sCan('billing','Manage plan & add-ons') && sCan('kairo','Manage subscription'), inc = agentPlanIncludes(a.id);
+  if(a.status==='disabled' || s.state==='paused' || s.state==='suspended') return '<span class="o-badge o-badge--warn">Paused by Oontu</span>';
+  if(inc && s.state==='none') return '';
+  if(!canSub) return s.state==='none' ? '<span class="s-lock">Ask the Owner to add this agent</span>' : '';
+  if(s.state==='none') return sBtn('Start '+a.trialDays+'-day trial', "agentSubscribe('"+a.id+"','trial') && settingsRefresh()")+sBtn('Add', "agentSubscribe('"+a.id+"','subscribe') && settingsRefresh()", 'primary');
+  if(s.state==='trial') return sBtn('Subscribe', "agentSubscribe('"+a.id+"','subscribe') && settingsRefresh()", 'primary');
+  if(s.state==='cancelling') return sBtn('Resume', "agentSubscribe('"+a.id+"','resume') && settingsRefresh()");
+  return sBtn('Cancel at period end', "agentSubscribe('"+a.id+"','cancel') && settingsRefresh()", 'ghost');
+}
+function sec_kairoAgents(ed){
+  const rolesAll = CUSTOM_ROLES;
+  const cards = AGENT_CATALOG.map(function(a){
+    const cfg = TENANT_AGENT_CONFIG[a.id], s = agentSub(a.id), st = agentStateLabel(a.id), usable = ['trial','active','cancelling'].indexOf(s.state)>-1 || agentPlanIncludes(a.id);
+    const head = sCard(a.name, a.does, '', '<span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+oBadge(st[0]==='ok' ? 'success' : st[0]==='risk' ? 'danger' : st[0]==='warn' ? 'warn' : 'neutral', st[1])+sAgentButtons(a)+'</span>');
+    if(!usable) return head.replace('</section>', sRow('Price', 'Add it in a click. Trial first if you like.', '<span class="s-val">₹'+a.price.amount.toLocaleString('en-IN')+' per '+a.price.per.replace('/',' / ')+' · '+a.includedActions.toLocaleString('en-IN')+' actions included</span>')+'</div></section>').replace('<div class="s-rows"></div>','<div class="s-rows">');
+    const steps = a.steps.map(function(step){
+      if(step.level==='person') return sRow(step.label, 'Always a person. Kairo never does this on its own.', '<span class="o-badge">'+oIcon('lock', 12, 1.75)+' Always a person</span>');
+      return sRow(step.label, 'The most this agent may do. People can choose less.', '<select class="app-input app-select s-ctl" aria-label="'+sEsc(step.label)+'"'+(ed ? ' onchange="sAgentStep(\''+a.id+'\',\''+step.id+'\', this.value)"' : ' disabled')+'>'+['auto','suggest','off'].filter(function(l){ return LEVEL_RANK[l] <= LEVEL_RANK[step.level]; }).map(function(l){ return '<option value="'+l+'"'+((cfg.steps[step.id]||step.level)===l ? ' selected' : '')+'>'+LEVEL_LABEL[l]+'</option>'; }).join('')+'</select>');
+    }).join('');
+    const chans = [['email','Email','google'],['whatsapp','WhatsApp','whatsapp'],['calendar','Calendar','google'],['linkedin','LinkedIn','']].filter(function(c){ return a.id==='linkit' ? c[0]==='linkedin' : c[0]!=='linkedin'; }).map(function(c){
+      const conn = c[2] ? (CONNECTORS.find(function(x){ return x.id===c[2]; })||{}).status==='connected' || (c[0]==='email' && (CONNECTORS.find(function(x){ return x.id==='microsoft'; })||{}).status==='connected') : true;
+      return '<label class="s-chk"><input type="checkbox"'+(cfg.channels.indexOf(c[0])>-1 ? ' checked' : '')+((ed && conn) ? '' : ' disabled')+' onchange="sAgentChannel(\''+a.id+'\',\''+c[0]+'\')" /> '+c[1]+(conn ? '' : ' <a href="#" onclick="sGo(\'integrations\'); return false;">Connect first</a>')+'</label>';
+    }).join('');
+    const activity = AUDIT_LOG.filter(function(x){ return /^Kairo for /.test(x.actor||'') && (x.agentId===a.id); }).slice(0,3).map(function(x){ return '<p class="s-line"><b>'+sEsc(x.actor)+'</b> · '+sEsc(x.action)+'</p>'; }).join('') || '<p class="s-line" style="color:var(--text-3)">Nothing yet. When '+sEsc(a.name)+' acts, it shows here as “Kairo for {name}”.</p>';
+    const body = sRow('Use '+a.name+' in this workspace', 'Turn it off for everyone without cancelling.', sSwitch(cfg.enabled, 'agentcfg:'+a.id, ed, a.name))+
+      sRow('Usage', '', sUsage(a.id))+
+      sRow('Who can use it', 'People with these roles.', '<div class="s-chks">'+rolesAll.map(function(r){ return '<label class="s-chk"><input type="checkbox"'+(cfg.roles.indexOf(r.id)>-1 ? ' checked' : '')+(ed ? '' : ' disabled')+' onchange="sAgentRole(\''+a.id+'\',\''+r.id+'\')" /> '+sEsc(r.name)+'</label>'; }).join('')+'</div>')+
+      steps+sRow('Channels it may use', 'Only connected integrations can be chosen.', '<div class="s-chks">'+chans+'</div>')+
+      sRow('Working hours', '', sInput(cfg.workingHours, 'agentcfgf:'+a.id+':workingHours', ed, { label:'Working hours' }))+
+      sRow('Daily cap', 'Up to '+a.dailyCap.toLocaleString('en-IN')+' actions a day (set by Oontu).', sInput(cfg.dailyCap, 'agentcfgf:'+a.id+':dailyCap', ed, { type:'number', num:true, w:'110px', label:'Daily cap' }))+
+      sRow('Latest activity', '', '<div>'+activity+'</div>');
+    return head.replace('<div class="s-rows"></div>', '<div class="s-rows">'+body+'</div>');
+  }).join('');
+  return sCard('Your Kairo agents', 'Agents act for a person with that person’s permissions. Each step is Automatic, Suggest or Always a person.', '')+cards+
+    sNote('Kairo never approves anything, never changes roles or permissions, never rejects an applicant, never sends to a client or vendor on its own, and never makes a stage outcome or hire decision.');
+}
+function sAgentCfgSave(msg, agentId){ logAudit('Kairo', msg, agentById(agentId).name); toast('Saved'); settingsRefresh(); if(typeof renderSidebar==='function') renderSidebar(); }
+function sAgentStep(id, step, v){ if(!sCanEdit('kairo-agents')) return; TENANT_AGENT_CONFIG[id].steps[step] = v; sAgentCfgSave('Step changed · '+step+' → '+v, id); }
+function sAgentRole(id, role){ if(!sCanEdit('kairo-agents')) return; const r = TENANT_AGENT_CONFIG[id].roles, i = r.indexOf(role); if(i>-1) r.splice(i,1); else r.push(role); sAgentCfgSave('Who can use it changed', id); }
+function sAgentChannel(id, ch){ if(!sCanEdit('kairo-agents')) return; const c = TENANT_AGENT_CONFIG[id].channels, i = c.indexOf(ch); if(i>-1) c.splice(i,1); else c.push(ch); sAgentCfgSave('Channels changed', id); }
+const __sTog2 = sTog;
+sTog = function(path){ if(path.indexOf('agentcfg:')===0){ if(!sCanEdit('kairo-agents')) return; const id = path.slice(9); TENANT_AGENT_CONFIG[id].enabled = !TENANT_AGENT_CONFIG[id].enabled; sAgentCfgSave('Agent '+(TENANT_AGENT_CONFIG[id].enabled ? 'turned on' : 'turned off')+' for the workspace', id); return; } __sTog2(path); };
+const __sPick2 = sPick;
+sPick = function(path, el){ if(path.indexOf('agentcfgf:')===0){ const p = path.split(':'), id = p[1], f = p[2]; if(!sCanEdit('kairo-agents')) return; const a = agentById(id); let v = el.value; if(f==='dailyCap'){ v = Math.max(0, Math.min(a.dailyCap, Number(v)||0)); } TENANT_AGENT_CONFIG[id][f] = v; sAgentCfgSave(f+' changed', id); return; } __sPick2(path, el); };
+const __sNum2 = sNum;
+sNum = function(path, el){ if(path.indexOf('agentcfgf:')===0){ sPick(path, el); return; } __sNum2(path, el); };
+
+/* Security & compliance, audit log */
+function sec_security(ed){
+  const s = SECURITY_SETTINGS, sec = WSX.security;
+  const setting = function(key, label, help, entitlement){ const gate = entitlement && !planHasEntitlement(entitlement); return sRow(label, gate ? 'Not on your plan.' : help, gate ? sBtn('Upgrade', "sGo('billing')") : '<button type="button" role="switch" aria-checked="'+!!s[key]+'" aria-label="'+sEsc(label)+'" class="app-switch'+(s[key] ? ' is-on' : '')+'"'+(ed ? ' onclick="updateSecuritySetting(\''+key+'\', '+!s[key]+'); settingsRefresh();"' : ' disabled style="opacity:.5"')+'><span></span></button>'); };
+  return sCard('Sign-in', '', setting('sso','Require single sign-on','Everyone signs in with your identity provider.','sso-scim')+setting('twoFactor','Require two-step verification','A second step for every user.')+
+      sRow('Session timeout', '', sSelect(['1 hour','4 hours','8 hours','24 hours'], s.sessionTimeout||sec.sessionTimeout, 'security.sessionTimeout', ed, 'Session timeout'))+
+      sRow('Password policy', '', sSelect(['Standard (10+ characters)','Strong (12+ chars, mixed case, number, symbol)'], s.passwordPolicy, 'security.passwordPolicy', ed, 'Password policy'))+
+      setting('ipWhitelistEnabled','IP allowlist','Only approved networks can sign in.','ip-allowlist'))+
+    sCard('Data and privacy', 'India DPDP and GDPR-ready.', sRow('Retention in India', '', sInput(sec.retention.India, 'security.retention.India', ed, { w:'260px', label:'Retention India' }))+sRow('Retention in the EU', '', sInput(sec.retention.EU, 'security.retention.EU', ed, { w:'260px', label:'Retention EU' }))+
+      sRow('Candidate consent text', 'Shown on every application.', '<textarea class="app-input s-ctl" rows="3" aria-label="Consent text"'+(ed ? ' onchange="sSet(\'security.consentText\', this.value)"' : ' disabled')+'>'+sEsc(sec.consentText)+'</textarea>'))+
+    sCard('Data requests', 'Export or delete one person’s data on request.', sec.requests.map(function(r){ return sRow(r.who, r.type+' · '+r.at, oBadge('success', r.state)); }).join('')+(ed ? sRow('New request', '', '<input id="dr-who" class="app-input" placeholder="Person" style="width:160px" /><select id="dr-type" class="app-input app-select"><option>Export</option><option>Delete</option></select>'+sBtn('Log request', 'sDataRequest()', 'primary')) : ''))+
+    sCard('API tokens', '', sRow('Active tokens', 'Manage them under Integrations → Developer.', '<span class="s-val">'+sec.apiTokens+'</span>'+sBtn('Open', "sGo('integrations')")));
+}
+function sDataRequest(){ const w = document.getElementById('dr-who').value.trim(); if(!w){ toast('Add the person’s name.'); return; } WSX.security.requests.unshift({ who:w, type:document.getElementById('dr-type').value, at:'just now', state:'Logged' }); logAudit('Privacy','Data request logged', w+' · '+document.getElementById('dr-type').value); toast('Request logged'); settingsRefresh(); }
+let sAuditModule = 'All', sAuditWho = 'All';
+function sec_audit(){
+  const me = currentActingUser(), team = me && !sIsOwner() && !sCan('team','Manage roles') ? recruitersManagedBy(me.id).map(function(r){ return r.name; }).concat([me.name]) : null;
+  let rows = AUDIT_LOG.filter(function(a){ return a.module!=='Platform'; });
+  if(team) rows = rows.filter(function(a){ return team.indexOf(a.actor)>-1 || /^Kairo for /.test(a.actor||'') && team.some(function(n){ return a.actor.indexOf(n)>-1; }); });
+  const mods = ['All'].concat(Array.from(new Set(rows.map(function(a){ return a.module; })))), who = ['All'].concat(Array.from(new Set(rows.map(function(a){ return a.actor; }))));
+  if(sAuditModule!=='All') rows = rows.filter(function(a){ return a.module===sAuditModule; });
+  if(sAuditWho!=='All') rows = rows.filter(function(a){ return a.actor===sAuditWho; });
+  const sel = function(list, cur, fn, label){ return '<select class="app-input app-select" aria-label="'+label+'" onchange="'+fn+'(this.value)">'+list.map(function(x){ return '<option'+(x===cur ? ' selected' : '')+'>'+sEsc(x)+'</option>'; }).join('')+'</select>'; };
+  return sCard('Audit log', team ? 'Your team’s activity.' : 'Everything changed in this workspace, including “Kairo for {name}”.', '<div style="display:flex;gap:8px;padding:4px 0 12px">'+sel(mods, sAuditModule, "sAuditSet('m')", 'Module')+sel(who, sAuditWho, "sAuditSet('w')", 'Person')+'</div>'+
+    '<div class="o-table-wrap" style="margin-top:0"><table class="o-table" style="min-width:760px"><thead><tr><th>When</th><th>Who</th><th>Module</th><th>Action</th><th>Detail</th></tr></thead><tbody>'+(rows.slice(0,60).map(function(a){ return '<tr><td style="color:var(--text-3)">'+sEsc(a.time||'')+'</td><td>'+sEsc(a.actor)+'</td><td>'+sEsc(a.module)+'</td><td><b>'+sEsc(a.action)+'</b></td><td style="white-space:normal;max-width:320px">'+sEsc(a.detail||'')+'</td></tr>'; }).join('') || '<tr><td colspan="5" style="height:auto;padding:28px;text-align:center;color:var(--text-3)">Nothing matches.</td></tr>')+'</tbody></table></div>');
+}
+function sAuditSet(which){ return function(v){}; }
+window.sAuditSet = function(which){ return function(v){ if(which==='m') sAuditModule = v; else sAuditWho = v; settingsRefresh(); }; };
+
+/* Plan & billing */
+function sAddonRow(label, desc, state, actions){ return sRow(label, desc, '<span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+state+actions+'</span>'); }
+function sec_billing(ed){
+  const sub = ORG_STRUCTURE.subscription, plan = planById(currentTenantPlanId()) || {}, seats = RECRUITER_ROSTER.length, owner = sCan('billing','Manage plan & add-ons');
+  const lights = RECRUITER_ROSTER.filter(function(u){ return !roleHasPermission(u.assignedRoleId,'jobs','Edit'); }).length;
+  const agentRows = AGENT_CATALOG.map(function(a){ const st = agentStateLabel(a.id); return sAddonRow('Kairo: '+a.name, a.does+' ₹'+a.price.amount.toLocaleString('en-IN')+' per '+a.price.per.replace('/',' / ')+'.', oBadge(st[0]==='ok' ? 'success' : st[0]==='risk' ? 'danger' : st[0]==='warn' ? 'warn' : 'neutral', st[1]), sAgentButtons(a)); }).join('');
+  const feat = function(key, label, desc, ent){
+    const on = TENANT_FEATURE_FLAGS[key].enabled, fc = typeof featureControlByKey==='function' ? featureControlByKey(key) : null, blocked = fc && ['unavailable','disabled_temporarily'].indexOf(fc.status)>-1;
+    const inc = planHasEntitlement(ent);
+    const state = blocked ? oBadge('warn','Paused by Oontu') : on ? oBadge('success', inc ? 'Included' : 'Active') : inc ? oBadge('neutral','Included · switched off') : oBadge('neutral','Available');
+    const act = blocked ? '' : !owner ? '' : on ? sBtn(inc ? 'Switch off' : 'Cancel at period end', "sFeatureFlag('"+key+"')", 'ghost') : sBtn(inc ? 'Switch on' : 'Add', "sFeatureFlag('"+key+"')", 'primary');
+    return sAddonRow(label, desc, state, act);
+  };
+  return sCard('Your plan', '', sRow('Plan', 'Renews '+sEsc(sub.renewalDate||'')+'.', oBadge('neutral', (plan.name||sub.plan)+' · '+sub.billingCycle)+(owner ? sBtn('Talk to Oontu', "toast('Oontu will be in touch about Enterprise.')") : ''))+
+      sRow('Status', '', oBadge(sub.status==='Active' ? 'neutral' : 'warn', sub.status))+
+      sRow('Recruiter seats', '', '<span class="s-val">'+(seats-lights)+' of '+(sub.seatsIncluded||'unlimited')+'</span>'+sMeter(seats-lights, sub.seatsIncluded))+sRow('Light seats', 'Hiring managers and interviewers.', '<span class="s-val">'+lights+'</span>')+
+      sRow('Jobs', 'Used against your plan.', '<span class="s-val">'+JOBS.length+' / '+(plan.jobLimit||'unlimited')+' jobs used</span>'+sMeter(JOBS.length, plan.jobLimit)))+
+    sCard('Add-ons', owner ? 'Add or cancel an add-on. Changes take effect at once and are recorded.' : 'Only the Owner can add or cancel add-ons.', agentRows+feat('whatsappCompliance','WhatsApp Business tiering','Tier-based daily caps for WhatsApp outreach.','whatsapp-tiering')+feat('advancedAnalytics','Advanced analytics and forecasting','Bottleneck diagnosis and composite scoring.','advanced-analytics'))+
+    sCard('Invoices and payment', '', WSX.billing.invoices.map(function(i){ return sRow(i[0], i[1]+' · '+i[2], oBadge('success', i[3])+sBtn('Download', "toast('Invoice download is simulated.')")); }).join('')+sRow('Payment method', '', '<span class="s-val">'+sEsc(WSX.billing.method)+'</span>'+(owner ? sBtn('Update', "toast('Payment update is simulated.')") : '')))+
+    (owner ? '' : sNote('You can see the plan and usage. Only the Owner changes the plan, add-ons and billing.'));
+}
+function sFeatureFlag(key){ if(!sCan('billing','Manage plan & add-ons')) return; const f = TENANT_FEATURE_FLAGS[key]; const prev = f.enabled; f.enabled = !prev; logAudit('Billing','Add-on '+(f.enabled ? 'added' : 'switched off'), f.label); try { logAudit('Platform','Tenant add-on '+(f.enabled ? 'added' : 'cancelled'), f.label+' · '+CURRENT_ORGANIZATION_ID, { entityType:'Platform' }); } catch(e){} toast(f.label+(f.enabled ? ' added' : ' switched off')); settingsRefresh(); }
+function sec_danger(ed){
+  const others = sMembersActive().filter(function(u){ return !tmIsTopRole(u.assignedRoleId); });
+  return sCard('Transfer ownership', 'The new owner gets the locked Owner role and becomes the final approval fallback. You become an Admin.', sRow('New owner', 'They must confirm.', '<select id="own-to" class="app-input app-select s-ctl" aria-label="New owner">'+others.map(function(u){ return '<option value="'+u.id+'">'+sEsc(u.name)+'</option>'; }).join('')+'</select>'+sBtn('Transfer…', 'sTransferOwner()', 'ghost')))+
+    sCard('Export everything', '', sRow('Export all workspace data', 'A complete copy of jobs, candidates, clients and history.', sBtn('Export', "toast('Your export is being prepared.'); logAudit('Workspace','Full data export requested','Owner');")))+
+    sCard('Close this workspace', 'Recoverable for 30 days.', sRow('Type the workspace name to confirm', ORG_STRUCTURE.profile.brandName, '<input id="close-confirm" class="app-input s-ctl" aria-label="Workspace name to confirm" placeholder="'+sEsc(ORG_STRUCTURE.profile.brandName)+'" />'+sBtn('Close workspace', 'sCloseWorkspace()', 'ghost')));
+}
+function sTransferOwner(){ const to = tmById(document.getElementById('own-to').value), me = currentActingUser(); if(!to || !me) return; if(!window.confirm('Make '+to.name+' the Owner? They will need to confirm, and you become an Admin.')) return; to.assignedRoleId = CUSTOM_ROLES[0].id; me.assignedRoleId = 'role_admin'; logAudit('Workspace','Ownership transferred', me.name+' → '+to.name); toast('Ownership transferred to '+to.name+'. They will be asked to confirm.'); settingsSection = 'profile'; showView('settings'); }
+function sCloseWorkspace(){ const v = (document.getElementById('close-confirm')||{}).value; if(v!==ORG_STRUCTURE.profile.brandName){ toast('Type the workspace name exactly to confirm.'); return; } WSX.closing = sToday(30); logAudit('Workspace','Workspace closure requested','Recoverable until '+WSX.closing); toast('Closure scheduled. You can recover it until '+WSX.closing+'.'); }
+
+/* ---------------- Platform ---------------- */
+const PLATFORM_AI = { primary:'Claude Sonnet', providers:[ ['Anthropic','connected','sk-ant-••••••9f2a','Claude Sonnet'], ['OpenAI','connected','sk-••••••41c0','GPT-4o'], ['Google Gemini','not_connected','—','Gemini 2.0'] ] };
+function sec_platformAi(){
+  return sCard('AI models', 'Provider keys and model selection live here, and only here. Tenants never see them.', sRow('Primary model for Kairo', '', '<select class="app-input app-select s-ctl" aria-label="Primary model" onchange="PLATFORM_AI.primary=this.value; logPlatformAudit(\'Primary model changed\', this.value); toast(\'Saved\')">'+PLATFORM_AI.providers.map(function(p){ return '<option'+(PLATFORM_AI.primary===p[3] ? ' selected' : '')+'>'+sEsc(p[3])+'</option>'; }).join('')+'</select>')+
+    PLATFORM_AI.providers.map(function(p){ return sRow(p[0], 'Key '+p[2], oBadge(p[1]==='connected' ? 'success' : 'neutral', p[1]==='connected' ? 'Connected' : 'Not connected')+sBtn(p[1]==='connected' ? 'Rotate key' : 'Add key', "toast('Key management is simulated in this prototype.'); logPlatformAudit('AI provider key action','"+p[0]+"')")); }).join(''));
+}
+function sPlatformTabs(active){ return '<div class="o-tabs-host"><div role="tablist" aria-label="Agents" id="agent-tabs">'+[['catalog','Catalog'],['usage','Usage']].map(function(t){ return '<button type="button" role="tab" aria-selected="'+(active===t[0])+'" onclick="sAgentsTab=\''+t[0]+'\'; showView(\'oontu-agents\')">'+t[1]+'</button>'; }).join('')+'</div></div>'; }
+let sAgentsTab = 'catalog';
+function renderOontuAgents(){
+  const body = sAgentsTab==='catalog' ? AGENT_CATALOG.map(function(a){
+    const plans = PLATFORM_PLANS.map(function(p){ return '<label class="s-chk"><input type="checkbox"'+(a.includedInPlans.indexOf(p.id)>-1 ? ' checked' : '')+' onchange="sAgentPlan(\''+a.id+'\',\''+p.id+'\')" /> '+sEsc(p.name)+'</label>'; }).join('');
+    return sCard(a.name, a.does, sRow('Status', 'Disabled removes it from every workspace at once.', '<select class="app-input app-select" id="ag-st-'+a.id+'" aria-label="Status"><option value="available"'+(a.status==='available' ? ' selected' : '')+'>Available</option><option value="beta"'+(a.status==='beta' ? ' selected' : '')+'>Beta</option><option value="disabled"'+(a.status==='disabled' ? ' selected' : '')+'>Disabled everywhere</option></select>')+
+      sRow('Price (₹ per '+a.price.per.replace('/',' / ')+')', '', '<input class="app-input" type="number" id="ag-pr-'+a.id+'" value="'+a.price.amount+'" style="width:110px" aria-label="Price" />')+
+      sRow('Actions included a month', '', '<input class="app-input" type="number" id="ag-in-'+a.id+'" value="'+a.includedActions+'" style="width:110px" aria-label="Included actions" />')+
+      sRow('Trial days', '', '<input class="app-input" type="number" id="ag-tr-'+a.id+'" value="'+a.trialDays+'" style="width:90px" aria-label="Trial days" />')+
+      sRow('Daily cap per workspace', 'The safety limit for each workspace.', '<input class="app-input" type="number" id="ag-cp-'+a.id+'" value="'+a.dailyCap+'" style="width:110px" aria-label="Daily cap" />')+
+      sRow('Included in plans', '', '<div class="s-chks">'+plans+'</div>')+
+      sRow('Model', 'Managed by the platform.', '<span class="s-val">'+sEsc(PLATFORM_AI.primary)+'</span>')+
+      sRow('Reason for the change', 'Required. Saved in the platform audit log.', '<input class="app-input" id="ag-rs-'+a.id+'" placeholder="Why?" style="width:220px" aria-label="Reason" />'+sBtn('Apply', "sAgentApply('"+a.id+"')", 'primary')));
+  }).join('') : sAgentUsageHTML();
+  return '<div class="content-shell o-page">'+oPageHead({ title:'Agents', lede:'Define, price and switch Kairo agents for every workspace.' })+sPlatformTabs(sAgentsTab)+'<div class="s-content">'+body+'</div></div>';
+}
+function sAgentPlan(agentId, planId){ const a = agentById(agentId), i = a.includedInPlans.indexOf(planId); if(i>-1) a.includedInPlans.splice(i,1); else a.includedInPlans.push(planId); logPlatformAudit('Agent plan inclusion changed', a.name+' · '+planId+' · '+(i>-1 ? 'removed' : 'added')); toast('Saved'); }
+function sAgentApply(id){
+  const g = function(k){ return document.getElementById('ag-'+k+'-'+id); }, reason = g('rs').value;
+  const ok = platformAgentSet(id, { status:g('st').value, price:Object.assign({}, agentById(id).price, { amount:Number(g('pr').value)||0 }), includedActions:Number(g('in').value)||0, trialDays:Number(g('tr').value)||0, dailyCap:Number(g('cp').value)||0 }, reason);
+  if(ok){ toast('Saved · '+agentById(id).name+(g('st').value==='disabled' ? ' is now off in every workspace' : '')); showView('oontu-agents'); }
+}
+function sAgentUsageHTML(){
+  const tenants = PLATFORM_TENANTS; let top = [];
+  const rows = tenants.map(function(t){
+    return AGENT_CATALOG.map(function(a){
+      const s = (TENANT_AGENT_SUBSCRIPTIONS[t.id]||{})[a.id]; if(!s || s.state==='none') return '';
+      const used = s.usedThisMonth||0, cap = a.includedActions, cost = ['active','cancelling'].indexOf(s.state)>-1 ? a.price.amount : 0, near = cap && used/cap>=.8;
+      top.push({ t:t.name, a:a.name, used:used });
+      return '<tr><td><b>'+sEsc(t.name)+'</b></td><td>'+sEsc(a.name)+'</td><td>'+oBadge(s.state==='active' ? 'neutral' : s.state==='trial' ? 'warn' : 'danger', s.state)+'</td><td class="num">'+used.toLocaleString('en-IN')+'</td><td class="num">'+(cap ? cap.toLocaleString('en-IN') : '—')+'</td><td class="num">₹'+cost.toLocaleString('en-IN')+'</td><td>'+(near ? oBadge('warn','Close to cap') : '')+'</td></tr>';
+    }).join('');
+  }).join('');
+  top.sort(function(a,b){ return b.used-a.used; });
+  return sCard('Usage and cost this month', 'Per workspace, per agent.', '<div class="o-table-wrap" style="margin-top:0"><table class="o-table" style="min-width:720px"><thead><tr><th>Workspace</th><th>Agent</th><th>State</th><th style="text-align:right">Actions used</th><th style="text-align:right">Included</th><th style="text-align:right">Cost</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="7" style="height:auto;padding:28px;text-align:center;color:var(--text-3)">No agent subscriptions yet.</td></tr>')+'</tbody></table></div>')+
+    sCard('Top consumers', '', top.slice(0,3).map(function(x){ return sRow(x.t, x.a, '<span class="s-val">'+x.used.toLocaleString('en-IN')+' actions</span>'); }).join('') || sRow('Nothing yet','',''));
+}
+/* Tenant detail: the tenant's agent subscriptions */
+function sTenantAgentsHTML(tenantId){
+  const subs = TENANT_AGENT_SUBSCRIPTIONS[tenantId] || {};
+  const rows = AGENT_CATALOG.map(function(a){
+    const s = subs[a.id] || { state:'none', usedThisMonth:0 }, id = tenantId+'-'+a.id;
+    return '<tr><td><b>'+sEsc(a.name)+'</b></td><td>'+oBadge(s.state==='active' ? 'neutral' : s.state==='trial' ? 'warn' : s.state==='none' ? 'neutral' : 'danger', s.state)+'</td><td>'+sEsc(s.since||'—')+'</td><td>'+sEsc(s.renewsOn||s.trialEndsOn||'—')+'</td><td class="num">'+(s.usedThisMonth||0).toLocaleString('en-IN')+'</td><td class="num">₹'+((['active','cancelling'].indexOf(s.state)>-1 ? a.price.amount : 0)).toLocaleString('en-IN')+'</td>'+
+      '<td style="white-space:nowrap"><input class="app-input" id="ta-rs-'+id+'" placeholder="Reason" style="width:140px" aria-label="Reason for '+sEsc(a.name)+'" />'+
+      sBtn('Grant trial', "sTenantAgent('"+tenantId+"','"+a.id+"','grant-trial')")+(['paused','suspended'].indexOf(s.state)>-1 ? sBtn('Resume', "sTenantAgent('"+tenantId+"','"+a.id+"','resume')") : sBtn('Pause', "sTenantAgent('"+tenantId+"','"+a.id+"','pause')")+sBtn('Suspend', "sTenantAgent('"+tenantId+"','"+a.id+"','suspend')", 'ghost'))+'</td></tr>';
+  }).join('');
+  return '<section class="o-card" style="margin-top:24px"><div class="o-card__head"><div><h2 class="o-card__title">Agents</h2><p class="o-card__sub">Kairo agent subscriptions for this workspace. Every action needs a reason and is audited.</p></div></div>'+
+    '<div class="o-table-wrap"><table class="o-table" style="min-width:860px"><thead><tr><th>Agent</th><th>State</th><th>Since</th><th>Renews or trial ends</th><th style="text-align:right">Used</th><th style="text-align:right">Cost</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+}
+function sTenantAgent(tid, aid, action){ const r = document.getElementById('ta-rs-'+tid+'-'+aid); if(platformTenantAgent(tid, aid, action, r ? r.value : '')){ toast('Saved'); showView('oontu-tenant-detail'); } }
+const __oontuTenantDetail = window.renderOontuTenantDetail;
+window.renderOontuTenantDetail = function(){ const html = __oontuTenantDetail(); return html.replace(/<\/div>\s*$/, sTenantAgentsHTML(oontuTenantDetailId)+'</div>'); };
+RENDERERS['oontu-tenant-detail'] = window.renderOontuTenantDetail;
+const __oontuSettings = window.renderOontuSettings;
+window.renderOontuSettings = function(){ const html = __oontuSettings(); return html.replace(/<\/div>\s*$/, '<div class="s-content" style="margin-top:24px">'+sec_platformAi()+'</div></div>'); };
+RENDERERS['oontu-settings'] = window.renderOontuSettings;
+RENDERERS['oontu-agents'] = renderOontuAgents;
+PAGE_TITLES['oontu-agents'] = 'Agents'; PAGE_TITLES.settings = 'Settings';
+
+/* ---------------- wiring ---------------- */
+(function wireNavigation(){
+  const group = function(items){ return { group:'', items:items }; };
+  // manager gets a Settings entry like every other role
+  if(!NAV.manager.some(function(g){ return (g.items||[]).some(function(i){ return i.id==='settings'; }); })) NAV.manager.splice(1, 0, group([{ id:'settings', label:'Settings', icon:'cog' }]));
+  // owner: one Settings item; the screens that moved inside leave the sidebar
+  const moved = ['roles-permissions','security-settings','feature-flags','integrations','audit-center','scheduled-jobs'];
+  NAV.admin.forEach(function(g){ g.items = g.items.map(function(i){ return i.id==='setup-hub' ? { id:'settings', label:'Settings', icon:'cog' } : i; }).filter(function(i){ return moved.indexOf(i.id)===-1; }); });
+  if(!NAV.candidate.some(function(i){ return i.id==='settings'; })) NAV.candidate.push({ id:'settings', label:'Settings', icon:'cog' });
+  // Oontu: the agents catalog
+  const pg = NAV.oontu.find(function(g){ return g.items; });
+  if(pg && !pg.items.some(function(i){ return i.id==='oontu-agents'; })){ const at = pg.items.findIndex(function(i){ return i.id==='oontu-subscriptions'; }); pg.items.splice(at>-1 ? at+1 : pg.items.length, 0, { id:'oontu-agents', label:'Agents', icon:'sparkles' }); }
+  DEFAULT_VIEW.candidate = DEFAULT_VIEW.candidate || 'candidate-home';
+})();
+const __oEnhanceTabsPrev = window.oEnhanceTabs;
+window.oEnhanceTabs = function(root){ __oEnhanceTabsPrev(root); const sn = document.getElementById('settings-nav'); if(sn && sn.offsetWidth) oPill(sn, '[aria-current="page"]', 'settings-nav', 'o-pill--lean'); };
+window.addEventListener('hashchange', function(){ const m = /^#settings\/(.+)$/.exec(location.hash); if(m && sSectionById(m[1]) && !document.getElementById('app').classList.contains('hidden')){ settingsSection = m[1]; showView('settings'); } });
+
 </script>
 </body>
 </html>

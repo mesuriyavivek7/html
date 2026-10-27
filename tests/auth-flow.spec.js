@@ -1042,7 +1042,7 @@
 
     await test('26 After a password sign-in, changing the password needs the current one', async function(){
       await signInWithPassword('alex@northstar.example', SAMPLE_PW);
-      showView('settings');
+      settingsSection = 'signin'; showView('settings');
       assert(document.getElementById('auth-pw-current'), 'current password is asked for');
       document.getElementById('auth-pw-current').value = 'wrong-current-pw';
       document.getElementById('auth-pw-new').value = 'Willow-Anchor-3318';
