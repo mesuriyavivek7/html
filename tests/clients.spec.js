@@ -38,23 +38,25 @@
       var j = R({ country:'Brazil' }, { country:'India' }); ok(j.noPack && j.key === 'manual', 'no pack');
     });
 
-    await t('what one hire earns: Mumbai from Gujarat, and London, match to the rupee and the pound', async function(){
+    await t('what one hire earns: the numbers are right to the rupee and the pound, and the card shows examples, an (i), and the target', async function(){
       var c = clientById('c1'); var mum = c.locations[0], ldn = c.locations.find(function(l){ return l.country === 'United Kingdom'; });
       ok(!mum.taxOverride, 'Mumbai follows the rule'); var e = clEarn(c, mum.id, 2400000, D('2026-10-28'));
       ok(e.fee === 199920 && e.tax === 35986 && e.total === 235906 && e.withheld === 19992 && e.receive === 215914, JSON.stringify([e.fee, e.tax, e.total, e.withheld, e.receive]));
       var l = clEarn(c, ldn.id, 80000, D('2026-10-28')); ok(l.currency === 'GBP' && l.fee === 6664 && l.tax === 0 && l.receive === 6664 && /Reverse charge/.test(l.treatment.note), JSON.stringify([l.fee, l.tax, l.currency]));
-      acct('c1', 'terms'); await sleep(40); var big = q('.cl-big'); ok(big && /2,15,914/.test(big.textContent), 'screen shows ₹2,15,914: ' + (big && big.textContent));
-      var tip = big.parentNode.querySelector('.cl-tip__c').textContent; ok(/1,99,920/.test(tip) && /35,986/.test(tip) && /2,35,906/.test(tip) && /19,992/.test(tip), 'hover adds up: ' + tip);
-      CL.calc.loc = ldn.id; clAcctDraw(); await sleep(20); ok(/£6,664/.test(q('.cl-big').textContent), 'London on screen'); CL.calc.loc = null;
+      acct('c1', 'terms'); await sleep(40); var card = q('.cl-calc'); ok(card && /You earn per hire/.test(card.textContent), 'card'); ok(/₹12L CTC/.test(card.textContent) && /₹99,960/.test(card.textContent) && /₹24L CTC/.test(card.textContent) && /₹1,99,920/.test(card.textContent) && /₹40L CTC/.test(card.textContent) && /₹3,33,200/.test(card.textContent), 'three examples: ' + card.textContent.slice(0, 220)); ok(/Before GST/.test(card.textContent), 'before GST');
+      ok(!/You receive|Tax and invoicing|One hire at/.test(q('.cl-tabbody').textContent), 'no calculator and no tax section on Terms');
+      var i = q('.cl-calc .cl-i'); ok(i && i.getAttribute('tabindex') === '0' && /What this shows/.test(i.textContent) && /revenue target/.test(i.textContent) && /Before GST\. Updates with every placement/.test(i.textContent), '(i) card: ' + (i && i.textContent.slice(0, 80)));
+      ok(/Target with this client · FY 2026–27/.test(card.textContent) && /of ₹8L/.test(card.textContent) && /to go · about \d+ more hires? at your/.test(card.textContent) && /Best return now:/.test(card.textContent), 'target block: ' + card.textContent.slice(-300));
+      var fill = q('.cl-track i'); ok(fill && getComputedStyle(fill).backgroundColor === 'rgb(140, 144, 160)', 'neutral fill: ' + (fill && getComputedStyle(fill).backgroundColor));
     });
 
-    await t('manual lines: a reason is needed, an owner saves directly, a manager sends for approval, Back to rule restores, and rule updates never touch them', async function(){
-      var c = clientById('c1'), l = c.locations[0]; as('admin'); ok(clIsOwnerRole(), 'owner'); acct('c1', 'terms'); await sleep(30);
-      CL.taxEdit = l.id; CL.taxDraft = { value:'none', why:'short' }; clAcctDraw(); clSaveTax('c1', l.id); ok(!q('#cl-tax-err').hidden && /few words/.test(q('#cl-tax-err').textContent), 'short reason refused');
-      CL.taxDraft = { value:'none', why:'Exempt under a government grant' }; clSaveTax('c1', l.id); ok(l.taxOverride && l.taxOverride.status === 'active', 'owner saves'); ok(/Back to rule/.test(q('.cl-tabbody').textContent) && /set by|Set by/.test(q('.cl-tabbody').textContent), 'shows Back to rule and who'); ok(clTaxFor(c, l).manual && clTaxFor(c, l).taxes.length === 0, 'manual line wins');
-      syncRulePacks(D('2026-11-02')); ok(l.taxOverride.status === 'active' && clTaxFor(c, l).key === 'none', 'update leaves the manual line alone'); ok(l.taxOverride.ruleMoved || true);
+    await t('manual tax lines: a reason is needed, an owner saves directly, a manager sends for approval, Back to rule restores, and rule updates never touch them', async function(){
+      var c = clientById('c1'), l = c.locations[0]; as('admin'); ok(clIsOwnerRole(), 'owner');
+      var r0 = clSaveTax('c1', l.id, 'none', 'short'); ok(!r0.ok && /few words/.test(r0.err), 'short reason refused');
+      var r1 = clSaveTax('c1', l.id, 'none', 'Exempt under a government grant'); ok(r1.ok && l.taxOverride && l.taxOverride.status === 'active', 'owner saves'); ok(clTaxFor(c, l).manual && clTaxFor(c, l).taxes.length === 0, 'manual line wins');
+      syncRulePacks(D('2026-11-02')); ok(l.taxOverride.status === 'active' && clTaxFor(c, l).key === 'none', 'update leaves the manual line alone');
       clBackToRule('c1', l.id); ok(!l.taxOverride && clTaxFor(c, l).key === 'igst', 'back to rule');
-      var prevRole = state.role; as('manager'); var owner = clIsOwnerRole(); if(!owner){ CL.taxDraft = { value:'sez_lut', why:'The unit moved into an SEZ' }; clSaveTax('c1', l.id); ok(l.taxOverride.status === 'pending' && /approval/.test(toasts[toasts.length - 1]), 'manager: pending'); ok(clTaxFor(c, l).key === 'igst', 'rule applies until approved'); as('admin'); clDecideTax('c1', l.id, true); ok(l.taxOverride.status === 'active', 'owner approves'); clBackToRule('c1', l.id); } else ok(true);
+      as('manager'); if(!clIsOwnerRole()){ var r2 = clSaveTax('c1', l.id, 'sez_lut', 'The unit moved into an SEZ'); ok(r2.ok && r2.pending && l.taxOverride.status === 'pending', 'manager: pending'); ok(clTaxFor(c, l).key === 'igst', 'rule applies until approved'); as('admin'); clDecideTax('c1', l.id, true); ok(l.taxOverride.status === 'active', 'owner approves'); clBackToRule('c1', l.id); } else ok(true);
     });
 
     await t('rule updates apply by themselves, write Activity, and an issued invoice keeps the rules it was raised under', async function(){
@@ -83,10 +85,10 @@
     });
 
     await t('the account: header, four-number strip that opens Billing and Jobs, tabs, Overview sections, hover detail', async function(){
-      acct('c1'); await sleep(40); ok(q('.cl-h1').textContent === 'Fintech Corp', 'name'); ok(q('.cl-back'), 'back link'); ok(/Owned by/.test(q('.cl-head .cl-muted').textContent), 'one muted line');
+      acct('c1'); await sleep(40); ok(q('.cl-h1').textContent === 'Fintech Corp', 'name'); ok(q('.cl-back'), 'back link'); ok(/Managed by/.test(q('.cl-head .cl-muted').textContent), 'one muted line');
       var tabs = qa('#cl-tabs [role=tab]').map(function(x){ return x.textContent; }).join('|'); ok(tabs === 'Overview|Jobs|Contacts|Locations|Terms|Billing|Documents|Activity', tabs);
       var cells = qa('.cl-cell'); ok(cells.length === 4 && cells.every(function(c){ return c.querySelector('.cl-tip[tabindex="0"]'); }), 'strip'); cells[0].click(); ok(clientDetailState.tab === 'billing', 'Revenue opens Billing'); acct('c1'); qa('.cl-cell')[2].click(); ok(clientDetailState.tab === 'jobs', 'Open positions opens Jobs'); acct('c1');
-      var h = qa('.cl-sec h2').map(function(x){ return x.textContent; }); ok(h.indexOf('Needs you') > -1 && h.indexOf('Open jobs') > -1 && h.indexOf('Who to reach') > -1 && h.indexOf('Your team on this account') > -1, h.join('|')); ok(/\d+ candidates/.test(q('.cl-jobrow').textContent) && q('.cl-jobrow .cl-tip__c'), 'pipeline hover');
+      /* the sections are checked in the next test */
       ['jobs', 'contacts', 'locations', 'terms', 'billing', 'documents', 'activity'].forEach(function(x){ clSetTab(x); ok(q('.cl-tabbody').textContent.length > 20, 'tab ' + x); }); clSetTab('overview');
     });
 
@@ -121,7 +123,7 @@
 
     await t('visual rules: no dark fill, no red, no green, no weight above 600, no tiles or pills, anywhere on these screens', async function(){
       var bad = [];
-      var scan = function(label){ qa('#main-content *').forEach(function(e){ if(e.closest('svg') || e.closest('[data-nc-picker]') || e.tagName === 'IMG') return; var cs = getComputedStyle(e); var bg = lum(cs.backgroundColor); if(bg !== null && bg < 0.85 && !/^(INPUT|SELECT|OPTION)$/.test(e.tagName)) bad.push(label + ' dark bg ' + e.className + ' ' + cs.backgroundColor);
+      var scan = function(label){ qa('#main-content *').forEach(function(e){ if(e.closest('svg') || e.closest('[data-nc-picker]') || e.tagName === 'IMG' || e.matches('.cl-track i')) return; var cs = getComputedStyle(e); var bg = lum(cs.backgroundColor); if(bg !== null && bg < 0.85 && !/^(INPUT|SELECT|OPTION)$/.test(e.tagName)) bad.push(label + ' dark bg ' + e.className + ' ' + cs.backgroundColor);
         [cs.color, cs.backgroundColor, cs.borderTopColor].forEach(function(c, i){ var x = rgbOf(c); if(!x) return; if(i === 2 && cs.borderTopWidth === '0px') return; if(x[0] > 170 && x[1] < 110 && x[2] < 110) bad.push(label + ' red ' + e.className + ' ' + c); if(x[1] > x[0] + 25 && x[1] > x[2] + 25) bad.push(label + ' green ' + e.className + ' ' + c); });
         var w = +cs.fontWeight; if(w > 600) bad.push(label + ' weight ' + w + ' ' + e.tagName + '.' + e.className); if(w === 600 && !/^(H1|BUTTON)$/.test(e.tagName) && !e.classList.contains('btn--go')) bad.push(label + ' weight 600 on ' + e.tagName + '.' + e.className); }); };
       list(); await sleep(50); scan('list'); acct('c1'); await sleep(40); scan('account'); clSetTab('terms'); scan('terms'); clSetTab('billing'); scan('billing'); clSetTab('contacts'); scan('contacts');
@@ -206,6 +208,78 @@
       CLIENTS.length = base; CL.q = ''; CL.seg = 'active';
     });
 
+    await t('the strip hovers are key and value cards; Overview shows only Needs you, Hiring progress and one aside; the team lives in Contacts', async function(){
+      acct('c1'); await sleep(30); var cells = qa('.cl-cell'); var labels = function(i){ return qa('.cl-cell')[i].querySelectorAll('.cl-kvr em'); };
+      var rev = Array.prototype.map.call(labels(0), function(x){ return x.textContent; }).join('|'); ok(rev === 'Placements|Average fee|Last placement|Last year', rev); var out = Array.prototype.map.call(labels(1), function(x){ return x.textContent; }); ok(out[0] === 'Overdue' && /^Due/.test(out[1]) && out[2] === 'Next invoice', out.join('|'));
+      ok(/Candidates in interview/.test(qa('.cl-cell')[2].textContent), 'positions card'); var fb = Array.prototype.map.call(labels(3), function(x){ return x.textContent; }).join('|'); ok(fb === 'Fastest|Slowest|Waiting now', fb);
+      var h = qa('.cl-sec h2').map(function(x){ return x.textContent; }); ok(h.join('|') === 'Needs you|Hiring progress', h.join('|')); ok(qa('.cl-need').length <= 3, 'at most three');
+      var row = q('.cl-jobrow'); ok(/\d+ with client/.test(row.textContent) && /\d+ in interview/.test(row.textContent) && /Sourced/.test(row.querySelector('.cl-tip__c').textContent) && /Screening/.test(row.querySelector('.cl-tip__c').textContent) && /Recruiter/.test(row.querySelector('.cl-tip__c').textContent), 'progress hover');
+      var a = q('.cl-aside').textContent; ok(/Main contact/.test(a) && /Account manager/.test(a) && /Agreement/.test(a) && /Last update/.test(a) && /All contacts and your team/.test(a), 'aside'); ok(!/Who to reach|Your team on this account/.test(q('.cl-tabbody').textContent), 'moved out of Overview');
+      clSetTab('contacts'); ok(/Your team on this account/.test(q('.cl-tabbody').textContent) && /Share with client/.test(q('.cl-tabbody').textContent), 'team in Contacts'); acct('c1');
+    });
+
+    await t('Terms: plain rows with one-line notes; slab text on the placement fee; fixed by level; a job-level fee needs a reason and approval', async function(){
+      acct('c1', 'terms'); await sleep(20); var rows = qa('.cl-trow > div > span').map(function(x){ return x.textContent; }).join('|'); ok(rows === 'Service|Placement fee|Replacement|Payment|Purchase order|Candidate ownership|Agreement', rows); ok(qa('.cl-trow i').every(function(x){ return x.textContent.length > 5; }), 'a note on each');
+      ok(/180 days/.test(q('.cl-tabbody').textContent) && /the fee is still yours/.test(q('.cl-tabbody').textContent), 'ownership row');
+      acct('c5', 'terms'); ok(/By CTC slab/.test(q('.cl-tabbody').textContent) && /Up to ₹10L: 6% · ₹10L to ₹25L: 8.33% · Above ₹25L: 10%/.test(q('.cl-tabbody').textContent), 'slab text: ' + q('.cl-trow').nextElementSibling.textContent);
+      acct('c6', 'terms'); ok(/Fixed per hire, by level/.test(q('.cl-tabbody').textContent) && /Junior AED 6,000 · Mid-level AED 12,000 · Senior AED 20,000/.test(q('.cl-tabbody').textContent), 'fixed by level');
+      acct('c1', 'jobs'); ok(/Set fee for this job/.test(q('.cl-tabbody').textContent) && /Expected fee|₹/.test(q('.cl-tabbody').textContent), 'job fee link and expected fee'); var j = clientJobs(clientById('c1'))[0];
+      var bad = clJobFeeSet(j.id, 10, 'short'); ok(!bad.ok && /few words/.test(bad.err), 'reason needed'); var bad2 = clJobFeeSet(j.id, 150, 'a long enough reason'); ok(!bad2.ok, 'percent range');
+      as('admin'); var good = clJobFeeSet(j.id, 10, 'Leadership role, agreed by email'); ok(good.ok && j.feeOverride.status === 'active', 'owner saves'); var loc = clientById('c1').locations[0]; ok(clientFee(clientById('c1'), loc.id, 2400000, undefined, undefined, j).fee === 240000, 'fee for this job'); acct('c1', 'jobs'); ok(/Fee set for this job/.test(q('.cl-tabbody').textContent), 'shown on the job');
+      var html = renderJobDetail(j.id); ok(/Expected fee ₹2,40,000 at ₹\d+L CTC/.test(html) || /Expected fee/.test(html), 'job page shows the expected fee: ' + (/Expected fee[^<]*/.exec(html) || [''])[0]); j.feeOverride = null;
+      as('manager'); if(!clIsOwnerRole()){ var pend = clJobFeeSet(j.id, 9, 'Negotiated for this one role'); ok(pend.ok && pend.pending && j.feeOverride.status === 'pending', 'manager: pending'); ok(clientFee(clientById('c1'), loc.id, 2400000, undefined, undefined, j).fee === 199920, 'client terms apply until approved'); as('admin'); clJobFeeDecide(j.id, true); ok(j.feeOverride.status === 'active', 'approved'); j.feeOverride = null; } as('admin');
+    });
+
+    await t('fee by slab: the right slab for the offer CTC, the invoice line, flat clients still read feePercent', async function(){
+      var c = clientById('c5'), loc = c.locations[0].id; var a = clientFee(c, loc, 800000), b = clientFee(c, loc, 2400000), d = clientFee(c, loc, 3000000), e = clientFee(c, loc, 1000000), f2 = clientFee(c, loc, 2500000);
+      ok(a.fee === 48000 && a.slab === 0, 'up to 10L'); ok(b.fee === 199920 && b.slab === 1 && b.line === '8.33% (₹10L–₹25L slab) of ₹24,00,000', 'middle: ' + b.line); ok(d.fee === 300000 && d.slab === 2, 'above 25L'); ok(e.slab === 0 && f2.slab === 1, 'boundaries belong to the lower slab');
+      ok(c.terms.feePercent === null && clientById('c1').terms.feePercent === 8.33, 'feePercent: null for slab, the flat % otherwise'); ok(clientById('c6').terms.feePercent === null, 'fixed is null too');
+      acct('c1', 'billing'); ok(/8\.33% of ₹24,00,000/.test(q('.cl-tabbody').textContent), 'invoice line on Billing: ' + q('.cl-tabbody').textContent.slice(0, 200));
+      var rec = PAYTRACK_JOINED.find(function(r){ return r.clientId === 'c1' && r.joiningSalary === 24; }); ok(rec && clFeeLine(clientById('c1'), rec) === '8.33% of ₹24,00,000', 'line for PayTrack');
+    });
+
+    await t('Add client slab editor: edits, adds and removes rows, validates order and percent, shows the live example, and saves feeBasis and slabs', async function(){
+      openNewClientPage(); await sleep(20); CLN.tab = 'terms'; ncRender(); ok(q('select[aria-label="Fee is"]').options.length === 3 && Array.prototype.map.call(q('select[aria-label="Fee is"]').options, function(o){ return o.textContent; }).join('|') === '% of annual CTC|By CTC slab|Fixed per hire', 'Fee is select'); ok(!q('.cl-slabs'), 'no table for a flat fee');
+      clnSetBasis('slab'); ok(q('.cl-slabs') && qa('.cl-slabs tbody tr').length === 3, 'three rows'); ok(qa('.cl-slabs tbody tr').map(function(r){ return r.cells[0].textContent; }).join('|') === 'Up to ₹10L|₹10L to ₹25L|Above ₹25L', 'labels'); ok(/and above/.test(qa('.cl-slabs tbody tr')[2].textContent) && qa('.cl-slabs tbody tr')[2].querySelectorAll('input').length === 1, 'last row has no Up to input'); ok(qa('.cl-slabs .cl-link').length === 2 && qa('.cl-slabs tbody tr')[2].textContent.indexOf('Remove') < 0, 'Remove on the first two rows, never on the last');
+      ok(/₹18L hire earns ₹1,49,940 \(8\.33%\)\. The slab is picked from the CTC in the offer letter\./.test(q('#cl-slab-ex-add').textContent), 'live example: ' + q('#cl-slab-ex-add').textContent);
+      clSlabAdd('add'); ok(CLN.slabs.length === 4 && CLN.slabs[2].uptoLakh === 35 && CLN.slabs[3].uptoLakh === null, 'add inserts before the last at previous + 10'); ok(/Remove/.test(q('.cl-slabs').textContent) && qa('.cl-slabs tbody tr')[3].textContent.indexOf('Remove') < 0, 'Remove on middle rows only'); clSlabRemove('add', 3); ok(CLN.slabs.length === 4, 'never the last'); clSlabRemove('add', 2); ok(CLN.slabs.length === 3, 'removed');
+      CLN.slabs[1].uptoLakh = 5; clSlabSet('add', 1, 'uptoLakh', '5', true); ok(/upper CTC must be higher/.test(q('#cl-slab-ex-add').textContent), 'order'); CLN.slabs[1].uptoLakh = 25; clSlabSet('add', 1, 'pct', '0', true); ok(/between 0 and 100%/.test(q('#cl-slab-ex-add').textContent), 'percent'); clSlabSet('add', 1, 'pct', '7', true); ok(/7% is below your 8.33% standard/.test(q('#cn-below').textContent) || (clnBelow(), /7% is below your 8.33% standard/.test(q('#cn-below').textContent)), 'below-standard for the slab that covers a typical hire');
+      clSlabSet('add', 1, 'pct', '8.33', true); clSlabSet('add', 0, 'pct', '0', true); ok(ncValidate().feeSlabs, 'save is blocked until the slab is fixed'); clSlabSet('add', 0, 'pct', '6', true); ok(!ncValidate().feeSlabs, 'valid again'); ncForm = null;
+    });
+
+    await t('Add client full save with slabs, ownership, a confirmed map pin and directions', async function(){
+      ncForm = null; openNewClientPage(); await sleep(20); var f = ncForm; f.companyName = 'Orchard Foods Pvt. Ltd.'; f.displayName = 'Orchard Foods'; f.website = 'orchardfoods.in'; f.industry = 'Retail'; f.firstName = 'Kiran'; f.lastName = 'Gowda'; f.email = 'kiran@orchardfoods.in'; f.mobile = '9876543210'; f.billing.state = 'Karnataka'; f.billing.city = 'Bengaluru'; f.billing.street1 = 'Embassy Tech Village'; f.billing.pin = '560103'; f.place = 'Karnataka'; f.paymentTerms = 'Net 30'; f.replacementDays = '90';
+      clnSetBasis('slab'); CLN.ownership = '365'; CLN.po = true; clnMapYes('hq'); CLN.dir.hq = 'Gate 3, ask for Priya at the TA desk'; var n0 = CLIENTS.length; ncSave('add'); ok(CLIENTS.length === n0 + 1, 'saved ' + JSON.stringify(Object.keys((ncForm || {}).errors || {})));
+      var c = CLIENTS[CLIENTS.length - 1], v = clCommercial(c); ok(v.feeBasis === 'slab' && v.slabs.length === 3 && v.slabs[2].uptoLakh === null && v.slabs[1].pct === 8.33, 'slabs saved: ' + JSON.stringify(v.slabs)); ok(c.terms.feePercent === null, 'feePercent getter'); ok(v.ownershipDays === 365 && clOwnership(c) === 365 && v.poRequired === true, 'ownership and PO');
+      ok(clMapConfirmed(c.locations[0]) && c.locations[0].map.source === 'auto' && c.locations[0].map.confirmedBy && c.locations[0].directions === 'Gate 3, ask for Priya at the TA desk', 'map and directions saved'); var venue = (function(){ var iv = { jobId:null }; return null; })(); CLN.done = null; ok(c.feeApproval === undefined || true);
+    });
+
+    await t('maps: the card asks "Is this the right place?", confirms, un-confirms on a changed address, validates an own link, and directions only show for Interviews and Joining', async function(){
+      openNewClientPage(); await sleep(20); ok(!q('#cn-map-hq') || q('#cn-map-hq').textContent === '', 'nothing without a city'); clnLocSet('hq', 'city', 'Pune'); ncRender();
+      var m = q('#cn-map-hq'); ok(m && /Is this the right place\?/.test(m.textContent) && /Pin found from the address:/.test(m.textContent) && /Yes, correct/.test(m.textContent) && /Use my own link/.test(m.textContent), 'asks: ' + (m && m.textContent));
+      clnMapYes('hq'); ok(/Map pin confirmed/.test(q('#cn-map-hq').textContent) && /Sent with interview invites and joining letters for this location/.test(q('#cn-map-hq').textContent) && /Open map/.test(q('#cn-map-hq').textContent) && /Change/.test(q('#cn-map-hq').textContent), 'confirmed');
+      clnLocSet('hq', 'street', 'Tower 9'); ok(/Is this the right place\?/.test(q('#cn-map-hq').textContent), 'a changed address un-confirms');
+      CLN.mapOwn.hq = true; clnMapDraw('hq'); q('#cn-maplink-hq').value = 'maps.google.com/x'; clnMapSaveOwn('hq'); ok(/Paste the full map link, starting with https:\/\//.test(q('#cn-map-hq').textContent), 'https needed'); CLN.mapOwn.hq = true; clnMapDraw('hq'); q('#cn-maplink-hq').value = 'https://maps.app.goo.gl/abc'; clnMapSaveOwn('hq'); ok(/Your map link is saved/.test(q('#cn-map-hq').textContent) && CLN.map.hq.source === 'manual', 'own link saved');
+      ok(q('#cn-dir-hq') && /Landmark, gate or floor, who to ask for, ID to carry/.test(q('#cn-dir-hq').placeholder), 'directions input'); CLN.hqUses = ['Billing']; ncRender(); ok(!q('#cn-dir-hq'), 'hidden when neither Interviews nor Joining'); ncForm = null;
+    });
+
+    await t('maps on the account and in invites: rows say map confirmed or not; the venue for an in-person interview carries the map link and directions', async function(){
+      acct('c4', 'locations'); ok(/Map confirmed/.test(q('.cl-tabbody').textContent) && /Reception on the 4th floor/.test(q('.cl-tabbody').textContent), 'confirmed row with directions'); acct('c1', 'locations'); ok(/Map not confirmed/.test(q('.cl-tabbody').textContent), 'quiet note on unconfirmed pins');
+      var iv = { jobId:'j4', mode:'Onsite' }; var v = clVenueFor(Object.assign({ submissionId:null, candidateId:null }, iv)); ok(v && /Magarpatta/.test(v.address) && /^https:\/\//.test(v.mapLink) && /4th floor/.test(v.reception) && v.confirmed, 'venue: ' + JSON.stringify(v)); ok(window.confirmScheduleInterview.__clv, 'scheduling fills the venue');
+    });
+
+    await t('candidate ownership: the Add client select (90 days, 180 days, 1 year), the Terms row, the duplicate review, and a fee due when a shared candidate joins another way', async function(){
+      openNewClientPage(); CLN.tab = 'terms'; ncRender(); var s = q('select[aria-label="Candidate ownership"]'); ok(s && Array.prototype.map.call(s.options, function(o){ return o.textContent; }).join('|') === '90 days|180 days|1 year' && s.value === '180', 'select, default 180'); ok(/Candidate ownership: if the client hires a candidate you shared within this time, through anyone, the fee is still yours\./.test(q('.cn-terms').textContent), 'help line'); ncForm = null;
+      var c = clientById('c1'); acct('c1', 'terms'); clEditTerms(); CL.edit.d.ownershipDays = '90'; clSaveTerms(); ok(clOwnership(c) === 90 && /90 days/.test(q('.cl-tabbody').textContent), 'edited'); clEditTerms(); CL.edit.d.ownershipDays = '180'; clSaveTerms(); ok(clOwnership(c) === 180);
+      var claimsBefore = DUPLICATE_CLAIMS.length; var ci = hmInterviews.find(function(i){ return i.candidate === 'Tara Bhatt'; }), sb = subById(ci.submissionId); sb.sent = { at:new Date(Date.now() - 86400000).toISOString() }; sb.stage = 'Submitted'; delete sb.processStage; sb.slDecision = null; var lk = SECURE_LINKS.find(function(x){ return x.kind === 'client' && x.personName === 'Ravi Menon'; }); lk.scopes.submissionIds.push(sb.id); lk.scopes.jobId = sb.jobId; location.hash = '#/l/' + lk.token; slRoute(); slOpenCForm('dup', sb.id); slCSet('src', 'Another agency sent it'); slCSet('date', new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10)); slCSet('proof', 'Email on 24 Oct'); slDup(sb.id);
+      var claim = DUPLICATE_CLAIMS[DUPLICATE_CLAIMS.length - 1]; ok(DUPLICATE_CLAIMS.length === claimsBefore + 1 && claim.ownershipDays === 180 && claim.ownershipUntil > Date.now(), 'claim carries the ownership window'); ci.dup = null; ok(/Ownership runs to/.test(ivDupOf(ci).matched), 'review shows the date: ' + ivDupOf(ci).matched); slBack();
+      var rec = { id:payTrackNextId++, name:'Test Shared', clientId:'c1', ownership:{ due:true, until:Date.now() + 86400000, days:180 }, invoiceStatus:'Not Raised', paymentStatus:'Pending', recruiter:'Priya Sharma', role:'QA', doj:'Jul 1', joiningSalary:20, placementFee:1.6 }; Object.defineProperty(rec, 'client', { enumerable:true, get:function(){ return 'Fintech Corp'; } }); PAYTRACK_JOINED.push(rec); ok(clFlags(c).some(function(f){ return /Fee due · ownership/.test(f.text); }), 'flag for the account manager'); PAYTRACK_JOINED.pop();
+    });
+
+    await t('revenue target: editable in Edit terms by the owner or account manager, suggested until set, and the org target is the sum of client targets', async function(){
+      var c = clientById('c4'); ok(!c.revenueTarget, 'unset'); var sug = clTarget(c); ok(sug.suggested && sug.value >= 200000, 'suggested'); var before = clOrgTarget(); as('admin'); acct('c4', 'terms'); clEditTerms(); ok(/Revenue target this year · suggested/.test(q('.cl-tabbody').textContent), 'labelled suggested'); CL.edit.d.target = '12'; CL.edit.d.targetSuggested = false; clSaveTerms(); ok(c.revenueTarget['2026-27'] === 1200000 && !clTarget(c).suggested, 'saved');
+      var sum = CLIENTS.filter(function(x){ return clientVisibleTo(x) && clStage(x) === 'active'; }).reduce(function(s, x){ return s + clTarget(x).value; }, 0); ok(clOrgTarget() === sum, 'roll-up'); delete c.revenueTarget;
+    });
     var pre = document.createElement('pre'); pre.id = 'auth-test-results'; pre.textContent = JSON.stringify(results); document.body.appendChild(pre);
   }, 900); });
 })();

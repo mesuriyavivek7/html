@@ -2495,6 +2495,17 @@ body.cl-on .app-toast{ background:#fff !important; color:#2F313F !important; bor
 .cl-page .cl-h1{ font-weight:600 !important; font-size:28px !important; line-height:36px !important; letter-spacing:-.025em !important; } .cl-page .seg__btn{ font-weight:500 !important; } .cl-page .seg__n{ font-weight:400 !important; }
 .cl-table th{ font-weight:500 !important; }
 .cl-page .cl-tabs [role="tab"],.cl-page .cl-tabs [role="tab"][aria-selected="true"]{ font-weight:500 !important; }
+.cl-kvr{ display:flex; justify-content:space-between; gap:18px; padding:2px 0; } .cl-kvr em{ font-style:normal; color:#6B6F80; } .cl-kvr u{ text-decoration:none; font-weight:500; color:#2F313F; text-align:right; } .cl-tip__c small{ display:block; margin-top:8px; padding-top:8px; border-top:1px solid #F4F4F1; font-size:11px; color:#9A9EAB; }
+.cl-trow{ display:flex; justify-content:space-between; gap:20px; padding:14px 0; border-bottom:1px solid #F4F4F1; } .cl-trow span{ display:block; font:400 14px var(--font); color:#6B6F80; } .cl-trow i{ display:block; margin-top:2px; font:400 13px/1.5 var(--font); font-style:normal; color:#9A9EAB; max-width:420px; } .cl-trow b{ font:500 14px var(--font); text-align:right; white-space:nowrap; }
+.cl-aside{ padding:20px 22px; } .cl-asrow{ padding:12px 0; border-bottom:1px solid #F4F4F1; } .cl-asrow:last-of-type{ border-bottom:0; } .cl-asrow b{ display:block; font:500 14px var(--font); } .cl-asrow .cl-person{ border:0; padding:0; } .cl-aslink{ display:block; margin-top:10px; padding:0; }
+.cl-prog{ display:inline-block; text-align:right; } .cl-prog b{ display:block; font:500 14px var(--font); } .cl-prog i{ display:block; font:400 13px var(--font); font-style:normal; color:#6B6F80; }
+.cl-earnhead{ display:flex; align-items:center; justify-content:space-between; } .cl-earnhead .cl-lab{ margin:0 0 8px; } .cl-i{ color:#9A9EAB; display:inline-flex; margin-bottom:8px; } .cl-i .cl-tip__c{ left:auto; right:0; }
+.cl-examples{ margin:4px 0 10px; } .cl-exrow{ display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #F4F4F1; font:400 14px var(--font); color:#6B6F80; } .cl-exrow b{ font:500 15px var(--font); color:#2F313F; font-variant-numeric:tabular-nums; }
+.cl-target{ margin-top:18px; padding-top:18px; border-top:1px solid #F4F4F1; } .cl-target .cl-lab{ margin:0 0 8px; } .cl-target__n{ display:flex; align-items:baseline; justify-content:space-between; } .cl-target__n b{ font:500 22px var(--font); font-variant-numeric:tabular-nums; } .cl-target__n span{ font:400 13px var(--font); color:#6B6F80; }
+.cl-track{ height:4px; margin:10px 0; border-radius:4px; background:#F1F1EE; overflow:hidden; } .cl-track i{ display:block; height:100%; background:#8C90A0; border-radius:4px; } .cl-advice{ margin-top:6px !important; }
+.cl-slabs{ margin:12px 0; } .cl-slabs table{ width:100%; border-collapse:collapse; margin-bottom:10px; } .cl-slabs th{ text-align:left; padding:8px 8px 8px 0; font:500 12px var(--font); color:#9A9EAB; } .cl-slabs td{ padding:6px 8px 6px 0; font:400 14px var(--font); vertical-align:middle; } .cl-slabs .cl-input{ height:36px; }
+.cn-map{ display:flex; align-items:center; gap:14px; margin-top:14px; padding:14px 16px; border:1px solid #ECECE8; border-radius:12px; background:#fff; } .cn-map > div{ flex:1; min-width:0; } .cn-map b{ display:block; font:500 14px var(--font); } .cn-map span{ font:400 13px/1.5 var(--font); color:#6B6F80; } .cn-pin{ width:40px; height:40px; border-radius:11px; background:#F3F3F0; color:#6B6F80; display:inline-flex !important; align-items:center; justify-content:center; flex:none; } .cn-map__a{ display:inline-flex; align-items:center; gap:8px; flex:none; } .cn-map--own .cl-field{ margin:0; } .cn-dir{ margin-top:14px; }
+.cl-quiet{ color:#9A9EAB !important; } .cl-jobfee{ margin:4px 0 0; font:400 13px var(--font); color:#6B6F80; } .cl-teamsec{ margin-top:32px; } .cl-prog,.cl-prog *{ text-align:right; }
 /* ==CL-CSS-END== */
 </style>
 </head>
@@ -43698,16 +43709,10 @@ function clientEnsure(c){
   return c;
 }
 function clCommercial(c, date){ clientEnsure(c); const d = clIso(date || ivNowMsSafe()); const list = c.commercials.slice().sort(function(a, b){ return a.effectiveFrom < b.effectiveFrom ? 1 : a.effectiveFrom > b.effectiveFrom ? -1 : b.version - a.version; }); return list.find(function(v){ return v.effectiveFrom <= d; }) || list[list.length - 1]; }
-function clAddCommercial(c, terms){ clientEnsure(c); const cur = clCommercial(c); const v = Object.assign({}, cur, terms, { version:c.commercials.reduce(function(m, x){ return Math.max(m, x.version); }, 0) + 1, effectiveFrom:clIso(ivNowMsSafe()) }); c.commercials.push(v); c.terms = Object.assign(c.terms || {}, { feeType:v.feeType, feePercent:v.feeType === 'percent' ? v.pct : null, feeFixed:v.feeType === 'fixed' ? v.fixed : null, replacementDays:v.replacementDays, paymentDays:v.paymentDays, markupPercent:v.markup, model:v.model }); c.paymentTerms = v.paymentDays ? 'Net ' + v.paymentDays : 'Due on Receipt'; return v; }
 function clBillingLocations(c){ clientEnsure(c); const head = c.locations[0]; return c.locations.filter(function(l){ return l.kind === 'head' ? (l.uses.indexOf('Billing') > -1 || !c.locations.some(function(x){ return x.uses.indexOf('Billing') > -1; })) : (l.uses.indexOf('Billing') > -1 && l.billing === 'own'); }).map(function(l){ return l.billing === 'own' || l.kind === 'head' ? l : Object.assign({}, l, { taxId:head.taxId }); }); }
 function clLocName(l){ return l.label || l.city || 'Office'; }
 function clBillName(l){ return l.kind === 'head' ? (l.city || 'Head office') : clLocName(l); }
 /** fee for one hire, in the location's currency. The version of terms is the one in force on the date (so an old placement keeps its own). */
-function clientFee(c, locId, ctc, date, version){
-  clientEnsure(c); const v = version ? (c.commercials.find(function(x){ return x.version === version; }) || clCommercial(c, date)) : clCommercial(c, date); const l = c.locations.find(function(x){ return x.id === locId; }) || c.locations[0];
-  let fee = 0; if(v.model === 'retained' || v.model === 'rpo') fee = 0; else if(v.model === 'contract') fee = ctc * ((v.markup || 0) / 100); else fee = v.feeType === 'fixed' ? (v.fixed || 0) : ctc * ((v.pct || 0) / 100);
-  return { fee:Math.round(fee), currency:l.currency || clCountryCur(l.country), version:v.version, terms:v };
-}
 /** "what one hire earns" at a location: fee, tax, invoice total, withholding, and what arrives */
 function clEarn(c, locId, ctc, date){
   const l = c.locations.find(function(x){ return x.id === locId; }) || clBillingLocations(c)[0], f = clientFee(c, l.id, ctc, date), t = clTaxFor(c, l, date);
@@ -43890,8 +43895,8 @@ function clStatsHTML(rows){
     const mine = all, slow = mine.filter(function(r){ return (r.c.feedbackDays || 0) > 3; }).length, iv = mine.reduce(function(s, r){ return s + clInterviewsWeek(r.c); }, 0);
     return '<div class="cl-stats">' + clCardHTML('all', 'Your clients', String(mine.length), ['Your clients', ['Clients on jobs you work on']]) + clCardHTML('open', 'Open positions', String(pos), ['Open positions', ['Across ' + jobsN + ' jobs at ' + withJobs + ' clients']]) + clCardHTML('feedback', 'Awaiting feedback', String(slow), ['Awaiting feedback', [slow + ' clients are slow to reply']]) + clCardHTML('interviews', 'Interviews this week', String(iv), ['Interviews this week', ['Next seven days']]) + '</div>';
   }
-  const pct = Math.round(money.billed / CL_TARGET * 100);
-  return '<div class="cl-stats">' + clCardHTML('revenue', 'Revenue this year', clShort(money.billed), ['Revenue this year', [pct + '% of the ' + clShort(CL_TARGET) + ' target', money.placements + ' placements']]) +
+  const pct = Math.round(money.billed / clOrgTarget() * 100);
+  return '<div class="cl-stats">' + clCardHTML('revenue', 'Revenue this year', clShort(money.billed), ['Revenue this year', [pct + '% of the ' + clShort(clOrgTarget()) + ' target', money.placements + ' placements']]) +
     clCardHTML('outstanding', 'Outstanding', clShort(money.outstanding), ['Outstanding', [clShort(money.notDue) + ' not yet due', clShort(money.overdue) + ' overdue at ' + money.overdueClients + ' client' + (money.overdueClients === 1 ? '' : 's')]]) +
     clCardHTML('open', 'Open positions', String(pos), ['Open positions', ['Across ' + jobsN + ' jobs at ' + withJobs + ' clients']]) +
     clCardHTML('need', 'Need you', String(flagged.length), ['Need you', flagged.slice(0, 6).map(function(r){ return cle(r.c.name) + ': ' + cle(r.flags[0].text); })]) + '</div>';
@@ -43941,28 +43946,10 @@ function clOpenJobsView(id){ jobSearch = id ? (clientById(id) || {}).name || '' 
 (function hookShow(){ const o = window.showView; if(typeof o !== 'function' || o.__cl) return; window.showView = function(id){ const r = o.apply(this, arguments); if(id === 'client-management') setTimeout(clPost, 30); return r; }; window.showView.__cl = true; })();
 
 /* ---------- account ---------- */
-function clStatCell(label, value, tip, go){ return '<button type="button" class="cl-cell" onclick="' + go + '"><span class="cl-stat__l">' + label + '</span>' + clTip('<span class="cl-stat__v">' + value + '</span>', tip[0], tip[1]) + '</button>'; }
-function clStatStrip(c){
-  const m = clientMoney(c.id), open = clPositions(c), jobs = clOpenJobsN(c), tabs = clCanSeeMoney();
-  const cells = [];
-  if(tabs){ cells.push(clStatCell('Revenue this year', clShort(m.billed), ['Revenue this year', [m.placements + ' placements', clShort(m.collected) + ' collected']], "clSetTab('billing')")); cells.push(clStatCell('Outstanding', m.outstanding ? clShort(m.outstanding) : '—', ['Outstanding', [clShort(m.notDue) + ' not yet due', clShort(m.overdue) + ' overdue']], "clSetTab('billing')")); }
-  cells.push(clStatCell('Open positions', String(open), ['Open positions', ['Across ' + jobs + ' job' + (jobs === 1 ? '' : 's')]], "clSetTab('jobs')"));
-  cells.push(clStatCell('Feedback in', c.feedbackDays ? c.feedbackDays + ' days' : '—', ['Feedback in', ['Average time to reply to a profile']], "clSetTab('jobs')"));
-  return '<div class="cl-card cl-strip">' + cells.join('') + '</div>';
-}
 function clTabs(){ const t = [['overview', 'Overview'], ['jobs', 'Jobs'], ['contacts', 'Contacts'], ['locations', 'Locations']]; if(clCanSeeMoney()){ t.push(['terms', 'Terms']); t.push(['billing', 'Billing']); } t.push(['documents', 'Documents'], ['activity', 'Activity']); return t; }
 function clSetTab(t){ clientDetailState.tab = t; CL.tab = t; CL.edit = null; CL.taxEdit = null; clientDetailState.contactEdit = null; clientDetailState.termsEdit = false; clAcctDraw(); }
 function clAcctDraw(){ const el = document.getElementById('cl-acct'); if(el) el.outerHTML = clAcctHTML(clientById(clientDetailState.id)); clPostAcct(); }
 function clPostAcct(){ const t = document.getElementById('cl-tabs'); if(t) oPill(t, '[aria-selected="true"]', 'cl-tabs', 'o-pill--under'); }
-function clAcctHTML(c){
-  clientEnsure(c); const tab = clientDetailState.tab || 'overview', tabs = clTabs(); if(!tabs.some(function(t){ return t[0] === tab; })) clientDetailState.tab = 'overview';
-  const cities = clCityList(c), own = clientOwner(c);
-  return '<div id="cl-acct"><a class="cl-back" role="button" tabindex="0" onclick="showView(\'client-management\')" onkeydown="if(event.key===\'Enter\')showView(\'client-management\')">← ' + clWord() + '</a>' +
-    '<header class="cl-head"><div><h1 class="cl-h1">' + cle(c.name) + '</h1><p class="cl-muted">' + cle([c.industry, cities.slice(0, 3).join(', '), own ? 'Owned by ' + own.name : ''].filter(Boolean).join(' · ')) + (clStage(c) === 'paused' ? ' · Paused' : clStage(c) === 'prospect' ? ' · Prospect' : '') + '</p></div>' +
-    '<div class="cl-head__r"><button type="button" class="cl-btn" onclick="clSendProfiles(\'' + c.id + '\')">Send profiles</button>' + (canI('jobs', 'Create') ? '<button type="button" class="btn--go" onclick="clientNewJob(\'' + c.id + '\')">New job</button>' : '') + clMoreHTML(c) + '</div></header>' +
-    clStatStrip(c) + '<div class="cl-tabs" id="cl-tabs" role="tablist">' + tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="' + (clientDetailState.tab === t[0]) + '" onclick="clSetTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
-    '<div class="cl-tabbody">' + clTabBody(c, clientDetailState.tab) + '</div></div>';
-}
 function clMoreHTML(c){
   const open = clientDetailState.menuOpen;
   return '<span class="cl-more"><button type="button" class="cl-btn" aria-haspopup="menu" aria-expanded="' + !!open + '" onclick="clientDetailState.menuOpen=!clientDetailState.menuOpen; clAcctDraw()">More</button>' + (open ? '<div class="cl-menu" role="menu">' + (canI('clients', 'Edit') ? '<button type="button" role="menuitem" onclick="clientDetailState.menuOpen=false; openClientPage(\'' + c.id + '\')">Edit details</button>' : '') + '<button type="button" role="menuitem" onclick="clPause(\'' + c.id + '\')">' + (clStage(c) === 'paused' ? 'Resume' : 'Pause') + '</button>' + (canI('clients', 'Delete') ? '<button type="button" role="menuitem" onclick="clientDetailState.menuOpen=false; clientArchive(\'' + c.id + '\', true)">Archive</button>' : '') + '</div>' : '') + '</span>';
@@ -43982,25 +43969,12 @@ function clTabBody(c, tab){
 }
 function clPipeTip(j){ const subs = submissionsForJob(j.id), by = {}; subs.forEach(function(s){ by[s.stage] = (by[s.stage] || 0) + 1; }); const lines = Object.keys(by).map(function(k){ return by[k] + ' ' + cle(k.toLowerCase()); }); return clTip(subs.length + ' candidates', j.title, lines.length ? lines : ['No candidates yet']); }
 function clJobRecs(j){ return (j.assignedRecruiters || []).map(function(id){ const r = RECRUITER_ROSTER.find(function(x){ return x.id === id; }); return r ? r.name : ''; }).filter(Boolean).join(', '); }
-function clOverviewTab(c){
-  const flags = clFlags(c), jobs = clientJobs(c).filter(function(j){ return j.status === 'Active' || j.status === 'Open'; }), mc = clMainContact(c);
-  const need = flags.length ? '<section class="cl-sec"><h2>Needs you</h2>' + flags.map(function(f){ return '<div class="cl-need"><div><span class="att">' + cle(f.text) + '</span><p class="cl-muted">' + cle(f.detail) + '</p></div><button type="button" class="cl-btn" onclick="clFlagAct(\'' + c.id + '\',\'' + (f.loc || '') + '\',\'' + cle(f.act).replace(/'/g, '’') + '\')">' + cle(f.act) + '</button></div>'; }).join('') + '</section>' : '';
-  const jobsH = '<section class="cl-sec"><h2>Open jobs</h2>' + (jobs.length ? jobs.map(function(j){ return '<div class="cl-jobrow" onclick="openJob(\'' + j.id + '\')" role="link" tabindex="0"><div><b>' + cle(j.title) + '</b><span class="cl-muted">' + cle([j.location || j.loc, j.workMode].filter(Boolean).join(' · ')) + '</span></div>' + clPipeTip(j) + '</div>'; }).join('') : '<p class="cl-muted">' + (c.openRoles ? c.openRoles + ' open positions are tracked outside Oontu.' : 'No open jobs. Start one with New job.') + '</p>') + '</section>';
-  const reach = clGroups(c).map(function(g){ const p = g[1][0]; return '<div class="cl-person"><div><b>' + cle(p.name) + '</b><span class="cl-muted">' + cle(g[0].split(' ')[0] + ' · ' + (p.title || '')) + '</span></div>' + clIcons(p) + '</div>'; }).join('') || '<p class="cl-muted">Add a contact to see who to reach.</p>';
-  const team = clTeam(c).map(function(t){ return '<div class="cl-person"><div><b>' + cle(t.name) + '</b><span class="cl-muted">' + cle(t.role) + '</span></div><span class="cl-icons"><button type="button" class="cl-ic" aria-label="Email ' + cle(t.name) + '" onclick="toast(\'Opening email to ' + cle(t.name).replace(/'/g, '’') + '.\')">' + oIcon('mail', 15, 1.7) + '</button></span></div>'; }).join('');
-  return '<div class="cl-two"><div>' + need + jobsH + '</div><div><section class="cl-sec"><h2>Who to reach</h2>' + reach + '</section><section class="cl-sec"><h2>Your team on this account</h2>' + team + '<button type="button" class="cl-link" onclick="toast(\'A secure link to this team is ready to share.\')">Share with client</button></section></div></div>';
-}
 function clTeam(c){ const own = clientOwner(c), out = []; if(own) out.push({ name:own.name, role:'Account owner' }); const rs = {}; clientJobs(c).forEach(function(j){ (j.assignedRecruiters || []).forEach(function(id){ rs[id] = 1; }); }); Object.keys(rs).forEach(function(id){ const r = RECRUITER_ROSTER.find(function(x){ return x.id === id; }); if(r && (!own || r.id !== own.id)) out.push({ name:r.name, role:'Recruiter' }); }); if(c.deliveryManager) out.push({ name:c.deliveryManager, role:'Delivery manager' }); return out.slice(0, 5); }
 function clGroups(c){ const order = ['Hiring', 'Invoices and payments', 'Agreements and renewals', 'Leadership'], by = {}; (c.pocs || []).forEach(function(p){ const g = clGroupOf(p); (by[g] = by[g] || []).push(p); }); return order.filter(function(g){ return by[g]; }).map(function(g){ return [g, by[g]]; }); }
 function clIcons(p){ const tel = (p.mobile || p.workPhone || '').replace(/[^\d+]/g, ''), wa = p.whatsapp || p.mobile; return '<span class="cl-icons">' + (tel ? '<a class="cl-ic" aria-label="Call ' + cle(p.name) + '" href="tel:' + cle(tel) + '">' + oIcon('phone', 15, 1.7) + '</a>' : '') + (wa ? '<a class="cl-ic" aria-label="WhatsApp ' + cle(p.name) + '" target="_blank" rel="noopener" href="' + cle(clientWaLink(wa)) + '">' + oIcon('chat', 15, 1.7) + '</a>' : '') + (p.email ? '<a class="cl-ic" aria-label="Email ' + cle(p.name) + '" href="mailto:' + cle(p.email) + '">' + oIcon('mail', 15, 1.7) + '</a>' : '') + '</span>'; }
-function clFlagAct(id, loc, act){ const c = clientById(id); if(/^(Remind|Nudge|Ask)/.test(act)){ const to = clientRoute(c, /Remind|Ask for PO/.test(act) ? 'Invoices' : 'Profiles and feedback')[0]; toast('Message sent to ' + (to ? to.name : 'the main contact') + '.'); clientActivity(c, act + (to ? ' · ' + to.name : '')); return; } if(act === 'Review' || act === 'Prepare' || act === 'Start renewal'){ clSetTab(act === 'Start renewal' ? 'documents' : 'terms'); return; } toast('Done.'); }
-function clJobsTab(c){
-  const jobs = clientJobs(c); if(!jobs.length) return '<div class="cl-empty"><p>This client’s jobs will appear here.</p>' + (canI('jobs', 'Create') ? '<button type="button" class="btn--go" onclick="clientNewJob(\'' + c.id + '\')">New job</button>' : '') + '</div>';
-  return '<div class="cl-card cl-tablewrap"><table class="cl-table"><thead><tr><th>Job</th><th>Recruiter</th><th>Candidates</th><th></th></tr></thead><tbody>' + jobs.map(function(j){ const late = j.status === 'On Hold'; return '<tr class="cl-tr" tabindex="0" role="link" onclick="openJob(\'' + j.id + '\')" onkeydown="if(event.key===\'Enter\')openJob(\'' + j.id + '\')"><td><div class="cl-name"><b>' + cle(j.title) + '</b><span>' + cle([j.location || j.loc, j.workMode].filter(Boolean).join(' · ')) + '</span></div></td><td class="cl-sub">' + cle(clJobRecs(j) || '—') + '</td><td>' + clPipeTip(j) + '</td><td>' + (late ? '<span class="att">On hold</span>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
-}
 /* ----- contacts ----- */
 function clLooks(c, p){ if(p.allLocations || c.locations.length <= 1) return 'all locations'; const ns = []; if(p.atHeadOffice !== false) ns.push('Head office'); (p.branchIds || []).forEach(function(id){ const l = c.locations.find(function(x){ return x.id === id; }); if(l) ns.push(clLocName(l)); }); return ns.length ? ns.join(', ') : 'Head office'; }
-function clContactsTab(c){
+function clContactsPeople(c){
   const groups = clGroups(c), ed = CL.edit && CL.edit.kind === 'contact' ? CL.edit : null;
   const rows = groups.map(function(g){ return '<section class="cl-sec"><h2>' + g[0] + '</h2>' + g[1].map(function(p){ const gets = (p.routes || []); const main = (p.roles || []).indexOf('main') > -1;
     return '<div class="cl-contact"><div class="cl-contact__main"><b>' + cle(p.name) + (main ? ' <span class="cl-muted">· Main contact</span>' : '') + '</b><span class="cl-muted">' + cle([p.title, 'looks after ' + clLooks(c, p), p.email].filter(Boolean).join(' · ')) + '</span>' +
@@ -44031,80 +44005,10 @@ function clSaveContact(){
 }
 /* ----- locations ----- */
 function clRegOf(c, l){ const id = l.billing === 'own' || l.kind === 'head' ? l.taxId : ''; if(!id) return l.uses.indexOf('Billing') > -1 ? 'Billed to head office' : ''; return ncTaxRegime(l.country).idShort + ' ' + id; }
-function clLocationsTab(c){
-  clientEnsure(c);
-  return '<div class="cl-card cl-list">' + c.locations.map(function(l){ const addr = [l.street, l.city, l.state, l.pin, l.country !== 'India' ? l.country : ''].filter(Boolean).join(', '); const reg = clRegOf(c, l);
-    return '<div class="cl-locrow"><div><b>' + cle(clLocName(l)) + '</b><span class="cl-muted">' + cle(addr) + '</span><span class="cl-muted">' + cle([l.uses.join(', ').toLowerCase().replace(/^./, function(m){ return m.toUpperCase(); }), reg].filter(Boolean).join(' · ')) + '</span></div><a class="cl-link" target="_blank" rel="noopener" href="https://maps.google.com/?q=' + encodeURIComponent(addr) + '">Map</a></div>'; }).join('') + '</div>' + (canI('clients', 'Edit') ? '<button type="button" class="cl-btn" onclick="openClientPage(\'' + c.id + '\')">Add or change a location</button>' : '');
-}
 /* ----- terms ----- */
 const CL_MODELS = [['contingency', 'Contingency'], ['retained', 'Retained'], ['rpo', 'RPO'], ['contract', 'Contract staffing']];
-function clFeeText(v){ if(v.model === 'contract') return (v.markup || 0) + '% markup on pay'; if(v.model === 'retained' || v.model === 'rpo') return clMoney(v.retainer || 0, v.currency) + ' a month' + (v.success ? ' + ' + v.success + '% on success' : ''); return v.feeType === 'fixed' ? clMoney(v.fixed || 0, v.currency) + ' per hire' : (v.pct == null ? 'Not set' : v.pct + '% of annual CTC'); }
-function clTermsTab(c){
-  clientEnsure(c); const v = clCommercial(c), ed = CL.edit && CL.edit.kind === 'terms', ag = c.agreement || {};
-  const row = function(k, val){ return '<div class="cl-kv"><span>' + k + '</span><b>' + val + '</b></div>'; };
-  const model = (CL_MODELS.find(function(m){ return m[0] === v.model; }) || CL_MODELS[0])[1];
-  const left = '<section class="cl-sec"><div class="cl-sechead"><h2>Commercial terms</h2>' + (canI('clients', 'Edit') && !ed ? '<button type="button" class="cl-link" onclick="clEditTerms()">Edit</button>' : '') + '</div>' + (ed ? clTermsEditor(c, v) :
-    row('How you work', model) + row('Fee', cle(clFeeText(v))) + row('Replacement', v.replacementDays ? v.replacementDays + ' days' : 'None') + row('Payment', v.paymentDays ? 'Net ' + v.paymentDays : 'Due on receipt') + row('Agreement', ag.start ? 'Signed · renews ' + new Date(ag.renewal || ag.start).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : 'Not signed yet') + (c.commercials.length > 1 ? '<p class="cl-muted">Version ' + v.version + ' from ' + v.effectiveFrom + '. Earlier placements keep their own terms.</p>' : '')) + '</section>' +
-    '<section class="cl-sec"><h2>Tax and invoicing</h2>' + clBillingLocations(c).map(function(l){ return clTaxRow(c, l); }).join('') + '<p class="cl-muted cl-foot2">Set from each billing location’s registration and kept current automatically. Issued invoices keep the rules they were raised under.</p></section>';
-  return '<div class="cl-two cl-two--terms"><div>' + left + '</div><div>' + clCalcHTML(c) + '</div></div>';
-}
-function clTaxRow(c, l){
-  const t = clTaxFor(c, l), o = l.taxOverride, ed = CL.taxEdit === l.id, canDirect = clIsOwnerRole();
-  const why = [t.why].concat(t.withholding ? ['Client deducts ' + t.withholding.text.replace('TDS ', 'TDS ') + ' ' + t.withholding.rate + '%'] : []).concat(t.note ? [t.note] : []);
-  const what = clTip(cle(clTaxText(t)), clLocName(l) + ': ' + clTaxText(t), why.filter(Boolean).map(cle));
-  return '<div class="cl-taxrow"><div class="cl-taxrow__l"><b>' + cle(clBillName(l)) + '</b><span class="cl-muted">' + cle(l.country !== 'India' ? l.country : l.state) + '</span></div><div class="cl-taxrow__t">' + what + (o && o.status === 'pending' ? ' <span class="att">Waiting for approval</span>' : '') + '</div><div class="cl-taxrow__a">' +
-    (o && o.status === 'active' ? '<button type="button" class="cl-link" onclick="clBackToRule(\'' + c.id + '\',\'' + l.id + '\')">Back to rule</button>' : '') + (o && o.status === 'pending' && canDirect ? '<button type="button" class="cl-link" onclick="clDecideTax(\'' + c.id + '\',\'' + l.id + '\',true)">Approve</button><button type="button" class="cl-link" onclick="clDecideTax(\'' + c.id + '\',\'' + l.id + '\',false)">Decline</button>' : '') + (canI('clients', 'Edit') ? '<button type="button" class="cl-link" onclick="CL.taxEdit=\'' + l.id + '\'; CL.taxDraft={value:\'\',why:\'\'}; clAcctDraw()">Change</button>' : '') + '</div></div>' +
-    (o && o.status === 'active' ? '<p class="cl-muted cl-manual">Set by ' + cle(o.byName || 'you') + ' · ' + cle(o.reason) + (o.ruleMoved ? ' · rules changed: ' + cle(o.ruleMoved) : '') + '</p>' : '') + (ed ? clTaxEditor(c, l) : '');
-}
-function clTaxEditor(c, l){
-  const d = CL.taxDraft || (CL.taxDraft = { value:'', why:'' }), rule = clTaxFor(Object.assign({}, c, {}), Object.assign({}, l, { taxOverride:null })).key;
-  return '<div class="cl-edit"><p class="cl-lab">Tax it as</p><div class="cl-chips" role="radiogroup" aria-label="Tax it as">' + CL_OVERRIDES.map(function(o){ return '<button type="button" role="radio" aria-checked="' + (d.value === o[0]) + '" class="cl-chip' + (d.value === o[0] ? ' is-on' : '') + '" onclick="clTaxPick(\'' + o[0] + '\')">' + o[1] + (o[0] === rule ? ' (suggested)' : '') + '</button>'; }).join('') + '</div>' +
-    '<label class="cl-field"><span>Why</span><input id="cl-why" class="cl-input" value="' + cle(d.why) + '" oninput="CL.taxDraft.why=this.value" placeholder="A few words, kept with every invoice it affects"></label><p class="cl-err" id="cl-tax-err" hidden></p><div class="cl-actions"><button type="button" class="cl-btn" onclick="CL.taxEdit=null; clAcctDraw()">Cancel</button><button type="button" class="btn--go" onclick="clSaveTax(\'' + c.id + '\',\'' + l.id + '\')">' + (clIsOwnerRole() ? 'Save' : 'Send for approval') + '</button></div></div>';
-}
-function clTaxPick(v){ const w = document.getElementById('cl-why'); if(w) CL.taxDraft.why = w.value; CL.taxDraft.value = v; clAcctDraw(); }
-function clSaveTax(id, locId){
-  const c = clientById(id), l = c.locations.find(function(x){ return x.id === locId; }), d = CL.taxDraft || {}, err = function(m){ const e = document.getElementById('cl-tax-err'); if(e){ e.textContent = m; e.hidden = false; } };
-  if(!d.value) return err('Pick how it should be taxed.'); const rule = resolveTax({ supplierEntity:clOurEntity(), location:l }).key;
-  if(d.value === rule){ l.taxOverride = null; CL.taxEdit = null; clAcctDraw(); return; }
-  if(String(d.why || '').trim().length < 12) return err('Say why in a few words. It’s kept with every invoice it affects.');
-  const me = currentActingUser(), direct = clIsOwnerRole(); l.taxOverride = { value:d.value, reason:d.why.trim(), byName:me ? me.name : 'You', byId:me ? me.id : null, at:clIso(ivNowMsSafe()), status:direct ? 'active' : 'pending', until:'changed' };
-  clientActivity(c, 'Tax for ' + clLocName(l) + ' set to ' + clOverrideLabel(d.value) + (direct ? '' : ', waiting for approval') + ' · ' + d.why.trim()); logAudit('Clients', direct ? 'Tax set by hand' : 'Tax change sent for approval', c.name + ' · ' + clLocName(l) + ' · ' + clOverrideLabel(d.value) + ' · ' + d.why.trim());
-  CL.taxEdit = null; clAcctDraw(); toast(direct ? 'Saved. ' + clLocName(l) + ' is set by hand.' : 'Sent to the owner for approval. The rule applies until then.');
-}
 function clBackToRule(id, locId){ const c = clientById(id), l = c.locations.find(function(x){ return x.id === locId; }); l.taxOverride = null; clientActivity(c, 'Tax for ' + clLocName(l) + ' is back to the rule'); logAudit('Clients', 'Tax back to rule', c.name + ' · ' + clLocName(l)); clAcctDraw(); toast('Back to the rule for ' + clLocName(l) + '.'); }
 function clDecideTax(id, locId, yes){ const c = clientById(id), l = c.locations.find(function(x){ return x.id === locId; }); if(!clIsOwnerRole()) return; if(yes){ l.taxOverride.status = 'active'; } else l.taxOverride = null; clientActivity(c, 'Tax change ' + (yes ? 'approved' : 'declined') + ' · ' + clLocName(l)); logAudit('Approvals', yes ? 'Tax change approved' : 'Tax change declined', c.name + ' · ' + clLocName(l)); clAcctDraw(); toast(yes ? 'Approved.' : 'Declined.'); }
-function clEditTerms(){ const c = clientById(clientDetailState.id), v = clCommercial(c); CL.edit = { kind:'terms', d:{ model:v.model, feeType:v.feeType || 'percent', pct:v.pct == null ? '' : String(v.pct), fixed:v.fixed == null ? '' : String(v.fixed), retainer:v.retainer == null ? '' : String(v.retainer), success:v.success == null ? '' : String(v.success), markup:v.markup == null ? '' : String(v.markup), replacementDays:String(v.replacementDays == null ? 90 : v.replacementDays), paymentDays:String(v.paymentDays == null ? 30 : v.paymentDays) } }; clAcctDraw(); }
-function clTermsEditor(c, v){
-  const d = CL.edit.d, set = function(k, val){ return 'clTermSet(\'' + k + '\',\'' + val + '\')'; }, opt = function(k, val, label, on){ return '<button type="button" class="cl-chip' + (on ? ' is-on' : '') + '" aria-pressed="' + on + '" onclick="' + set(k, val) + '">' + label + '</button>'; };
-  const num = function(k, label, suffix){ return '<label class="cl-field"><span>' + label + '</span><span class="cl-suffix"><input class="cl-input" inputmode="decimal" value="' + cle(d[k]) + '" oninput="CL.edit.d.' + k + '=this.value">' + (suffix ? '<i>' + suffix + '</i>' : '') + '</span></label>'; };
-  const rep = ['0', '30', '60', '90', '180'], pay = ['0', '15', '30', '45', '60'];
-  return '<p class="cl-lab">How you work</p><div class="cl-chips">' + CL_MODELS.map(function(m){ return opt('model', m[0], m[1], d.model === m[0]); }).join('') + '</div>' +
-    (d.model === 'contingency' ? '<p class="cl-lab">Fee is</p><div class="cl-chips">' + opt('feeType', 'percent', '% of annual CTC', d.feeType === 'percent') + opt('feeType', 'fixed', 'Fixed per hire', d.feeType === 'fixed') + '</div>' + (d.feeType === 'fixed' ? num('fixed', 'Fee', clCur(v.currency).trim() || '₹') : num('pct', 'Fee', '%')) : d.model === 'contract' ? num('markup', 'Markup on pay', '%') : num('retainer', 'Monthly fee', clCur(v.currency).trim() || '₹') + num('success', 'Success fee', '%')) +
-    '<p class="cl-lab">Replacement</p><div class="cl-chips">' + rep.map(function(r){ return opt('replacementDays', r, r === '0' ? 'None' : r + ' days', d.replacementDays === r); }).join('') + opt('replacementDays', 'custom', 'Custom…', rep.indexOf(d.replacementDays) < 0) + '</div>' + (rep.indexOf(d.replacementDays) < 0 ? num('replacementDays', 'Replacement days', 'days') : '') +
-    '<p class="cl-lab">Payment</p><div class="cl-chips">' + pay.map(function(r){ return opt('paymentDays', r, r === '0' ? 'Due on receipt' : 'Net ' + r, d.paymentDays === r); }).join('') + opt('paymentDays', 'custom', 'Custom…', pay.indexOf(d.paymentDays) < 0) + '</div>' + (pay.indexOf(d.paymentDays) < 0 ? num('paymentDays', 'Payment days', 'days') : '') +
-    '<p class="cl-err" id="cl-terms-err" hidden></p><div class="cl-actions"><button type="button" class="cl-btn" onclick="CL.edit=null; clAcctDraw()">Cancel</button><button type="button" class="btn--go" onclick="clSaveTerms()">Save as a new version</button></div>';
-}
-function clTermSet(k, val){ const d = CL.edit.d; d[k] = val === 'custom' ? (k === 'replacementDays' ? '120' : '40') : val; clAcctDraw(); }
-function clSaveTerms(){
-  const c = clientById(clientDetailState.id), d = CL.edit.d, err = function(m){ const e = document.getElementById('cl-terms-err'); if(e){ e.textContent = m; e.hidden = false; } };
-  const n = function(x){ return x === '' || x == null ? null : Number(x); };
-  if(d.model === 'contingency' && d.feeType === 'percent' && !(n(d.pct) >= 0 && n(d.pct) <= 100)) return err('Enter a fee between 0 and 100%.');
-  if(!/^\d+$/.test(String(d.replacementDays)) || Number(d.replacementDays) < 0 || Number(d.replacementDays) > 365) return err('Enter replacement days from 0 to 365.'); if(!/^\d+$/.test(String(d.paymentDays)) || Number(d.paymentDays) > 180) return err('Enter payment days from 0 to 180.');
-  const v = clAddCommercial(c, { model:d.model, feeType:d.feeType, pct:n(d.pct), fixed:n(d.fixed), retainer:n(d.retainer), success:n(d.success), markup:n(d.markup), replacementDays:Number(d.replacementDays), paymentDays:Number(d.paymentDays) }); c.engagement = d.model;
-  clientActivity(c, 'Terms changed (version ' + v.version + '): ' + clFeeText(v) + ', replacement ' + v.replacementDays + ' days, payment ' + v.paymentDays + ' days'); logAudit('Clients', 'Client terms changed', c.name + ' · version ' + v.version);
-  const below = d.model === 'contingency' && d.feeType === 'percent' && n(d.pct) != null && n(d.pct) < 8.33; CL.edit = null; clAcctDraw(); toast('Terms saved' + (below ? '. The fee is below your 8.33% standard and goes to the owner for approval before the first invoice.' : '.'));
-}
-function clCalcHTML(c){
-  const locs = clBillingLocations(c), sel = locs.find(function(l){ return l.id === CL.calc.loc; }) || locs[0], cur = sel.currency || clCountryCur(sel.country);
-  const opts = cur === 'INR' ? [1200000, 1800000, 2400000, 3600000, 4800000] : [40000, 60000, 80000, 100000, 140000];
-  const key = cur === 'INR' ? 'inr' : 'fx'; let ctc = CL.calc[key] || (cur === 'INR' ? 2400000 : 80000); if(opts.indexOf(ctc) < 0) ctc = opts[2];
-  const e = clEarn(c, sel.id, ctc), lbl = function(n){ return cur === 'INR' ? '₹' + (n / 1e5) + 'L' : clMoney(n, cur).replace(/,000$/, 'k'); };
-  const taxLines = e.taxes.map(function(t){ return t.label + ' ' + t.rate + '% ' + clMoney(t.amount, cur); });
-  return '<div class="cl-card cl-calc"><p class="cl-lab">One hire at</p><div class="cl-calc__row"><select class="cl-select" aria-label="Annual pay" data-k="' + key + '" onchange="CL.calc[this.dataset.k]=+this.value; clAcctDraw()">' + opts.map(function(o){ return '<option value="' + o + '"' + (o === ctc ? ' selected' : '') + '>' + lbl(o) + ' a year</option>'; }).join('') + '</select>' +
-    (locs.length > 1 ? '<select class="cl-select" aria-label="Billed to" onchange="CL.calc.loc=this.value; clAcctDraw()">' + locs.map(function(l){ return '<option value="' + l.id + '"' + (l.id === sel.id ? ' selected' : '') + '>Billed to ' + cle(clBillName(l)) + '</option>'; }).join('') + '</select>' : '<span class="cl-muted">Billed to ' + cle(clBillName(sel)) + '</span>') + '</div>' +
-    '<p class="cl-lab">You receive</p>' + clTip('<span class="cl-big">' + clMoney(e.receive, cur) + '</span>', 'How it adds up', ['Fee ' + clMoney(e.fee, cur)].concat(taxLines).concat(e.taxes.length ? [] : ['No tax on this invoice']).concat(['Invoice ' + clMoney(e.total, cur)]).concat(e.withheld ? ['TDS −' + clMoney(e.withheld, cur)] : []).concat([e.treatment.note || ''].filter(Boolean)).map(function(x){ return cle(x); })) +
-    '<p class="cl-muted">Invoice on the joining day, due in ' + (e.terms.paymentDays || 30) + ' days.' + (cur !== 'INR' ? ' PayTrack reports it in ₹ at the invoice-date rate.' : '') + '</p></div>';
-}
 /* ----- billing ----- */
 function clInvNo(r){ return r.invoiceNo || ('NS/26-27/' + String(1000 + (r.id || 0))); }
 function clBillingTab(c){
@@ -44114,7 +44018,7 @@ function clBillingTab(c){
     const tax = Math.round(fee * t.taxes.reduce(function(s, x){ return s + x.rate; }, 0) / 100), due = clRecDue(r, c), overdue = raised && !paid && due && due < PAYTRACK_TODAY, hold = r.invoiceHold || '';
     const status = hold ? '<span class="att">' + cle(hold) + '</span>' : paid ? '<span class="cl-sub">Paid</span>' : overdue ? '<span class="att">Overdue</span>' : raised ? '<span class="cl-sub">Due ' + cle(ptFmtDate(due)) + '</span>' : '<span class="cl-sub">Not invoiced</span>';
     const act = !raised ? '<button type="button" class="cl-link" onclick="ptRaiseInvoice(' + r.id + '); clAcctDraw()">Raise invoice</button>' : !paid ? '<button type="button" class="cl-link" onclick="ptMarkPaymentReceived(' + r.id + '); clAcctDraw()">Mark received</button>' : '';
-    return '<tr><td><div class="cl-name"><b>' + cle(r.name) + '</b><span>' + cle(r.role || '') + '</span></div></td><td class="cl-sub">' + cle(r.doj || r.completedDate || '') + '</td><td class="cl-sub">' + (raised ? cle(clInvNo(r)) : '—') + '</td><td>' + clTip(clMoney(fee + tax, cur), 'Invoice', ['Fee ' + clMoney(fee, cur), clTaxText(t) + ' ' + clMoney(tax, cur), 'Total ' + clMoney(fee + tax, cur)]) + '</td><td>' + status + '</td><td>' + act + '</td></tr>'; }).join('');
+    return '<tr><td><div class="cl-name"><b>' + cle(r.name) + '</b><span>' + cle(clFeeLine(c, r) || r.role || '') + '</span></div></td><td class="cl-sub">' + cle(r.doj || r.completedDate || '') + '</td><td class="cl-sub">' + (raised ? cle(clInvNo(r)) : '—') + '</td><td>' + clTip(clMoney(fee + tax, cur), 'Invoice', ['Fee ' + clMoney(fee, cur), clTaxText(t) + ' ' + clMoney(tax, cur), 'Total ' + clMoney(fee + tax, cur)]) + '</td><td>' + status + '</td><td>' + act + '</td></tr>'; }).join('');
   return '<div class="cl-card cl-tablewrap"><table class="cl-table"><thead><tr><th>Placement</th><th>Joined</th><th>Invoice</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div><div class="cl-foot"><span>Billed ' + clShort(m.billed) + ' this year · ' + clShort(m.collected) + ' collected</span><button type="button" class="cl-link" onclick="clOpenPay()">Open in PayTrack</button></div>';
 }
 /* ----- documents, activity ----- */
@@ -44318,22 +44222,8 @@ function clnSaveContact(){
 }
 
 /* ---------- commercial terms ---------- */
-function clnTermsHTML(){
-  const f = ncForm, cur = f.currency, set = function(k, v){ return 'clnSetTerm(\'' + k + '\',\'' + v + '\')'; }, opt = function(on, label, fn, role){ return clnChip(on, label, fn, role); };
-  const sym = (clCur(cur).trim() || cur), num = function(path, label, suffix, ph){ return clnField(label, '<span class="cl-suffix"><input class="cl-input' + (f.errors[path] ? ' has-err' : '') + '" inputmode="decimal" value="' + cle(ncGet(path)) + '" placeholder="' + cle(ph || '') + '" oninput="ncSet(\'' + path + '\', this.value); clnBelow()"><i>' + cle(suffix) + '</i></span>' + clnErr(path)); };
-  const rep = ['0', '30', '60', '90', '180'], repv = String(f.replacementDays), pay = ['0', '15', '30', '45', '60'], payDays = (/\d+/.exec(f.paymentTerms) || ['0'])[0], payv = f.paymentTerms === 'Due on Receipt' ? '0' : payDays;
-  const m = CLN.model;
-  return '<div class="cn-terms"><p class="cl-lab">How you work with them</p><div class="cn-models" role="radiogroup" aria-label="How you work">' + CL_MODELS.map(function(x){ return '<button type="button" role="radio" aria-checked="' + (m === x[0]) + '" class="cn-model' + (m === x[0] ? ' is-on' : '') + '" onclick="CLN.model=\'' + x[0] + '\'; ncRender()">' + x[1] + '</button>'; }).join('') + '</div>' +
-    (m === 'contingency' ? '<p class="cl-lab">Fee is</p><div class="cl-chips" role="radiogroup" aria-label="Fee is">' + opt(f.feeType === 'percent', '% of annual CTC', 'ncSet(\'feeType\',\'percent\'); ncRender()', 'radio') + opt(f.feeType === 'fixed', 'Fixed per hire', 'ncSet(\'feeType\',\'fixed\'); ncRender()', 'radio') + '</div><div class="cn-grid">' + (f.feeType === 'fixed' ? num('feeFixed', 'Fee', sym, '150000') : num('feePercent', 'Fee', '%', '8.33')) + clnField('Currency', '<select class="cl-input" aria-label="Currency" onchange="ncSet(\'currency\', this.value); ncRender()">' + NC_CURRENCIES.map(function(c){ return '<option value="' + c[0] + '"' + (f.currency === c[0] ? ' selected' : '') + '>' + cle(c[1]) + '</option>'; }).join('') + '</select>') + '</div>'
-      : m === 'contract' ? '<div class="cn-grid">' + num('markup', 'Markup on pay', '%', '12') + '</div>' : '<div class="cn-grid">' + clnField('Monthly ' + (m === 'rpo' ? 'fee' : 'retainer'), '<span class="cl-suffix"><input class="cl-input" inputmode="decimal" value="' + cle(CLN.retainer) + '" oninput="CLN.retainer=this.value"><i>' + sym + '</i></span>') + clnField('Success fee', '<span class="cl-suffix"><input class="cl-input" inputmode="decimal" value="' + cle(CLN.success) + '" oninput="CLN.success=this.value"><i>%</i></span>') + '</div>') +
-    '<p class="cn-below" id="cn-below" hidden></p>' +
-    '<p class="cl-lab">Replacement</p><div class="cl-chips" role="radiogroup" aria-label="Replacement">' + rep.map(function(r){ return opt(repv === r, r === '0' ? 'No replacement' : r + ' days', set('replacementDays', r), 'radio'); }).join('') + opt(rep.indexOf(repv) < 0, 'Custom…', set('replacementDays', 'custom'), 'radio') + '</div>' + (rep.indexOf(repv) < 0 ? '<div class="cn-grid">' + num('replacementDays', 'Replacement days', 'days') + '</div>' : '') +
-    '<p class="cl-lab">Payment</p><div class="cl-chips" role="radiogroup" aria-label="Payment">' + pay.map(function(r){ return opt(payv === r, r === '0' ? 'Due on receipt' : 'Net ' + r, set('payment', r), 'radio'); }).join('') + opt(pay.indexOf(payv) < 0, 'Custom…', set('payment', 'custom'), 'radio') + '</div>' + (pay.indexOf(payv) < 0 ? '<div class="cn-grid">' + clnField('Payment days', '<span class="cl-suffix"><input class="cl-input" inputmode="numeric" value="' + cle(payv) + '" oninput="clnPayDays(this.value)"><i>days</i></span>' + '<p class="cl-err" id="cn-err-pay" hidden></p>') + '</div>' : '') +
-    '<p class="cl-lab">Agreement</p><div class="cn-grid cn-grid--3">' + clnField('Agreement signed', '<input class="cl-input" type="date" value="' + cle(f.agreementDate) + '" onchange="ncSet(\'agreementDate\', this.value)">') + clnField('Renews on', '<input class="cl-input" type="date" value="' + cle(f.renewalDate) + '" onchange="ncSet(\'renewalDate\', this.value)">' + clnErr('renewalDate')) + clnField('Signed copy', '<button type="button" class="cl-btn" onclick="clnDoc(\'agreement\')">' + (CLN.docs.agreement ? 'View ' + cle(CLN.docs.agreement.name) : 'Upload') + '</button>') + '</div></div>';
-}
 function clnSetTerm(k, v){ const f = ncForm; if(k === 'payment'){ f.paymentTerms = v === 'custom' ? 'Net 40' : v === '0' ? 'Due on Receipt' : 'Net ' + v; } else if(k === 'replacementDays'){ f.replacementDays = v === 'custom' ? '120' : v; } ncRender(); }
 function clnPayDays(v){ const e = document.getElementById('cn-err-pay'), n = Number(v); if(!/^\d+$/.test(String(v).trim()) || n < 1 || n > 180){ if(e){ e.textContent = 'Enter payment days from 1 to 180.'; e.hidden = false; } return; } if(e) e.hidden = true; ncForm.paymentTerms = 'Net ' + n; }
-function clnBelowText(){ const f = ncForm; if(!f) return ''; if(CLN.model !== 'contingency' || f.feeType !== 'percent' || f.feePercent === '' || isNaN(Number(f.feePercent))) return ''; const p = Number(f.feePercent); if(p >= 8.33 || p < 0) return ''; const own = clIsOwnerRole(); const o = clientOwner({ ownerId:f.ownerId }) || currentActingUser(); return p + '% is below your 8.33% standard. ' + (own ? 'You are the owner, so it applies now.' : 'The client saves now; the fee goes to ' + ((typeof clientApprover === 'function' && clientApprover()) ? clientApprover().name : 'the owner') + ' for approval before the first invoice.'); }
 function clnBelow(){ if(!ncForm) return; const e = document.getElementById('cn-below'), t = clnBelowText(); if(e){ e.textContent = t; e.hidden = !t; } const b = document.getElementById('cn-save'); if(b) b.textContent = clnSaveLabel(); }
 function clnSaveLabel(){ const c = ncEditId ? clientById(ncEditId) : null, adding = !c || c.status === 'Draft'; return !adding ? 'Save changes' : (clnBelowText() && !clIsOwnerRole() ? 'Add client and send fee for approval' : (clientNeedsApproval() ? 'Send for approval' : 'Add client')); }
 
@@ -44435,6 +44325,396 @@ function clnApply(c, s, mode, wasEdit){
   logAudit('Clients', wasEdit ? 'Client locations and terms saved' : 'Client locations and terms set', c.name + ' · ' + c.locations.length + ' location' + (c.locations.length === 1 ? '' : 's'));
 }
 document.addEventListener('mousedown', function(e){ if(typeof ncPickerPath !== 'undefined' && ncPickerPath && !(e.target.closest && e.target.closest('[data-nc-picker]'))){ ncPickerPath = null; if(document.getElementById('nc-root')) ncRender(); } }, true);
+
+/* ---------- cl-fees.js ---------- */
+/* ============================================================
+   CLIENTS v7: fee by CTC slab, per-job fees, ownership window, revenue target, map pins.
+   Loaded after cl-core: these definitions supersede the flat-fee versions.
+============================================================ */
+const CL_SLABS_DEFAULT = [{ uptoLakh:10, pct:6 }, { uptoLakh:25, pct:8.33 }, { uptoLakh:null, pct:10 }];
+function clBasis(v){ return v.feeBasis || (v.feeType === 'fixed' ? 'fixed' : 'pct'); }
+function clSlabsOf(v){ return (v && v.slabs && v.slabs.length >= 2 ? v.slabs : CL_SLABS_DEFAULT).map(function(s){ return { uptoLakh:s.uptoLakh, pct:s.pct }; }); }
+function clL(n){ return '₹' + (+Number(n).toFixed(2)) + 'L'; }
+function clSlabLabel(slabs, i){ const s = slabs[i], p = i > 0 ? slabs[i - 1].uptoLakh : null; return s.uptoLakh == null ? 'Above ' + clL(p) : i === 0 ? 'Up to ' + clL(s.uptoLakh) : clL(p) + ' to ' + clL(s.uptoLakh); }
+function clSlabIndex(slabs, ctc){ const l = ctc / 100000; for(let i = 0; i < slabs.length; i++){ if(slabs[i].uptoLakh == null || l <= slabs[i].uptoLakh) return i; } return slabs.length - 1; }
+function clSlabCheck(slabs){
+  for(let i = 0; i < slabs.length; i++){ const p = Number(slabs[i].pct); if(!(p > 0 && p <= 100) || slabs[i].pct === '' || slabs[i].pct == null) return 'Each slab needs a fee between 0 and 100%.'; }
+  for(let i = 0; i < slabs.length - 1; i++){ const u = Number(slabs[i].uptoLakh); if(slabs[i].uptoLakh === '' || slabs[i].uptoLakh == null || !(u > 0)) return 'Each slab’s upper CTC must be higher than the one before.'; if(i > 0 && u <= Number(slabs[i - 1].uptoLakh)) return 'Each slab’s upper CTC must be higher than the one before.'; }
+  return '';
+}
+/** the slab that covers a typical hire (₹10 to 25L) is the one compared with the 8.33% standard */
+function clSlabTypicalPct(slabs){ return Number(slabs[clSlabIndex(slabs, 1800000)].pct); }
+function clCtcText(n, cur){ return cur && cur !== 'INR' ? clMoney(n, cur).replace(/,000$/, 'k') : n >= 100000 ? clL(n / 100000) : clMoney(n, 'INR'); }
+/** fee for one hire: percent, slab or fixed. A job can carry its own fee, and an old placement keeps its own terms version. */
+function clientFee(c, locId, ctc, date, version, job){
+  clientEnsure(c); const v = version ? (c.commercials.find(function(x){ return x.version === version; }) || clCommercial(c, date)) : clCommercial(c, date);
+  const l = c.locations.find(function(x){ return x.id === locId; }) || c.locations[0], cur = l.currency || clCountryCur(l.country), basis = clBasis(v);
+  let fee = 0, line = '', slabIdx = null;
+  if(job && job.feeOverride && job.feeOverride.status === 'active'){ fee = ctc * job.feeOverride.pct / 100; line = job.feeOverride.pct + '% set for this job of ' + clMoney(ctc, cur); }
+  else if(v.model === 'retained' || v.model === 'rpo'){ fee = 0; line = clMoney(v.retainer || 0, cur) + ' a month'; }
+  else if(v.model === 'contract'){ fee = ctc * ((v.markup || 0) / 100); line = (v.markup || 0) + '% markup on ' + clMoney(ctc, cur); }
+  else if(basis === 'fixed'){ fee = v.fixed || 0; line = 'Fixed ' + clMoney(fee, cur) + ' per hire'; }
+  else if(basis === 'slab'){ const s = clSlabsOf(v); slabIdx = cur === 'INR' ? clSlabIndex(s, ctc) : Math.min(1, s.length - 1); fee = ctc * s[slabIdx].pct / 100; line = s[slabIdx].pct + '% (' + clSlabLabel(s, slabIdx).replace(' to ', '–') + ' slab) of ' + clMoney(ctc, cur); }
+  else { fee = ctc * ((v.pct || 0) / 100); line = (v.pct || 0) + '% of ' + clMoney(ctc, cur); }
+  return { fee:Math.round(fee), currency:cur, version:v.version, terms:v, basis:basis, line:line, slab:slabIdx };
+}
+function clBindTerms(c){
+  clientEnsure(c); c.terms = c.terms || {}; const d = Object.getOwnPropertyDescriptor(c.terms, 'feePercent'); if(d && d.get) return;
+  Object.defineProperty(c.terms, 'feePercent', { enumerable:true, configurable:true, get:function(){ const v = clCommercial(c); return clBasis(v) === 'pct' ? (v.pct == null ? null : v.pct) : null; }, set:function(x){ clCommercial(c).pct = x; } });
+}
+function clAddCommercial(c, terms){
+  clientEnsure(c); const cur = clCommercial(c); const v = Object.assign({}, cur, terms, { version:c.commercials.reduce(function(m, x){ return Math.max(m, x.version); }, 0) + 1, effectiveFrom:clIso(ivNowMsSafe()) });
+  v.feeBasis = clBasis(v); if(v.feeBasis === 'fixed') v.feeType = 'fixed'; else v.feeType = 'percent'; c.commercials.push(v);
+  c.terms = c.terms || {}; Object.assign(c.terms, { feeType:v.feeType, feeBasis:v.feeBasis, feeFixed:v.feeBasis === 'fixed' ? v.fixed : null, replacementDays:v.replacementDays, paymentDays:v.paymentDays, markupPercent:v.markup, model:v.model }); clBindTerms(c);
+  c.paymentTerms = v.paymentDays ? 'Net ' + v.paymentDays : 'Due on receipt'; return v;
+}
+function clOwnership(c){ return (clCommercial(clientEnsure(c)).ownershipDays) || 180; }
+function clOwnershipText(d){ return d >= 365 ? '1 year' : d + ' days'; }
+
+/* ---------- revenue target ---------- */
+const CL_FY = '2026-27';
+function clLastFyRevenue(c){ const a = new Date(2025, 3, 1); return clPayRecords(c).filter(function(r){ const d = clRecDate(r); return !r.reason && d && d >= a && d < CL_FY_START && (r.invoiceStatus === 'Raised' || r.invoiceStatus === 'Paid'); }).reduce(function(s, r){ return s + clRecFee(r); }, 0); }
+function clTarget(c){ const t = c.revenueTarget && c.revenueTarget[CL_FY]; if(t) return { value:t, suggested:false }; const last = clLastFyRevenue(c), base = last || clientMoney(c.id).billed; return { value:Math.max(200000, Math.ceil(base * 1.2 / 50000) * 50000), suggested:true }; }
+function clOrgTarget(){ const vis = CLIENTS.filter(function(c){ return clientVisibleTo(c) && clStage(c) === 'active'; }); return vis.length ? vis.reduce(function(s, c){ return s + clTarget(c).value; }, 0) : CL_TARGET; }
+function clCanSetTarget(c){ const me = currentActingUser(); return clIsOwnerRole() || (!!me && c.ownerId === me.id); }
+
+/* ---------- jobs: terms copied at creation, expected fee, a fee for one job ---------- */
+function clJobCtc(job){ const m = /(\d+(?:\.\d+)?)\s*(?:–|-|to)\s*(\d+(?:\.\d+)?)/.exec(String(job.salary || '')); return m ? [+m[1], +m[2]] : null; }
+function clJobExpected(job){
+  const c = clientForJob(job); if(!c || !job) return null; clientEnsure(c); const r = clJobCtc(job), ctc = r ? Math.round((r[0] + r[1]) / 2 * 100000) : 2400000, loc = clBillingLocations(c)[0], f = clientFee(c, loc.id, ctc, undefined, job.termsVersion, job);
+  return { fee:f.fee, ctc:ctc, cur:f.currency, range:r, text:'Expected fee ' + clMoney(f.fee, f.currency) + ' at ' + clCtcText(ctc, f.currency) + ' CTC', own:!!(job.feeOverride && job.feeOverride.status === 'active') };
+}
+function clJobFeeSet(jobId, pct, reason){
+  const j = jobById(jobId); if(!j) return { ok:false, err:'Job not found.' }; const p = Number(pct);
+  if(!(p > 0 && p <= 100)) return { ok:false, err:'Enter a fee between 0 and 100%.' }; if(String(reason || '').trim().length < 12) return { ok:false, err:'Say why in a few words. It’s kept with the job.' };
+  const me = currentActingUser(), direct = clIsOwnerRole(), c = clientForJob(j); j.feeOverride = { pct:p, reason:reason.trim(), byName:me ? me.name : 'You', status:direct ? 'active' : 'pending', at:clIso(ivNowMsSafe()) };
+  if(c) clientActivity(c, 'Fee for ' + j.title + ' set to ' + p + (direct ? '' : ', waiting for approval') + ' · ' + reason.trim()); logAudit('Clients', direct ? 'Fee set for one job' : 'Fee for one job sent for approval', j.title + ' · ' + p + '% · ' + reason.trim()); return { ok:true, pending:!direct };
+}
+function clJobFeeDecide(jobId, yes){ const j = jobById(jobId); if(!j || !j.feeOverride || !clIsOwnerRole()) return; if(yes) j.feeOverride.status = 'active'; else j.feeOverride = null; const c = clientForJob(j); if(c) clientActivity(c, 'Fee for ' + j.title + (yes ? ' approved' : ' declined')); logAudit('Approvals', yes ? 'Job fee approved' : 'Job fee declined', j.title); }
+(function hookJobs(){
+  const p = window.publishJob; if(typeof p === 'function' && !p.__cl){ window.publishJob = function(){ const n = JOBS.length, r = p.apply(this, arguments); if(JOBS.length > n){ const j = JOBS[JOBS.length - 1], c = clientForJob(j); if(c){ clientEnsure(c); const v = clCommercial(c); j.termsVersion = v.version; j.feeTerms = JSON.parse(JSON.stringify(v)); } } return r; }; window.publishJob.__cl = true; }
+  const d = window.renderJobDetail; if(typeof d === 'function' && !d.__cl){ window.renderJobDetail = function(id){ let h = d.apply(this, arguments); try { const j = jobById(id), e = j && clCanSeeMoney() && !clCorp() && clJobExpected(j); if(e){ const note = '<p class="cl-jobfee">' + cle(e.text) + (e.own ? ' · Fee set for this job' : '') + '</p>'; const i = h.indexOf('</h1>'); h = i > -1 ? h.slice(0, i + 5) + note + h.slice(i + 5) : note + h; } } catch(x){ console.error(x); } return h; }; window.renderJobDetail.__cl = true; if(RENDERERS['job-detail']) RENDERERS['job-detail'] = window.renderJobDetail; }
+})();
+
+/* ---------- maps ---------- */
+const CL_GEO = { 'Mumbai':[19.0760, 72.8777], 'Pune':[18.5204, 73.8567], 'Bengaluru':[12.9716, 77.5946], 'Chennai':[13.0827, 80.2707], 'Hyderabad':[17.3850, 78.4867], 'New Delhi':[28.6139, 77.2090], 'Ahmedabad':[23.0225, 72.5714], 'Kolkata':[22.5726, 88.3639], 'Gurugram':[28.4595, 77.0266], 'Noida':[28.5355, 77.3910], 'Dubai':[25.2048, 55.2708], 'Abu Dhabi':[24.4539, 54.3773], 'London':[51.5072, -0.1276], 'Manchester':[53.4808, -2.2426], 'Singapore':[1.3521, 103.8198], 'San Francisco':[37.7749, -122.4194], 'Sydney':[-33.8688, 151.2093] };
+/** PROTOTYPE stand-in for the Google Maps Geocoding or Places API. Production caches the result per location. */
+function clGeocode(l){ const a = CL_GEO[l.city]; if(!l.city) return null; let h = 7; String(l.street || '').split('').forEach(function(ch){ h = (h * 31 + ch.charCodeAt(0)) % 9973; }); const lat = (a ? a[0] : 20) + (h % 100) / 10000, lng = (a ? a[1] : 78) + (h % 70) / 10000; return { lat:+lat.toFixed(5), lng:+lng.toFixed(5), label:[l.street, l.city, l.state].filter(Boolean).join(', '), url:'https://maps.google.com/?q=' + lat.toFixed(5) + ',' + lng.toFixed(5) }; }
+function clLocSig(l){ return [l.street, l.city, l.state, l.pin, l.country].map(function(x){ return String(x || '').trim().toLowerCase(); }).join('|'); }
+function clMapConfirmed(l){ return !!(l.map && l.map.url && l.map.sig === clLocSig(l)); }
+function clMapUrl(l){ return clMapConfirmed(l) ? l.map.url : 'https://maps.google.com/?q=' + encodeURIComponent([l.street, l.city, l.state, l.pin, l.country].filter(Boolean).join(', ')); }
+/** In-person interview invites carry the map link and the directions for the chosen location. */
+function clVenueFor(iv){
+  const j = ivJob(iv), c = j && clientForJob(j); if(!c) return null; clientEnsure(c);
+  const loc = c.locations.filter(function(l){ return l.uses.indexOf('Interviews') > -1; }).find(function(l){ return j.loc && l.city && String(j.loc).indexOf(l.city) > -1; }) || c.locations.find(function(l){ return l.uses.indexOf('Interviews') > -1; }); if(!loc || !loc.street) return null;
+  return { address:[loc.street, loc.city, loc.state, loc.pin].filter(Boolean).join(', '), mapLink:clMapUrl(loc), reception:loc.directions || '', confirmed:clMapConfirmed(loc) };
+}
+(function hookSchedule(){
+  const o = window.confirmScheduleInterview; if(typeof o !== 'function' || o.__clv) return;
+  window.confirmScheduleInterview = function(){ const known = hmInterviews.slice(); const r = o.apply(this, arguments); try { hmInterviews.filter(function(iv){ return known.indexOf(iv) < 0 && iv.mode === 'Onsite' && !iv.venue; }).forEach(function(iv){ const v = clVenueFor(iv); if(v){ iv.venue = v; ivLog('Venue added from the client’s location', iv, v.address); } }); } catch(e){ console.error(e); } return r; };
+  window.confirmScheduleInterview.__clv = true;
+})();
+
+/* ---------- ownership: the duplicate review shows the window; a joining inside it can be a fee due ---------- */
+(function hookOwnership(){
+  const sd = window.slDup; if(typeof sd === 'function' && !sd.__co){ window.slDup = function(subId){ const n = DUPLICATE_CLAIMS.length; sd.apply(this, arguments); if(DUPLICATE_CLAIMS.length > n){ const claim = DUPLICATE_CLAIMS[DUPLICATE_CLAIMS.length - 1], sb = subById(subId), c = sb && clientForJob(jobById(sb.jobId)), days = c ? clOwnership(c) : 180, sent = Date.parse(((sb || {}).sent || {}).at || '') || claim.createdAt; claim.ownershipDays = days; claim.ownershipUntil = sent + days * 86400000; } }; window.slDup.__co = true; }
+  const dd = window.ivDupOf; if(typeof dd === 'function' && !dd.__co){ window.ivDupOf = function(iv){ const d = dd.apply(this, arguments); if(d && d.__claim && d.__claim.ownershipUntil) d.matched = d.matched + '. Ownership runs to ' + new Date(d.__claim.ownershipUntil).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) + ' (' + clOwnershipText(d.__claim.ownershipDays) + ')'; return d; }; window.ivDupOf.__co = true; }
+  const jr = window.ptCreateJoinedRecord; if(typeof jr === 'function' && !jr.__co){ window.ptCreateJoinedRecord = function(){
+    const r = jr.apply(this, arguments); if(!r) return r;
+    try { const c = clientById(r.clientId); if(c){ const job = jobById(r.jobId), loc = clBillingLocations(clientEnsure(c))[0], ctc = (r.joiningSalary || 0) * 100000, f = clientFee(c, r.locationId || loc.id, ctc, ivNowMsSafe(), job && job.termsVersion, job); r.feeAmount = f.fee; r.feeLine = f.line; r.termsVersion = f.version; r.placementFee = +(f.fee / 100000).toFixed(2);
+      const days = clOwnership(c), now = ivNowMs(), shared = SUBMISSIONS.filter(function(s){ const j = jobById(s.jobId); return s.candidateId === r.candidateId && j && clientForJob(j) === c && s.sent && Date.parse(s.sent.at || '') && now - Date.parse(s.sent.at) <= days * 86400000; });
+      if(shared.length && !shared.some(function(s){ return s.jobId === r.jobId; })){ r.ownership = { due:true, until:Date.parse(shared[0].sent.at) + days * 86400000, days:days }; clientActivity(c, 'Fee due · ownership · ' + r.name + ' joined inside the ' + clOwnershipText(days) + ' window'); } } } catch(e){ console.error(e); }
+    return r; }; window.ptCreateJoinedRecord.__co = true; }
+})();
+
+/* ---------- flags: fee approvals, ownership, job fees ---------- */
+(function extendFlags(){
+  const of = window.clFlags; if(typeof of !== 'function' || of.__v7) return;
+  window.clFlags = function(c){
+    const out = of.apply(this, arguments); clientEnsure(c);
+    if(c.feeApproval && c.feeApproval.status === 'pending') out.push({ p:3, text:'Fee waiting for approval', detail:c.feeApproval.pct + '% is below your 8.33% standard', act:clIsOwnerRole() ? 'Approve' : 'Review', kind:'fee' });
+    if(clCanSeeMoney()) clPayRecords(c).forEach(function(r){ if(r.ownership && r.ownership.due) out.push({ p:2, text:'Fee due · ownership', detail:r.name + ' joined within ' + clOwnershipText(r.ownership.days), act:'Review', kind:'own' }); });
+    clientJobs(c).forEach(function(j){ if(j.feeOverride && j.feeOverride.status === 'pending') out.push({ p:3, text:'Job fee waiting for approval', detail:j.title + ' · ' + j.feeOverride.pct + '%', act:clIsOwnerRole() ? 'Approve' : 'Review', kind:'job', job:j.id }); });
+    out.forEach(function(f){ if(f.p === 3 && /^Tax change waiting/.test(f.text) && clIsOwnerRole()){ f.act = 'Approve'; f.kind = 'tax'; } });
+    return out.sort(function(a, b){ return a.p - b.p; });
+  }; window.clFlags.__v7 = true;
+})();
+function clFlagAct(id, loc, act, kind, job){
+  const c = clientById(id);
+  if(act === 'Approve'){ if(kind === 'tax') clDecideTax(id, loc, true); else if(kind === 'fee'){ c.feeApproval.status = 'approved'; clientActivity(c, 'Fee approved'); logAudit('Approvals', 'Client fee approved', c.name); toast('Fee approved.'); } else if(kind === 'job'){ clJobFeeDecide(job, true); toast('Job fee approved.'); } clAcctDraw(); return; }
+  if(/^(Remind|Nudge|Ask)/.test(act)){ const to = clientRoute(c, /Remind|Ask for PO/.test(act) ? 'Invoices' : 'Profiles and feedback')[0]; toast('Message sent to ' + (to ? to.name : 'the main contact') + '.'); clientActivity(c, act + (to ? ' · ' + to.name : '')); return; }
+  if(act === 'Start renewal'){ clSetTab('documents'); return; } if(act === 'Review' || act === 'Prepare'){ clSetTab(kind === 'tax' || /Rules changed/.test(act) ? 'locations' : (kind === 'job' ? 'jobs' : kind === 'own' ? 'billing' : 'terms')); return; } toast('Done.');
+}
+(function seedV7(){
+  const c5 = CLIENTS.find(function(c){ return c.id === 'c5'; }), c6 = CLIENTS.find(function(c){ return c.id === 'c6'; }), c1 = CLIENTS[0];
+  if(c5){ clientEnsure(c5); const v = c5.commercials[0]; v.feeBasis = 'slab'; v.slabs = CL_SLABS_DEFAULT.map(function(s){ return Object.assign({}, s); }); v.feeType = 'percent'; v.pct = null; }
+  if(c6){ clientEnsure(c6); const v = c6.commercials[0]; v.feeBasis = 'fixed'; v.feeType = 'fixed'; v.fixed = 12000; v.pct = null; v.currency = 'AED'; v.levels = [{ name:'Junior', fee:6000 }, { name:'Mid-level', fee:12000 }, { name:'Senior', fee:20000 }]; c6.locations[0].currency = 'AED'; }
+  if(c1) c1.revenueTarget = { '2026-27':800000 };
+  const c4 = CLIENTS.find(function(c){ return c.id === 'c4'; }); if(c4){ clientEnsure(c4); const h = c4.locations[0]; h.street = h.street || 'Magarpatta City, Tower 3'; h.directions = 'Reception on the 4th floor. Carry a photo ID.'; h.map = { lat:18.5204, lng:73.8567, url:'https://maps.google.com/?q=18.52040,73.85670', source:'auto', confirmedBy:'Divya Menon', confirmedAt:'2026-09-10', sig:clLocSig(h) }; }
+  const c1h = c1 && c1.locations[0]; if(c1h){ c1h.directions = 'Gate 2, BKC. Ask for the TA desk on the 6th floor.'; c1h.map = { lat:19.0690, lng:72.8691, url:'https://maps.google.com/?q=19.06900,72.86910', source:'auto', confirmedBy:'Priya Sharma', confirmedAt:'2026-08-02', sig:clLocSig(c1h) }; }
+  CLIENTS.forEach(function(c){ clientEnsure(c); clBindTerms(c); const v = c.commercials[0]; if(v.ownershipDays == null) v.ownershipDays = 180; });
+})();
+
+/* ---------- cl-v7.js ---------- */
+/* ============================================================
+   CLIENTS v7 screens: account strip and Overview, Contacts with the team, plain Terms with the "You earn per hire" card,
+   the slab editor (account and Add client), a fee for one job, locations with a map pin, candidate ownership.
+============================================================ */
+function clTipKV(label, title, rows, foot){ return '<span class="cl-tip" tabindex="0">' + label + '<span class="cl-tip__c" role="tooltip"><b>' + cle(title) + '</b>' + rows.map(function(r){ return '<span class="cl-kvr"><em>' + cle(r[0]) + '</em><u>' + cle(r[1]) + '</u></span>'; }).join('') + (foot ? '<small>' + cle(foot) + '</small>' : '') + '</span></span>'; }
+function clDate(ms){ return new Date(ms).toLocaleDateString('en-IN', { day:'numeric', month:'short' }); }
+function clLinesOf(c){ return clPayRecords(c).filter(function(r){ return !r.reason; }); }
+function clStageCounts(j){ const o = { sourced:0, screening:0, client:0, interview:0 }; submissionsForJob(j.id).forEach(function(s){ const p = subPhase(s); if(p === 'applied') o.sourced++; else if(p === 'review' || p === 'ready') o.screening++; else if(p === 'client') o.client++; else if(p === 'process') o.interview++; }); return o; }
+function clAvgFee(c){ const m = clientMoney(c.id); if(m.placements && m.billed) return m.billed / m.placements; const loc = clBillingLocations(c)[0]; return clientFee(c, loc.id, 2400000).fee; }
+
+/* ---------- the four-number strip ---------- */
+function clStatStrip(c){
+  const m = clientMoney(c.id), recs = clLinesOf(c), money = clCanSeeMoney(), cells = [], jobs = clientOpenJobs(c);
+  if(money){
+    const last = recs.map(clRecDate).filter(Boolean).sort(function(a, b){ return b - a; })[0], prev = clLastFyRevenue(c);
+    cells.push(clStatCell('Revenue this year', clShort(m.billed), null, "clSetTab('billing')", clTipKV('<span class="cl-stat__v">' + clShort(m.billed) + '</span>', 'Revenue this year', [['Placements', String(m.placements)], ['Average fee', m.placements ? clShort(clAvgFee(c)) : '—'], ['Last placement', last ? clDate(last) : '—'], ['Last year', prev ? clShort(prev) : '—']])));
+    const over = recs.filter(function(r){ const d = clRecDue(r, c); return (r.invoiceStatus === 'Raised') && r.paymentStatus !== 'Received' && d && d < PAYTRACK_TODAY; }).sort(function(a, b){ return clRecFee(b) - clRecFee(a); })[0];
+    const soon = recs.filter(function(r){ const d = clRecDue(r, c); return r.invoiceStatus === 'Raised' && r.paymentStatus !== 'Received' && d && d >= PAYTRACK_TODAY; }).sort(function(a, b){ return clRecDue(a, c) - clRecDue(b, c); })[0];
+    const next = PAYTRACK_JOINED.filter(function(r){ return r.clientId === c.id && r.invoiceStatus === 'Not Raised'; })[0];
+    cells.push(clStatCell('Outstanding', m.outstanding ? clShort(m.outstanding) : '—', null, "clSetTab('billing')", clTipKV('<span class="cl-stat__v">' + (m.outstanding ? clShort(m.outstanding) : '—') + '</span>', 'Outstanding', [['Overdue', over ? clShort(clRecFee(over)) + ' · ' + clInvNo(over).split('/').pop() + ', ' + Math.max(1, Math.round((PAYTRACK_TODAY - clRecDue(over, c)) / 86400000)) + ' days' : '—'], ['Due ' + (soon ? clDate(clRecDue(soon, c)) : ''), soon ? clShort(clRecFee(soon)) : '—'], ['Next invoice', next ? clShort(clRecFee(next)) + ' · ' + next.name + ', joins ' + next.doj : '—']])));
+  }
+  const inInterview = jobs.reduce(function(s, j){ return s + clStageCounts(j).interview; }, 0);
+  cells.push(clStatCell('Open positions', String(clPositions(c)), null, "clSetTab('jobs')", clTipKV('<span class="cl-stat__v">' + clPositions(c) + '</span>', 'Open positions', jobs.map(function(j){ return [j.title, String(j.positions || 1)]; }).concat([['Candidates in interview', String(inInterview)]]))));
+  const d = c.feedbackDays || 0, waiting = jobs.reduce(function(s, j){ return s + clStageCounts(j).client; }, 0);
+  cells.push(clStatCell('Feedback in', d ? d + ' days' : '—', null, "clSetTab('jobs')", clTipKV('<span class="cl-stat__v">' + (d ? d + ' days' : '—') + '</span>', 'Feedback in', [['Fastest', d ? Math.max(1, d - 1) + ' days' : '—'], ['Slowest', d ? d + 3 + ' days' : '—'], ['Waiting now', waiting + ' profile' + (waiting === 1 ? '' : 's')]])));
+  return '<div class="cl-card cl-strip">' + cells.join('') + '</div>';
+}
+function clStatCell(label, value, tip, go, html){ return '<button type="button" class="cl-cell" onclick="' + go + '"><span class="cl-stat__l">' + label + '</span>' + html + '</button>'; }
+function clAcctHTML(c){
+  clientEnsure(c); const tab = clientDetailState.tab || 'overview', tabs = clTabs(); if(!tabs.some(function(t){ return t[0] === tab; })) clientDetailState.tab = 'overview';
+  const cities = clCityList(c), own = clientOwner(c);
+  return '<div id="cl-acct"><a class="cl-back" role="button" tabindex="0" onclick="showView(\'client-management\')" onkeydown="if(event.key===\'Enter\')showView(\'client-management\')">← ' + clWord() + '</a>' +
+    '<header class="cl-head"><div><h1 class="cl-h1">' + cle(c.name) + '</h1><p class="cl-muted">' + cle([c.industry, cities.slice(0, 3).join(', '), own ? 'Managed by ' + own.name : ''].filter(Boolean).join(' · ')) + (clStage(c) === 'paused' ? ' · Paused' : clStage(c) === 'prospect' ? ' · Prospect' : '') + '</p></div>' +
+    '<div class="cl-head__r"><button type="button" class="cl-btn" onclick="clSendProfiles(\'' + c.id + '\')">Send profiles</button>' + (canI('jobs', 'Create') ? '<button type="button" class="btn--go" onclick="clientNewJob(\'' + c.id + '\')">New job</button>' : '') + clMoreHTML(c) + '</div></header>' +
+    clStatStrip(c) + '<div class="cl-tabs" id="cl-tabs" role="tablist">' + tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="' + (clientDetailState.tab === t[0]) + '" onclick="clSetTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div><div class="cl-tabbody">' + clTabBody(c, clientDetailState.tab) + '</div></div>';
+}
+
+/* ---------- Overview: needs you, hiring progress, one aside ---------- */
+function clOverviewTab(c){
+  const flags = clFlags(c).slice(0, 3), jobs = clientOpenJobs(c), mc = clMainContact(c), own = clientOwner(c), ag = c.agreement || {}, last = (c.activity || []).slice().sort(function(a, b){ return new Date(b.at) - new Date(a.at); })[0];
+  const need = flags.length ? '<section class="cl-sec"><h2>Needs you</h2>' + flags.map(function(f){ return '<div class="cl-need"><div><span class="att">' + cle(f.text) + '</span><p class="cl-muted">' + cle(f.detail) + '</p></div><button type="button" class="cl-btn" onclick="clFlagAct(\'' + c.id + '\',\'' + (f.loc || '') + '\',\'' + cle(f.act).replace(/'/g, '’') + '\',\'' + (f.kind || '') + '\',\'' + (f.job || '') + '\')">' + cle(f.act) + '</button></div>'; }).join('') + '</section>' : '';
+  const prog = '<section class="cl-sec"><h2>Hiring progress</h2>' + (jobs.length ? jobs.map(function(j){ const s = clStageCounts(j);
+    return '<div class="cl-jobrow" onclick="openJob(\'' + j.id + '\')" role="link" tabindex="0"><div><b>' + cle(j.title) + '</b><span class="cl-muted">' + cle([j.location || j.loc, j.workMode].filter(Boolean).join(' · ')) + '</span></div>' + clTipKV('<span class="cl-prog"><b>' + s.client + ' with client</b><i>' + s.interview + ' in interview</i></span>', j.title, [['Sourced', String(s.sourced)], ['Screening', String(s.screening)], ['With client', String(s.client)], ['In interview', String(s.interview)], ['Recruiter', clJobRecs(j) || '—']]) + '</div>'; }).join('') : '<p class="cl-muted">' + (c.openRoles ? c.openRoles + ' open positions are tracked outside Oontu.' : 'No open jobs. Start one with New job.') + '</p>') + '</section>';
+  const aside = '<aside class="cl-card cl-aside"><div class="cl-asrow"><span class="cl-stat__l">Main contact</span>' + (mc ? '<div class="cl-person"><div><b>' + cle(mc.name) + '</b><span class="cl-muted">' + cle(mc.title || '') + '</span></div>' + clIcons(mc) + '</div>' : '<span class="cl-muted">Add a contact</span>') + '</div>' +
+    '<div class="cl-asrow"><span class="cl-stat__l">Account manager</span><b>' + cle(own ? own.name : 'Unassigned') + '</b></div><div class="cl-asrow"><span class="cl-stat__l">Agreement</span><b>' + (ag.start ? 'Signed · renews ' + cle(clDate(new Date((ag.renewal || ag.start) + 'T00:00:00').getTime())) : 'Not signed yet') + '</b></div>' +
+    '<div class="cl-asrow"><span class="cl-stat__l">Last update</span><b>' + (last ? cle(last.text.slice(0, 80)) + '</b><span class="cl-muted">' + cle(clDate(new Date(last.at).getTime())) : 'Nothing yet') + '</span></div><button type="button" class="cl-link cl-aslink" onclick="clSetTab(\'contacts\')">All contacts and your team</button></aside>';
+  return '<div class="cl-two"><div>' + need + prog + '</div><div>' + aside + '</div></div>';
+}
+/* ---------- Contacts: the client's people, then your team ---------- */
+function clContactsTab(c){
+  const team = clTeam(c).map(function(t){ return '<div class="cl-contact"><div class="cl-contact__main"><b>' + cle(t.name) + '</b><span class="cl-muted">' + cle(t.role) + '</span></div><span class="cl-icons"><button type="button" class="cl-ic" aria-label="Email ' + cle(t.name) + '" onclick="toast(\'Opening email to ' + cle(t.name).replace(/'/g, '’') + '.\')">' + oIcon('mail', 15, 1.7) + '</button></span></div>'; }).join('');
+  return clContactsPeople(c) + '<section class="cl-sec cl-teamsec"><h2>Your team on this account</h2><div class="cl-card cl-list">' + (team || '<p class="cl-muted cl-pad">No one is assigned yet.</p>') + '</div><button type="button" class="cl-link" onclick="toast(\'A secure link to this team is ready to share.\')">Share with client</button></section>';
+}
+
+/* ---------- Terms: plain rows, then what one hire earns ---------- */
+function clTermsRows(c){
+  const v = clCommercial(c), ag = c.agreement || {}, b = clBasis(v), cur = v.currency || clCountryCur(c.country), slabs = clSlabsOf(v);
+  const model = { contingency:'Permanent hiring', retained:'Retained search', rpo:'RPO', contract:'Contract staffing' }[v.model] || 'Permanent hiring';
+  let feeV, feeN;
+  if(v.model === 'contract'){ feeV = (v.markup || 0) + '% markup on pay'; feeN = 'Added to the monthly pay of each person placed.'; }
+  else if(v.model === 'retained' || v.model === 'rpo'){ feeV = clMoney(v.retainer || 0, cur) + ' a month'; feeN = v.success ? v.success + '% extra on success.' : 'Paid monthly, whether or not a role closes.'; }
+  else if(b === 'slab'){ feeV = 'By CTC slab'; feeN = slabs.map(function(s, i){ return clSlabLabel(slabs, i) + ': ' + s.pct + '%'; }).join(' · ').replace(/^Up to/, 'Up to'); }
+  else if(b === 'fixed'){ feeV = 'Fixed per hire' + (v.levels && v.levels.length ? ', by level' : ''); feeN = v.levels && v.levels.length ? v.levels.map(function(l){ return l.name + ' ' + clMoney(l.fee, cur); }).join(' · ') : clMoney(v.fixed || 0, cur) + ' for every hire.'; }
+  else { feeV = (v.pct == null ? 'Not set' : v.pct + '% of annual CTC'); feeN = 'Worked out on the CTC in the offer letter.'; }
+  const rows = [['Service', model, model === 'Permanent hiring' ? 'You find, they hire, you invoice on joining.' : model === 'Contract staffing' ? 'They pay for each person you place, month by month.' : 'A standing arrangement across their roles.'], ['Placement fee', feeV, feeN],
+    ['Replacement', v.replacementDays ? v.replacementDays + ' days' : 'None', v.replacementDays ? 'A free replacement if the hire leaves in this time.' : 'No replacement is promised.'], ['Payment', v.paymentDays ? 'Net ' + v.paymentDays : 'Due on receipt', v.paymentDays ? 'An invoice is due ' + v.paymentDays + ' days after it is raised.' : 'An invoice is due when it is raised.'],
+    ['Purchase order', v.poRequired ? 'Needed' : 'Not needed', v.poRequired ? 'Invoices wait for the PO number.' : 'Invoices go out without one.'], ['Candidate ownership', clOwnershipText(clOwnership(c)), 'From sharing a profile. If they hire that candidate through anyone in this time, the fee is still yours.'],
+    ['Agreement', ag.start ? 'Signed' : 'Not signed yet', ag.start ? 'Renews ' + new Date((ag.renewal || ag.start) + 'T00:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) + '.' : 'Upload it under Documents. Oontu reminds you before the first invoice.']];
+  return rows.map(function(r){ return '<div class="cl-trow"><div><span>' + r[0] + '</span><i>' + cle(r[2]) + '</i></div><b>' + cle(r[1]) + '</b></div>'; }).join('');
+}
+function clTermsTab(c){
+  clientEnsure(c); const v = clCommercial(c), ed = CL.edit && CL.edit.kind === 'terms';
+  const left = '<section class="cl-sec"><div class="cl-sechead"><h2>Commercial terms</h2>' + (canI('clients', 'Edit') && !ed ? '<button type="button" class="cl-link" onclick="clEditTerms()">Edit</button>' : '') + '</div>' + (ed ? clTermsEditor(c, v) : clTermsRows(c) + (c.commercials.length > 1 ? '<p class="cl-muted">Version ' + v.version + ' from ' + v.effectiveFrom + '. Earlier placements keep their own terms.</p>' : '')) + '</section>';
+  return '<div class="cl-two cl-two--terms"><div>' + left + '</div><div>' + clEarnCard(c) + '</div></div>';
+}
+function clEarnTitle(c){ return clCorp() ? 'You pay per hire' : c.engagement === 'contract' || clCommercial(c).model === 'contract' ? 'You earn per person, monthly' : 'You earn per hire'; }
+function clEarnInfo(c){ const corp = clCorp(); return '<span class="cl-i cl-tip" tabindex="0" aria-label="What this shows"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span class="cl-tip__c" role="tooltip"><b>What this shows</b><i>' + (corp ? 'What one hire costs you at typical salaries, under this vendor’s agreed fee.' : 'What one hire earns you at typical salaries, using this client’s agreed fee.') + '</i><i>' + (corp ? 'Use it to budget new requisitions and compare vendors before releasing a job.' : 'Below it: how far you are from this client’s revenue target this year, how many hires close the gap, and which open roles pay best, so the team knows where to push.') + '</i><small>Before GST. Updates with every placement and every change to the terms.</small></span></span>'; }
+function clExamples(c){
+  const v = clCommercial(c), loc = clBillingLocations(c)[0], cur = loc.currency || clCountryCur(loc.country), b = clBasis(v), out = [];
+  if(v.model === 'contract'){ [30000, 50000, 80000].forEach(function(s){ out.push([clMoney(s, cur) + ' a month', clMoney(Math.round(s * (v.markup || 0) / 100), cur)]); }); return out; }
+  if(v.model === 'retained' || v.model === 'rpo') return [['Every month', clMoney(v.retainer || 0, cur)]].concat(v.success ? [['On a successful hire', v.success + '% of CTC']] : []);
+  if(b === 'fixed') return (v.levels && v.levels.length ? v.levels : [{ name:'Every hire', fee:v.fixed || 0 }]).map(function(l){ return [l.name, clMoney(l.fee, cur)]; });
+  const ctcs = cur === 'INR' ? (b === 'slab' ? (function(){ const s = clSlabsOf(v); return s.map(function(x, i){ const p = i > 0 ? s[i - 1].uptoLakh : 0; return Math.round((x.uptoLakh == null ? p * 1.2 : (p + x.uptoLakh) / 2) * 100000); }); })() : [1200000, 2400000, 4000000]) : [40000, 80000, 140000];
+  ctcs.forEach(function(ct){ out.push([clCtcText(ct, cur) + ' CTC', clMoney(clientFee(c, loc.id, ct).fee, cur)]); }); return out;
+}
+function clTargetHTML(c){
+  const m = clientMoney(c.id), t = clTarget(c), avg = clAvgFee(c), gap = Math.max(0, t.value - m.billed), pct = Math.min(100, Math.round(m.billed / t.value * 100)), jobs = clientOpenJobs(c);
+  const hires = Math.max(1, Math.ceil(gap / Math.max(1, avg)));
+  const best = jobs.map(function(j){ return { j:j, e:clJobExpected(j) }; }).filter(function(x){ return x.e; }).sort(function(a, b){ return b.e.fee - a.e.fee; })[0];
+  const advice = best ? 'Best return now: ' + best.j.title + (best.e.range ? ' (₹' + best.e.range[0] + '–' + best.e.range[1] + 'L CTC)' : '') + ' earns about ' + clShort(best.e.fee) + ' per hire. ' + (best.j.positions || 1) + ' position' + ((best.j.positions || 1) === 1 ? '' : 's') + ' open.' : 'No open jobs right now. A new requirement is the fastest way to close the gap.';
+  return '<div class="cl-target"><p class="cl-lab">Target with this client · FY 2026–27</p><div class="cl-target__n"><b>' + clShort(m.billed) + '</b><span>of ' + clShort(t.value) + (t.suggested ? ' · suggested' : '') + '</span></div><div class="cl-track" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div><p class="cl-muted">' + (gap ? clShort(gap) + ' to go · about ' + hires + ' more hire' + (hires === 1 ? '' : 's') + ' at your ' + clShort(avg) + ' average fee.' : 'Target reached. Every hire from here is extra.') + '</p><p class="cl-muted cl-advice">' + cle(advice) + '</p></div>';
+}
+function clEarnCard(c){
+  const ex = clExamples(c), showTarget = !clCorp() && clStage(c) === 'active' && clCanSeeMoney();
+  return '<div class="cl-card cl-calc"><div class="cl-earnhead"><p class="cl-lab">' + clEarnTitle(c) + '</p>' + clEarnInfo(c) + '</div><div class="cl-examples">' + ex.map(function(r){ return '<div class="cl-exrow"><span>' + cle(r[0]) + '</span><b>' + cle(r[1]) + '</b></div>'; }).join('') + '</div><p class="cl-muted">Before GST. Invoiced on the joining date.</p>' + (showTarget ? clTargetHTML(c) : '') + '</div>';
+}
+
+/* ---------- the slab editor, shared by the account and Add client ---------- */
+function clSlabStore(ctx){ return ctx === 'edit' ? CL.edit.d : CLN; }
+function clSlabRedraw(ctx){ if(ctx === 'edit') clAcctDraw(); else ncRender(); }
+function clSlabNum(slabs){ return slabs.map(function(s){ return { uptoLakh:s.uptoLakh === null || s.uptoLakh === undefined ? null : (s.uptoLakh === '' ? '' : Number(s.uptoLakh)), pct:s.pct }; }); }
+function clSlabExample(slabs){ const err = clSlabCheck(slabs); if(err) return err; const n = clSlabNum(slabs), i = clSlabIndex(n, 1800000), pct = Number(n[i].pct); return 'A ₹18L hire earns ' + clMoney(1800000 * pct / 100, 'INR') + ' (' + pct + '%). The slab is picked from the CTC in the offer letter.'; }
+function clSlabEditorHTML(ctx){
+  const st = clSlabStore(ctx), slabs = st.slabs, n = slabs.length, num = clSlabNum(slabs);
+  const rows = slabs.map(function(s, i){ const last = i === n - 1, lbl = (!last && (s.uptoLakh === '' || isNaN(num[i].uptoLakh))) ? '' : clSlabLabel(num, i);
+    return '<tr><td class="cl-sub">' + cle(lbl) + '</td><td>' + (last ? '<span class="cl-sub">and above</span>' : '<span class="cl-suffix"><input class="cl-input" inputmode="decimal" aria-label="Up to, in lakh" value="' + cle(s.uptoLakh) + '" oninput="clSlabSet(\'' + ctx + '\',' + i + ',\'uptoLakh\',this.value,true)" onchange="clSlabSet(\'' + ctx + '\',' + i + ',\'uptoLakh\',this.value)"><i>L</i></span>') + '</td><td><span class="cl-suffix"><input class="cl-input" inputmode="decimal" aria-label="Fee" value="' + cle(s.pct) + '" oninput="clSlabSet(\'' + ctx + '\',' + i + ',\'pct\',this.value,true)"><i>%</i></span></td><td>' + (n > 2 && !last ? '<button type="button" class="cl-link" onclick="clSlabRemove(\'' + ctx + '\',' + i + ')">Remove</button>' : '') + '</td></tr>'; }).join('');
+  const err = clSlabCheck(slabs);
+  return '<div class="cl-slabs"><table><thead><tr><th>Annual CTC</th><th>Up to (₹ lakh)</th><th>Fee</th><th></th></tr></thead><tbody>' + rows + '</tbody></table><button type="button" class="cl-btn" onclick="clSlabAdd(\'' + ctx + '\')">Add slab</button><p class="' + (err ? 'cl-err' : 'cl-muted') + '" id="cl-slab-ex-' + ctx + '">' + cle(clSlabExample(slabs)) + '</p></div>';
+}
+function clSlabSet(ctx, i, k, v, live){ const st = clSlabStore(ctx); st.slabs[i][k] = v; if(typeof clnBelow === 'function' && ctx !== 'edit') clnBelow(); const e = document.getElementById('cl-slab-ex-' + ctx); if(e){ const err = clSlabCheck(st.slabs); e.textContent = clSlabExample(st.slabs); e.className = err ? 'cl-err' : 'cl-muted'; } if(!live) clSlabRedraw(ctx); }
+function clSlabAdd(ctx){ const st = clSlabStore(ctx), s = st.slabs, n = s.length, prev = Number(s[n - 2].uptoLakh) || 0; s.splice(n - 1, 0, { uptoLakh:prev + 10, pct:s[n - 1].pct }); clSlabRedraw(ctx); }
+function clSlabRemove(ctx, i){ const st = clSlabStore(ctx); if(st.slabs.length <= 2 || i >= st.slabs.length - 1) return; st.slabs.splice(i, 1); clSlabRedraw(ctx); }
+
+/* ---------- edit terms on the account ---------- */
+function clEditTerms(){
+  const c = clientById(clientDetailState.id), v = clCommercial(c), t = clTarget(c);
+  CL.edit = { kind:'terms', d:{ model:v.model || 'contingency', feeBasis:clBasis(v), slabs:clSlabsOf(v), pct:v.pct == null ? '' : String(v.pct), fixed:v.fixed == null ? '' : String(v.fixed), retainer:v.retainer == null ? '' : String(v.retainer), success:v.success == null ? '' : String(v.success), markup:v.markup == null ? '' : String(v.markup), replacementDays:String(v.replacementDays == null ? 90 : v.replacementDays), paymentDays:String(v.paymentDays == null ? 30 : v.paymentDays), ownershipDays:String(clOwnership(c)), poRequired:!!v.poRequired, target:String(+(t.value / 100000).toFixed(2)), targetSuggested:t.suggested } };
+  clAcctDraw();
+}
+function clTermsEditor(c, v){
+  const d = CL.edit.d, set = function(k, val){ return 'clTermSet(\'' + k + '\',\'' + val + '\')'; }, opt = function(k, val, label, on){ return '<button type="button" class="cl-chip' + (on ? ' is-on' : '') + '" aria-pressed="' + on + '" onclick="' + set(k, val) + '">' + label + '</button>'; };
+  const num = function(k, label, suffix){ return '<label class="cl-field"><span>' + label + '</span><span class="cl-suffix"><input class="cl-input" inputmode="decimal" value="' + cle(d[k]) + '" oninput="CL.edit.d.' + k + '=this.value">' + (suffix ? '<i>' + suffix + '</i>' : '') + '</span></label>'; };
+  const rep = ['0', '30', '60', '90', '180'], pay = ['0', '15', '30', '45', '60'], cur = clCur(v.currency).trim() || '₹';
+  return '<p class="cl-lab">How you work</p><div class="cl-chips">' + CL_MODELS.map(function(m){ return opt('model', m[0], m[1], d.model === m[0]); }).join('') + '</div>' +
+    (d.model === 'contingency' ? '<label class="cl-field"><span>Fee is</span><select class="cl-input" aria-label="Fee is" onchange="clTermSet(\'feeBasis\',this.value)"><option value="pct"' + (d.feeBasis === 'pct' ? ' selected' : '') + '>% of annual CTC</option><option value="slab"' + (d.feeBasis === 'slab' ? ' selected' : '') + '>By CTC slab</option><option value="fixed"' + (d.feeBasis === 'fixed' ? ' selected' : '') + '>Fixed per hire</option></select></label>' + (d.feeBasis === 'slab' ? clSlabEditorHTML('edit') : d.feeBasis === 'fixed' ? num('fixed', 'Fee', cur) : num('pct', 'Fee', '%')) : d.model === 'contract' ? num('markup', 'Markup on pay', '%') : num('retainer', 'Monthly fee', cur) + num('success', 'Success fee', '%')) +
+    '<p class="cl-lab">Replacement</p><div class="cl-chips">' + rep.map(function(r){ return opt('replacementDays', r, r === '0' ? 'None' : r + ' days', d.replacementDays === r); }).join('') + opt('replacementDays', 'custom', 'Custom…', rep.indexOf(d.replacementDays) < 0) + '</div>' + (rep.indexOf(d.replacementDays) < 0 ? num('replacementDays', 'Replacement days', 'days') : '') +
+    '<p class="cl-lab">Payment</p><div class="cl-chips">' + pay.map(function(r){ return opt('paymentDays', r, r === '0' ? 'Due on receipt' : 'Net ' + r, d.paymentDays === r); }).join('') + opt('paymentDays', 'custom', 'Custom…', pay.indexOf(d.paymentDays) < 0) + '</div>' + (pay.indexOf(d.paymentDays) < 0 ? num('paymentDays', 'Payment days', 'days') : '') +
+    '<p class="cl-lab">Purchase order</p><div class="cl-chips">' + opt('poRequired', 'no', 'Not needed', !d.poRequired) + opt('poRequired', 'yes', 'Needed', d.poRequired) + '</div>' +
+    '<p class="cl-lab">Candidate ownership</p><div class="cl-chips">' + [['90', '90 days'], ['180', '180 days'], ['365', '1 year']].map(function(x){ return opt('ownershipDays', x[0], x[1], d.ownershipDays === x[0]); }).join('') + '</div><p class="cl-muted">If the client hires a candidate you shared within this time, through anyone, the fee is still yours.</p>' +
+    (clCanSetTarget(c) && !clCorp() ? '<label class="cl-field"><span>Revenue target this year' + (d.targetSuggested ? ' · suggested' : '') + '</span><span class="cl-suffix"><input class="cl-input" inputmode="decimal" value="' + cle(d.target) + '" oninput="CL.edit.d.target=this.value; CL.edit.d.targetSuggested=false"><i>L</i></span></label>' : '') +
+    '<p class="cl-err" id="cl-terms-err" hidden></p><div class="cl-actions"><button type="button" class="cl-btn" onclick="CL.edit=null; clAcctDraw()">Cancel</button><button type="button" class="btn--go" onclick="clSaveTerms()">Save as a new version</button></div>';
+}
+function clTermSet(k, val){
+  const d = CL.edit.d; if(k === 'poRequired') d.poRequired = val === 'yes'; else if(k === 'feeBasis'){ d.feeBasis = val; if(val === 'slab' && (!d.slabs || d.slabs.length < 2)) d.slabs = CL_SLABS_DEFAULT.map(function(s){ return Object.assign({}, s); }); } else d[k] = val === 'custom' ? (k === 'replacementDays' ? '120' : '40') : val; clAcctDraw();
+}
+function clSaveTerms(){
+  const c = clientById(clientDetailState.id), d = CL.edit.d, err = function(m){ const e = document.getElementById('cl-terms-err'); if(e){ e.textContent = m; e.hidden = false; } return m; };
+  const n = function(x){ return x === '' || x == null ? null : Number(x); };
+  if(d.model === 'contingency' && d.feeBasis === 'slab'){ const m = clSlabCheck(d.slabs); if(m) return err(m); }
+  if(d.model === 'contingency' && d.feeBasis === 'pct' && !(n(d.pct) >= 0 && n(d.pct) <= 100)) return err('Enter a fee between 0 and 100%.');
+  if(!/^\d+$/.test(String(d.replacementDays)) || Number(d.replacementDays) < 0 || Number(d.replacementDays) > 365) return err('Enter replacement days from 0 to 365.'); if(!/^\d+$/.test(String(d.paymentDays)) || Number(d.paymentDays) > 180) return err('Enter payment days from 0 to 180.');
+  const slabs = d.feeBasis === 'slab' ? clSlabNum(d.slabs).map(function(s){ return { uptoLakh:s.uptoLakh, pct:Number(s.pct) }; }) : (clCommercial(c).slabs || null);
+  const v = clAddCommercial(c, { model:d.model, feeBasis:d.feeBasis, feeType:d.feeBasis === 'fixed' ? 'fixed' : 'percent', slabs:slabs, pct:d.feeBasis === 'pct' ? n(d.pct) : null, fixed:n(d.fixed), retainer:n(d.retainer), success:n(d.success), markup:n(d.markup), replacementDays:Number(d.replacementDays), paymentDays:Number(d.paymentDays), ownershipDays:Number(d.ownershipDays), poRequired:!!d.poRequired }); c.engagement = d.model;
+  if(clCanSetTarget(c) && d.target !== '' && !d.targetSuggested){ c.revenueTarget = c.revenueTarget || {}; c.revenueTarget[CL_FY] = Math.round(Number(d.target) * 100000); }
+  const stand = d.model === 'contingency' && (d.feeBasis === 'pct' ? n(d.pct) : d.feeBasis === 'slab' ? clSlabTypicalPct(clSlabNum(d.slabs)) : null), below = stand != null && stand < 8.33;
+  if(below && !clIsOwnerRole()) c.feeApproval = { status:'pending', pct:stand, by:(currentActingUser() || {}).name || 'A teammate', at:clIso(ivNowMsSafe()) };
+  clientActivity(c, 'Terms changed (version ' + v.version + '): ' + clFeeText(v) + ', replacement ' + v.replacementDays + ' days, payment ' + v.paymentDays + ' days'); logAudit('Clients', 'Client terms changed', c.name + ' · version ' + v.version);
+  CL.edit = null; clAcctDraw(); toast('Terms saved' + (below ? '. The fee is below your 8.33% standard' + (clIsOwnerRole() ? '.' : ' and goes to the owner for approval before the first invoice.') : '.'));
+}
+function clFeeText(v){ const b = clBasis(v); if(v.model === 'contract') return (v.markup || 0) + '% markup on pay'; if(v.model === 'retained' || v.model === 'rpo') return clMoney(v.retainer || 0, v.currency) + ' a month' + (v.success ? ' + ' + v.success + '% on success' : ''); if(b === 'slab') return 'by CTC slab'; return b === 'fixed' ? clMoney(v.fixed || 0, v.currency) + ' per hire' : (v.pct == null ? 'Not set' : v.pct + '% of annual CTC'); }
+function clFeeLine(c, r){ if(!r.joiningSalary) return r.feeLine || ''; try { return clientFee(c, r.locationId, r.joiningSalary * 100000, undefined, r.termsVersion, r.jobId ? jobById(r.jobId) : null).line; } catch(e){ return ''; } }
+
+/* ---------- jobs: a fee for one job ---------- */
+function clJobsTab(c){
+  const jobs = clientJobs(c); if(!jobs.length) return '<div class="cl-empty"><p>This client’s jobs will appear here.</p>' + (canI('jobs', 'Create') ? '<button type="button" class="btn--go" onclick="clientNewJob(\'' + c.id + '\')">New job</button>' : '') + '</div>';
+  const money = clCanSeeMoney(), ed = CL.edit && CL.edit.kind === 'jobfee' ? CL.edit : null;
+  return '<div class="cl-card cl-tablewrap"><table class="cl-table"><thead><tr><th>Job</th><th>Recruiter</th><th>Candidates</th>' + (money ? '<th>Fee</th>' : '') + '<th></th></tr></thead><tbody>' + jobs.map(function(j){ const e = money && clJobExpected(j), o = j.feeOverride;
+    const row = '<tr class="cl-tr" tabindex="0" role="link" onclick="openJob(\'' + j.id + '\')" onkeydown="if(event.key===\'Enter\')openJob(\'' + j.id + '\')"><td><div class="cl-name"><b>' + cle(j.title) + '</b><span>' + cle([j.location || j.loc, j.workMode].filter(Boolean).join(' · ')) + '</span></div></td><td class="cl-sub">' + cle(clJobRecs(j) || '—') + '</td><td>' + clPipeTip(j) + '</td>' +
+      (money ? '<td class="cl-sub">' + (o && o.status === 'active' ? 'Fee set for this job' : o && o.status === 'pending' ? '<span class="att">Waiting for approval</span>' : e ? clTip(cle(clShort(e.fee)), 'Expected fee', [cle(e.text)]) : '') + '</td>' : '') + '<td onclick="event.stopPropagation()">' + (j.status === 'On Hold' ? '<span class="att">On hold</span> ' : '') + (money && canI('jobs', 'Edit') ? (o && o.status === 'pending' && clIsOwnerRole() ? '<button type="button" class="cl-link" onclick="clJobFeeDecide(\'' + j.id + '\',true); clAcctDraw()">Approve</button><button type="button" class="cl-link" onclick="clJobFeeDecide(\'' + j.id + '\',false); clAcctDraw()">Decline</button>' : '<button type="button" class="cl-link" onclick="clJobFeeOpen(\'' + j.id + '\')">' + (o ? 'Change fee' : 'Set fee for this job') + '</button>') : '') + '</td></tr>';
+    const form = ed && ed.job === j.id ? '<tr><td colspan="5"><div class="cl-edit"><div class="cn-grid"><label class="cl-field"><span>Fee for this job</span><span class="cl-suffix"><input id="cl-jf-pct" class="cl-input" inputmode="decimal" value="' + cle(ed.pct) + '" placeholder="10"><i>%</i></span></label><label class="cl-field"><span>Why</span><input id="cl-jf-why" class="cl-input" value="' + cle(ed.why) + '" placeholder="A few words, kept with the job"></label></div><p class="cl-err" id="cl-jf-err" hidden></p><div class="cl-actions"><button type="button" class="cl-btn" onclick="CL.edit=null; clAcctDraw()">Cancel</button><button type="button" class="btn--go" onclick="clJobFeeSave()">' + (clIsOwnerRole() ? 'Save' : 'Send for approval') + '</button></div></div></td></tr>' : '';
+    return row + form; }).join('') + '</tbody></table></div>';
+}
+function clJobFeeOpen(id){ const j = jobById(id); CL.edit = { kind:'jobfee', job:id, pct:j.feeOverride ? String(j.feeOverride.pct) : '', why:'' }; clAcctDraw(); }
+function clJobFeeSave(){ const e = CL.edit, r = clJobFeeSet(e.job, document.getElementById('cl-jf-pct').value, document.getElementById('cl-jf-why').value); if(!r.ok){ const el = document.getElementById('cl-jf-err'); el.textContent = r.err; el.hidden = false; return; } CL.edit = null; clAcctDraw(); toast(r.pending ? 'Sent to the owner for approval. The client’s terms apply until then.' : 'Fee set for this job.'); }
+
+/* ---------- locations: map pin and directions on the account ---------- */
+function clLocationsTab(c){
+  clientEnsure(c);
+  return '<div class="cl-card cl-list">' + c.locations.map(function(l){ const addr = [l.street, l.city, l.state, l.pin, l.country !== 'India' ? l.country : ''].filter(Boolean).join(', '), reg = clRegOf(c, l), conf = clMapConfirmed(l), phys = l.uses.indexOf('Interviews') > -1 || l.uses.indexOf('Joining') > -1;
+    return '<div class="cl-locrow"><div><b>' + cle(clLocName(l)) + '</b><span class="cl-muted">' + cle(addr) + '</span><span class="cl-muted">' + cle([l.uses.join(', ').toLowerCase().replace(/^./, function(m){ return m.toUpperCase(); }), reg, conf ? 'Map confirmed' : ''].filter(Boolean).join(' · ')) + '</span>' + (l.directions ? '<span class="cl-muted">' + cle(l.directions) + '</span>' : '') + (phys && !conf ? '<span class="cl-muted cl-quiet">Map not confirmed</span>' : '') + '</div><a class="cl-link" target="_blank" rel="noopener" href="' + cle(clMapUrl(l)) + '">Map</a></div>'; }).join('') + '</div>' + (canI('clients', 'Edit') ? '<button type="button" class="cl-btn" onclick="openClientPage(\'' + c.id + '\')">Add or change a location</button>' : '');
+}
+
+/** A manual tax line for one billing location. The owner saves it directly; anyone else sends it for approval and the rule applies until then. Used by Add client and by the tests. */
+function clSaveTax(id, locId, value, why){
+  const c = clientById(id), l = c && c.locations.find(function(x){ return x.id === locId; }); if(!l) return { ok:false, err:'Location not found.' }; if(!value) return { ok:false, err:'Pick how it should be taxed.' };
+  if(value === resolveTax({ supplierEntity:clOurEntity(), location:l }).key){ l.taxOverride = null; return { ok:true }; }
+  if(String(why || '').trim().length < 12) return { ok:false, err:'Say why in a few words. It’s kept with every invoice it affects.' };
+  const me = currentActingUser(), direct = clIsOwnerRole(); l.taxOverride = { value:value, reason:why.trim(), byName:me ? me.name : 'You', byId:me ? me.id : null, at:clIso(ivNowMsSafe()), status:direct ? 'active' : 'pending', until:'changed' };
+  clientActivity(c, 'Tax for ' + clBillName(l) + ' set to ' + clOverrideLabel(value) + (direct ? '' : ', waiting for approval') + ' · ' + why.trim()); logAudit('Clients', direct ? 'Tax set by hand' : 'Tax change sent for approval', c.name + ' · ' + clBillName(l) + ' · ' + clOverrideLabel(value) + ' · ' + why.trim());
+  return { ok:true, pending:!direct };
+}
+/* ---------- cl-add7.js ---------- */
+/* ============================================================
+   ADD CLIENT v7: fee by slab, candidate ownership, map pin and directions for each location.
+============================================================ */
+(function extendState(){
+  const ob = window.clnBlank; window.clnBlank = function(){ const b = ob(); b.basis = 'pct'; b.slabs = CL_SLABS_DEFAULT.map(function(s){ return Object.assign({}, s); }); b.ownership = '180'; b.po = false; b.map = {}; b.mapOwn = {}; b.mapNote = {}; b.mapErr = {}; b.dir = {}; return b; };
+  const oc = window.openClientPage; window.openClientPage = function(id){
+    const r = oc.apply(this, arguments); const c = clientById(id); if(!c || !ncForm || !CLN) return r; clientEnsure(c); const v = clCommercial(c), head = c.locations[0];
+    ncForm.billing.street1 = ncForm.billing.street1 || head.street || ''; ncForm.billing.pin = ncForm.billing.pin || head.pin || '';
+    ncForm.branches.forEach(function(b){ const l = c.locations.find(function(x){ return x.id === b.id; }); if(l){ b.street = b.street || l.street || ''; b.pin = b.pin || l.pin || ''; } });
+    c.locations.forEach(function(l){ const key = l.kind === 'head' ? 'hq' : l.id; if(l.map) CLN.map[key] = Object.assign({}, l.map, { sig:l.map.sig || clLocSig(l) }); CLN.dir[key] = l.directions || ''; });
+    CLN.basis = clBasis(v); CLN.slabs = clSlabsOf(v); CLN.ownership = String(clOwnership(c)); CLN.po = !!v.poRequired; if(CLN.basis === 'slab'){ ncForm.feeType = 'percent'; ncForm.feePercent = ''; }
+    return r;
+  };
+})();
+
+/* ---------- commercial terms ---------- */
+function clnSetBasis(v){ CLN.basis = v; ncForm.feeType = v === 'fixed' ? 'fixed' : 'percent'; if(v === 'slab'){ ncForm.feePercent = ''; delete ncForm.errors.feePercent; } ncRender(); }
+function clnTermsHTML(){
+  const f = ncForm, cur = f.currency, set = function(k, v){ return 'clnSetTerm(\'' + k + '\',\'' + v + '\')'; }, opt = function(on, label, fn, role){ return clnChip(on, label, fn, role); };
+  const sym = (clCur(cur).trim() || cur), num = function(path, label, suffix, ph){ return clnField(label, '<span class="cl-suffix"><input class="cl-input' + (f.errors[path] ? ' has-err' : '') + '" inputmode="decimal" value="' + cle(ncGet(path)) + '" placeholder="' + cle(ph || '') + '" oninput="ncSet(\'' + path + '\', this.value); clnBelow()"><i>' + cle(suffix) + '</i></span>' + clnErr(path)); };
+  const rep = ['0', '30', '60', '90', '180'], repv = String(f.replacementDays), pay = ['0', '15', '30', '45', '60'], payDays = (/\d+/.exec(f.paymentTerms) || ['0'])[0], payv = f.paymentTerms === 'Due on Receipt' ? '0' : payDays, m = CLN.model;
+  const feeIs = '<label class="cl-field"><span>Fee is</span><select class="cl-input" aria-label="Fee is" onchange="clnSetBasis(this.value)"><option value="pct"' + (CLN.basis === 'pct' ? ' selected' : '') + '>% of annual CTC</option><option value="slab"' + (CLN.basis === 'slab' ? ' selected' : '') + '>By CTC slab</option><option value="fixed"' + (CLN.basis === 'fixed' ? ' selected' : '') + '>Fixed per hire</option></select></label>';
+  const feeBlock = m === 'contingency' ? '<div class="cn-grid">' + feeIs + clnField('Currency', '<select class="cl-input" aria-label="Currency" onchange="ncSet(\'currency\', this.value); ncRender()">' + NC_CURRENCIES.map(function(c){ return '<option value="' + c[0] + '"' + (f.currency === c[0] ? ' selected' : '') + '>' + cle(c[1]) + '</option>'; }).join('') + '</select>') + '</div>' + (CLN.basis === 'slab' ? clSlabEditorHTML('add') : '<div class="cn-grid">' + (CLN.basis === 'fixed' ? num('feeFixed', 'Fee', sym, '150000') : num('feePercent', 'Fee', '%', '8.33')) + '</div>')
+    : m === 'contract' ? '<div class="cn-grid">' + num('markup', 'Markup on pay', '%', '12') + '</div>' : '<div class="cn-grid">' + clnField('Monthly ' + (m === 'rpo' ? 'fee' : 'retainer'), '<span class="cl-suffix"><input class="cl-input" inputmode="decimal" value="' + cle(CLN.retainer) + '" oninput="CLN.retainer=this.value"><i>' + sym + '</i></span>') + clnField('Success fee', '<span class="cl-suffix"><input class="cl-input" inputmode="decimal" value="' + cle(CLN.success) + '" oninput="CLN.success=this.value"><i>%</i></span>') + '</div>';
+  return '<div class="cn-terms"><p class="cl-lab">How you work with them</p><div class="cn-models" role="radiogroup" aria-label="How you work">' + CL_MODELS.map(function(x){ return '<button type="button" role="radio" aria-checked="' + (m === x[0]) + '" class="cn-model' + (m === x[0] ? ' is-on' : '') + '" onclick="CLN.model=\'' + x[0] + '\'; ncRender()">' + x[1] + '</button>'; }).join('') + '</div>' + feeBlock + '<p class="cn-below" id="cn-below" hidden></p>' +
+    '<p class="cl-lab">Replacement</p><div class="cl-chips" role="radiogroup" aria-label="Replacement">' + rep.map(function(r){ return opt(repv === r, r === '0' ? 'No replacement' : r + ' days', set('replacementDays', r), 'radio'); }).join('') + opt(rep.indexOf(repv) < 0, 'Custom…', set('replacementDays', 'custom'), 'radio') + '</div>' + (rep.indexOf(repv) < 0 ? '<div class="cn-grid">' + num('replacementDays', 'Replacement days', 'days') + '</div>' : '') +
+    '<p class="cl-lab">Payment</p><div class="cl-chips" role="radiogroup" aria-label="Payment">' + pay.map(function(r){ return opt(payv === r, r === '0' ? 'Due on receipt' : 'Net ' + r, set('payment', r), 'radio'); }).join('') + opt(pay.indexOf(payv) < 0, 'Custom…', set('payment', 'custom'), 'radio') + '</div>' + (pay.indexOf(payv) < 0 ? '<div class="cn-grid">' + clnField('Payment days', '<span class="cl-suffix"><input class="cl-input" inputmode="numeric" value="' + cle(payv) + '" oninput="clnPayDays(this.value)"><i>days</i></span><p class="cl-err" id="cn-err-pay" hidden></p>') + '</div>' : '') +
+    '<div class="cn-grid"><label class="cl-field"><span>Candidate ownership</span><select class="cl-input" aria-label="Candidate ownership" onchange="CLN.ownership=this.value"><option value="90"' + (CLN.ownership === '90' ? ' selected' : '') + '>90 days</option><option value="180"' + (CLN.ownership === '180' ? ' selected' : '') + '>180 days</option><option value="365"' + (CLN.ownership === '365' ? ' selected' : '') + '>1 year</option></select><span class="cl-muted">Candidate ownership: if the client hires a candidate you shared within this time, through anyone, the fee is still yours.</span></label>' +
+    '<div class="cl-field"><span>Purchase order</span><div class="cl-chips">' + opt(!CLN.po, 'Not needed', 'CLN.po=false; ncRender()') + opt(CLN.po, 'Needed', 'CLN.po=true; ncRender()') + '</div></div></div>' +
+    '<p class="cl-lab">Agreement</p><div class="cn-grid cn-grid--3">' + clnField('Agreement signed', '<input class="cl-input" type="date" value="' + cle(f.agreementDate) + '" onchange="ncSet(\'agreementDate\', this.value)">') + clnField('Renews on', '<input class="cl-input" type="date" value="' + cle(f.renewalDate) + '" onchange="ncSet(\'renewalDate\', this.value)">' + clnErr('renewalDate')) + clnField('Signed copy', '<button type="button" class="cl-btn" onclick="clnDoc(\'agreement\')">' + (CLN.docs.agreement ? 'View ' + cle(CLN.docs.agreement.name) : 'Upload') + '</button>') + '</div></div>';
+}
+function clnBelowText(){
+  const f = ncForm; if(!f || CLN.model !== 'contingency') return ''; let p = null;
+  if(CLN.basis === 'slab'){ if(clSlabCheck(CLN.slabs)) return ''; p = clSlabTypicalPct(clSlabNum(CLN.slabs)); } else if(CLN.basis === 'pct'){ if(f.feePercent === '' || isNaN(Number(f.feePercent))) return ''; p = Number(f.feePercent); } else return '';
+  if(p >= 8.33 || p < 0) return ''; const own = clIsOwnerRole();
+  return p + '% is below your 8.33% standard. ' + (own ? 'You are the owner, so it applies now.' : 'The client saves now; the fee goes to ' + ((typeof clientApprover === 'function' && clientApprover()) ? clientApprover().name : 'the owner') + ' for approval before the first invoice.');
+}
+(function wrapValidate7(){ const ov = window.ncValidate; window.ncValidate = function(){ const e = ov(); if(CLN && CLN.model === 'contingency' && CLN.basis === 'slab'){ const m = clSlabCheck(CLN.slabs); if(m) e.feeSlabs = m; delete e.feePercent; } return e; }; })();
+
+/* ---------- map pin and directions ---------- */
+function clnAddr(key){ const L = clnLoc(key); return { street:L.hq ? ncForm.billing.street1 : L.street, city:L.city, state:L.state, pin:L.pin, country:clnLocCountry(L) }; }
+function clnMapConfirmed(key){ const m = CLN.map[key]; return !!(m && m.url && m.sig === clLocSig(clnAddr(key))); }
+function clnMapInner(key){
+  const a = clnAddr(key); if(!String(a.city || '').trim()) return ''; const g = clGeocode(a), m = CLN.map[key], conf = clnMapConfirmed(key), pin = '<span class="cn-pin" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>';
+  if(conf) return '<div class="cn-map">' + pin + '<div><b>Map pin confirmed</b><span>' + (CLN.mapNote[key] ? cle(CLN.mapNote[key]) + '. ' : '') + 'Sent with interview invites and joining letters for this location.</span></div><span class="cn-map__a"><a class="cl-btn" target="_blank" rel="noopener" href="' + cle(m.url) + '">Open map</a><button type="button" class="cl-link" onclick="clnMapChange(\'' + key + '\')">Change</button></span></div>';
+  if(CLN.mapOwn[key]) return '<div class="cn-map cn-map--own">' + pin + '<div><label class="cl-field"><span>Map link</span><input id="cn-maplink-' + key + '" class="cl-input" placeholder="Paste a Google Maps or Apple Maps link"></label><p class="cl-err" id="cn-maperr-' + key + '"' + (CLN.mapErr[key] ? '' : ' hidden') + '>' + cle(CLN.mapErr[key] || '') + '</p></div><span class="cn-map__a"><button type="button" class="btn--go" onclick="clnMapSaveOwn(\'' + key + '\')">Save</button><button type="button" class="cl-link" onclick="CLN.mapOwn[\'' + key + '\']=false; clnMapDraw(\'' + key + '\')">Back</button></span></div>';
+  return '<div class="cn-map">' + pin + '<div><b>Is this the right place?</b><span>Pin found from the address: ' + cle(g.label) + '</span></div><span class="cn-map__a"><button type="button" class="cl-btn" onclick="clnMapYes(\'' + key + '\')">Yes, correct</button><button type="button" class="cl-link" onclick="CLN.mapOwn[\'' + key + '\']=true; clnMapDraw(\'' + key + '\')">Use my own link</button></span></div>';
+}
+function clnMapDraw(key){ const e = document.getElementById('cn-map-' + key); if(e) e.innerHTML = clnMapInner(key); }
+function clnMapYes(key){ const a = clnAddr(key), g = clGeocode(a), me = currentActingUser(); CLN.map[key] = { lat:g.lat, lng:g.lng, url:g.url, source:'auto', confirmedBy:me ? me.name : 'You', confirmedAt:clIso(ivNowMsSafe()), sig:clLocSig(a) }; CLN.mapNote[key] = ''; clnMapDraw(key); }
+function clnMapChange(key){ delete CLN.map[key]; CLN.mapOwn[key] = false; CLN.mapNote[key] = ''; clnMapDraw(key); }
+function clnMapSaveOwn(key){ const v = String((document.getElementById('cn-maplink-' + key) || {}).value || '').trim(); if(!/^https:\/\/\S+$/.test(v)){ CLN.mapErr[key] = 'Paste the full map link, starting with https://'; clnMapDraw(key); return; } const a = clnAddr(key), me = currentActingUser(); CLN.map[key] = { url:v, source:'manual', confirmedBy:me ? me.name : 'You', confirmedAt:clIso(ivNowMsSafe()), sig:clLocSig(a) }; CLN.mapErr[key] = ''; CLN.mapOwn[key] = false; CLN.mapNote[key] = 'Your map link is saved'; clnMapDraw(key); }
+function clnDirHTML(key){ const L = clnLoc(key), uses = L.uses || []; if(uses.indexOf('Interviews') < 0 && uses.indexOf('Joining') < 0) return ''; return '<label class="cl-field cn-dir"><span>Directions for candidates</span><input class="cl-input" id="cn-dir-' + key + '" value="' + cle(CLN.dir[key] || '') + '" placeholder="Landmark, gate or floor, who to ask for, ID to carry" oninput="CLN.dir[\'' + key + '\']=this.value"></label>'; }
+(function wrapCard(){
+  const oc = window.clnLocationCard; window.clnLocationCard = function(key){
+    const h = oc(key); if(CLN.open !== key) return h; const add = '<div id="cn-map-' + key + '">' + clnMapInner(key) + '</div>' + clnDirHTML(key); const i = h.indexOf('<button type="button" class="cl-link" onclick="clnRemoveLoc'); if(i > -1) return h.slice(0, i) + add + h.slice(i); const j = h.lastIndexOf('</div></div>'); return h.slice(0, j) + add + h.slice(j);
+  };
+  const os = window.clnLocSet; window.clnLocSet = function(key, k, v){ os.apply(this, arguments); if(k === 'street' || k === 'city' || k === 'state' || k === 'pin') clnMapDraw(key); };
+  const ou = window.clnUse; window.clnUse = function(key, u){ ou.apply(this, arguments); };
+})();
+
+/* ---------- save: slabs, ownership, map and directions ---------- */
+(function wrapSnapshot(){
+  const os = window.clnSnapshot; window.clnSnapshot = function(f){ const s = os(f); if(!s) return s; s.v7 = { basis:CLN.basis, slabs:clSlabNum(CLN.slabs).map(function(x){ return { uptoLakh:x.uptoLakh, pct:Number(x.pct) }; }), ownership:Number(CLN.ownership) || 180, po:!!CLN.po, map:{}, dir:Object.assign({}, CLN.dir) }; clnLocKeys().forEach(function(k){ if(clnMapConfirmed(k)) s.v7.map[k] = Object.assign({}, CLN.map[k]); }); return s; };
+  const oa = window.clnApply; window.clnApply = function(c, s, mode, wasEdit){
+    const prev = wasEdit && c.commercials && c.status !== 'Draft' ? clCommercial(c) : null, prevJson = prev ? JSON.stringify([clBasis(prev), prev.slabs || null, prev.ownershipDays, !!prev.poRequired]) : '';
+    oa.apply(this, arguments); const v = s.v7; if(!v) return;
+    const patch = { feeBasis:v.basis, feeType:v.basis === 'fixed' ? 'fixed' : 'percent', ownershipDays:v.ownership, poRequired:v.po }; if(v.basis === 'slab'){ patch.slabs = v.slabs; patch.pct = null; }
+    const cur = clCommercial(c);
+    if(prev && cur === prev && prevJson !== JSON.stringify([v.basis, v.basis === 'slab' ? v.slabs : (prev.slabs || null), v.ownership, v.po])){ const nv = clAddCommercial(c, patch); clientActivity(c, 'Terms changed (version ' + nv.version + ')'); }
+    else Object.assign(cur, patch);
+    clBindTerms(c); c.terms.feeBasis = v.basis; if(v.basis !== 'fixed') c.terms.feeFixed = null; if(v.basis === 'fixed') c.terms.feeFixed = clCommercial(c).fixed;
+    c.locations.forEach(function(l, i){ const key = s.loc[i] ? s.loc[i].key : null; if(!key) return; const m = v.map[key]; l.map = m ? Object.assign({}, m, { sig:clLocSig(l) }) : null; l.directions = (v.dir[key] || '').trim(); });
+    const stand = v.basis === 'slab' ? clSlabTypicalPct(clSlabNum(v.slabs)) : null; if(!wasEdit && mode !== 'draft' && stand != null && stand < 8.33 && !clIsOwnerRole()){ c.feeApproval = { status:'pending', pct:stand, by:(currentActingUser() || {}).name || 'A teammate', at:clIso(ivNowMsSafe()) }; }
+    if(typeof clientDetailRefresh === 'function' && wasEdit) clientDetailRefresh();
+  };
+})();
 
 /* ---------- cl-boot.js ---------- */
 /* ---------- boot: rule updates, toast close, scope the quiet toast to these screens ---------- */
