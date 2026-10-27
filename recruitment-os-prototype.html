@@ -1978,6 +1978,7 @@ html:not([data-theme="comfort"]) #sidebar.o-sidebar{ border:0; border-right:1px 
   transition:transform var(--t-glide) var(--ease-glide), width var(--t-glide) var(--ease-glide), height var(--t-glide) var(--ease-glide), opacity 200ms;
   pointer-events:none; z-index:0; }
 .o-pill--lean::before{ content:""; position:absolute; left:8px; top:50%; width:4px; height:16px; margin-top:-8px; border-radius:2px; background:var(--lean); transform:skewX(-15deg); }
+#sidebar .o-pill--lean::before{ left:4px; width:3px; }
 .o-pill--under::after{ content:""; position:absolute; left:20%; right:20%; bottom:5px; height:2px; border-radius:2px; background:var(--lean); transform:skewX(-15deg); }
 .o-pill--flat{ border-radius:8px; box-shadow:0 1px 2px rgba(47,49,63,.08); }
 @media (prefers-reduced-motion: reduce){ .o-pill{ transition:none; } }
@@ -2061,9 +2062,9 @@ html:not([data-theme="comfort"]) .kairo-note{ background:var(--kairo-bg); border
 .s-layout{ display:grid; grid-template-columns:232px minmax(0,1fr); gap:24px; align-items:start; }
 .s-nav{ position:sticky; top:88px; }
 .s-nav__list{ position:relative; background:var(--bg-sidebar); border-radius:var(--r-card); padding:8px; max-height:calc(100vh - 120px); overflow-y:auto; }
-.s-nav__list .o-nav-head{ height:32px; padding:12px 12px 0; }
+.s-nav__list .o-nav-head{ height:32px; padding:12px 12px 0; padding-left:36px !important; }
 .s-nav__list .o-nav-head:first-of-type{ padding-top:4px; height:24px; }
-.s-nav-item{ width:100%; border:0; padding-left:26px; }
+.s-nav-item{ width:100%; border:0; padding-left:36px; }
 .s-ro{ margin-left:auto; display:inline-flex; color:var(--text-3); }
 .s-select{ display:none; }
 .s-content{ display:flex; flex-direction:column; gap:16px; min-width:0; }
@@ -37661,7 +37662,7 @@ function sNavItemsHTML(){
   SETTINGS_GROUPS.forEach(function(g){
     const items = vis.filter(function(s){ return s.group===g[0]; });
     if(!items.length) return;
-    parts.push('<p class="o-nav-head" style="padding-left:12px">'+g[1]+'</p>');
+    parts.push('<p class="o-nav-head">'+g[1]+'</p>');
     items.forEach(function(s){
       const on = cur && s.id===cur.id, ro = !s.go && s.edit && !s.edit();
       parts.push('<button type="button" class="o-nav-item s-nav-item'+(on ? ' active' : '')+'" data-sec="'+s.id+'"'+(on ? ' aria-current="page"' : '')+' onclick="sGo(\''+s.id+'\')"><span class="o-nav-item__label">'+sEsc(s.label)+'</span>'+(ro ? '<span class="s-ro" title="Read only">'+oIcon('lock', 13, 1.75)+'</span>' : s.go ? '<span class="s-ro">'+oIcon('chev', 13, 1.75)+'</span>' : '')+'</button>');
@@ -40167,7 +40168,7 @@ function sSectionHTML(sec){
 function sTab(id){ const cur = sCurrent(); if(!cur) return; settingsTabs[cur.id] = id; settingsRefresh(); }
 function sPillSync(){
   const nav = document.getElementById('settings-nav'); if(nav && nav.offsetWidth) oPill(nav, '[aria-current="page"]', 'settings-nav', 'o-pill--lean');
-  const tb = document.getElementById('settings-tabs'); if(tb && tb.offsetWidth) oPill(tb, '[aria-selected="true"]', 'settings-tabs:' + settingsSection, 'o-pill--under');
+  const tb = document.getElementById('settings-tabs'); if(tb && tb.offsetWidth) tb.classList.add('is-slid'); if(tb && tb.offsetWidth) oPill(tb, '[aria-selected="true"]', 'settings-tabs:' + settingsSection, 'o-pill--under');
 }
 function settingsRefresh(){
   const el = document.getElementById('settings-content'); if(!el) return;
