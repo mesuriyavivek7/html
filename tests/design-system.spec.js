@@ -10,7 +10,7 @@
     state.role = 'recruiter'; enterApp(); await sleep(100);
 
     await t('sidebar: 240 px expanded, 64 px collapsed, state remembered in state.sidebarOpen', async function(){
-      var sb = q('#sidebar');
+      var sb = q('#sidebar'); sb.style.transition = 'none';   // widths are measured, not animated, in this check
       ok(Math.round(sb.getBoundingClientRect().width)===240, 'expanded width ' + sb.getBoundingClientRect().width);
       toggleSidebar(); await sleep(900);
       ok(state.sidebarOpen===false && Math.round(sb.getBoundingClientRect().width)===64, 'collapsed width ' + sb.getBoundingClientRect().width);
@@ -33,9 +33,9 @@ ok(Array.prototype.some.call(document.styleSheets, function(ss){ try { return Ar
       document.dispatchEvent(new KeyboardEvent('keydown', { key:String.fromCharCode(92), ctrlKey:true, bubbles:true })); await sleep(500);
       ok(state.sidebarOpen===true && localStorage.getItem('oontu.sidebar')==='open', 'Ctrl+\ expanded again');
     });
-    await t('sidebar: the selection slides (transform, 240 ms)', async function(){
-      var sel = q('#sb-sel'); var before = sel.style.transform;
-      ok(getComputedStyle(sel).transitionDuration.indexOf('0.24s')>-1, 'duration ' + getComputedStyle(sel).transitionDuration);
+    await t('sidebar: the lean pill glides (600 ms), white, with the leaning dash, no green', async function(){
+      var sel = q('#sidebar-nav > .o-pill'); ok(sel, 'pill present'); ok(sel.classList.contains('o-pill--lean'), 'lean variant'); var before = sel.style.transform;
+      ok(getComputedStyle(sel).transitionDuration.split(',').indexOf('0.6s')>-1 || getComputedStyle(sel).transitionDuration.indexOf('0.6s')>-1, 'duration ' + getComputedStyle(sel).transitionDuration); ok(getComputedStyle(sel).backgroundColor==='rgb(255, 255, 255)', 'white pill'); ok(!/(?:rgb(d+, 1[6-9]d, d+))/.test(getComputedStyle(q('.nav-item.active')).color), 'selected label is not green');
       showView('jobs'); await sleep(50);
       ok(sel.style.transform!==before, 'moved: ' + before + ' -> ' + sel.style.transform);
       ok(q('.nav-item.active').getAttribute('data-nav')==='jobs', 'jobs is selected');
@@ -43,9 +43,9 @@ ok(Array.prototype.some.call(document.styleSheets, function(ss){ try { return Ar
     await t('segmented control: one thumb slides under the picked option', async function(){
       showView('dashboard'); await sleep(60);
       var seg = q('#rec-jobs-seg'); ok(seg, 'segmented control present');
-      var thumb = seg.querySelector('.o-seg__thumb'); var before = thumb.style.transform;
+      var thumb = seg.querySelector(':scope > .o-pill'); ok(thumb, 'pill present'); var before = thumb.style.transform;
       oSegPick('rec-jobs-seg', 1); await sleep(30);
-      ok(thumb.style.transform!==before, 'thumb moved'); ok(getComputedStyle(thumb).transitionDuration.indexOf('0.24s')>-1, 'thumb transition 240 ms');
+      ok(thumb.style.transform!==before, 'pill moved'); ok(getComputedStyle(thumb).transitionDuration.indexOf('0.6s')>-1, 'pill transition 600 ms');
       oSegPick('rec-jobs-seg', 0);
     });
     await t('no blue, indigo or purple colour anywhere on the dashboards', async function(){
@@ -79,12 +79,12 @@ ok(Array.prototype.some.call(document.styleSheets, function(ss){ try { return Ar
       ok(!q('#own-clients-h'), 'no Clients table');
       ORG_STRUCTURE.profile.orgType = prev;
     });
-    await t('every screen has the page title at 32/40/700', async function(){
+    await t('every screen has the page title at 30/38/800', async function(){
       state.role = 'admin'; renderSidebar();
       var bad = [];
       ['jobs','talent-pool','interviews','settings','reports','team-members','client-management','integrations'].forEach(function(v){
         showView(v); var h = q('#main-content .sec-head .sec-title') || q('#main-content h1'); if(!h){ bad.push(v + ' (no title)'); return; }
-        var cs = getComputedStyle(h); if(cs.fontSize!=='32px' || cs.fontWeight!=='700') bad.push(v + ' ' + cs.fontSize + '/' + cs.fontWeight);
+        var cs = getComputedStyle(h); if(cs.fontSize!=='30px' || cs.fontWeight!=='800') bad.push(v + ' ' + cs.fontSize + '/' + cs.fontWeight);
       });
       ok(!bad.length, bad.join(', '));
     });
