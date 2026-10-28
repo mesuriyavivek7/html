@@ -85,7 +85,7 @@
       const fnAt = function(idx){ const re = /\bfunction\s+([A-Za-z0-9_]+)\s*\(/g; let m, last = ''; while((m = re.exec(src)) && m.index<idx) last = m[1]; return last; };
       const owners = [], re2 = /\bcreateSubmission\(/g; let m;
       while((m = re2.exec(src))) owners.push(fnAt(m.index));
-      const allowed = ['createSubmission','submitOneToJob','intakeAttach','ptCreateJoinedRecord','seedMultiJobDemo'];   // the write itself; the canonical operation; inbound applications (Task 01); the PayTrack joining backfill (not a recruiter submission); the multi-job demo seed data
+      const allowed = ['createSubmission','submitOneToJob','intakeAttach','ptCreateJoinedRecord','seedMultiJobDemo','cpLink'];   // the write itself; the canonical operation; inbound applications (Task 01); the PayTrack joining backfill (not a recruiter submission); the multi-job demo seed data
       const stray = owners.filter(function(o){ return allowed.indexOf(o)<0; });
       assert(!stray.length, 'unexpected createSubmission callers: '+stray.join(', '));
       const writers = [], re3 = /manualLineupIds\.push\(/g;

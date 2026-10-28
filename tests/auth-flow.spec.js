@@ -6,6 +6,7 @@
    and the adapter contract behave correctly against the prototype simulator, which applies the rules the
    real auth API must enforce. They do NOT prove server-side security - that needs the same scenarios run
    against the real API (see docs/AUTH.md, "Server test plan"). */
+window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check */
 (function(){
   'use strict';
   const results = [];
