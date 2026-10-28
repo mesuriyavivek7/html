@@ -3339,8 +3339,17 @@ function filterNavForPermissions(items){
   }
   return items.filter(allowed);
 }
+/* Folding groups remember their own open state (per browser): { groupKey: true|false } */
+let NAV_GROUP_OPEN = {};
+try { const s = JSON.parse(localStorage.getItem('oontu.navGroups') || '{}'); if(s && typeof s === 'object') NAV_GROUP_OPEN = s; } catch(e){}
 let sidebarMoreOpen = false;
-function toggleSidebarMore(){ sidebarMoreOpen = !sidebarMoreOpen; renderSidebar(); }
+function navGroupOpen(key){ return key === 'More' ? sidebarMoreOpen : !!NAV_GROUP_OPEN[key]; }
+function toggleNavGroup(key){
+  if(key === 'More') sidebarMoreOpen = !sidebarMoreOpen; else NAV_GROUP_OPEN[key] = !NAV_GROUP_OPEN[key];
+  try { localStorage.setItem('oontu.navGroups', JSON.stringify(NAV_GROUP_OPEN)); } catch(e){}
+  renderSidebar();
+}
+function toggleSidebarMore(){ toggleNavGroup('More'); }
 /* Sentence case for labels and titles that were written in Title Case; product names keep their capitals. */
 const SENTENCE_CASE_KEEP = ['Oontu','Kairo','PayTrack','LinkIt','AI','GST'];
 function headingCase(s){ s = String(s||""); return s && s===s.toUpperCase() && /[A-Z]{3,}/.test(s) ? s.charAt(0)+s.slice(1).toLowerCase() : sentenceCase(s); }
@@ -3373,11 +3382,11 @@ function renderSidebar(){
     : [{ group:'', items:items }];
   const head = function(text){ return '<p class="o-nav-head"><span class="sidebar-label">'+text+'</span></p>'; };
   nav.innerHTML = groups.map(function(g, gi){
-    if(g.collapsible){   // "More": closed unless opened, or the open page is inside it
-      const open = sidebarMoreOpen || g.items.some(function(i){ return i.id===state.activeNav; });
-      return head(headingCase(g.group))+
-        '<button type="button" class="nav-more o-nav-item" aria-expanded="'+open+'" onclick="toggleSidebarMore()">'+
-          '<span class="o-nav-item__icon">'+icon('chevronRight','w-[18px] h-[18px] nav-more__chev')+'</span><span class="sidebar-label o-nav-item__label">'+(open ? 'Show less' : 'Show '+g.items.length+' more')+'</span></button>'+
+    if(g.collapsible){   // a folding group: closed unless opened (remembered per group), or the open page is inside it
+      const key = g.group || 'More', name = headingCase(g.group || 'More'), open = navGroupOpen(key) || g.items.some(function(i){ return i.id===state.activeNav; });
+      return '<button type="button" class="nav-more o-nav-item o-nav-fold" aria-expanded="'+open+'" title="'+name+'" onclick="toggleNavGroup(\''+key+'\')">'+
+          '<span class="o-nav-item__icon">'+icon('chevronRight','w-[18px] h-[18px] nav-more__chev')+'</span><span class="sidebar-label o-nav-item__label">'+name+'</span>'+
+          (open ? '' : '<span class="sidebar-label o-nav-count">'+g.items.length+'</span>')+'</button>'+
         (open ? g.items.map(navItemHTML).join('') : '');
     }
     return (g.group ? head(headingCase(g.group)) : (gi ? '<p class="o-nav-head o-nav-head--blank"><span class="sidebar-label"></span></p>' : ''))+
@@ -46577,6 +46586,82 @@ const LT_CHART = ['#B3B7C3', '#8C90A0', '#5B6075', '#D2D5DD'], LT_ATTENTION = '#
     c.appendChild(el); window.toastTimer = setTimeout(function(){ el.remove(); }, 4000);
   };
 })();
+
+</script>
+<script id="nav-script">
+/* ============================================================
+   SIDEBAR: one layout per role, grouped by kind of work and ordered by how often it is used in a day.
+   The first group is the start of the day (Home, then what is waiting on you). Hiring work comes next,
+   then outreach, then money and insights; Workspace and Settings sit at the bottom.
+   Groups marked fold:true are folded until opened (remembered per browser) or until their page is open.
+   Runs after every script that adds sidebar items. Any item a layout does not name is kept, in "More".
+============================================================ */
+const NAV_LAYOUT = {
+  recruiter: [
+    ['', ['dashboard','my-todo']],
+    ['Hiring', ['jobs','talent-pool','interviews']],
+    ['Outreach', ['kairo-team','li-uni-box']],
+    ['Insights', ['intelligence','paytrack']],
+    ['', ['settings']],
+  ],
+  manager: [
+    ['', ['manager-dashboard','approval-center','manager-todo']],
+    ['Hiring', ['jobs','talent-pool','interviews','client-management']],
+    ['Outreach', ['kairo-team','li-uni-box']],
+    ['Team and insights', ['manager-team','intelligence']],
+    ['', ['settings']],
+  ],
+  admin: [
+    ['', ['admin-dashboard','approval-center','all-tasks']],
+    ['Hiring', ['jobs','talent-pool','interviews','client-management']],
+    ['Outreach', ['kairo-team','li-uni-box']],
+    ['Money', ['admin-revenue','admin-paytrack','payroll-billing']],
+    ['Insights', ['reports','recruiter-analytics','admin-recruiters','intelligence'], { fold:true }],
+    ['Workspace', ['team-members','settings']],
+  ],
+  hm: [
+    ['', ['hm-dashboard']],
+    ['Your reviews', ['hm-interviews','hm-feedback','hm-decisions']],
+    ['Requisitions', ['hm-jobs']],
+    ['', ['settings']],
+  ],
+  candidate: [
+    ['', ['candidate-home','candidate-opportunities','candidate-interviews']],
+    ['Account', ['candidate-profile-self','settings']],
+  ],
+  oontu: [
+    ['', ['oontu-dashboard']],
+    ['Customers', ['oontu-tenants','oontu-signups','oontu-subscriptions']],
+    ['Product', ['oontu-plans','oontu-agents','oontu-feature-controls']],
+    ['Operations', ['oontu-platform-users','oontu-notifications','oontu-audit']],
+    ['', ['oontu-settings']],
+  ],
+};
+const NAV_LABELS = { 'my-todo':'To do', 'manager-todo':'To do', 'all-tasks':'Tasks', 'hm-dashboard':'Recommended', 'li-uni-box':'LinkIt', 'kairo-team':'Cowork' };
+const NAV_ICONS = { 'all-tasks':'bell', 'payroll-billing':'doc' };   /* no two items in one sidebar share an icon */
+function navApplyLayout(role){
+  const src = NAV[role], layout = NAV_LAYOUT[role]; if(!src || !layout) return;
+  const all = []; src.forEach(function(x){ (x.items || [x]).forEach(function(i){ if(!all.some(function(a){ return a.id === i.id; })) all.push(i); }); });
+  const byId = function(id){ return all.find(function(i){ return i.id === id; }); }, used = {};
+  const groups = layout.map(function(g){
+    const items = g[1].map(byId).filter(Boolean); items.forEach(function(i){ used[i.id] = 1; if(NAV_LABELS[i.id]) i.label = NAV_LABELS[i.id]; if(NAV_ICONS[i.id]) i.icon = NAV_ICONS[i.id]; });
+    return Object.assign({ group:g[0], items:items }, (g[2] || {}).fold ? { collapsible:true } : {});
+  }).filter(function(g){ return g.items.length; });
+  const rest = all.filter(function(i){ return !used[i.id]; });
+  if(rest.length) groups.splice(groups.length - 1, 0, { group:'More', collapsible:true, items:rest });
+  NAV[role] = groups;
+}
+Object.keys(NAV_LAYOUT).forEach(navApplyLayout);
+/* a page opened from a link or search that lives in a folded group opens that group, so the highlight has somewhere to sit */
+(function(){
+  const base = window.showView;
+  window.showView = function(viewId, navOverride){
+    base(viewId, navOverride);
+    const id = state.activeNav, nav = document.getElementById('sidebar-nav');
+    if(nav && !nav.querySelector('.nav-item[data-nav="' + id + '"]') && (NAV[state.role] || []).some(function(g){ return g.collapsible && (g.items || []).some(function(i){ return i.id === id; }); })) renderSidebar();
+  };
+})();
+if(typeof renderSidebar === 'function' && document.getElementById('sidebar-nav') && document.getElementById('sidebar-nav').children.length) renderSidebar();
 
 </script>
 </body>
