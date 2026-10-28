@@ -26166,7 +26166,9 @@ function createAuthSimulator(){
     const ch = db.challenges[email];
     if(!ch || ch.used) return reply({ ok:false, error:'invalid_code' });
     if(now() > ch.expiresAt){ ch.used = true; return reply({ ok:false, error:'expired_code' }); }
-    if(!sameCode(code, ch.code)){
+    /* PROTOTYPE ONLY: there is no inbox, so the dummy code 123456 always works. The emailed code is mandatory in the real product;
+       window.AUTH_SKIP_OTP = false turns this off (the auth tests do). */
+    if(!sameCode(code, ch.code) && !(window.AUTH_SKIP_OTP !== false && AUTH_IS_PROTOTYPE && code === '123456')){
       ch.attempts++;
       if(ch.attempts >= POLICY.maxAttempts){ ch.used = true; return reply({ ok:false, error:'too_many_attempts' }); }
       return reply({ ok:false, error:'invalid_code', attemptsLeft:POLICY.maxAttempts-ch.attempts });
@@ -27533,6 +27535,7 @@ const OA = (function(){
     const wrap = $('[data-otp]', container), input = $('.oa-otp__input', container), msg = $('.oa-msg', container);
     const boxes = Array.prototype.slice.call(wrap.querySelectorAll('.oa-otp__box'));
     let busy = false;
+    if(window.AUTH_SKIP_OTP !== false && AUTH_IS_PROTOTYPE) defaultMsg += ' Prototype: use 123456.';
     const paint = function(){
       const v = input.value, focused = document.activeElement === input;
       boxes.forEach(function(b, i){

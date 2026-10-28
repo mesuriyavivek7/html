@@ -1,6 +1,7 @@
 /* Sign-up recovery (flow map 00 and 01, approved as AR-1): every answered question is saved, a live domain offers "Request to join"
    and shows who to ask, anyone can escalate to Oontu, Oontu can resolve every case, and assisted set-up needs the customer's permission.
    Run: & .\tests\run-auth-tests.ps1 -Spec tests\signup-recovery.spec.js */
+window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check */
 (function(){
   'use strict';
   const results = [];
