@@ -79,12 +79,12 @@ ok(Array.prototype.some.call(document.styleSheets, function(ss){ try { return Ar
       ok(!q('#own-clients-h'), 'no Clients table');
       ORG_STRUCTURE.profile.orgType = prev;
     });
-    await t('every screen has the page title at 30/38/800', async function(){
+    await t('every screen has the page title at 28/36/600 (Oontu Light)', async function(){
       state.role = 'admin'; renderSidebar();
       var bad = [];
       ['jobs','talent-pool','interviews','settings','reports','team-members','client-management','integrations'].forEach(function(v){
         showView(v); var h = q('#main-content .sec-head .sec-title') || q('#main-content h1'); if(!h){ bad.push(v + ' (no title)'); return; }
-        var cs = getComputedStyle(h), want = v==='client-management' ? ['28px','600'] : ['30px','800'];   /* the Clients screens use the calmer 28 / 600 title */
+        var cs = getComputedStyle(h), want = ['28px','600'];   /* Oontu Light: one calm page title everywhere */
         if(cs.fontSize!==want[0] || cs.fontWeight!==want[1]) bad.push(v + ' ' + cs.fontSize + '/' + cs.fontWeight);
       });
       ok(!bad.length, bad.join(', '));

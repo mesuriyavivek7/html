@@ -130,7 +130,7 @@
     await t('design rules: no dead hrefs, no “AI”, “smart” or “Optional”, only brand colours, Plus Jakarta Sans and JetBrains Mono', async function(){
       var js = document.getElementById('interviews-script').textContent; var css = (Array.prototype.find.call(document.querySelectorAll('style'), function(s){ return /IV-CSS-BEGIN/.test(s.textContent); }) || {}).textContent || ''; ok(css, 'css found'); css = css.slice(css.indexOf('IV-CSS-BEGIN'), css.indexOf('IV-CSS-END'));
       ok(!/href="#"/.test(js), 'no href="#"'); ok(!/\bsmart\b/i.test(js) && !/'[^']*\bAI\b[^']*'/.test(js) && !/>Optional</.test(js) && !/\(optional\)/i.test(js), 'no banned words');
-      var allowed = ['#fff', '#ffffff', '#a93226', '#2f313f', '#e7e6e1', '#d9d8d2'].concat([]); var hex = (css.match(/#[0-9a-fA-F]{3,8}\b/g) || []).map(function(h){ return h.toLowerCase(); }).filter(function(h){ return allowed.indexOf(h) < 0; }); ok(!hex.length, 'only brand tokens: ' + hex.join(','));
+      var allowed = ['#fff', '#ffffff', '#94570a', '#a93226', '#2f313f', '#e7e6e1', '#d9d8d2'].concat([]); var hex = (css.match(/#[0-9a-fA-F]{3,8}\b/g) || []).map(function(h){ return h.toLowerCase(); }).filter(function(h){ return allowed.indexOf(h) < 0; }); ok(!hex.length, 'only brand tokens: ' + hex.join(','));
       ok(/Plus Jakarta Sans|var\(--font\)/.test(css) && /var\(--mono\)/.test(css), 'fonts via tokens'); ok(!/#(?:00|0f|1[0-9a-f])[89a-f][0-9a-f]{3}\b/i.test(css), 'no new greens');
       as('admin', 'Agency'); ok(qa('#main-content a[href="#"]').length === 0, 'no dead links on screen'); var rootHtml = q('#main-content').innerHTML; ok(!/\bAI\b|smart/i.test(q('#main-content').textContent.replace(/\bHealthAI\b/g, '')), 'no AI wording on the page');
     });
