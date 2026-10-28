@@ -27,7 +27,7 @@
 
   window.addEventListener('load', function(){ setTimeout(async function(){
     var ob = document.getElementById('onboarding'); if(ob) ob.classList.add('hidden');
-    state.role = 'recruiter'; enterApp(); await sleep(100);
+    state.role = 'recruiter'; enterApp(); await sleep(100); CP.top = 'agents';   // Cowork opens on Campaigns; these checks are about the agent pages
 
     await t('Cowork shows four core agents and LinkedIn outreach; status panel, signals with a Why, workflows, activity; plain words; one nav label', async function(){
       as('admin'); ok(cwVisibleAgents().join() === CW.order.join(), 'owner sees all five: ' + cwVisibleAgents());

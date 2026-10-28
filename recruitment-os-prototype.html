@@ -2490,6 +2490,74 @@ body.cl-on .app-toast{ background:#fff !important; color:#2F313F !important; bor
 .cn-map{ display:flex; align-items:center; gap:14px; margin-top:14px; padding:14px 16px; border:1px solid #ECECE8; border-radius:12px; background:#fff; } .cn-map > div{ flex:1; min-width:0; } .cn-map b{ display:block; font:500 14px var(--font); } .cn-map span{ font:400 13px/1.5 var(--font); color:#6B6F80; } .cn-pin{ width:40px; height:40px; border-radius:11px; background:#F3F3F0; color:#6B6F80; display:inline-flex !important; align-items:center; justify-content:center; flex:none; } .cn-map__a{ display:inline-flex; align-items:center; gap:8px; flex:none; } .cn-map--own .cl-field{ margin:0; } .cn-dir{ margin-top:14px; }
 .cl-quiet{ color:#9A9EAB !important; } .cl-jobfee{ margin:4px 0 0; font:400 13px var(--font); color:#6B6F80; } .cl-teamsec{ margin-top:32px; } .cl-prog,.cl-prog *{ text-align:right; }
 /* ==CL-CSS-END== */
+/* ==CP-CSS-BEGIN== */
+/* Cowork campaigns: white cards, neutral greys, amber only for what needs you */
+.cp-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:4px 0 16px}
+.cp-sug{margin-bottom:16px}.cp-sug__list{list-style:none;margin:0;padding:0}
+.cp-sug__row{display:flex;align-items:center;gap:14px;padding:12px 0;border-top:1px solid #F1F1EE}.cp-sug__row:first-child{border-top:0}
+.cp-sug__t{flex:1;min-width:0}.cp-sug__t b,.cp-table b,.cp-play__t b,.cp-stepc__h b{font-weight:500}
+.cp-sug__t small,.cp-table small,.cp-play__t small,.cp-facts dt,.cp-lab,.cp-foot,.cp-foot2,.cp-hint{display:block;font-size:12px;color:#6B6F80;font-weight:400}
+.cp-val{font-size:15px;font-weight:500;color:#2F313F}
+.cp-tools-wrap{padding:0 20px 12px}.cp-tools{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.cp-search{width:240px}.cp-cnt{display:inline-block;margin-left:4px;font-size:11px;color:#6B6F80;font-weight:400}
+.cp-table td{vertical-align:top}.cp-row{cursor:pointer}.cp-row:hover td,.cp-row:focus td{background:#F7F7F5}
+.cp-num{font-weight:500;color:#2F313F}.cp-muted{color:#6B6F80;font-size:12px}.cp-wrap{white-space:normal;max-width:480px}
+.cp-flagcell{text-align:right;white-space:nowrap}.cp-empty{text-align:center;color:#6B6F80;padding:28px 12px}
+.cp-foot{padding:12px 20px 0;margin:0}.cp-foot2{margin:10px 0 0}.cp-back{display:inline-block;font-size:13px;color:#5B6075;margin:0 0 6px;text-decoration:none}.cp-back:hover{color:#2F313F}
+.cp-state{margin:-4px 0 10px}
+.tw.cp-tw-block{display:flex;width:100%;gap:10px;align-items:center;justify-content:space-between}.tw.cp-tw-right .tip{left:auto;right:0}
+.cp-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:6px 0 14px;padding:0;overflow:visible}
+.cp-strip__c{display:flex;flex-direction:column;gap:2px;text-align:left;padding:14px 18px;background:transparent;border:0;border-right:1px solid #F1F1EE;cursor:pointer;position:relative}.cp-strip__c:last-child{border-right:0}.cp-strip__c:hover{background:#F7F7F5}
+.cp-two{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}.cp-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.cp-body{margin-top:16px}
+.cp-goal{display:flex;align-items:baseline;gap:10px}.cp-goal__n{font-size:40px;line-height:1;font-weight:500;color:#2F313F}.cp-goal__t{font-size:14px;color:#5B6075}
+.cp-bar{height:4px;background:#F1F1EE;border-radius:2px;margin:12px 0 8px;overflow:hidden}.cp-bar i{display:block;height:100%;background:#8C90A0;border-radius:2px}
+.cp-pace{margin:0 0 6px;font-size:13px;color:#5B6075}
+.cp-fun{list-style:none;margin:8px 0 0;padding:0}.cp-fun li{padding:6px 0}
+.cp-fun__l{width:140px;font-size:13px;color:#5B6075}.cp-fun__b{flex:1;height:6px;background:#F1F1EE;border-radius:3px;overflow:hidden}.cp-fun__b i{display:block;height:100%;background:#B3B7C3}.cp-fun__n{width:90px;text-align:right;font-weight:500;font-size:13px}.cp-fun__n small{display:inline;font-size:11px;color:#6B6F80}
+.cp-moves,.cp-needs{list-style:none;margin:8px 0 0;padding:0}.cp-move,.cp-need{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid #F1F1EE}.cp-move:first-child,.cp-need:first-child{border-top:0}
+.cp-move__t,.cp-need__t{flex:1;font-size:13px;color:#2F313F}.cp-move__t small,.cp-need__t small{display:block;font-size:12px;color:#6B6F80}.cp-move__a{display:flex;gap:10px;align-items:center}
+.cp-how{margin:8px 0 0;display:grid;gap:8px}.cp-how>div{display:block}.cp-how .tw{display:flex;width:100%;justify-content:space-between;gap:12px}.cp-how dt{font-size:13px;color:#6B6F80}.cp-how dd{margin:0;font-size:13px;color:#2F313F;font-weight:500}
+.cp-honest{margin:14px 0 0;font-size:12px;color:#6B6F80}
+.cp-act{text-align:right;white-space:nowrap}
+.cp-msgs{list-style:none;margin:8px 0 0;padding:0}.cp-msg{padding:12px 0;border-top:1px solid #F1F1EE}.cp-msg:first-child{border-top:0}.cp-msg__h{display:flex;justify-content:space-between;gap:10px;font-size:13px}.cp-msg__t{margin:8px 0 0;font-size:13px;color:#2F313F;white-space:pre-wrap}
+.cp-ab{list-style:none;margin:8px 0 0;padding:0;font-size:12px;color:#5B6075}
+.cp-chat{display:flex;flex-direction:column;gap:8px;margin:12px 0}.cp-b{max-width:88%;padding:10px 12px;border-radius:12px;font-size:13px;border:1px solid #E6E6E1;background:#fff;color:#2F313F}.cp-b small{display:block;margin-top:4px;font-size:11px;color:#6B6F80}.cp-b--c{align-self:flex-end;background:#F2F3F6;border-color:#F2F3F6}.cp-b--k{align-self:flex-start}
+.cp-quick{display:flex;gap:8px;margin-top:6px}.cp-quick span{font-size:12px;padding:5px 10px;border:1px solid #E6E6E1;border-radius:999px;color:#5B6075;background:#fff}
+.cp-reply{display:flex;gap:8px;margin:6px 0}.cp-pick{width:auto;max-width:200px}
+.cp-ed{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start;margin-top:8px}.cp-ed__l{display:flex;flex-direction:column;gap:16px;min-width:0}.cp-ed__r{position:sticky;top:12px}
+.cp-sec__h{display:flex;align-items:center;gap:10px;margin-bottom:12px}.cp-sec__n{width:22px;height:22px;border-radius:50%;border:1px solid #D2D5DD;color:#5B6075;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+.cp-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 20px;margin:12px 0 0}.cp-facts dd{margin:2px 0 0;font-size:13px;color:#2F313F}.cp-readonly{margin:0;font-size:14px;color:#2F313F}.cp-readonly small{display:block;color:#6B6F80;font-size:12px}
+.cp-att-link{text-decoration:none}
+.cp-goalrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.cp-step{display:inline-flex;align-items:center;border:1px solid #E6E6E1;border-radius:10px;overflow:hidden}.cp-step button{width:34px;height:34px;background:#fff;border:0;font-size:16px;color:#5B6075;cursor:pointer}.cp-step button:hover{background:#F7F7F5}.cp-step b{min-width:44px;text-align:center;font-weight:500}
+.cp-chips{display:flex;gap:8px;flex-wrap:wrap}.cp-chip{border:1px solid #E6E6E1;background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;color:#5B6075;cursor:pointer}.cp-chip small{color:#6B6F80;margin-left:4px}.cp-chip.is-on{border-color:#8C90A0;color:#2F313F;background:#F7F7F5}.cp-chip:disabled{opacity:.5;cursor:not-allowed}
+.cp-sentence{margin:14px 0 8px;padding:12px 14px;background:#F7F7F5;border-radius:10px;font-size:13px;color:#2F313F}.cp-hint{margin:10px 0 0}
+.cp-mix{margin:0 0 10px;font-size:13px;color:#2F313F}.cp-plays{list-style:none;margin:0;padding:0}.cp-play{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid #F1F1EE}.cp-play:first-child{border-top:0}.cp-play__t{flex:1;min-width:0}.cp-play__u{min-width:110px;text-align:right;font-size:13px;color:#2F313F}
+.cp-sub{list-style:none;margin:0 0 8px;padding:12px 14px;background:#F7F7F5;border-radius:10px}.cp-srcs{list-style:none;margin:0;padding:0}.cp-srcs li{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}.cp-srcs .tw{display:flex;width:100%;justify-content:space-between}
+.cp-mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}.cp-mini__c{padding:10px 12px;background:#fff;position:relative;cursor:default}
+.cp-words{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}.cp-word{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border:1px solid #E6E6E1;border-radius:999px;background:#fff;font-size:12px}.cp-word button{border:0;background:none;color:#6B6F80;cursor:pointer}.cp-word-in{width:170px}
+.cp-one{margin-top:14px;padding:12px 14px;background:#F7F7F5;border-radius:10px;font-size:13px;color:#5B6075}
+.cp-row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}.cp-row3{display:grid;grid-template-columns:130px 1fr 1fr;gap:10px;margin-bottom:10px}.cp-row4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.cp-steps{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:12px}.cp-stepc{border:1px solid #E6E6E1;border-radius:12px;padding:14px}.cp-stepc__h{display:flex;justify-content:space-between;margin-bottom:10px;font-size:13px}
+.cp-stepc textarea{width:100%}.cp-vchips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.cp-vchip{font-size:11px;border:1px solid #E6E6E1;background:#fff;border-radius:6px;padding:2px 7px;color:#5B6075;cursor:pointer}
+.cp-cc{display:flex;gap:12px;align-items:center;font-size:12px;color:#6B6F80}.cp-b2{margin-top:12px;font-size:13px}.cp-b2 small{display:block;color:#6B6F80;margin:2px 0 8px}.cp-b2 textarea{width:100%}
+.cp-issue{margin:6px 0 0;font-size:13px}.cp-prev{margin-top:14px;padding:12px;background:#F7F7F5;border-radius:10px}
+.cp-pace{display:flex;flex-direction:column;gap:12px}.cp-pacec{border:1px solid #E6E6E1;border-radius:12px;padding:14px}.cp-pacec__h{margin-bottom:10px;font-size:13px}.cp-pacec__h small{display:block;color:#6B6F80;font-size:12px}.cp-ack{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:8px}
+.cp-qs{list-style:none;margin:0;padding:0}.cp-q{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid #F1F1EE}.cp-q:first-child{border-top:0}.cp-q__n{width:20px;font-size:12px;color:#6B6F80;padding-top:10px}.cp-q__f{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}.cp-q__r{font-size:12px}
+.cp-qadd{display:flex;gap:8px;margin:10px 0}.cp-qadd input{flex:1}
+.cp-safe{list-style:none;margin:0;padding:0}.cp-safe li{padding:8px 0;border-top:1px solid #F1F1EE;font-size:13px}.cp-safe li:first-child{border-top:0}.cp-safe b{font-weight:500;color:#2F313F}.cp-safe span{color:#6B6F80}
+.cp-chk{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0 0;font-size:13px}.cp-chk small{display:block;color:#6B6F80}
+.cp-plan__r{list-style:none;margin:10px 0 12px;padding:0}.cp-plan__r li{padding:7px 0;border-top:1px solid #F1F1EE;font-size:13px}.cp-plan__r li:first-child{border-top:0}.cp-plan__r span{color:#6B6F80}.cp-plan__r b{font-weight:500;color:#2F313F}
+.cp-cta{width:100%;justify-content:center;margin-top:6px}.cp-next{margin:8px 0 0;font-size:12px;color:#6B6F80}.cp-chg{margin:6px 0 10px}.cp-chg ul{margin:6px 0 0;padding-left:16px;font-size:13px;color:#2F313F}.cp-short{margin:0 0 8px;font-size:13px}
+.cp-modal__f{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}.cp-h3{margin:14px 0 4px;font-size:12px;color:#6B6F80;font-weight:500}.cp-kv .kv{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+.cp-rv{list-style:none;margin:10px 0 0;padding:0;max-height:52vh;overflow:auto}.cp-rv__i{padding:10px 0;border-top:1px solid #F1F1EE}.cp-rv__i textarea{width:100%;margin-top:6px}.cp-rv__a{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+.cp-calls{list-style:none;margin:10px 0 0;padding:0}.cp-calls li{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #F1F1EE;font-size:13px}.cp-calls small{display:block;color:#6B6F80}
+.cp-jobline{margin:-6px 0 14px;font-size:13px;color:#5B6075}.cp-jobline a{color:#2F313F;text-decoration:underline}
+.cp-appbar{display:flex;gap:8px;padding:12px 16px 4px}.cp-fbtn{border:1px solid #E6E6E1;background:#fff;border-radius:999px;padding:4px 12px;font-size:12px;color:#5B6075;cursor:pointer}.cp-fbtn.is-on{border-color:#8C90A0;color:#2F313F;background:#F7F7F5}.cp-readyblock{padding:4px 16px 8px}
+.cp-pipe{margin-bottom:16px}.cp-pipeline-line{margin:10px 0 0;font-size:12px;color:#6B6F80}
+@media (max-width:960px){.cp-stats,.cp-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.cp-two,.cp-ed{grid-template-columns:minmax(0,1fr)}.cp-ed__r{position:static}.cp-row2,.cp-row3,.cp-row4{grid-template-columns:minmax(0,1fr)}.cp-facts{grid-template-columns:minmax(0,1fr)}.cp-strip__c{border-right:0;border-bottom:1px solid #F1F1EE}}
+@media (max-width:520px){.cp-tools .seg,.cp-tools-wrap .seg{max-width:100%;overflow-x:auto}.cp-stats{grid-template-columns:minmax(0,1fr)}.cp-sug__row{flex-wrap:wrap}.cp-search{width:100%}}
+/* ==CP-CSS-END== */
 </style>
 </head>
 <body class="text-zinc-900 antialiased">
@@ -44830,6 +44898,1214 @@ html:not([data-theme="comfort"]) .o-num__label { margin-bottom:6px; }
 html:not([data-theme="comfort"]) .kairo-note, html:not([data-theme="comfort"]) .o-card[data-agent], html:not([data-theme="comfort"]) .ap-rule, html:not([data-theme="comfort"]) .ap-kairo { background:#FFFFFF !important; border:1px solid #ECECE8 !important; color:#565A66 !important; }
 
 </style>
+<script id="campaigns-script">
+/* ---------- cp-core.js ---------- */
+/* ============================================================
+   COWORK CAMPAIGNS: one job, one goal. Kairo plans backwards from "N people ready to call by a date",
+   reaches the warmest people first, pre-screens in the same chat, books the call, and lands every
+   interested person in the job's Applicants.
+
+   Production notes
+   - Tables: campaigns, campaign_versions, campaign_people, campaign_messages (A/B version), conversion_history_daily, campaign_moves.
+     applications.source_campaign_id links a person to Jobs → Applicants.
+   - Queues: reuse the channel queues. Add a hourly "campaign-planner" job (pace, moves, auto-widen) and a nightly "conversion-history" rollup.
+   - Pre-screen parsing: deterministic parsers first (numbers, notice options, yes/no). A language model may only classify free-text replies into
+     interested / not now / question / out of office, with a confidence stored beside it. Below 0.8 confidence goes to "needs you".
+   - Every send goes through cwHonestyCheck and the engine checks. Text is stored as rendered and as template + variables.
+   - The pool sizes, job-board seats and postal data below are stand-ins for live counts.
+============================================================ */
+const CP_PLAYS = [
+  { id:'apps',   name:'Applications received', sub:'Everyone who applied, from every channel', chan:'Their own channel', why:'People who applied are already interested. Kairo checks each one once.' },
+  { id:'know',   name:'People who know you',   sub:'Past applicants, near-misses and “not now” from the last year', chan:'WhatsApp, then email', why:'They know your name, so replies are about three times higher.' },
+  { id:'pool',   name:'Talent pool matches',   sub:'Score 75 and above for this job', chan:'WhatsApp, then email', why:'Already in your pool with consent, and a close match.' },
+  { id:'ref',    name:'Referrals',             sub:'Ask people you placed in similar roles', chan:'WhatsApp or email', why:'A referral from someone they trust is the warmest cold start.' },
+  { id:'boards', name:'Job-board search',      sub:'Resume search in your own seats, active in the last 30 days', chan:'Email or the board’s contact', why:'Reaches people who are looking now, inside the seat’s daily views.' },
+  { id:'li',     name:'LinkedIn',              sub:'Connected accounts, inside safe limits', chan:'Invite, then message', why:'Reaches people who are not on any list yet, at a human pace.' },
+];
+const CP_NOW = function(){ return cwNow(); };
+const CP_ISO = function(ms){ const d = new Date(ms); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const CP_DAY = 86400000;
+const CP_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function cpDate(iso){ const d = new Date(iso + 'T12:00:00'); return d.getDate() + ' ' + CP_MONTHS[d.getMonth()]; }
+function cpDateMs(ms){ const d = new Date(ms); return d.getDate() + ' ' + CP_MONTHS[d.getMonth()]; }
+function cpDaysLeft(c){ return Math.round((new Date(c.goal.by + 'T12:00:00').getTime() - CP_NOW()) / CP_DAY); }
+function cpEsc(s){ return escapeHtml(String(s == null ? '' : s)); }
+function cpMoney(n){ n = Math.round(Number(n) || 0); return n >= 10000000 ? '₹' + (+(n / 10000000).toFixed(2)) + ' Cr' : n >= 100000 ? '₹' + (+(n / 100000).toFixed(1)) + 'L' : '₹' + n.toLocaleString('en-IN'); }
+function cpPct(a, b){ return b ? Math.round(a / b * 100) : 0; }
+function cpIsCorp(){ return ORG_STRUCTURE.profile.orgType === 'Corporate'; }
+
+/* ---------- conversion history: the org's own last 90 days, per role family ---------- */
+let CONVERSION_HISTORY = {
+  'backend-engineering': { reached:420, reply:.24, interested:.65, ready:.27, readyToSubmit:.5, submitToHire:.33, bestHours:[19,20,21], byPlay:{ apps:.05, know:.087, pool:.028, ref:.045, boards:.026, li:.033 } },
+  'warehouse-ops':       { reached:380, reply:.31, interested:.55, ready:.19, readyToSubmit:.5, submitToHire:.3,  bestHours:[18,19,20], byPlay:{ apps:.07, know:.06, pool:.03, ref:.04, boards:.03, li:.012 } },
+  'healthcare':          { reached:260, reply:.27, interested:.6, ready:.22, readyToSubmit:.5, submitToHire:.35, bestHours:[19,20,21], byPlay:{ apps:.06, know:.075, pool:.03, ref:.05, boards:.028, li:.02 } },
+  'default':             { reached:0,   reply:.18, interested:.55, ready:.25, readyToSubmit:.5, submitToHire:.3,  bestHours:[19,20,21], byPlay:{ apps:.05, know:.07, pool:.025, ref:.04, boards:.02, li:.03 } },
+};
+function cpFamily(job){
+  const t = (String((job && job.title) || '') + ' ' + ((job && job.skills) || []).join(' ')).toLowerCase();
+  if(/java|python|backend|engineer|developer|devops|data|cloud|react|software|qa/.test(t)) return 'backend-engineering';
+  if(/warehouse|supervisor|logistic|driver|picker/.test(t)) return 'warehouse-ops';
+  if(/nurse|pharma|medical|lab|health|icu|coder|front office/.test(t)) return 'healthcare';
+  return 'default';
+}
+function cpHistory(job){
+  const f = cpFamily(job), h = CONVERSION_HISTORY[f], d = CONVERSION_HISTORY.default;
+  if(f === 'default' || h.reached >= 30) return h;
+  const mix = function(a, b){ return (a + b) / 2; }, by = {}; Object.keys(d.byPlay).forEach(function(k){ by[k] = mix(h.byPlay[k], d.byPlay[k]); });
+  return Object.assign({}, h, { reply:mix(h.reply, d.reply), interested:mix(h.interested, d.interested), ready:mix(h.ready, d.ready), byPlay:by });
+}
+/* stand-in pool sizes per role family (live counts in production) */
+const CP_POOL_SEED = {
+  'backend-engineering': { apps:58, know:64, pool:120, ref:40, boards:210, li:260 },
+  'warehouse-ops':       { apps:140, know:90, pool:300, ref:60, boards:400, li:40 },
+  'healthcare':          { apps:46, know:70, pool:150, ref:50, boards:180, li:60 },
+  'default':             { apps:30, know:40, pool:80, ref:25, boards:120, li:100 },
+};
+function cpPools(job){ return Object.assign({}, CP_POOL_SEED[cpFamily(job)] || CP_POOL_SEED.default); }
+
+/* ---------- jobs: agency jobs live in JOBS; corporate requisitions are kept here ---------- */
+let CP_CORP_JOBS = [
+  { id:'nw1', title:'Staff Nurse (ICU)', client:'Northwind Health', department:'Nursing', loc:'Mumbai, IN', status:'Active', positions:4, daysOpen:12, salary:'₹4–6 LPA', skills:['ICU care','BLS','Ventilator handling'], minExp:'2+ Years', notice:'< 30 Days', workMode:'On-site', corp:true, avgFeedbackDays:2 },
+  { id:'nw2', title:'Pharmacist', client:'Northwind Health', department:'Pharmacy', loc:'Pune, IN', status:'Active', positions:2, daysOpen:20, salary:'₹3–4.5 LPA', skills:['Dispensing','Inventory','Pharmacy software'], minExp:'1+ Years', notice:'< 30 Days', workMode:'On-site', corp:true, avgFeedbackDays:3 },
+  { id:'nw3', title:'Medical Coder', client:'Northwind Health', department:'Revenue cycle', loc:'Hyderabad, IN', status:'Active', positions:9, daysOpen:34, salary:'₹3.5–5 LPA', skills:['ICD-10','CPT','Medical billing'], minExp:'2+ Years', notice:'< 45 Days', workMode:'Hybrid', corp:true, avgFeedbackDays:2 },
+  { id:'nw4', title:'Lab Technician', client:'Northwind Health', department:'Diagnostics', loc:'Mumbai, IN', status:'Active', positions:3, daysOpen:9, salary:'₹2.8–4 LPA', skills:['Phlebotomy','Pathology','Lab equipment'], minExp:'1+ Years', notice:'< 30 Days', workMode:'On-site', corp:true, avgFeedbackDays:2 },
+  { id:'nw5', title:'ICU Charge Nurse', client:'Northwind Health', department:'Nursing', loc:'Mumbai, IN', status:'Active', positions:2, daysOpen:15, salary:'₹6–8 LPA', skills:['ICU care','Team lead','BLS'], minExp:'5+ Years', notice:'< 45 Days', workMode:'On-site', corp:true, avgFeedbackDays:2 },
+  { id:'nw6', title:'Front Office Executive', client:'Northwind Health', department:'Administration', loc:'Pune, IN', status:'Active', positions:3, daysOpen:7, salary:'', skills:['Reception','Hospital software','Communication'], minExp:'1+ Years', notice:'< 15 Days', workMode:'On-site', corp:true, avgFeedbackDays:2 },
+];
+function cpJob(id){ return jobById(id) || CP_CORP_JOBS.find(function(j){ return j.id === id; }) || null; }
+function cpJobRange(job){ const r = typeof clJobCtc === 'function' ? clJobCtc(job) : null; return r; }
+function cpHasPay(job){ return !!(job && cpJobRange(job)); }
+function cpPayText(job){ const r = cpJobRange(job); return r ? '₹' + r[0] + '–' + r[1] + ' LPA' : ''; }
+function cpCtcMid(job){ const r = cpJobRange(job); return r ? Math.round((r[0] + r[1]) / 2 * 100000) : 2400000; }
+function cpFee(job){
+  if(!job) return 0;
+  if(!job.corp && typeof clJobExpected === 'function'){ try { const e = clJobExpected(job); if(e && e.fee) return e.fee; } catch(e){} }
+  return Math.round(cpCtcMid(job) * 0.0833);
+}
+function cpJobCompany(job){ return (job && (job.client || job.department)) || ''; }
+function cpClientSpeed(job){ const c = !job.corp && typeof clientForJob === 'function' ? clientForJob(job) : null; return Math.max(1, (c && c.avgFeedbackDays) || job.avgFeedbackDays || (job.client === 'CloudNova' ? 5 : 3)); }
+
+/* ---------- seed jobs and candidates (agency) ---------- */
+(function seedJobs(){
+  const sal = { j1:'₹24–32 LPA', j2:'₹14–20 LPA', j3:'₹22–30 LPA', j4:'₹26–34 LPA', j5:'₹16–24 LPA', j6:'₹14–22 LPA', j7:'₹20–28 LPA', j8:'₹18–26 LPA', j9:'₹20–28 LPA' };
+  JOBS.forEach(function(j){ if(!j.salary && sal[j.id]) j.salary = sal[j.id]; });
+  const J = function(id, title, client, loc, skills, minExp, extra){
+    if(JOBS.some(function(j){ return j.id === id; })) return;
+    JOBS.push(Object.assign({ id:id, title:title, client:client, loc:loc, status:'Active', priority:'Medium', recruiter:'Priya Sharma', recruiterId:'RP-088', assignedBy:'Manager Assigned', positions:1, matchQuality:80, recommended:4, submitted:0, daysOpen:8, replacementDays:90,
+      skills:skills, preferredSkills:[], minExp:minExp, notice:'< 45 Days', department:'Operations', employmentType:'Full-time', workMode:'On-site', responsibilities:[], candidateRequirements:[], summary:title + ' for ' + client + '.', candidateIds:[], interested:[], recs:[], interviewWorkflow:['Phone Screen','Interview','Offer','Joining'] }, extra || {}));
+  };
+  J('j21', 'Warehouse Supervisor', 'SwiftLog', 'Pune, IN', ['Inventory','WMS','Team handling'], '4+ Years', { positions:3, salary:'₹4.5–6 LPA', notice:'< 30 Days', daysOpen:14, recruiter:'Akash Shah', recruiterId:'RP-104' });
+  J('j22', 'Product Designer', 'CloudNova', 'Hyderabad, IN', ['Figma','Design systems','Prototyping'], '4+ Years', { salary:'₹18–26 LPA', workMode:'Hybrid', recruiter:'Arjun Kapoor', recruiterId:'RP-092', daysOpen:20 });
+  J('j23', 'Staff Nurse (ICU)', 'MediSure Health', 'Mumbai, IN', ['ICU care','BLS','Ventilator handling'], '2+ Years', { positions:4, salary:'₹4–6 LPA', notice:'< 30 Days', recruiter:'Divya Menon', recruiterId:'RP-081', daysOpen:5 });
+  J('j24', 'Data Engineer', 'HealthAI', 'Bengaluru, IN', ['Python','SQL','Spark'], '4+ Years', { salary:'₹20–30 LPA', workMode:'Hybrid', recruiter:'Arjun Kapoor', recruiterId:'RP-092', daysOpen:18 });
+  J('j25', 'Relationship Manager', 'Finvest Labs', 'Ahmedabad, IN', ['Sales','Banking products','CRM'], '3+ Years', { positions:2, salary:'₹8–12 LPA', status:'Filled', recruiter:'Priya Sharma', daysOpen:41 });
+  J('j26', 'Engineering Manager', 'Fintech Corp', 'Pune, IN', ['Java','People management','Architecture'], '9+ Years', { salary:'', workMode:'Hybrid', daysOpen:11 });
+  J('j27', 'Area Sales Manager', 'RetailX', 'Bengaluru, IN', ['Field sales','Retail','Team handling'], '6+ Years', { positions:2, salary:'₹12–18 LPA', daysOpen:16 });
+  J('j28', 'Cloud Security Engineer', 'CloudNova', 'Hyderabad, IN', ['AWS','Security','IAM'], '5+ Years', { salary:'₹26–36 LPA', workMode:'Hybrid', daysOpen:10 });
+})();
+/* people for the Java campaign: real candidate records, so they can sit in the job's Applicants */
+(function seedCandidates(){
+  const rows = [
+    ['Rohan Deshmukh','Java Developer','BluePeak Technologies',7,'Pune, IN',24,30,'30 Days'], ['Meera Iyer','Senior Backend Engineer','Nimbus Labs',8,'Pune, IN',26,32,'45 Days'],
+    ['Aditya Kulkarni','Java Developer','Zenith Systems',6,'Pune, IN',22,28,'30 Days'], ['Nisha Rao','Software Engineer','Skyline Fintech',6,'Mumbai, IN',23,29,'60 Days'],
+    ['Karthik Nair','Backend Engineer','Harbor Data',9,'Pune, IN',28,34,'60 Days'], ['Pooja Bhatt','Java Developer','Meridian Softworks',6,'Pune, IN',21,27,'15 Days'],
+    ['Sandeep Joshi','Senior Engineer','Trident Analytics',8,'Nashik, IN',25,30,'30 Days'], ['Ritu Malhotra','Backend Developer','Orbit Payments',7,'Pune, IN',24,31,'45 Days'],
+    ['Vivek Menon','Java Lead','Persistent Systems',10,'Pune, IN',30,36,'60 Days'], ['Anjali Gupta','Software Engineer','CoreLedger',6,'Pune, IN',22,27,'30 Days'],
+    ['Faizan Ahmed','Java Developer','Ledgerline',7,'Mumbai, IN',25,30,'90 Days'], ['Tanvi Shah','Backend Engineer','Zenith Systems',6,'Pune, IN',23,28,'30 Days'],
+  ];
+  rows.forEach(function(r, i){
+    const id = 101 + i; if(CANDIDATES.some(function(c){ return c.id === id; })) return;
+    CANDIDATES.push({ id:id, name:r[0], role:r[1], exp:r[3] + ' yrs', loc:r[4], avail:i % 3 === 0 ? 'Available' : 'Passive', availScore:60 + (i * 7) % 35, joinProb:60 + (i * 11) % 30, respProb:55 + (i * 13) % 35, bestTime:'7:00 PM', counterRisk:20 + (i * 9) % 40, trust:85, intent:'Medium',
+      skills:['Java','Spring Boot','AWS','Microservices'].slice(0, 3 + (i % 2)), salary:'₹' + r[5] + '–' + r[6] + ' LPA', notice:r[7], preferredRoles:['Backend Lead'], goals:'Found through a hiring campaign.', market:'Replied to a campaign message.', comms:'Replies on WhatsApp in the evening.', employmentType:'Full-time', industry:'Technology', domain:'Fintech',
+      email:r[0].toLowerCase().replace(/[^a-z]+/g, '.') + '@example.com', phone:'98' + String(10000000 + i * 137).slice(0, 8), company:r[2], currentCompany:r[2], campaignSeed:true, linkedin:'linkedin.com/in/' + r[0].toLowerCase().replace(/[^a-z]+/g, '-') });
+  });
+  CANDIDATES.forEach(function(c){ if(c.campaignSeed && CW_OPTINS && !CW_OPTINS[personKeyOf(c)]) CW_OPTINS[personKeyOf(c)] = { source:'Applied and ticked “Contact me on WhatsApp”', date:'Oct 2026' }; });
+})();
+
+/* ---------- planner: a pure function ---------- */
+function planCampaign(o){
+  const job = o.job, goal = Math.max(1, o.goalReady || 1), h = o.history || cpHistory(job), pools = o.pools || cpPools(job), plays = o.plays || {};
+  const days = Math.max(1, o.days || 10);
+  let remaining = goal, expectedReady = 0, reach = 0, checked = 0;
+  const playUse = {};
+  CP_PLAYS.forEach(function(p){
+    const on = plays[p.id] !== false && (p.id !== 'li' || (agentAccess('linkedin').on && cwLiAccounts().some(function(a){ return a.connected; }))) && !(o.blocked && o.blocked[p.id]);
+    const pool = pools[p.id] || 0, rate = h.byPlay[p.id] || .02;
+    if(!on){ playUse[p.id] = { label:'Off', take:0, pool:pool, rate:rate, on:false }; return; }
+    if(pool === 0){ playUse[p.id] = { label:'None to reach', take:0, pool:0, rate:rate, on:true }; return; }
+    if(remaining <= 0){ playUse[p.id] = { label:'Only if needed', take:0, pool:pool, rate:rate, on:true, spare:true }; return; }
+    const take = Math.min(pool, Math.ceil(remaining / rate)), gain = take * rate;
+    expectedReady += gain; remaining -= gain; if(p.id === 'apps') checked = take; else reach += take;
+    playUse[p.id] = { label:take >= pool ? 'All ' + pool : take + ' of ' + pool, take:take, pool:pool, rate:rate, on:true };
+  });
+  const reachAll = reach + checked, replies = Math.round(reach * h.reply + checked * .5), ready = Math.round(expectedReady * 10) / 10;
+  const prescreens = Math.round(replies * h.interested), msgs = Math.round(reach * 2.2);
+  const yourHours = Math.round(((goal * 15 + (o.check ? 12 : 0)) / 60) * 10) / 10, handHours = Math.round(((msgs * 2 + prescreens * 10) / 60) * 10) / 10;
+  const atStake = (job.positions || 1) * cpFee(job);
+  const short = remaining > 0.5, appsOnly = playUse.apps && playUse.apps.on && !playUse.apps.spare && reach === 0 && !short;
+  return { reach:reach, checked:checked, reachAll:reachAll, replies:replies, ready:ready, msgs:msgs, prescreens:prescreens, yourHours:yourHours, handHours:handHours, atStake:atStake, playUse:playUse, short:short, appsOnly:appsOnly, days:days };
+}
+function cpPlanSentence(p, c){
+  const by = cpDate(c.goal.by);
+  if(p.short) return 'Not enough people for this goal with these sources. Kairo can reach about ' + Math.max(0, Math.round(p.ready)) + ' ready people by ' + by + '.';
+  const chk = p.checked ? 'Kairo will check ' + p.checked + ' applications' + (p.reach ? ' and reach about ' + p.reach + ' more people' : ', and that alone reaches the goal. Other sources wait unless the pace drops') : 'Kairo will reach about ' + p.reach + ' people';
+  return 'To get ' + c.goal.ready + ' people ready to call by ' + by + ', ' + chk + (p.replies ? ', expects about ' + p.replies + ' replies' : '') + ', and books your calls in your free slots.';
+}
+
+/* ---------- honest messages ---------- */
+const CP_PRESSURE = /\b(urgent(ly)?|last chance|only today|limited seats?|act now|hurry|final call|apply today|don'?t miss|before it'?s too late)\b/i;
+function cpVarsOf(text){ return (String(text || '').match(/\{[a-z ]+\}/g) || []); }
+function cwHonestyCheck(text, job, ctx){
+  ctx = ctx || {}; const out = [], t = String(text || ''), first = ctx.first !== false && ctx.stepIndex === 0;
+  if(CP_PRESSURE.test(t) && !(job && job.closingDate)) out.push({ code:'pressure', text:'“' + (t.match(CP_PRESSURE) || [''])[0] + '” is a pressure word. Say what is true about the job instead.' });
+  if(/\b(remote|work from home|wfh)\b/i.test(t) && job && !/remote/i.test(job.workMode || '')) out.push({ code:'promise', text:'The job is not remote, so the message cannot say it is.' });
+  if(/\b(bonus|relocation|visa|joining bonus)\b/i.test(t) && job && !(job.compensation && job.compensation.bonuses && job.compensation.bonuses.length) && !(job.perks || []).length) out.push({ code:'promise', text:'The job has no bonus, relocation or visa support listed, so the message cannot promise it.' });
+  const r = job ? cpJobRange(job) : null;
+  (t.match(/₹\s?\d+(?:\.\d+)?\s?(?:[–-]\s?\d+(?:\.\d+)?)?\s?(?:L|LPA|lakh)/gi) || []).forEach(function(m){
+    const nums = (m.match(/\d+(?:\.\d+)?/g) || []).map(Number); if(r && nums.some(function(n){ return n < r[0] - 0.01 || n > r[1] + 0.01; })) out.push({ code:'pay', text:'“' + m + '” is outside the job’s range of ' + cpPayText(job) + '.' });
+  });
+  if(ctx.senderName){ RECRUITER_ROSTER.forEach(function(u){ const f = u.name.split(' ')[0]; if(u.name !== ctx.senderName && new RegExp('\\b' + f + '\\b').test(t) && ctx.senderName.split(' ')[0] !== f) out.push({ code:'sender', text:'The message names ' + f + ', but it is sent in the name of ' + ctx.senderName + '.' }); }); }
+  if(first){
+    if(!/\{pay range\}|₹\s?\d/i.test(t)) out.push({ code:'nopay', text:'The first message needs the pay range. Messages without one get about half the replies.' });
+    else if(/\{pay range\}/i.test(t) && job && !cpHasPay(job)) out.push({ code:'nopay', text:'The job has no pay range yet, so {pay range} cannot be filled in.' });
+    if(job && !(job.confidential && job.confidential.companyName) && !/\{company\}/i.test(t) && !new RegExp(cpJobCompany(job).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(t) && cpJobCompany(job)) out.push({ code:'company', text:'Name the company. Hiding it makes people trust the message less.' });
+  }
+  if(ctx.channel){ const lim = ctx.channel === 'whatsapp' ? 1024 : ctx.channel === 'linkedin' ? 300 : 2000; const len = cpRenderText(t, ctx.person, ctx.camp, true).length; if(len > lim) out.push({ code:'long', text:'About ' + len + ' characters after names are filled in; ' + ctx.channel + ' allows ' + lim.toLocaleString('en-IN') + '.' }); }
+  return out;
+}
+
+/* ---------- message steps: three tones, all seeded ---------- */
+const CP_TEXT = {
+  warm: [
+    'Hi {first name}, this is {sender} from {company}. {profile line} We have a {job title} role in {city} that pays {pay range}. Reply 1 for details, or 2 if the timing is not right. No problem either way.',
+    'Hi {first name}, one more detail on the {job title} role: the team works on payment services and interviews take two short rounds. Reply 1 for the details, or 2 if not now.',
+    'Hi {first name}, I will close this here so I do not keep messaging you. If the timing is not right, is there someone in your circle who might like the {job title} role at {company}? Thank you either way.',
+  ],
+  short: [
+    'Hi {first name}, {sender} here. {job title} at {company}, {city}, {pay range}. Reply 1 for details, 2 if not now.',
+    '{first name}, the {job title} role has two short interview rounds and a quick decision. Reply 1 for details, 2 if not now.',
+    '{first name}, closing this so I do not keep messaging you. Know someone who might like the {job title} role? Thank you.',
+  ],
+  formal: [
+    'Dear {first name}, I am {sender} of {company}. {profile line} We are hiring a {job title} in {city} with a pay range of {pay range}. Please reply 1 to receive details, or 2 if this is not a good time.',
+    'Dear {first name}, further to my earlier note on the {job title} position, the process has two interview rounds. Please reply 1 for details, or 2 if not now.',
+    'Dear {first name}, I will close this thread so that I do not trouble you further. If you know someone who may be interested in the {job title} position at {company}, I would be grateful for an introduction.',
+  ],
+};
+const CP_TEXT_B = 'Hi {first name}, {sender} from {company}. {profile line} Would you take a 15-minute call about a {job title} role in {city}, {pay range}? Reply 1 for yes, or 2 if not now.';
+function cpDefaultText(i, tone){ return (CP_TEXT[tone] || CP_TEXT.warm)[Math.min(i, 2)]; }
+function cpStepKind(c, i){ return i === 0 ? 0 : i === c.message.steps.length - 1 ? 2 : 1; }
+function cpStepText(c, i, which){ const s = c.message.steps[i]; if(which === 'B') return s.textB || ''; return s.text == null ? cpDefaultText(cpStepKind(c, i), c.message.tone) : s.text; }
+function cpProfileLine(cand, job){
+  if(!cand) return '';
+  const ex = parseInt(String(cand.exp || ''), 10), skill = (job && job.skills || []).find(function(s){ return (cand.skills || []).indexOf(s) > -1; }), co = cand.company || (typeof enrichCandidate === 'function' ? (enrichCandidate(cand).currentCompany || '') : '');
+  if(skill && ex && co) return 'I saw your ' + ex + ' years of ' + skill + ' at ' + co + '.';
+  if(cand.role && co) return 'I saw your work as ' + cand.role + ' at ' + co + '.';
+  if(cand.role) return 'I saw your background as ' + cand.role + '.';
+  if(skill) return 'Your ' + skill + ' experience stood out.';
+  return '';
+}
+function cpSenderOf(c){ return tmById(c.message.senderId || c.ownerId) || { name:'Priya Sharma' }; }
+function cpRenderText(text, cand, c, plain){
+  const job = c ? cpJob(c.jobId) : null, sender = c ? cpSenderOf(c) : { name:'Priya' };
+  const vars = { 'first name':cand ? cand.name.split(' ')[0] : 'there', 'sender':sender.name.split(' ')[0], 'company':job ? (job.confidential && job.confidential.companyName ? 'a company in ' + (job.loc || '').split(',')[0] : cpJobCompany(job)) : 'the company', 'job title':job ? job.title : 'the role', 'city':job ? (job.loc || '').split(',')[0] : '', 'pay range':job ? (cpPayText(job) || '{pay range}') : '', 'profile line':cpProfileLine(cand, job) };
+  return String(text || '').replace(/\{([a-z ]+)\}/g, function(m, k){ return vars[k] != null ? vars[k] : m; }).replace(/\s{2,}/g, ' ').replace(/ ([.,])/g, '$1').trim();
+}
+
+/* ---------- pre-screen questions drafted from the JD ---------- */
+function cpNoticeLimit(job){ const m = /(\d+)/.exec(String((job && job.notice) || '')); return m ? +m[1] : 60; }
+function cpDraftQuestions(job){
+  const qs = []; let n = 1;
+  const add = function(kind, text, rule, src){ qs.push({ id:'q' + n++, kind:kind, text:text, rule:rule, source:src, edited:false }); };
+  add('notice', 'What is your notice period?', 'Up to ' + cpNoticeLimit(job) + ' days', 'Kairo picked this from the JD: “Notice period: ' + (job.notice || 'not stated') + '.”');
+  const r = cpJobRange(job);
+  add('ctc', corpFrontline(job) ? 'What is your current monthly pay, and what do you expect?' : 'What is your current CTC, and what do you expect?', r ? 'Expected up to ₹' + r[1] + 'L' : '', r ? 'Kairo picked this from the JD: “Pay range: ' + cpPayText(job) + '.”' : 'Kairo picked this from the job. Add a pay range to the job to make it a rule.');
+  add('location', /remote/i.test(job.workMode || '') ? 'Are you comfortable working remotely?' : 'Can you work from ' + (job.loc || 'the job location').split(',')[0] + (/hybrid/i.test(job.workMode || '') ? ' on a hybrid schedule?' : '?'), 'Yes', 'Kairo picked this from the JD: “' + (job.workMode || 'On-site') + ' · ' + (job.loc || '') + '.”');
+  const sk = (job.skills || [])[0]; if(sk) add('skill', 'How many years have you worked with ' + sk + '?', '', 'Kairo picked this from the must-have skills: “' + (job.skills || []).join(', ') + '.”');
+  return qs;
+}
+function corpFrontline(job){ return !!(job && job.corp && /nurse|technician|executive|pharmacist/i.test(job.title)); }
+function cpMoreFromJd(job, have){
+  const more = [], used = (have || []).map(function(q){ return q.text; });
+  (job.preferredSkills || []).slice(0, 3).forEach(function(s){ more.push({ text:'Have you worked on ' + s + '?', source:'“Good to have: ' + s + '”' }); });
+  (job.candidateRequirements || []).slice(0, 2).forEach(function(r){ if(!/^(Education|Certifications|Domain|Industry):/.test(r)) more.push({ text:'Do you meet this: ' + r.replace(/\.$/, '') + '?', source:'“' + r + '”' }); });
+  if(!more.length) (job.skills || []).slice(1, 3).forEach(function(s){ more.push({ text:'How many years have you worked with ' + s + '?', source:'“Must-have: ' + s + '”' }); });
+  return more.filter(function(m){ return used.indexOf(m.text) === -1; });
+}
+/* deterministic parsers */
+function cpParseNotice(t){ t = String(t).toLowerCase(); if(/immediate|serving|(^|\D)0 ?days?\b/.test(t)) return 0; const m = /(\d+)\s*(day|week|month)?/.exec(t); if(!m) return null; const n = +m[1], u = m[2] || 'day'; return u === 'month' ? n * 30 : u === 'week' ? n * 7 : n; }
+function cpParseCtc(t){ const s = String(t).toLowerCase().replace(/,/g, ''); const nums = (s.match(/\d+(?:\.\d+)?/g) || []).map(Number); if(!nums.length) return null; return { ctcNow:nums[0], ctcExpected:nums.length > 1 ? nums[1] : nums[0] }; }
+function cpParseYes(t){ t = String(t).toLowerCase().trim(); if(/^(y|yes|yeah|yep|ok|sure|1|can|comfortable)\b/.test(t)) return true; if(/^(n|no|nope|not|2)\b/.test(t)) return false; if(/after|move|relocat/.test(t)) return 'after'; return null; }
+function cpIntent(t){
+  t = String(t || '').toLowerCase().trim();
+  if(/^(stop|unsubscribe|remove me|do not contact)/.test(t)) return 'stop';
+  if(/out of office|auto.?reply|on leave/.test(t)) return 'ooo';
+  if(/^(1|yes|interested|tell me more|sure|ok|okay)\b/.test(t)) return 'interested';
+  if(/^(2|no|not now|not interested|later)\b/.test(t)) return 'notNow';
+  if(/\?|how|what|can i|do you|is it|will i/.test(t)) return 'question';
+  return 'unclear';
+}
+/** one answer against its rule: 'pass' | 'close' | 'fail' | 'unclear' | 'info' */
+function cpJudge(q, text, job){
+  const k = q.kind;
+  if(k === 'notice'){ const d = cpParseNotice(text); if(d == null) return { r:'unclear' }; const lim = cpNoticeLimit(job); return { r:d <= lim ? 'pass' : d <= lim + 30 ? 'close' : 'fail', val:d, note:d + ' days' }; }
+  if(k === 'ctc'){ const v = cpParseCtc(text); if(!v) return { r:'unclear' }; const r = cpJobRange(job); if(!r || !q.rule) return { r:'pass', val:v, note:'₹' + v.ctcNow + 'L now, ₹' + v.ctcExpected + 'L expected' }; const top = r[1]; return { r:v.ctcExpected <= top ? 'pass' : v.ctcExpected <= top * 1.1 ? 'close' : 'fail', val:v, note:'₹' + v.ctcNow + 'L now, ₹' + v.ctcExpected + 'L expected' }; }
+  if(k === 'location'){ const y = cpParseYes(text); if(y == null) return { r:'unclear' }; return { r:y === true ? 'pass' : y === 'after' ? 'close' : 'fail', val:y, note:y === true ? 'Yes' : y === 'after' ? 'After moving' : 'No' }; }
+  if(!q.rule) return { r:'info', val:text, note:String(text).slice(0, 40) };
+  const y = cpParseYes(text); return { r:y === false ? 'fail' : 'pass', val:text, note:String(text).slice(0, 40) };
+}
+
+/* ---------- cp-camp.js ---------- */
+/* ============================================================
+   Campaigns: records, people, one person one approach, the pre-screen chat, the engine tick, moves, pace, money.
+============================================================ */
+let CAMPAIGNS = [], CAMPAIGN_PEOPLE = [], CP_NEXT = 1, CP_PNEXT = 1, CP_MV = 1;
+const CP_DEFAULT_PACE = { whatsapp:{ gap:'20-60', batch:50, rest:10, daily:300 }, email:{ gap:'60-180', batch:40, rest:15, daily:100 }, linkedin:{ gap:'120-540', batch:8, rest:30, daily:16 } };
+const CP_PACE_OPTS = {
+  whatsapp:{ gap:[['10-30','10–30 s','fast'],['20-60','20–60 s'],['45-120','45–120 s']], batch:[[25,'25'],[50,'50'],[100,'100','big']], rest:[[5,'5 min','short'],[10,'10 min'],[20,'20 min'],[30,'30 min']], daily:[[150,'150'],[300,'300'],[600,'600','over'],[1000,'1,000','over']] },
+  email:{ gap:[['30-60','30–60 s','fast'],['60-180','1–3 min'],['120-300','2–5 min']], batch:[[20,'20'],[40,'40'],[80,'80','big']], rest:[[5,'5 min','short'],[15,'15 min'],[30,'30 min']], daily:[[50,'50'],[100,'100'],[150,'150'],[250,'250','over']] },
+  linkedin:{ gap:[['60-180','1–3 min','fast'],['120-540','2–9 min'],['300-900','5–15 min']], batch:[[5,'5'],[8,'8'],[15,'15','big']], rest:[[15,'15 min','short'],[30,'30 min'],[60,'60 min']], daily:[[8,'8'],[16,'16'],[20,'20'],[30,'30','over']] },
+};
+const CP_STATE_LABEL = { queued:'Queued', contacted:'Contacted', replied:'Replied', notNow:'Not now', interested:'Interested', screening:'In pre-screen', ready:'Ready to call', closeMiss:'Needs you', needsYou:'Needs you', optedOut:'Opted out', done:'Done' };
+function cpById(id){ return CAMPAIGNS.find(function(c){ return c.id === id; }); }
+function cpPerson(id){ return CAMPAIGN_PEOPLE.find(function(p){ return p.id === id; }); }
+function cpPeopleOf(c){ return CAMPAIGN_PEOPLE.filter(function(p){ return p.campaignId === c.id; }); }
+function cpOwner(c){ return tmById(c.ownerId) || { name:'Priya Sharma', id:'RP-088' }; }
+function cpLog(c, text, kind, who){ c.log.unshift({ at:CP_NOW(), text:text, kind:kind || 'info', who:who || 'Kairo for ' + cpOwner(c).name }); if(c.log.length > 300) c.log.length = 300; }
+function cpAudit(c, text){ logAudit('Cowork', 'Kairo for ' + cpOwner(c).name + ' · ' + text, c.title, { actor:'Kairo for ' + cpOwner(c).name, entityType:'Campaign', entityId:c.id }); }
+
+/* ---------- a new campaign with the recommended setup ---------- */
+function cpSteps(){ return [ { id:'s1', delayDays:0, sendWhen:'noreply', channel:'auto', text:null, textB:null }, { id:'s2', delayDays:2, sendWhen:'noreply', channel:'email', text:null, textB:null }, { id:'s3', delayDays:3, sendWhen:'noreply', channel:'auto', text:null, textB:null } ]; }
+function cpNewCampaign(jobId, o){
+  o = o || {}; const job = cpJob(jobId); if(!job) return null; const me = currentActingUser() || {}, owner = o.ownerId || me.id || 'RP-088', pos = job.positions || 1;
+  const c = { id:o.detached ? 'draft' : 'cmp' + (CP_NEXT++), jobId:jobId, org:o.org || (cpIsCorp() ? 'corp' : 'agency'), ownerId:owner, createdBy:me.id || owner, createdAt:CP_NOW(), startedAt:null, status:'draft', pausedReason:'', pausedBy:'',
+    title:job.title, goal:{ ready:Math.max(3, pos * 6), by:CP_ISO(CP_NOW() + 10 * CP_DAY) }, mix:'recommended', plays:{ apps:true, know:true, pool:true, ref:true, boards:true, li:true },
+    message:{ tone:'warm', senderId:owner, ab:true, edited:false, steps:cpSteps() }, prescreen:{ questions:cpDraftQuestions(job), edited:false, callMinutes:15 }, pace:JSON.parse(JSON.stringify(CP_DEFAULT_PACE)),
+    rules:{ checkFirst:10, hours:'10:00-20:00', days:[1,2,3,4,5,6], recheck:true }, review:{ pending:[], approved:0 }, search:cpDefaultChips(job),
+    stats:{ reached:0, replied:0, interested:0, screened:0, ready:0, submitted:0, interviews:0, offers:0, hired:0, notNow:0, referrals:0, optOuts:0 }, bySource:{}, byChannel:{ whatsapp:{ sent:0, replied:0 }, email:{ sent:0, replied:0 }, linkedin:{ sent:0, replied:0 } },
+    dedupe:{ merged:0, skipped:0, waits:0, notAgain:0 }, bestHours:cpHistory(job).bestHours.slice(), moves:[], log:[], versions:[], version:1, versionLog:[], abResult:null, nextAt:0, goalReached:false };
+  Object.keys(c.stats).forEach(function(){}); CP_PLAYS.forEach(function(p){ c.bySource[p.id] = { reached:0, replied:0, ready:0, share:0, paused:false }; });
+  if(!o.detached) CAMPAIGNS.push(c); return c;
+}
+function cpDefaultChips(job){ return { words:[job.title].concat((job.skills || []).slice(0, 3)).concat([job.minExp || '', (job.loc || '').split(',')[0]]).filter(Boolean) }; }
+function cpPlay(id){ return CP_PLAYS.find(function(p){ return p.id === id; }); }
+function cpPlanFor(c){ return planCampaign({ job:cpJob(c.jobId), goalReady:c.goal.ready, byDate:c.goal.by, days:Math.max(1, cpDaysLeft(c)), plays:c.plays, check:c.rules.checkFirst > 0 }); }
+
+/* ---------- one person, one approach ---------- */
+function cpActiveLock(cand, exceptCampaignId){ return CAMPAIGN_PEOPLE.find(function(p){ return p.candidateId === cand.id && p.campaignId !== exceptCampaignId && ['optedOut','done','notNow'].indexOf(p.state) === -1 && !p.lockedFree && !(p.state === 'queued' && p.nextAt === Infinity); }); }
+function cpEligible(c, cand){
+  const job = cpJob(c.jobId), key = personKeyOf(cand);
+  if(cpPeopleOf(c).some(function(p){ return p.candidateId === cand.id; })) return { ok:false, code:'merged', reason:'Already in this campaign' };
+  if(!job.corp && findSubmission(c.jobId, cand.id)) return { ok:false, code:'notAgain', reason:'Already applied to this job. Counted as an applicant.' };
+  if(cwSuppression(key)) return { ok:false, code:'skip', reason:'On the do-not-contact list' };
+  if(cwNoPoach(cand)) return { ok:false, code:'skip', reason:'Works at the client' };
+  if(!job.corp && job.clientId){ const dup = SUBMISSIONS.find(function(s){ return s.candidateId === cand.id && s.clientId === job.clientId && s.jobId !== c.jobId; }); if(dup) return { ok:false, code:'skip', reason:'Already submitted to this client' }; }
+  const lock = cpActiveLock(cand, c.id); if(lock){ const oc = cpById(lock.campaignId); return { ok:false, code:'waits', reason:'Waits its turn: in "' + (oc ? oc.title : 'another campaign') + '" owned by ' + (oc ? cpOwner(oc).name : 'someone') }; }
+  const recent = SEND_LEDGER.some(function(l){ return l.personKey === key && l.status === 'sent' && CP_NOW() - l.at < 30 * CP_DAY && l.campaignId !== c.id; });
+  if(recent) return { ok:false, code:'skip', reason:'Contacted in the last 30 days' };
+  return { ok:true };
+}
+function cpNote(c, code, cand, reason){ const d = c.dedupe; if(code === 'merged') d.merged++; else if(code === 'waits') d.waits++; else if(code === 'notAgain') d.notAgain++; else d.skipped++; cpLog(c, (code === 'merged' ? 'Merged ' : 'Skipped ') + cand.name + ': ' + reason, code === 'merged' ? 'merge' : 'skip'); }
+function cpPlayFor(c, cand){ return SUBMISSIONS.some(function(s){ return s.candidateId === cand.id; }) ? 'know' : 'pool'; }
+function cpEnqueue(c, cand, play, extra){
+  const e = cpEligible(c, cand); if(!e.ok){ cpNote(c, e.code, cand, e.reason); return null; }
+  const job = cpJob(c.jobId), sc = cwScore(cand, job);
+  const p = Object.assign({ id:'cpp' + (CP_PNEXT++), campaignId:c.id, candidateId:cand.id, play:play || cpPlayFor(c, cand), channel:'', step:0, state:'queued', score:sc.score, why:[cwReason({ c:cand, job:job }, 'match')], answers:{}, qIndex:0, slot:null, version:'A', lastAt:0, nextAt:CP_NOW(), chat:[], misses:[], basis:'Applied earlier or in the pool with consent', cVersion:c.version }, extra || {});
+  CAMPAIGN_PEOPLE.push(p); return p;
+}
+function cpEnroll(c, max){
+  const job = cpJob(c.jobId); let n = 0;
+  CANDIDATES.map(function(x){ return { c:x, s:cwScore(x, job).score }; }).sort(function(a, b){ return b.s - a.s; }).forEach(function(r){
+    if(n >= max || r.s < 40) return; if(!(c.plays.know || c.plays.pool)) return; const mu = cwMust(r.c, job); if(mu.need && mu.have / mu.need < .5) return;
+    const pl = cpPlayFor(c, r.c); if(!c.plays[pl]) return; if(cpEnqueue(c, r.c, pl)) n++;
+  });
+  return n;
+}
+/* the channel a person is reached on: the best one they agreed to */
+function cpChannelFor(c, p, stepIdx){
+  const cand = byId(p.candidateId), key = personKeyOf(cand), s = c.message.steps[stepIdx], want = s.channel;
+  const waOk = !!CW_OPTINS[key] && agentAccess('engagement').on, emailOk = !!cwMailbox(c.message.senderId || c.ownerId) || !!cwMailbox('RP-088'), liOk = c.plays.li && agentAccess('linkedin').on && cwLiAccounts().some(function(a){ return a.connected; });
+  if(want === 'whatsapp') return waOk ? 'whatsapp' : '';
+  if(want === 'email') return emailOk ? 'email' : '';
+  if(want === 'linkedin') return liOk ? 'linkedin' : '';
+  const order = ['whatsapp','email','linkedin'].sort(function(a, b){ const r = function(k){ const x = c.byChannel[k]; return x && x.sent >= 40 ? x.replied / x.sent : 0; }; return r(b) - r(a); });
+  if(stepIdx === 0 && p.play === 'li' && liOk) return 'linkedin';
+  for(let i = 0; i < order.length; i++){ if(order[i] === 'whatsapp' && waOk) return 'whatsapp'; if(order[i] === 'email' && emailOk) return 'email'; if(order[i] === 'linkedin' && liOk && p.play === 'li') return 'linkedin'; }
+  return '';
+}
+
+/* ---------- the pre-screen chat ---------- */
+function cpSay(p, who, text){ p.chat.push({ who:who, text:text, at:CP_NOW() }); }
+function cpSenderFirst(c){ return cpSenderOf(c).name.split(' ')[0]; }
+function cpSlots(c){
+  const out = [], d0 = new Date(CP_NOW()); let n = 0;
+  for(let i = 1; i < 8 && out.length < 3; i++){ const d = new Date(d0.getTime() + i * CP_DAY); if(d.getDay() === 0) continue; const hh = n % 2 === 0 ? [13, 0] : [18, 30]; d.setHours(hh[0], hh[1], 0, 0); out.push({ at:d.getTime(), text:d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' }) + ', ' + (hh[0] > 12 ? hh[0] - 12 : hh[0]) + ':' + String(hh[1]).padStart(2, '0') + (hh[0] >= 12 ? ' pm' : ' am') }); n++; }
+  return out;
+}
+function cpLink(c, p){
+  const cand = byId(p.candidateId), job = cpJob(c.jobId); if(!cand || job.corp) return null;
+  const play = cpPlay(p.play), src = 'Campaign · ' + (play ? play.name : 'Outreach');
+  let sb = findSubmission(job.id, cand.id);
+  if(!sb) sb = createSubmission(job.id, cand.id, { source:src, recruiterId:c.ownerId, stage:'Applied Directly', reason:'Replied to a campaign' });
+  if(!sb) return null;
+  sb.source = sb.source && /^Campaign/.test(sb.source) ? sb.source : src; sb.campaignId = c.id; sb.campaignPersonId = p.id; sb.sourceMeta = { kind:'campaign', campaignId:c.id, play:p.play, channel:p.channel };
+  sb.campaignStage = p.state === 'ready' ? 'Ready to call' : p.state === 'screening' ? 'Pre-screen' : 'Applied · interested'; sb.appliedAt = sb.appliedAt || cpDateMs(CP_NOW()); sb.preScreen = Object.assign({}, p.answers); sb.campaignScore = p.score;
+  return sb;
+}
+function cpAsk(c, p){
+  const qs = c.prescreen.questions, q = qs[p.qIndex]; if(!q) return;
+  cpSay(p, 'kairo', (p.qIndex === 0 ? 'Great, thank you. A few quick questions so ' + cpSenderFirst(c) + ' can use the call well. ' : '') + q.text);
+}
+function cpSetState(c, p, st){ const was = p.state; p.state = st; p.lastAt = CP_NOW(); if(c.stats && was !== st){ if(st === 'interested') c.stats.interested++; if(st === 'ready') c.stats.ready++; if(st === 'notNow') c.stats.notNow++; } cpLink(c, p); }
+function cpFinishScreen(c, p){
+  const bad = p.misses.filter(function(m){ return m.r === 'fail'; }), close = p.misses.filter(function(m){ return m.r === 'close'; });
+  c.stats.screened++;
+  if(bad.length){ cpSay(p, 'kairo', 'Thanks for sharing. This one may not fit, but ' + cpSenderFirst(c) + ' will keep you in mind for similar roles.'); cpSetState(c, p, 'done'); p.tag = 'clearMiss'; p.reengageOn = CP_ISO(CP_NOW() + 90 * CP_DAY); cpLog(c, byId(p.candidateId).name + ' finished the pre-screen: not a fit this time, kept in the talent pool with the answers', 'screen'); return; }
+  if(close.length){ cpSay(p, 'kairo', 'Thanks, ' + cpSenderFirst(c) + ' will get back to you shortly.'); p.reason = close.map(function(m){ return m.q.kind === 'notice' ? 'Notice ' + m.note + ' is a little over the ' + cpNoticeLimit(cpJob(c.jobId)) + ' days the job allows' : m.q.kind === 'ctc' ? 'Expected pay is a little above the range' : 'Location needs a conversation'; }).join('; '); cpSetState(c, p, 'closeMiss'); cpLog(c, byId(p.candidateId).name + ' is a close miss: ' + p.reason + '. Sent to ' + cpOwner(c).name, 'needs'); return; }
+  p.slots = cpSlots(c); p.state = 'booking'; cpLink(c, p);
+  cpSay(p, 'kairo', 'You are a good fit for a quick call with ' + cpSenderFirst(c) + ' (' + c.prescreen.callMinutes + ' minutes). Which time suits you? ' + p.slots.map(function(s, i){ return (i + 1) + ' · ' + s.text; }).join('  '));
+}
+/** the one door every reply goes through. Returns the new state. */
+function cpHandleReply(pid, text){
+  const p = typeof pid === 'string' ? cpPerson(pid) : pid; if(!p) return null; const c = cpById(p.campaignId), cand = byId(p.candidateId), job = cpJob(c.jobId); if(!c || !cand) return null;
+  cpSay(p, 'cand', text); const it = cpIntent(text), ch = p.channel || 'whatsapp';
+  if(['contacted','replied','queued'].indexOf(p.state) > -1 && !p.counted){ p.counted = true; c.stats.replied++; if(c.byChannel[ch]) c.byChannel[ch].replied++; if(c.bySource[p.play]) c.bySource[p.play].replied++; if(p.version === 'B' || p.version === 'A'){ const v = c.message.versions && c.message.versions.find(function(x){ return x.id === p.version; }); if(v) v.replies++; } }
+  if(it === 'stop'){ cpOptOut(p, 'Replied STOP'); return p.state; }
+  if(it === 'ooo'){ p.nextAt = CP_NOW() + 3 * CP_DAY; p.state = 'contacted'; cpLog(c, cand.name + ' sent an out-of-office reply. Paused for 3 days', 'info'); return p.state; }
+  if(p.state === 'screening'){
+    const q = c.prescreen.questions[p.qIndex]; if(!q) return p.state;
+    const j = cpJudge(q, text, job);
+    if(j.r === 'unclear'){ if(p.reasked){ cpSay(p, 'kairo', 'Thanks. ' + cpSenderFirst(c) + ' will pick this up with you personally.'); cpSetState(c, p, 'needsYou'); cpLog(c, cand.name + ' gave an answer Kairo could not read. Sent to ' + cpOwner(c).name, 'needs'); return p.state; } p.reasked = true; cpSay(p, 'kairo', 'Sorry, I did not catch that. ' + q.text); return p.state; }
+    p.reasked = false; p.answers[q.kind === 'custom' ? q.id : q.kind] = j.note || text; p.answers['_' + q.id] = j.r; if(j.r === 'close' || j.r === 'fail') p.misses.push({ q:q, r:j.r, note:j.note });
+    p.qIndex++; if(p.qIndex < c.prescreen.questions.length){ cpAsk(c, p); return p.state; } cpFinishScreen(c, p); return p.state;
+  }
+  if(p.state === 'booking'){
+    const n = parseInt(String(text).replace(/\D/g, ''), 10), s = p.slots[n - 1] || p.slots[0]; p.slot = s.at; p.slotText = s.text; cpSay(p, 'kairo', 'Booked: ' + s.text + '. ' + cpSenderFirst(c) + ' will call you on this number. Reply here if you need to change it.');
+    cpSetState(c, p, 'ready'); cpLog(c, cand.name + ' is ready to call, ' + s.text, 'ready'); if(c.stats.ready >= c.goal.ready) c.goalReached = true; cpEvalMoves(c); return p.state;
+  }
+  if(it === 'interested' || (p.state === 'needsYou' && false)){
+    cpSetState(c, p, 'interested'); p.state = 'screening'; p.qIndex = 0; p.reasked = false; p.misses = []; cpLink(c, p); cpAsk(c, p); cpLog(c, cand.name + ' is interested. Pre-screen started', 'reply'); return p.state;
+  }
+  if(it === 'notNow'){
+    cpSay(p, 'kairo', 'No problem, thank you for letting me know. ' + (p.askedRef ? '' : 'If someone in your circle might like it, I would be glad to hear their name.')); p.askedRef = true; p.reengageOn = CP_ISO(CP_NOW() + 90 * CP_DAY); cpSetState(c, p, 'notNow'); p.tag = 'notNow'; cpLog(c, cand.name + ' said not now. Will ask again from ' + cpDate(p.reengageOn), 'reply'); return p.state;
+  }
+  if(it === 'question'){ cpSay(p, 'kairo', 'Good question, ' + cpSenderFirst(c) + ' will reply to you personally today.'); p.question = text; cpSetState(c, p, 'needsYou'); cpLog(c, cand.name + ' asked: “' + text + '”. Sent to ' + cpOwner(c).name, 'needs'); return p.state; }
+  if(p.state !== 'needsYou'){ cpSay(p, 'kairo', 'Thanks for replying. ' + cpSenderFirst(c) + ' will be in touch.'); p.state = 'replied'; }
+  return p.state;
+}
+function cpOptOut(p, why){
+  const cand = byId(p.candidateId); const key = personKeyOf(cand); cwSuppress(key, why || 'Opted out');
+  CAMPAIGN_PEOPLE.forEach(function(x){ if(x.candidateId === p.candidateId && ['done','optedOut'].indexOf(x.state) === -1){ x.state = 'optedOut'; const cc = cpById(x.campaignId); if(cc){ cc.stats.optOuts++; cpLog(cc, cand.name + ' opted out. Removed from every campaign and agent', 'stop'); } } });
+  WORKFLOW_RUNS.forEach(function(r){ if(r.personKey === key && ['queued','running','waiting','held'].indexOf(r.status) > -1) cwFinish(r, 'stopped', 'Opted out'); });
+}
+/** a recruiter sends the answer to a question Kairo could not answer */
+function cpResolve(pid, how){
+  const p = cpPerson(pid); if(!p) return; const c = cpById(p.campaignId), cand = byId(p.candidateId);
+  if(how === 'reply'){ cpSay(p, 'person', 'Hi ' + cand.name.split(' ')[0] + ', ' + cpSenderFirst(c) + ' here. ' + (p.question ? 'On your question: ' : '') + 'happy to talk it through on a quick call.'); p.state = 'screening'; p.question = ''; p.qIndex = Math.min(p.qIndex || 0, c.prescreen.questions.length - 1); cpAsk(c, p); cpLog(c, cpOwner(c).name + ' replied to ' + cand.name, 'reply', cpOwner(c).name); cpLink(c, p); }
+  else if(how === 'call'){ p.slots = cpSlots(c); p.state = 'booking'; cpSay(p, 'person', cpSenderFirst(c) + ' would like a quick call. ' + p.slots.map(function(s, i){ return (i + 1) + ' · ' + s.text; }).join('  ')); cpLog(c, cpOwner(c).name + ' offered ' + cand.name + ' a call', 'reply', cpOwner(c).name); cpLink(c, p); }
+  if(typeof cpRefresh === 'function') cpRefresh();
+}
+
+/* ---------- sending: the engine's check order, applied to campaign messages ---------- */
+function cpSendCheck(c, p, stepIdx){
+  const cand = byId(p.candidateId), key = personKeyOf(cand), job = cpJob(c.jobId);
+  const ks = cwAgentState(p.play === 'li' ? 'linkedin' : 'engagement'); if(!ks.on) return { blocked:ks.why, hold:true };
+  if(c.status !== 'running') return { blocked:'Campaign ' + c.status, hold:true };
+  if(cwSuppression(key)) return { blocked:'On the do-not-contact list', stop:true };
+  const win = c.rules.hours, d = new Date(CP_NOW()); if(d.getDay() === 0 || c.rules.days.indexOf(d.getDay()) === -1 || !cwInWindow(CP_NOW(), win)) return { blocked:'Outside send hours (' + win.replace('-', ' to ') + ', never Sundays)', hold:true };
+  const day = cwSent(function(l){ return l.personKey === key; }, CP_NOW() - CP_DAY).length, wk = cwSent(function(l){ return l.personKey === key; }, CP_NOW() - 7 * CP_DAY).length;
+  if(day >= CW.caps.perPersonDay) return { blocked:'Already contacted in the last day by Oontu', hold:true }; if(wk >= CW.caps.perPersonWeek) return { blocked:'Three messages this week from Oontu already', hold:true };
+  const lock = cpActiveLock(cand, c.id); if(lock && lock.state !== 'queued') return { blocked:'In another campaign right now', hold:true };
+  const ch = cpChannelFor(c, p, stepIdx); if(!ch) return { blocked:'No channel they agreed to is connected', stop:true };
+  const used = cwSentToday(function(l){ return l.channel === ch && l.campaignId === c.id; }).length; if(used >= (c.pace[ch] || {}).daily) return { blocked:'Daily limit for this campaign reached (' + used + ')', hold:true };
+  if(ch === 'whatsapp'){ const q = WA_BUSINESS_ACCOUNT.qualityRating; if(q === 'red') return { blocked:'WhatsApp quality is Low: outreach paused', hold:true }; }
+  if(ch === 'email'){ const mb = cwMailbox(c.message.senderId || c.ownerId) || cwMailbox('RP-088'); if(mb && mb.paused) return { blocked:'Mailbox paused for bounces', hold:true }; }
+  const s = c.message.steps[stepIdx], text = cpRenderText(s.text == null ? cpDefaultText(stepIdx === 0 ? 0 : stepIdx === c.message.steps.length - 1 ? 2 : 1, c.message.tone) : s.text, cand, c);
+  const issues = cwHonestyCheck(s.text == null ? cpDefaultText(stepIdx === 0 ? 0 : stepIdx === c.message.steps.length - 1 ? 2 : 1, c.message.tone) : s.text, job, { stepIndex:stepIdx, senderName:cpSenderOf(c).name, channel:ch, person:cand, camp:c });
+  if(issues.length) return { blocked:'Honesty check: ' + issues[0].text, hold:true, honesty:true };
+  return { ok:true, channel:ch, text:text };
+}
+function cpSendStep(c, p){
+  const cand = byId(p.candidateId), chk = cpSendCheck(c, p, p.step);
+  if(!chk.ok){ if(chk.stop){ p.state = 'done'; p.tag = 'skipped'; cpLog(c, 'Skipped ' + cand.name + ': ' + chk.blocked, 'skip'); c.dedupe.skipped++; } else { p.nextAt = CP_NOW() + 3 * CP_HOUR(); p.holdReason = chk.blocked; } return false; }
+  if(c.rules.checkFirst > 0 && c.review.approved < c.rules.checkFirst && c.status === 'running' && p.step === 0 && !p.approved){ return false; }
+  const s = c.message.steps[p.step], ab = p.step === 0 && c.message.ab && s.textB != null;
+  if(p.step === 0 && c.message.ab){ p.version = cwHash(p.id) % 2 ? 'B' : 'A'; }
+  const text = p.step === 0 && p.version === 'B' && s.textB ? cpRenderText(s.textB, cand, c) : chk.text;
+  cwLedger({ channel:chk.channel, senderId:c.message.senderId || c.ownerId, personKey:personKeyOf(cand), campaignId:c.id, campaignPersonId:p.id, status:'sent', action:'send', text:text, workflowId:null, runId:null });
+  p.channel = chk.channel; p.lastAt = CP_NOW(); p.state = p.state === 'queued' ? 'contacted' : p.state; cpSay(p, 'kairo', text);
+  if(p.step === 0){ c.stats.reached++; if(c.bySource[p.play]) c.bySource[p.play].reached++; if(!c.message.versions) c.message.versions = []; let v = c.message.versions.find(function(x){ return x.id === p.version; }); if(!v){ v = { id:p.version, sent:0, replies:0, status:'testing' }; c.message.versions.push(v); } v.sent++; }
+  if(c.byChannel[chk.channel]) c.byChannel[chk.channel].sent++;
+  const next = c.message.steps[p.step + 1]; if(next){ p.step++; p.nextAt = CP_NOW() + next.delayDays * CP_DAY; } else { p.step = c.message.steps.length; p.nextAt = Infinity; }
+  return true;
+}
+function CP_HOUR(){ return 3600000; }
+/* ---------- A/B, send hour, pausing a weak source ---------- */
+function cpLearn(c){
+  const vs = c.message.versions || []; const A = vs.find(function(v){ return v.id === 'A'; }), B = vs.find(function(v){ return v.id === 'B'; });
+  if(c.message.ab && A && B && A.status === 'testing' && A.sent >= 40 && B.sent >= 40){
+    const ra = A.replies / A.sent, rb = B.replies / B.sent, gap = Math.abs(ra - rb);
+    if(gap >= .05 || (A.sent >= 80 && B.sent >= 80)){ const win = ra >= rb ? A : B, lose = win === A ? B : A; win.status = 'kept'; lose.status = 'stopped'; c.abResult = 'Kept version ' + win.id + ' of the first note (' + Math.round(Math.max(ra, rb) * 100) + '% vs ' + Math.round(Math.min(ra, rb) * 100) + '%)'; cpLog(c, c.abResult, 'auto'); }
+  }
+}
+/* ---------- the engine tick for campaigns ---------- */
+function cpTick(){
+  CAMPAIGNS.forEach(function(c){
+    if(c.status !== 'running' && c.status !== 'review') return;
+    const job = cpJob(c.jobId);
+    if(job && ['Closed','Filled','On Hold','Cancelled'].indexOf(job.status) > -1){ cpPause(c, 'system', 'The job was ' + job.status.toLowerCase().replace('on hold', 'put on hold')); return; }
+    if(cpDaysLeft(c) < -0.5 && c.status === 'running'){ cpFinish(c); return; }
+    if(c.status === 'review') return;
+    if(cpPeopleOf(c).length < 6 && c.org === (cpIsCorp() ? 'corp' : 'agency')) cpEnroll(c, 3);
+    cpPeopleOf(c).filter(function(p){ return ['queued','contacted'].indexOf(p.state) > -1 && p.step < c.message.steps.length && p.nextAt <= CP_NOW(); }).slice(0, 12).forEach(function(p){
+      const s = c.message.steps[p.step]; if(p.step > 0 && s.sendWhen !== 'noreply' && s.sendWhen === 'read' && !p.read) return;
+      if(c.goalReached && p.step === 0) return; cpSendStep(c, p);
+    });
+    cpPeopleOf(c).filter(function(p){ return p.state === 'contacted' && p.lastAt && CP_NOW() - p.lastAt > 3 * CP_HOUR() && !p.simDone; }).slice(0, 6).forEach(function(p){
+      p.simDone = true; const h = cwHash(p.id + c.id) % 100, h2 = cpHistory(cpJob(c.jobId)); if(h < h2.reply * 100) cpHandleReply(p, h % 3 === 0 ? '2' : h % 7 === 0 ? 'What are the office days?' : '1');
+    });
+    cpLearn(c); cpEvalMoves(c);
+  });
+}
+function cpPause(c, by, reason){ if(c.status === 'paused') return; c.status = 'paused'; c.pausedReason = reason; c.pausedBy = by; cpLog(c, 'Paused: ' + reason, 'pause', by === 'system' ? 'Oontu' : by); cpAudit(c, 'paused · ' + reason); }
+function cpResume(c){
+  if(!c || c.status !== 'paused') return false; const job = cpJob(c.jobId); if(job && ['Closed','Filled','On Hold'].indexOf(job.status) > -1){ toast('The job is ' + job.status.toLowerCase() + '. Reopen it first.'); return false; }
+  c.status = c.review.approved < c.rules.checkFirst && c.review.pending.length ? 'review' : 'running'; c.pausedReason = ''; cpLog(c, 'Resumed', 'resume', (currentActingUser() || {}).name); cpAudit(c, 'resumed'); return true;
+}
+function cpFinish(c){ c.status = 'done'; c.doneAt = CP_NOW(); cpPeopleOf(c).forEach(function(p){ if(['queued','contacted'].indexOf(p.state) > -1){ p.state = 'done'; p.tag = 'cooling'; } }); cpLog(c, 'Campaign finished. People who said not now come back to the pool with a re-engage date', 'done'); cpAudit(c, 'finished'); }
+
+/* ---------- start, review and approve the first messages ---------- */
+function cpGoLive(c){
+  const job = cpJob(c.jobId), out = [], plan = cpPlanFor(c);
+  if(!cpHasPay(job)) out.push({ k:'pay', text:'Add a pay range to the job. Messages without a pay range get about half the replies, so Oontu asks for one first.', fix:job.corp ? '' : "openJob('" + job.id + "')", fixText:'Add a pay range to the job' });
+  if(!CP_PLAYS.some(function(p){ return plan.playUse[p.id].on && plan.playUse[p.id].pool > 0; })) out.push({ k:'plays', text:'Turn on at least one source with people in it.' });
+  if(!(['whatsapp','email','linkedin'].some(function(ch){ return cpChannelOnline(c, ch); }))) out.push({ k:'chan', text:'Connect a sending channel first (WhatsApp, email or LinkedIn).' });
+  CP_STEP_ISSUES(c).forEach(function(x){ out.push({ k:'honesty', text:'Step ' + x.n + ': ' + x.issue.text }); });
+  const tplBad = c.message.steps.some(function(s, i){ return (s.channel === 'whatsapp' || s.channel === 'auto') && i === 0 && typeof cwTplStatus === 'function' && cwTplStatus('Quiet candidate check-in') !== 'Approved' && !CW_TPL_OK(); });
+  if(tplBad) out.push({ k:'tpl', text:'WhatsApp needs an approved template for messages outside the 24-hour window.' });
+  if(CW.pauseAll.on) out.push({ k:'kill', text:'All Cowork is paused by ' + CW.pauseAll.by + '.' });
+  if(plan.short && !c.confirmShort) out.push({ k:'short', text:'Not enough people for this goal with these sources.', confirm:true });
+  return out;
+}
+function CW_TPL_OK(){ return true; }
+function cpChannelOnline(c, ch){ if(ch === 'whatsapp') return agentAccess('engagement').on && WA_BUSINESS_ACCOUNT.qualityRating !== 'red'; if(ch === 'email') return agentAccess('engagement').on && !!(cwMailbox(c.message.senderId || c.ownerId) || cwMailbox('RP-088')); return agentAccess('linkedin').on && cwLiAccounts().some(function(a){ return a.connected; }); }
+function CP_STEP_ISSUES(c){
+  const job = cpJob(c.jobId), out = [];
+  c.message.steps.forEach(function(s, i){ const t = s.text == null ? cpDefaultText(i === 0 ? 0 : i === c.message.steps.length - 1 ? 2 : 1, c.message.tone) : s.text; const iss = cwHonestyCheck(t, job, { stepIndex:i, senderName:cpSenderOf(c).name, channel:s.channel === 'auto' ? 'whatsapp' : s.channel, camp:c }); iss.forEach(function(x){ out.push({ n:i + 1, i:i, issue:x }); });
+    if(s.textB != null && i === 0){ cwHonestyCheck(s.textB, job, { stepIndex:0, senderName:cpSenderOf(c).name, camp:c }).forEach(function(x){ out.push({ n:'1 (version B)', i:i, issue:x }); }); } });
+  return out;
+}
+function cpPrepareReview(c){
+  c.review = { pending:[], approved:0 }; const job = cpJob(c.jobId);
+  CANDIDATES.map(function(x){ return { c:x, s:cwScore(x, job).score }; }).sort(function(a, b){ return b.s - a.s; }).forEach(function(r){
+    if(c.review.pending.length >= c.rules.checkFirst) return; if(!cpEligible(c, r.c).ok && !cpPeopleOf(c).some(function(p){ return p.candidateId === r.c.id; })) return;
+    const p = cpPeopleOf(c).find(function(x){ return x.candidateId === r.c.id; }) || cpEnqueue(c, r.c, cpPlayFor(c, r.c)); if(!p) return; p.nextAt = Infinity;
+    c.review.pending.push({ id:'rv' + c.review.pending.length + p.id, personId:p.id, name:r.c.name, channel:CW_OPTINS[personKeyOf(r.c)] ? 'WhatsApp' : 'Email', text:cpRenderText(cpDefaultText(0, c.message.tone), r.c, c), state:'pending' });
+  });
+}
+function cpStart(id){
+  const c = cpById(id); if(!c) return false; const blockers = cpGoLive(c).filter(function(b){ return !b.confirm || !c.confirmShort; });
+  if(blockers.length){ toast(blockers[0].text); return false; }
+  c.startedAt = CP_NOW(); c.version = Math.max(1, c.version);
+  if(c.rules.checkFirst > 0){ c.status = 'review'; cpPrepareReview(c); cpLog(c, 'Prepared the first ' + c.review.pending.length + ' messages for ' + cpOwner(c).name + ' to check', 'review'); toast('The first ' + c.review.pending.length + ' messages wait for you. Nothing is sent until you approve them.'); }
+  else { c.status = 'running'; cpPeopleOf(c).forEach(function(p){ p.nextAt = CP_NOW(); }); toast('Campaign started. Kairo sends inside your limits.'); }
+  cpAudit(c, 'started · goal ' + c.goal.ready + ' ready by ' + cpDate(c.goal.by)); return true;
+}
+function cpReviewDecide(cid, rid, how, edited){
+  const c = cpById(cid); if(!c) return; const r = c.review.pending.find(function(x){ return x.id === rid; }); if(!r || r.state !== 'pending') return; const p = cpPerson(r.personId);
+  if(how === 'edit'){ const job = cpJob(c.jobId), iss = cwHonestyCheck(edited, job, { stepIndex:0, senderName:cpSenderOf(c).name }); if(iss.length){ r.error = iss[0].text; return iss[0].text; } r.text = edited; r.error = ''; how = 'approve'; }
+  if(how === 'skip'){ r.state = 'skipped'; if(p){ p.state = 'done'; p.tag = 'skipped'; } cpLog(c, 'Skipped ' + r.name + ' at review', 'skip', (currentActingUser() || {}).name); }
+  else { r.state = 'approved'; c.review.approved++; if(p){ p.approved = true; p.nextAt = CP_NOW(); } }
+  if(c.review.approved >= Math.min(c.rules.checkFirst, c.review.pending.length) || c.review.pending.every(function(x){ return x.state !== 'pending'; })){ if(c.status === 'review'){ c.status = 'running'; cpPeopleOf(c).forEach(function(q){ if(q.nextAt === Infinity) q.nextAt = CP_NOW(); q.approved = true; }); cpLog(c, 'First messages approved. The campaign is running', 'review'); cpAudit(c, 'running after review'); toast('Approved. The campaign is running.'); } }
+  if(typeof cpRefresh === 'function') cpRefresh();
+}
+function cpApproveAll(cid){ const c = cpById(cid); if(!c) return; c.review.pending.filter(function(r){ return r.state === 'pending'; }).forEach(function(r){ cpReviewDecide(cid, r.id, 'approve'); }); }
+
+/* ---------- pace, funnel, money ---------- */
+function cpPace(c){
+  const total = Math.max(1, (new Date(c.goal.by + 'T12:00:00').getTime() - (c.startedAt || c.createdAt)) / CP_DAY), el = Math.max(0, Math.min(total, (CP_NOW() - (c.startedAt || c.createdAt)) / CP_DAY));
+  const exp = c.goal.ready * el / total, behind = c.status === 'running' && el >= 3 && c.stats.ready < exp * .8 && c.stats.ready < c.goal.ready;
+  return { expected:exp, behind:behind, more:Math.max(0, c.goal.ready - c.stats.ready), daysLeft:Math.max(0, Math.round(total - el)), elapsed:el, total:total };
+}
+function cpFlag(c){
+  if(c.status === 'done') return { text:'Done · ' + c.stats.hired + ' hired', muted:true };
+  if(c.status === 'review') return { text:'First ' + (c.review.pending.filter(function(r){ return r.state === 'pending'; }).length || c.rules.checkFirst) + ' messages wait for you' };
+  if(c.status === 'paused') return { text:c.pausedReason || 'Paused' };
+  if(cpPace(c).behind) return { text:'Behind pace' };
+  if(CAMPAIGN_PEOPLE.some(function(p){ return p.campaignId === c.id && (p.state === 'needsYou' || p.state === 'closeMiss'); }) && c.status === 'running') return { text:'Needs you' };
+  return null;
+}
+function cpRates(c){ return cpHistory(cpJob(c.jobId)); }
+function cpExpected(c){
+  const h = cpRates(c), job = cpJob(c.jobId), s = c.stats, pos = job.positions || 1;
+  const inInterview = Math.max(0, s.interviews - s.offers - s.hired), submittedOnly = Math.max(0, s.submitted - s.interviews), readyOnly = Math.max(0, s.ready - s.submitted);
+  const placements = Math.min(Math.max(0, pos - s.hired), readyOnly * h.readyToSubmit * h.submitToHire + submittedOnly * h.submitToHire + inInterview * Math.min(.6, h.submitToHire * 1.7) + s.offers * .8);
+  return { placements:Math.round(placements * 10) / 10, revenue:Math.round(placements * cpFee(job)), fee:cpFee(job), positions:pos, readyW:readyOnly * h.readyToSubmit * h.submitToHire, subW:submittedOnly * h.submitToHire, intW:inInterview * Math.min(.6, h.submitToHire * 1.7) };
+}
+function cpHoursSaved(c){ const s = c.stats, msgs = Math.round(s.reached * 2.2), mins = msgs * 2 + s.screened * 10 + s.ready * 5; return Math.round(mins / 6) / 10; }
+function cpMoneyMode(){ if(cpIsCorp()) return sCan('kairo','Configure') || sRoleKind() !== 'recruiter' ? 'saved' : 'none'; const k = sRoleKind(); return k === 'recruiter' ? 'placements' : 'revenue'; }
+function cpMoneyLabel(){ const m = cpMoneyMode(); return m === 'saved' ? 'Agency fees saved' : m === 'placements' ? 'Placements expected' : m === 'none' ? '' : 'Expected revenue'; }
+function cpMoneyVal(c){ const e = cpExpected(c), m = cpMoneyMode(); return m === 'placements' ? String(e.placements) : m === 'none' ? '' : cpMoney(e.revenue); }
+function cpVisible(c){
+  if(c.org !== (cpIsCorp() ? 'corp' : 'agency')) return false; const k = sRoleKind(), me = currentUserId();
+  if(k === 'owner' || cwIsOwnerish()) return true; if(c.ownerId === me || c.createdBy === me) return true;
+  if(k === 'manager'){ return recruitersManagedBy(me).some(function(u){ return u.id === c.ownerId; }); }
+  return false;
+}
+function cpCanEdit(c){ const me = currentUserId(); if(cwIsOwnerish()) return true; if(c.ownerId === me) return sCan('kairo','Create workflows') || sCan('kairo','Use agents'); if(sRoleKind() === 'manager') return recruitersManagedBy(me).some(function(u){ return u.id === c.ownerId; }); return false; }
+function cpCanApprove(c){ return cpCanEdit(c) && (sCan('kairo','Approve agent messages') || sCan('kairo','Configure') || c.ownerId === currentUserId()); }
+function cpList(){ return CAMPAIGNS.filter(cpVisible); }
+
+/* ---------- Kairo's next moves ---------- */
+function cpAddMove(c, id, text, why, action, safety){ if(c.moves.some(function(m){ return m.id === id && m.status !== 'undone' && !(m.status === 'hidden' && m.until <= CP_NOW()); })) return; c.moves.unshift({ id:id, text:text, why:why, action:action, safety:safety, status:safety === 'auto' ? 'auto' : 'open', at:CP_NOW(), until:0 }); }
+function cpEvalMoves(c){
+  if(c.status !== 'running') return; const s = c.stats, P = cpPace(c);
+  const rate = function(k){ const x = c.byChannel[k]; return x && x.sent >= 40 ? x.replied / x.sent : null; };
+  const wa = rate('whatsapp'), em = rate('email'); if(wa != null && em != null && Math.max(wa, em) >= 2 * Math.min(wa, em) && Math.min(wa, em) >= 0){ const best = wa > em ? 'WhatsApp' : 'email'; cpAddMove(c, 'channel-' + best, 'Move the remaining sends to ' + best + ' first', best + ' replies ' + Math.round(Math.max(wa, em) * 100) + '% vs ' + Math.round(Math.min(wa, em) * 100) + '% after 40 sends each', 'channel:' + best.toLowerCase(), 'ask'); }
+  if(s.replied >= 30 && c.hourShare >= .6 && !c.hoursShifted) cpAddMove(c, 'hours', 'Send after 7 pm', Math.round(c.hourShare * 100) + '% of replies come between 7 and 10 pm', 'hours', 'auto');
+  if(c.questionCluster && c.questionCluster.n >= 5) cpAddMove(c, 'question', 'Add office days to the first message', c.questionCluster.n + ' people asked about ' + c.questionCluster.word, 'edit', 'ask');
+  if(c.message.versions && c.abResult) cpAddMove(c, 'ab', c.abResult.split(' of the')[0], c.abResult, 'none', 'auto');
+  CP_PLAYS.forEach(function(pl){ const b = c.bySource[pl.id], avg = s.reached ? s.replied / s.reached : 0; if(b && b.reached >= 40 && !b.paused && avg > 0 && b.replied / b.reached < avg * .4) cpAddMove(c, 'pause-' + pl.id, 'Pause ' + pl.name + ': ' + Math.round(b.replied / b.reached * 100) + '% replies', 'Below 40% of the campaign average of ' + Math.round(avg * 100) + '% after ' + b.reached + ' sends', 'pause:' + pl.id, 'auto'); });
+  if(P.behind){ if(!c.plays.boards) cpAddMove(c, 'widen-boards', 'Turn on job-board search', 'Behind pace by ' + Math.max(0, Math.round(P.expected - s.ready)) + ' people. The next source in the order is off', 'play:boards', 'ask'); cpAddMove(c, 'widen-pool', 'Add 120 talent-pool matches from nearby cities', 'Behind pace: ' + s.ready + ' of ' + Math.round(P.expected) + ' expected', 'widen', 'ask'); cpAddMove(c, 'extend', 'Move the date by 4 days', 'Behind pace with ' + P.daysLeft + ' days left', 'extend', 'ask'); }
+  if(s.ready >= c.goal.ready * .5 && ((cpJob(c.jobId).avgFeedbackDays || cpClientSpeed(cpJob(c.jobId))) > 3) && !cpJob(c.jobId).corp) cpAddMove(c, 'client-slots', 'Ask ' + cpJobCompany(cpJob(c.jobId)) + ' for interview slots now', s.ready + ' people are ready and this client takes about ' + cpClientSpeed(cpJob(c.jobId)) + ' days to give feedback', 'client', 'ask');
+  if(s.ready >= c.goal.ready){ c.goalReached = true; cpAddMove(c, 'goal', 'Goal reached. Stop new outreach?', s.ready + ' of ' + c.goal.ready + ' are ready to call', 'stop-outreach', 'ask'); }
+}
+function cpOpenMoves(c){ return c.moves.filter(function(m){ return m.status === 'open' || (m.status === 'hidden' && m.until <= CP_NOW() && (m.status = 'open')); }).slice(0, 4); }
+function cpMoveApply(cid, mid){
+  const c = cpById(cid); if(!c) return; const m = c.moves.find(function(x){ return x.id === mid; }); if(!m) return; const a = m.action;
+  if(a.indexOf('play:') === 0){ c.plays[a.slice(5)] = true; c.mix = 'custom'; }
+  else if(a === 'widen'){ c.pools = c.pools || {}; c.pools.pool = (c.pools.pool || 0) + 120; }
+  else if(a === 'extend'){ c.goal.by = CP_ISO(new Date(c.goal.by + 'T12:00:00').getTime() + 4 * CP_DAY); }
+  else if(a.indexOf('pause:') === 0){ c.bySource[a.slice(6)].paused = true; }
+  else if(a.indexOf('channel:') === 0){ c.channelFirst = a.slice(8); }
+  else if(a === 'stop-outreach'){ c.goalReached = true; }
+  else if(a === 'hours'){ c.hoursShifted = true; c.rules.hours = '19:00-20:00'; c.rules.hoursWas = '10:00-20:00'; }
+  else if(a === 'client'){ const j = cpJob(c.jobId); cpLog(c, 'Drafted an email to ' + (j.clientPOC || 'the main contact') + ' asking for interview slots', 'move'); }
+  else if(a === 'edit'){ m.status = 'done'; cpAudit(c, 'move: ' + m.text); cpEdit(c.id); return; }
+  m.status = 'done'; cpLog(c, 'Applied: ' + m.text, 'move', (currentActingUser() || {}).name); cpAudit(c, 'move applied · ' + m.text); toast('Done · logged'); cpRefresh();
+}
+function cpMoveSkip(cid, mid){ const c = cpById(cid); const m = c && c.moves.find(function(x){ return x.id === mid; }); if(!m) return; m.status = 'hidden'; m.until = CP_NOW() + 3 * CP_DAY; cpLog(c, 'Not now: ' + m.text, 'move', (currentActingUser() || {}).name); toast('Hidden for 3 days'); cpRefresh(); }
+function cpMoveUndo(cid, mid){
+  const c = cpById(cid); const m = c && c.moves.find(function(x){ return x.id === mid; }); if(!m) return; const a = m.action;
+  if(a.indexOf('pause:') === 0) c.bySource[a.slice(6)].paused = false; if(a === 'hours' && c.rules.hoursWas){ c.rules.hours = c.rules.hoursWas; c.hoursShifted = false; }
+  m.status = 'undone'; cpLog(c, 'Undone: ' + m.text, 'move', (currentActingUser() || {}).name); toast('Undone'); cpRefresh();
+}
+function cpAutoApply(c){ c.moves.forEach(function(m){ if(m.status === 'auto' && !m.applied){ m.applied = true; const a = m.action; if(a.indexOf('pause:') === 0) c.bySource[a.slice(6)].paused = true; if(a === 'hours' && !c.hoursShifted){ c.hoursShifted = true; c.rules.hoursWas = c.rules.hours; c.rules.hours = '19:00-20:00'; } cpLog(c, 'Applied by Kairo: ' + m.text, 'auto'); } }); }
+
+/* hook into the engine */
+(function(){ const base = cwEngineTick; window.cwEngineTick = function(ms, o){ const s = base(ms, o); try { if(s) cpTick(); CAMPAIGNS.forEach(cpAutoApply); } catch(e){ console.error(e); } return s; }; })();
+
+/* ---------- cp-ui.js ---------- */
+/* ============================================================
+   Campaigns UI: the Cowork tabs, the list, suggestions and the campaign page.
+============================================================ */
+const CP = { top:'campaigns', filter:'running', stat:null, search:'', sel:null, tab:'overview', appFilter:'ready', chatPid:null, draft:null, editId:null, jobPick:'', sub:{ apps:false, boards:false }, riskOk:false, writeQ:'', callPid:null };
+const cpTw = function(inner, title, rows, foot, cls){ return '<span class="tw' + (cls ? ' ' + cls : '') + '" tabindex="0">' + inner + tipHTML(title, rows, foot) + '</span>'; };
+function cpHist(c){ return cpRates(c); }
+function cpRefresh(){
+  const main = document.getElementById('main-content'); if(!main) return; const v = state.activeNav, top = main.scrollTop;
+  if(document.getElementById('cp-editor-root')) main.innerHTML = cpEditorHTML();
+  else if(document.getElementById('cp-detail-root')) main.innerHTML = cpDetailHTML(CP.sel);
+  else if(document.getElementById('cw-tabs-top') || v === 'kairo-team') main.innerHTML = renderCowork();
+  else return;
+  main.scrollTop = top; oPostRender(main); cpPills();
+}
+function cpPills(){ ['cp-tabs','cp-det-tabs','cp-seg','cw-tabs-top'].forEach(function(id){ const el = document.getElementById(id); if(el) oPill(el, '[aria-selected="true"],[aria-pressed="true"]', id, id === 'cp-seg' ? 'o-pill--flat' : 'o-pill--under'); }); }
+(function(){ const base = window.cwPills; window.cwPills = function(){ if(base) base(); cpPills(); }; })();
+
+/* ---------- Cowork: Campaigns · Agents · Activity ---------- */
+(function(){
+  const base = window.renderCowork;
+  window.renderCowork = function(){
+    const own = cwIsOwnerish(), vis = cwVisibleAgents(); if(!vis.length) return base();
+    const actions = [ own ? (CW.pauseAll.on ? '<button type="button" class="o-btn o-btn--lg" onclick="cwSetPauseAll(false); cwRefresh()">Resume all Cowork</button>' : '<button type="button" class="o-btn o-btn--lg" onclick="cwAskPauseAll()">Pause all Cowork</button>') : '', CP.top === 'campaigns' && sCan('kairo','Use agents') ? '<button type="button" class="o-btn o-btn--lg o-btn--primary" onclick="cpNew()">New campaign</button>' : '' ].join('');
+    const head = pageHeaderHTML({ title:'Cowork', actions:actions });
+    const tabs = '<div class="o-tabs-host"><div role="tablist" id="cw-tabs-top" aria-label="Cowork">' + [['campaigns','Campaigns'],['agents','Agents'],['activity','Activity']].map(function(t){ return '<button type="button" role="tab" aria-selected="' + (CP.top === t[0]) + '" onclick="CP.top=\'' + t[0] + '\'; cpRefresh()">' + t[1] + '</button>'; }).join('') + '</div></div>';
+    let body;
+    if(CP.top === 'agents') body = base().replace(/<header class="o-page-head">[\s\S]*?<\/header>/, '').replace(/^<div class="content-shell o-page">/, '').replace(/<\/div>$/, '');
+    else if(CP.top === 'activity') body = cpGlobalActivity();
+    else body = cpCampaignsTab();
+    const banner = CW.pauseAll.on ? '<div class="o-note" role="status">' + oIcon('alert', 16, 1.75) + '<span><b>All Cowork is paused</b> by ' + cwEsc(CW.pauseAll.by) + ': ' + cwEsc(CW.pauseAll.reason) + '. Nothing is sent.</span></div>' : '';
+    return '<div class="content-shell o-page" id="cp-top-root">' + head + banner + tabs + body + '</div>';
+  };
+  window.renderAiTeamHub = window.renderCowork; RENDERERS['kairo-team'] = window.renderCowork;
+})();
+
+/* ---------- list ---------- */
+function cpStatCards(list){
+  const open = list.filter(function(c){ return c.status !== 'done'; }), ready = list.reduce(function(s, c){ return s + c.stats.ready; }, 0), apps = list.reduce(function(s, c){ return s + c.stats.interested; }, 0);
+  const mode = cpMoneyMode(), exp = list.reduce(function(s, c){ const e = cpExpected(c); return { rev:s.rev + e.revenue, pl:s.pl + e.placements }; }, { rev:0, pl:0 });
+  const hrs = list.reduce(function(s, c){ return s + cpHoursSaved(c); }, 0);
+  const top4 = list.slice().sort(function(a, b){ return b.stats.ready - a.stats.ready; }).slice(0, 4).map(function(c){ return [c.title, c.stats.ready + ' of ' + c.goal.ready]; }).concat([['Most answer between 6 and 8 pm','']]);
+  const bySrc = {}; list.forEach(function(c){ CP_PLAYS.forEach(function(p){ const b = c.bySource[p.id]; if(b && b.replied) bySrc[p.name] = (bySrc[p.name] || 0) + Math.round(b.replied * .4); }); });
+  const money = mode === 'none' ? null : { label:cpMoneyLabel(), value:mode === 'placements' ? exp.pl.toFixed(1) : cpMoney(exp.rev), rows:list.filter(function(c){ return c.status !== 'done'; }).slice(0, 4).map(function(c){ return [c.title, mode === 'placements' ? cpExpected(c).placements : cpMoney(cpExpected(c).revenue)]; }), foot:mode === 'saved' ? 'Agency fees you do not pay: 8.33% of the middle of each pay range, weighted by stage.' : mode === 'placements' ? 'Weighted by stage, from your last 90 days.' : 'Fee per hire (CTC slab aware) × people expected to be hired, weighted by stage.' };
+  const cards = [ { key:'ready', label:'Ready to call', value:String(ready), tipTitle:'Ready to call', tipRows:top4, tipFoot:'Click to sort by people ready.' },
+    { key:'apps', label:'Applicants from campaigns', value:String(apps), tipTitle:'This month, by source', tipRows:Object.keys(bySrc).map(function(k){ return [k, bySrc[k]]; }), tipFoot:'Click to show campaigns that brought applicants.' } ];
+  if(money) cards.push({ key:'money', label:money.label, value:money.value, tipTitle:money.label, tipRows:money.rows, tipFoot:money.foot });
+  cards.push({ key:'hours', label:'Hours saved', value:Math.round(hrs) + ' h', tipTitle:'Hours saved', tipRows:[['Messages sent','2 min each'],['Pre-screens','10 min each'],['Calls booked','5 min each']], tipFoot:'Compared with doing it by hand.' });
+  return '<div class="cp-stats">' + cards.map(function(k){ return statCardHTML({ label:k.label, value:k.value, isOn:CP.stat === k.key, tipTitle:k.tipTitle, tipRows:k.tipRows, tipFoot:k.tipFoot, onclick:"CP.stat = CP.stat === '" + k.key + "' ? null : '" + k.key + "'; cpRefresh()" }); }).join('') + '</div>';
+}
+function cpSuggested(){
+  const jobs = (cpIsCorp() ? CP_CORP_JOBS : JOBS.filter(function(j){ return j.status === 'Active'; })).filter(function(j){ return !CAMPAIGNS.some(function(c){ return c.jobId === j.id && (c.status !== 'done' || c.stats.hired >= (j.positions || 1)); }); });
+  const vis = jobs.filter(function(j){ if(cwIsOwnerish() || j.corp) return true; return typeof jobCanWorkOn === 'function' ? jobCanWorkOn(j) : true; });
+  return vis.map(function(j){
+    const h = cpHistory(j), pools = cpPools(j), fee = cpFee(j) * (j.positions || 1), fill = Math.min(1, (pools.pool + pools.know) / ((j.positions || 1) * 20)), pf = (fill + Math.min(1, h.ready * 3)) / 2, urg = 1 + Math.min(j.daysOpen || 0, 30) / 30, speed = 1 / Math.max(1, cpClientSpeed(j) / 2);
+    return { job:j, fee:fee, score:fee * pf * urg * speed, fill:pf, speed:cpClientSpeed(j), match:pools.pool + pools.know };
+  }).sort(function(a, b){ return b.score - a.score; }).slice(0, 3);
+}
+function cpSuggestedCard(){
+  const s = cpSuggested(); if(!s.length) return ''; const money = cpMoneyMode() === 'revenue' || cpMoneyMode() === 'saved';
+  return '<section class="o-card cp-sug"><div class="o-card__head"><h2 class="o-card__title">' + (cpIsCorp() ? 'Open requisitions with no campaign' : 'Open jobs with no campaign') + '</h2></div><ul class="cp-sug__list">' + s.map(function(r){
+    const j = r.job, val = money ? cpTw('<span class="cp-val">' + cpMoney(r.fee) + '</span>', cpIsCorp() ? 'Agency fee avoided' : 'What this job can earn', [[cpIsCorp() ? 'Agency fee avoided' : 'Fee for the job', cpMoney(r.fee)], ['Open for', (j.daysOpen || 0) + ' days'], ['Client feedback', 'about ' + r.speed + ' days'], ['Matching people', r.match]], 'Ranked by return: fee × chance to fill × how long it has been open × client speed.', 'cp-tw-right') : '<span class="cp-val">' + (j.positions || 1) + (j.positions === 1 ? ' position' : ' positions') + '</span>';
+    return '<li class="cp-sug__row"><span class="cp-sug__t"><b>' + cpEsc(j.title) + '</b><small>' + cpEsc([cpJobCompany(j), (j.loc || '').split(',')[0], (j.positions || 1) + (j.positions === 1 ? ' position' : ' positions'), (j.daysOpen || 0) + ' days open'].join(' · ')) + '</small></span>' + (!cpHasPay(j) ? attHTML('No pay range') : '') + val + '<button type="button" class="o-btn" onclick="cpStartSuggested(\'' + j.id + '\')">Start campaign</button></li>';
+  }).join('') + '</ul></section>';
+}
+function cpCampaignsTab(){
+  let list = cpList();
+  const counts = { running:list.filter(function(c){ return c.status === 'running' || c.status === 'review'; }).length, paused:list.filter(function(c){ return c.status === 'paused'; }).length, done:list.filter(function(c){ return c.status === 'done'; }).length, all:list.length };
+  const stats = cpStatCards(list);
+  let rows = list.filter(function(c){ return CP.filter === 'all' || (CP.filter === 'running' ? (c.status === 'running' || c.status === 'review' || c.status === 'draft') : c.status === CP.filter); });
+  if(CP.search) rows = rows.filter(function(c){ return (c.title + ' ' + cpJobCompany(cpJob(c.jobId)) + ' ' + cpOwner(c).name).toLowerCase().indexOf(CP.search.toLowerCase()) > -1; });
+  if(CP.stat === 'ready') rows = rows.slice().sort(function(a, b){ return b.stats.ready - a.stats.ready; });
+  if(CP.stat === 'apps') rows = rows.filter(function(c){ return c.stats.interested > 0; }).sort(function(a, b){ return b.stats.interested - a.stats.interested; });
+  if(CP.stat === 'money') rows = rows.slice().sort(function(a, b){ return cpExpected(b).revenue - cpExpected(a).revenue; });
+  if(CP.stat === 'hours') rows = rows.slice().sort(function(a, b){ return cpHoursSaved(b) - cpHoursSaved(a); });
+  const showMoney = cpMoneyMode() !== 'none';
+  const body = rows.map(function(c){
+    const job = cpJob(c.jobId), s = c.stats, P = cpPace(c), fl = cpFlag(c), e = cpExpected(c), h = cpHist(c);
+    const goal = cpTw('<span class="cp-num">' + s.ready + ' of ' + c.goal.ready + '</span>', 'Goal', [['By', cpDate(c.goal.by)], ['Days left', Math.max(0, cpDaysLeft(c))], ['Pace', P.behind ? 'Behind' : 'On track']], 'People ready to call by the date.');
+    const apps = cpTw('<span class="cp-num">' + s.interested + '</span>', 'Applicants', [['Reached', s.reached], ['Replied', cpPct(s.replied, s.reached) + '%'], ['Interested', s.interested], ['Pre-screened', s.screened], ['Submitted', s.submitted]], 'Every one is also in Jobs → Applicants.');
+    const rr = cpTw('<span class="cp-num">' + (s.reached ? cpPct(s.replied, s.reached) + '%' : '—') + '</span>', 'Reply rate', ['whatsapp','email','linkedin'].map(function(k){ const b = c.byChannel[k]; return [{ whatsapp:'WhatsApp', email:'Email', linkedin:'LinkedIn' }[k], b && b.sent ? cpPct(b.replied, b.sent) + '%' : '—']; }).concat([['Your average for similar roles', Math.round(h.reply * 100) + '%']]), '');
+    const money = showMoney ? '<td>' + cpTw('<span class="cp-num">' + cpMoneyVal(c) + '</span>', cpMoneyLabel(), cpMoneyMode() === 'placements' ? [['Positions', e.positions], ['Ready (weighted)', e.readyW.toFixed(1)], ['Submitted (weighted)', e.subW.toFixed(1)]] : [['Fee per hire', cpMoney(e.fee)], ['Positions', e.positions], ['Weighted by stage', cpMoney(e.revenue)]], '') + '</td>' : '';
+    return '<tr class="cp-row" tabindex="0" onclick="cpOpen(\'' + c.id + '\')" onkeydown="if(event.key===\'Enter\')cpOpen(\'' + c.id + '\')"><td><b>' + cpEsc(c.title) + '</b><small>' + cpEsc([cpJobCompany(job), (job.loc || '').split(',')[0], cpOwner(c).name].join(' · ')) + '</small></td><td>' + goal + '</td><td>' + apps + '</td><td>' + rr + '</td>' + money + '<td class="cp-flagcell">' + (fl ? (fl.muted ? '<span class="cp-muted">' + cpEsc(fl.text) + '</span>' : attHTML(fl.text)) : '') + '</td></tr>';
+  }).join('') || '<tr><td colspan="6" class="cp-empty">' + (list.length ? 'Nothing matches. Clear the filter or the card you picked.' : 'No campaigns yet. Start one from an open job above.') + '</td></tr>';
+  const seg = '<div role="group" id="cp-seg" class="seg" aria-label="Campaign status">' + [['running','Running'],['paused','Paused'],['done','Done'],['all','All']].map(function(f){ return '<button type="button" class="seg__btn' + (CP.filter === f[0] ? ' is-on' : '') + '" aria-pressed="' + (CP.filter === f[0]) + '" onclick="CP.filter=\'' + f[0] + '\'; cpRefresh()">' + f[1] + (counts[f[0]] ? ' <span class="cp-cnt">' + counts[f[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>';
+  const tools = '<div class="cp-tools">' + seg + '<input class="app-input cp-search" type="search" placeholder="Search campaigns" aria-label="Search campaigns" value="' + cpEsc(CP.search) + '" oninput="CP.search=this.value; cpSearchLive()" /></div>';
+  return stats + cpSuggestedCard() + '<section class="o-card o-card--flush">' + '<div class="cp-tools-wrap">' + tools + '</div><div class="o-table-wrap"><table class="o-table cp-table" style="min-width:760px"><thead><tr><th>Campaign</th><th>Goal</th><th>Applicants</th><th>Reply rate</th>' + (showMoney ? '<th>' + cpMoneyLabel() + '</th>' : '') + '<th></th></tr></thead><tbody id="cp-tbody">' + body + '</tbody></table></div><p class="cp-foot">' + rows.length + ' campaigns · every applicant also appears in Jobs → Applicants</p></section>';
+}
+function cpSearchLive(){ const main = document.getElementById('main-content'), top = main.scrollTop, pos = document.activeElement && document.activeElement.selectionStart; main.innerHTML = renderCowork(); main.scrollTop = top; oPostRender(main); cpPills(); const i = main.querySelector('.cp-search'); if(i){ i.focus(); try { i.setSelectionRange(pos, pos); } catch(e){} } }
+function cpOpen(id, tab){ CP.sel = id; CP.tab = tab || 'overview'; CP.appFilter = 'ready'; CP.chatPid = null; showView('cowork-campaign', 'kairo-team'); }
+function cpBack(){ CP.top = 'campaigns'; showView('kairo-team'); }
+function cpStartSuggested(jobId){
+  if(!sCan('kairo','Use agents')){ toast('You cannot start campaigns.'); return; } const c = cpNewCampaign(jobId); if(!c) return; c.fromSuggestion = true;
+  if(!cpHasPay(cpJob(jobId))){ toast('Add a pay range to the job first. Messages without one get about half the replies.'); CP.editId = c.id; CP.draft = null; showView('cowork-campaign-new', 'kairo-team'); return; }
+  if(cpStart(c.id)){ cpAudit(c, 'created from a suggestion'); CP.filter = 'running'; cpRefresh(); }
+}
+function cpGlobalActivity(){
+  const rows = []; cpList().forEach(function(c){ c.log.forEach(function(l){ rows.push({ c:c, l:l }); }); }); rows.sort(function(a, b){ return b.l.at - a.l.at; });
+  return '<section class="o-card o-card--flush"><div class="o-card__head" style="padding:0 20px"><div><h2 class="o-card__title">Activity</h2><p class="o-card__sub">Every campaign, newest first. Each line says who did it.</p></div>' + sBtn('Export CSV', 'cpExportCsv()') + '</div><div class="o-table-wrap"><table class="o-table" style="min-width:640px"><thead><tr><th>When</th><th>Campaign</th><th>What happened</th><th>Who</th></tr></thead><tbody>' + (rows.slice(0, 80).map(function(r){ return '<tr><td>' + cwFmtAgo(r.l.at) + '</td><td>' + cpEsc(r.c.title) + '</td><td class="cp-wrap">' + cpEsc(r.l.text) + '</td><td>' + cpEsc(r.l.who) + '</td></tr>'; }).join('') || oTableEmptyRow(4, 'Nothing yet.')) + '</tbody></table></div></section>';
+}
+function cpExportCsv(id){
+  const q = function(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }, list = id ? [cpById(id)] : cpList(), lines = [['Time','Campaign','What happened','Who'].join(',')];
+  list.forEach(function(c){ c.log.forEach(function(l){ lines.push([new Date(l.at).toISOString(), c.title, l.text, l.who].map(q).join(',')); }); });
+  try { const blob = new Blob([lines.join('\n')], { type:'text/csv' }), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'campaign-activity.csv'; document.body.appendChild(a); a.click(); a.remove(); } catch(e){}
+  logAudit('Cowork', 'Campaign activity exported', (lines.length - 1) + ' lines'); toast('Exported ' + (lines.length - 1) + ' lines');
+}
+
+/* ---------- the campaign page ---------- */
+function cpDetailHTML(id){
+  const c = cpById(id); if(!c || !cpVisible(c)) return '<div class="content-shell o-page" id="cp-detail-root">' + breadcrumbHTML([{ label:'Cowork', onclick:'cpBack()' }], 'cpBack()') + '<p class="o-card__sub">This campaign is not available to you.</p></div>';
+  const job = cpJob(c.jobId), s = c.stats, P = cpPace(c), e = cpExpected(c), h = cpHist(c), edit = cpCanEdit(c);
+  const st = c.status === 'paused' ? 'Paused' : c.status === 'review' ? 'Waiting for your check' : c.status === 'done' ? 'Done' : c.status === 'draft' ? 'Draft' : '';
+  const meta = [cpJobCompany(job), (job.loc || '').split(',')[0], (job.positions || 1) + ((job.positions || 1) === 1 ? ' position' : ' positions'), (c.startedAt ? 'started ' + cpDateMs(c.startedAt) : 'not started') + ' by ' + cpOwner(c).name].join(' · ');
+  const actions = [ c.status === 'paused' && edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpResumeUI(\'' + c.id + '\')">Resume</button>' : (c.status === 'running' || c.status === 'review') && edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpPauseUI(\'' + c.id + '\')">Pause</button>' : '', edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpEdit(\'' + c.id + '\')">Edit</button>' : '', c.status === 'draft' && edit ? '<button type="button" class="o-btn o-btn--lg o-btn--primary" onclick="cpEdit(\'' + c.id + '\')">Finish setup</button>' : '<button type="button" class="o-btn o-btn--lg o-btn--primary" onclick="cpCallList(\'' + c.id + '\')">Call ready list</button>' ].join('');
+  const flag = cpFlag(c), banner = c.status === 'paused' ? '<div class="o-note" role="status">' + oIcon('alert', 16, 1.75) + '<span><b>Paused.</b> ' + cpEsc(c.pausedReason) + '. Nothing is sent. Replies still reach ' + cpEsc(cpOwner(c).name.split(' ')[0]) + '.</span></div>' : '';
+  const strip = '<div class="cp-strip card">' + [
+    ['ready', 'Ready to call', s.ready + ' of ' + c.goal.ready, [['Booked', cpPeopleOf(c).filter(function(p){ return p.state === 'ready' && p.slot; }).length], ['Goal date', cpDate(c.goal.by)]], 'applicants'],
+    ['all', 'Applicants', String(s.interested), [['Reached', s.reached], ['Replied', cpPct(s.replied, s.reached) + '%'], ['Pre-screened', s.screened]], 'applicants'],
+    ['reply', 'Reply rate', s.reached ? cpPct(s.replied, s.reached) + '%' : '—', [['Your average', Math.round(h.reply * 100) + '%'], ['Sent', s.reached]], 'messages'],
+    ['money', cpMoneyMode() === 'revenue' || cpMoneyMode() === 'saved' ? cpMoneyLabel() : 'Days left', cpMoneyMode() === 'revenue' || cpMoneyMode() === 'saved' ? cpMoney(e.revenue) : String(Math.max(0, cpDaysLeft(c))), cpMoneyMode() === 'revenue' || cpMoneyMode() === 'saved' ? [['Fee per hire', cpMoney(e.fee)], ['Placements expected', e.placements]] : [['Goal date', cpDate(c.goal.by)]], 'sources'],
+  ].map(function(x){ return '<button type="button" class="cp-strip__c tw" onclick="CP.tab=\'' + x[4] + '\'; ' + (x[0] === 'ready' ? "CP.appFilter='ready'" : x[0] === 'all' ? "CP.appFilter='all'" : '') + '; cpRefresh()"><span class="stat__l">' + cpEsc(x[1]) + '</span><span class="stat__v">' + cpEsc(x[2]) + '</span>' + tipHTML(x[1], x[3], 'Click to open.') + '</button>'; }).join('') + '</div>';
+  const people = cpPeopleOf(c).filter(function(p){ return ['queued','optedOut'].indexOf(p.state) === -1 && p.answers !== null; });
+  const tabs = [['overview','Overview'],['applicants','Applicants ' + (people.length ? '<span class="cp-cnt">' + s.interested + '</span>' : '')],['messages','Messages'],['sources','Sources'],['activity','Activity']];
+  const tabBar = '<div class="o-tabs-host"><div role="tablist" id="cp-det-tabs" aria-label="Campaign">' + tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="' + (CP.tab === t[0]) + '" onclick="CP.tab=\'' + t[0] + '\'; cpRefresh()">' + t[1] + '</button>'; }).join('') + '</div></div>';
+  const body = CP.tab === 'applicants' ? cpApplicantsTab(c) : CP.tab === 'messages' ? cpMessagesTab(c) : CP.tab === 'sources' ? cpSourcesTab(c) : CP.tab === 'activity' ? cpActivityTab(c) : cpOverviewTab(c);
+  return '<div class="content-shell o-page" id="cp-detail-root"><a class="cp-back" href="#" onclick="cpBack(); return false">← Campaigns</a>' + pageHeaderHTML({ title:c.title, meta:meta, actions:actions }) + (st && c.status !== 'paused' ? '<p class="cp-state">' + attHTML(st) + '</p>' : '') + banner + strip + tabBar + '<div class="cp-body">' + body + '</div></div>';
+}
+function cpOverviewTab(c){
+  const s = c.stats, P = cpPace(c), job = cpJob(c.jobId), pct = Math.min(100, cpPct(s.ready, c.goal.ready));
+  const paceTxt = c.goalReached ? 'Goal reached. Kairo keeps the best extra people warm and stops new outreach.' : P.behind ? attHTML('Behind pace · ' + P.more + ' more in ' + P.daysLeft + ' days') : 'On pace · ' + P.daysLeft + ' days left';
+  const next = c.status === 'review' ? 'Nothing is sent until you approve the first messages.' : c.status === 'paused' ? 'Paused. Nothing is sent until you resume.' : c.status === 'done' ? 'Finished. People who said not now come back to the pool with a date to ask again.' : 'Kairo messages the next people inside your limits, pre-screens anyone who says yes, and books your calls.';
+  const goal = '<section class="o-card"><div class="cp-goal"><span class="cp-goal__n">' + s.ready + '</span><span class="cp-goal__t">of ' + c.goal.ready + ' ready to call · by ' + cpDate(c.goal.by) + '</span></div><div class="cp-bar"><i style="width:' + pct + '%"></i></div><p class="cp-pace">' + paceTxt + '</p><p class="o-card__sub">' + cpEsc(next) + '</p></section>';
+  const fun = [['Reached', s.reached, null, 'People Kairo has messaged or checked.'], ['Replied', s.replied, s.reached, 'Anyone who answered, including “not now”.'], ['Interested', s.interested, s.replied, 'Said yes, or applied themselves.'], ['Pre-screened', s.screened, s.interested, 'Answered every pre-screen question.'], ['Ready to call', s.ready, s.screened, 'Passed the pre-screen and booked a call.'], ['Submitted to client', s.submitted, s.ready, 'You submitted them after the call.'], ['In interview', s.interviews, s.submitted, 'The client is interviewing them.']];
+  const max = Math.max(1, s.reached);
+  const funnel = '<section class="o-card"><h2 class="o-card__title">How people moved</h2><ul class="cp-fun">' + fun.map(function(f){ return '<li>' + cpTw('<span class="cp-fun__l">' + f[0] + '</span><span class="cp-fun__b"><i style="width:' + Math.max(2, Math.round(f[1] / max * 100)) + '%"></i></span><span class="cp-fun__n">' + f[1] + (f[2] != null && f[2] ? ' <small>' + cpPct(f[1], f[2]) + '%</small>' : '') + '</span>', f[0], [[f[1] + ' people', f[2] ? cpPct(f[1], f[2]) + '% of the row above' : '']], f[3], 'cp-tw-block') + '</li>'; }).join('') + '</ul></section>';
+  const moves = cpMovesCard(c);
+  const needs = cpNeedsCard(c);
+  const how = cpHowCard(c);
+  return '<div class="cp-two"><div class="cp-col">' + goal + funnel + moves + '</div><div class="cp-col">' + needs + how + '</div></div>';
+}
+function cpMovesCard(c){
+  const open = cpOpenMoves(c), auto = c.moves.filter(function(m){ return m.status === 'auto' || (m.status === 'done' && m.safety === 'auto'); }).slice(0, 3), can = cpCanApprove(c);
+  const rows = open.map(function(m){ return '<li class="cp-move"><span class="cp-move__t">' + cwEsc(m.text) + '<small>' + cwEsc(m.why) + '</small></span>' + (can ? '<span class="cp-move__a"><button type="button" class="o-link" onclick="cpMoveSkip(\'' + c.id + '\',\'' + m.id + '\')">Not now</button><button type="button" class="o-btn" onclick="cpMoveApply(\'' + c.id + '\',\'' + m.id + '\')">Apply</button></span>' : '') + '</li>'; }).join('') + auto.map(function(m){ return '<li class="cp-move"><span class="cp-move__t">' + cwEsc(m.text) + '<small>Applied by Kairo · ' + cwEsc(m.why) + '</small></span><span class="cp-move__a"><button type="button" class="o-link" onclick="cpMoveUndo(\'' + c.id + '\',\'' + m.id + '\')">Undo</button></span></li>'; }).join('');
+  return '<section class="o-card"><h2 class="o-card__title">Kairo’s next moves</h2>' + (rows ? '<ul class="cp-moves">' + rows + '</ul>' : '<p class="o-card__sub">Nothing to change right now.</p>') + '</section>';
+}
+function cpNeedsCard(c){
+  const ppl = cpPeopleOf(c), q = ppl.filter(function(p){ return p.state === 'needsYou'; }), cm = ppl.filter(function(p){ return p.state === 'closeMiss'; }), today = ppl.filter(function(p){ return p.state === 'ready' && p.slot && CP_ISO(p.slot) === CP_ISO(CP_NOW()); });
+  const rv = c.review.pending.filter(function(r){ return r.state === 'pending'; });
+  const row = function(t, m, btn){ return '<li class="cp-need"><span class="cp-need__t">' + t + '<small>' + m + '</small></span>' + btn + '</li>'; };
+  const items = [];
+  if(rv.length && c.status === 'review') items.push(row(rv.length + ' messages wait for you', 'Nothing is sent until you check them', '<button type="button" class="o-btn" onclick="cpReviewOpen(\'' + c.id + '\')">Check</button>'));
+  q.forEach(function(p){ const cand = byId(p.candidateId); items.push(row(cpEsc(cand.name) + ' asked a question', cpEsc(p.question || 'Kairo could not read the answer'), '<button type="button" class="o-btn" onclick="cpChatOpen(\'' + p.id + '\')">Reply</button>')); });
+  cm.forEach(function(p){ const cand = byId(p.candidateId); items.push(row(cpEsc(cand.name) + ' is a close miss', cpEsc(p.reason || ''), '<button type="button" class="o-btn" onclick="cpResolve(\'' + p.id + '\',\'call\')">Offer a call</button>')); });
+  today.forEach(function(p){ const cand = byId(p.candidateId); items.push(row('Call ' + cpEsc(cand.name) + ' today', cpEsc(p.slotText || ''), '<button type="button" class="o-btn" onclick="cpCallOpen(\'' + p.id + '\')">Open brief</button>')); });
+  return '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">Needs you</h2>' + (items.length ? '<span class="o-card__sub">' + items.length + '</span>' : '') + '</div>' + (items.length ? '<ul class="cp-needs">' + items.join('') + '</ul>' : '<p class="o-card__sub">Nothing needs you right now.</p>') + '</section>';
+}
+function cpHowCard(c){
+  const chans = ['whatsapp','email','linkedin'].filter(function(k){ return c.message.steps.some(function(s){ return s.channel === k || s.channel === 'auto'; }) && (k !== 'linkedin' || c.plays.li); }).map(function(k){ return { whatsapp:'WhatsApp', email:'Email', linkedin:'LinkedIn' }[k]; });
+  const rows = [ ['Approach', c.mix === 'recommended' ? 'Recommended mix' : 'Your mix', 'Warmest people first. Wider only if the pace needs it.'], ['Channels', chans.join(', ') || '—', 'The best channel each person agreed to.'], ['Messages', c.message.steps.length + ' steps · ' + c.message.tone, c.message.ab ? 'Two openings are tested; the one with more replies is kept.' : 'One opening.'], ['Sender', cpSenderOf(c).name, 'Every message is in this person’s name.'], ['Send hours', c.rules.hours.replace('-', ' to '), 'Never Sundays, never more than 3 messages to a person.'], ['Checked by you', c.rules.checkFirst ? 'First ' + c.rules.checkFirst : 'No', c.rules.checkFirst ? 'The first ' + c.rules.checkFirst + ' messages wait for you.' : 'Messages go out on their own.'] ];
+  return '<section class="o-card"><h2 class="o-card__title">How it runs</h2><dl class="cp-how">' + rows.map(function(r){ return '<div>' + cpTw('<dt>' + r[0] + '</dt><dd>' + cpEsc(r[1]) + '</dd>', r[0], [r[2]], '') + '</div>'; }).join('') + '</dl><p class="cp-honest">Honest by design: no made-up deadlines, no invented offers, and every message says who it is from.</p></section>';
+}
+function cpApplicantsTab(c){
+  const ppl = cpPeopleOf(c).filter(function(p){ return ['queued','optedOut'].indexOf(p.state) === -1; });
+  const f = CP.appFilter, rows = ppl.filter(function(p){ return f === 'all' || (f === 'ready' ? p.state === 'ready' : f === 'screen' ? ['screening','booking'].indexOf(p.state) > -1 : ['interested','screening','booking','ready','needsYou','closeMiss'].indexOf(p.state) > -1); }).sort(function(a, b){ return (a.slot || 9e15) - (b.slot || 9e15) || b.score - a.score; });
+  const seg = '<div role="group" class="seg" aria-label="Applicants">' + [['ready','Ready to call'],['screen','In pre-screen'],['interested','Interested'],['all','All']].map(function(x){ return '<button type="button" class="seg__btn' + (f === x[0] ? ' is-on' : '') + '" aria-pressed="' + (f === x[0]) + '" onclick="CP.appFilter=\'' + x[0] + '\'; cpRefresh()">' + x[1] + '</button>'; }).join('') + '</div>';
+  const job = cpJob(c.jobId), qs = c.prescreen.questions;
+  const body = rows.map(function(p){
+    const cand = byId(p.candidateId), ans = p.answers || {}, done = Object.keys(ans).filter(function(k){ return k.charAt(0) !== '_'; }).length;
+    const action = p.state === 'ready' ? (p.called ? '<button type="button" class="o-btn" onclick="cpSubmit(\'' + p.id + '\')">Submit</button>' : '<button type="button" class="o-btn" onclick="cpCallOpen(\'' + p.id + '\')">Call</button>') : p.state === 'needsYou' || p.state === 'closeMiss' ? '<button type="button" class="o-btn" onclick="cpChatOpen(\'' + p.id + '\')">' + attHTML('Reply') + '</button>' : '<button type="button" class="o-link" onclick="cpChatOpen(\'' + p.id + '\')">View chat</button>';
+    const whyTxt = cwReason({ c:cand, job:job }, 'match');
+    return '<tr><td><b>' + cpEsc(cand.name) + '</b><small>' + cpEsc([cand.role, cand.company || '', cand.exp, cand.salary].filter(Boolean).join(' · ')) + '</small></td><td>' + cpTw('<span class="cp-num">' + p.score + '</span>', 'Why', [whyTxt.replace(/^Score \d+ · /, '')], '') + '</td><td>' + cpTw('<span class="cp-num">' + done + ' of ' + qs.length + '</span>', 'Pre-screen answers', Object.keys(ans).filter(function(k){ return k.charAt(0) !== '_'; }).map(function(k){ return [k === 'ctc' ? 'Pay' : k.charAt(0).toUpperCase() + k.slice(1), ans[k]]; }).concat(p.state === 'screening' ? [['Now', 'Answering question ' + (p.qIndex + 1)]] : []), '') + '</td><td>' + cpEsc(cand.notice || '') + '</td><td>' + cpEsc((cpPlay(p.play) || {}).name || '') + (p.state === 'ready' && p.slotText ? '<small>' + cpEsc(p.slotText) + '</small>' : p.state === 'closeMiss' || p.state === 'needsYou' ? '<small>' + attHTML('Needs you') + '</small>' : '') + '</td><td class="cp-act">' + action + '</td></tr>';
+  }).join('') || '<tr><td colspan="6" class="cp-empty">Nobody here yet.</td></tr>';
+  return '<section class="o-card o-card--flush"><div class="cp-tools-wrap">' + seg + '</div><div class="o-table-wrap"><table class="o-table" style="min-width:720px"><thead><tr><th>Candidate</th><th>Score</th><th>Pre-screen</th><th>Notice</th><th>Source</th><th></th></tr></thead><tbody>' + body + '</tbody></table></div><p class="cp-foot">Showing ' + rows.length + ' of ' + c.stats.interested + '. The same people are in Jobs → ' + cpEsc(c.title) + ' → Applicants, marked Campaign.</p></section>';
+}
+function cpMessagesTab(c){
+  const steps = c.message.steps, vs = c.message.versions || [];
+  const left = steps.map(function(s, i){
+    const nm = i === 0 ? 'First note' : i === steps.length - 1 ? 'Last note and referral ask' : 'Follow-up with something new', when = i === 0 ? 'Day 0' : 'Day ' + steps.slice(0, i + 1).reduce(function(a, x){ return a + x.delayDays; }, 0);
+    const sent = i === 0 ? c.stats.reached : Math.round(c.stats.reached * Math.pow(.62, i)), rep = i === 0 ? c.stats.replied : Math.round(c.stats.replied * Math.pow(.3, i));
+    const ab = i === 0 && vs.length ? '<ul class="cp-ab">' + vs.map(function(v){ return '<li><b>Version ' + v.id + '</b> · sent ' + v.sent + ' · ' + (v.sent ? cpPct(v.replies, v.sent) + '% replied' : '—') + (v.status === 'kept' ? ' · kept' : v.status === 'stopped' ? ' · stopped' : ' · testing') + '</li>'; }).join('') + '</ul>' : '';
+    return '<li class="cp-msg"><div class="cp-msg__h">' + cpTw('<b>' + when + ' · ' + nm + '</b>', 'Why it works', [i === 0 ? 'Relevance, a clear pay range and one easy reply.' : i === steps.length - 1 ? 'A clean close and permission to say no. People often refer someone.' : 'It adds one new fact, so it is never “just checking in”.'], '') + '<span class="cp-muted">' + (s.channel === 'auto' ? 'Best channel' : s.channel) + ' · ' + cpTw('sent ' + sent + ' · ' + cpPct(rep, sent) + '% replied', nm, [['Sent', sent], ['Replied', rep], ['Not now', i === 0 ? c.stats.notNow : '—'], ['Referrals', i === steps.length - 1 ? c.stats.referrals : '—']], '') + '</span></div><p class="cp-msg__t">' + cpEsc(cpStepText(c, i)) + '</p>' + ab + '</li>';
+  }).join('');
+  const pp = cpPeopleOf(c).filter(function(p){ return p.chat.length; }), sel = cpPerson(CP.chatPid) || pp[0], right = sel ? cpChatCard(c, sel) : '<section class="o-card"><p class="o-card__sub">No conversations yet.</p></section>';
+  return '<div class="cp-two"><div class="cp-col"><section class="o-card"><div class="o-card__head"><h2 class="o-card__title">Message steps</h2>' + (cpCanEdit(c) ? '<button type="button" class="o-link" onclick="cpEdit(\'' + c.id + '\',\'msg\')">Edit messages</button>' : '') + '</div><ol class="cp-msgs">' + left + '</ol></section></div><div class="cp-col">' + right + '</div></div>';
+}
+function cpChatCard(c, p){
+  const cand = byId(p.candidateId), pp = cpPeopleOf(c).filter(function(x){ return x.chat.length; });
+  const pick = pp.length > 1 ? '<select class="app-input app-select cp-pick" aria-label="Conversation" onchange="CP.chatPid=this.value; cpRefresh()">' + pp.map(function(x){ return '<option value="' + x.id + '"' + (x.id === p.id ? ' selected' : '') + '>' + cpEsc(byId(x.candidateId).name) + '</option>'; }).join('') + '</select>' : '';
+  const bub = p.chat.map(function(m){ return '<div class="cp-b cp-b--' + (m.who === 'cand' ? 'c' : 'k') + '"><span>' + cpEsc(m.text) + '</span><small>' + (m.who === 'cand' ? cpEsc(cand.name.split(' ')[0]) : m.who === 'person' ? cpEsc(cpOwner(c).name.split(' ')[0]) : 'Kairo for ' + cpEsc(cpOwner(c).name.split(' ')[0])) + ' · ' + cwFmtTime(m.at) + '</small></div>'; }).join('');
+  const quick = p.state === 'contacted' || p.state === 'replied' ? '<div class="cp-quick"><span>1 · Tell me more</span><span>2 · Not now</span></div>' : '';
+  const reply = cpCanEdit(c) && (p.state === 'needsYou' || p.state === 'closeMiss') ? '<div class="cp-reply"><button type="button" class="o-btn" onclick="cpResolve(\'' + p.id + '\',\'reply\')">Reply personally</button><button type="button" class="o-btn" onclick="cpResolve(\'' + p.id + '\',\'call\')">Offer a call</button></div>' : '';
+  return '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">' + cpEsc(cand.name) + '</h2>' + pick + '</div><p class="o-card__sub">' + cpEsc(CP_STATE_LABEL[p.state] || p.state) + '</p><div class="cp-chat">' + bub + quick + '</div>' + reply + '<p class="cp-foot2">Kairo runs this chat in ' + cpEsc(cpOwner(c).name) + '’s name. Any question it cannot answer goes to ' + cpEsc(cpOwner(c).name.split(' ')[0]) + '.</p></section>';
+}
+function cpChatOpen(pid){ const p = cpPerson(pid); if(!p) return; CP.sel = p.campaignId; CP.tab = 'messages'; CP.chatPid = pid; if(document.getElementById('cp-detail-root')) cpRefresh(); else showView('cowork-campaign', 'kairo-team'); }
+function cpSourcesTab(c){
+  const h = cpHist(c), avg = c.stats.reached ? c.stats.replied / c.stats.reached : 0, plan = cpPlanFor(c);
+  const rows = CP_PLAYS.map(function(p){
+    const b = c.bySource[p.id] || { reached:0, replied:0, ready:0 }, on = c.plays[p.id] !== false; const share = on && !b.paused ? Math.round((plan.playUse[p.id].take || 0) / Math.max(1, plan.reachAll) * 100) : 0;
+    const nm = p.id === 'boards' ? 'Job-board search · Naukri Resdex in ' + cpOwner(c).name.split(' ')[0] + '’s seat' : p.name;
+    return '<tr><td>' + cpTw('<b>' + cpEsc(nm) + '</b>', p.name, [p.why, p.chan], '') + '</td><td>' + b.reached + '</td><td>' + b.replied + (b.reached ? ' <small>' + cpPct(b.replied, b.reached) + '%</small>' : '') + '</td><td>' + b.ready + '</td><td>' + (b.paused ? attHTML('Paused') : on ? share + '%' : '<span class="cp-muted">Off</span>') + '</td></tr>';
+  }).join('');
+  const d = c.dedupe;
+  return '<section class="o-card o-card--flush"><div class="o-table-wrap"><table class="o-table" style="min-width:640px"><thead><tr><th>Source</th><th>Reached</th><th>Replied</th><th>Ready</th><th>Share of next sends</th></tr></thead><tbody>' + rows + '</tbody></table></div><p class="cp-foot">If a source’s reply rate falls below 40% of the campaign average after 40 sends, Kairo pauses it and moves its share to the others. One person, one approach: ' + d.merged + ' duplicates merged, ' + (d.skipped + d.notAgain) + ' people skipped, ' + d.waits + ' waiting their turn.</p></section>';
+}
+function cpActivityTab(c){
+  const vlog = (c.versionLog || []).map(function(v){ return { at:v.at, text:'Version ' + v.v + ' published: ' + v.changes.join('; '), who:v.by }; });
+  const rows = c.log.concat(vlog).sort(function(a, b){ return b.at - a.at; }).slice(0, 100);
+  return '<section class="o-card o-card--flush"><div class="o-card__head" style="padding:0 20px"><h2 class="o-card__title">Activity</h2>' + sBtn('Export CSV', "cpExportCsv('" + c.id + "')") + '</div><div class="o-table-wrap"><table class="o-table" style="min-width:600px"><thead><tr><th>When</th><th>What happened</th><th>Who</th></tr></thead><tbody>' + (rows.map(function(l){ return '<tr><td>' + cwFmtAgo(l.at) + '</td><td class="cp-wrap">' + cpEsc(l.text) + '</td><td>' + cpEsc(l.who) + '</td></tr>'; }).join('') || oTableEmptyRow(3, 'Nothing yet.')) + '</tbody></table></div></section>';
+}
+
+/* ---------- actions ---------- */
+function cpPauseUI(id){ const c = cpById(id); if(!c) return; const me = (currentActingUser() || {}).name || 'a person'; cpPause(c, me, 'Paused by ' + me); toast('Paused. Nothing is sent.'); cpRefresh(); }
+function cpResumeUI(id){ const c = cpById(id); if(c && cpResume(c)){ toast('Resumed'); cpRefresh(); } }
+function cpCallList(id){ const c = cpById(id); if(!c) return; CP.tab = 'applicants'; CP.appFilter = 'ready'; cpRefresh(); }
+function cpModal(html){ let root = document.getElementById('cp-modal-root'); if(!root){ root = document.createElement('div'); root.id = 'cp-modal-root'; document.body.appendChild(root); } root.innerHTML = html ? '<div class="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true"><div class="modal-backdrop absolute inset-0" onclick="cpModal(\'\')"></div><div class="modal-panel relative bg-white w-full max-w-lg p-6 cp-modal">' + html + '</div></div>' : ''; }
+function cpCallOpen(pid){
+  const p = cpPerson(pid); if(!p) return; const c = cpById(p.campaignId), cand = byId(p.candidateId), job = cpJob(c.jobId);
+  const ans = Object.keys(p.answers).filter(function(k){ return k.charAt(0) !== '_'; }).map(function(k){ return '<div class="kv"><span>' + cpEsc(k === 'ctc' ? 'Pay' : k) + '</span><span>' + cpEsc(p.answers[k]) + '</span></div>'; }).join('');
+  cpModal('<h2 class="o-card__title">' + cpEsc(cand.name) + '</h2><p class="o-card__sub">' + cpEsc([cand.role, cand.company || '', cand.exp].filter(Boolean).join(' · ')) + (p.slotText ? ' · call ' + cpEsc(p.slotText) : '') + '</p><h3 class="cp-h3">Why they fit</h3><p class="o-card__sub">' + cpEsc(cwReason({ c:cand, job:job }, 'match').replace(/^Score \d+ · Why: /, '')) + '</p><h3 class="cp-h3">Their answers</h3><div class="cp-kv">' + (ans || '<p class="o-card__sub">None yet.</p>') + '</div><h3 class="cp-h3">Notes</h3><textarea class="app-input" rows="3" placeholder="Notes from the call" id="cp-call-notes"></textarea><div class="cp-modal__f"><button type="button" class="o-btn" onclick="cpChatOpen(\'' + p.id + '\'); cpModal(\'\')">View chat</button><button type="button" class="o-btn" onclick="cpModal(\'\')">Close</button><button type="button" class="o-btn o-btn--primary" onclick="cpCallDone(\'' + p.id + '\')">Call done</button></div>');
+}
+function cpCallDone(pid){ const p = cpPerson(pid); if(!p) return; const n = (document.getElementById('cp-call-notes') || {}).value; p.called = true; p.notes = n || ''; const c = cpById(p.campaignId); cpLog(c, 'Call done with ' + byId(p.candidateId).name, 'call', (currentActingUser() || {}).name); cpModal(''); toast('Saved. You can submit them now.'); cpRefresh(); }
+function cpSubmit(pid){
+  const p = cpPerson(pid); if(!p) return; const c = cpById(p.campaignId), job = cpJob(c.jobId), sb = job.corp ? null : findSubmission(job.id, p.candidateId);
+  if(sb && typeof moveSubmissionStage === 'function') moveSubmissionStage(sb.id, 'Pending Review', 'Submitted from the campaign after the call'); if(sb) sb.campaignStage = 'Submitted';
+  p.state = 'done'; p.tag = 'submitted'; c.stats.submitted++; cpLog(c, byId(p.candidateId).name + ' submitted for review after the call', 'submit', (currentActingUser() || {}).name); cpAudit(c, 'submission · ' + byId(p.candidateId).name); toast('Sent for review. A person decides on the submission.'); cpRefresh();
+}
+function cpReviewOpen(cid){
+  const c = cpById(cid); if(!c) return; const can = cpCanApprove(c);
+  cpModal('<h2 class="o-card__title">First messages</h2><p class="o-card__sub">Nothing is sent until you approve. ' + c.review.approved + ' of ' + Math.min(c.rules.checkFirst, c.review.pending.length) + ' approved.</p><ul class="cp-rv">' + c.review.pending.map(function(r){ return '<li class="cp-rv__i"><b>' + cpEsc(r.name) + '</b> <span class="cp-muted">' + cpEsc(r.channel) + (r.state !== 'pending' ? ' · ' + r.state : '') + '</span><textarea class="app-input" rows="3" id="rv-' + r.id + '"' + (r.state !== 'pending' || !can ? ' disabled' : '') + '>' + cpEsc(r.text) + '</textarea>' + (r.error ? '<p class="cp-issue">' + attHTML(r.error) + '</p>' : '') + (r.state === 'pending' && can ? '<span class="cp-rv__a"><button type="button" class="o-link" onclick="cpRvSkip(\'' + c.id + '\',\'' + r.id + '\')">Skip</button><button type="button" class="o-link" onclick="cpRvEdit(\'' + c.id + '\',\'' + r.id + '\')">Save my edit</button><button type="button" class="o-btn" onclick="cpReviewDecide(\'' + c.id + '\',\'' + r.id + '\',\'approve\'); cpReviewOpen(\'' + c.id + '\')">Approve</button></span>' : '') + '</li>'; }).join('') + '</ul><div class="cp-modal__f"><button type="button" class="o-btn" onclick="cpModal(\'\')">Close</button>' + (can ? '<button type="button" class="o-btn o-btn--primary" onclick="cpApproveAll(\'' + c.id + '\'); cpModal(\'\')">Approve all</button>' : '') + '</div>');
+}
+function cpRvSkip(cid, rid){ cpReviewDecide(cid, rid, 'skip'); cpReviewOpen(cid); }
+function cpRvEdit(cid, rid){ const t = document.getElementById('rv-' + rid).value, err = cpReviewDecide(cid, rid, 'edit', t); cpReviewOpen(cid); if(!err) toast('Edited and approved'); }
+
+/* ---------- cp-edit.js ---------- */
+/* ============================================================
+   New campaign and Edit: one page. Six cards (plus sending pace) on the left, The plan on the right.
+   Edit works on a copy; Publish makes version + 1. Nothing is locked by status.
+============================================================ */
+function cpNew(){ CP.editId = null; CP.draft = null; CP.live = null; CP.riskOk = false; CP.sub = { apps:false, boards:false }; CP.writeQ = ''; showView('cowork-campaign-new', 'kairo-team'); }
+function cpEdit(id, focus){
+  const c = cpById(id); if(!c) return; if(!cpCanEdit(c)){ toast('Only the owner, their manager or an Admin can edit this campaign.'); return; }
+  CP.editId = id; CP.live = c; CP.draft = JSON.parse(JSON.stringify(c)); CP.draft.__edit = true; CP.riskOk = false; CP.sub = { apps:false, boards:false }; CP.focus = focus || ''; showView('cowork-campaign-new', 'kairo-team');
+}
+function cpWorkableJobs(){ return (cpIsCorp() ? CP_CORP_JOBS : JOBS.filter(function(j){ return j.status === 'Active'; })).filter(function(j){ return j.corp || cwIsOwnerish() || (typeof jobCanWorkOn === 'function' ? jobCanWorkOn(j) : true); }); }
+function cpBlank(jobId){ const c = cpNewCampaign(jobId, { detached:true }); return c; }
+function cpDraft(){
+  if(CP.draft) return CP.draft;
+  const jobs = cpWorkableJobs(); const pre = CP.jobPick && jobs.find(function(j){ return j.id === CP.jobPick; }); const j = pre || jobs.filter(function(x){ return !CAMPAIGNS.some(function(c){ return c.jobId === x.id && c.status !== 'done'; }); })[0] || jobs[0];
+  CP.draft = j ? cpBlank(j.id) : null; CP.jobPick = ''; return CP.draft;
+}
+function cpIsFirstCampaign(d){ return !CAMPAIGNS.some(function(c){ return c.ownerId === (d.message.senderId || d.ownerId) && c.id !== d.id && c.status !== 'draft'; }); }
+function cpJobChange(id){ const d = cpDraft(); const keep = d.rules; CP.draft = cpBlank(id); CP.draft.rules = keep; CP.riskOk = false; cpEdRender(); }
+function cpEdRender(){ const m = document.getElementById('main-content'); if(!m) return; const top = m.scrollTop; m.innerHTML = cpEditorHTML(); m.scrollTop = top; oPostRender(m); cpPills(); }
+function cpSw(on, onclick, label, dis){ return '<button type="button" role="switch" aria-checked="' + !!on + '" aria-label="' + cpEsc(label) + '" class="app-switch' + (on ? ' is-on' : '') + '"' + (dis ? ' disabled style="opacity:.55"' : ' onclick="' + onclick + '"') + '><span></span></button>'; }
+function cpSec(n, title, inner, id){ return '<section class="o-card cp-sec" id="' + (id || 'cp-s' + n) + '"><div class="cp-sec__h"><span class="cp-sec__n">' + n + '</span><h2 class="o-card__title">' + title + '</h2></div>' + inner + '</section>'; }
+
+/* ---------- what changed ---------- */
+function cpChanges(){
+  const d = CP.draft, l = CP.live; if(!l || !d) return []; const out = [];
+  if(d.goal.ready !== l.goal.ready) out.push('Goal ' + l.goal.ready + ' → ' + d.goal.ready + ' ready');
+  if(d.goal.by !== l.goal.by) out.push('Date ' + cpDate(l.goal.by) + ' → ' + cpDate(d.goal.by));
+  CP_PLAYS.forEach(function(p){ if((d.plays[p.id] !== false) !== (l.plays[p.id] !== false)) out.push(p.name + (d.plays[p.id] !== false ? ' on' : ' off')); });
+  if(d.message.tone !== l.message.tone) out.push('Tone ' + l.message.tone + ' → ' + d.message.tone);
+  if(d.message.senderId !== l.message.senderId) out.push('Sender changed');
+  if(d.message.ab !== l.message.ab) out.push('Second opening ' + (d.message.ab ? 'on' : 'off'));
+  if(d.message.steps.length !== l.message.steps.length) out.push('Steps ' + l.message.steps.length + ' → ' + d.message.steps.length);
+  d.message.steps.forEach(function(s, i){ const o = l.message.steps[i]; if(o && JSON.stringify(s) !== JSON.stringify(o)) out.push('Message step ' + (i + 1) + ' changed'); });
+  if(JSON.stringify(d.prescreen.questions) !== JSON.stringify(l.prescreen.questions)) out.push('Pre-screen questions changed');
+  if(JSON.stringify(d.pace) !== JSON.stringify(l.pace)) out.push('Sending pace changed');
+  if(d.rules.checkFirst !== l.rules.checkFirst) out.push('Check the first messages ' + (d.rules.checkFirst ? 'on' : 'off'));
+  return out;
+}
+function cpDiffValues(){ const d = CP.draft, l = CP.live, out = []; if(!l) return out; if(d.goal.ready !== l.goal.ready) out.push('goal ' + l.goal.ready + ' → ' + d.goal.ready); if(d.goal.by !== l.goal.by) out.push('date ' + l.goal.by + ' → ' + d.goal.by); if(d.message.tone !== l.message.tone) out.push('tone ' + l.message.tone + ' → ' + d.message.tone); return out; }
+
+/* ---------- the page ---------- */
+function cpEditorHTML(){
+  const d = cpDraft(), edit = !!CP.live; if(!d) return '<div class="content-shell o-page" id="cp-editor-root">' + pageHeaderHTML({ title:'New campaign' }) + '<div class="o-card">' + oEmpty('zap', 'There are no open jobs you can run a campaign for.') + '</div></div>';
+  const job = cpJob(d.jobId), plan = cpPlanFor(d), changes = cpChanges(), nv = edit ? CP.live.version + 1 : 1;
+  const head = pageHeaderHTML({ title:edit ? 'Edit campaign' : 'New campaign', meta:edit ? 'Live while you edit. Your changes go out as version ' + nv + ' when you publish.' : '', actions:edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpDiscard()">Discard changes</button>' : '<button type="button" class="o-btn o-btn--lg" onclick="cpSaveDraft()">Save draft</button>' });
+  const left = cpSecJob(d, job, edit) + cpSecGoal(d, job, plan) + cpSecWho(d, job, plan) + cpSecMsg(d, job) + cpSecPace(d) + cpSecPre(d, job) + cpSecSafe(d);
+  return '<div class="content-shell o-page" id="cp-editor-root"><a class="cp-back" href="#" onclick="' + (edit ? "cpOpen('" + CP.live.id + "'); return false" : 'cpBack(); return false') + '">← ' + (edit ? cpEsc(CP.live.title) : 'Campaigns') + '</a>' + head + '<div class="cp-ed"><div class="cp-ed__l">' + left + '</div><aside class="cp-ed__r">' + cpPlanPanel(d, job, plan, edit, changes, nv) + '</aside></div></div>';
+}
+function cpSecJob(d, job, edit){
+  const jobs = cpWorkableJobs(), fee = (!job.corp && typeof clJobExpected === 'function') ? clJobExpected(job) : null;
+  const sel = edit ? '<p class="cp-readonly">' + cpEsc(job.title) + ' · ' + cpEsc(cpJobCompany(job)) + '<small>One campaign, one job. For another job, start a new campaign.</small></p>' : '<select class="app-input app-select" aria-label="Job" onchange="cpJobChange(this.value)">' + jobs.map(function(j){ return '<option value="' + j.id + '"' + (j.id === d.jobId ? ' selected' : '') + '>' + cpEsc(j.title + ' · ' + cpJobCompany(j)) + '</option>'; }).join('') + '</select>';
+  const pay = cpHasPay(job) ? cpPayText(job) : '<span class="cp-nopay">' + (job.corp ? attHTML('Add a pay range to the requisition') : '<a href="#" class="cp-att-link" onclick="openJob(\'' + job.id + '\'); return false">' + attHTML('Add a pay range to the job') + '</a>') + '</span>';
+  const feeTxt = cpIsCorp() ? cpMoney(cpFee(job)) + ' per hire avoided' : (fee ? cpMoney(fee.fee) + ' per hire' : cpMoney(cpFee(job)));
+  const feeCell = cpTw(cpEsc(feeTxt), cpIsCorp() ? 'Agency fee avoided' : 'Fee per hire', [fee ? fee.text : '8.33% of the middle of the pay range', 'Pay range ' + (cpPayText(job) || 'not added')], '');
+  const facts = [[cpIsCorp() ? 'Department' : 'Client', cpEsc(cpJobCompany(job)) + ' · ' + (job.positions || 1) + ((job.positions || 1) === 1 ? ' position' : ' positions')], ['Must-haves', cpEsc((job.skills || []).join(', '))], ['Experience', cpEsc(job.minExp || 'Any')], ['Location', cpEsc((job.loc || '') + (job.workMode ? ' · ' + job.workMode : ''))], ['Pay range', pay], ['Notice limit', cpEsc(job.notice || 'Not set')], [cpIsCorp() ? 'Agency fee avoided' : 'Fee per hire', feeCell]];
+  return cpSec(1, 'Which job', sel + '<dl class="cp-facts">' + facts.map(function(f){ return '<div><dt>' + f[0] + '</dt><dd>' + f[1] + '</dd></div>'; }).join('') + '</dl>');
+}
+function cpSecGoal(d, job, plan){
+  const h = cpHistory(job), sugg = (job.positions || 1) * 6, days = [7, 10, 14], byMs = new Date(d.goal.by + 'T12:00:00').getTime(), left = Math.round((byMs - CP_NOW()) / CP_DAY);
+  const chips = days.map(function(n){ const iso = CP_ISO(CP_NOW() + n * CP_DAY); return '<button type="button" class="cp-chip' + (d.goal.by === iso ? ' is-on' : '') + '" aria-pressed="' + (d.goal.by === iso) + '" onclick="cpSetBy(\'' + iso + '\')">' + n + ' days <small>' + cpDate(iso) + '</small></button>'; }).join('');
+  const hint = 'Suggested: ' + sugg + '. Your teams usually need about ' + Math.round(1 / (h.readyToSubmit * h.submitToHire) * 10) / 10 + ' ready people per hire (half of ready people get submitted and about a third of those are hired).';
+  const how = cpTw('<button type="button" class="o-link">How Kairo plans this</button>', 'How Kairo plans this', [['Reply rate', Math.round(h.reply * 100) + '%'], ['Interested', Math.round(h.interested * 100) + '%'], ['Ready to call', Math.round(h.ready * 100) + '%']], 'From your last 90 days on similar roles.');
+  return cpSec(2, 'Goal', '<div class="cp-goalrow"><span class="cp-lab">People ready to call</span><span class="cp-step"><button type="button" aria-label="Fewer" onclick="cpSetGoal(' + (d.goal.ready - 1) + ')">−</button><b id="cp-gv">' + d.goal.ready + '</b><button type="button" aria-label="More" onclick="cpSetGoal(' + (d.goal.ready + 1) + ')">+</button></span><span class="cp-lab">By</span><span class="cp-chips">' + chips + '</span></div><p class="cp-hint">' + cpEsc(hint) + '</p><div class="cp-sentence" id="cp-sentence">' + cpEsc(cpPlanSentence(plan, d)) + '</div>' + how);
+}
+function cpSetGoal(n){ const d = CP.draft; d.goal.ready = Math.max(1, Math.min(200, n)); d.goalEdited = true; cpEdRender(); }
+function cpSetBy(iso){ CP.draft.goal.by = iso; cpEdRender(); }
+function cpSecWho(d, job, plan){
+  const liOn = agentAccess('linkedin').on, label = d.mix === 'recommended' ? 'Recommended mix' : 'Your mix';
+  const rows = CP_PLAYS.filter(function(p){ return p.id !== 'li' || liOn; }).map(function(p){
+    const u = plan.playUse[p.id], on = d.plays[p.id] !== false, det = (p.id === 'apps' || p.id === 'boards') ? ' <button type="button" class="o-link" onclick="CP.sub.' + p.id + ' = !CP.sub.' + p.id + '; cpEdRender()">' + (CP.sub[p.id] ? 'Hide details' : 'Details') + '</button>' : '';
+    return '<li class="cp-play"><span class="cp-play__t">' + cpTw('<b>' + p.name + '</b>', p.name, [p.why, 'Channel: ' + p.chan], '') + '<small>' + p.sub + det + '</small></span><span class="cp-play__u">' + (u.spare ? '<span class="cp-muted">Only if needed</span>' : u.on ? u.label : '<span class="cp-muted">Off</span>') + '</span>' + cpSw(on, 'cpPlayToggle(\'' + p.id + '\')', p.name) + '</li>' + (p.id === 'apps' && CP.sub.apps ? cpAppsPanel(d, job) : '') + (p.id === 'boards' && CP.sub.boards ? cpBoardsPanel(d, job) : '');
+  }).join('');
+  const why = !liOn ? '<p class="cp-hint">LinkedIn is not added to your plan, so it is not in the mix.</p>' : '';
+  const dd = d.dedupe || {}; const running = !!d.startedAt;
+  const one = '<div class="cp-one">' + cpTw('<b>One person, one approach.</b>', 'No double contact', [['Same person on 2–3 sources', 'merged into one profile'], ['Already applied to this job', 'not contacted again'], [cpIsCorp() ? 'Interviewed for this role in 12 months' : 'Submitted to this client before', 'skipped'], ['In another outreach campaign', 'waits its turn'], ['Contacted by anyone in 30 days', 'skipped'], ['Do-not-contact, opted out, client employee', 'skipped']], '') + ' <span>' + (running ? 'So far ' + dd.merged + ' duplicates merged and ' + (dd.skipped + dd.notAgain) + ' people skipped, each with the reason in Activity.' : 'Before anyone is queued, Kairo merges the same person from every source, and skips anyone already in your pipeline, in another campaign, contacted in the last 30 days, opted out or working at the client. Each skip is logged with its reason.') + '</span></div>';
+  return cpSec(3, 'Who to reach', '<p class="cp-mix"><b>' + label + '</b>' + (d.mix === 'custom' ? ' <button type="button" class="o-link" onclick="cpBackToRecommended()">Back to recommended</button>' : '') + '</p><ul class="cp-plays">' + rows + '</ul>' + why + (plan.short ? '<p class="cp-issue">' + attHTML('Not enough people for this goal with these sources.') + '</p>' : '') + one);
+}
+function cpPlayToggle(id){ const d = CP.draft; d.plays[id] = d.plays[id] === false; d.mix = 'custom'; cpEdRender(); }
+function cpBackToRecommended(){ const d = CP.draft; d.plays = { apps:true, know:true, pool:true, ref:true, boards:true, li:true }; d.mix = 'recommended'; cpEdRender(); }
+function cpAppsPanel(d, job){
+  const pools = cpPools(job), n = pools.apps, h = cpHistory(job), src = [['Naukri job post', Math.round(n * .42)], ['Indeed', Math.round(n * .2)], ['LinkedIn Easy Apply', Math.round(n * .14)], ['Careers page and job link', Math.round(n * .16)], ['WhatsApp and email CVs', Math.round(n * .08)]];
+  const act = Math.round(n * .78), int = Math.round(act * .82), q = Math.round(int * .6);
+  const cards = [['Active', act, 'Applied or updated their profile or replied in the last 30 days. Older applications get one short “Still interested?” note.'], ['Interested', int, 'They applied themselves, or replied yes. An old application counts after they confirm.'], ['Qualified', q, 'Meets the must-haves, notice, pay and location. Others stay in the talent pool with the reason; Kairo never rejects anyone.']];
+  return '<li class="cp-sub"><ul class="cp-srcs">' + src.map(function(s){ return '<li>' + cpTw('<span>' + s[0] + '</span><b>' + s[1] + ' applied</b>', s[0], [['Applied', s[1]], ['Pulled in', 'every 15 minutes']], 'Matched to this job by its reference code or thread.') + '</li>'; }).join('') + '</ul><div class="cp-mini">' + cards.map(function(x){ return '<div class="card tw cp-mini__c" tabindex="0"><span class="stat__l">' + x[0] + '</span><span class="stat__v">' + x[1] + '</span>' + tipHTML(x[0], [x[2]], '') + '</div>'; }).join('') + '</div><p class="cp-hint">Kairo checks every application once, from every channel, and keeps only people who are active, interested and qualified.</p></li>';
+}
+function cpBoardsPanel(d, job){
+  const seats = [{ n:'Naukri Resdex', who:cpOwner(d).name.split(' ')[0], left:42, ok:true }, { n:'Indeed resume search', who:'Arjun', left:0, ok:false }];
+  const chips = (d.search && d.search.words) || [];
+  return '<li class="cp-sub"><ul class="cp-srcs">' + seats.map(function(s){ return '<li><span>' + s.n + ' in ' + cpEsc(s.who) + '’s seat</span><b>' + (s.ok ? s.left + ' views left today' : attHTML('Needs sign-in')) + '</b></li>'; }).join('') + '</ul><div class="cp-words">' + chips.map(function(w, i){ return '<span class="cp-word">' + cpEsc(w) + ' <button type="button" aria-label="Remove ' + cpEsc(w) + '" onclick="cpWordDel(' + i + ')">×</button></span>'; }).join('') + '<input class="app-input cp-word-in" id="cp-word" placeholder="Add a search word" aria-label="Add a search word" onkeydown="if(event.key===\'Enter\'){cpWordAdd();event.preventDefault()}" /><button type="button" class="o-btn" onclick="cpWordAdd()">Add</button></div><p class="cp-hint">Only profiles active in the last 30 days. Kairo opens a profile only when it is a likely fit, stays inside each seat’s daily views, and stops if the site asks for verification.</p></li>';
+}
+function cpWordAdd(){ const i = document.getElementById('cp-word'), v = (i && i.value || '').trim(); if(!v) return; CP.draft.search.words.push(v); cpEdRender(); }
+function cpWordDel(i){ CP.draft.search.words.splice(i, 1); cpEdRender(); }
+
+/* ---------- messages ---------- */
+function cpChannelsInUse(d){ const out = []; d.message.steps.forEach(function(s){ (s.channel === 'auto' ? ['whatsapp','email'].concat(d.plays.li !== false && agentAccess('linkedin').on ? ['linkedin'] : []) : [s.channel]).forEach(function(k){ if(out.indexOf(k) === -1) out.push(k); }); }); return out; }
+function cpSecMsg(d, job){
+  const tone = '<div role="group" class="seg" aria-label="Tone">' + [['warm','Warm'],['short','Short'],['formal','Formal']].map(function(t){ return '<button type="button" class="seg__btn' + (d.message.tone === t[0] ? ' is-on' : '') + '" aria-pressed="' + (d.message.tone === t[0]) + '" onclick="cpTone(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>';
+  const senders = [cpOwner(d)].concat(cwIsOwnerish() || sRoleKind() === 'manager' ? RECRUITER_ROSTER.filter(function(u){ return u.id !== d.ownerId; }).slice(0, 4) : []);
+  const sender = '<select class="app-input app-select" aria-label="Sent in the name of" onchange="cpSender(this.value)">' + senders.map(function(u){ return '<option value="' + u.id + '"' + ((d.message.senderId || d.ownerId) === u.id ? ' selected' : '') + '>' + cpEsc(u.name) + (u.id === d.ownerId ? ' (owner)' : '') + '</option>'; }).join('') + '</select>';
+  const steps = d.message.steps.map(function(s, i){ return cpStepCard(d, job, s, i); }).join('');
+  const prev = cpPreview(d, job);
+  const why = cpTw('<button type="button" class="o-link">Why these get replies</button>', 'Why these get replies', ['They are about the person (the profile line is real or left out).', 'They show the pay range.', 'They ask for one small step: reply 1.', 'They give permission to say “not now”.', 'They name the sender and the company.', 'Each follow-up adds something new.', 'They go out at a good time.'], 'No pressure tricks: no made-up deadlines, invented offers or fake scarcity.');
+  return cpSec(4, 'Messages', '<div class="cp-row2"><label><span class="cp-lab">Tone</span>' + tone + '</label><label><span class="cp-lab">Sent in the name of</span>' + sender + '</label></div><ol class="cp-steps">' + steps + '</ol><button type="button" class="o-btn" onclick="cpAddStep()"' + (d.message.steps.length >= 4 ? ' disabled style="opacity:.5"' : '') + '>Add follow-up</button> <span class="cp-muted">' + d.message.steps.length + ' of 4 steps</span>' + prev + why, 'cp-s4');
+}
+function cpTone(t){ const d = CP.draft; d.message.tone = t; cpEdRender(); }
+function cpSender(id){ const d = CP.draft; d.message.senderId = id; if(id !== d.ownerId) d.rules.checkFirst = d.rules.checkFirst || 10; cpEdRender(); }
+function cpAddStep(){ const d = CP.draft; if(d.message.steps.length >= 4) return; d.message.steps.splice(d.message.steps.length - 1, 0, { id:'s' + (Date.now() % 100000), delayDays:3, sendWhen:'noreply', channel:'auto', text:null, textB:null }); cpEdRender(); }
+function cpDelStep(i){ const d = CP.draft; if(i === 0) return; d.message.steps.splice(i, 1); cpEdRender(); }
+function cpStepSet(i, k, v){ const d = CP.draft, s = d.message.steps[i]; s[k] = k === 'delayDays' ? +v : v; if(k === 'text') s.text = v; cpEdRender(); }
+function cpStepType(i, which, v){ const s = CP.draft.message.steps[i]; if(which === 'B') s.textB = v; else s.text = v; cpEdLive(i); }
+function cpStepReset(i){ CP.draft.message.steps[i].text = null; cpEdRender(); }
+function cpStepB(i, on){ const s = CP.draft.message.steps[i]; s.textB = on ? CP_TEXT_B : null; CP.draft.message.ab = !!on; cpEdRender(); }
+function cpChip(i, which, v){ const el = document.getElementById('cp-t-' + i + which); if(!el) return; const a = el.selectionStart || el.value.length; el.value = el.value.slice(0, a) + v + el.value.slice(el.selectionEnd || a); cpStepType(i, which, el.value); el.focus(); }
+function cpStepIssues(d, job, i){
+  const s = d.message.steps[i], out = [], ch = s.channel === 'auto' ? 'whatsapp' : s.channel, ctx = { stepIndex:i, senderName:cpSenderOf(d).name, channel:ch, camp:d };
+  cwHonestyCheck(cpStepText(d, i), job, ctx).forEach(function(x){ out.push(x.text); }); if(i === 0 && s.textB != null) cwHonestyCheck(s.textB, job, Object.assign({}, ctx)).forEach(function(x){ out.push('Version B: ' + x.text); });
+  const gap = d.rules.minGapDays || 2; if(i > 0 && s.channel !== 'auto' && s.delayDays < gap) out.push('Shorter than your minimum of ' + gap + ' days between broadcasts. Kairo would wait anyway.');
+  return out;
+}
+function cpIssHTML(list){ return list.map(function(t){ return '<p class="cp-issue">' + attHTML(t) + '</p>'; }).join(''); }
+function cpStepCard(d, job, s, i){
+  const edited = s.text != null, n = d.message.steps.length, nm = i === 0 ? 'First note' : i === n - 1 ? 'Last note and referral ask' : 'Follow-up with something new', live = d.__edit && CP.live && CP.live.message.steps[i] && d.stats.reached ? 'Sent ' + Math.round(d.stats.reached * Math.pow(.62, i)) + ' · ' + cpPct(i === 0 ? d.stats.replied : Math.round(d.stats.replied * Math.pow(.3, i)), i === 0 ? d.stats.reached : Math.round(d.stats.reached * Math.pow(.62, i))) + '% replied (version A)' : '';
+  const online = { whatsapp:cpChannelOnline(d, 'whatsapp'), email:cpChannelOnline(d, 'email'), linkedin:d.plays.li !== false && cpChannelOnline(d, 'linkedin') };
+  const wait = i === 0 ? '<span class="cp-muted">In the next send window</span>' : '<select class="app-input app-select" aria-label="Wait" onchange="cpStepSet(' + i + ',\'delayDays\',this.value)">' + [1,2,3,5,7].map(function(x){ return '<option value="' + x + '"' + (s.delayDays === x ? ' selected' : '') + '>' + x + (x === 1 ? ' day' : ' days') + '</option>'; }).join('') + '</select>';
+  const when = i === 0 ? '' : '<label><span class="cp-lab">Send when</span><select class="app-input app-select" aria-label="Send when" onchange="cpStepSet(' + i + ',\'sendWhen\',this.value)">' + [['noreply','if no reply'],['read','if read, no reply'],['unread','if not read']].map(function(x){ return '<option value="' + x[0] + '"' + (s.sendWhen === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></label>';
+  const chan = '<label><span class="cp-lab">Channel</span><select class="app-input app-select" aria-label="Channel" onchange="cpStepSet(' + i + ',\'channel\',this.value)">' + [['auto','Best channel they agreed to'],['whatsapp','WhatsApp'],['email','Email'],['linkedin','LinkedIn']].map(function(x){ return '<option value="' + x[0] + '"' + (s.channel === x[0] ? ' selected' : '') + (x[0] !== 'auto' && !online[x[0]] ? ' disabled' : '') + '>' + x[1] + (x[0] !== 'auto' && !online[x[0]] ? ' (not connected)' : '') + '</option>'; }).join('') + '</select></label>';
+  const text = cpStepText(d, i), lim = s.channel === 'email' ? 2000 : 1024, cc = cpRenderText(text, null, d, true).length;
+  const chips = ['first name','profile line','job title','company','city','pay range','sender'].map(function(v){ return '<button type="button" class="cp-vchip" onclick="cpChip(' + i + ',\'\',\'{' + v + '}\')">{' + v + '}</button>'; }).join('');
+  const B = i === 0 ? '<div class="cp-b2"><span>' + cpSw(s.textB != null, 'cpStepB(0,' + (s.textB == null) + ')', 'Test a second opening') + ' Test a second opening <small>Sent to half until one gets more replies after 40 sends each.</small></span>' + (s.textB != null ? '<textarea class="app-input" rows="3" id="cp-t-0B" aria-label="Version B" oninput="cpStepType(0,\'B\',this.value)">' + cpEsc(s.textB) + '</textarea>' : '') + '</div>' : '';
+  return '<li class="cp-stepc"><div class="cp-stepc__h"><b>' + (i === 0 ? 'Day 0' : 'Step ' + (i + 1)) + ' · ' + nm + '</b>' + (i > 0 ? '<button type="button" class="o-link" onclick="cpDelStep(' + i + ')">Remove</button>' : '') + '</div><div class="cp-row3"><label><span class="cp-lab">Wait</span>' + wait + '</label>' + when + chan + '</div><textarea class="app-input" rows="4" id="cp-t-' + i + '" aria-label="Message text" oninput="cpStepType(' + i + ',\'\',this.value)">' + cpEsc(text) + '</textarea><div class="cp-vchips">' + chips + '</div><div class="cp-cc" id="cp-ccw-' + i + '">' + cpCcHTML(d, i, live) + '</div>' + B + '<div id="cp-iss-' + i + '">' + cpIssHTML(cpStepIssues(d, job, i)) + '</div></li>';
+}
+function cpCcHTML(d, i, live){
+  const s = d.message.steps[i], lim = s.channel === 'email' ? 2000 : 1024, cc = cpRenderText(cpStepText(d, i), null, d, true).length;
+  if(live == null){ live = d.__edit && CP.live && CP.live.message.steps[i] && d.stats.reached ? 'Sent ' + Math.round(d.stats.reached * Math.pow(.62, i)) + ' · ' + cpPct(i === 0 ? d.stats.replied : Math.round(d.stats.replied * Math.pow(.3, i)), i === 0 ? d.stats.reached : Math.round(d.stats.reached * Math.pow(.62, i))) + '% replied (version A)' : ''; }
+  return '<span id="cp-cc-' + i + '">' + cc + ' of ' + lim.toLocaleString('en-IN') + ' characters</span>' + (s.text != null ? '<button type="button" class="o-link" onclick="cpStepReset(' + i + ')">Use Kairo’s version</button>' : '') + (live ? ' <span class="cp-muted">' + live + '</span>' : '');
+}
+function cpPreview(d, job){
+  const top = CANDIDATES.map(function(x){ return { c:x, s:cwScore(x, job).score }; }).sort(function(a, b){ return b.s - a.s; })[0].c, text = cpRenderText(cpStepText(d, 0), top, d);
+  return '<div class="cp-prev" id="cp-prev"><p class="cp-lab">First message, as ' + cpEsc(top.name.split(' ')[0]) + ' sees it</p><div class="cp-b cp-b--k"><span>' + cpEsc(text) + '</span><small>' + cpEsc(cpSenderOf(d).name) + ' · WhatsApp</small></div><div class="cp-quick"><span>1 · Tell me more</span><span>2 · Not now</span></div></div>';
+}
+function cpEdLive(i){
+  const d = CP.draft, job = cpJob(d.jobId), plan = cpPlanFor(d), el = document.getElementById('cp-iss-' + i); if(el) el.innerHTML = cpIssHTML(cpStepIssues(d, job, i));
+  const cc = document.getElementById('cp-ccw-' + i); if(cc) cc.innerHTML = cpCcHTML(d, i);
+  const pv = document.getElementById('cp-prev'); if(pv && i === 0) pv.outerHTML = cpPreview(d, job);
+  const pl = document.getElementById('cp-plan'); if(pl) pl.outerHTML = cpPlanPanel(d, job, plan, !!CP.live, cpChanges(), CP.live ? CP.live.version + 1 : 1, true);
+}
+
+/* ---------- sending pace ---------- */
+function cpPaceCap(k){ if(k === 'whatsapp') return cwWaCap(); if(k === 'email'){ const mb = cwMailbox('RP-088'); return mb ? cwMailboxCap(mb) : 40; } return Math.max(8, LI_SENDER_PROFILES.reduce(function(m, p){ return Math.max(m, p.dailyConnectionLimit || 0); }, 0) + 5); }
+function cpPaceRisks(d){
+  const out = []; cpChannelsInUse(d).forEach(function(k){ const o = CP_PACE_OPTS[k], v = d.pace[k]; ['gap','batch','rest','daily'].forEach(function(f){ const opt = o[f].find(function(x){ return String(x[0]) === String(v[f]); }); if(opt && opt[2]) out.push({ k:k, f:f, t:opt[2] }); }); if(v.daily > cpPaceCap(k)) out.push({ k:k, f:'daily', t:'over' }); });
+  return out;
+}
+function cpSecPace(d){
+  const chans = cpChannelsInUse(d), names = { whatsapp:'WhatsApp', email:'Email', linkedin:'LinkedIn' }, fields = [['gap','Gap between messages'],['batch','Batch size'],['rest','Rest after each batch'],['daily','Daily limit for this campaign']], word = { fast:'too fast', big:'too big', short:'too short', over:'over safe' };
+  const acct = { whatsapp:'WhatsApp Business · ' + (WA_TIER_INFO[WA_BUSINESS_ACCOUNT.tier] ? WA_TIER_INFO[WA_BUSINESS_ACCOUNT.tier].dailyLimit.toLocaleString('en-IN') : '1,000') + ' people a day, shared by every campaign', email:(cwMailbox(d.message.senderId || d.ownerId) || cwMailbox('RP-088') || { address:'No mailbox connected' }).address + ' · about ' + cpPaceCap('email') + ' a day, rising as the mailbox warms up', linkedin:'Invites a day: ' + (cpPaceCap('linkedin') - 5) + ', a weekly cap of 100, rising while the account warms up' };
+  const cards = chans.map(function(k){ const v = d.pace[k], o = CP_PACE_OPTS[k];
+    return '<div class="cp-pacec"><div class="cp-pacec__h">' + cpTw('<b>' + names[k] + '</b>', names[k] + ' limits', [acct[k], 'Shared with every campaign and agent using this number or account.'], 'Small batches, random gaps and rests keep the account safe.') + '<small>' + cpEsc(acct[k]) + '</small></div><div class="cp-row4">' + fields.map(function(f){ return '<label><span class="cp-lab">' + f[1] + '</span><select class="app-input app-select" aria-label="' + names[k] + ' ' + f[1] + '" onchange="cpPaceSet(\'' + k + '\',\'' + f[0] + '\',this.value)">' + o[f[0]].map(function(x){ const bad = x[2] || (f[0] === 'daily' && x[0] > cpPaceCap(k)); return '<option value="' + x[0] + '"' + (String(v[f[0]]) === String(x[0]) ? ' selected' : '') + '>' + x[1] + (bad ? ' · ' + word[x[2] || 'over'] : '') + '</option>'; }).join('') + '</select></label>'; }).join('') + '</div></div>'; }).join('');
+  const risks = cpPaceRisks(d), line = risks.length ? '<p class="cp-issue">' + attHTML('Some settings go faster than is safe for ' + risks.map(function(r){ return names[r.k]; }).filter(function(x, i, a){ return a.indexOf(x) === i; }).join(' and ') + '. Faster sending can get the account restricted.') + '</p><label class="cp-ack"><input type="checkbox" ' + (CP.riskOk ? 'checked ' : '') + 'onchange="CP.riskOk=this.checked; cpEdRender()" /> Use these settings anyway</label>' : '';
+  return cpSec(5, 'Sending pace', '<p class="cp-hint">Kairo sends in small batches with random gaps and rests. The safe choice is already picked.</p><div class="cp-pace">' + cards + '</div>' + line);
+}
+function cpPaceSet(k, f, v){ CP.draft.pace[k][f] = f === 'gap' ? v : +v; CP.riskOk = false; cpEdRender(); }
+
+/* ---------- pre-screen ---------- */
+function cpSecPre(d, job){
+  const qs = d.prescreen.questions, label = d.prescreen.edited ? 'Your questions' : 'Recommended by Kairo', more = cpMoreFromJd(job, qs), max = qs.length >= 6;
+  const rows = qs.map(function(q, i){ const src = q.source || (q.kind === 'custom' ? 'Your question' : 'Kairo picked this from the JD.'); return '<li class="cp-q"><span class="cp-q__n">' + (i + 1) + '</span><span class="cp-q__f">' + cpTw('<input class="app-input" value="' + cpEsc(q.text) + '" aria-label="Question ' + (i + 1) + '" onchange="cpQSet(' + i + ',\'text\',this.value)" />', 'Where this came from', [q.kind === 'custom' || q.edited && q.kind === 'custom' ? 'Your question' : src], '', 'cp-tw-block') + '<input class="app-input cp-q__r" value="' + cpEsc(q.rule) + '" placeholder="Pass rule (empty means shown to you only)" aria-label="Pass rule ' + (i + 1) + '" onchange="cpQSet(' + i + ',\'rule\',this.value)" />' + (q.jdChanged ? '<small>' + attHTML('The JD changed. Review this question.') + '</small>' : '') + '</span><button type="button" class="o-link" onclick="cpQDel(' + i + ')">Remove</button></li>'; }).join('');
+  const chips = more.length ? '<p class="cp-lab">More from the JD</p><div class="cp-chips">' + more.map(function(m, i){ return cpTw('<button type="button" class="cp-chip" onclick="cpQAddText(\'' + cpEsc(m.text).replace(/'/g, "\\'") + '\')"' + (max ? ' disabled' : '') + '>+ ' + cpEsc(m.text) + '</button>', 'From the JD', [m.source], ''); }).join('') + '</div>' : '';
+  return cpSec(6, 'Pre-screen and call booking', '<p class="cp-mix"><b>' + label + '</b>' + (d.prescreen.edited ? ' <button type="button" class="o-link" onclick="cpQBack()">Back to Kairo’s questions</button>' : '') + '</p><ol class="cp-qs">' + rows + '</ol><div class="cp-qadd"><input class="app-input" id="cp-qnew" placeholder="Write your own question" aria-label="Write your own question" onkeydown="if(event.key===\'Enter\'){cpQAdd();event.preventDefault()}" /><button type="button" class="o-btn" onclick="cpQAdd()">Add question</button></div>' + (max ? '<p class="cp-issue">' + attHTML('6 questions is the most. Longer chats lose people.') + '</p>' : '') + chips + '<p class="cp-hint">Then a ' + d.prescreen.callMinutes + '-minute call with ' + cpEsc(cpSenderOf(d).name.split(' ')[0]) + ' from free calendar slots (1 to 2 pm and 6 to 8:30 pm). Close misses go to you with the reason. Nobody is rejected by Kairo.</p>');
+}
+function cpQSet(i, k, v){ const q = CP.draft.prescreen.questions[i]; q[k] = v; q.edited = true; CP.draft.prescreen.edited = true; q.jdChanged = false; cpEdRender(); }
+function cpQDel(i){ CP.draft.prescreen.questions.splice(i, 1); CP.draft.prescreen.edited = true; cpEdRender(); }
+function cpQAdd(){ const i = document.getElementById('cp-qnew'), v = (i && i.value || '').trim(); if(!v) return; cpQAddText(v, true); }
+function cpQAddText(t, mine){ const d = CP.draft; if(d.prescreen.questions.length >= 6){ toast('6 questions is the most. Longer chats lose people.'); return; } d.prescreen.questions.push({ id:'q' + (Date.now() % 100000), kind:'custom', text:t, rule:'', source:mine ? 'Your question' : 'Kairo found this in the JD.', edited:true }); d.prescreen.edited = true; cpEdRender(); }
+function cpQBack(){ const d = CP.draft; d.prescreen.questions = cpDraftQuestions(cpJob(d.jobId)); d.prescreen.edited = false; cpEdRender(); }
+
+/* ---------- safe sending ---------- */
+function cpSecSafe(d){
+  const first = cpIsFirstCampaign(d), rows = [['Send hours', '10:00 to 20:00 their time, never Sundays', 'Messages wait for the next window.'], ['Messages per person', '3 at most', 'No more than 1 a day or 3 a week from any campaign or agent.'], ['Stops when', 'they reply, say no, unsubscribe or STOP', 'Any reply stops the sequence at once.'], ['Never contacted', 'client employees, do-not-contact list', 'Each skip is logged with its reason.'], ['Consent', 'WhatsApp only with opt-in; email has unsubscribe', 'Outside the 24-hour window WhatsApp uses an approved template.']];
+  return cpSec(7, 'Safe sending', '<ul class="cp-safe">' + rows.map(function(r){ return '<li>' + cpTw('<span>' + r[0] + '</span><b>' + r[1] + '</b>', r[0], [r[2]], '', 'cp-tw-block') + '</li>'; }).join('') + '</ul><div class="cp-chk"><span>Let me check the first 10 messages before they go' + (first ? '<small>Locked on for a sender’s first campaign.</small>' : '') + '</span>' + cpSw(d.rules.checkFirst > 0 || first, 'cpCheckFirst()', 'Check the first 10 messages', first) + '</div>' + (d.__edit ? '<div class="cp-chk"><span>Let me check the first 10 messages of the new version</span>' + cpSw(d.rules.recheck !== false, 'cpRecheck()', 'Check the new version') + '</div>' : ''));
+}
+function cpCheckFirst(){ const d = CP.draft; d.rules.checkFirst = d.rules.checkFirst ? 0 : 10; cpEdRender(); }
+function cpRecheck(){ const d = CP.draft; d.rules.recheck = d.rules.recheck === false; cpEdRender(); }
+
+/* ---------- the plan ---------- */
+function cpPlanPanel(d, job, plan, edit, changes, nv, live){
+  const blockers = cpGoLive(d), risky = cpPaceRisks(d).length && !CP.riskOk, first = blockers.filter(function(b){ return !b.confirm; })[0], short = blockers.find(function(b){ return b.confirm; });
+  const block = first ? first.text : risky ? 'Confirm the faster sending settings first.' : '';
+  const dis = edit ? !changes.length || !!block : !!block;
+  const hr = Math.round(plan.handHours * 10) / 10, yr = plan.yourHours;
+  const rows = [['People to reach', plan.reachAll, 'Applications checked and people messaged.'], ['Replies expected', plan.replies, 'From your last 90 days on similar roles.'], ['Ready to call by ' + cpDate(d.goal.by), Math.round(plan.ready), 'About this many pass the pre-screen and book a call.'], ['Kairo sends', plan.msgs, 'Messages across all steps.'], ['Your time vs by hand', yr + ' h vs ' + hr + ' h', 'Your time is the calls and the check; by hand adds every message and pre-screen.'], [cpIsCorp() ? 'Agency fee avoided' : 'At stake', cpMoneyMode() === 'placements' ? (job.positions || 1) + ' placements' : cpMoney(plan.atStake), cpIsCorp() ? '8.33% of the middle of the pay range × positions.' : (job.positions || 1) + ' positions × the fee for this pay range (CTC slab aware).']];
+  const list = edit ? '<div class="cp-chg"><p class="cp-lab">Changes in version ' + nv + '</p>' + (changes.length ? '<ul>' + changes.map(function(t){ return '<li>' + cpEsc(t) + '</li>'; }).join('') + '</ul>' : '<p class="cp-muted">Nothing changed yet.</p>') + '</div>' : '';
+  const cta = edit ? '<button type="button" class="o-btn o-btn--lg o-btn--primary cp-cta" ' + (dis ? 'disabled' : '') + ' onclick="cpPublish()">Publish changes</button><p class="cp-next">' + (changes.length ? changes.length + (changes.length === 1 ? ' change' : ' changes') + ' not published. People not yet messaged get version ' + nv + '; people mid-sequence finish their step first.' : 'Live while you edit.') + '</p>' : '<button type="button" class="o-btn o-btn--lg o-btn--primary cp-cta" ' + (dis ? 'disabled' : '') + ' onclick="cpStartDraft()">Start campaign</button><p class="cp-next">' + (d.rules.checkFirst > 0 || cpIsFirstCampaign(d) ? 'The first 10 messages wait for you. Nothing is sent until you approve them.' : 'Kairo starts at the next send window.') + '</p>';
+  const shortRow = short ? '<div class="cp-short">' + attHTML(short.text) + (d.confirmShort ? '' : ' <button type="button" class="o-link" onclick="CP.draft.confirmShort=true; cpEdRender()">Start anyway</button>') + '</div>' : '';
+  return '<div class="o-card cp-plan" id="cp-plan"><h2 class="o-card__title">The plan</h2><ul class="cp-plan__r">' + rows.map(function(r){ return '<li>' + cpTw('<span>' + r[0] + '</span><b>' + r[1] + '</b>', r[0], [r[2]], '', 'cp-tw-block') + '</li>'; }).join('') + '</ul>' + shortRow + (block && !edit ? '<p class="cp-issue">' + attHTML(block) + '</p>' : edit && block ? '<p class="cp-issue">' + attHTML(block) + '</p>' : '') + list + cta + '</div>';
+}
+function cpSaveDraft(){ const d = cpDraft(); if(!d) return; d.status = 'draft'; d.id = 'cmp' + (CP_NEXT++); d.createdAt = CP_NOW(); CAMPAIGNS.push(d); CP.draft = null; cpAudit(d, 'saved a draft'); toast('Saved as a draft'); CP.filter = 'all'; cpBack(); }
+function cpStartDraft(){
+  const d = cpDraft(); if(!d) return; const left = cpGoLive(d).filter(function(b){ return !b.confirm || !d.confirmShort; }); if(left.length){ toast(left[0].text); return; }
+  d.id = 'cmp' + (CP_NEXT++); d.createdAt = CP_NOW(); CAMPAIGNS.push(d); CP.draft = null; delete d.__edit; if(cpStart(d.id)){ CP.filter = 'running'; cpOpen(d.id); }
+}
+function cpPublish(){
+  const d = CP.draft, l = CP.live; if(!d || !l) return; const changes = cpChanges(); if(!changes.length) return; const bl = cpGoLive(d).filter(function(b){ return !b.confirm; }); if(bl.length){ toast(bl[0].text); return; } if(cpPaceRisks(d).length && !CP.riskOk){ toast('Confirm the faster sending settings first.'); return; }
+  const was = cpDiffValues(), nv = l.version + 1;
+  ['goal','plays','mix','message','prescreen','pace','search'].forEach(function(k){ l[k] = JSON.parse(JSON.stringify(d[k])); }); l.rules.checkFirst = d.rules.checkFirst; l.rules.recheck = d.rules.recheck; l.version = nv; l.goalReached = l.stats.ready >= l.goal.ready; l.confirmShort = d.confirmShort;
+  cpPeopleOf(l).forEach(function(p){ if(['queued','contacted'].indexOf(p.state) > -1){ if(p.step === 0 && p.state === 'queued') p.cVersion = nv; if(p.step > l.message.steps.length) p.step = l.message.steps.length; } });
+  l.versionLog.push({ v:nv, at:CP_NOW(), by:(currentActingUser() || {}).name || 'A person', changes:changes });
+  if(d.rules.recheck !== false && changes.some(function(t){ return /Message|Tone|Steps|Sender|opening/.test(t); })){ l.review = { pending:[], approved:0 }; cpPeopleOf(l).filter(function(p){ return p.state === 'queued' && p.step === 0; }).slice(0, l.rules.checkFirst || 10).forEach(function(p){ const cand = byId(p.candidateId); p.approved = false; p.nextAt = Infinity; l.review.pending.push({ id:'rv' + l.review.pending.length + p.id, personId:p.id, name:cand.name, channel:CW_OPTINS[personKeyOf(cand)] ? 'WhatsApp' : 'Email', text:cpRenderText(cpStepText(l, 0), cand, l), state:'pending' }); }); if(!l.review.pending.length) l.review.approved = 10; }
+  cpLog(l, 'Version ' + nv + ' published: ' + changes.join('; '), 'version', (currentActingUser() || {}).name); logAudit('Cowork', 'Kairo for ' + cpOwner(l).name + ' · version ' + nv + ' published', l.title + ' · ' + (was.length ? was.join(', ') : changes.join(', ')), { entityType:'Campaign', entityId:l.id });
+  CP.draft = null; CP.live = null; toast('Version ' + nv + ' is live'); cpOpen(l.id);
+}
+function cpDiscard(){ const id = CP.live && CP.live.id; CP.draft = null; CP.live = null; if(id) cpOpen(id); else cpBack(); }
+
+/* the routes */
+RENDERERS['cowork-campaign'] = function(){ return cpDetailHTML(CP.sel); }; PAGE_TITLES['cowork-campaign'] = 'Campaign';
+RENDERERS['cowork-campaign-new'] = cpEditorHTML; PAGE_TITLES['cowork-campaign-new'] = 'Campaign';
+
+/* ---------- cp-seed.js ---------- */
+/* ============================================================
+   Seed data. Agency "Northstar Talent Partners": six campaigns and three suggestions.
+   Corporate "Northwind Health": four campaigns and two suggestions.
+============================================================ */
+function cpSeedChat(c, p, ans){
+  const cand = byId(p.candidateId), t0 = p.lastAt - 6 * 3600000, f = cpSenderFirst(c); let t = t0;
+  const say = function(who, text){ p.chat.push({ who:who, text:text, at:(t += 420000) }); };
+  say('kairo', cpRenderText(cpDefaultText(0, c.message.tone), cand, c)); say('cand', '1');
+  const qs = c.prescreen.questions;
+  qs.forEach(function(q, i){ const k = q.kind === 'custom' ? q.id : q.kind; if(ans[k] == null && i > (p.qIndex || 0)) return; if(i === 0) say('kairo', 'Great, thank you. A few quick questions so ' + f + ' can use the call well. ' + q.text); else say('kairo', q.text); if(ans[k] != null) say('cand', String(ans[k])); });
+}
+function cpSeedPerson(c, candId, state, o){
+  const cand = byId(candId), job = cpJob(c.jobId), now = CP_NOW();
+  const p = Object.assign({ id:'cpp' + (CP_PNEXT++), campaignId:c.id, candidateId:candId, play:'know', channel:'whatsapp', step:1, state:state, score:cwScore(cand, job).score, why:[cwReason({ c:cand, job:job }, 'match')], answers:{}, qIndex:0, slot:null, version:'A', lastAt:now - 3 * 3600000, nextAt:Infinity, chat:[], misses:[], counted:true, approved:true, cVersion:c.version, basis:'Applied earlier and in the pool with consent' }, o || {});
+  CAMPAIGN_PEOPLE.push(p); const ans = Object.keys(p.answers).reduce(function(m, k){ m[k] = p.answers[k]; return m; }, {}); cpSeedChat(c, p, ans);
+  if(state === 'needsYou'){ cpSay(p, 'cand', p.question); cpSay(p, 'kairo', 'Good question, ' + cpSenderFirst(c) + ' will reply to you personally today.'); }
+  if(state === 'ready' && p.slotText) cpSay(p, 'kairo', 'Booked: ' + p.slotText + '. ' + cpSenderFirst(c) + ' will call you on this number.');
+  if(state === 'closeMiss') cpSay(p, 'kairo', 'Thanks, ' + cpSenderFirst(c) + ' will get back to you shortly.');
+  cpLink(c, p); return p;
+}
+function cpSlotAt(dayOffset, h, m){ const d = new Date(CP_NOW() + dayOffset * CP_DAY); d.setHours(h, m, 0, 0); if(d.getTime() < CP_NOW() + 1800000) d.setTime(d.getTime() + CP_DAY); return { slot:d.getTime(), slotText:d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' }) + ', ' + (h > 12 ? h - 12 : h) + ':' + String(m).padStart(2, '0') + (h >= 12 ? ' pm' : ' am') }; }
+function cpSeedAll(){
+  if(CAMPAIGNS.length) return; const D = CP_DAY, t = CP_NOW();
+  const mk = function(jobId, o){
+    const c = cpNewCampaign(jobId, { ownerId:o.owner, org:o.org }); c.status = o.status; c.startedAt = t - (o.started || 0) * D; c.createdAt = c.startedAt || t; c.goal = { ready:o.goal, by:CP_ISO(t + o.by * D) }; c.rules.checkFirst = o.check == null ? 10 : o.check; c.review = { pending:[], approved:c.rules.checkFirst };
+    Object.assign(c.stats, o.stats || {}); if(o.bySource) Object.keys(o.bySource).forEach(function(k){ Object.assign(c.bySource[k], o.bySource[k]); }); if(o.byChannel) Object.assign(c.byChannel, o.byChannel); if(o.dedupe) Object.assign(c.dedupe, o.dedupe); if(o.pausedReason){ c.pausedReason = o.pausedReason; c.pausedBy = o.pausedBy || 'Oontu'; }
+    if(o.plays) Object.assign(c.plays, o.plays); c.title = cpJob(jobId).title; c.log = (o.log || ['Campaign started']).map(function(x, i){ return { at:t - (o.started || 0) * D + i * 3600000 * 5, text:x, kind:'info', who:'Kairo for ' + cpOwner(c).name }; }).reverse();
+    return c;
+  };
+  /* 1 · Senior Java Developer · Fintech Corp: on pace, rich data */
+  const j1 = jobById('j1'); j1.avgFeedbackDays = 4;
+  const c1 = mk('j1', { owner:'RP-088', status:'running', started:6, goal:12, by:3, stats:{ reached:168, replied:41, interested:24, screened:14, ready:9, submitted:3, interviews:1, offers:0, hired:0, notNow:9, referrals:2, optOuts:1 },
+    bySource:{ apps:{ reached:58, replied:58, ready:3 }, know:{ reached:64, replied:22, ready:4 }, pool:{ reached:46, replied:12, ready:2 }, ref:{ reached:0, replied:0, ready:0 }, boards:{ reached:40, replied:4, ready:0, paused:true }, li:{ reached:0, replied:0, ready:0 } },
+    byChannel:{ whatsapp:{ sent:120, replied:34 }, email:{ sent:80, replied:14 }, linkedin:{ sent:30, replied:4 } }, dedupe:{ merged:37, skipped:35, waits:6, notAgain:8 },
+    log:['Campaign started: 58 applications checked and 64 people who know you queued', 'Skipped 3 people: work at the client', 'Merged 12 people found on more than one source', 'First 10 messages approved by Priya Sharma', 'Kept version A of the first note (31% vs 18%)', 'Paused Job-board search: 11% replies'] });
+  c1.message.versions = [{ id:'A', sent:84, replies:26, status:'kept' }, { id:'B', sent:84, replies:15, status:'stopped' }]; c1.message.steps[0].textB = CP_TEXT_B; c1.abResult = 'Kept version A of the first note (31% vs 18%)'; c1.hourShare = .62; c1.questionCluster = { n:5, word:'office days' }; c1.version = 3;
+  c1.versionLog = [{ v:2, at:t - 4 * D, by:'Priya Sharma', changes:['Goal 10 → 12 ready'] }, { v:3, at:t - 2 * D, by:'Priya Sharma', changes:['Message step 2 changed'] }];
+  c1.moves = [{ id:'pause-boards', text:'Pause Job-board search: 11% replies', why:'Below 40% of the campaign average of 24% after 40 sends', action:'pause:boards', safety:'auto', status:'auto', applied:true, at:t - 2 * D, until:0 }, { id:'ab', text:'Kept version A', why:c1.abResult, action:'none', safety:'auto', status:'auto', applied:true, at:t - 3 * D, until:0 }];
+  const sl = [cpSlotAt(0, 18, 30), cpSlotAt(1, 13, 0), cpSlotAt(1, 18, 0), cpSlotAt(2, 13, 30), cpSlotAt(2, 18, 30), cpSlotAt(3, 13, 0), cpSlotAt(3, 18, 0), cpSlotAt(4, 13, 30), cpSlotAt(4, 18, 30)];
+  const ansFor = function(i){ const c = byId(101 + i); return { notice:c.notice.replace('Days', 'days'), ctc:c.salary.replace(/₹|\sLPA/g, '').split('–').length === 2 ? '₹' + c.salary.split('–')[0].replace('₹', '') + 'L now, ₹' + c.salary.split('–')[1].replace(' LPA', '') + 'L expected' : c.salary, location:'Yes', skill:(5 + i % 4) + ' years' }; };
+  const plays = ['apps','know','know','pool','know','apps','pool','know','apps'];
+  for(let i = 0; i < 9; i++) cpSeedPerson(c1, 101 + i, 'ready', Object.assign({ play:plays[i], answers:ansFor(i), qIndex:4, called:i === 8 }, sl[i], { lastAt:t - (i + 2) * 3600000 }));
+  cpSeedPerson(c1, 110, 'screening', { play:'pool', answers:{ notice:'30 days', ctc:'₹22L now, ₹27L expected' }, qIndex:2, lastAt:t - 1800000 });
+  cpSeedPerson(c1, 111, 'needsYou', { play:'know', answers:{}, qIndex:0, question:'Is the role hybrid? How many days in the office?', lastAt:t - 5400000 });
+  const cm = cpSeedPerson(c1, 112, 'closeMiss', { play:'pool', answers:{ notice:'45 days', ctc:'₹23L now, ₹28L expected', location:'Yes', skill:'6 years' }, qIndex:4, lastAt:t - 7200000 }); cm.reason = 'Notice 45 days is a little over the 30 days the job allows'; cm.misses = [{ q:c1.prescreen.questions[0], r:'close', note:'45 days' }];
+  cpEvalMoves(c1);
+  /* 2 · Warehouse Supervisor · SwiftLog: behind pace */
+  const c2 = mk('j21', { owner:'RP-104', status:'running', started:8, goal:20, by:4, stats:{ reached:310, replied:88, interested:41, screened:22, ready:5, submitted:0, interviews:0, notNow:20, referrals:3, optOuts:2 }, bySource:{ apps:{ reached:140, replied:140, ready:2 }, know:{ reached:90, replied:30, ready:2 }, pool:{ reached:80, replied:18, ready:1 } }, byChannel:{ whatsapp:{ sent:240, replied:70 }, email:{ sent:90, replied:18 }, linkedin:{ sent:0, replied:0 } }, dedupe:{ merged:21, skipped:18, waits:4, notAgain:5 }, plays:{ boards:false, li:false } });
+  c2.mix = 'custom'; c2.message.versions = [{ id:'A', sent:60, replies:20, status:'testing' }, { id:'B', sent:60, replies:17, status:'testing' }]; cpEvalMoves(c2);
+  /* 3 · Product Designer · CloudNova: goal reached */
+  const c3 = mk('j22', { owner:'RP-092', status:'running', started:9, goal:6, by:1, stats:{ reached:150, replied:44, interested:19, screened:11, ready:6, submitted:3, interviews:2, notNow:8, referrals:1, optOuts:0 }, bySource:{ apps:{ reached:40, replied:40, ready:2 }, know:{ reached:55, replied:20, ready:3 }, pool:{ reached:55, replied:14, ready:1 } }, byChannel:{ whatsapp:{ sent:90, replied:30 }, email:{ sent:60, replied:14 }, linkedin:{ sent:0, replied:0 } }, dedupe:{ merged:9, skipped:7, waits:2, notAgain:3 } });
+  c3.goalReached = true; cpEvalMoves(c3);
+  /* 4 · Staff Nurse (ICU) · MediSure Health: review */
+  const c4 = mk('j23', { owner:'RP-081', status:'review', started:0, goal:24, by:10, stats:{}, log:['Prepared the first messages for Divya Menon to check'] }); c4.startedAt = t - 3600000; c4.review = { pending:[], approved:0 }; cpPrepareReview(c4);
+  if(c4.review.pending.length < 10){ CANDIDATES.slice(0, 12).forEach(function(cd){ if(c4.review.pending.length >= 10 || c4.review.pending.some(function(r){ return r.name === cd.name; })) return; c4.review.pending.push({ id:'rv' + c4.review.pending.length + 'x', personId:null, name:cd.name, channel:'WhatsApp', text:cpRenderText(cpDefaultText(0, 'warm'), cd, c4), state:'pending' }); }); }
+  /* 5 · Data Engineer · HealthAI: paused, LinkedIn account needs sign-in */
+  mk('j24', { owner:'RP-092', status:'paused', started:7, goal:12, by:5, stats:{ reached:96, replied:22, interested:9, screened:6, ready:4, submitted:1, interviews:0, notNow:5, referrals:0, optOuts:0 }, bySource:{ apps:{ reached:30, replied:30, ready:1 }, know:{ reached:30, replied:10, ready:2 }, li:{ reached:36, replied:2, ready:1 } }, byChannel:{ whatsapp:{ sent:50, replied:14 }, email:{ sent:30, replied:6 }, linkedin:{ sent:16, replied:2 } }, dedupe:{ merged:6, skipped:5, waits:1, notAgain:2 }, pausedReason:'LinkedIn account needs sign-in', log:['Paused: LinkedIn account needs sign-in'] });
+  /* 6 · Relationship Manager · Finvest Labs: done, 2 hired */
+  const c6 = mk('j25', { owner:'RP-088', status:'done', started:40, goal:10, by:-5, stats:{ reached:240, replied:70, interested:31, screened:19, ready:10, submitted:6, interviews:4, offers:3, hired:2, notNow:14, referrals:3, optOuts:1 }, bySource:{ apps:{ reached:60, replied:60, ready:3 }, know:{ reached:80, replied:30, ready:4 }, pool:{ reached:100, replied:20, ready:3 } }, byChannel:{ whatsapp:{ sent:180, replied:50 }, email:{ sent:100, replied:20 }, linkedin:{ sent:0, replied:0 } }, dedupe:{ merged:15, skipped:11, waits:3, notAgain:4 }, log:['Campaign finished. 2 hired'] }); c6.doneAt = t - 5 * D;
+  /* corporate · Northwind Health */
+  mk('nw1', { org:'corp', owner:'RP-088', status:'running', started:5, goal:24, by:5, stats:{ reached:130, replied:41, interested:22, screened:13, ready:8, submitted:0, interviews:0, notNow:6, referrals:1, optOuts:0 }, bySource:{ apps:{ reached:46, replied:46, ready:3 }, know:{ reached:50, replied:20, ready:3 }, pool:{ reached:34, replied:10, ready:2 } }, byChannel:{ whatsapp:{ sent:90, replied:30 }, email:{ sent:40, replied:11 }, linkedin:{ sent:0, replied:0 } }, dedupe:{ merged:8, skipped:6, waits:1, notAgain:3 } });
+  mk('nw2', { org:'corp', owner:'RP-081', status:'running', started:9, goal:12, by:3, stats:{ reached:110, replied:25, interested:11, screened:6, ready:2, submitted:0, interviews:0, notNow:7, referrals:0, optOuts:1 }, bySource:{ apps:{ reached:20, replied:20, ready:0 }, know:{ reached:40, replied:10, ready:1 }, pool:{ reached:50, replied:8, ready:1 } }, byChannel:{ whatsapp:{ sent:80, replied:18 }, email:{ sent:30, replied:5 }, linkedin:{ sent:0, replied:0 } }, dedupe:{ merged:4, skipped:5, waits:0, notAgain:1 } });
+  mk('nw3', { org:'corp', owner:'RP-088', status:'done', started:45, goal:54, by:-6, stats:{ reached:600, replied:190, interested:96, screened:70, ready:54, submitted:30, interviews:22, offers:12, hired:9, notNow:40, referrals:8, optOuts:3 }, bySource:{ apps:{ reached:200, replied:200, ready:20 }, know:{ reached:200, replied:80, ready:20 }, pool:{ reached:200, replied:50, ready:14 } }, byChannel:{ whatsapp:{ sent:420, replied:140 }, email:{ sent:180, replied:50 }, linkedin:{ sent:0, replied:0 } }, dedupe:{ merged:44, skipped:30, waits:6, notAgain:9 } });
+  mk('nw4', { org:'corp', owner:'RP-104', status:'paused', started:3, goal:18, by:7, stats:{ reached:40, replied:9, interested:4, screened:2, ready:1 }, pausedReason:'Waiting for your approval', pausedBy:'Oontu', log:['Paused: waiting for your approval'] });
+  CAMPAIGNS.forEach(function(c){ c.review.approved = c.status === 'review' ? 0 : c.rules.checkFirst; });
+}
+
+/* ---------- cp-hooks.js ---------- */
+/* ============================================================
+   Where campaign results show up outside Cowork: Jobs → Applicants, the job header, the recruiter's Home,
+   the candidate timeline and the PayTrack forecast / client target.
+============================================================ */
+const isInboundSourceBase = isInboundSource;
+window.isInboundSource = function(src){ return /^Campaign/i.test(src || '') || isInboundSourceBase(src); };
+let CP_JF = 'all';
+function cpJobSubs(j){ return SUBMISSIONS.filter(function(s){ return s.jobId === j.id && s.campaignId; }); }
+function cpJobFilter(jobId, f){ CP_JF = f; refreshJobWorkspace(jobId, 'applicants'); }
+(function(){
+  const base = window.jobWsApplicantsHTML;
+  window.jobWsApplicantsHTML = function(j){
+    const subs = cpJobSubs(j); if(!subs.length) return base(j);
+    const ready = subs.filter(function(s){ return s.campaignStage === 'Ready to call'; });
+    const bar = '<div class="cp-appbar" role="group" aria-label="Applicants filter">' + [['all', 'All'], ['campaign', 'Campaign <span class="cp-cnt">' + subs.length + '</span>'], ['ready', 'Ready to call <span class="cp-cnt">' + ready.length + '</span>']].map(function(x){ return '<button type="button" class="cp-fbtn' + (CP_JF === x[0] ? ' is-on' : '') + '" aria-pressed="' + (CP_JF === x[0]) + '" onclick="cpJobFilter(\'' + j.id + '\',\'' + x[0] + '\')">' + x[1] + '</button>'; }).join('') + '</div>';
+    const skills = (j.skills || []).filter(function(x){ return x !== 'General'; });
+    const rowFor = function(sb){
+      const c = byId(sb.candidateId); if(!c) return ''; const cam = cpById(sb.campaignId), p = cpPerson(sb.campaignPersonId);
+      const action = sb.campaignStage === 'Ready to call' ? '<button type="button" class="o-btn" onclick="cpOpen(\'' + sb.campaignId + '\',\'applicants\')">Call</button>' : '<span class="text-[11px] text-zinc-500">' + cpEsc(sb.campaignStage || '') + '</span>';
+      return jobWsRow(j, c, { badge:' <span class="ml-1.5 align-middle text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">' + cpEsc(sb.source) + '</span>', match:skills.length ? computeJobMatchPct(c, { skills:skills }) : null, action:action, sub:'<p class="text-[11px] text-zinc-400 truncate">' + (p && p.slotText ? 'Call ' + cpEsc(p.slotText) + ' · ' : '') + 'Score ' + (sb.campaignScore || '') + (cam ? ' · ' + cpEsc(cam.title) + ' campaign' : '') + '</p>' + cpAnswerChips(sb) });
+    };
+    if(CP_JF === 'campaign' || CP_JF === 'ready') return bar + '<ul class="divide-y divide-zinc-100">' + (CP_JF === 'ready' ? ready : subs).map(rowFor).join('') + '</ul>';
+    const top = ready.length ? '<div class="cp-readyblock"><p class="cp-lab">Ready to call</p><ul class="divide-y divide-zinc-100">' + ready.slice(0, 3).map(rowFor).join('') + '</ul></div>' : '';
+    return bar + top + base(j);
+  };
+  const chipBase = window.jobApplicantChipsHTML;
+  window.jobApplicantChipsHTML = function(sb){
+    const out = chipBase(sb); if(!sb.preScreen) return out; const a = sb.preScreen, parts = Object.keys(a).filter(function(k){ return k.charAt(0) !== '_'; }).map(function(k){ return (k === 'ctc' ? 'Pay' : k.charAt(0).toUpperCase() + k.slice(1)) + ': ' + a[k]; });
+    return out + (parts.length ? '<p class="text-[11px] text-zinc-500 mt-1">Pre-screen · ' + cpEsc(parts.join(' · ')) + '</p>' : '');
+  };
+  function cpAnswerChips(sb){ return window.jobApplicantChipsHTML(sb); }
+  /* the job header: one quiet line */
+  const rd = window.renderJobDetail;
+  window.renderJobDetail = function(id){
+    const html = rd(id), j = jobById(id); if(!j || !agentAccess('engagement').on && !agentAccess('talent-discovery').on) return html;
+    const c = CAMPAIGNS.find(function(x){ return x.jobId === id && ['running','review','paused','draft'].indexOf(x.status) > -1 && cpVisible(x); });
+    const line = c ? '<p class="cp-jobline">Campaign ' + (c.status === 'running' ? 'running' : c.status === 'paused' ? 'paused' : c.status === 'review' ? 'waiting for your check' : 'draft') + ' · ' + c.stats.ready + ' of ' + c.goal.ready + ' ready · <a href="#" onclick="cpOpen(\'' + c.id + '\'); return false">Open</a></p>' : (sCan('kairo', 'Use agents') && j.status === 'Active' ? '<p class="cp-jobline"><a href="#" onclick="CP.jobPick=\'' + j.id + '\'; cpNew(); return false">Start campaign</a></p>' : '');
+    return line ? html.replace('<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-5">', line + '<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-5">') : html;
+  };
+})();
+
+/* ---------- the recruiter's Home: people ready to call ---------- */
+function cpReadyCalls(){
+  const out = []; CAMPAIGNS.forEach(function(c){ if(!cpVisible(c) || (c.ownerId !== currentUserId() && !cwIsOwnerish())) return; cpPeopleOf(c).forEach(function(p){ if(p.state === 'ready' && !p.called) out.push({ c:c, p:p }); }); });
+  return out.sort(function(a, b){ return (a.p.slot || 9e15) - (b.p.slot || 9e15) || b.p.score - a.p.score; });
+}
+function cpOpenCallList(){
+  const rows = cpReadyCalls();
+  cpModal('<h2 class="o-card__title">People ready to call</h2><p class="o-card__sub">Sorted by booked time, then score.</p><ul class="cp-calls">' + (rows.map(function(r){ const cand = byId(r.p.candidateId); return '<li><span><b>' + cpEsc(cand.name) + '</b><small>' + cpEsc(r.c.title + ' · ' + (r.p.slotText || 'no time booked')) + '</small></span><button type="button" class="o-btn" onclick="cpModal(\'\'); cpCallOpen(\'' + r.p.id + '\')">Open brief</button></li>'; }).join('') || '<li>Nobody is ready yet.</li>') + '</ul><div class="cp-modal__f"><button type="button" class="o-btn" onclick="cpModal(\'\')">Close</button></div>');
+}
+(function(){
+  const base = window.oRecruiterAttention;
+  window.oRecruiterAttention = function(me){
+    const items = base(me); try {
+      const rows = cpReadyCalls().filter(function(r){ return r.c.ownerId === me.id; });
+      if(rows.length){ items.unshift({ tone:'warn', icon:'cal', title:rows.length + (rows.length === 1 ? ' person ready to call' : ' people ready to call'), meta:'best between 6 and 8 pm', cta:'Open call list', onclick:'cpOpenCallList()' }); }
+    } catch(e){}
+    return items;
+  };
+})();
+
+/* ---------- the candidate timeline ---------- */
+(function(){
+  const base = window.tsTimeline;
+  window.tsTimeline = function(cid){
+    const ev = base(cid); try {
+      CAMPAIGN_PEOPLE.filter(function(p){ return p.candidateId === cid; }).forEach(function(p){ const c = cpById(p.campaignId); p.chat.forEach(function(m){ ev.push({ at:m.at, by:m.who === 'cand' ? 'Candidate' : 'Kairo for ' + cpOwner(c).name, kind:'Campaign', text:(m.who === 'cand' ? 'Replied: ' : 'Sent: ') + m.text + ' · ' + c.title + ' campaign', i:ev.length }); }); });
+      ev.sort(function(a, b){ return b.at - a.at; });
+    } catch(e){}
+    return ev;
+  };
+})();
+
+/* ---------- money: pipeline from campaigns, in the PayTrack forecast and the client target ---------- */
+function cpPipeline(clientName){ return CAMPAIGNS.filter(function(c){ return c.org === 'agency' && c.status !== 'done' && cpVisible(c) && (!clientName || cpJob(c.jobId).client === clientName); }).reduce(function(s, c){ return s + cpExpected(c).revenue; }, 0); }
+(function(){
+  const pt = window.payTrackRecruiterBodyHTML;
+  window.payTrackRecruiterBodyHTML = function(){
+    const html = pt(); if(cpIsCorp() || cpMoneyMode() === 'none') return html; const v = cpPipeline(); if(!v) return html;
+    const card = '<div class="o-card cp-pipe" id="cp-pipe">' + cpTw('<span class="stat__l">Pipeline from campaigns</span><span class="stat__v">' + (cpMoneyMode() === 'placements' ? CAMPAIGNS.filter(function(c){ return c.org === 'agency' && c.status !== 'done' && cpVisible(c); }).reduce(function(s, c){ return s + cpExpected(c).placements; }, 0).toFixed(1) + ' placements' : cpMoney(v)) + '</span>', 'Pipeline from campaigns', CAMPAIGNS.filter(function(c){ return c.org === 'agency' && c.status !== 'done' && cpVisible(c); }).slice(0, 4).map(function(c){ return [c.title, cpMoneyMode() === 'placements' ? cpExpected(c).placements : cpMoney(cpExpected(c).revenue)]; }), 'Expected fees from people ready, submitted or in interview, weighted by stage. Not yet earned.') + '</div>';
+    return card + html;
+  };
+  const ec = window.clEarnCard;
+  if(ec) window.clEarnCard = function(c){ const html = ec(c); try { const v = cpPipeline(c.name); if(v && !cpIsCorp() && cpMoneyMode() !== 'none' && cpMoneyMode() !== 'placements') return html.replace(/<\/div>$/, '<p class="cp-pipeline-line">Pipeline from campaigns · ' + cpMoney(v) + '</p></div>'); } catch(e){} return html; };
+})();
+
+/* ---------- cp-boot.js ---------- */
+/* boot: seed once, after every other script has loaded */
+try { cpSeedAll(); } catch(e){ console.error('campaign seed', e); }
+
+</script>
 <script id="light-script">
 /* ============================================================
    OONTU LIGHT: shared helpers. Every screen uses these, so every screen behaves the same.
