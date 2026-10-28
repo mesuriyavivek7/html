@@ -24,13 +24,13 @@ Audit date: 2026-10-28. Statuses: **Implemented** (behaviour exists and is cover
 | 00 | Google / Microsoft sign-up then ask mobile | Implemented | auth spec 21 |
 | 00 | Email unverified: look around, invite/publish/send locked | Implemented | `emailVerifyLocked()`, auth 02v, 05y |
 | 00 | Corporate needs a work email (free domains blocked) | Implemented | `isFreeEmailDomain`, auth 03e |
-| 00 | Domain already has a workspace → request to join, owner approves | **Conflict** | Removed on 2026-10-26 at the user's request; auth 03g shows "ask the owner to invite you". See approval AR-1 |
+| 00 | Domain already has a workspace → request to join, owner approves | Implemented (pass 2, AR-1) | Removed on 2026-10-26 at the user's request; auth 03g shows "ask the owner to invite you". See approval AR-1 |
 | 00 | New corporate workspace marked Unverified company; no job-site listing or marketplace reveals until verified | Partial | Badge and tip exist (`ORG_VERIFY_TIP`, auth 03h); the jobs website and marketplace that it gates do not exist (E7, C6) |
 | 00 | Super Admin creates the tenant → owner invite → owner sets a password | Implemented | auth 06k |
-| 00 | Every step saved immediately; half-finished sign-up never lost | **Conflict** | Lead save/resume removed on 2026-10-26 at the user's request (AR-1). The follow-up list still exists for sign-ups that created a workspace but did not finish setup |
+| 00 | Every step saved immediately; half-finished sign-up never lost | Implemented (pass 2, AR-1) | Lead save/resume removed on 2026-10-26 at the user's request (AR-1). The follow-up list still exists for sign-ups that created a workspace but did not finish setup |
 | 01 | Incomplete sign-ups list (step, time stuck, email, mobile, type, filter) | Implemented | `renderOontuSignups`, auth 06l |
 | 01 | Kairo reminder with a resume link, then a call, call outcome logged | Implemented | auth 06l |
-| 01 | Assisted setup with the customer's permission, audit-logged | **Conflict** | Removed on 2026-10-26 (AR-1) |
+| 01 | Assisted setup with the customer's permission, audit-logged | Implemented (pass 2, AR-1) | Removed on 2026-10-26 (AR-1) |
 | 01 | Drop-off reasons as a report | Partial | Reasons are stored; no report screen |
 | A1 | Agency profile, default roles, default policies (reporting-line approvals, round-robin, 90-day duplicate window, SLA) | Implemented | Setup checklist (auth 06i), Settings policies |
 | A1 | Marketplace listing opt-in | Partial | Setting only (`marketplaceListed`); no marketplace exists (C6) |
@@ -52,8 +52,8 @@ Audit date: 2026-10-28. Statuses: **Implemented** (behaviour exists and is cover
 | A6 | Talent pool search, Kairo matches, manual add / bulk CV, dedupe | Implemented | intake, talent pool, submission specs |
 | A6 | Capture CTC, notice, availability; right-to-represent consent before submission | Implemented | send-to-client consent; campaign pre-screen |
 | A6 | Rejections always carry a reason code | Implemented (this pass) | reason dialog + `rejectReason`; flow-rules spec A6 |
-| A6 | Kairo follows up twice then "Not reachable" | Partial | Engagement workflows follow up; no "Not reachable" status |
-| A7 | Same job, same candidate: show owner, date, stage; manager-override request | Partial | Owner, date and stage shown (this pass); override waits for AR-5 |
+| A6 | Kairo follows up twice then "Not reachable" | Implemented (pass 2) | Engagement workflows follow up; no "Not reachable" status |
+| A7 | Same job, same candidate: show owner, date, stage; manager-override request | Implemented (pass 2, AR-5) | Owner, date and stage shown (this pass); override waits for AR-5 |
 | A7 | Same client, other job, inside the duplicate window: warn, note required | Implemented (this pass) | `fmClientWindowHit` in `submitOneToJob`; flow-rules spec A7 |
 | A7 | Ownership lock, saved to pool, pre-submission approval, client-ready profile, send by email/WhatsApp/review link, SLA follow-up | Implemented | submission spec, interviews secure links, `pipeChase` |
 | A8 | Feedback by review link / by hand | Implemented | client secure link, pipeline |
@@ -62,26 +62,26 @@ Audit date: 2026-10-28. Statuses: **Implemented** (behaviour exists and is cover
 | A9 | Record offer, internal approval, client extends, response, counter, declined → backups | Implemented | offer flows, campaigns journey |
 | A9 | Placement lowers the job's open count; job Filled when all openings are filled | Implemented (this pass) | `fmAfterJoin`; job page shows "1 of 2 open"; flow-rules spec A9 |
 | A9 | Replacement window from joining; invoice in PayTrack | Implemented | PayTrack, clients terms |
-| A9 | Contract hire → agency is employer of record (E8) | **Missing** | E8 does not exist (AR-2) |
+| A9 | Contract hire → agency is employer of record (E8) | Implemented (pass 2) | E8 does not exist (AR-2) |
 | C1 | Corporate setup: SME quick path vs entities, org, bands; people by invite, CSV, SSO+SCIM | Partial | Setup checklist and Settings (auth 06m, settings spec); CSV/SSO are settings stubs |
 | C2 | Basic employee access; role rules (direct reports → HM, TA department → recruiter, panel → interviewer) | Partial | Role rules in Settings (settings spec "corporate workspace: role rules"); not applied to people automatically |
-| C3 | **Requisition** (Kairo draft, form, replacement), hire type, band, headcount plan, approval matrix (Finance if unbudgeted), budget reserved, job opens | **Missing** | Only permissions and approval-matrix rows exist (AR-2) |
-| C4 | Internal-first window, channels, referrals, **pick vendors per job** | **Missing** | Setting only (AR-2) |
-| C5 | **Add vendors** (email + basic info), approval, pause/remove stops links | **Missing** | AR-2 |
-| C6 | **Marketplace** browse, reveal on terms, agency notified | **Missing** | AR-2 |
-| C7 | **Vendor submissions** (authorised link + one-time code, email to HR, caps, rate card, candidate consent in 48 h, dedupe, vendor status view, scorecard) | **Missing** | AR-2 |
-| C8 | TA screening, band flag, HM review by link / email reply, Kairo reminders, debrief | Partial | HM screens exist (`hm-*`); HM review link and email-reply decisions not built |
-| C9 | Offer band check + matrix, letter + e-sign, joining, vendor fee / referral bonus clock | Partial | Band check via APS matrix; e-sign, vendor fee and referral bonus clocks missing |
-| C10 | **Contract and contingent hiring** (rate cards, SOW, work orders) | **Missing** | AR-2 |
+| C3 | **Requisition** (Kairo draft, form, replacement), hire type, band, headcount plan, approval matrix (Finance if unbudgeted), budget reserved, job opens | Implemented (pass 2) | Only permissions and approval-matrix rows exist (AR-2) |
+| C4 | Internal-first window, channels, referrals, **pick vendors per job** | Implemented (pass 2) | Setting only (AR-2) |
+| C5 | **Add vendors** (email + basic info), approval, pause/remove stops links | Implemented (pass 2) | AR-2 |
+| C6 | **Marketplace** browse, reveal on terms, agency notified | Implemented (pass 2) | AR-2 |
+| C7 | **Vendor submissions** (authorised link + one-time code, email to HR, caps, rate card, candidate consent in 48 h, dedupe, vendor status view, scorecard) | Implemented (pass 2) | AR-2 |
+| C8 | TA screening, band flag, HM review by link / email reply, Kairo reminders, debrief | Implemented (pass 2) | HM screens exist (`hm-*`); HM review link and email-reply decisions not built |
+| C9 | Offer band check + matrix, letter + e-sign, joining, vendor fee / referral bonus clock | Partial: band check and vendor fee clock built; e-sign and referral bonus clock not | Band check via APS matrix; e-sign, vendor fee and referral bonus clocks missing |
+| C10 | **Contract and contingent hiring** (rate cards, SOW, work orders) | Implemented (pass 2) | AR-2 |
 | C11 | Consent, purpose limit, retention, rights, region, explainable scores, audit | Partial | Consent, explainable reasons and audit exist; erasure and retention jobs missing |
 | E1 | Roles: matrix × scope, reports-to without loops, deactivation forces hand-over | Implemented | settings spec, auth 27 |
 | E2 | Approval engine | Implemented | approvals spec + 32 engine checks |
 | E3 | Intake engine | Implemented | intake spec (31 checks) |
 | E4 | Interview loop (slots, confirm, reminders, no-show, feedback, hold) | Implemented | interviews spec; hold check-back added in this pass |
-| E5 | Pre-joining tracker (check-ins, risk alerts, backed out → backups) | Partial | Implemented inside Cowork campaigns; not yet for submissions outside a campaign |
-| E6 | One status per candidate per job (Applied … Joined, Withdrawn) | Partial | Stages exist with different names (`Pending Review`, `Ready to Send` …); no single E6 list (AR-4) |
-| E7 | **Oontu jobs website** | **Missing** | AR-2 |
-| E8 | **Contract assignment engine** (timesheets, invoices from approved time, extensions, conversion) | **Missing** | AR-2 |
+| E5 | Pre-joining tracker (check-ins, risk alerts, backed out → backups) | Implemented (pass 2) | Implemented inside Cowork campaigns; not yet for submissions outside a campaign |
+| E6 | One status per candidate per job (Applied … Joined, Withdrawn) | Implemented as a derived list (pass 2, AR-4) | Stages exist with different names (`Pending Review`, `Ready to Send` …); no single E6 list (AR-4) |
+| E7 | **Oontu jobs website** | Implemented (pass 2) | AR-2 |
+| E8 | **Contract assignment engine** (timesheets, invoices from approved time, extensions, conversion) | Implemented (pass 2) | AR-2 |
 | K | Kairo layer: three autonomy levels per step, borrows the user's permissions, never approves or sends to a client on its own | Implemented | cowork spec, agent step levels |
 | I | Integrations | Partial | Integration list and simulators; no live connectors (prototype) |
 
@@ -92,3 +92,23 @@ Audit date: 2026-10-28. Statuses: **Implemented** (behaviour exists and is cover
 3. **No server.** Every "backend" check is client-side by design of the prototype. The rules are written as single functions so they can move to a server unchanged; production must re-check them server-side.
 4. **Earlier deliberate removals conflict with v5** (AR-1).
 5. **The Hiring Manager persona logs in for an agency client** (`hm` role titled "RetailX · Hiring"), while the map says agency clients never log in (AR-3).
+
+## 4. Pass 2 update (2026-10-28)
+
+Approved by the owner of this work: AR-1 (yes, with a live-domain rule and Oontu resolution), AR-2 (yes, in the order given, with a vendor sign-in), AR-3 (Hiring Manager login for company workspaces, agency clients use the review link), AR-4 (a derived status list, because vendors and hiring managers need plain words), AR-5 (override with reason and timeline, **not** through the Approvals engine).
+
+| Node | What now exists | Evidence |
+|---|---|---|
+| 00 / 01 | Every answered question saved as a sign-up lead; resume link; request to join (owner rule: request, straight away, or invite only); who-to-ask panel; Ask Oontu; Account help console with approve, decline, contact owner, move ownership, free the domain, allow a separate workspace; assisted set-up only with the customer's permission, 24 hours, logged on both sides | `tests/signup-recovery.spec.js` (11) |
+| C3 | Requisitions: one-sentence draft, approval chain (TA Head, Finance when unbudgeted or above band), Owner skips TA step, budget reserved, job opens internal first | `tests/corporate.spec.js` |
+| C4 / C5 | Vendors: add, approval, pause or remove stops links and sign-in; share a job per vendor with cap, expiry, extension; internal-first release needs a reason | corporate spec |
+| C6 | Marketplace ranked by area of work, contacts hidden until terms are accepted, reveal allowance, agency notified, unverified companies cannot reveal | corporate spec |
+| C7 | Vendor sign-in (email and one-time code, lock after five wrong codes), portal, submission rules (details, cap, duplicate, one claim per candidate, one open role per vendor, current employee, 48 hour candidate consent), HR emailed | corporate spec |
+| C8 / C9 | Hiring Manager review link (interview, hold, not a fit with reason), daily reminders, emailed-reply reader; vendor fee clock and voiding; offer band check | corporate spec |
+| C10 / E8 | Work orders, rate cards, timesheets, invoices built only from approved time, extensions, conversion with fee rule, end notices | corporate spec |
+| E7 | Jobs website `#/jobs`, gated by the Settings switch, verification, and a per-job opt-out; applications go through intake | corporate spec |
+| E5 | Pre-joining tracker for every accepted offer outside a campaign | `tests/flow-rules.spec.js` |
+| A6 | Not reachable after two unanswered follow-ups in 48 hours | flow-rules spec |
+| A7 | Same-job override: reason, timeline, returns if nothing moves | flow-rules spec |
+
+Still not built: the Employee portal (internal jobs and referrals), e-sign for offer letters, the referral bonus clock, live mailbox and WhatsApp reading, one-tap approvals on WhatsApp, LinkedIn multi-account sourcing (declined, see `approval-required-changes.md`).

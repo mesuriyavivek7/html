@@ -42,3 +42,22 @@ Nothing in this file has been built. Each item changes a process, a data model o
 
 - **Proposal (Step 7, ready to build):** "Request a manager override" creates an approval of a new kind, Submission override, routed by the reporting line with the owner as fallback. When approved, the requester may submit once and the earlier owner is told.
 - **Why approval:** adds a new kind to the approvals engine you supplied (I add it through its public API, not by editing the engine).
+
+## Decisions received (2026-10-28) and what was done
+
+| ID | Decision | Built |
+|---|---|---|
+| AR-1 | Yes. Saved steps, request to join and assisted set-up come back. The join prompt appears only when the domain has a live workspace, shows who to ask, and the person can escalate to Oontu. Oontu must be able to resolve any case. | Saved leads with resume link, request to join by owner rule, escalation, Account help console with every resolution, assisted set-up with permission. The `.oa-*` screens were edited only to call the new functions; the existing wording and test 03g are unchanged. |
+| AR-2 | Yes, in the order: requisitions, vendors and marketplace, vendor submissions with vendor login, hiring manager link, contract hiring. | All built, plus the jobs website. |
+| AR-3 | Hiring Manager login for company workspaces, or as needed; agency clients use the review link. | Role menu shows Hiring Manager only for company workspaces, or for an agency that turns on "Client contacts sign in" in Settings. Existing `hm` screens and tests are untouched. |
+| AR-4 | Yes, if really needed. | A derived list (`coE6`), used where outsiders read status (vendor portal, requisition funnel). Recruiters keep today's stage names. Nothing stored. |
+| AR-5 | Override with reason and timeline. **Not** through the Approvals engine. | Override on the duplicate dialog: a recruiter asks, the owner's manager or an admin decides with a reason and 1 to 30 days. It returns to the owner if nothing moves. A test proves no approval request is created. |
+
+### Declined: LinkedIn multi-account search through proxies and security-check bypass
+
+Not built, and not recommended. Rotating proxies (GoLogin or similar) and working around LinkedIn's security checks to run searches across several accounts breaches LinkedIn's user agreement, puts every recruiter's account at risk of a ban, and would make Oontu a party to it. What can be built safely instead:
+
+1. LinkedIn Recruiter or Talent Solutions seats, connected through LinkedIn's own partner integration, one seat per recruiter, with the seat's real limits shown.
+2. A consented browser extension that acts in the recruiter's own session, one profile at a time, with human-paced limits and no proxies.
+3. Sourcing from job boards, the company's own talent pool, referrals and the Oontu jobs website, which Cowork already uses.
+Tell me if you want 1 or 2 designed.

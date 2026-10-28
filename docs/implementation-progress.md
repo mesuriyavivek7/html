@@ -36,3 +36,29 @@
 - Manager notices from the SLA rule are stored in `FM.notices` and the audit log; they are not yet shown in the notification centre.
 
 **Awaiting approval:** AR-1 to AR-5 in `approval-required-changes.md`.
+
+## 2026-10-28 · pass 2 (corporate journey, AR-1, AR-3, AR-4, AR-5, steps 17 and 18)
+
+**Changes**
+- `corp-script` (new): requisitions, vendors, marketplace, vendor sign-in and portal, vendor submission rules, consent, hiring manager link, contract hiring, jobs website, E6 derived list. Pages outside the app: `#/vendor`, `#/hm/<token>`, `#/consent/<token>`, `#/time/<token>`, `#/jobs`.
+- `join-script` (new): saved sign-up leads, resume, request to join, escalation, Oontu Account help, assisted set-up.
+- `flow-script`: same-job override, Not reachable, pre-joining tracker, notices in the notification centre.
+- Auth simulator and sign-up screen: join rules, domain liveness, request records; hooks only.
+- Settings: Hiring rules gets "Client contacts sign in".
+
+**Tests executed (actual results)**
+
+| Spec | Result |
+|---|---|
+| corporate (new) | 20 / 20 |
+| signup-recovery (new) | 11 / 11 |
+| flow-rules (extended) | 12 / 12 |
+| submission-flow, intake, crawl, light, clients, interviews, approvals, settings, cowork, campaigns, cowork-journey, design-system, sidebar, auth-flow | all green |
+| approval engine checks | 32 / 32 |
+
+**Not verified / not built**
+- Employee portal, e-sign, referral bonus clock, real mailbox and WhatsApp reading, one-tap WhatsApp approvals.
+- Everything runs in the page with in-memory data. Rules are single functions so they can move to a server, but production must re-check every one.
+- The sweeps run on navigation; production needs a scheduler.
+- A recruiter who is "Not reachable" is marked dormant for the SLA rule, but job header counts still include them.
+- Plan entitlements for vendors and marketplace are not checked; only the Settings switches are.
