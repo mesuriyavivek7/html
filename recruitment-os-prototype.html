@@ -2557,6 +2557,25 @@ body.cl-on .app-toast{ background:#fff !important; color:#2F313F !important; bor
 .cp-pipe{margin-bottom:16px}.cp-pipeline-line{margin:10px 0 0;font-size:12px;color:#6B6F80}
 @media (max-width:960px){.cp-stats,.cp-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.cp-two,.cp-ed{grid-template-columns:minmax(0,1fr)}.cp-ed__r{position:static}.cp-row2,.cp-row3,.cp-row4{grid-template-columns:minmax(0,1fr)}.cp-facts{grid-template-columns:minmax(0,1fr)}.cp-strip__c{border-right:0;border-bottom:1px solid #F1F1EE}}
 @media (max-width:520px){.cp-tools .seg,.cp-tools-wrap .seg{max-width:100%;overflow-x:auto}.cp-stats{grid-template-columns:minmax(0,1fr)}.cp-sug__row{flex-wrap:wrap}.cp-search{width:100%}}
+/* v3: journey, quick start, evaluation, your day */
+.cp-day{margin-bottom:16px}.cp-more{margin-top:8px}
+.cp-jstrip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin-top:14px;border:1px solid #F1F1EE;border-radius:10px;overflow:visible}
+.cp-jstrip__c{display:flex;flex-direction:column;gap:2px;text-align:left;padding:10px 12px;background:#fff;border:0;border-right:1px solid #F1F1EE;cursor:pointer;position:relative}.cp-jstrip__c:last-child{border-right:0}.cp-jstrip__c:hover{background:#F7F7F5}.cp-jstrip__c b{font-weight:500;font-size:18px;color:#2F313F}
+.cp-stages{list-style:none;margin:10px 0 0;padding:0}.cp-stage{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid #F1F1EE}.cp-stage:first-child{border-top:0}
+.cp-stage .tw{display:flex;align-items:center;gap:12px;flex:1;min-width:0}.cp-stage__n{width:24px;height:24px;border-radius:50%;border:1px solid #D2D5DD;color:#5B6075;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.cp-stage__t{flex:1;min-width:0}.cp-stage__t b{font-weight:500}.cp-stage__t small{display:block;font-size:12px;color:#6B6F80}.cp-stage__c{min-width:120px;text-align:right;font-size:13px;color:#5B6075}.cp-stage__c b{font-weight:500;color:#2F313F}
+.cp-lv{width:190px}.cp-gtype{margin-bottom:12px}.cp-gap{margin-top:14px}
+.cp-modal--wide{max-width:720px;max-height:90vh;overflow:auto}
+.cp-fld{display:block;margin:10px 0}.cp-fld .app-input{width:100%}
+.cp-q3{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}.cp-q3>div:last-child{grid-column:1 / -1}
+.cp-checks{list-style:none;margin:6px 0 0;padding:0}.cp-checks li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-top:1px solid #F1F1EE;font-size:13px}.cp-checks li:first-child{border-top:0}
+.cp-ok{display:inline-flex;margin-right:6px;color:#5B6075;vertical-align:-2px}
+.cp-payfix{display:flex;gap:6px;align-items:center}.cp-payfix input{width:70px}
+.cp-rec{font-size:13px;font-weight:500;color:#2F313F}.cp-rec--call{color:#5B6075;font-weight:400}
+.cp-box{width:34px}.cp-bulk{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap;font-size:13px}
+.cp-together{margin-bottom:16px}
+@media (max-width:960px){.cp-jstrip{grid-template-columns:repeat(3,minmax(0,1fr))}.cp-q3{grid-template-columns:minmax(0,1fr)}.cp-stage{flex-wrap:wrap}.cp-lv{width:100%}}
+.cp-checks li{flex-direction:column;align-items:flex-start;gap:6px}.cp-checks .att{white-space:normal}
 /* ==CP-CSS-END== */
 </style>
 </head>
@@ -45012,6 +45031,8 @@ function cpClientSpeed(job){ const c = !job.corp && typeof clientForJob === 'fun
     ['Sandeep Joshi','Senior Engineer','Trident Analytics',8,'Nashik, IN',25,30,'30 Days'], ['Ritu Malhotra','Backend Developer','Orbit Payments',7,'Pune, IN',24,31,'45 Days'],
     ['Vivek Menon','Java Lead','Persistent Systems',10,'Pune, IN',30,36,'60 Days'], ['Anjali Gupta','Software Engineer','CoreLedger',6,'Pune, IN',22,27,'30 Days'],
     ['Faizan Ahmed','Java Developer','Ledgerline',7,'Mumbai, IN',25,30,'90 Days'], ['Tanvi Shah','Backend Engineer','Zenith Systems',6,'Pune, IN',23,28,'30 Days'],
+    ['Arvind Rao','Senior Java Developer','Orbit Payments',8,'Pune, IN',26,31,'60 Days'], ['Swati Kulkarni','Java Developer','CoreLedger',6,'Pune, IN',22,28,'30 Days'],
+    ['Manish Tiwari','Backend Engineer','Harbor Data',7,'Pune, IN',25,30,'30 Days'], ['Deepa Nair','Java Developer','Nimbus Labs',6,'Pune, IN',21,27,'15 Days'],
   ];
   rows.forEach(function(r, i){
     const id = 101 + i; if(CANDIDATES.some(function(c){ return c.id === id; })) return;
@@ -45033,7 +45054,10 @@ function planCampaign(o){
     const pool = pools[p.id] || 0, rate = h.byPlay[p.id] || .02;
     if(!on){ playUse[p.id] = { label:'Off', take:0, pool:pool, rate:rate, on:false }; return; }
     if(pool === 0){ playUse[p.id] = { label:'None to reach', take:0, pool:0, rate:rate, on:true }; return; }
-    if(remaining <= 0){ playUse[p.id] = { label:'Only if needed', take:0, pool:pool, rate:rate, on:true, spare:true }; return; }
+    if(remaining <= 0){
+      if(o.allAtOnce){ const t = Math.min(pool, Math.ceil(goal * .25 / rate)); expectedReady += t * rate; if(p.id === 'apps') checked += t; else reach += t; playUse[p.id] = { label:(t >= pool ? 'All ' + pool : t + ' of ' + pool) + ' · from day one', take:t, pool:pool, rate:rate, on:true }; return; }
+      playUse[p.id] = { label:'Only if needed', take:0, pool:pool, rate:rate, on:true, spare:true }; return;
+    }
     const take = Math.min(pool, Math.ceil(remaining / rate)), gain = take * rate;
     expectedReady += gain; remaining -= gain; if(p.id === 'apps') checked = take; else reach += take;
     playUse[p.id] = { label:take >= pool ? 'All ' + pool : take + ' of ' + pool, take:take, pool:pool, rate:rate, on:true };
@@ -45179,7 +45203,7 @@ function cpSteps(){ return [ { id:'s1', delayDays:0, sendWhen:'noreply', channel
 function cpNewCampaign(jobId, o){
   o = o || {}; const job = cpJob(jobId); if(!job) return null; const me = currentActingUser() || {}, owner = o.ownerId || me.id || 'RP-088', pos = job.positions || 1;
   const c = { id:o.detached ? 'draft' : 'cmp' + (CP_NEXT++), jobId:jobId, org:o.org || (cpIsCorp() ? 'corp' : 'agency'), ownerId:owner, createdBy:me.id || owner, createdAt:CP_NOW(), startedAt:null, status:'draft', pausedReason:'', pausedBy:'',
-    title:job.title, goal:{ ready:Math.max(3, pos * 6), by:CP_ISO(CP_NOW() + 10 * CP_DAY) }, mix:'recommended', plays:{ apps:true, know:true, pool:true, ref:true, boards:true, li:true },
+    title:job.title, goal:{ ready:Math.max(3, pos * 6), by:CP_ISO(CP_NOW() + 10 * CP_DAY), join:pos }, goalType:'ready', playbook:'standard', stages:{}, mix:'recommended', plays:{ apps:true, know:true, pool:true, ref:true, boards:true, li:true },
     message:{ tone:'warm', senderId:owner, ab:true, edited:false, steps:cpSteps() }, prescreen:{ questions:cpDraftQuestions(job), edited:false, callMinutes:15 }, pace:JSON.parse(JSON.stringify(CP_DEFAULT_PACE)),
     rules:{ checkFirst:10, hours:'10:00-20:00', days:[1,2,3,4,5,6], recheck:true }, review:{ pending:[], approved:0 }, search:cpDefaultChips(job),
     stats:{ reached:0, replied:0, interested:0, screened:0, ready:0, submitted:0, interviews:0, offers:0, hired:0, notNow:0, referrals:0, optOuts:0 }, bySource:{}, byChannel:{ whatsapp:{ sent:0, replied:0 }, email:{ sent:0, replied:0 }, linkedin:{ sent:0, replied:0 } },
@@ -45189,7 +45213,7 @@ function cpNewCampaign(jobId, o){
 }
 function cpDefaultChips(job){ return { words:[job.title].concat((job.skills || []).slice(0, 3)).concat([job.minExp || '', (job.loc || '').split(',')[0]]).filter(Boolean) }; }
 function cpPlay(id){ return CP_PLAYS.find(function(p){ return p.id === id; }); }
-function cpPlanFor(c){ return planCampaign({ job:cpJob(c.jobId), goalReady:c.goal.ready, byDate:c.goal.by, days:Math.max(1, cpDaysLeft(c)), plays:c.plays, check:c.rules.checkFirst > 0 }); }
+function cpPlanFor(c){ return planCampaign({ job:cpJob(c.jobId), goalReady:c.goal.ready, byDate:c.goal.by, days:Math.max(1, cpDaysLeft(c)), plays:c.plays, check:c.rules.checkFirst > 0, allAtOnce:!!c.allAtOnce }); }
 
 /* ---------- one person, one approach ---------- */
 function cpActiveLock(cand, exceptCampaignId){ return CAMPAIGN_PEOPLE.find(function(p){ return p.candidateId === cand.id && p.campaignId !== exceptCampaignId && ['optedOut','done','notNow'].indexOf(p.state) === -1 && !p.lockedFree && !(p.state === 'queued' && p.nextAt === Infinity); }); }
@@ -45199,7 +45223,7 @@ function cpEligible(c, cand){
   if(!job.corp && findSubmission(c.jobId, cand.id)) return { ok:false, code:'notAgain', reason:'Already applied to this job. Counted as an applicant.' };
   if(cwSuppression(key)) return { ok:false, code:'skip', reason:'On the do-not-contact list' };
   if(cwNoPoach(cand)) return { ok:false, code:'skip', reason:'Works at the client' };
-  if(!job.corp && job.clientId){ const dup = SUBMISSIONS.find(function(s){ return s.candidateId === cand.id && s.clientId === job.clientId && s.jobId !== c.jobId; }); if(dup) return { ok:false, code:'skip', reason:'Already submitted to this client' }; }
+  if(!job.corp && job.clientId){ const dup = SUBMISSIONS.find(function(s){ return s.candidateId === cand.id && s.clientId === job.clientId && s.jobId !== c.jobId && ['Applied Directly','Pending Review','Ready to Send','Withdrawn','Rejected'].indexOf(s.stage) === -1; });   /* only profiles that actually reached the client */ if(dup) return { ok:false, code:'skip', reason:'Already submitted to this client' }; }
   const lock = cpActiveLock(cand, c.id); if(lock){ const oc = cpById(lock.campaignId); return { ok:false, code:'waits', reason:'Waits its turn: in "' + (oc ? oc.title : 'another campaign') + '" owned by ' + (oc ? cpOwner(oc).name : 'someone') }; }
   const recent = SEND_LEDGER.some(function(l){ return l.personKey === key && l.status === 'sent' && CP_NOW() - l.at < 30 * CP_DAY && l.campaignId !== c.id; });
   if(recent) return { ok:false, code:'skip', reason:'Contacted in the last 30 days' };
@@ -45260,7 +45284,7 @@ function cpSetState(c, p, st){ const was = p.state; p.state = st; p.lastAt = CP_
 function cpFinishScreen(c, p){
   const bad = p.misses.filter(function(m){ return m.r === 'fail'; }), close = p.misses.filter(function(m){ return m.r === 'close'; });
   c.stats.screened++;
-  if(bad.length){ cpSay(p, 'kairo', 'Thanks for sharing. This one may not fit, but ' + cpSenderFirst(c) + ' will keep you in mind for similar roles.'); cpSetState(c, p, 'done'); p.tag = 'clearMiss'; p.reengageOn = CP_ISO(CP_NOW() + 90 * CP_DAY); cpLog(c, byId(p.candidateId).name + ' finished the pre-screen: not a fit this time, kept in the talent pool with the answers', 'screen'); return; }
+  if(bad.length){ cpSay(p, 'kairo', 'Thanks for sharing. This one may not fit, but ' + cpSenderFirst(c) + ' will keep you in mind for similar roles.'); cpSetState(c, p, 'done'); p.tag = 'clearMiss'; p.reengageOn = CP_ISO(CP_NOW() + 90 * CP_DAY); cpLog(c, byId(p.candidateId).name + ' finished the pre-screen: not a fit this time, kept in the talent pool with the answers', 'screen'); if(typeof cpRouteSuggest === 'function') cpRouteSuggest(c, p); return; }
   if(close.length){ cpSay(p, 'kairo', 'Thanks, ' + cpSenderFirst(c) + ' will get back to you shortly.'); p.reason = close.map(function(m){ return m.q.kind === 'notice' ? 'Notice ' + m.note + ' is a little over the ' + cpNoticeLimit(cpJob(c.jobId)) + ' days the job allows' : m.q.kind === 'ctc' ? 'Expected pay is a little above the range' : 'Location needs a conversation'; }).join('; '); cpSetState(c, p, 'closeMiss'); cpLog(c, byId(p.candidateId).name + ' is a close miss: ' + p.reason + '. Sent to ' + cpOwner(c).name, 'needs'); return; }
   p.slots = cpSlots(c); p.state = 'booking'; cpLink(c, p);
   cpSay(p, 'kairo', 'You are a good fit for a quick call with ' + cpSenderFirst(c) + ' (' + c.prescreen.callMinutes + ' minutes). Which time suits you? ' + p.slots.map(function(s, i){ return (i + 1) + ' · ' + s.text; }).join('  '));
@@ -45351,6 +45375,7 @@ function cpLearn(c){
 /* ---------- the engine tick for campaigns ---------- */
 function cpTick(){
   CAMPAIGNS.forEach(function(c){
+    if(c.status === 'done' || c.status === 'running') cpJourneyTick(c);
     if(c.status !== 'running' && c.status !== 'review') return;
     const job = cpJob(c.jobId);
     if(job && ['Closed','Filled','On Hold','Cancelled'].indexOf(job.status) > -1){ cpPause(c, 'system', 'The job was ' + job.status.toLowerCase().replace('on hold', 'put on hold')); return; }
@@ -45431,6 +45456,10 @@ function cpFlag(c){
   if(c.status === 'done') return { text:'Done · ' + c.stats.hired + ' hired', muted:true };
   if(c.status === 'review') return { text:'First ' + (c.review.pending.filter(function(r){ return r.state === 'pending'; }).length || c.rules.checkFirst) + ' messages wait for you' };
   if(c.status === 'paused') return { text:c.pausedReason || 'Paused' };
+  const pp = cpPeopleOf(c);
+  if(pp.some(function(p){ return p.state === 'joinDue'; })) return { text:'Confirm a joining' };
+  if(pp.some(function(p){ return p.state === 'offerDecision'; })) return { text:'Decide an offer' };
+  if(pp.some(function(p){ return p.state === 'accepted' && p.risk >= 60; })) return { text:'Joiner at risk' };
   if(cpPace(c).behind) return { text:'Behind pace' };
   if(CAMPAIGN_PEOPLE.some(function(p){ return p.campaignId === c.id && (p.state === 'needsYou' || p.state === 'closeMiss'); }) && c.status === 'running') return { text:'Needs you' };
   return null;
@@ -45448,7 +45477,7 @@ function cpMoneyLabel(){ const m = cpMoneyMode(); return m === 'saved' ? 'Agency
 function cpMoneyVal(c){ const e = cpExpected(c), m = cpMoneyMode(); return m === 'placements' ? String(e.placements) : m === 'none' ? '' : cpMoney(e.revenue); }
 function cpVisible(c){
   if(c.org !== (cpIsCorp() ? 'corp' : 'agency')) return false; const k = sRoleKind(), me = currentUserId();
-  if(k === 'owner' || cwIsOwnerish()) return true; if(c.ownerId === me || c.createdBy === me) return true;
+  if(k === 'owner' || cwIsOwnerish()) return true; if(c.ownerId === me || (c.createdBy === me && c.status === 'draft')) return true;
   if(k === 'manager'){ return recruitersManagedBy(me).some(function(u){ return u.id === c.ownerId; }); }
   return false;
 }
@@ -45518,11 +45547,11 @@ function cpPills(){ ['cp-tabs','cp-det-tabs','cp-seg','cw-tabs-top'].forEach(fun
   const base = window.renderCowork;
   window.renderCowork = function(){
     const own = cwIsOwnerish(), vis = cwVisibleAgents(); if(!vis.length) return base();
-    const actions = [ own ? (CW.pauseAll.on ? '<button type="button" class="o-btn o-btn--lg" onclick="cwSetPauseAll(false); cwRefresh()">Resume all Cowork</button>' : '<button type="button" class="o-btn o-btn--lg" onclick="cwAskPauseAll()">Pause all Cowork</button>') : '', CP.top === 'campaigns' && sCan('kairo','Use agents') ? '<button type="button" class="o-btn o-btn--lg o-btn--primary" onclick="cpNew()">New campaign</button>' : '' ].join('');
+    const actions = [ own ? (CW.pauseAll.on ? '<button type="button" class="o-btn o-btn--lg" onclick="cwSetPauseAll(false); cwRefresh()">Resume all Cowork</button>' : '<button type="button" class="o-btn o-btn--lg" onclick="cwAskPauseAll()">Pause all Cowork</button>') : '', CP.top === 'campaigns' && sCan('kairo','Use agents') ? '<button type="button" class="o-btn o-btn--lg o-btn--primary" onclick="cpQuick()">New campaign</button>' : '' ].join('');
     const head = pageHeaderHTML({ title:'Cowork', actions:actions });
     const tabs = '<div class="o-tabs-host"><div role="tablist" id="cw-tabs-top" aria-label="Cowork">' + [['campaigns','Campaigns'],['agents','Agents'],['activity','Activity']].map(function(t){ return '<button type="button" role="tab" aria-selected="' + (CP.top === t[0]) + '" onclick="CP.top=\'' + t[0] + '\'; cpRefresh()">' + t[1] + '</button>'; }).join('') + '</div></div>';
     let body;
-    if(CP.top === 'agents') body = base().replace(/<header class="o-page-head">[\s\S]*?<\/header>/, '').replace(/^<div class="content-shell o-page">/, '').replace(/<\/div>$/, '');
+    if(CP.top === 'agents') body = cpAgentsTogether() + base().replace(/<header class="o-page-head">[\s\S]*?<\/header>/, '').replace(/^<div class="content-shell o-page">/, '').replace(/<\/div>$/, '');
     else if(CP.top === 'activity') body = cpGlobalActivity();
     else body = cpCampaignsTab();
     const banner = CW.pauseAll.on ? '<div class="o-note" role="status">' + oIcon('alert', 16, 1.75) + '<span><b>All Cowork is paused</b> by ' + cwEsc(CW.pauseAll.by) + ': ' + cwEsc(CW.pauseAll.reason) + '. Nothing is sent.</span></div>' : '';
@@ -45557,7 +45586,7 @@ function cpSuggestedCard(){
   const s = cpSuggested(); if(!s.length) return ''; const money = cpMoneyMode() === 'revenue' || cpMoneyMode() === 'saved';
   return '<section class="o-card cp-sug"><div class="o-card__head"><h2 class="o-card__title">' + (cpIsCorp() ? 'Open requisitions with no campaign' : 'Open jobs with no campaign') + '</h2></div><ul class="cp-sug__list">' + s.map(function(r){
     const j = r.job, val = money ? cpTw('<span class="cp-val">' + cpMoney(r.fee) + '</span>', cpIsCorp() ? 'Agency fee avoided' : 'What this job can earn', [[cpIsCorp() ? 'Agency fee avoided' : 'Fee for the job', cpMoney(r.fee)], ['Open for', (j.daysOpen || 0) + ' days'], ['Client feedback', 'about ' + r.speed + ' days'], ['Matching people', r.match]], 'Ranked by return: fee × chance to fill × how long it has been open × client speed.', 'cp-tw-right') : '<span class="cp-val">' + (j.positions || 1) + (j.positions === 1 ? ' position' : ' positions') + '</span>';
-    return '<li class="cp-sug__row"><span class="cp-sug__t"><b>' + cpEsc(j.title) + '</b><small>' + cpEsc([cpJobCompany(j), (j.loc || '').split(',')[0], (j.positions || 1) + (j.positions === 1 ? ' position' : ' positions'), (j.daysOpen || 0) + ' days open'].join(' · ')) + '</small></span>' + (!cpHasPay(j) ? attHTML('No pay range') : '') + val + '<button type="button" class="o-btn" onclick="cpStartSuggested(\'' + j.id + '\')">Start campaign</button></li>';
+    return '<li class="cp-sug__row"><span class="cp-sug__t"><b>' + cpEsc(j.title) + '</b><small>' + cpEsc([cpJobCompany(j), (j.loc || '').split(',')[0], (j.positions || 1) + (j.positions === 1 ? ' position' : ' positions'), (j.daysOpen || 0) + ' days open'].join(' · ')) + '</small></span>' + (!cpHasPay(j) ? attHTML('No pay range') : '') + val + '<button type="button" class="o-btn" onclick="cpQuick(\'' + j.id + '\')">Start campaign</button></li>';
   }).join('') + '</ul></section>';
 }
 function cpCampaignsTab(){
@@ -45581,7 +45610,7 @@ function cpCampaignsTab(){
   }).join('') || '<tr><td colspan="6" class="cp-empty">' + (list.length ? 'Nothing matches. Clear the filter or the card you picked.' : 'No campaigns yet. Start one from an open job above.') + '</td></tr>';
   const seg = '<div role="group" id="cp-seg" class="seg" aria-label="Campaign status">' + [['running','Running'],['paused','Paused'],['done','Done'],['all','All']].map(function(f){ return '<button type="button" class="seg__btn' + (CP.filter === f[0] ? ' is-on' : '') + '" aria-pressed="' + (CP.filter === f[0]) + '" onclick="CP.filter=\'' + f[0] + '\'; cpRefresh()">' + f[1] + (counts[f[0]] ? ' <span class="cp-cnt">' + counts[f[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>';
   const tools = '<div class="cp-tools">' + seg + '<input class="app-input cp-search" type="search" placeholder="Search campaigns" aria-label="Search campaigns" value="' + cpEsc(CP.search) + '" oninput="CP.search=this.value; cpSearchLive()" /></div>';
-  return stats + cpSuggestedCard() + '<section class="o-card o-card--flush">' + '<div class="cp-tools-wrap">' + tools + '</div><div class="o-table-wrap"><table class="o-table cp-table" style="min-width:760px"><thead><tr><th>Campaign</th><th>Goal</th><th>Applicants</th><th>Reply rate</th>' + (showMoney ? '<th>' + cpMoneyLabel() + '</th>' : '') + '<th></th></tr></thead><tbody id="cp-tbody">' + body + '</tbody></table></div><p class="cp-foot">' + rows.length + ' campaigns · every applicant also appears in Jobs → Applicants</p></section>';
+  return stats + cpMyDayCard() + cpSuggestedCard() + '<section class="o-card o-card--flush">' + '<div class="cp-tools-wrap">' + tools + '</div><div class="o-table-wrap"><table class="o-table cp-table" style="min-width:760px"><thead><tr><th>Campaign</th><th>Goal</th><th>Applicants</th><th>Reply rate</th>' + (showMoney ? '<th>' + cpMoneyLabel() + '</th>' : '') + '<th></th></tr></thead><tbody id="cp-tbody">' + body + '</tbody></table></div><p class="cp-foot">' + rows.length + ' campaigns · every applicant also appears in Jobs → Applicants</p></section>';
 }
 function cpSearchLive(){ const main = document.getElementById('main-content'), top = main.scrollTop, pos = document.activeElement && document.activeElement.selectionStart; main.innerHTML = renderCowork(); main.scrollTop = top; oPostRender(main); cpPills(); const i = main.querySelector('.cp-search'); if(i){ i.focus(); try { i.setSelectionRange(pos, pos); } catch(e){} } }
 function cpOpen(id, tab){ CP.sel = id; CP.tab = tab || 'overview'; CP.appFilter = 'ready'; CP.chatPid = null; showView('cowork-campaign', 'kairo-team'); }
@@ -45608,7 +45637,7 @@ function cpDetailHTML(id){
   const job = cpJob(c.jobId), s = c.stats, P = cpPace(c), e = cpExpected(c), h = cpHist(c), edit = cpCanEdit(c);
   const st = c.status === 'paused' ? 'Paused' : c.status === 'review' ? 'Waiting for your check' : c.status === 'done' ? 'Done' : c.status === 'draft' ? 'Draft' : '';
   const meta = [cpJobCompany(job), (job.loc || '').split(',')[0], (job.positions || 1) + ((job.positions || 1) === 1 ? ' position' : ' positions'), (c.startedAt ? 'started ' + cpDateMs(c.startedAt) : 'not started') + ' by ' + cpOwner(c).name].join(' · ');
-  const actions = [ c.status === 'paused' && edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpResumeUI(\'' + c.id + '\')">Resume</button>' : (c.status === 'running' || c.status === 'review') && edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpPauseUI(\'' + c.id + '\')">Pause</button>' : '', edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpEdit(\'' + c.id + '\')">Edit</button>' : '', c.status === 'draft' && edit ? '<button type="button" class="o-btn o-btn--lg o-btn--primary" onclick="cpEdit(\'' + c.id + '\')">Finish setup</button>' : '<button type="button" class="o-btn o-btn--lg o-btn--primary" onclick="cpCallList(\'' + c.id + '\')">Call ready list</button>' ].join('');
+  const actions = [ edit && c.status !== 'done' && (cwIsOwnerish() || sRoleKind() === 'manager') ? '<button type="button" class="o-btn o-btn--lg" onclick="cpHandoverOpen(\'' + c.id + '\')">Hand over</button>' : '', c.status === 'done' && edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpRunAgain(\'' + c.id + '\')">Run again</button>' : '', c.status === 'paused' && edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpResumeUI(\'' + c.id + '\')">Resume</button>' : (c.status === 'running' || c.status === 'review') && edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpPauseUI(\'' + c.id + '\')">Pause</button>' : '', edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpEdit(\'' + c.id + '\')">Edit</button>' : '', c.status === 'draft' && edit ? '<button type="button" class="o-btn o-btn--lg o-btn--primary" onclick="cpEdit(\'' + c.id + '\')">Finish setup</button>' : '<button type="button" class="o-btn o-btn--lg o-btn--primary" onclick="cpCallList(\'' + c.id + '\')">Call ready list</button>' ].join('');
   const flag = cpFlag(c), banner = c.status === 'paused' ? '<div class="o-note" role="status">' + oIcon('alert', 16, 1.75) + '<span><b>Paused.</b> ' + cpEsc(c.pausedReason) + '. Nothing is sent. Replies still reach ' + cpEsc(cpOwner(c).name.split(' ')[0]) + '.</span></div>' : '';
   const strip = '<div class="cp-strip card">' + [
     ['ready', 'Ready to call', s.ready + ' of ' + c.goal.ready, [['Booked', cpPeopleOf(c).filter(function(p){ return p.state === 'ready' && p.slot; }).length], ['Goal date', cpDate(c.goal.by)]], 'applicants'],
@@ -45617,16 +45646,18 @@ function cpDetailHTML(id){
     ['money', cpMoneyMode() === 'revenue' || cpMoneyMode() === 'saved' ? cpMoneyLabel() : 'Days left', cpMoneyMode() === 'revenue' || cpMoneyMode() === 'saved' ? cpMoney(e.revenue) : String(Math.max(0, cpDaysLeft(c))), cpMoneyMode() === 'revenue' || cpMoneyMode() === 'saved' ? [['Fee per hire', cpMoney(e.fee)], ['Placements expected', e.placements]] : [['Goal date', cpDate(c.goal.by)]], 'sources'],
   ].map(function(x){ return '<button type="button" class="cp-strip__c tw" onclick="CP.tab=\'' + x[4] + '\'; ' + (x[0] === 'ready' ? "CP.appFilter='ready'" : x[0] === 'all' ? "CP.appFilter='all'" : '') + '; cpRefresh()"><span class="stat__l">' + cpEsc(x[1]) + '</span><span class="stat__v">' + cpEsc(x[2]) + '</span>' + tipHTML(x[1], x[3], 'Click to open.') + '</button>'; }).join('') + '</div>';
   const people = cpPeopleOf(c).filter(function(p){ return ['queued','optedOut'].indexOf(p.state) === -1 && p.answers !== null; });
-  const tabs = [['overview','Overview'],['applicants','Applicants ' + (people.length ? '<span class="cp-cnt">' + s.interested + '</span>' : '')],['messages','Messages'],['sources','Sources'],['activity','Activity']];
+  const tabs = [['overview','Overview'],['journey','Journey'],['applicants','Applicants ' + (people.length ? '<span class="cp-cnt">' + s.interested + '</span>' : '')],['messages','Messages'],['sources','Sources'],['activity','Activity']];
   const tabBar = '<div class="o-tabs-host"><div role="tablist" id="cp-det-tabs" aria-label="Campaign">' + tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="' + (CP.tab === t[0]) + '" onclick="CP.tab=\'' + t[0] + '\'; cpRefresh()">' + t[1] + '</button>'; }).join('') + '</div></div>';
-  const body = CP.tab === 'applicants' ? cpApplicantsTab(c) : CP.tab === 'messages' ? cpMessagesTab(c) : CP.tab === 'sources' ? cpSourcesTab(c) : CP.tab === 'activity' ? cpActivityTab(c) : cpOverviewTab(c);
+  const body = CP.tab === 'journey' ? cpJourneyTab(c) : CP.tab === 'applicants' ? cpApplicantsTab(c) : CP.tab === 'messages' ? cpMessagesTab(c) : CP.tab === 'sources' ? cpSourcesTab(c) : CP.tab === 'activity' ? cpActivityTab(c) : cpOverviewTab(c);
   return '<div class="content-shell o-page" id="cp-detail-root"><a class="cp-back" href="#" onclick="cpBack(); return false">← Campaigns</a>' + pageHeaderHTML({ title:c.title, meta:meta, actions:actions }) + (st && c.status !== 'paused' ? '<p class="cp-state">' + attHTML(st) + '</p>' : '') + banner + strip + tabBar + '<div class="cp-body">' + body + '</div></div>';
 }
 function cpOverviewTab(c){
   const s = c.stats, P = cpPace(c), job = cpJob(c.jobId), pct = Math.min(100, cpPct(s.ready, c.goal.ready));
   const paceTxt = c.goalReached ? 'Goal reached. Kairo keeps the best extra people warm and stops new outreach.' : P.behind ? attHTML('Behind pace · ' + P.more + ' more in ' + P.daysLeft + ' days') : 'On pace · ' + P.daysLeft + ' days left';
   const next = c.status === 'review' ? 'Nothing is sent until you approve the first messages.' : c.status === 'paused' ? 'Paused. Nothing is sent until you resume.' : c.status === 'done' ? 'Finished. People who said not now come back to the pool with a date to ask again.' : 'Kairo messages the next people inside your limits, pre-screens anyone who says yes, and books your calls.';
-  const goal = '<section class="o-card"><div class="cp-goal"><span class="cp-goal__n">' + s.ready + '</span><span class="cp-goal__t">of ' + c.goal.ready + ' ready to call · by ' + cpDate(c.goal.by) + '</span></div><div class="cp-bar"><i style="width:' + pct + '%"></i></div><p class="cp-pace">' + paceTxt + '</p><p class="o-card__sub">' + cpEsc(next) + '</p></section>';
+  const jp = cpJoinPlan(c), joinLine = c.goalType === 'join' ? '<p class="cp-pace">Goal: ' + c.goal.join + (c.goal.join === 1 ? ' joining' : ' joinings') + ' · ' + s.hired + ' joined so far · about ' + jp.joins + ' expected around ' + cpDate(jp.around) + '</p>' : '';
+  const strip = '<div class="cp-jstrip" role="group" aria-label="Journey">' + CP_STAGES.map(function(st){ const n = cpStageCount(c, st.id); return '<button type="button" class="cp-jstrip__c tw" onclick="CP.tab=\'journey\'; cpRefresh()"><span class="stat__l">' + st.name + '</span><b>' + n.n + '</b>' + tipHTML(st.name, [st.does, ['Run by', cpStageLevel(c, st.id) === 'me' ? 'You' : (agentById(st.agent) || {}).name + (cpStageLevel(c, st.id) === 'ask' ? ', asks you first' : '')]], 'Click to open the journey.') + '</button>'; }).join('') + '</div>';
+  const goal = '<section class="o-card"><div class="cp-goal"><span class="cp-goal__n">' + s.ready + '</span><span class="cp-goal__t">of ' + c.goal.ready + ' ready to call · by ' + cpDate(c.goal.by) + '</span></div><div class="cp-bar"><i style="width:' + pct + '%"></i></div><p class="cp-pace">' + paceTxt + '</p>' + joinLine + '<p class="o-card__sub">' + cpEsc(next) + '</p>' + strip + '</section>';
   const fun = [['Reached', s.reached, null, 'People Kairo has messaged or checked.'], ['Replied', s.replied, s.reached, 'Anyone who answered, including “not now”.'], ['Interested', s.interested, s.replied, 'Said yes, or applied themselves.'], ['Pre-screened', s.screened, s.interested, 'Answered every pre-screen question.'], ['Ready to call', s.ready, s.screened, 'Passed the pre-screen and booked a call.'], ['Submitted to client', s.submitted, s.ready, 'You submitted them after the call.'], ['In interview', s.interviews, s.submitted, 'The client is interviewing them.']];
   const max = Math.max(1, s.reached);
   const funnel = '<section class="o-card"><h2 class="o-card__title">How people moved</h2><ul class="cp-fun">' + fun.map(function(f){ return '<li>' + cpTw('<span class="cp-fun__l">' + f[0] + '</span><span class="cp-fun__b"><i style="width:' + Math.max(2, Math.round(f[1] / max * 100)) + '%"></i></span><span class="cp-fun__n">' + f[1] + (f[2] != null && f[2] ? ' <small>' + cpPct(f[1], f[2]) + '%</small>' : '') + '</span>', f[0], [[f[1] + ' people', f[2] ? cpPct(f[1], f[2]) + '% of the row above' : '']], f[3], 'cp-tw-block') + '</li>'; }).join('') + '</ul></section>';
@@ -45641,16 +45672,11 @@ function cpMovesCard(c){
   return '<section class="o-card"><h2 class="o-card__title">Kairo’s next moves</h2>' + (rows ? '<ul class="cp-moves">' + rows + '</ul>' : '<p class="o-card__sub">Nothing to change right now.</p>') + '</section>';
 }
 function cpNeedsCard(c){
-  const ppl = cpPeopleOf(c), q = ppl.filter(function(p){ return p.state === 'needsYou'; }), cm = ppl.filter(function(p){ return p.state === 'closeMiss'; }), today = ppl.filter(function(p){ return p.state === 'ready' && p.slot && CP_ISO(p.slot) === CP_ISO(CP_NOW()); });
-  const rv = c.review.pending.filter(function(r){ return r.state === 'pending'; });
   const row = function(t, m, btn){ return '<li class="cp-need"><span class="cp-need__t">' + t + '<small>' + m + '</small></span>' + btn + '</li>'; };
-  const items = [];
-  if(rv.length && c.status === 'review') items.push(row(rv.length + ' messages wait for you', 'Nothing is sent until you check them', '<button type="button" class="o-btn" onclick="cpReviewOpen(\'' + c.id + '\')">Check</button>'));
-  q.forEach(function(p){ const cand = byId(p.candidateId); items.push(row(cpEsc(cand.name) + ' asked a question', cpEsc(p.question || 'Kairo could not read the answer'), '<button type="button" class="o-btn" onclick="cpChatOpen(\'' + p.id + '\')">Reply</button>')); });
-  cm.forEach(function(p){ const cand = byId(p.candidateId); items.push(row(cpEsc(cand.name) + ' is a close miss', cpEsc(p.reason || ''), '<button type="button" class="o-btn" onclick="cpResolve(\'' + p.id + '\',\'call\')">Offer a call</button>')); });
-  today.forEach(function(p){ const cand = byId(p.candidateId); items.push(row('Call ' + cpEsc(cand.name) + ' today', cpEsc(p.slotText || ''), '<button type="button" class="o-btn" onclick="cpCallOpen(\'' + p.id + '\')">Open brief</button>')); });
+  const items = cpEditable(c) ? cpMyDay('all').filter(function(x){ return x.c === c; }).map(function(x){ return row(x.w >= 8 ? attHTML(x.t) : cpEsc(x.t), cpEsc(x.m), '<button type="button" class="o-btn" onclick="' + x.on + '">' + cpEsc(x.cta) + '</button>'); }) : [];
   return '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">Needs you</h2>' + (items.length ? '<span class="o-card__sub">' + items.length + '</span>' : '') + '</div>' + (items.length ? '<ul class="cp-needs">' + items.join('') + '</ul>' : '<p class="o-card__sub">Nothing needs you right now.</p>') + '</section>';
 }
+function cpEditable(c){ return cpCanEdit(c) || c.ownerId === currentUserId(); }
 function cpHowCard(c){
   const chans = ['whatsapp','email','linkedin'].filter(function(k){ return c.message.steps.some(function(s){ return s.channel === k || s.channel === 'auto'; }) && (k !== 'linkedin' || c.plays.li); }).map(function(k){ return { whatsapp:'WhatsApp', email:'Email', linkedin:'LinkedIn' }[k]; });
   const rows = [ ['Approach', c.mix === 'recommended' ? 'Recommended mix' : 'Your mix', 'Warmest people first. Wider only if the pace needs it.'], ['Channels', chans.join(', ') || '—', 'The best channel each person agreed to.'], ['Messages', c.message.steps.length + ' steps · ' + c.message.tone, c.message.ab ? 'Two openings are tested; the one with more replies is kept.' : 'One opening.'], ['Sender', cpSenderOf(c).name, 'Every message is in this person’s name.'], ['Send hours', c.rules.hours.replace('-', ' to '), 'Never Sundays, never more than 3 messages to a person.'], ['Checked by you', c.rules.checkFirst ? 'First ' + c.rules.checkFirst : 'No', c.rules.checkFirst ? 'The first ' + c.rules.checkFirst + ' messages wait for you.' : 'Messages go out on their own.'] ];
@@ -45660,14 +45686,19 @@ function cpApplicantsTab(c){
   const ppl = cpPeopleOf(c).filter(function(p){ return ['queued','optedOut'].indexOf(p.state) === -1; });
   const f = CP.appFilter, rows = ppl.filter(function(p){ return f === 'all' || (f === 'ready' ? p.state === 'ready' : f === 'screen' ? ['screening','booking'].indexOf(p.state) > -1 : ['interested','screening','booking','ready','needsYou','closeMiss'].indexOf(p.state) > -1); }).sort(function(a, b){ return (a.slot || 9e15) - (b.slot || 9e15) || b.score - a.score; });
   const seg = '<div role="group" class="seg" aria-label="Applicants">' + [['ready','Ready to call'],['screen','In pre-screen'],['interested','Interested'],['all','All']].map(function(x){ return '<button type="button" class="seg__btn' + (f === x[0] ? ' is-on' : '') + '" aria-pressed="' + (f === x[0]) + '" onclick="CP.appFilter=\'' + x[0] + '\'; cpRefresh()">' + x[1] + '</button>'; }).join('') + '</div>';
-  const job = cpJob(c.jobId), qs = c.prescreen.questions;
+  const job = cpJob(c.jobId), qs = c.prescreen.questions, canPick = cpCanEdit(c) && rows.some(function(p){ return p.state === 'ready'; });
   const body = rows.map(function(p){
     const cand = byId(p.candidateId), ans = p.answers || {}, done = Object.keys(ans).filter(function(k){ return k.charAt(0) !== '_'; }).length;
     const action = p.state === 'ready' ? (p.called ? '<button type="button" class="o-btn" onclick="cpSubmit(\'' + p.id + '\')">Submit</button>' : '<button type="button" class="o-btn" onclick="cpCallOpen(\'' + p.id + '\')">Call</button>') : p.state === 'needsYou' || p.state === 'closeMiss' ? '<button type="button" class="o-btn" onclick="cpChatOpen(\'' + p.id + '\')">' + attHTML('Reply') + '</button>' : '<button type="button" class="o-link" onclick="cpChatOpen(\'' + p.id + '\')">View chat</button>';
     const whyTxt = cwReason({ c:cand, job:job }, 'match');
-    return '<tr><td><b>' + cpEsc(cand.name) + '</b><small>' + cpEsc([cand.role, cand.company || '', cand.exp, cand.salary].filter(Boolean).join(' · ')) + '</small></td><td>' + cpTw('<span class="cp-num">' + p.score + '</span>', 'Why', [whyTxt.replace(/^Score \d+ · /, '')], '') + '</td><td>' + cpTw('<span class="cp-num">' + done + ' of ' + qs.length + '</span>', 'Pre-screen answers', Object.keys(ans).filter(function(k){ return k.charAt(0) !== '_'; }).map(function(k){ return [k === 'ctc' ? 'Pay' : k.charAt(0).toUpperCase() + k.slice(1), ans[k]]; }).concat(p.state === 'screening' ? [['Now', 'Answering question ' + (p.qIndex + 1)]] : []), '') + '</td><td>' + cpEsc(cand.notice || '') + '</td><td>' + cpEsc((cpPlay(p.play) || {}).name || '') + (p.state === 'ready' && p.slotText ? '<small>' + cpEsc(p.slotText) + '</small>' : p.state === 'closeMiss' || p.state === 'needsYou' ? '<small>' + attHTML('Needs you') + '</small>' : '') + '</td><td class="cp-act">' + action + '</td></tr>';
-  }).join('') || '<tr><td colspan="6" class="cp-empty">Nobody here yet.</td></tr>';
-  return '<section class="o-card o-card--flush"><div class="cp-tools-wrap">' + seg + '</div><div class="o-table-wrap"><table class="o-table" style="min-width:720px"><thead><tr><th>Candidate</th><th>Score</th><th>Pre-screen</th><th>Notice</th><th>Source</th><th></th></tr></thead><tbody>' + body + '</tbody></table></div><p class="cp-foot">Showing ' + rows.length + ' of ' + c.stats.interested + '. The same people are in Jobs → ' + cpEsc(c.title) + ' → Applicants, marked Campaign.</p></section>';
+    const ev = p.state === 'ready' ? cpEvaluate(c, p) : null, sel = CP.pick && CP.pick[p.id];
+    const evCell = ev ? cpTw('<span class="cp-rec cp-rec--' + ev.rec + '">' + (ev.rec === 'hold' ? attHTML(ev.recText) : cpEsc(ev.recText)) + '</span>', 'Kairo’s evaluation', ev.fit.map(function(f){ return [f.k + (f.ok ? '' : f.close ? ' · close' : ' · miss'), f.note]; }).concat(ev.risks.map(function(r){ return ['Risk', r]; })), ev.why) : '<span class="cp-muted">—</span>';
+    const box = canPick ? '<td class="cp-box">' + (ev ? '<input type="checkbox" aria-label="Pick ' + cpEsc(cand.name) + '"' + (sel ? ' checked' : '') + ' onchange="cpPick(\'' + p.id + '\', this.checked)" />' : '') + '</td>' : '';
+    return '<tr>' + box + '<td><b>' + cpEsc(cand.name) + '</b><small>' + cpEsc([cand.role, cand.company || '', cand.exp, cand.salary].filter(Boolean).join(' · ')) + '</small></td><td>' + cpTw('<span class="cp-num">' + p.score + '</span>', 'Why', [whyTxt.replace(/^Score \d+ · /, '')], '') + '</td><td>' + evCell + '</td><td>' + cpTw('<span class="cp-num">' + done + ' of ' + qs.length + '</span>', 'Pre-screen answers', Object.keys(ans).filter(function(k){ return k.charAt(0) !== '_'; }).map(function(k){ return [k === 'ctc' ? 'Pay' : k.charAt(0).toUpperCase() + k.slice(1), ans[k]]; }).concat(p.state === 'screening' ? [['Now', 'Answering question ' + (p.qIndex + 1)]] : []), '') + '</td><td>' + cpEsc(cand.notice || '') + '</td><td>' + cpEsc((cpPlay(p.play) || {}).name || '') + (p.state === 'ready' && p.slotText ? '<small>' + cpEsc(p.slotText) + '</small>' : p.state === 'closeMiss' || p.state === 'needsYou' ? '<small>' + attHTML('Needs you') + '</small>' : '') + '</td><td class="cp-act">' + action + '</td></tr>';
+  }).join('') || '<tr><td colspan="8" class="cp-empty">Nobody here yet.</td></tr>';
+  const picked = Object.keys(CP.pick || {}).filter(function(k){ return CP.pick[k] && cpPerson(k) && cpPerson(k).state === 'ready' && cpPerson(k).campaignId === c.id; });
+  const bulk = canPick ? '<div class="cp-bulk">' + (picked.length ? '<span>' + picked.length + ' picked</span><button type="button" class="o-btn" onclick="cpPickSuggested(\'' + c.id + '\')">Pick Kairo’s “Submit”</button><button type="button" class="o-btn o-btn--primary" onclick="cpSubmitPicked(\'' + c.id + '\')">Send ' + picked.length + ' for review</button>' : '<button type="button" class="o-btn" onclick="cpPickSuggested(\'' + c.id + '\')">Pick Kairo’s “Submit”</button><span class="cp-muted">Kairo suggests; you decide who is submitted.</span>') + '</div>' : '';
+  return '<section class="o-card o-card--flush"><div class="cp-tools-wrap">' + seg + bulk + '</div><div class="o-table-wrap"><table class="o-table" style="min-width:820px"><thead><tr>' + (canPick ? '<th class="cp-box"></th>' : '') + '<th>Candidate</th><th>Score</th><th>Kairo suggests</th><th>Pre-screen</th><th>Notice</th><th>Source</th><th></th></tr></thead><tbody>' + body + '</tbody></table></div><p class="cp-foot">Showing ' + rows.length + ' of ' + c.stats.interested + '. The same people are in Jobs → ' + cpEsc(c.title) + ' → Applicants, marked Campaign.</p></section>';
 }
 function cpMessagesTab(c){
   const steps = c.message.steps, vs = c.message.versions || [];
@@ -45709,17 +45740,24 @@ function cpActivityTab(c){
 function cpPauseUI(id){ const c = cpById(id); if(!c) return; const me = (currentActingUser() || {}).name || 'a person'; cpPause(c, me, 'Paused by ' + me); toast('Paused. Nothing is sent.'); cpRefresh(); }
 function cpResumeUI(id){ const c = cpById(id); if(c && cpResume(c)){ toast('Resumed'); cpRefresh(); } }
 function cpCallList(id){ const c = cpById(id); if(!c) return; CP.tab = 'applicants'; CP.appFilter = 'ready'; cpRefresh(); }
-function cpModal(html){ let root = document.getElementById('cp-modal-root'); if(!root){ root = document.createElement('div'); root.id = 'cp-modal-root'; document.body.appendChild(root); } root.innerHTML = html ? '<div class="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true"><div class="modal-backdrop absolute inset-0" onclick="cpModal(\'\')"></div><div class="modal-panel relative bg-white w-full max-w-lg p-6 cp-modal">' + html + '</div></div>' : ''; }
+function cpModal(html, wide){ let root = document.getElementById('cp-modal-root'); if(!root){ root = document.createElement('div'); root.id = 'cp-modal-root'; document.body.appendChild(root); } if(!html) CP.q = null; root.innerHTML = html ? '<div class="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true"><div class="modal-backdrop absolute inset-0" onclick="cpModal(\'\')"></div><div class="modal-panel relative bg-white w-full ' + (wide ? 'cp-modal--wide' : 'max-w-lg') + ' p-6 cp-modal">' + html + '</div></div>' : ''; }
 function cpCallOpen(pid){
   const p = cpPerson(pid); if(!p) return; const c = cpById(p.campaignId), cand = byId(p.candidateId), job = cpJob(c.jobId);
   const ans = Object.keys(p.answers).filter(function(k){ return k.charAt(0) !== '_'; }).map(function(k){ return '<div class="kv"><span>' + cpEsc(k === 'ctc' ? 'Pay' : k) + '</span><span>' + cpEsc(p.answers[k]) + '</span></div>'; }).join('');
-  cpModal('<h2 class="o-card__title">' + cpEsc(cand.name) + '</h2><p class="o-card__sub">' + cpEsc([cand.role, cand.company || '', cand.exp].filter(Boolean).join(' · ')) + (p.slotText ? ' · call ' + cpEsc(p.slotText) : '') + '</p><h3 class="cp-h3">Why they fit</h3><p class="o-card__sub">' + cpEsc(cwReason({ c:cand, job:job }, 'match').replace(/^Score \d+ · Why: /, '')) + '</p><h3 class="cp-h3">Their answers</h3><div class="cp-kv">' + (ans || '<p class="o-card__sub">None yet.</p>') + '</div><h3 class="cp-h3">Notes</h3><textarea class="app-input" rows="3" placeholder="Notes from the call" id="cp-call-notes"></textarea><div class="cp-modal__f"><button type="button" class="o-btn" onclick="cpChatOpen(\'' + p.id + '\'); cpModal(\'\')">View chat</button><button type="button" class="o-btn" onclick="cpModal(\'\')">Close</button><button type="button" class="o-btn o-btn--primary" onclick="cpCallDone(\'' + p.id + '\')">Call done</button></div>');
+  cpModal('<h2 class="o-card__title">' + cpEsc(cand.name) + '</h2><p class="o-card__sub">' + cpEsc([cand.role, cand.company || '', cand.exp].filter(Boolean).join(' · ')) + (p.slotText ? ' · call ' + cpEsc(p.slotText) : '') + '</p><h3 class="cp-h3">Why they fit</h3><p class="o-card__sub">' + cpEsc(cwReason({ c:cand, job:job }, 'match').replace(/^Score \d+ · Why: /, '')) + '</p>' + cpEvalBrief(c, p) + '<h3 class="cp-h3">Their answers</h3><div class="cp-kv">' + (ans || '<p class="o-card__sub">None yet.</p>') + '</div><h3 class="cp-h3">Notes</h3><textarea class="app-input" rows="3" placeholder="Notes from the call" id="cp-call-notes"></textarea><div class="cp-modal__f"><button type="button" class="o-btn" onclick="cpChatOpen(\'' + p.id + '\'); cpModal(\'\')">View chat</button><button type="button" class="o-btn" onclick="cpModal(\'\')">Close</button><button type="button" class="o-btn o-btn--primary" onclick="cpCallDone(\'' + p.id + '\')">Call done</button></div>');
+}
+function cpEvalBrief(c, p){
+  if(p.state !== 'ready') return ''; const ev = cpEvaluate(c, p);
+  return '<h3 class="cp-h3">Kairo suggests: ' + cpEsc(ev.recText) + '</h3><p class="o-card__sub">' + cpEsc(ev.why) + '</p><div class="cp-kv">' + ev.fit.map(function(f){ return '<div class="kv"><span>' + cpEsc(f.k) + '</span><span>' + (f.ok ? cpEsc(f.note) : attHTML(f.note)) + '</span></div>'; }).join('') + ev.risks.map(function(r){ return '<div class="kv"><span>Ask about</span><span>' + attHTML(r) + '</span></div>'; }).join('') + '</div>';
 }
 function cpCallDone(pid){ const p = cpPerson(pid); if(!p) return; const n = (document.getElementById('cp-call-notes') || {}).value; p.called = true; p.notes = n || ''; const c = cpById(p.campaignId); cpLog(c, 'Call done with ' + byId(p.candidateId).name, 'call', (currentActingUser() || {}).name); cpModal(''); toast('Saved. You can submit them now.'); cpRefresh(); }
-function cpSubmit(pid){
+function cpPick(pid, on){ CP.pick = CP.pick || {}; CP.pick[pid] = on; cpRefresh(); }
+function cpPickSuggested(cid){ const c = cpById(cid); CP.pick = {}; cpPeopleOf(c).forEach(function(p){ if(p.state === 'ready' && cpEvaluate(c, p).rec === 'submit') CP.pick[p.id] = true; }); if(!Object.keys(CP.pick).length) toast('Kairo suggests calling everyone first. Mark calls done to see who to submit.'); cpRefresh(); }
+function cpSubmitPicked(cid){ const ids = Object.keys(CP.pick || {}).filter(function(k){ const p = cpPerson(k); return CP.pick[k] && p && p.state === 'ready' && p.campaignId === cid; }); ids.forEach(function(id){ cpSubmit(id, true); }); CP.pick = {}; toast(ids.length + ' sent for review. A person decides on every submission.'); cpRefresh(); }
+function cpSubmit(pid, quiet){
   const p = cpPerson(pid); if(!p) return; const c = cpById(p.campaignId), job = cpJob(c.jobId), sb = job.corp ? null : findSubmission(job.id, p.candidateId);
   if(sb && typeof moveSubmissionStage === 'function') moveSubmissionStage(sb.id, 'Pending Review', 'Submitted from the campaign after the call'); if(sb) sb.campaignStage = 'Submitted';
-  p.state = 'done'; p.tag = 'submitted'; c.stats.submitted++; cpLog(c, byId(p.candidateId).name + ' submitted for review after the call', 'submit', (currentActingUser() || {}).name); cpAudit(c, 'submission · ' + byId(p.candidateId).name); toast('Sent for review. A person decides on the submission.'); cpRefresh();
+  p.state = 'submitted'; p.jAt = CP_NOW(); p.tag = 'submitted'; c.stats.submitted++; if(quiet){ cpLog(c, byId(p.candidateId).name + ' submitted for review', 'submit', (currentActingUser() || {}).name); return; } cpLog(c, byId(p.candidateId).name + ' submitted for review after the call', 'submit', (currentActingUser() || {}).name); cpAudit(c, 'submission · ' + byId(p.candidateId).name); toast('Sent for review. A person decides on the submission.'); cpRefresh();
 }
 function cpReviewOpen(cid){
   const c = cpById(cid); if(!c) return; const can = cpCanApprove(c);
@@ -45743,10 +45781,14 @@ function cpBlank(jobId){ const c = cpNewCampaign(jobId, { detached:true }); retu
 function cpDraft(){
   if(CP.draft) return CP.draft;
   const jobs = cpWorkableJobs(); const pre = CP.jobPick && jobs.find(function(j){ return j.id === CP.jobPick; }); const j = pre || jobs.filter(function(x){ return !CAMPAIGNS.some(function(c){ return c.jobId === x.id && c.status !== 'done'; }); })[0] || jobs[0];
-  CP.draft = j ? cpBlank(j.id) : null; CP.jobPick = ''; return CP.draft;
+  CP.draft = j ? cpFreshDraft(j.id) : null; CP.jobPick = ''; return CP.draft;
+}
+/** a new draft: goal in joinings, and the campaign type picked from the job */
+function cpFreshDraft(jobId){
+  const d = cpBlank(jobId), job = cpJob(jobId), pb = cpDetectPlaybook(job); d.goalType = 'join'; d.goal.join = job.positions || 1; cpApplyPlaybook(d, pb.key); return d;
 }
 function cpIsFirstCampaign(d){ return !CAMPAIGNS.some(function(c){ return c.ownerId === (d.message.senderId || d.ownerId) && c.id !== d.id && c.status !== 'draft'; }); }
-function cpJobChange(id){ const d = cpDraft(); const keep = d.rules; CP.draft = cpBlank(id); CP.draft.rules = keep; CP.riskOk = false; cpEdRender(); }
+function cpJobChange(id){ const d = cpDraft(); const keep = d.rules; CP.draft = cpFreshDraft(id); CP.draft.rules = keep; CP.riskOk = false; cpEdRender(); }
 function cpEdRender(){ const m = document.getElementById('main-content'); if(!m) return; const top = m.scrollTop; m.innerHTML = cpEditorHTML(); m.scrollTop = top; oPostRender(m); cpPills(); }
 function cpSw(on, onclick, label, dis){ return '<button type="button" role="switch" aria-checked="' + !!on + '" aria-label="' + cpEsc(label) + '" class="app-switch' + (on ? ' is-on' : '') + '"' + (dis ? ' disabled style="opacity:.55"' : ' onclick="' + onclick + '"') + '><span></span></button>'; }
 function cpSec(n, title, inner, id){ return '<section class="o-card cp-sec" id="' + (id || 'cp-s' + n) + '"><div class="cp-sec__h"><span class="cp-sec__n">' + n + '</span><h2 class="o-card__title">' + title + '</h2></div>' + inner + '</section>'; }
@@ -45765,6 +45807,10 @@ function cpChanges(){
   if(JSON.stringify(d.prescreen.questions) !== JSON.stringify(l.prescreen.questions)) out.push('Pre-screen questions changed');
   if(JSON.stringify(d.pace) !== JSON.stringify(l.pace)) out.push('Sending pace changed');
   if(d.rules.checkFirst !== l.rules.checkFirst) out.push('Check the first messages ' + (d.rules.checkFirst ? 'on' : 'off'));
+  if((d.goalType || 'ready') !== (l.goalType || 'ready')) out.push('Goal is now ' + (d.goalType === 'join' ? 'joinings' : 'people ready to call'));
+  if(d.goalType === 'join' && d.goal.join !== l.goal.join) out.push('Joinings ' + l.goal.join + ' → ' + d.goal.join);
+  if((d.playbook || 'standard') !== (l.playbook || 'standard')) out.push('Campaign type ' + CP_PLAYBOOKS[l.playbook || 'standard'].name + ' → ' + CP_PLAYBOOKS[d.playbook].name);
+  CP_STAGES.forEach(function(st){ if(cpStageLevel(d, st.id) !== cpStageLevel(l, st.id)) out.push(st.name + ': ' + CP_LEVELS.find(function(x){ return x[0] === cpStageLevel(d, st.id); })[1]); });
   return out;
 }
 function cpDiffValues(){ const d = CP.draft, l = CP.live, out = []; if(!l) return out; if(d.goal.ready !== l.goal.ready) out.push('goal ' + l.goal.ready + ' → ' + d.goal.ready); if(d.goal.by !== l.goal.by) out.push('date ' + l.goal.by + ' → ' + d.goal.by); if(d.message.tone !== l.message.tone) out.push('tone ' + l.message.tone + ' → ' + d.message.tone); return out; }
@@ -45774,7 +45820,7 @@ function cpEditorHTML(){
   const d = cpDraft(), edit = !!CP.live; if(!d) return '<div class="content-shell o-page" id="cp-editor-root">' + pageHeaderHTML({ title:'New campaign' }) + '<div class="o-card">' + oEmpty('zap', 'There are no open jobs you can run a campaign for.') + '</div></div>';
   const job = cpJob(d.jobId), plan = cpPlanFor(d), changes = cpChanges(), nv = edit ? CP.live.version + 1 : 1;
   const head = pageHeaderHTML({ title:edit ? 'Edit campaign' : 'New campaign', meta:edit ? 'Live while you edit. Your changes go out as version ' + nv + ' when you publish.' : '', actions:edit ? '<button type="button" class="o-btn o-btn--lg" onclick="cpDiscard()">Discard changes</button>' : '<button type="button" class="o-btn o-btn--lg" onclick="cpSaveDraft()">Save draft</button>' });
-  const left = cpSecJob(d, job, edit) + cpSecGoal(d, job, plan) + cpSecWho(d, job, plan) + cpSecMsg(d, job) + cpSecPace(d) + cpSecPre(d, job) + cpSecSafe(d);
+  const left = cpSecJob(d, job, edit) + cpSecGoal(d, job, plan) + cpSecWho(d, job, plan) + cpSecMsg(d, job) + cpSecPace(d) + cpSecPre(d, job) + cpSecSafe(d) + cpSecAfter(d);
   return '<div class="content-shell o-page" id="cp-editor-root"><a class="cp-back" href="#" onclick="' + (edit ? "cpOpen('" + CP.live.id + "'); return false" : 'cpBack(); return false') + '">← ' + (edit ? cpEsc(CP.live.title) : 'Campaigns') + '</a>' + head + '<div class="cp-ed"><div class="cp-ed__l">' + left + '</div><aside class="cp-ed__r">' + cpPlanPanel(d, job, plan, edit, changes, nv) + '</aside></div></div>';
 }
 function cpSecJob(d, job, edit){
@@ -45784,14 +45830,19 @@ function cpSecJob(d, job, edit){
   const feeTxt = cpIsCorp() ? cpMoney(cpFee(job)) + ' per hire avoided' : (fee ? cpMoney(fee.fee) + ' per hire' : cpMoney(cpFee(job)));
   const feeCell = cpTw(cpEsc(feeTxt), cpIsCorp() ? 'Agency fee avoided' : 'Fee per hire', [fee ? fee.text : '8.33% of the middle of the pay range', 'Pay range ' + (cpPayText(job) || 'not added')], '');
   const facts = [[cpIsCorp() ? 'Department' : 'Client', cpEsc(cpJobCompany(job)) + ' · ' + (job.positions || 1) + ((job.positions || 1) === 1 ? ' position' : ' positions')], ['Must-haves', cpEsc((job.skills || []).join(', '))], ['Experience', cpEsc(job.minExp || 'Any')], ['Location', cpEsc((job.loc || '') + (job.workMode ? ' · ' + job.workMode : ''))], ['Pay range', pay], ['Notice limit', cpEsc(job.notice || 'Not set')], [cpIsCorp() ? 'Agency fee avoided' : 'Fee per hire', feeCell]];
-  return cpSec(1, 'Which job', sel + '<dl class="cp-facts">' + facts.map(function(f){ return '<div><dt>' + f[0] + '</dt><dd>' + f[1] + '</dd></div>'; }).join('') + '</dl>');
+  const pb = cpDetectPlaybook(job), cur = d.playbook || 'standard';
+  const types = '<p class="cp-lab cp-gap">Campaign type</p><div class="cp-chips">' + Object.keys(CP_PLAYBOOKS).map(function(k){ return cpTw('<button type="button" class="cp-chip' + (cur === k ? ' is-on' : '') + '" aria-pressed="' + (cur === k) + '" onclick="cpPickPlaybook(\'' + k + '\')">' + CP_PLAYBOOKS[k].name + (pb.key === k ? ' <small>suggested</small>' : '') + '</button>', CP_PLAYBOOKS[k].name, [CP_PLAYBOOKS[k].sub], pb.key === k ? 'Suggested because of ' + pb.why + '. Picking a type resets sources, messages and questions to suit it.' : 'Picking a type resets sources, messages and questions to suit it.'); }).join('') + '</div>';
+  return cpSec(1, 'Which job', sel + '<dl class="cp-facts">' + facts.map(function(f){ return '<div><dt>' + f[0] + '</dt><dd>' + f[1] + '</dd></div>'; }).join('') + '</dl>' + types);
 }
 function cpSecGoal(d, job, plan){
   const h = cpHistory(job), sugg = (job.positions || 1) * 6, days = [7, 10, 14], byMs = new Date(d.goal.by + 'T12:00:00').getTime(), left = Math.round((byMs - CP_NOW()) / CP_DAY);
   const chips = days.map(function(n){ const iso = CP_ISO(CP_NOW() + n * CP_DAY); return '<button type="button" class="cp-chip' + (d.goal.by === iso ? ' is-on' : '') + '" aria-pressed="' + (d.goal.by === iso) + '" onclick="cpSetBy(\'' + iso + '\')">' + n + ' days <small>' + cpDate(iso) + '</small></button>'; }).join('');
   const hint = 'Suggested: ' + sugg + '. Your teams usually need about ' + Math.round(1 / (h.readyToSubmit * h.submitToHire) * 10) / 10 + ' ready people per hire (half of ready people get submitted and about a third of those are hired).';
   const how = cpTw('<button type="button" class="o-link">How Kairo plans this</button>', 'How Kairo plans this', [['Reply rate', Math.round(h.reply * 100) + '%'], ['Interested', Math.round(h.interested * 100) + '%'], ['Ready to call', Math.round(h.ready * 100) + '%']], 'From your last 90 days on similar roles.');
-  return cpSec(2, 'Goal', '<div class="cp-goalrow"><span class="cp-lab">People ready to call</span><span class="cp-step"><button type="button" aria-label="Fewer" onclick="cpSetGoal(' + (d.goal.ready - 1) + ')">−</button><b id="cp-gv">' + d.goal.ready + '</b><button type="button" aria-label="More" onclick="cpSetGoal(' + (d.goal.ready + 1) + ')">+</button></span><span class="cp-lab">By</span><span class="cp-chips">' + chips + '</span></div><p class="cp-hint">' + cpEsc(hint) + '</p><div class="cp-sentence" id="cp-sentence">' + cpEsc(cpPlanSentence(plan, d)) + '</div>' + how);
+  const jt = d.goalType === 'join', jp = cpJoinPlan(d);
+  const gtype = '<div role="group" class="seg cp-gtype" aria-label="Goal type">' + [['join','Joinings'],['ready','People ready to call']].map(function(t){ return '<button type="button" class="seg__btn' + ((d.goalType || 'ready') === t[0] ? ' is-on' : '') + '" aria-pressed="' + ((d.goalType || 'ready') === t[0]) + '" onclick="cpSetGoalType(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>';
+  const joinRow = jt ? '<div class="cp-goalrow"><span class="cp-lab">Joinings</span><span class="cp-step"><button type="button" aria-label="Fewer joinings" onclick="cpSetJoin(' + ((d.goal.join || 1) - 1) + ')">−</button><b id="cp-jv">' + (d.goal.join || 1) + '</b><button type="button" aria-label="More joinings" onclick="cpSetJoin(' + ((d.goal.join || 1) + 1) + ')">+</button></span>' + cpTw('<span class="cp-muted">about ' + jp.joins + ' expected around ' + cpDate(jp.around) + '</span>', 'From ready to joined', [['Ready to call', d.goal.ready], ['Submitted', jp.subs], ['Interviewed', jp.ints], ['Offers', jp.offers], ['Joined', jp.joins]], 'From your last 90 days on similar roles. The joining date allows for interviews and the notice period.') + '</div>' : '';
+  return cpSec(2, 'Goal', gtype + joinRow + '<div class="cp-goalrow"><span class="cp-lab">People ready to call</span><span class="cp-step"><button type="button" aria-label="Fewer" onclick="cpSetGoal(' + (d.goal.ready - 1) + ')">−</button><b id="cp-gv">' + d.goal.ready + '</b><button type="button" aria-label="More" onclick="cpSetGoal(' + (d.goal.ready + 1) + ')">+</button></span><span class="cp-lab">By</span><span class="cp-chips">' + chips + '</span></div><p class="cp-hint">' + cpEsc(hint) + '</p><div class="cp-sentence" id="cp-sentence">' + cpEsc(cpPlanSentence(plan, d)) + '</div>' + how);
 }
 function cpSetGoal(n){ const d = CP.draft; d.goal.ready = Math.max(1, Math.min(200, n)); d.goalEdited = true; cpEdRender(); }
 function cpSetBy(iso){ CP.draft.goal.by = iso; cpEdRender(); }
@@ -45910,6 +45961,15 @@ function cpSecSafe(d){
   const first = cpIsFirstCampaign(d), rows = [['Send hours', '10:00 to 20:00 their time, never Sundays', 'Messages wait for the next window.'], ['Messages per person', '3 at most', 'No more than 1 a day or 3 a week from any campaign or agent.'], ['Stops when', 'they reply, say no, unsubscribe or STOP', 'Any reply stops the sequence at once.'], ['Never contacted', 'client employees, do-not-contact list', 'Each skip is logged with its reason.'], ['Consent', 'WhatsApp only with opt-in; email has unsubscribe', 'Outside the 24-hour window WhatsApp uses an approved template.']];
   return cpSec(7, 'Safe sending', '<ul class="cp-safe">' + rows.map(function(r){ return '<li>' + cpTw('<span>' + r[0] + '</span><b>' + r[1] + '</b>', r[0], [r[2]], '', 'cp-tw-block') + '</li>'; }).join('') + '</ul><div class="cp-chk"><span>Let me check the first 10 messages before they go' + (first ? '<small>Locked on for a sender’s first campaign.</small>' : '') + '</span>' + cpSw(d.rules.checkFirst > 0 || first, 'cpCheckFirst()', 'Check the first 10 messages', first) + '</div>' + (d.__edit ? '<div class="cp-chk"><span>Let me check the first 10 messages of the new version</span>' + cpSw(d.rules.recheck !== false, 'cpRecheck()', 'Check the new version') + '</div>' : ''));
 }
+function cpSecAfter(d){
+  const rows = CP_STAGES.slice(2).map(function(st){
+    const off = cpStageWhyOff(st), lv = cpStageLevel(d, st.id);
+    const ctl = off ? '<span class="cp-muted">You do this · ' + cpEsc(off) + '</span>' : '<select class="app-input app-select cp-lv" aria-label="' + st.name + '" onchange="cpDraftStage(\'' + st.id + '\', this.value)">' + CP_LEVELS.filter(function(l){ return st.id !== 'offer' || l[0] !== 'auto'; }).map(function(l){ return '<option value="' + l[0] + '"' + (lv === l[0] ? ' selected' : '') + '>' + l[1] + '</option>'; }).join('') + '</select>';
+    return '<li class="cp-play">' + cpTw('<span class="cp-play__t"><b>' + st.name + '</b><small>' + cpEsc(st.does) + '</small></span>', st.name, [st.does, 'Agent: ' + ((agentById(st.agent) || {}).name || '')], st.id === 'offer' ? 'Offer terms are always decided by a person.' : '', 'cp-tw-block') + ctl + '</li>';
+  }).join('');
+  return cpSec(8, 'After the call', '<p class="cp-hint">Kairo carries everyone you submit through the interview, the offer and up to their first day. Choose how much it does.</p><ul class="cp-plays">' + rows + '</ul>');
+}
+function cpDraftStage(id, lv){ const d = CP.draft; d.stages = d.stages || {}; d.stages[id] = lv; cpEdRender(); }
 function cpCheckFirst(){ const d = CP.draft; d.rules.checkFirst = d.rules.checkFirst ? 0 : 10; cpEdRender(); }
 function cpRecheck(){ const d = CP.draft; d.rules.recheck = d.rules.recheck === false; cpEdRender(); }
 
@@ -45919,7 +45979,7 @@ function cpPlanPanel(d, job, plan, edit, changes, nv, live){
   const block = first ? first.text : risky ? 'Confirm the faster sending settings first.' : '';
   const dis = edit ? !changes.length || !!block : !!block;
   const hr = Math.round(plan.handHours * 10) / 10, yr = plan.yourHours;
-  const rows = [['People to reach', plan.reachAll, 'Applications checked and people messaged.'], ['Replies expected', plan.replies, 'From your last 90 days on similar roles.'], ['Ready to call by ' + cpDate(d.goal.by), Math.round(plan.ready), 'About this many pass the pre-screen and book a call.'], ['Kairo sends', plan.msgs, 'Messages across all steps.'], ['Your time vs by hand', yr + ' h vs ' + hr + ' h', 'Your time is the calls and the check; by hand adds every message and pre-screen.'], [cpIsCorp() ? 'Agency fee avoided' : 'At stake', cpMoneyMode() === 'placements' ? (job.positions || 1) + ' placements' : cpMoney(plan.atStake), cpIsCorp() ? '8.33% of the middle of the pay range × positions.' : (job.positions || 1) + ' positions × the fee for this pay range (CTC slab aware).']];
+  const rows = [['People to reach', plan.reachAll, 'Applications checked and people messaged.'], ['Replies expected', plan.replies, 'From your last 90 days on similar roles.'], ['Ready to call by ' + cpDate(d.goal.by), Math.round(plan.ready), 'About this many pass the pre-screen and book a call.'], ['Joinings expected', cpJoinPlan(d).joins + ' around ' + cpDate(cpJoinPlan(d).around), 'Ready → submitted → interviewed → offer → joined, from your last 90 days.'], ['Kairo sends', plan.msgs, 'Messages across all steps.'], ['Your time vs by hand', yr + ' h vs ' + hr + ' h', 'Your time is the calls and the check; by hand adds every message and pre-screen.'], [cpIsCorp() ? 'Agency fee avoided' : 'At stake', cpMoneyMode() === 'placements' ? (job.positions || 1) + ' placements' : cpMoney(plan.atStake), cpIsCorp() ? '8.33% of the middle of the pay range × positions.' : (job.positions || 1) + ' positions × the fee for this pay range (CTC slab aware).']];
   const list = edit ? '<div class="cp-chg"><p class="cp-lab">Changes in version ' + nv + '</p>' + (changes.length ? '<ul>' + changes.map(function(t){ return '<li>' + cpEsc(t) + '</li>'; }).join('') + '</ul>' : '<p class="cp-muted">Nothing changed yet.</p>') + '</div>' : '';
   const cta = edit ? '<button type="button" class="o-btn o-btn--lg o-btn--primary cp-cta" ' + (dis ? 'disabled' : '') + ' onclick="cpPublish()">Publish changes</button><p class="cp-next">' + (changes.length ? changes.length + (changes.length === 1 ? ' change' : ' changes') + ' not published. People not yet messaged get version ' + nv + '; people mid-sequence finish their step first.' : 'Live while you edit.') + '</p>' : '<button type="button" class="o-btn o-btn--lg o-btn--primary cp-cta" ' + (dis ? 'disabled' : '') + ' onclick="cpStartDraft()">Start campaign</button><p class="cp-next">' + (d.rules.checkFirst > 0 || cpIsFirstCampaign(d) ? 'The first 10 messages wait for you. Nothing is sent until you approve them.' : 'Kairo starts at the next send window.') + '</p>';
   const shortRow = short ? '<div class="cp-short">' + attHTML(short.text) + (d.confirmShort ? '' : ' <button type="button" class="o-link" onclick="CP.draft.confirmShort=true; cpEdRender()">Start anyway</button>') + '</div>' : '';
@@ -45933,7 +45993,7 @@ function cpStartDraft(){
 function cpPublish(){
   const d = CP.draft, l = CP.live; if(!d || !l) return; const changes = cpChanges(); if(!changes.length) return; const bl = cpGoLive(d).filter(function(b){ return !b.confirm; }); if(bl.length){ toast(bl[0].text); return; } if(cpPaceRisks(d).length && !CP.riskOk){ toast('Confirm the faster sending settings first.'); return; }
   const was = cpDiffValues(), nv = l.version + 1;
-  ['goal','plays','mix','message','prescreen','pace','search'].forEach(function(k){ l[k] = JSON.parse(JSON.stringify(d[k])); }); l.rules.checkFirst = d.rules.checkFirst; l.rules.recheck = d.rules.recheck; l.version = nv; l.goalReached = l.stats.ready >= l.goal.ready; l.confirmShort = d.confirmShort;
+  ['goal','plays','mix','message','prescreen','pace','search','stages'].forEach(function(k){ l[k] = JSON.parse(JSON.stringify(d[k] || {})); }); l.goalType = d.goalType; l.playbook = d.playbook; l.allAtOnce = !!d.allAtOnce; l.rules.checkFirst = d.rules.checkFirst; l.rules.recheck = d.rules.recheck; l.version = nv; l.goalReached = l.stats.ready >= l.goal.ready; l.confirmShort = d.confirmShort;
   cpPeopleOf(l).forEach(function(p){ if(['queued','contacted'].indexOf(p.state) > -1){ if(p.step === 0 && p.state === 'queued') p.cVersion = nv; if(p.step > l.message.steps.length) p.step = l.message.steps.length; } });
   l.versionLog.push({ v:nv, at:CP_NOW(), by:(currentActingUser() || {}).name || 'A person', changes:changes });
   if(d.rules.recheck !== false && changes.some(function(t){ return /Message|Tone|Steps|Sender|opening/.test(t); })){ l.review = { pending:[], approved:0 }; cpPeopleOf(l).filter(function(p){ return p.state === 'queued' && p.step === 0; }).slice(0, l.rules.checkFirst || 10).forEach(function(p){ const cand = byId(p.candidateId); p.approved = false; p.nextAt = Infinity; l.review.pending.push({ id:'rv' + l.review.pending.length + p.id, personId:p.id, name:cand.name, channel:CW_OPTINS[personKeyOf(cand)] ? 'WhatsApp' : 'Email', text:cpRenderText(cpStepText(l, 0), cand, l), state:'pending' }); }); if(!l.review.pending.length) l.review.approved = 10; }
@@ -45945,6 +46005,359 @@ function cpDiscard(){ const id = CP.live && CP.live.id; CP.draft = null; CP.live
 /* the routes */
 RENDERERS['cowork-campaign'] = function(){ return cpDetailHTML(CP.sel); }; PAGE_TITLES['cowork-campaign'] = 'Campaign';
 RENDERERS['cowork-campaign-new'] = cpEditorHTML; PAGE_TITLES['cowork-campaign-new'] = 'Campaign';
+
+/* ---------- cp-journey.js ---------- */
+/* ============================================================
+   Cowork v3: from the first message to joining day.
+   A campaign is one hiring journey with five stages, each run by an agent:
+     Find (Talent Discovery) → Engage and pre-screen (Engagement) → Client interview (Interviews)
+     → Offer (a person decides; Offers & Joining checks and nudges) → Joining (Offers & Joining).
+   Per stage the owner picks: Kairo does it · Kairo asks me first · I do it.
+   Playbooks set the whole campaign from the job. Every ready person gets an evaluation and a suggestion.
+   High drop-out risk keeps two backups warm. A miss on one job is offered a better-fitting open job.
+============================================================ */
+const CP_STAGES = [
+  { id:'find', name:'Find', agent:'talent-discovery', does:'Checks every application, scores the pool, merges duplicates and queues the best people first.' },
+  { id:'engage', name:'Engage and pre-screen', agent:'engagement', does:'Messages people, answers from the job, asks the pre-screen questions and books your call.' },
+  { id:'interview', name:'Client interview', agent:'interviews', does:'Books the client interview, reminds both sides, chases feedback and rebooks no-shows.' },
+  { id:'offer', name:'Offer', agent:'offers-joining', does:'You decide the offer. Kairo checks it was opened, answers simple questions from the job and asks for a reply.' },
+  { id:'join', name:'Joining', agent:'offers-joining', does:'Checks in before the joining date, watches for drop-out signs and keeps two backups warm when the risk is high.' },
+];
+const CP_LEVELS = [['auto','Kairo does it'],['ask','Kairo asks me first'],['me','I do it']];
+function cpStageAgentOn(st){ return agentAccess(st.agent).on; }
+function cpStageLevel(c, id){
+  const st = CP_STAGES.find(function(s){ return s.id === id; }); if(!st) return 'me';
+  if(!cpStageAgentOn(st)) return 'me';
+  const lv = (c.stages || {})[id]; if(lv) return id === 'offer' && lv === 'auto' ? 'ask' : lv;
+  return id === 'offer' ? 'ask' : 'auto';
+}
+function cpStageWhyOff(st){ const a = agentAccess(st.agent); return a.on ? '' : (agentById(st.agent) || {}).name + (a.why === 'not-subscribed' ? ' is not in your plan' : ' is off for you'); }
+
+/* ---------- the chain from ready to joined ---------- */
+function cpChain(h){ return { rts:h.readyToSubmit || .5, sti:h.submitToInterview || .7, ito:h.interviewToOffer || .6, oa:h.offerAccept || .85, jr:h.joinRate || .9 }; }
+function cpPerReady(h){ const k = cpChain(h); return k.rts * k.sti * k.ito * k.oa * k.jr; }
+function cpReadyFor(job, join){ return Math.max(2, Math.ceil(join / cpPerReady(cpHistory(job)))); }
+function cpJoinPlan(c){
+  const job = cpJob(c.jobId), h = cpHistory(job), k = cpChain(h), r = c.goal.ready, subs = r * k.rts, ints = subs * k.sti, offers = ints * k.ito, acc = offers * k.oa, joins = acc * k.jr;
+  const around = new Date(c.goal.by + 'T12:00:00').getTime() + (21 + cpNoticeLimit(job)) * CP_DAY;
+  return { ready:r, subs:Math.round(subs * 10) / 10, ints:Math.round(ints * 10) / 10, offers:Math.round(offers * 10) / 10, joins:Math.round(joins * 10) / 10, around:CP_ISO(around), k:k };
+}
+function cpSetJoin(n){ const d = CP.draft || CP.q; if(!d) return; d.goalType = 'join'; d.goal.join = Math.max(1, Math.min(100, n)); d.goal.ready = cpReadyFor(cpJob(d.jobId), d.goal.join); if(CP.q && d === CP.q) cpQRender(); else cpEdRender(); }
+function cpSetGoalType(t){ const d = CP.draft || CP.q; d.goalType = t; if(t === 'join'){ d.goal.join = d.goal.join || (cpJob(d.jobId).positions || 1); d.goal.ready = cpReadyFor(cpJob(d.jobId), d.goal.join); } if(CP.q && d === CP.q) cpQRender(); else cpEdRender(); }
+
+/* ---------- playbooks: the whole setup, picked from the job ---------- */
+const CP_PLAYBOOKS = {
+  standard:{ name:'Standard', sub:'Warmest sources first, three messages, a 15-minute call.' },
+  volume:{ name:'Volume hiring', sub:'WhatsApp first, two short messages, a 3-question pre-screen and a 10-minute call or walk-in.' },
+  niche:{ name:'Senior and niche', sub:'People who know you, referrals and LinkedIn first, four messages with longer gaps, a 30-minute call.' },
+  urgent:{ name:'Urgent backfill', sub:'Every source from day one, shorter gaps and a 7-day window.' },
+};
+function cpDetectPlaybook(job){
+  const r = cpJobRange(job), t = job.title || '', exp = parseInt(job.minExp, 10) || 0, pos = job.positions || 1;
+  if(pos >= 4 || (r && r[1] <= 8) || /nurse|supervisor|executive|technician|associate|driver|picker|pharmacist|coder|telecaller/i.test(t)) return { key:'volume', why:pos >= 4 ? pos + ' positions' : r && r[1] <= 8 ? 'pay up to ₹' + r[1] + 'L' : 'a frontline role' };
+  if(exp >= 8 || (r && r[1] >= 35) || /lead|manager|architect|head|director|principal/i.test(t)) return { key:'niche', why:exp >= 8 ? exp + '+ years' : r && r[1] >= 35 ? 'pay up to ₹' + r[1] + 'L' : 'a senior title' };
+  if((job.daysOpen || 0) >= 21 || /urgent/i.test(job.priority || '')) return { key:'urgent', why:(job.daysOpen || 0) + ' days open' };
+  return { key:'standard', why:'a typical role' };
+}
+function cpApplyPlaybook(c, key){
+  const job = cpJob(c.jobId), S = function(id, d, ch){ return { id:id, delayDays:d, sendWhen:'noreply', channel:ch || 'auto', text:null, textB:null }; };
+  c.playbook = key; c.allAtOnce = key === 'urgent'; c.prescreen.questions = cpDraftQuestions(job); c.prescreen.edited = false; c.message.textEdited = false;
+  c.plays = { apps:true, know:true, pool:true, ref:true, boards:true, li:true }; c.mix = 'recommended';
+  if(key === 'volume'){
+    c.plays.li = false; c.message.tone = 'short'; c.message.steps = [S('s1', 0, 'auto'), S('s2', 2, 'auto')]; c.prescreen.callMinutes = 10;
+    c.prescreen.questions = c.prescreen.questions.filter(function(q){ return q.kind !== 'skill'; }); c.prescreen.questions.push({ id:'q9', kind:'custom', text:'Can you come for a short walk-in interview this week?', rule:'Yes', source:'Volume hiring playbook: walk-ins fill seats faster.', edited:false });
+  } else if(key === 'niche'){
+    c.message.tone = 'warm'; c.message.steps = [S('s1', 0), S('s2', 3, 'email'), S('s3', 4), S('s4', 5)]; c.prescreen.callMinutes = 30;
+  } else if(key === 'urgent'){
+    c.message.tone = 'warm'; c.message.steps = [S('s1', 0), S('s2', 1, 'email'), S('s3', 2)]; c.goal.by = CP_ISO(CP_NOW() + 7 * CP_DAY); c.prescreen.callMinutes = 15;
+  } else { c.message.tone = 'warm'; c.message.steps = cpSteps(); c.prescreen.callMinutes = 15; }
+  if(c.goalType === 'join') c.goal.ready = cpReadyFor(job, c.goal.join || job.positions || 1);
+  return c;
+}
+function cpPickPlaybook(key){ const d = CP.draft || CP.q; if(!d) return; cpApplyPlaybook(d, key); d.playbookChosen = true; if(CP.q && d === CP.q) cpQRender(); else cpEdRender(); }
+
+/* ---------- Kairo's evaluation of a ready person ---------- */
+function cpEvaluate(c, p){
+  const cand = byId(p.candidateId), job = cpJob(c.jobId), s = cwScore(cand, job), a = p.answers || {}, fit = [], risks = [];
+  const r = cpJobRange(job), yrs = parseInt(cand.exp, 10) || 0, minY = parseInt(job.minExp, 10) || 0;
+  fit.push({ k:'Must-haves', ok:s.m.have >= Math.ceil(s.m.need * .75), note:s.m.have + ' of ' + s.m.need });
+  fit.push({ k:'Experience', ok:!minY || yrs >= minY, note:yrs + ' years' + (minY ? ' (job asks ' + minY + '+)' : '') });
+  const nd = a.notice != null ? cpParseNotice(a.notice) : cwNoticeDays(cand.notice), lim = cpNoticeLimit(job);
+  fit.push({ k:'Notice', ok:nd == null || nd <= lim, close:nd != null && nd > lim && nd <= lim + 30, note:(nd == null ? 'not given' : nd + ' days') + ' · job allows ' + lim });
+  const pay = a.ctc ? cpParseCtc(String(a.ctc).replace(/now|expected|₹|L/gi, ' ')) : null;
+  if(pay && r) fit.push({ k:'Pay', ok:pay.ctcExpected <= r[1], close:pay.ctcExpected > r[1] && pay.ctcExpected <= r[1] * 1.1, note:'expects ₹' + pay.ctcExpected + 'L · range up to ₹' + r[1] + 'L' });
+  if(a.location) fit.push({ k:'Location', ok:/^yes/i.test(a.location), note:a.location });
+  if((cand.counterRisk || 0) >= 55) risks.push('Counter-offer risk ' + cand.counterRisk + '%');
+  if(nd != null && nd > 60) risks.push('Long notice: ' + nd + ' days');
+  if((cand.respProb || 100) < 55) risks.push('Slow to reply');
+  if(pay && r && pay.ctcExpected > r[1]) risks.push('Expects more than the range');
+  const hard = fit.filter(function(f){ return !f.ok && !f.close; }), soft = fit.filter(function(f){ return !f.ok && f.close; });
+  let rec, why;
+  if(hard.length){ rec = 'hold'; why = hard.map(function(f){ return f.k + ': ' + f.note; }).join('; '); }
+  else if(!p.called){ rec = 'call'; why = 'Fits on ' + fit.filter(function(f){ return f.ok; }).length + ' of ' + fit.length + ' checks. Talk to them before you submit' + (risks.length ? '; ask about ' + risks[0].toLowerCase() : '') + '.'; }
+  else if(soft.length || risks.length >= 2){ rec = 'submit'; why = 'Submit, and keep a backup: ' + soft.map(function(f){ return f.k.toLowerCase() + ' is close'; }).concat(risks).join(', ') + '.'; }
+  else { rec = 'submit'; why = 'Fits every check and the call is done.'; }
+  return { fit:fit, risks:risks, rec:rec, recText:{ submit:'Submit', call:'Call first', hold:'Hold' }[rec], why:why, score:p.score };
+}
+
+/* ---------- the journey after the call ---------- */
+function cpJAt(p){ return p.jAt || p.lastAt || CP_NOW(); }
+function cpSub(c, p){ const job = cpJob(c.jobId); return job.corp ? null : findSubmission(job.id, p.candidateId); }
+function cpSubStage(c, p, stage, label){ const sb = cpSub(c, p); if(!sb) return; sb.campaignStage = label; if(stage && typeof moveSubmissionStage === 'function' && sb.stage !== stage){ try { moveSubmissionStage(sb.id, stage, 'Campaign: ' + label); } catch(e){} } }
+function cpNextWeekday(ms, h){ const d = new Date(ms); d.setHours(h, 0, 0, 0); while(d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1); return d.getTime(); }
+function cpWhen(ms){ const d = new Date(ms); return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' }) + ', ' + (d.getHours() > 12 ? d.getHours() - 12 : d.getHours()) + ':' + String(d.getMinutes()).padStart(2, '0') + (d.getHours() >= 12 ? ' pm' : ' am'); }
+function cpBookInterview(c, p, by){
+  const cand = byId(p.candidateId), job = cpJob(c.jobId); p.state = 'interview'; p.interviewAt = cpNextWeekday(CP_NOW() + 2 * CP_DAY, 11); p.jAt = CP_NOW(); c.stats.interviews++;
+  cpSay(p, 'kairo', 'Good news: ' + (job.corp ? 'the hiring manager' : cpJobCompany(job)) + ' would like to meet you on ' + cpWhen(p.interviewAt) + '. Reply 1 to confirm, or 2 for another time.');
+  cpSubStage(c, p, 'Interview Scheduled', 'Client interview ' + cpWhen(p.interviewAt)); cpLog(c, 'Booked the ' + (job.corp ? 'hiring manager' : 'client') + ' interview for ' + cand.name + ', ' + cpWhen(p.interviewAt), 'journey', by === 'person' ? (currentActingUser() || {}).name : undefined);
+}
+function cpNotSelected(c, p, why, by){
+  const cand = byId(p.candidateId); p.state = 'notSelected'; p.reason = why; p.jAt = CP_NOW(); p.tag = 'notSelected';
+  cpSay(p, by === 'person' ? 'person' : 'kairo', 'Thank you for your time on the ' + c.title + ' role. It will not go ahead this time. ' + cpSenderFirst(c) + ' will keep you in mind for roles that fit.');
+  cpSubStage(c, p, null, 'Not selected'); cpLog(c, cand.name + ' not selected: ' + why, 'journey', by === 'person' ? (currentActingUser() || {}).name : undefined); cpRouteSuggest(c, p);
+}
+function cpAccept(c, p){
+  const cand = byId(p.candidateId), job = cpJob(c.jobId); p.state = 'accepted'; p.jAt = CP_NOW(); p.joinOn = p.offer && p.offer.joinMs ? p.offer.joinMs : CP_NOW() + 30 * CP_DAY;
+  p.risk = Math.min(90, Math.round((cand.counterRisk || 20) * .7 + (cpNoticeLimit(job) > 60 ? 15 : 0) + (p.risk || 0) * 0));
+  p.checkins = [14, 7, 1].map(function(d){ return { d:d, at:p.joinOn - d * CP_DAY, sent:false }; }).filter(function(x){ return x.at > CP_NOW(); });
+  cpSay(p, 'kairo', 'Thank you for accepting, ' + cand.name.split(' ')[0] + '. ' + cpSenderFirst(c) + ' will stay in touch until your first day on ' + cpDateMs(p.joinOn) + '.');
+  cpSubStage(c, p, 'Offer Accepted', 'Offer accepted · joins ' + cpDateMs(p.joinOn)); cpLog(c, cand.name + ' accepted the offer. Joins ' + cpDateMs(p.joinOn), 'journey');
+}
+function cpEnsureBench(c, p){
+  if((p.bench || []).length >= 2) return;
+  const pool = cpPeopleOf(c).filter(function(x){ return x.id !== p.id && x.state === 'ready' && !x.warmFor; }).sort(function(a, b){ return b.score - a.score; }).slice(0, 2 - (p.bench || []).length);
+  if(!pool.length) return; p.bench = (p.bench || []).concat(pool.map(function(x){ return x.id; }));
+  pool.forEach(function(x){ x.warmFor = p.id; cpSay(x, 'kairo', 'Hi ' + byId(x.candidateId).name.split(' ')[0] + ', the ' + c.title + ' hiring is moving ahead. If another seat opens in the next few weeks, may ' + cpSenderFirst(c) + ' call you first? Reply 1 for yes.'); });
+  cpLog(c, 'Kept ' + pool.length + ' backups warm for ' + byId(p.candidateId).name + ' (drop-out risk ' + p.risk + '%): ' + pool.map(function(x){ return byId(x.candidateId).name; }).join(', '), 'journey');
+}
+function cpJourneyTick(c){
+  if(c.status !== 'running' && c.status !== 'done') return; const now = CP_NOW();
+  cpPeopleOf(c).forEach(function(p){
+    const cand = byId(p.candidateId); if(!cand) return;
+    if(p.state === 'submitted' && now - cpJAt(p) >= CP_DAY){
+      if(cpStageLevel(c, 'interview') === 'me'){ p.waiting = 'Book the client interview yourself'; return; }
+      if(cpStageLevel(c, 'interview') === 'ask' && !p.bookOk){ p.waiting = 'Kairo has a client slot ready. Approve the booking'; return; }
+      if(cwHash(p.id + 'client') % 10 < 7) cpBookInterview(c, p); else cpNotSelected(c, p, 'The client passed after reading the profile', 'kairo');
+    } else if(p.state === 'interview' && now >= p.interviewAt + CP_DAY){
+      if(cpStageLevel(c, 'interview') !== 'me') cpLog(c, 'Chased interview feedback for ' + cand.name, 'journey');
+      if(cwHash(p.id + 'fb') % 10 < 6){ p.state = 'offerDecision'; p.jAt = now; cpSubStage(c, p, 'Feedback Given', 'Cleared the interview'); cpLog(c, cand.name + ' cleared the interview. The offer is yours to decide', 'needs'); }
+      else cpNotSelected(c, p, 'Did not clear the interview', 'kairo');
+    } else if(p.state === 'offer'){
+      if(cpStageLevel(c, 'offer') !== 'me' && !p.nudged && now - cpJAt(p) >= CP_DAY){ p.nudged = true; cpSay(p, 'kairo', 'Hi ' + cand.name.split(' ')[0] + ', checking that the offer letter reached you. If anything is unclear, reply here and ' + cpSenderFirst(c) + ' will answer.'); cpLog(c, 'Checked that ' + cand.name + ' opened the offer', 'journey'); return; }
+      if(now - cpJAt(p) >= 2 * CP_DAY){ if(cwHash(p.id + 'acc') % 100 < 85) cpAccept(c, p); else { p.state = 'declined'; p.jAt = now; cpSubStage(c, p, null, 'Offer declined'); cpLog(c, cand.name + ' declined the offer', 'needs'); } }
+    } else if(p.state === 'accepted'){
+      (p.checkins || []).forEach(function(ci){ if(ci.sent || now < ci.at) return; ci.sent = true; ci.answered = cwHash(p.id + ci.d) % 10 < (p.risk >= 60 ? 5 : 9);
+        cpSay(p, 'kairo', ci.d === 1 ? 'See you tomorrow! Reply here if you need the address or the reporting time.' : 'Hi ' + cand.name.split(' ')[0] + ', ' + ci.d + ' days to go. Is your notice period on track? Reply 1 if all is well.');
+        if(ci.answered){ cpSay(p, 'cand', '1'); p.risk = Math.max(5, p.risk - 8); } else p.risk = Math.min(95, p.risk + 15);
+        cpLog(c, 'Pre-joining check-in (' + ci.d + ' days) for ' + cand.name + ': ' + (ci.answered ? 'all well' : 'no reply, risk now ' + p.risk + '%'), 'journey'); });
+      if(p.risk >= 60 && cpStageLevel(c, 'join') !== 'me') cpEnsureBench(c, p);
+      if(now >= p.joinOn){ p.state = 'joinDue'; p.jAt = now; cpLog(c, cand.name + '’s joining date has come. Confirm whether they joined', 'needs'); }
+    }
+  });
+}
+
+/* ---------- person actions ---------- */
+function cpPersonActor(){ return (currentActingUser() || {}).name || 'A person'; }
+function cpApproveBooking(pid){ const p = cpPerson(pid), c = p && cpById(p.campaignId); if(!p) return; p.bookOk = true; p.waiting = ''; cpBookInterview(c, p, 'person'); toast('Interview booked'); cpRefresh(); }
+function cpOfferOpen(pid){
+  const p = cpPerson(pid); if(!p) return; const c = cpById(p.campaignId), cand = byId(p.candidateId), job = cpJob(c.jobId), r = cpJobRange(job), a = p.answers || {}, pay = a.ctc ? cpParseCtc(String(a.ctc).replace(/now|expected|₹|L/gi, ' ')) : null;
+  const sug = pay && r ? Math.min(pay.ctcExpected, r[1]) : r ? r[1] : '', notice = a.notice != null ? (cpParseNotice(a.notice) || 0) : cwNoticeDays(cand.notice) || 30;
+  cpModal('<h2 class="o-card__title">Offer for ' + cpEsc(cand.name) + '</h2><p class="o-card__sub">The terms are yours. Kairo then checks the offer was opened, answers simple questions from the job and asks for a reply.</p><label class="cp-fld"><span class="cp-lab">Annual CTC (₹ lakh)</span><input class="app-input" id="cp-of-ctc" inputmode="decimal" value="' + sug + '" /></label><label class="cp-fld"><span class="cp-lab">Joining date</span><input class="app-input" type="date" id="cp-of-date" value="' + CP_ISO(CP_NOW() + Math.max(15, notice) * CP_DAY) + '" /></label>' + (r ? '<p class="cp-hint">Job range ₹' + r[0] + '–' + r[1] + 'L' + (pay ? ' · they expect ₹' + pay.ctcExpected + 'L' : '') + '</p>' : '') + '<p class="cp-issue" id="cp-of-err"></p><div class="cp-modal__f"><button type="button" class="o-btn" onclick="cpNotSelectedUI(\'' + p.id + '\')">Not selected</button><button type="button" class="o-btn" onclick="cpModal(\'\')">Cancel</button><button type="button" class="o-btn o-btn--primary" onclick="cpMakeOffer(\'' + p.id + '\')">Release offer</button></div>');
+}
+function cpMakeOffer(pid, ctc, iso){
+  const p = cpPerson(pid); if(!p) return false; const c = cpById(p.campaignId), cand = byId(p.candidateId), job = cpJob(c.jobId), r = cpJobRange(job);
+  ctc = ctc != null ? ctc : parseFloat((document.getElementById('cp-of-ctc') || {}).value); iso = iso || (document.getElementById('cp-of-date') || {}).value;
+  const err = !(ctc > 0) ? 'Enter the CTC in lakh.' : !iso || new Date(iso + 'T12:00:00').getTime() < CP_NOW() ? 'Pick a joining date in the future.' : '';
+  if(err){ const e = document.getElementById('cp-of-err'); if(e) e.innerHTML = attHTML(err); return false; }
+  p.offer = { ctc:ctc, joinMs:new Date(iso + 'T10:00:00').getTime(), at:CP_NOW(), by:cpPersonActor(), aboveRange:!!(r && ctc > r[1]) }; p.state = 'offer'; p.jAt = CP_NOW(); c.stats.offers++;
+  cpSubStage(c, p, 'Offer Extended', 'Offer released · ₹' + ctc + 'L'); cpLog(c, 'Offer released to ' + cand.name + ' at ₹' + ctc + 'L, joining ' + cpDateMs(p.offer.joinMs) + (p.offer.aboveRange ? ' (above the job’s range)' : ''), 'journey', cpPersonActor());
+  logAudit('Cowork', 'Offer released from a campaign', cand.name + ' · ' + c.title + ' · ₹' + ctc + 'L'); cpModal(''); toast('Offer released. Kairo checks it is opened and asks for a reply.'); cpRefresh(); return true;
+}
+function cpNotSelectedUI(pid, reason){
+  const p = cpPerson(pid); if(!p) return; reason = reason || window.prompt('Why is ' + byId(p.candidateId).name + ' not going ahead? This is kept with the record.'); if(reason == null || !String(reason).trim()) return;
+  cpNotSelected(cpById(p.campaignId), p, String(reason).trim(), 'person'); cpModal(''); toast('Recorded. A polite note went to the candidate.'); cpRefresh();
+}
+function cpJoinedUI(pid){
+  const p = cpPerson(pid); if(!p) return; const c = cpById(p.campaignId), cand = byId(p.candidateId), job = cpJob(c.jobId);
+  p.state = 'joined'; p.jAt = CP_NOW(); c.stats.hired++; cpSubStage(c, p, 'Joined', 'Joined');
+  (p.bench || []).forEach(function(id){ const b = cpPerson(id); if(b) b.warmFor = null; }); p.bench = [];
+  if(!job.corp && typeof ptCreateJoinedRecord === 'function' && !(typeof ptIsTracked === 'function' && ptIsTracked(cand.name, job.title))){ try { ptCreateJoinedRecord(cand.name, job.title, job.client, job.id, CP_ISO(CP_NOW())); } catch(e){} }
+  cpLog(c, cand.name + ' joined', 'joined', cpPersonActor()); cpAudit(c, 'joining · ' + cand.name); toast(cand.name + ' joined.'); cpRefresh();
+}
+function cpDroppedUI(pid, reason){
+  const p = cpPerson(pid); if(!p) return; reason = reason || window.prompt('What happened? This is kept with the record.'); if(reason == null || !String(reason).trim()) return;
+  const c = cpById(p.campaignId), cand = byId(p.candidateId); p.state = 'dropped'; p.reason = String(reason).trim(); p.jAt = CP_NOW(); cpSubStage(c, p, null, 'Did not join');
+  cpLog(c, cand.name + ' did not join: ' + p.reason + ((p.bench || []).length ? '. ' + p.bench.length + ' backups are warm' : ''), 'needs', cpPersonActor()); toast('Recorded.' + ((p.bench || []).length ? ' Move a backup forward from Needs you.' : '')); cpRefresh();
+}
+function cpPromote(pid){
+  const b = cpPerson(pid); if(!b) return; const c = cpById(b.campaignId), from = cpPerson(b.warmFor); b.warmFor = null; if(from) from.bench = (from.bench || []).filter(function(x){ return x !== pid; });
+  b.called = true; cpSubmit(pid); cpLog(c, 'Moved backup ' + byId(b.candidateId).name + ' forward' + (from ? ' after ' + byId(from.candidateId).name + ' dropped' : ''), 'journey', cpPersonActor());
+}
+
+/* ---------- a miss on one job may fit another ---------- */
+function cpAltJob(cand, exceptJobId){
+  let best = null;
+  CAMPAIGNS.forEach(function(c){ if(c.status !== 'running' || c.jobId === exceptJobId || !cpVisible(c)) return; const job = cpJob(c.jobId); if(!job || !!job.corp !== !!cpJob(exceptJobId).corp) return;
+    if(cpPeopleOf(c).some(function(x){ return x.candidateId === cand.id; }) || (!job.corp && findSubmission(job.id, cand.id))) return;
+    const s = cwScore(cand, job).score; if(s >= 60 && (!best || s > best.score)) best = { campaignId:c.id, jobId:job.id, title:job.title, score:s }; });
+  return best;
+}
+function cpRouteSuggest(c, p){ const alt = cpAltJob(byId(p.candidateId), c.jobId); if(alt){ p.alt = alt; cpLog(c, byId(p.candidateId).name + ' may fit ' + alt.title + ' (score ' + alt.score + ')', 'needs'); } }
+function cpReroute(pid){
+  const p = cpPerson(pid); if(!p || !p.alt) return; const c = cpById(p.campaignId), t = cpById(p.alt.campaignId), cand = byId(p.candidateId); if(!t) return;
+  const q = cpEnqueue(t, cand, 'know'); if(!q){ toast('They cannot be added to that campaign right now. The reason is in its Activity.'); return; }
+  const job = cpJob(t.jobId); q.state = 'contacted'; q.step = 1; q.channel = p.channel || 'whatsapp'; q.lastAt = CP_NOW(); q.nextAt = CP_NOW() + 2 * CP_DAY; q.simDone = true;
+  cpSay(q, 'kairo', 'Hi ' + cand.name.split(' ')[0] + ', ' + cpSenderFirst(t) + ' here. ' + c.title + ' did not work out, but ' + job.title + ' at ' + cpJobCompany(job) + ' in ' + (job.loc || '').split(',')[0] + ', ' + cpPayText(job) + ', looks closer to your profile. Reply 1 for details, or 2 if not now.');
+  t.stats.reached++; p.alt = null; p.routed = t.id; cpLog(c, 'Offered ' + cand.name + ' the ' + job.title + ' role instead', 'journey', cpPersonActor()); cpLog(t, cand.name + ' came from the ' + c.title + ' campaign', 'journey');
+  toast('Asked ' + cand.name.split(' ')[0] + ' about ' + job.title + '.'); cpRefresh();
+}
+
+/* ---------- one list for the recruiter's day ---------- */
+function cpMyDay(scope){
+  const out = [], me = currentUserId(), mine = function(c){ return scope === 'all' || c.ownerId === me || cwIsOwnerish() || (sRoleKind() === 'manager' && cpVisible(c)); };
+  CAMPAIGNS.filter(function(c){ return cpVisible(c) && mine(c) && c.status !== 'draft'; }).forEach(function(c){
+    const add = function(w, mins, t, m, cta, on){ out.push({ w:w, mins:mins, t:t, m:m, cta:cta, on:on, c:c }); };
+    let calls = 0;
+    cpPeopleOf(c).forEach(function(p){ const n = (byId(p.candidateId) || {}).name || '';
+      if(p.state === 'joinDue') add(10, 2, 'Confirm ' + n + ' joined', c.title + ' · joining date ' + cpDateMs(p.joinOn), 'Confirm', "cpJourneyOpen('" + p.id + "')");
+      else if(p.state === 'offerDecision') add(9, 5, 'Decide the offer for ' + n, c.title + ' · cleared the interview', 'Decide', "cpOfferOpen('" + p.id + "')");
+      else if(p.state === 'accepted' && p.risk >= 60) add(8, 10, n + ' may not join (' + p.risk + '% risk)', c.title + ' · joins ' + cpDateMs(p.joinOn) + ((p.bench || []).length ? ' · ' + p.bench.length + ' backups warm' : ''), 'Call', "cpJourneyOpen('" + p.id + "')");
+      else if(p.state === 'dropped' && p.bench && p.bench.length) add(8, 3, 'Move a backup forward for ' + c.title, n + ' did not join', 'Open', "cpOpen('" + c.id + "','journey')");
+      else if(p.state === 'declined') add(7, 3, n + ' declined the offer', c.title, 'Open', "cpOpen('" + c.id + "','journey')");
+      else if(p.state === 'submitted' && p.waiting) add(7, 3, p.waiting.replace(/\.$/, '') + ' for ' + n, c.title, cpStageLevel(c, 'interview') === 'ask' ? 'Approve' : 'Open', cpStageLevel(c, 'interview') === 'ask' ? "cpApproveBooking('" + p.id + "')" : "cpOpen('" + c.id + "','journey')");
+      else if(p.state === 'ready' && p.slot && CP_ISO(p.slot) === CP_ISO(CP_NOW()) && !p.called) add(7, 15, 'Call ' + n + ' at ' + cpWhen(p.slot).split(', ').pop(), c.title, 'Brief', "cpCallOpen('" + p.id + "')");
+      else if(p.state === 'ready' && !p.called) calls++;
+      else if(p.state === 'needsYou') add(6, 3, 'Reply to ' + n, p.question ? '“' + p.question + '”' : c.title, 'Reply', "cpChatOpen('" + p.id + "')");
+      else if(p.state === 'closeMiss') add(4, 3, n + ' is a close miss', p.reason || c.title, 'Open', "cpChatOpen('" + p.id + "')");
+      if(p.alt && ['notSelected','done','closeMiss'].indexOf(p.state) > -1) add(4, 1, n + ' may fit ' + p.alt.title, 'Score ' + p.alt.score + ' · from ' + c.title, 'Ask them', "cpReroute('" + p.id + "')");
+    });
+    if(calls) add(5, calls * 15, 'Call ' + calls + ' ready ' + (calls === 1 ? 'person' : 'people'), c.title + ' · best between 6 and 8 pm', 'Call list', "cpOpen('" + c.id + "','applicants')");
+    if(c.status === 'review' && c.review.pending.some(function(r){ return r.state === 'pending'; })) add(6, 5, 'Check the first messages', c.title + ' · nothing goes out until you do', 'Check', "cpReviewOpen('" + c.id + "')");
+    const held = cpPeopleOf(c).filter(function(p){ return /^Honesty check/.test(p.holdReason || ''); });
+    if(held.length && c.status === 'running') add(6, 5, held.length + ' messages are on hold', held[0].holdReason.replace(/^Honesty check: /, ''), 'Fix', "cpEdit('" + c.id + "','msg')");
+  });
+  return out.sort(function(a, b){ return b.w - a.w; });
+}
+function cpMyDayCard(){
+  const items = cpMyDay(); if(!items.length) return '<section class="o-card cp-day"><div class="o-card__head"><h2 class="o-card__title">Your day</h2></div><p class="o-card__sub">Nothing needs you in your campaigns. Kairo keeps going inside your limits.</p></section>';
+  const mins = items.reduce(function(s, x){ return s + x.mins; }, 0), shown = CP.dayAll ? items : items.slice(0, 5);
+  const week = cpList().reduce(function(s, c){ return { m:s.m + Math.round(c.stats.reached * 2.2), p:s.p + c.stats.screened }; }, { m:0, p:0 });
+  return '<section class="o-card cp-day"><div class="o-card__head"><div><h2 class="o-card__title">Your day</h2><p class="o-card__sub">' + items.length + (items.length === 1 ? ' thing' : ' things') + ' · about ' + (mins >= 60 ? Math.round(mins / 6) / 10 + ' h' : mins + ' min') + '. Kairo has sent ' + week.m.toLocaleString('en-IN') + ' messages and run ' + week.p + ' pre-screens for you.</p></div></div><ul class="cp-needs">' +
+    shown.map(function(x){ return '<li class="cp-need"><span class="cp-need__t">' + (x.w >= 8 ? attHTML(x.t) : cpEsc(x.t)) + '<small>' + cpEsc(x.m) + '</small></span><button type="button" class="o-btn" onclick="' + x.on + '">' + cpEsc(x.cta) + '</button></li>'; }).join('') + '</ul>' +
+    (items.length > 5 ? '<button type="button" class="o-link cp-more" onclick="CP.dayAll=!CP.dayAll; cpRefresh()">' + (CP.dayAll ? 'Show less' : 'Show all ' + items.length) + '</button>' : '') + '</section>';
+}
+
+/* ---------- the journey tab ---------- */
+const CP_J_STATES = { submitted:'interview', interview:'interview', offerDecision:'offer', offer:'offer', declined:'offer', accepted:'join', joinDue:'join', joined:'join', dropped:'join', notSelected:'interview' };
+function cpStageCount(c, id){
+  const pp = cpPeopleOf(c), s = c.stats;
+  if(id === 'find') return { n:s.reached, l:'reached' }; if(id === 'engage') return { n:s.ready, l:'ready to call' };
+  if(id === 'interview'){ const n = Math.max(s.interviews, pp.filter(function(p){ return p.state === 'interview'; }).length); return { n:n, l:n === 1 ? 'interview' : 'interviews' }; }
+  if(id === 'offer') return { n:s.offers, l:s.offers === 1 ? 'offer' : 'offers' }; return { n:s.hired, l:'joined' };
+}
+function cpJourneyTab(c){
+  const edit = cpCanEdit(c), pp = cpPeopleOf(c);
+  const stages = CP_STAGES.map(function(st, i){
+    const lv = cpStageLevel(c, st.id), off = cpStageWhyOff(st), cnt = cpStageCount(c, st.id);
+    const sel = edit && !off ? '<select class="app-input app-select cp-lv" aria-label="' + st.name + ' level" onchange="cpSetStage(\'' + c.id + '\',\'' + st.id + '\',this.value)">' + CP_LEVELS.filter(function(l){ return st.id !== 'offer' || l[0] !== 'auto'; }).map(function(l){ return '<option value="' + l[0] + '"' + (lv === l[0] ? ' selected' : '') + '>' + l[1] + '</option>'; }).join('') + '</select>' : '<span class="cp-muted">' + (off ? 'You do this · ' + cpEsc(off) : CP_LEVELS.find(function(l){ return l[0] === lv; })[1]) + '</span>';
+    return '<li class="cp-stage">' + cpTw('<span class="cp-stage__n">' + (i + 1) + '</span><span class="cp-stage__t"><b>' + st.name + '</b><small>' + cpEsc((agentById(st.agent) || {}).name || '') + '</small></span>', st.name, [st.does], st.id === 'offer' ? 'Offer terms are always decided by a person.' : '') + '<span class="cp-stage__c"><b>' + cnt.n + '</b> ' + cnt.l + '</span>' + sel + '</li>';
+  }).join('');
+  const rows = pp.filter(function(p){ return CP_J_STATES[p.state] || p.warmFor; }).sort(function(a, b){ const o = ['joinDue','offerDecision','accepted','offer','interview','submitted','declined','dropped','notSelected','joined','ready']; return o.indexOf(a.state) - o.indexOf(b.state); }).map(function(p){
+    const cand = byId(p.candidateId), st = p.state, act = cpJourneyAction(c, p);
+    const status = st === 'submitted' ? (p.waiting ? attHTML(p.waiting) : 'Sent for review · client next') : st === 'interview' ? 'Interview ' + cpWhen(p.interviewAt) : st === 'offerDecision' ? attHTML('Cleared the interview · decide the offer') : st === 'offer' ? 'Offer ₹' + p.offer.ctc + 'L · waiting for a reply' : st === 'accepted' ? 'Joins ' + cpDateMs(p.joinOn) + ' · ' + (p.risk >= 60 ? attHTML('Drop-out risk ' + p.risk + '%') : 'risk ' + p.risk + '%') : st === 'joinDue' ? attHTML('Joining date reached · confirm') : st === 'joined' ? 'Joined' : st === 'dropped' ? 'Did not join · ' + cpEsc(p.reason || '') : st === 'declined' ? attHTML('Declined the offer') : st === 'notSelected' ? 'Not selected · ' + cpEsc(p.reason || '') : p.warmFor ? 'Backup, kept warm for ' + cpEsc(byId(cpPerson(p.warmFor).candidateId).name) : '';
+    return '<tr><td><b>' + cpEsc(cand.name) + '</b><small>' + cpEsc([cand.role, cand.company || ''].filter(Boolean).join(' · ')) + '</small></td><td class="cp-wrap">' + status + (p.alt ? '<small>Also fits ' + cpEsc(p.alt.title) + '</small>' : '') + '</td><td class="cp-act">' + act + '</td></tr>';
+  }).join('') || '<tr><td colspan="3" class="cp-empty">Nobody has been submitted yet. People you submit after the call show here until they join.</td></tr>';
+  const jp = cpJoinPlan(c);
+  return '<section class="o-card"><div class="o-card__head"><div><h2 class="o-card__title">From first message to joining day</h2><p class="o-card__sub">' + (c.goalType === 'join' ? 'Goal: ' + c.goal.join + (c.goal.join === 1 ? ' joining' : ' joinings') + ' · ' : '') + 'about ' + jp.joins + ' expected to join from ' + c.goal.ready + ' ready to call, around ' + cpDate(jp.around) + '.</p></div></div><ol class="cp-stages">' + stages + '</ol></section>' +
+    '<section class="o-card o-card--flush"><div class="o-card__head" style="padding:0 20px"><h2 class="o-card__title">After the call</h2></div><div class="o-table-wrap"><table class="o-table" style="min-width:640px"><thead><tr><th>Candidate</th><th>Where they are</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></section>';
+}
+function cpJourneyAction(c, p){
+  if(!cpCanEdit(c)) return '';
+  const b = function(t, on, primary){ return '<button type="button" class="o-btn' + (primary ? ' o-btn--primary' : '') + '" onclick="' + on + '">' + t + '</button>'; };
+  if(p.state === 'submitted' && cpStageLevel(c, 'interview') !== 'auto') return b(cpStageLevel(c, 'interview') === 'ask' ? 'Approve booking' : 'Book interview', "cpApproveBooking('" + p.id + "')") + ' ' + b('Not selected', "cpNotSelectedUI('" + p.id + "')");
+  if(p.state === 'interview') return b('Cleared', "cpCleared('" + p.id + "')") + ' ' + b('Not selected', "cpNotSelectedUI('" + p.id + "')");
+  if(p.state === 'offerDecision') return b('Decide offer', "cpOfferOpen('" + p.id + "')", true);
+  if(p.state === 'offer') return b('Accepted', "cpAcceptUI('" + p.id + "')") + ' ' + b('Declined', "cpDeclineUI('" + p.id + "')");
+  if(p.state === 'accepted' || p.state === 'joinDue') return b('Joined', "cpJoinedUI('" + p.id + "')", p.state === 'joinDue') + ' ' + b('Did not join', "cpDroppedUI('" + p.id + "')");
+  if(p.state === 'dropped' || p.state === 'declined'){ const bench = cpPeopleOf(c).filter(function(x){ return x.warmFor === p.id || (p.bench || []).indexOf(x.id) > -1; }); return bench.map(function(x){ return b('Move ' + byId(x.candidateId).name.split(' ')[0] + ' forward', "cpPromote('" + x.id + "')"); }).join(' '); }
+  if(p.alt) return b('Ask about ' + p.alt.title, "cpReroute('" + p.id + "')");
+  return '';
+}
+function cpJourneyOpen(pid){ const p = cpPerson(pid); if(!p) return; CP.sel = p.campaignId; CP.tab = 'journey'; if(document.getElementById('cp-detail-root')) cpRefresh(); else showView('cowork-campaign', 'kairo-team'); }
+function cpCleared(pid){ const p = cpPerson(pid); if(!p) return; const c = cpById(p.campaignId); p.state = 'offerDecision'; p.jAt = CP_NOW(); cpSubStage(c, p, 'Feedback Given', 'Cleared the interview'); cpLog(c, byId(p.candidateId).name + ' cleared the interview', 'journey', cpPersonActor()); cpOfferOpen(pid); }
+function cpAcceptUI(pid){ const p = cpPerson(pid); if(!p) return; cpAccept(cpById(p.campaignId), p); toast('Recorded. Kairo checks in before the joining date.'); cpRefresh(); }
+function cpDeclineUI(pid){ const p = cpPerson(pid); if(!p) return; const c = cpById(p.campaignId); p.state = 'declined'; p.jAt = CP_NOW(); cpSubStage(c, p, null, 'Offer declined'); cpLog(c, byId(p.candidateId).name + ' declined the offer', 'journey', cpPersonActor()); cpRefresh(); }
+function cpSetStage(cid, id, lv){ const c = cpById(cid); if(!c || !cpCanEdit(c)) return; c.stages = c.stages || {}; const was = cpStageLevel(c, id); c.stages[id] = lv; cpLog(c, CP_STAGES.find(function(s){ return s.id === id; }).name + ': ' + CP_LEVELS.find(function(l){ return l[0] === was; })[1] + ' → ' + CP_LEVELS.find(function(l){ return l[0] === lv; })[1], 'version', cpPersonActor()); logAudit('Cowork', 'Campaign stage level changed', c.title + ' · ' + id + ' · ' + was + ' → ' + lv); toast('Saved'); cpRefresh(); }
+
+/* ---------- quick start: one sheet, fixes in place, one click ---------- */
+function cpQuick(jobId){
+  if(!sCan('kairo','Use agents')){ toast('You cannot start campaigns.'); return; }
+  const jobs = cpWorkableJobs(); jobId = jobId || (jobs.filter(function(j){ return !CAMPAIGNS.some(function(c){ return c.jobId === j.id && c.status !== 'done'; }); })[0] || jobs[0] || {}).id; if(!jobId){ toast('There are no open jobs you can run a campaign for.'); return; }
+  const c = cpBlank(jobId), job = cpJob(jobId), pb = cpDetectPlaybook(job); c.goalType = 'join'; c.goal.join = job.positions || 1; cpApplyPlaybook(c, pb.key); c.playbookWhy = pb.why; CP.q = c; CP.payFix = { lo:'', hi:'' }; cpQRender();
+}
+function cpQChecks(c){
+  const job = cpJob(c.jobId), out = [], own = cwIsOwnerish();
+  const dup = CAMPAIGNS.find(function(x){ return x.jobId === c.jobId && x.status !== 'done' && x.id !== c.id; });
+  if(dup) out.push({ ok:false, block:true, t:'This job already has a campaign', fix:'<button type="button" class="o-btn" onclick="cpModal(\'\'); cpOpen(\'' + dup.id + '\')">Open it</button>' });
+  if(!cpHasPay(job)) out.push({ ok:false, block:true, t:'The job has no pay range. Messages without one get about half the replies.', fix:job.corp ? '' : '<span class="cp-payfix"><input class="app-input" id="cp-pay-lo" inputmode="decimal" placeholder="From" aria-label="Pay from, lakh" /><input class="app-input" id="cp-pay-hi" inputmode="decimal" placeholder="To" aria-label="Pay to, lakh" /><span class="cp-muted">LPA</span><button type="button" class="o-btn" onclick="cpPayFix()">Save to the job</button></span>' });
+  else out.push({ ok:true, t:'Pay range ' + cpPayText(job) + ' is in every first message' });
+  CP_STAGES.forEach(function(st){ if(st.id === 'offer') return; const off = cpStageWhyOff(st); if(off) out.push({ ok:false, block:st.id === 'engage', t:st.name + ': ' + off + (st.id === 'engage' ? '. Nothing can be sent without it.' : '. You will do this stage yourself.'), fix:own && sCan('kairo','Manage subscription') ? '<button type="button" class="o-btn" onclick="cpQTrial(\'' + st.agent + '\')">Start trial</button>' : '<button type="button" class="o-btn" onclick="cwAskOwner(\'' + st.agent + '\')">Ask the Owner</button>' }); });
+  if(CW.pauseAll.on) out.push({ ok:false, block:true, t:'All Cowork is paused by ' + CW.pauseAll.by, fix:own ? '<button type="button" class="o-btn" onclick="cwSetPauseAll(false); cpQRender()">Resume</button>' : '' });
+  if(cpIsFirstCampaign(c)) out.push({ ok:true, t:'Your first campaign: the first 10 messages wait for you' });
+  if(job.confidential && job.confidential.companyName) out.push({ ok:true, t:'The client stays unnamed in messages: “a company in ' + (job.loc || '').split(',')[0] + '”' });
+  const plan = cpPlanFor(c); if(plan.short) out.push({ ok:false, block:false, t:'Fewer people than the goal needs. Kairo will say so on the campaign and suggest widening.' });
+  return out;
+}
+function cpPayFix(){
+  const lo = parseFloat((document.getElementById('cp-pay-lo') || {}).value), hi = parseFloat((document.getElementById('cp-pay-hi') || {}).value), c = CP.q || CP.draft; if(!c) return;
+  if(!(lo > 0 && hi >= lo)){ toast('Enter the range in lakh, the second number at least the first.'); return; }
+  const job = cpJob(c.jobId); job.salary = '₹' + lo + '–' + hi + ' LPA'; logAudit('Jobs', 'Pay range added from a campaign', job.title + ' · ' + job.salary); c.prescreen.questions = c.prescreen.edited ? c.prescreen.questions : cpDraftQuestions(job); if(c.playbook) cpApplyPlaybook(c, c.playbook);
+  toast('Saved to the job'); if(CP.q) cpQRender(); else cpEdRender();
+}
+function cpQTrial(agentId){ if(agentSubscribe(agentId, 'trial')){ toast('Trial started'); cpQRender(); } }
+function cpQRender(){
+  const c = CP.q; if(!c) return; const job = cpJob(c.jobId), plan = cpPlanFor(c), jp = cpJoinPlan(c), checks = cpQChecks(c), blocked = checks.some(function(x){ return x.block; }), jobs = cpWorkableJobs(), pb = cpDetectPlaybook(job);
+  const top = CANDIDATES.map(function(x){ return { c:x, s:cwScore(x, job).score }; }).sort(function(a, b){ return b.s - a.s; })[0].c;
+  const senders = [cpOwner(c)].concat(cwIsOwnerish() || sRoleKind() === 'manager' ? RECRUITER_ROSTER.filter(function(u){ return u.id !== c.ownerId; }).slice(0, 4) : []);
+  const html = '<div id="cp-quick"><h2 class="o-card__title">Start a campaign</h2><p class="o-card__sub">Kairo set everything up from the job. Check three things and start.</p>' +
+    '<label class="cp-fld"><span class="cp-lab">Job</span><select class="app-input app-select" aria-label="Job" onchange="cpQuick(this.value)">' + jobs.map(function(j){ return '<option value="' + j.id + '"' + (j.id === c.jobId ? ' selected' : '') + '>' + cpEsc(j.title + ' · ' + cpJobCompany(j)) + '</option>'; }).join('') + '</select></label>' +
+    '<p class="cp-lab">Campaign type</p><div class="cp-chips">' + Object.keys(CP_PLAYBOOKS).map(function(k){ return cpTw('<button type="button" class="cp-chip' + (c.playbook === k ? ' is-on' : '') + '" aria-pressed="' + (c.playbook === k) + '" onclick="cpPickPlaybook(\'' + k + '\')">' + CP_PLAYBOOKS[k].name + (pb.key === k ? ' <small>suggested</small>' : '') + '</button>', CP_PLAYBOOKS[k].name, [CP_PLAYBOOKS[k].sub], pb.key === k ? 'Suggested because of ' + pb.why + '.' : ''); }).join('') + '</div>' +
+    '<div class="cp-q3"><div><p class="cp-lab">1 · Goal</p><span class="cp-step"><button type="button" aria-label="Fewer" onclick="cpSetJoin(' + ((c.goal.join || 1) - 1) + ')">−</button><b>' + (c.goal.join || 1) + '</b><button type="button" aria-label="More" onclick="cpSetJoin(' + ((c.goal.join || 1) + 1) + ')">+</button></span> <span class="cp-muted">' + ((c.goal.join || 1) === 1 ? 'joining' : 'joinings') + '</span><p class="cp-hint">Kairo aims for ' + c.goal.ready + ' ready to call by ' + cpDate(c.goal.by) + ', then carries them to joining around ' + cpDate(jp.around) + '.</p></div>' +
+    '<div><p class="cp-lab">2 · Sent in the name of</p><select class="app-input app-select" aria-label="Sent in the name of" onchange="CP.q.message.senderId=this.value; cpQRender()">' + senders.map(function(u){ return '<option value="' + u.id + '"' + ((c.message.senderId || c.ownerId) === u.id ? ' selected' : '') + '>' + cpEsc(u.name) + '</option>'; }).join('') + '</select></div>' +
+    '<div><p class="cp-lab">3 · First message, as ' + cpEsc(top.name.split(' ')[0]) + ' sees it</p><div class="cp-b cp-b--k"><span>' + cpEsc(cpRenderText(cpStepText(c, 0), top, c)) + '</span></div></div></div>' +
+    '<p class="cp-lab">Ready to start</p><ul class="cp-checks">' + checks.map(function(x){ return '<li><span>' + (x.ok ? '<span class="cp-ok">' + oIcon('check', 14, 2) + '</span>' : '') + (x.ok ? cpEsc(x.t) : attHTML(x.t)) + '</span>' + (x.fix || '') + '</li>'; }).join('') + '</ul>' +
+    '<p class="cp-hint">' + plan.reachAll + ' people to reach · about ' + plan.replies + ' replies · your time about ' + plan.yourHours + ' h instead of ' + plan.handHours + ' h by hand.</p>' +
+    '<div class="cp-modal__f"><button type="button" class="o-btn" onclick="cpQCustomise()">Customise everything</button><button type="button" class="o-btn o-btn--primary" ' + (blocked ? 'disabled' : '') + ' onclick="cpQStart()">Start campaign</button></div></div>';
+  cpModal(html, true);
+}
+function cpQCustomise(){ const c = CP.q; CP.q = null; cpModal(''); CP.editId = null; CP.live = null; CP.draft = c; CP.riskOk = false; CP.sub = { apps:false, boards:false }; showView('cowork-campaign-new', 'kairo-team'); }
+function cpQStart(){
+  const c = CP.q; if(!c) return; if(cpQChecks(c).some(function(x){ return x.block; })) return; c.confirmShort = true;
+  c.id = 'cmp' + (CP_NEXT++); c.createdAt = CP_NOW(); CAMPAIGNS.push(c); CP.q = null; cpModal('');
+  if(cpStart(c.id)){ cpAudit(c, 'started from quick start · ' + CP_PLAYBOOKS[c.playbook].name); CP.filter = 'running'; cpOpen(c.id); } else { CAMPAIGNS.splice(CAMPAIGNS.indexOf(c), 1); }
+}
+
+/* ---------- hand over, run again ---------- */
+function cpHandoverOpen(cid){
+  const c = cpById(cid); if(!c) return; const opts = RECRUITER_ROSTER.filter(function(u){ return u.id !== c.ownerId; });
+  cpModal('<h2 class="o-card__title">Hand over ' + cpEsc(c.title) + '</h2><p class="o-card__sub">Calls, replies and decisions move to the new owner. Messages not yet sent go in their name; conversations already running keep the same thread.</p><label class="cp-fld"><span class="cp-lab">New owner</span><select class="app-input app-select" id="cp-ho">' + opts.map(function(u){ return '<option value="' + u.id + '">' + cpEsc(u.name) + '</option>'; }).join('') + '</select></label><div class="cp-modal__f"><button type="button" class="o-btn" onclick="cpModal(\'\')">Cancel</button><button type="button" class="o-btn o-btn--primary" onclick="cpHandover(\'' + c.id + '\', document.getElementById(\'cp-ho\').value)">Hand over</button></div>');
+}
+function cpHandover(cid, uid){
+  const c = cpById(cid), u = tmById(uid); if(!c || !u || !cpCanEdit(c)) return false; const was = cpOwner(c).name;
+  c.ownerId = uid; c.message.senderId = uid; cpLog(c, 'Handed over from ' + was + ' to ' + u.name, 'version', cpPersonActor()); logAudit('Cowork', 'Campaign handed over', c.title + ' · ' + was + ' → ' + u.name); cpModal(''); toast('Handed over to ' + u.name); cpRefresh(); return true;
+}
+function cpRunAgain(cid){
+  const c = cpById(cid); if(!c) return; const job = cpJob(c.jobId); if(!job || job.status !== 'Active'){ toast('The job is not open. Reopen it first.'); return; }
+  const d = cpBlank(c.jobId); ['plays','mix','message','prescreen','pace','search','stages','playbook','goalType'].forEach(function(k){ if(c[k] != null) d[k] = JSON.parse(JSON.stringify(c[k])); });
+  d.message.versions = []; d.goal = { ready:c.goal.ready, by:CP_ISO(CP_NOW() + 10 * CP_DAY), join:c.goal.join }; d.runOf = c.id; CP.editId = null; CP.live = null; CP.draft = d; showView('cowork-campaign-new', 'kairo-team');
+}
+
+/* ---------- how the agents work together (Agents tab) ---------- */
+function cpAgentsTogether(){
+  const run = cpList().filter(function(c){ return c.status === 'running' || c.status === 'review'; });
+  return '<section class="o-card cp-together"><div class="o-card__head"><div><h2 class="o-card__title">How the agents work together</h2><p class="o-card__sub">A campaign runs all five for one job, from the first message to joining day. Workflows here are rules that apply to every job.</p></div></div><ol class="cp-stages">' +
+    CP_STAGES.map(function(st, i){ const on = cpStageAgentOn(st), n = run.filter(function(c){ return cpStageLevel(c, st.id) !== 'me'; }).length; return '<li class="cp-stage"><span class="cp-stage__n">' + (i + 1) + '</span><span class="cp-stage__t"><b>' + st.name + '</b><small>' + cpEsc((agentById(st.agent) || {}).name || '') + '</small></span><span class="cp-stage__c">' + (on ? n + ' campaigns' : attHTML(cpStageWhyOff(st))) + '</span></li>'; }).join('') + '</ol></section>';
+}
 
 /* ---------- cp-seed.js ---------- */
 /* ============================================================
@@ -45973,7 +46386,7 @@ function cpSeedAll(){
   const mk = function(jobId, o){
     const c = cpNewCampaign(jobId, { ownerId:o.owner, org:o.org }); c.status = o.status; c.startedAt = t - (o.started || 0) * D; c.createdAt = c.startedAt || t; c.goal = { ready:o.goal, by:CP_ISO(t + o.by * D) }; c.rules.checkFirst = o.check == null ? 10 : o.check; c.review = { pending:[], approved:c.rules.checkFirst };
     Object.assign(c.stats, o.stats || {}); if(o.bySource) Object.keys(o.bySource).forEach(function(k){ Object.assign(c.bySource[k], o.bySource[k]); }); if(o.byChannel) Object.assign(c.byChannel, o.byChannel); if(o.dedupe) Object.assign(c.dedupe, o.dedupe); if(o.pausedReason){ c.pausedReason = o.pausedReason; c.pausedBy = o.pausedBy || 'Oontu'; }
-    if(o.plays) Object.assign(c.plays, o.plays); c.title = cpJob(jobId).title; c.log = (o.log || ['Campaign started']).map(function(x, i){ return { at:t - (o.started || 0) * D + i * 3600000 * 5, text:x, kind:'info', who:'Kairo for ' + cpOwner(c).name }; }).reverse();
+    if(o.plays) Object.assign(c.plays, o.plays); c.title = cpJob(jobId).title; c.playbook = cpDetectPlaybook(cpJob(jobId)).key; c.log = (o.log || ['Campaign started']).map(function(x, i){ return { at:t - (o.started || 0) * D + i * 3600000 * 5, text:x, kind:'info', who:'Kairo for ' + cpOwner(c).name }; }).reverse();
     return c;
   };
   /* 1 · Senior Java Developer · Fintech Corp: on pace, rich data */
@@ -45986,12 +46399,23 @@ function cpSeedAll(){
   c1.versionLog = [{ v:2, at:t - 4 * D, by:'Priya Sharma', changes:['Goal 10 → 12 ready'] }, { v:3, at:t - 2 * D, by:'Priya Sharma', changes:['Message step 2 changed'] }];
   c1.moves = [{ id:'pause-boards', text:'Pause Job-board search: 11% replies', why:'Below 40% of the campaign average of 24% after 40 sends', action:'pause:boards', safety:'auto', status:'auto', applied:true, at:t - 2 * D, until:0 }, { id:'ab', text:'Kept version A', why:c1.abResult, action:'none', safety:'auto', status:'auto', applied:true, at:t - 3 * D, until:0 }];
   const sl = [cpSlotAt(0, 18, 30), cpSlotAt(1, 13, 0), cpSlotAt(1, 18, 0), cpSlotAt(2, 13, 30), cpSlotAt(2, 18, 30), cpSlotAt(3, 13, 0), cpSlotAt(3, 18, 0), cpSlotAt(4, 13, 30), cpSlotAt(4, 18, 30)];
-  const ansFor = function(i){ const c = byId(101 + i); return { notice:c.notice.replace('Days', 'days'), ctc:c.salary.replace(/₹|\sLPA/g, '').split('–').length === 2 ? '₹' + c.salary.split('–')[0].replace('₹', '') + 'L now, ₹' + c.salary.split('–')[1].replace(' LPA', '') + 'L expected' : c.salary, location:'Yes', skill:(5 + i % 4) + ' years' }; };
+  /* people who reached Ready to call passed the job's rules: notice up to 30 days, expected pay up to ₹32L */
+  const ansFor = function(i){ const c = byId(101 + i), r = /(\d+)–(\d+)/.exec(c.salary), nd = Math.min(30, cwNoticeDays(c.notice) || 30); return { notice:(nd === 30 && cwNoticeDays(c.notice) > 30 ? 'Can join in 30 days (buyout)' : nd + ' days'), ctc:'₹' + Math.min(+r[1], 30) + 'L now, ₹' + Math.min(+r[2], 32) + 'L expected', location:'Yes', skill:(5 + i % 4) + ' years' }; };
   const plays = ['apps','know','know','pool','know','apps','pool','know','apps'];
   for(let i = 0; i < 9; i++) cpSeedPerson(c1, 101 + i, 'ready', Object.assign({ play:plays[i], answers:ansFor(i), qIndex:4, called:i === 8 }, sl[i], { lastAt:t - (i + 2) * 3600000 }));
   cpSeedPerson(c1, 110, 'screening', { play:'pool', answers:{ notice:'30 days', ctc:'₹22L now, ₹27L expected' }, qIndex:2, lastAt:t - 1800000 });
   cpSeedPerson(c1, 111, 'needsYou', { play:'know', answers:{}, qIndex:0, question:'Is the role hybrid? How many days in the office?', lastAt:t - 5400000 });
   const cm = cpSeedPerson(c1, 112, 'closeMiss', { play:'pool', answers:{ notice:'45 days', ctc:'₹23L now, ₹28L expected', location:'Yes', skill:'6 years' }, qIndex:4, lastAt:t - 7200000 }); cm.reason = 'Notice 45 days is a little over the 30 days the job allows'; cm.misses = [{ q:c1.prescreen.questions[0], r:'close', note:'45 days' }];
+  /* after the call: one person at each stage of the journey, so the joining side can be seen working */
+  c1.goalType = 'join'; c1.goal.join = 2; Object.assign(c1.stats, { submitted:4, interviews:2, offers:1 });
+  const jx = { notice:'30 days', ctc:'₹24L now, ₹29L expected', location:'Yes', skill:'7 years' };
+  const pj = cpSeedPerson(c1, 113, 'accepted', { play:'know', answers:Object.assign({}, jx, { notice:'60 days' }), qIndex:4, called:true, lastAt:t - 9 * D, offer:{ ctc:30, joinMs:t + 12 * D, at:t - 6 * D, by:'Priya Sharma' } });
+  pj.jAt = t - 5 * D; pj.joinOn = t + 12 * D; pj.risk = 66; pj.checkins = [{ d:14, at:t - 2 * D, sent:true, answered:false }, { d:7, at:t + 5 * D, sent:false }, { d:1, at:t + 11 * D, sent:false }];
+  cpSay(pj, 'kairo', 'Hi Arvind, 14 days to go. Is your notice period on track? Reply 1 if all is well.'); cpEnsureBench(c1, pj); cpSubStage(c1, pj, null, 'Offer accepted · joins ' + cpDateMs(pj.joinOn));
+  const pi = cpSeedPerson(c1, 114, 'interview', { play:'pool', answers:jx, qIndex:4, called:true, lastAt:t - 3 * D }); pi.jAt = t - D; pi.interviewAt = cpNextWeekday(t + D, 11); cpSubStage(c1, pi, null, 'Client interview ' + cpWhen(pi.interviewAt));
+  const po = cpSeedPerson(c1, 115, 'offerDecision', { play:'apps', answers:jx, qIndex:4, called:true, lastAt:t - 5 * D }); po.jAt = t - 4 * 3600000; cpSubStage(c1, po, null, 'Cleared the interview');
+  const ps = cpSeedPerson(c1, 116, 'submitted', { play:'know', answers:Object.assign({}, jx, { notice:'15 days' }), qIndex:4, called:true, lastAt:t - D }); ps.jAt = t - 2 * 3600000; cpSubStage(c1, ps, null, 'Submitted');
+  c1.log.unshift({ at:t - 4 * 3600000, text:'Manish Tiwari cleared the client interview. The offer is yours to decide', kind:'needs', who:'Kairo for Priya Sharma' });
   cpEvalMoves(c1);
   /* 2 · Warehouse Supervisor · SwiftLog: behind pace */
   const c2 = mk('j21', { owner:'RP-104', status:'running', started:8, goal:20, by:4, stats:{ reached:310, replied:88, interested:41, screened:22, ready:5, submitted:0, interviews:0, notNow:20, referrals:3, optOuts:2 }, bySource:{ apps:{ reached:140, replied:140, ready:2 }, know:{ reached:90, replied:30, ready:2 }, pool:{ reached:80, replied:18, ready:1 } }, byChannel:{ whatsapp:{ sent:240, replied:70 }, email:{ sent:90, replied:18 }, linkedin:{ sent:0, replied:0 } }, dedupe:{ merged:21, skipped:18, waits:4, notAgain:5 }, plays:{ boards:false, li:false } });
@@ -46051,7 +46475,7 @@ function cpJobFilter(jobId, f){ CP_JF = f; refreshJobWorkspace(jobId, 'applicant
   window.renderJobDetail = function(id){
     const html = rd(id), j = jobById(id); if(!j || !agentAccess('engagement').on && !agentAccess('talent-discovery').on) return html;
     const c = CAMPAIGNS.find(function(x){ return x.jobId === id && ['running','review','paused','draft'].indexOf(x.status) > -1 && cpVisible(x); });
-    const line = c ? '<p class="cp-jobline">Campaign ' + (c.status === 'running' ? 'running' : c.status === 'paused' ? 'paused' : c.status === 'review' ? 'waiting for your check' : 'draft') + ' · ' + c.stats.ready + ' of ' + c.goal.ready + ' ready · <a href="#" onclick="cpOpen(\'' + c.id + '\'); return false">Open</a></p>' : (sCan('kairo', 'Use agents') && j.status === 'Active' ? '<p class="cp-jobline"><a href="#" onclick="CP.jobPick=\'' + j.id + '\'; cpNew(); return false">Start campaign</a></p>' : '');
+    const line = c ? '<p class="cp-jobline">Campaign ' + (c.status === 'running' ? 'running' : c.status === 'paused' ? 'paused' : c.status === 'review' ? 'waiting for your check' : 'draft') + ' · ' + c.stats.ready + ' of ' + c.goal.ready + ' ready · <a href="#" onclick="cpOpen(\'' + c.id + '\'); return false">Open</a></p>' : (sCan('kairo', 'Use agents') && j.status === 'Active' ? '<p class="cp-jobline"><a href="#" onclick="cpQuick(\'' + j.id + '\'); return false">Start campaign</a></p>' : '');
     return line ? html.replace('<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-5">', line + '<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-5">') : html;
   };
 })();
@@ -46070,7 +46494,9 @@ function cpOpenCallList(){
   window.oRecruiterAttention = function(me){
     const items = base(me); try {
       const rows = cpReadyCalls().filter(function(r){ return r.c.ownerId === me.id; });
-      if(rows.length){ items.unshift({ tone:'warn', icon:'cal', title:rows.length + (rows.length === 1 ? ' person ready to call' : ' people ready to call'), meta:'best between 6 and 8 pm', cta:'Open call list', onclick:'cpOpenCallList()' }); }
+      const dec = cpMyDay().filter(function(x){ return x.w >= 8 && x.c.ownerId === me.id; });
+      if(dec.length) items.unshift({ tone:'danger', icon:'check', title:dec.length === 1 ? dec[0].t : dec.length + ' hiring decisions in Cowork', meta:dec.length === 1 ? dec[0].m : dec.slice(0, 2).map(function(x){ return x.t; }).join(' · '), cta:dec.length === 1 ? dec[0].cta : 'Open', onclick:dec.length === 1 ? dec[0].on : "CP.top='campaigns'; showView('kairo-team')" });
+      if(rows.length){ items.splice(dec.length ? 1 : 0, 0,{ tone:'warn', icon:'cal', title:rows.length + (rows.length === 1 ? ' person ready to call' : ' people ready to call'), meta:'best between 6 and 8 pm', cta:'Open call list', onclick:'cpOpenCallList()' }); }
     } catch(e){}
     return items;
   };
