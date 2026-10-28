@@ -12277,7 +12277,7 @@ function renderJobDetail(id){
   '</div>';
   // Key facts
   const facts = '<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-5">'+
-    jdFact('Positions', j.positions)+
+    jdFact('Positions', typeof fmPositionsText === 'function' ? fmPositionsText(j) : j.positions)+
     jdFact('Days open', j.daysOpen, urgent?'Needs attention':null, urgent?'text-terracotta-600':null)+
     jdFact('Priority', j.priority||'Medium', null, j.priority==='High'||j.priority==='Urgent'?'text-terracotta-600':null)+
     jdFact('Experience', escapeHtml(j.minExp||'Any'))+
@@ -46584,6 +46584,216 @@ const LT_CHART = ['#B3B7C3', '#8C90A0', '#5B6075', '#D2D5DD'], LT_ATTENTION = '#
     const el = document.createElement('div'); el.className = 'toast app-toast'; el.innerHTML = '<span>' + msg + '</span>' + (typeof opts.undo === 'function' ? '<button type="button" class="app-toast__undo">Undo</button>' : '') + '<button type="button" class="cl-toast-x lt-toast-x">Close</button>';
     if(typeof opts.undo === 'function') el.querySelector('.app-toast__undo').onclick = function(){ clearTimeout(window.toastTimer); el.remove(); opts.undo(); }; el.querySelector('.lt-toast-x').onclick = function(){ el.remove(); };
     c.appendChild(el); window.toastTimer = setTimeout(function(){ el.remove(); }, 4000);
+  };
+})();
+
+</script>
+<style id="flow-style">.fm-modal .fm-reasons{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin:12px 0}.fm-reason{font-size:13px;color:#2F313F;display:flex;gap:6px;align-items:center}
+.fm-fld{display:block;margin-top:8px}.fm-fld .app-input{width:100%}.fm-lab{display:block;font-size:12px;color:#6B6F80;margin-bottom:4px}.fm-err{margin:6px 0 0;font-size:13px}
+.fm-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}.fm-foot--start{justify-content:flex-start;margin-top:8px}
+.fm-reply-card{border:1px solid #E6E6E1;border-radius:12px;padding:14px;background:#fff}.fm-reply-card textarea{width:100%}.fm-prop{margin:10px 0 0;font-size:13px;color:#2F313F}.fm-prop b{font-weight:500}.fm-hint{margin:10px 0 0;font-size:12px;color:#6B6F80}</style><script id="flow-script">
+/* ============================================================
+   FLOW-MAP RULES (Oontu-Flow-Map v5). One function per rule; each names its node.
+   See docs/product-flow-audit.md and docs/implementation-progress.md.
+   These run in the page because the prototype has no server. Each is written as a single
+   function over the records so it can move to a server unchanged.
+============================================================ */
+const FM = { interactive:true, offset:0, lastSweep:0, notices:[] };
+function fmNow(){ return Date.now() + FM.offset; }
+function fmMs(x){ if(x == null) return null; if(typeof x === 'number') return x; const t = new Date(x).getTime(); return isNaN(t) ? null : t; }
+function fmDate(x){ const t = fmMs(x); return t ? new Date(t).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : ''; }
+function fmMe(){ return (currentActingUser() || {}).name || 'A person'; }
+function fmEsc(s){ return escapeHtml(String(s == null ? '' : s)); }
+function fmModal(html){
+  let root = document.getElementById('fm-modal-root'); if(!root){ root = document.createElement('div'); root.id = 'fm-modal-root'; document.body.appendChild(root); }
+  root.innerHTML = html ? '<div class="fixed inset-0 z-[95] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="fm-h"><div class="modal-backdrop absolute inset-0" onclick="fmModal(\'\')"></div><div class="modal-panel relative bg-white w-full max-w-md p-6 fm-modal">' + html + '</div></div>' : '';
+  const f = root.querySelector('input,textarea,select,button'); if(f) try { f.focus(); } catch(e){}
+}
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && document.querySelector('#fm-modal-root > div')){ fmModal(''); e.stopImmediatePropagation(); } }, true);
+const FM_JOINED = ['Joined','Lock-in Completed'];
+
+/* ---------- A9 · a placement lowers the job's open count; the job is Filled when all openings are filled ---------- */
+function fmFilledCount(job){ return SUBMISSIONS.filter(function(s){ return s.jobId === job.id && FM_JOINED.indexOf(s.stage) > -1; }).length; }
+function fmOpenings(job){ return Math.max(0, (job.positions || 1) - fmFilledCount(job)); }
+function fmPositionsText(job){ const f = fmFilledCount(job), p = job.positions || 1; return f ? (p - f) + ' of ' + p + ' open' : String(p); }
+function fmAfterJoin(sb, was, stage){
+  const j = jobById(sb.jobId); if(!j) return;
+  const nowJoined = FM_JOINED.indexOf(stage) > -1, wasJoined = FM_JOINED.indexOf(was) > -1;
+  if(nowJoined && !wasJoined){
+    const p = j.positions || 1, f = fmFilledCount(j);
+    if(f >= p && j.status !== 'Filled'){
+      j.statusBeforeFill = j.status; j.status = 'Filled'; j.filledAt = new Date(fmNow()).toISOString();
+      logAudit('Jobs', 'Job filled', j.title + ' · ' + j.client + ' · all ' + p + (p === 1 ? ' opening' : ' openings') + ' filled', { entityType:'Job', entityId:j.id, jobId:j.id, previousState:j.statusBeforeFill, newState:'Filled' });
+    } else if(f < p) logAudit('Jobs', 'Opening filled', j.title + ' · ' + f + ' of ' + p + ' filled, ' + (p - f) + ' still open', { entityType:'Job', entityId:j.id, jobId:j.id });
+  } else if(wasJoined && !nowJoined && j.status === 'Filled'){
+    j.status = j.statusBeforeFill || 'Active'; logAudit('Jobs', 'Job reopened', j.title + ' · a placement ended (' + stage + '), so an opening is free again', { entityType:'Job', entityId:j.id, jobId:j.id, previousState:'Filled', newState:j.status });
+  }
+}
+(function(){
+  const base = window.moveSubmissionStage;
+  window.moveSubmissionStage = function(id, stage, reason){
+    const sb = SUBMISSIONS.find(function(s){ return s.id === id; }), was = sb ? sb.stage : null;
+    const out = base.apply(this, arguments);
+    if(out){ out.openedAt = out.openedAt || new Date(fmNow()).toISOString(); if(was !== stage){ fmAfterJoin(out, was, stage); if(stage === 'On Hold' && !out.holdCheckAt) out.holdCheckAt = fmNow() + 7 * 86400000; } }
+    return out;
+  };
+})();
+
+/* ---------- A6 · every rejection carries a reason code ---------- */
+const FM_REJECT_REASONS = [['skills','Skills do not match'],['experience','Not enough experience'],['pay','Expected pay above the range'],['notice','Notice period too long'],['location','Location does not work'],['duplicate','Duplicate application'],['not_interested','Not interested'],['not_reachable','Not reachable'],['other','Other']];
+window.pipeRejectApplicant = function(subId, code, note){
+  const sb = subById(subId), j = sb && jobById(sb.jobId); if(!j || !canMoveInPipeline(j)) return false;
+  if(!code){ fmRejectOpen(subId); return false; }
+  const r = FM_REJECT_REASONS.find(function(x){ return x[0] === code; }); note = String(note || '').trim();
+  if(!r || (code === 'other' && note.length < 3)) return false;
+  sb.rejectReason = { code:code, label:r[1], note:note, by:fmMe(), at:new Date(fmNow()).toISOString() };
+  moveSubmissionStage(sb.id, 'Rejected', r[1] + (note ? ' · ' + note : ''));
+  toast((byId(sb.candidateId) || {}).name + ' rejected · ' + r[1] + '. They stay in your talent pool.');
+  if(typeof pipeRefreshAll === 'function') pipeRefreshAll(); return true;
+};
+function fmRejectOpen(subId){
+  const sb = subById(subId), c = sb && byId(sb.candidateId); if(!c) return;
+  fmModal('<h2 id="fm-h" class="o-card__title">Reject ' + fmEsc(c.name) + '?</h2><p class="o-card__sub">Pick the reason. It is kept with the record and used in reports. ' + fmEsc(c.name.split(' ')[0]) + ' stays in your talent pool.</p>' +
+    '<div class="fm-reasons" role="radiogroup" aria-label="Reason">' + FM_REJECT_REASONS.map(function(r, i){ return '<label class="fm-reason"><input type="radio" name="fm-rr" value="' + r[0] + '"' + (i === 0 ? ' checked' : '') + ' /> ' + r[1] + '</label>'; }).join('') + '</div>' +
+    '<label class="fm-fld"><span class="fm-lab">Note (needed for Other)</span><textarea id="fm-rr-note" class="app-input" rows="2"></textarea></label><p class="fm-err" id="fm-rr-err"></p>' +
+    '<div class="fm-foot"><button type="button" class="o-btn" onclick="fmModal(\'\')">Cancel</button><button type="button" class="o-btn o-btn--primary" onclick="fmRejectConfirm(\'' + subId + '\')">Reject</button></div>');
+}
+function fmRejectConfirm(subId){
+  const code = (document.querySelector('input[name=fm-rr]:checked') || {}).value, note = (document.getElementById('fm-rr-note') || {}).value;
+  if(code === 'other' && String(note || '').trim().length < 3){ document.getElementById('fm-rr-err').innerHTML = attHTML('Add a short note for Other.'); return; }
+  fmModal(''); pipeRejectApplicant(subId, code, note);
+}
+
+/* ---------- A7 · same client, other job, inside the duplicate window: warn, a note is needed ---------- */
+function fmClientWindowHit(job, c){
+  if(!job || !c || (typeof sIsCorporate === 'function' && sIsCorporate())) return null;
+  const days = Number(sGet('hiring.dupWindow')) || 0; if(!days || !job.client) return null; const since = fmNow() - days * 86400000;
+  let best = null;
+  SUBMISSIONS.forEach(function(s){
+    if(s.candidateId !== c.id || s.jobId === job.id) return; const oj = jobById(s.jobId); if(!oj || oj.client !== job.client) return;
+    const info = subSentInfo(s), at = info ? fmMs(info.at) : null; if(!at || at < since) return;
+    if(!best || at > best.at) best = { sub:s, job:oj, at:at, days:days };
+  });
+  return best;
+}
+/* ---------- A7 · same job, same candidate: show owner, date and stage ---------- */
+(function(){
+  const base = window.submitOneToJob;
+  window.submitOneToJob = function(job, c, source, opts){
+    opts = opts || {};
+    const hit = fmClientWindowHit(job, c);
+    if(hit){
+      const pre = base(job, c, source, Object.assign({}, opts, { dryRun:true }));
+      if(pre.ok){
+        const why = 'Sent to ' + job.client + ' for ' + hit.job.title + ' on ' + fmDate(hit.at) + ', inside the ' + hit.days + '-day client duplicate window.';
+        if(opts.dryRun) return Object.assign(pre, { warning:why, window:hit });
+        let note = opts.windowNote; if(note == null && FM.interactive) note = window.prompt(why + ' Add a note to continue. It goes with the submission and to your manager.');
+        note = String(note || '').trim();
+        if(note.length < 5) return { ok:false, code:'client_window', category:'blocked', reason:why + ' Add a note to submit.', candidateId:c.id, jobId:job.id, window:hit };
+        const r = base(job, c, source, opts);
+        if(r.ok && r.sub){ r.sub.windowNote = { text:note, otherJobId:hit.job.id, by:fmMe(), at:new Date(fmNow()).toISOString() }; logAudit('Submissions', 'Submitted inside the client duplicate window', c.name + ' → ' + job.title + ' (also sent for ' + hit.job.title + ' on ' + fmDate(hit.at) + ') · note: ' + note, { entityType:'Submission', entityId:r.sub.id, jobId:job.id, candidateId:c.id }); }
+        return r;
+      }
+    }
+    const r = base(job, c, source, opts);
+    if(r && r.code === 'journey_exists' && r.sub && r.reason.indexOf(' · since ') === -1){
+      const s = r.sub, since = (s.stageHistory && s.stageHistory[0] && s.stageHistory[0].at) || s.createdAt;
+      r.since = since; r.stage = s.stage; r.reason += ' · since ' + fmDate(since) + ' · ' + ((typeof O_STAGE_LABEL !== 'undefined' && O_STAGE_LABEL[s.stage]) || s.stage);
+    }
+    return r;
+  };
+})();
+
+/* ---------- A5 · applicant not opened within the SLA: reassign to the next recruiter on the job, tell the manager ---------- */
+function fmTeam(job){ return (job.assignedRecruiters || []).filter(function(id){ return RECRUITER_ROSTER.some(function(r){ return r.id === id && r.status !== 'Disabled'; }); }); }
+function fmLoad(job, rid){ return SUBMISSIONS.filter(function(s){ return s.jobId === job.id && s.recruiterId === rid && subPhase(s) === 'applied'; }).length; }
+function fmNextRecruiter(job, exclude){
+  const team = fmTeam(job).filter(function(id){ return exclude.indexOf(id) === -1; }); if(!team.length) return null;
+  return team.slice().sort(function(a, b){ return fmLoad(job, a) - fmLoad(job, b) || team.indexOf(a) - team.indexOf(b); })[0];
+}
+function fmManagerOf(rid){ const t = typeof teamForRecruiter === 'function' ? teamForRecruiter(rid) : null; return t && t.managerId && t.managerId !== rid ? RECRUITER_ROSTER.find(function(x){ return x.id === t.managerId; }) : null; }
+function fmName(rid){ const r = RECRUITER_ROSTER.find(function(x){ return x.id === rid; }); return r ? r.name : 'nobody'; }
+function fmSlaSweep(){
+  const hours = Number(sGet('hiring.slaHours')) || 0, now = fmNow(), out = { reassigned:0, checkedBack:0 }; FM.lastSweep = now;
+  if(hours && !(typeof sIsCorporate === 'function' && sIsCorporate())) SUBMISSIONS.forEach(function(s){
+    if(subPhase(s) !== 'applied' || s.openedAt || !s.recruiterId) return; const j = jobById(s.jobId); if(!j || j.status !== 'Active') return;
+    const from = fmMs(s.slaFrom || s.createdAt); if(!from || now - from < hours * 3600000) return;
+    const next = fmNextRecruiter(j, [s.recruiterId]); if(!next) return;
+    const was = s.recruiterId, c = byId(s.candidateId) || {};
+    setJourneyOwner(s, next, 'Not opened within the ' + hours + '-hour SLA'); s.slaFrom = new Date(now).toISOString(); s.slaReassigned = (s.slaReassigned || 0) + 1; out.reassigned++;
+    const mgr = fmManagerOf(was), text = c.name + ' (' + j.title + ') was not opened by ' + fmName(was) + ' within ' + hours + ' hours, so it moved to ' + fmName(next) + '.';
+    if(sGet('hiring.notifyManager') !== false) FM.notices.push({ at:now, to:mgr ? mgr.id : 'owner', toName:mgr ? mgr.name : 'Owner', text:text, subId:s.id });
+    logAudit('Applicants', 'Reassigned: not opened within the SLA', text, { entityType:'Submission', entityId:s.id, jobId:j.id, candidateId:s.candidateId, previousState:was, newState:next });
+  });
+  /* A8 / E4 · on hold: Kairo checks back with the client every 7 days */
+  SUBMISSIONS.forEach(function(s){
+    if(s.stage !== 'On Hold' || !s.holdCheckAt || s.holdCheckAt > now) return; const j = jobById(s.jobId), c = byId(s.candidateId) || {};
+    s.holdCheckAt = now + 7 * 86400000; s.holdChecks = (s.holdChecks || 0) + 1; out.checkedBack++;
+    (s.notes = s.notes || []).push({ at:new Date(now).toISOString(), by:'Kairo for ' + fmName(s.recruiterId), text:'Checked back with ' + (j ? j.client : 'the client') + ' about ' + c.name + ' (on hold).' });
+    logAudit('Submissions', 'Kairo for ' + fmName(s.recruiterId) + ' · checked back on a hold', c.name + ' · ' + (j ? j.title + ' · ' + j.client : ''), { entityType:'Submission', entityId:s.id, jobId:s.jobId, candidateId:s.candidateId });
+  });
+  return out;
+}
+(function(){
+  const base = window.openPipelineDetail;
+  window.openPipelineDetail = function(subId){ const s = subById(subId), me = currentActingUser(); if(s && me && s.recruiterId === me.id && !s.openedAt) s.openedAt = new Date(fmNow()).toISOString(); return base.apply(this, arguments); };
+  const sv = window.showView;
+  window.showView = function(){ const r = sv.apply(this, arguments); try { if(fmNow() - FM.lastSweep > 60000) fmSlaSweep(); } catch(e){ console.error('flow sweep', e); } return r; };
+})();
+
+/* ---------- A4 · removing someone from a job redistributes only their unreviewed applicants ---------- */
+(function(){
+  const base = window.removeRecruiterFromJob;
+  window.removeRecruiterFromJob = function(jobId, rid){
+    const job = jobById(jobId), mine = job ? SUBMISSIONS.filter(function(s){ return s.jobId === jobId && s.recruiterId === rid && subPhase(s) === 'applied'; }) : [];
+    const r = base.apply(this, arguments); if(!r || !r.ok || !mine.length) return r;
+    const moved = [], parked = [];
+    mine.forEach(function(s){ const next = fmNextRecruiter(job, [rid]); if(next){ setJourneyOwner(s, next, fmName(rid) + ' left the job team'); s.slaFrom = new Date(fmNow()).toISOString(); moved.push(next); } else { setJourneyOwner(s, null, fmName(rid) + ' left the job team and nobody else is on it'); parked.push(s.id); } });
+    r.redistributed = moved.length; r.unassigned = parked.length;
+    logAudit('Jobs', 'Applicants redistributed', mine.length + ' unreviewed ' + (mine.length === 1 ? 'applicant' : 'applicants') + ' of ' + fmName(rid) + ' on ' + job.title + ': ' + moved.length + ' moved' + (parked.length ? ', ' + parked.length + ' waiting for someone on the job' : '') + '. Submitted candidates keep their owner.', { entityType:'Job', entityId:job.id, jobId:job.id });
+    return r;
+  };
+})();
+
+/* ---------- A8 · Kairo reads a client's email or WhatsApp reply and proposes a status; a recruiter confirms ---------- */
+const FM_CLIENT_RULES = [
+  { status:'Rejected', label:'Client rejected', re:/\b(not (a )?(good )?fit|reject(ed)?|not suitable|not shortlist(ed)?|pass on|not moving|won'?t (be )?(moving|proceeding)|not (be )?proceed(ing)?|decline)\b/i },
+  { status:'On Hold', label:'On hold', re:/\b(on hold|hold (on|off)|later|pause[d]?|wait(ing)?|freeze|next (month|quarter)|budget (is )?not)\b/i },
+  { status:'Shortlisted', label:'Shortlisted', re:/\b(shortlist(ed)?|schedule|set up (an? )?(call|interview)|interview|meet (him|her|them)|go ahead|proceed|move forward|like (the|this) (profile|candidate)|let'?s talk)\b/i },
+];
+function fmReadClientReply(text){
+  const t = String(text || ''); if(t.trim().length < 3) return { status:null, why:'Paste the reply first.' };
+  for(let i = 0; i < FM_CLIENT_RULES.length; i++){ const m = t.match(FM_CLIENT_RULES[i].re); if(m) return { status:FM_CLIENT_RULES[i].status, label:FM_CLIENT_RULES[i].label, why:'“' + m[0] + '”' }; }
+  return { status:null, why:'Kairo could not tell. Pick the status yourself.' };
+}
+function fmClientApply(subId, status, text){
+  const sb = subById(subId), j = sb && jobById(sb.jobId); if(!j || !canMoveInPipeline(j)) return false;
+  const lab = (FM_CLIENT_RULES.find(function(x){ return x.status === status; }) || {}).label; if(!lab) return false;
+  const reply = String(text || '').trim();
+  if(reply) (sb.notes = sb.notes || []).push({ at:new Date(fmNow()).toISOString(), by:fmMe(), text:'Client replied: ' + reply });
+  if(status === 'Rejected') sb.rejectReason = { code:'client', label:'Client rejected', note:reply.slice(0, 200), by:fmMe(), at:new Date(fmNow()).toISOString() };
+  moveSubmissionStage(sb.id, status, lab + ' · confirmed by ' + fmMe() + (reply ? ' from the client’s reply' : ''));
+  if(status === 'On Hold') sb.holdCheckAt = fmNow() + 7 * 86400000;
+  logAudit('Submissions', 'Client feedback recorded', (byId(sb.candidateId) || {}).name + ' · ' + j.title + ' · ' + lab, { entityType:'Submission', entityId:sb.id, jobId:j.id, candidateId:sb.candidateId });
+  toast(lab + (status === 'On Hold' ? '. Kairo checks back with the client in 7 days.' : '.'));
+  if(typeof pdRender === 'function' && typeof pdSubId !== 'undefined' && pdSubId === subId) pdRender(); if(typeof pipeRefreshAll === 'function') pipeRefreshAll(); return true;
+}
+function fmClientReplyCard(sb){
+  const ph = subPhase(sb), j = jobById(sb.jobId); if(!j || !canMoveInPipeline(j) || ['client','process'].indexOf(ph) === -1 && sb.stage !== 'On Hold') return '';
+  const p = FM.proposal && FM.proposal.subId === sb.id ? FM.proposal : null;
+  const pick = function(st, lab, on){ return '<button type="button" class="o-btn' + (on ? ' o-btn--primary' : '') + '" onclick="fmClientApply(\'' + sb.id + '\',\'' + st + '\', (document.getElementById(\'fm-reply\')||{}).value)">' + lab + '</button>'; };
+  return '<section class="fm-reply-card" id="fm-reply-card"><p class="fm-lab">Client replied by email or WhatsApp?</p><textarea id="fm-reply" class="app-input" rows="3" placeholder="Paste the reply here">' + fmEsc(p ? p.text : '') + '</textarea>' +
+    '<div class="fm-foot fm-foot--start"><button type="button" class="o-btn" onclick="fmClientRead(\'' + sb.id + '\')">Read with Kairo</button></div>' +
+    (p ? '<p class="fm-prop">' + (p.status ? 'Kairo reads this as <b>' + fmEsc(p.label) + '</b> because of ' + fmEsc(p.why) + '. Confirm, or pick another.' : fmEsc(p.why)) + '</p><div class="fm-foot fm-foot--start">' + pick('Shortlisted', 'Shortlisted', p.status === 'Shortlisted') + pick('On Hold', 'On hold', p.status === 'On Hold') + pick('Rejected', 'Client rejected', p.status === 'Rejected') + '</div>' : '') +
+    (sb.stage === 'On Hold' && sb.holdCheckAt ? '<p class="fm-hint">On hold. Kairo checks back with ' + fmEsc(j.client) + ' on ' + fmDate(sb.holdCheckAt) + '.</p>' : '') + '</section>';
+}
+function fmClientRead(subId){ const t = (document.getElementById('fm-reply') || {}).value || ''; FM.proposal = Object.assign({ subId:subId, text:t }, fmReadClientReply(t)); if(typeof pdRender === 'function') pdRender(); }
+(function(){
+  const base = window.pdRender;
+  window.pdRender = function(){
+    const r = base.apply(this, arguments);
+    try { const sb = subById(pdSubId), body = document.querySelector('#pd-panel > .overflow-y-auto') || document.querySelector('#pd-panel .overflow-y-auto'); const card = sb ? fmClientReplyCard(sb) : ''; if(body && card) body.insertAdjacentHTML('afterbegin', card); } catch(e){ console.error('client reply card', e); }
+    return r;
   };
 })();
 
