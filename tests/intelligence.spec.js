@@ -81,7 +81,7 @@
       WSX.hiring.aiDisclose = false; ok(!/Drafted by Kairo/.test(cwTemplateText(step, c, { ownerId:'RP-088' })), 'line removed when off'); WSX.hiring.aiDisclose = true;
     });
     await t('Audit Center carries the fairness report and says what is not collected', async function(){
-      as('admin'); var html = renderAuditCenter(); ok(/FAIRNESS AND AI USE/.test(html) && /NOT COLLECTED YET/.test(html) && /does not use name, age, gender/.test(html), 'sections');
+      as('admin'); var html = renderAuditCenter(); ok(/FAIRNESS AND HOW KAIRO DECIDES/.test(html) && /NOT COLLECTED YET/.test(html) && /does not use name, age, gender/.test(html), 'sections');
       ok(/No candidate is rejected by Oontu on its own/.test(html), 'human control stated'); ok(/small sample|Nothing has been sent/.test(html) || fairnessData().rows.every(function(r){ return r.sent >= 5; }), 'small samples are marked');
     });
     await t('detailed fit counts near skills as half and is only used for ranking when the model is switched', async function(){

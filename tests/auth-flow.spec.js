@@ -89,17 +89,19 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
   }
   async function suPick(value){ const b = q('[data-act=su-pick][data-value="'+value+'"]'); assert(b, 'no choice '+value); b.click(); await sleep(340); await idle(); }
   async function suSkip(){ click('[data-act=su-skip]'); await sleep(10); await idle(); }
+  /* The plan step: keep the recommended plan, or look at another one first. */
+  async function suPlan(id){ if(id){ click('[data-act=su-plan-see][data-value="'+id+'"]'); await sleep(10); } const b = q('[data-act=su-pick][data-field=plan]'); assert(b, 'the plan question'); b.click(); await sleep(340); await idle(); }
   /* Answers the questions up to (not including) `stop`. type: 'agency' | 'corporate'. */
   async function signUpTo(stop, type, o){
     o = Object.assign({ name:'Dana', org:type==='corporate' ? 'Startup Corp' : 'Startup Talent', size:type==='corporate' ? '51–200' : '6–20', place:'IN', email:'dana@startup.example', mobile:'98250 41207' }, o || {});
     if(authFlow.step!=='signup') authSwitchIntent('signup');
     await sleep(10);
-    const order = ['name','type','org','size', type==='corporate' ? 'partners' : 'focus','place','email','mobile'];
+    const order = ['name','type','org','size', type==='corporate' ? 'partners' : 'focus','place','plan','email'];
     for(let i=0;i<order.length;i++){
       const k = order[i]; if(k===stop) return;
       if(k==='name') await suText(o.name); else if(k==='type') await suPick(type); else if(k==='org') await suText(o.org);
       else if(k==='size') await suPick(o.size); else if(k==='focus' || k==='partners') await suSkip(); else if(k==='place') await suPick(o.place);
-      else if(k==='email') await suText(o.email); else if(k==='mobile') await suText(o.mobile);
+      else if(k==='plan') await suPlan(o.plan); else if(k==='email') await suText(o.email);
     }
   }
   /* The whole sign-up with a real code, into the product. type: 'Staffing agency' | 'Corporate'. */
@@ -140,6 +142,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
   function customRoleId(name){ const r = CUSTOM_ROLES.find(function(x){ return x.name===name; }); return r ? r.id : ''; }
   async function test(name, fn){
     reset();
+    window.AUTH_OPEN_SIGNIN = /^01g\b/.test(name);   // the prototype lets any unknown address in; the other tests need the real "no account" answer
     window.OONTU_MOTION_SCALE = /^(01b|01c|02P)\b/.test(name) ? 1 : 0.05;   // full length only where the timing is the point; the rest would not fit the runner's clock
     try { await fn(); results.push({ name:name, pass:true }); }
     catch(e){ results.push({ name:name, pass:false, error:String(e && e.message || e) }); }
@@ -165,12 +168,12 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       eq(heading(), 'Check your inbox.'); assert(/a•••@northstar\.example/.test(oaText()), 'the address is masked');
       eq(qa('.oa-otp__box').length, 6, 'six boxes');
       const t0 = Date.now(), seen = {};
-      new MutationObserver(function(){ const o = q('.oa-otp'); if(o && o.classList.contains('is-collapsing')) seen.collapsing = true; if(o && o.classList.contains('is-verified')) seen.verified = true; if(q('.oa-verify')) seen.ring = true; if(/Verifying your code/.test(oaMsg())) seen.msg = true; }).observe(document.getElementById('oontu-auth'), { attributes:true, childList:true, subtree:true, characterData:true });
+      new MutationObserver(function(){ const o = q('.oa-otp'); if(o && o.classList.contains('is-collapsing')) seen.collapsing = true; if(o && o.classList.contains('is-verified')) seen.verified = true; if(q('.oa-verify')) seen.ring = true; if(/Checking it’s you/.test(oaMsg())) seen.msg = true; }).observe(document.getElementById('oontu-auth'), { attributes:true, childList:true, subtree:true, characterData:true });
       setv('.oa-otp__input', authApi._latestEmail('alex@northstar.example').code);
       assert(await waitFor(function(){ return !!q('[data-act=si-enter]'); }, 8000), 'then the welcome');
       assert(seen.collapsing && seen.ring, 'the six boxes collapsed into the verifying ring'); assert(seen.msg, 'it said what was happening'); assert(seen.verified, 'the ring completed into a tick');
       assert(Date.now() - t0 >= 1000, 'the motion is never skipped, even when the answer is instant');
-      assert(/^Welcome back, Alex\.$/.test(heading()), 'a welcome, not "You’re in": '+heading()); assert(q('[data-arrive-tile]'), 'the tick is now the workspace tile'); assert(!/Open my day/.test(oaText()), 'no extra button to press');
+      assert(/^Welcome back, Alex\.$/.test(heading()), 'a welcome, not "You’re in": '+heading()); assert(await waitFor(function(){ return !!q('#oa-h .oa-dotland.is-in'); }, 2000), 'the green tick lands as the full stop'); assert(!q('#oa-h .oa-roll'), 'the roll has settled'); assert(!/Open my day/.test(oaText()), 'no extra button to press');
       assert(q('.oa-stage').classList.contains('is-done'), 'the scene tidies up');
       assert(!appVisible(), 'not before the welcome has been seen');
       assert(await waitFor(function(){ return appVisible(); }, 8000), 'it opens the app by itself');
@@ -231,6 +234,79 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       as('hm', 'hm.hire@startup.example', 'ws_9_abc123'); showView('hm-dashboard'); await idle(); assert(card(), 'hiring managers too, they take interviews');
       as('recruiter', 'sam@harbor.example', 'ws_northstar'); showView('dashboard'); await idle(); assert(!card(), 'a demo persona never sees it'); eq(WSX.accounts.mail.status, 'connected', 'and keeps the demo connections');
       as('admin', 'owner@startup.example', 'ws_9_abc123'); authAppSession.role = 'owner'; myConnApply(); assert(!myConnectCardHTML(), 'the owner has the workspace list instead');
+    });
+
+    await test('01g Prototype sign-in: test@incomplete.com always opens an unfinished workspace; any other address goes straight into a complete dashboard; Create workspace is untouched', async function(){
+      const titles = function(){ return Array.from(document.querySelectorAll('#ws-card .ws-item__title')).map(function(e){ return e.textContent; }).join('|'); };
+      // the fixed incomplete account
+      await signInWithCode('test@incomplete.com');
+      assert(appVisible() && state.role === 'admin', 'in as the owner');
+      eq(titles(), 'Invite your team|Marketplace listing|Oontu jobs website|Add your first client|Open your first job', 'only what is left'); assert(/2 of 7 done/.test(cardText()));
+      eq(document.getElementById('ws-name').textContent, 'Incomplete Demo Agency');
+      wsSetup.done['agency-team'] = true; wsRefreshCard(); assert(/3 of 7 done/.test(cardText()), 'progress works inside the session');
+      authApi._advance(40000); backToSignIn(); await signInWithCode('test@incomplete.com');
+      assert(/2 of 7 done/.test(cardText()), 'and the demo starts the same way every time');
+      // any other address
+      authApi._advance(40000); backToSignIn(); await signInWithCode('someone.new@brightpath.example');
+      assert(appVisible() && state.role === 'admin', 'an address nobody has used goes straight in'); assert(!document.getElementById('ws-card'), 'with nothing left to set up');
+      eq(document.getElementById('ws-name').textContent, 'Brightpath', 'the workspace is named from the address'); eq(authAppSession.role, 'owner');
+      authApi._advance(40000); backToSignIn(); await signInWithCode('someone.new@brightpath.example');
+      assert(appVisible() && !document.getElementById('ws-card'), 'and the same account is there next time');
+      authApi._advance(40000); backToSignIn(); await signInWithCode('person@gmail.com'); eq(document.getElementById('ws-name').textContent, 'Person’s workspace', 'a personal address names it after the person');
+      // Create workspace still asks for a workspace
+      await authApi.sendCode({ email:'brand.new@startup.example', intent:'signup' });
+      eq((await authApi.verifyCode({ email:'brand.new@startup.example', code:authApi._latestEmail('brand.new@startup.example').code })).status, 'new_user', 'sign-up is still a sign-up');
+    });
+
+    await test('01h A new workspace gets one welcome email; a code user is offered a password after a while, once more later, then never; a trusted browser needs no code', async function(){
+      window.OONTU_PW_NUDGE_MS = 600;
+      try {
+        await signUpAll('Staffing agency', 'Dana Lee', 'dana@startup.example');
+        const mails = authApi._welcomeMail().filter(function(m){ return m.to === 'dana@startup.example'; });
+        eq(mails.length, 1, 'one welcome email'); assert(/is live on Oontu/.test(mails[0].subject), mails[0].subject);
+        eq(authApi._verifyMailCount('dana@startup.example'), 0, 'and no verification email: the code already proved it');
+        assert(!document.getElementById('pw-nudge'), 'not straight away');
+        await sleep(700); assert(document.getElementById('pw-nudge'), 'a little later, a quiet password suggestion'); assert(/Faster next time\?/.test(document.getElementById('pw-nudge').textContent));
+        pwNudgeDismiss(); assert(!document.getElementById('pw-nudge'), '"Codes are fine" hides it');
+        assert(authTrustedToken('dana@startup.example') || await waitFor(function(){ return !!authTrustedToken('dana@startup.example'); }, 2000), 'this browser is trusted after a code');
+        // a reload while still signed in: "Continue as Dana" goes straight in
+        authAppSession = { method:'', email:'' }; const app = document.getElementById('app'); app.classList.add('hidden'); app.classList.remove('flex'); document.getElementById('onboarding').classList.remove('hidden');
+        authFlow = authInitialState(); authGo('email'); await sleep(10);
+        assert(q('[data-act=si-continue]'), 'Continue as Dana'); const before = authApi._outboxCount('dana@startup.example');
+        await click('[data-act=si-continue]'); await idle(); await waitFor(function(){ return !!q('[data-act=si-enter]') || appVisible(); }, 4000); await openApp();
+        assert(appVisible(), 'in without a code'); eq(authApi._outboxCount('dana@startup.example'), before, 'no code was sent');
+        // signing out forgets the browser; the third code sign-in asks once more, a second "no" is final
+        for(let i = 0; i < 2; i++){ authApi._advance(40000); backToSignIn(); assert(!authTrustedToken('dana@startup.example'), 'signed out: no longer trusted'); await signInWithCode('dana@startup.example'); }
+        await sleep(700); assert(document.getElementById('pw-nudge') && /signed in with a code 3 times/.test(document.getElementById('pw-nudge').textContent), 'asked once more on the third code sign-in');
+        pwNudgeDismiss(); authApi._advance(40000); backToSignIn(); await signInWithCode('dana@startup.example'); await sleep(700); assert(!document.getElementById('pw-nudge'), 'then never again');
+        // setting a password ends it for good
+        authApi._advance(40000); backToSignIn(); await signInWithCode('alex@northstar.example'); await sleep(700);
+        assert(!document.getElementById('pw-nudge'), 'someone who already has a password is never asked');
+      } finally { delete window.OONTU_PW_NUDGE_MS; }
+    });
+
+    await test('01i Plans: the trial shown as results, locks that explain, Boosts, compare and choose, read-only after the trial', async function(){
+      await signInWithCode('test@incomplete.com');
+      const card = function(){ return document.getElementById('trial-card'); };
+      assert(card(), 'the owner sees the trial card'); assert(/Your 14 days so far/.test(card().textContent) && /Floor · 9 days left/.test(card().textContent), card().textContent);
+      eq(Array.from(card().querySelectorAll('.trial-nums b')).map(function(b){ return b.textContent; }).join('|'), '3|18|5|16 h', 'jobs, candidates, interviews, hours Kairo saved');
+      assert(!/\bAI\b/.test(card().textContent), 'no "AI" wording');
+      // locks: visible, explained, and the owner can try
+      assert(navPlanLocked('contract-hiring') && !navPlanLocked('client-management'), 'Floor includes client billing, not contract hiring');
+      planLockOpen('contract-hiring'); const dlg = document.getElementById('plan-lock-root').textContent;
+      assert(/Contract hiring and timesheets/.test(dlg) && /Included in Network/.test(dlg) && /Contract Desk/.test(dlg) && /per active contractor/.test(dlg), dlg);
+      planTry('boost'); assert(!navPlanLocked('contract-hiring'), 'the Boost unlocks just that'); assert(/billed only for who uses it/i.test(document.querySelector('.app-toasts').textContent));
+      eq(wsPlanState().plan.name, 'Floor', 'still on Floor');
+      // compare and choose
+      showView('admin-dashboard'); wsPlanCompareOpen(); const cmp = document.getElementById('plan-compare-root').textContent;
+      assert(/Desk/.test(cmp) && /Floor/.test(cmp) && /Network/.test(cmp) && /LinkedIn Reach/.test(cmp) && /always free/.test(cmp), 'all plans and Boosts');
+      wsPlanChoose('plan-network'); eq(wsPlanState().plan.name, 'Network'); eq(wsPlanState().status, 'active'); assert(!card(), 'a chosen plan: no trial card');
+      // a trial that has run out: readable, nothing new
+      const wp = wsPlanCurrent(); wp.status = 'trial'; wp.trialEndsAt = Date.now() - 1000; showView('admin-dashboard');
+      assert(/Your trial has ended/.test(card().textContent) && /read-only/.test(card().textContent), 'says so');
+      assert(wsReadOnlyBlocked(), 'creating is paused'); assert(/Choose a plan/.test(document.querySelector('.app-toasts').textContent));
+      // a recruiter is never asked to buy
+      authAppSession.role = 'recruiter'; assert(!wsTrialCardHTML(), 'only the owner sees plan prompts'); planLockOpen('vendors'); assert(/Ask your owner/.test(document.getElementById('plan-lock-root').textContent)); planLockClose();
     });
 
     await test('01c A wrong code slides the boxes back out with an error; "Open now" skips the welcome', async function(){
@@ -408,8 +484,8 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       await signUpTo('place', 'agency', { name:'Taylor' });
       eq(suTitle(), 'Where’s your team based?');
       await suPick('IN');
-      eq(suTitle(), 'Your mobile number?', 'no email or code question: the provider proved the email');
-      await suText('98250 41207');
+      assert(/^Here’s what fits /.test(suTitle()), 'no email or code question: the provider proved the email, so the plan is the last answer');
+      await suPlan();
       assert(await waitFor(function(){ return !!q('[data-act=su-enter]'); }, 3000), 'workspace created');
       await click('[data-act=su-enter]'); await settle();
       eq(state.role, 'admin', 'then the product');
@@ -602,13 +678,22 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       eq(suTitle(), 'What do you place most?'); assert(qa('.oa-chip').length===8, 'eight industries');
       qa('.oa-chip')[0].click(); qa('.oa-chip')[1].click(); eq(q('[data-count]').textContent.trim(), 'Continue with 2'); await click('[data-act=su-next]');
       eq(suTitle(), 'Where’s your team based?'); await suPick('IN');
-      eq(suTitle(), 'Your work email?'); eq(suProgress(), '3 to go'); await suText('dana@startup.example');
-      eq(suTitle(), 'Your mobile number?'); assert(/Next, I’ll email you a code\./.test(oaText()));
+      eq(suTitle(), 'Here’s what fits Startup Talent.'); eq(suProgress(), '3 to go');
+      assert(/You hire for clients with 21–50 recruiters and place IT & tech and BFSI roles/.test(oaText()), 'the reasons start from their answers');
+      eq(q('.oa-plan__name b').textContent, 'Floor', '21–50 recruiters: Floor'); eq(qa('.oa-plan__why li').length, 3, 'three reasons');
+      assert(/PayTrack raises the invoice/.test(oaText()) && /Kairo sources IT & tech jobs every morning/.test(oaText()), 'reasons tied to what they place');
+      assert(/₹2,999/.test(oaText()) && /per recruiter licence/.test(oaText()), 'priced per recruiter licence, in rupees for India');
+      assert(/For 30 recruiters, ₹89,970 a month\. One placement covers about 1 month\./.test(oaText()), 'value in their own numbers: ' + q('.oa-plan__value').textContent);
+      assert(/Hiring managers, interviewers, clients and vendors are always free/.test(oaText()));
+      assert(!/\bAI\b/.test(oaText()), 'no "AI" on the plan step');
+      assert(/Desk/.test(q('.oa-plan__alt').textContent) && /Network/.test(q('.oa-plan__alt').textContent), 'the other plans are quiet links');
+      await suPlan();
+      eq(suTitle(), 'Your work email?'); eq(suProgress(), '2 to go');
       assert(/By continuing you agree to the terms and privacy notice\./.test(oaText()), 'terms and privacy');
       assert(!q('input[type=password]'), 'no password anywhere');
-      eq(authApi._outboxCount('dana@startup.example'), 0, 'no code until the number is given');
-      await suText('98250 41207');
-      eq(suTitle(), 'Enter the code I sent.'); eq(suProgress(), 'last one'); eq(authApi._outboxCount('dana@startup.example'), 1);
+      eq(authApi._outboxCount('dana@startup.example'), 0, 'no code before the email');
+      await suText('dana@startup.example');
+      eq(suTitle(), 'Enter the code I sent.'); eq(suProgress(), 'last one'); eq(authApi._outboxCount('dana@startup.example'), 1, 'the code goes out with the email, no mobile number asked');
       assert(!(await authApi.session()).authenticated, 'nothing is created until the code is right');
       await enterCode(authApi._latestEmail('dana@startup.example').code);
       assert(await waitFor(function(){ return !!q('[data-act=su-enter]'); }, 3000), 'the workspace is ready');
@@ -621,6 +706,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       eq((await authApi.passwordSignIn({ email:'dana@startup.example', password:'Harbor-Lights-42' })).error, 'invalid_credentials', 'no password was ever set');
       await click('[data-act=su-enter]'); await settle();
       assert(appVisible()); eq(state.role, 'admin', 'the owner'); eq(state.activeNav, 'admin-dashboard', 'Home');
+      eq(wsPlanState().plan.name, 'Floor'); eq(wsPlanState().status, 'trial'); eq(wsPlanState().daysLeft, 14, '14 days of the chosen plan');
       eq(document.querySelector('#main-content .o-page-head__title').textContent, 'Welcome to Oontu, Dana.', 'welcome line');
       assert(!emailVerifyLocked() && !q('#verify-banner-root .vb'), 'no verification banner: the code did it');
       eq(authApi._verifyMailCount('dana@startup.example'), 0, 'no verification link is needed');
@@ -640,25 +726,24 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       await suText('   '); eq(oaMsg(), 'Just a first name will do.'); eq(q('#su-name').getAttribute('aria-invalid'), 'true'); eq(suTitle(), 'What should I call you?');
       setv('#su-name', 'Dana'); eq(q('#su-name').getAttribute('aria-invalid'), 'false', 'typing clears the red'); eq(oaMsg(), 'Press Enter to continue.');
       await signUpTo('org', 'agency'); await suText('x'); assert(/at least 2 characters/.test(oaMsg()), oaMsg());
-      await suText('Startup Talent'); await suPick('6–20'); await suSkip(); await suPick('IN');
+      await suText('Startup Talent'); await suPick('6–20'); await suSkip(); await suPick('IN'); await suPlan();
       await suText('not-an-email'); assert(/valid work email/.test(oaMsg()), 'invalid email: '+oaMsg()); eq(suTitle(), 'Your work email?');
-      await suText('dana@gmail.com'); eq(suTitle(), 'Your mobile number?', 'an agency can use Gmail');
-      await suText(''); eq(oaMsg(), AUTH_MESSAGES.mobile_required);
-      await suText('12345 67890'); assert(/10-digit Indian/.test(oaMsg()), 'Indian number rule');
-      await suText('98250 4120'); assert(/10-digit Indian/.test(oaMsg()), 'nine digits');
-      assert(!(await authApi.session()).authenticated, 'nothing created');
-      eq(authApi._outboxCount('dana@gmail.com'), 0, 'no code for a bad number');
+      eq(authApi._outboxCount('not-an-email'), 0, 'no code for a bad address');
+      await suText('dana@gmail.com'); eq(suTitle(), 'Enter the code I sent.', 'an agency can use Gmail');
+      assert(!(await authApi.session()).authenticated, 'nothing created before the code');
+      eq(authMobileProblem('+91', '12345 67890'), 'mobile_invalid_in', 'the mobile rules still hold where a number is asked (WhatsApp, Settings)');
       eq(authMobileProblem('+44', '7700 900123'), '', 'other countries: 6 to 15 digits');
       eq((await authApi.signUp({ name:'x', email:'x@y.example', mobileCode:'+91', mobile:'123', password:'Cedar-Harbor-77' })).error, 'mobile_invalid_in', 'the server checks too');
     });
 
     await test('02c Progress, the answers trail, Back and jumping to an earlier answer keep what was typed', async function(){
       await signUpTo('email', 'agency');
-      eq(suProgress(), '3 to go');
-      eq(qa('.oa-trail button').map(function(b){ return b.textContent; }).join('|'), 'Dana|Agency|Startup Talent|6–20|India');
+      eq(suProgress(), '2 to go');
+      eq(qa('.oa-trail button').map(function(b){ return b.textContent; }).join('|'), 'Dana|Agency|Startup Talent|6–20|India|Floor');
+      assert(/Floor · 14 days free/.test(q('[data-ws-row=plan]').textContent), 'the plan on the preview card');
       eq(q('[data-ws-name]').textContent, 'Startup Talent', 'the preview builds as you answer'); eq(q('[data-ws-url]').textContent, 'startup-talent.oontu.app');
       assert(/Staffing agency/.test(q('[data-ws-row=type]').textContent) && /6–20 recruiters/.test(q('[data-ws-row=team]').textContent) && /India/.test(q('[data-ws-row=place]').textContent), 'type, team and place in the preview');
-      q('.oa-iconbtn').click(); eq(suTitle(), 'Where’s your team based?', 'Back');
+      q('.oa-iconbtn').click(); eq(suTitle(), 'Here’s what fits Startup Talent.', 'Back');
       qa('.oa-trail button').filter(function(b){ return b.textContent==='Startup Talent'; })[0].click();
       eq(suTitle(), 'What’s your agency called?'); eq(q('#su-org').value, 'Startup Talent', 'the answer is kept');
       setv('#su-org', 'Brightpath Talent'); eq(q('[data-ws-url]').textContent, 'brightpath-talent.oontu.app', 'the address follows as you type'); eq(oaMsg(), 'Your address: brightpath-talent.oontu.app');
@@ -679,7 +764,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       click('[data-act=su-short-edit]'); setv('#su-short', 'Oontu HQ'); eq(q('[data-ws-name]').textContent, 'Oontu HQ', 'the short name can be edited'); eq(q('[data-ws-url]').textContent, 'oontu-hq.oontu.app'); setv('#su-short', 'Oontu');
       await suText(LONG);
       eq(qa('.oa-trail button').map(function(b){ return b.textContent; }).indexOf(LONG), -1, 'the long name is never in the trail');
-      await suPick('51–200'); await suSkip(); await suPick('IN'); await suText('dana@startup.example'); await suText('98250 41207');
+      await suPick('51–200'); await suSkip(); await suPick('IN'); await suPlan(); await suText('dana@startup.example');
       await enterCode(authApi._latestEmail('dana@startup.example').code);
       assert(await waitFor(function(){ return !!q('[data-act=su-enter]'); }, 3000), 'welcome');
       eq(suTitle(), 'Welcome, Dana.'); assert(/Oontu is live\./.test(oaText()), 'greets with the short name');
@@ -703,7 +788,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
         inp('zzzz'); assert(/No match/.test(q('[data-place-results]').textContent), 'no match says so');
         inp('jap'); eq(chips()[0], 'Japan', 'a country outside the old five');
         await suPick('JP'); eq(suProgress(), '3 to go');
-        await suText('dana@startup.example'); eq(q('[data-cc]').value, '+81', 'the phone code follows the chosen country');
+        assert(/\$39/.test(oaText()), 'priced in dollars outside India'); await suPlan(); await suText('dana@startup.example'); eq(suTitle(), 'Enter the code I sent.');
       } finally { delete window.OONTU_DETECT_COUNTRY; }
     });
 
@@ -724,10 +809,9 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       eq(suTitle(), 'Where’s your team based?'); eq(qa('.oa-place').length, 1); eq(q('.oa-place b').textContent, 'Yes, India');
       assert(qa('[data-place-results] .oa-chip').some(function(c){ return c.textContent === 'United Kingdom'; }), 'the common markets');
       await suPick('GB');
+      assert(/\$39/.test(oaText()), 'the plan is priced for the chosen country');
+      await suPlan();
       await suText('dana@startup.example');
-      eq(q('[data-cc]').value, '+44', '+44 on the mobile question');
-      await suText('98250 4120'); assert(/10-digit mobile number for the UK/.test(oaMsg()), 'the UK number length: '+oaMsg());
-      await suText('7700 900123');
       await enterCode(authApi._latestEmail('dana@startup.example').code);
       assert(await waitFor(function(){ return !!q('[data-act=su-enter]'); }, 3000)); await click('[data-act=su-enter]'); await settle();
       const p = ORG_STRUCTURE.profile;
@@ -746,9 +830,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       // India by default: +91 and INR
       reset(); await signUpAll('Staffing agency', 'Dana Lee', 'dana@in-default.example');
       eq(ORG_STRUCTURE.profile.currency, 'INR (₹)'); eq(ORG_STRUCTURE.profile.taxIdLabel, 'GSTIN');
-      // the number code chosen on the mobile question is kept when it differs from the place
-      reset(); await signUpTo('mobile', 'agency'); q('[data-cc]').value = '+971'; q('[data-cc]').dispatchEvent(new Event('change', { bubbles:true }));
-      await suText('50 123 4567'); eq(authApi._outboxCount('dana@startup.example'), 1, '+971 with 9 digits is accepted');
+      eq(authMobileProblem('+971', '50 123 4567'), '', 'a UAE number still passes where a number is asked');
     });
 
     await test('02L2 Super Admin sign-ups list: country column and filter', async function(){
@@ -814,7 +896,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       eq((await authApi.signUp({ name:'Dana', email:'dana@yahoo.com', mobileCode:'+91', mobile:'9825041207', password:'Harbor-Lights-42', type:'Corporate' })).error, 'personal_email', 'the server checks too');
       eq((await authApi.checkSignupEmail({ email:'dana@gmail.com', type:'Corporate' })).error, 'personal_email', 'and the email check does');
       ['gmail.com','yahoo.com','outlook.com','hotmail.com','live.com','icloud.com','rediffmail.com','proton.me','protonmail.com','aol.com','zoho.com','yandex.com','gmx.com','mail.com'].forEach(function(d){ assert(isFreeEmailDomain(d), d); });
-      await suText('dana@startup.example'); eq(suTitle(), 'Your mobile number?');
+      await suText('dana@startup.example'); eq(suTitle(), 'Enter the code I sent.', 'a company email goes straight to the code');
     });
 
     await test('03g Corporate on a domain that already has a workspace: ask the owner to invite you', async function(){
@@ -853,7 +935,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       assert(/already uses this email/.test(oaMsg()), 'known with a password: '+oaMsg());
       // an account without a password (made through single sign-on) is caught when the code is entered
       reset(); await authApi.ssoStart({ email:'newhire@acme.example' }); await authApi.ssoComplete({ outcome:'approve' }); await authApi.signOut();
-      await signUpTo('email', 'agency'); await suText('newhire@acme.example'); await suText('98250 41207');
+      await signUpTo('email', 'agency'); await suText('newhire@acme.example');
       await enterCode(authApi._latestEmail('newhire@acme.example').code);
       assert(/already uses this email/.test(oaMsg()), 'known without a password: '+oaMsg()); assert((await authApi.session()).authenticated===false, 'signed out again');
       assert(!appVisible());
@@ -865,12 +947,13 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       eq(authFlow.step, 'signup', 'an unknown email is offered a workspace'); eq(suTitle(), 'What should I call you?'); eq(authFlow.intent, 'signup');
       assert(/Email verified/.test(q('.oa-aside').textContent), 'the email is verified already');
       await suText('Fresh'); await suPick('agency'); await suText('Fresh Talent'); await suPick('Just me'); await suSkip(); await suPick('IN');
-      eq(suTitle(), 'Your mobile number?', 'straight to the mobile number'); eq(suProgress(), 'last one');
-      await suText('98250 41207');
+      eq(suTitle(), 'Here’s what fits Fresh Talent.', 'straight to the plan'); eq(suProgress(), 'last one');
+      eq(q('.oa-plan__name b').textContent, 'Desk', 'just one recruiter: Desk');
+      await suPlan();
       assert(await waitFor(function(){ return !!q('[data-act=su-enter]'); }, 3000), 'created'); await click('[data-act=su-enter]'); await settle();
       assert(appVisible()); eq(state.role, 'admin'); eq(authAppSession.method, 'email_code');
       eq((await authApi.passwordSignIn({ email:'fresh.person@startup.example', password:'Harbor-Lights-42' })).error, 'invalid_credentials', 'no password');
-      eq(ORG_STRUCTURE.profile.teamSize, '1–5');
+      eq(ORG_STRUCTURE.profile.teamSize, '1–5'); eq(wsPlanState().plan.name, 'Desk', 'the plan they chose');
     });
 
     await test('03k Verified corporate sign-up: a personal email can only create an agency workspace', async function(){
@@ -1301,15 +1384,15 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       showView('oontu-signups'); await idle();
       const rows = function(){ return Array.from(document.querySelectorAll('#oontu-signups-table tbody tr')); };
       eq(rows().length, 7, 'seven sign-ups still answering questions');
-      eq(LEAD_STOP_STEPS.join('|'), 'Workspace type|Team size|Location|Name|Email|Mobile|Password');
+      eq(LEAD_STOP_STEPS.join('|'), 'Workspace type|Team size|Location|Name|Plan|Email|Email code');
       assert(Array.from(document.querySelectorAll('#oontu-signups-table th')).some(function(th){ return th.textContent==='Team size'; }), 'Team size column');
       const calls = oontuSignupsRows().filter(leadNeedsCall).map(function(l){ return teamSizeRank(l.teamSize); });
       assert(calls.length>1 && calls.every(function(r, i){ return i===0 || r<=calls[i-1]; }), 'leads that need a call: bigger teams first');
       assert(oontuSignupsRows().slice(0, calls.length).every(leadNeedsCall), 'and they come first');
       assert(/Bigger teams are called first\./.test(document.getElementById('main-content').textContent));
-      eq(leadStoppedAt(signupLeadById('lead-s1')), 'Password'); eq(leadStoppedAt(signupLeadById('lead-s2')), 'Mobile'); eq(leadStoppedAt(signupLeadById('lead-s7')), 'Workspace type');
+      eq(leadStoppedAt(signupLeadById('lead-s1')), 'Email code'); eq(leadStoppedAt(signupLeadById('lead-s2')), 'Email code'); eq(leadStoppedAt(signupLeadById('lead-s6')), 'Plan', 'a drop-off at the plan step shows as Plan'); eq(leadStoppedAt(signupLeadById('lead-s7')), 'Workspace type');
       const stops = document.getElementById('oontu-signups-stops').textContent;
-      assert(/Workspace type/.test(stops) && /Name/.test(stops) && /Mobile/.test(stops) && /Password/.test(stops) && !/Workspace setup|Verify email/.test(stops), 'Where people stop uses the question names');
+      assert(/Workspace type/.test(stops) && /Name/.test(stops) && /Plan/.test(stops) && /Email code/.test(stops) && !/Mobile|Password/.test(stops) && !/Workspace setup|Verify email/.test(stops), 'Where people stop uses the question names');
       assert(Array.from(document.querySelectorAll('[data-lead-filter]')).some(function(b){ return b.textContent==='Setup not finished'; }), 'separate filter');
       setSignupFilter('Setup not finished');
       eq(rows().length, 2); assert(rows().every(function(r){ return /Setup \d of \d/.test(r.textContent) && /In product/.test(r.textContent); }), 'owners in the product, with checklist progress');

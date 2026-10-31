@@ -1131,6 +1131,13 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 .ws-card__title { font-family:'Plus Jakarta Sans', Inter, sans-serif; font-size:17px; line-height:24px; font-weight:600; color:#2F313F; }
 .ws-card__title:focus { outline:none; }
 .ws-card__sub { margin-top:2px; font-size:13px; line-height:19px; color:#6E717C; }
+.trial-nums { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:14px; }
+.trial-nums div { padding:12px; border-radius:12px; background:#F7F7F5; }
+.trial-nums b { display:block; font-size:22px; line-height:28px; font-weight:600; color:#2F313F; }
+.trial-nums span { font-size:12px; color:#6E717C; }
+@media (max-width:720px){ .trial-nums { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.nav-item.is-plan-locked .o-nav-item__label { opacity:.7; }
+.nav-lock { margin-left:auto; display:inline-flex; color:#8C90A0; }
 .ws-card__prog { display:flex; align-items:center; gap:10px; margin-top:8px; }
 .ws-bar { display:block; width:160px; height:6px; border-radius:999px; background:#E7E6E1; overflow:hidden; }
 .ws-bar > span { display:block; height:100%; border-radius:999px; background:#2F313F; transition:width .3s ease; }
@@ -1359,12 +1366,12 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 .oa-page{min-height:100vh;display:flex;flex-wrap:wrap;gap:16px;padding:16px;background:var(--oa-page)}
 .oa-main{flex:1 1 480px;max-width:100%;min-width:0;display:flex;flex-direction:column;padding:16px clamp(8px,3vw,40px) 8px}
 .oa-top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-.oa-logo{display:inline-flex} .oa-logo svg{height:40px;width:auto;display:block}
+.oa-logo{display:inline-flex} .oa-logo svg{height:48px;width:auto;display:block}
 .oa-top p{font-size:14px;color:var(--oa-ink-2)}
 .oa-top a{font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .oa-main{--oa-w:450px} .oa-main--wide{--oa-w:500px}   /* one content width per page: header, form and footer share the same edges */
 .oa-top,.oa-footer{width:100%;max-width:var(--oa-w)}
-.oa-body{width:100%;max-width:var(--oa-w);margin:auto 0;padding:48px 0}
+.oa-body{width:100%;max-width:var(--oa-w);margin:0 0 auto;padding:clamp(56px,13vh,150px) 0 48px}   /* a fixed top line, never re-centred: headings sit at the same place on every step */
 .oa-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--oa-ink-3)}
 .oa-footer span{display:inline-flex;align-items:center;gap:8px}
 .oa-footer nav{display:inline-flex;gap:16px} .oa-footer nav a{color:var(--oa-ink-2)}
@@ -1446,7 +1453,7 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 .oa-aside__stage-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:36px 0 12px;position:relative;z-index:1}
 .oa-stage{position:relative;width:600px;height:470px;flex:none;--mx:0;--my:0}
 .oa-aside__foot{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--oa-ink-3)}
-.oa-aside__foot span{display:inline-flex;align-items:center;gap:10px} .oa-aside__foot svg{height:20px;width:auto}
+.oa-aside__foot span{display:inline-flex;align-items:center;gap:10px} .oa-aside__foot svg{height:22px;width:auto}
 
 /* scene objects: position via custom properties, parallax via --mx/--my × depth */
 .oa-obj{position:absolute;left:var(--l);top:var(--t);width:var(--w);z-index:var(--z,2);
@@ -1544,6 +1551,21 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 .oa-ws__tile::after{content:"";position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;background:var(--oa-mint);border:2px solid #fff}
 .oa-ws__name{display:block;font-size:19px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .oa-ws__name.is-long{font-size:16px;color:var(--oa-ink-2)}
+/* Plan step: reasons from their answers, one plan card, quiet alternatives */
+.oa-plan__why{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:10px}
+.oa-plan__why li{display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:22px;color:var(--oa-ink);animation:oa-in .4s var(--oa-ease) both}
+.oa-plan__why li:nth-child(2){animation-delay:.08s} .oa-plan__why li:nth-child(3){animation-delay:.16s}
+.oa-plan__why li span{display:flex;width:20px;height:20px;margin-top:1px;border-radius:50%;background:#10B981;color:#fff;align-items:center;justify-content:center;flex:none}
+.oa-plan__why li svg{width:12px;height:12px}
+.oa-plan{padding:20px;border:2px solid var(--oa-ink);border-radius:18px;background:var(--oa-surface);box-shadow:0 10px 28px rgba(47,49,63,.10)}
+.oa-plan__name{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap} .oa-plan__name b{font-size:22px;font-weight:600;letter-spacing:-.02em} .oa-plan__name span{font-size:14px;color:var(--oa-ink-3)}
+.oa-plan__price{margin-top:6px !important;font-size:20px;font-weight:600} .oa-plan__price small{font-size:13px;font-weight:500;color:var(--oa-ink-3)}
+.oa-plan__value{margin:8px 0 16px !important;font-size:14px;line-height:21px;color:var(--oa-ink-2);padding:10px 12px;border-radius:12px;background:#ECFDF5;color:#065F46}
+.oa-plan .oa-btn{width:100%}
+.oa-plan__alt{margin-top:14px !important;font-size:14px;color:var(--oa-ink-3)} .oa-plan__alt .oa-link{font-size:14px}
+.oa-plan__more{margin-top:12px;font-size:14px} .oa-plan__more summary{cursor:pointer;font-weight:600;color:var(--oa-ink-2)} .oa-plan__more summary small{font-weight:400;color:var(--oa-ink-3);margin-left:6px}
+.oa-plan__more .oa-chips{margin-top:10px}
+.oa-plan__row{padding:10px 0;border-bottom:1px solid var(--oa-line)} .oa-plan__row small{display:block;color:var(--oa-ink-3);margin-top:2px;line-height:19px}
 /* Sign-in: six boxes -> one ring -> a tick -> the workspace tile */
 .oa-otp.is-collapsing .oa-otp__box{transform:translateX(var(--dx,0)) scale(.28);opacity:0;border-radius:50%;color:transparent;transition:transform .6s cubic-bezier(.65,0,.25,1),opacity .32s ease .3s,border-radius .4s ease,color .15s}
 .oa-otp.is-collapsing .oa-otp__sep{opacity:0;transition:opacity .2s}
@@ -1559,6 +1581,24 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 .oa-otp.is-verified .oa-verify__fill{opacity:1;transform:none;transition:opacity .2s,transform .4s cubic-bezier(.2,.9,.3,1.3)}
 .oa-otp.is-verified .oa-verify__tick{stroke-dashoffset:0;transition:stroke-dashoffset .4s ease .2s}
 @keyframes oa-verify-spin{to{transform:rotate(360deg)}}
+.oa-verify::after{content:"";position:absolute;inset:4px;border-radius:50%;border:2px solid #10B981;opacity:0;pointer-events:none}
+.oa-otp.is-verified .oa-verify::after{animation:oa-ripple .7s ease-out .18s}   /* one soft ripple on confirm */
+@keyframes oa-ripple{from{opacity:.55;transform:scale(1)}to{opacity:0;transform:scale(2.3)}}
+/* The Oontu dot: fold, roll, land */
+.oa-fold{overflow:hidden;transition:max-height .45s var(--oa-ease),opacity .25s ease,margin .45s var(--oa-ease),padding .45s var(--oa-ease)}
+.oa-fold.is-folded{max-height:0 !important;opacity:0;margin-top:0 !important;margin-bottom:0 !important;padding-top:0 !important;padding-bottom:0 !important;pointer-events:none}
+.oa-roll{display:inline-grid;overflow:hidden;vertical-align:top;padding-bottom:.1em;margin-bottom:-.1em}
+.oa-roll>span{grid-area:1/1}
+.oa-roll__old{animation:oa-roll-out .42s var(--oa-ease) forwards}
+.oa-roll__new{animation:oa-roll-in .52s var(--oa-ease) .1s both}
+@keyframes oa-roll-out{to{transform:translateY(-105%);opacity:0}}
+@keyframes oa-roll-in{from{transform:translateY(105%);opacity:0}to{transform:none;opacity:1}}
+.oa-dotland{display:inline-block;width:.19em;height:.19em;margin-left:.05em;border-radius:50%;background:#10B981;opacity:0;transform:scale(.3);vertical-align:baseline}
+.oa-dotland.is-in{opacity:1;transform:none;transition:transform .35s cubic-bezier(.2,.9,.3,1.4),opacity .15s}
+.oa-dotfly{position:fixed;z-index:400;border-radius:50%;background:#10B981;pointer-events:none}
+.oa-tail{animation:oa-in .4s var(--oa-ease) both}
+.oa-q--still .oa-say,.oa-q--still .oa-ans{animation:none}
+@media (prefers-reduced-motion:reduce){.oa-roll__old,.oa-roll__new,.oa-tail{animation:none}.oa-fold{transition:none}.oa-otp.is-verified .oa-verify::after{animation:none}}
 .oa-arrive__tile{position:relative;width:56px;height:56px;border-radius:16px;background:var(--oa-ink);color:#F9FAFB;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600}
 .oa-arrive__tile::after{content:"";position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;background:#10B981;border:2px solid #fff}
 .oa-arrive__bar--quick i{animation-duration:2s}
@@ -1682,12 +1722,12 @@ html:not([data-theme="comfort"]) :focus-visible{ outline:2px solid var(--mint-70
 /* sidebar header: 64 px, the same line as the content top bar */
 .sb-head{ position:relative; height:64px; flex:none; display:flex; align-items:center; justify-content:space-between; margin:0 -12px; padding:0 12px 0 24px; border-bottom:1px solid #E7E6E1; box-sizing:border-box; }
 .sb-brand{ display:inline-flex; align-items:center; margin-left:-2px; border-radius:8px; }
-.sb-logo-full{ height:34px; width:auto; display:block; }
+.sb-logo-full{ height:40px; width:auto; display:block; }
 .sb-toggle{ width:32px; height:32px; padding:0; border:0; border-radius:8px; background:transparent; color:#565A66; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transition:opacity 120ms, background 120ms, color 120ms; }
 #sidebar:hover .sb-toggle, #sidebar:focus-within .sb-toggle, .sb-toggle:focus-visible{ opacity:1; }
 .sb-toggle:hover{ background:#F4F4F1; color:#2F313F; }
 .sb-rail-btn{ display:none; position:relative; width:40px; height:40px; margin:0 auto; padding:0; border:0; border-radius:10px; background:transparent; cursor:pointer; align-items:center; justify-content:center; color:#2F313F; }
-.sb-logo-mark{ height:28px; width:auto; display:block; transition:opacity 120ms; }
+.sb-logo-mark{ height:32px; width:auto; display:block; transition:opacity 120ms; }
 .sb-rail-icon{ position:absolute; inset:0; margin:auto; opacity:0; transition:opacity 120ms; }
 .sb-rail-btn:hover, .sb-rail-btn:focus-visible{ background:#F4F4F1; }
 .sb-rail-btn:hover .sb-logo-mark, .sb-rail-btn:focus-visible .sb-logo-mark{ opacity:0; }
@@ -3283,7 +3323,7 @@ function applySidebarVisibility(){
   setTimeout(positionNavSel, 260);   // the width animation (240 ms) changes the item widths: measure again once it settles
 }
 /* Brand SVGs, inline so they never blur: the full lockup (expanded, 34 px) and the symbol (collapsed, 28 px). */
-const OONTU_SYMBOL_MARK = `<svg class="sb-logo-mark" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="-1.99 -32.50 188.93 140.05"><g transform="translate(-338.3531,-259.0504) scale(0.741840)"><path d="M542.12,491.12 C535.43,490.41 526.31,488.53 521.12,486.79 C516.20,485.14 508.85,482.09 505.25,480.21 C496.98,475.89 486.11,467.67 480.61,461.58 C478.51,459.26 474.69,454.54 472.69,451.80 C471.16,449.70 466.74,442.58 465.82,440.74 C464.28,437.66 460.44,428.08 459.76,425.62 C458.08,419.59 457.60,417.33 456.71,411.38 C455.96,406.40 455.90,395.07 456.59,390.50 C457.82,382.34 459.62,375.55 462.35,368.74 C465.91,359.88 466.38,358.91 470.23,352.75 C480.54,336.20 494.86,324.03 513.62,315.87 C521.93,312.26 529.34,310.22 540.12,308.58 C544.48,307.92 558.24,307.92 562.75,308.58 C579.27,311.00 593.28,316.46 606.24,325.51 C617.77,333.56 628.02,345.05 634.71,357.43 C635.70,359.25 636.50,360.78 636.50,360.85 C636.50,360.91 636.95,361.74 637.50,362.69 C638.57,364.55 640.30,369.20 642.28,375.50 C645.40,385.47 646.67,397.49 645.65,407.25 C644.05,422.40 639.33,436.01 631.62,447.67 C625.95,456.27 621.19,461.66 613.50,468.22 C606.64,474.07 596.22,480.59 589.69,483.11 C588.83,483.44 587.06,484.15 585.75,484.69 C579.36,487.34 572.86,489.07 563.62,490.61 C558.11,491.52 548.16,491.76 542.12,491.12 Z  M556.62,449.99 C560.52,449.53 564.99,448.49 568.88,447.13 C572.95,445.71 573.69,445.38 577.25,443.30 C583.34,439.76 589.90,434.09 593.22,429.50 C596.46,425.03 599.65,419.18 600.96,415.37 C602.44,411.01 603.67,402.58 603.38,398.75 C603.02,394.12 601.81,387.40 600.84,384.67 C599.94,382.15 596.75,375.69 595.44,373.75 C592.38,369.21 591.61,368.20 589.61,366.06 C588.42,364.78 586.94,363.39 586.33,362.97 C585.71,362.54 584.67,361.72 584.01,361.14 C581.61,359.01 574.72,354.83 572.00,353.87 C571.11,353.55 569.11,352.83 567.56,352.27 C562.22,350.35 554.11,349.42 547.51,349.98 C540.77,350.55 533.41,352.54 527.95,355.26 C523.72,357.37 516.42,362.75 513.49,365.92 C511.47,368.10 507.94,372.87 506.47,375.42 C502.39,382.49 500.90,387.10 499.88,395.88 C499.26,401.27 499.43,404.34 500.76,411.24 C501.50,415.07 501.65,415.57 503.15,418.92 C505.20,423.51 506.39,425.52 509.54,429.71 C512.27,433.35 514.62,435.71 518.43,438.68 C524.40,443.33 527.79,445.17 534.65,447.46 C541.21,449.66 544.15,450.16 550.62,450.22 C552.69,450.23 555.39,450.13 556.62,449.99 Z " fill="#2F313F" fill-rule="evenodd"/><circle cx="680.9000000000001" cy="450.0" r="24.5" fill="#8C90A0"/></g></svg>`;
+const OONTU_SYMBOL_MARK = `<svg class="sb-logo-mark" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="-1.99 -32.50 188.93 140.05"><g transform="translate(-338.3531,-259.0504) scale(0.741840)"><path d="M542.12,491.12 C535.43,490.41 526.31,488.53 521.12,486.79 C516.20,485.14 508.85,482.09 505.25,480.21 C496.98,475.89 486.11,467.67 480.61,461.58 C478.51,459.26 474.69,454.54 472.69,451.80 C471.16,449.70 466.74,442.58 465.82,440.74 C464.28,437.66 460.44,428.08 459.76,425.62 C458.08,419.59 457.60,417.33 456.71,411.38 C455.96,406.40 455.90,395.07 456.59,390.50 C457.82,382.34 459.62,375.55 462.35,368.74 C465.91,359.88 466.38,358.91 470.23,352.75 C480.54,336.20 494.86,324.03 513.62,315.87 C521.93,312.26 529.34,310.22 540.12,308.58 C544.48,307.92 558.24,307.92 562.75,308.58 C579.27,311.00 593.28,316.46 606.24,325.51 C617.77,333.56 628.02,345.05 634.71,357.43 C635.70,359.25 636.50,360.78 636.50,360.85 C636.50,360.91 636.95,361.74 637.50,362.69 C638.57,364.55 640.30,369.20 642.28,375.50 C645.40,385.47 646.67,397.49 645.65,407.25 C644.05,422.40 639.33,436.01 631.62,447.67 C625.95,456.27 621.19,461.66 613.50,468.22 C606.64,474.07 596.22,480.59 589.69,483.11 C588.83,483.44 587.06,484.15 585.75,484.69 C579.36,487.34 572.86,489.07 563.62,490.61 C558.11,491.52 548.16,491.76 542.12,491.12 Z  M556.62,449.99 C560.52,449.53 564.99,448.49 568.88,447.13 C572.95,445.71 573.69,445.38 577.25,443.30 C583.34,439.76 589.90,434.09 593.22,429.50 C596.46,425.03 599.65,419.18 600.96,415.37 C602.44,411.01 603.67,402.58 603.38,398.75 C603.02,394.12 601.81,387.40 600.84,384.67 C599.94,382.15 596.75,375.69 595.44,373.75 C592.38,369.21 591.61,368.20 589.61,366.06 C588.42,364.78 586.94,363.39 586.33,362.97 C585.71,362.54 584.67,361.72 584.01,361.14 C581.61,359.01 574.72,354.83 572.00,353.87 C571.11,353.55 569.11,352.83 567.56,352.27 C562.22,350.35 554.11,349.42 547.51,349.98 C540.77,350.55 533.41,352.54 527.95,355.26 C523.72,357.37 516.42,362.75 513.49,365.92 C511.47,368.10 507.94,372.87 506.47,375.42 C502.39,382.49 500.90,387.10 499.88,395.88 C499.26,401.27 499.43,404.34 500.76,411.24 C501.50,415.07 501.65,415.57 503.15,418.92 C505.20,423.51 506.39,425.52 509.54,429.71 C512.27,433.35 514.62,435.71 518.43,438.68 C524.40,443.33 527.79,445.17 534.65,447.46 C541.21,449.66 544.15,450.16 550.62,450.22 C552.69,450.23 555.39,450.13 556.62,449.99 Z " fill="#2F313F" fill-rule="evenodd"/><circle cx="680.9000000000001" cy="450.0" r="24.5" fill="#10B981"/></g></svg>`;
 function renderSidebarLogo(){
   const brand = document.querySelector('.sb-brand'), slot = document.querySelector('.sb-mark-slot');
   if(brand && !brand.firstChild) brand.innerHTML = OONTU_LOGO_PRIMARY.replace('<svg ', '<svg class="sb-logo-full" ');
@@ -3399,10 +3439,11 @@ function renderSidebar(){
   const nav = document.getElementById('sidebar-nav');
   const navItemHTML = function(item){
     const label = sentenceCase(item.label), hasCount = typeof item.count==='function', n = hasCount ? item.count() : 0;
-    const on = state.activeNav===item.id;
-    return '<button type="button" onclick="navigateWithSkeleton(\''+item.id+'\')" data-nav="'+item.id+'" title="'+label+'" aria-label="'+label+(n ? ', '+n : '')+'"'+(on ? ' aria-current="page"' : '')+' class="nav-item o-nav-item'+(on ? ' active' : '')+'">'+
+    const on = state.activeNav===item.id, locked = typeof navPlanLocked==='function' && navPlanLocked(item.id);   // not on this workspace's plan: shown with a lock, never hidden
+    return '<button type="button" onclick="'+(locked ? 'planLockOpen' : 'navigateWithSkeleton')+'(\''+item.id+'\')" data-nav="'+item.id+'" title="'+label+(locked ? ' (not on your plan yet)' : '')+'" aria-label="'+label+(locked ? ', not on your plan yet' : '')+(n ? ', '+n : '')+'"'+(on ? ' aria-current="page"' : '')+' class="nav-item o-nav-item'+(on ? ' active' : '')+(locked ? ' is-plan-locked' : '')+'">'+
       '<span class="nav-icon o-nav-item__icon">'+icon(item.icon,'w-[18px] h-[18px]')+'</span>'+
       '<span class="sidebar-label o-nav-item__label">'+label+'</span>'+
+      (locked ? '<span class="sidebar-label nav-lock" aria-hidden="true">'+icon('lock','w-3.5 h-3.5')+'</span>' : '')+
       (hasCount ? '<span class="sidebar-label o-nav-count'+(item.urgent ? ' is-urgent' : '')+'"'+(n ? '' : ' hidden')+'>'+n+'</span>'+(item.urgent ? '<i class="o-nav-dot" aria-hidden="true"'+(n ? '' : ' hidden')+'></i>' : '') : '')+
     '</button>';
   };
@@ -3633,7 +3674,7 @@ function computeNotifications(){
   });
   followUpNotificationItems().forEach(function(n){ items.push(n); });
   pendingTasks().filter(function(a){ return a.type!=='followup'; }).forEach(function(a){
-    items.push({ id:'task-'+a.id, category:'AI', icon:'sparkles', tone:'purple', text:a.title, onclick:"closeNotifications(); showView('all-tasks','dashboard');" });
+    items.push({ id:'task-'+a.id, category:'Kairo', icon:'sparkles', tone:'purple', text:a.title, onclick:"closeNotifications(); showView('all-tasks','dashboard');" });
   });
   JOBS.filter(function(j){ return j.daysOpen>30 && j.status==='Active'; }).forEach(function(j, idx){
     items.push({ id:'stale-'+idx, category:'Jobs', icon:'briefcase', tone:'terracotta', text:j.title+' has been open '+j.daysOpen+' days \u2014 needs attention', onclick:"closeNotifications(); openJob('"+j.id+"');" });
@@ -4035,7 +4076,7 @@ function kairoRespond(rawText){
   if(/\b(show|open|go to|goto|view)\b.*\bjobs?\b/.test(low)){ showView('jobs'); return { text:'Opening Jobs.' }; }
   if(/\b(show|open|go to|goto|view)\b.*\b(dashboard|home)\b/.test(low)){ showView('dashboard'); return { text:'Opening your Dashboard.' }; }
   if(/\b(show|open|go to|goto|view)\b.*\breports?\b/.test(low)){ showView('reports'); return { text:'Opening Reports.' }; }
-  if(/\b(show|open|go to|goto|view)\b.*\bagents?\b/.test(low)){ showView('talent-acquisition'); return { text:'Opening your AI workforce.' }; }
+  if(/\b(show|open|go to|goto|view)\b.*\bagents?\b/.test(low)){ showView('talent-acquisition'); return { text:'Opening Kairo.' }; }
 
   return { text:'I didn\'t quite catch that. Try "find <skill or role>", "call / whatsapp / email <candidate name>", "submit <candidate> to <client>", or "show lineup / prospects / jobs".' };
 }
@@ -5095,7 +5136,7 @@ function aiAssistantPanelHTML(){
   const riskAlerts = CANDIDATES.filter(function(c){ return c.counterRisk>=55; }).slice(0,3);
   const suggestions = AI_SUGGESTION_FN.sourcing().concat(AI_SUGGESTION_FN.engagement()).slice(0,3);
   return '<div class="card p-6 mb-8">'+
-    '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-4 flex items-center gap-1.5">'+icon('sparkles','w-3.5 h-3.5 text-accent-500')+'AI ASSISTANT</p>'+
+    '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-4 flex items-center gap-1.5">'+icon('sparkles','w-3.5 h-3.5 text-accent-500')+'KAIRO</p>'+
     '<div class="grid grid-cols-1 md:grid-cols-2 gap-5">'+
       '<div><p class="text-[11px] font-semibold text-zinc-500 mb-2">PRIORITY CANDIDATES</p><div class="space-y-1.5">'+(priorityCandidates.length?priorityCandidates.map(function(c){
         return '<button onclick="openCandidate('+c.id+')" class="w-full flex items-center justify-between text-left hover:bg-zinc-50 rounded-lg px-2 py-1.5 -mx-2"><span class="text-sm text-zinc-700 truncate">'+c.name+'</span><span class="text-xs font-medium text-accent-600 shrink-0">'+c.joinProb+'%</span></button>';
@@ -5725,7 +5766,7 @@ function renderRecruiterDashboard(){
 
   const lede = attention.length ? oPlural(attention.length, 'thing')+' need you today. Everything else is moving.' : 'Your desk is clear. Nothing is waiting on you.';
   return oDashShell([
-    myConnectCardHTML(),
+    myConnectCardHTML(), pwNudgeSlotHTML(),
     oPageHead({ title:oGreeting()+', '+oFirstName(), lede:lede, actions:[{ label:'New job', icon:'brief', onclick:'openJobCreate()' }, { label:'Add candidate', icon:'plus', primary:true, onclick:"showView('talent-pool')" }] }),
     numbers,
     '<div class="o-cols">'+oAttentionCard(attention, { id:'rec', empty:'Nothing needs you right now.', emptyAction:['Open jobs', "showView('jobs')"] })+
@@ -5827,7 +5868,7 @@ function renderManagerDashboard(){
     }).join('')+'</ul></section>' : '';
 
   return oDashShell([
-    myConnectCardHTML(),
+    myConnectCardHTML(), pwNudgeSlotHTML(),
     teamPermissionNoticeHTML(),
     oPageHead({ ctx:oDateLine()+(teamsManagedBy(me.id).length ? ' · '+teamsManagedBy(me.id).map(function(t){ return t.name; }).join(', ') : ''), title:oGreeting()+', '+oFirstName(),
       lede: attention.length ? oPlural(attention.length, 'thing')+' need you today. Your team is moving on the rest.' : 'Your team is on track. Nothing is waiting on you.',
@@ -5927,7 +5968,8 @@ function renderAdminDashboard(){
 
   return oDashShell([
     state.role==='admin' ? wsSetupCardHTML('home') : '',
-    myConnectCardHTML(),
+    state.role==='admin' ? wsTrialCardHTML() : '',
+    myConnectCardHTML(), pwNudgeSlotHTML(),
     oPageHead({ ctx:oDateLine()+' · '+(ORG_STRUCTURE.profile.brandName || ''), title: welcome ? 'Welcome to Oontu, '+oFirstName()+'.' : oGreeting()+', '+oFirstName(),
       lede: attention.length ? oPlural(attention.length, 'thing')+' need you. Everything else is on track.' : 'Everything is on track. Nothing needs you right now.',
       actions:[{ label:'Invite a teammate', icon:'users', onclick:"showView('team-members')" }, { label:'New job', icon:'plus', primary:true, onclick:'openJobCreate()' }] }),
@@ -5984,7 +6026,7 @@ function renderHmDashboard(){
     '<div id="hm-rec-seg-body">'+recBody(hmViewMode)+'</div></section>';
 
   return oDashShell([
-    myConnectCardHTML(),
+    myConnectCardHTML(), pwNudgeSlotHTML(),
     oPageHead({ ctx:oDateLine()+' · '+myClient, title:oGreeting()+', '+oFirstName(),
       lede: attention.length ? oPlural(attention.length, 'decision')+' wait for you.' : 'Nothing is waiting for your decision.',
       actions:[{ label:'Add new job', icon:'plus', primary:true, onclick:'hmOpenJobCreate()' }] }),
@@ -7171,6 +7213,7 @@ function jobWorkModeLabel(d){
   return d.workMode + (d.workMode==='Hybrid' && n ? ' \u00b7 '+n+' day'+(n===1?'':'s')+' in office' : '');
 }
 function openJobCreate(){
+  if(wsReadOnlyBlocked()) return;   // a trial that has ended: everything stays readable, nothing new is created
   jobDraft = jobCreateDefaults();
   jobCreateOpenSections = new Set(['summary','skills']);
   const main = document.getElementById('main-content');
@@ -13731,7 +13774,7 @@ function pipeButtonsHTML(nx, size){
 let prospectsFilter = 'All';
 let prospectsSearch = '';
 let aiScreenedResults = {};
-const PROSPECT_SOURCE_LABELS = ['Applied via Job Post','AI Agent Qualified','Added by Recruiter'];
+const PROSPECT_SOURCE_LABELS = ['Applied via Job Post','Qualified by Kairo','Added by Recruiter'];
 function setProspectsFilter(f){ prospectsFilter = f; refreshProspectsTable(); }
 function setProspectsSearch(v){ prospectsSearch = v; refreshProspectsTable(); }
 function refreshProspectsTable(){
@@ -13790,12 +13833,12 @@ function bestJobMatch(c){
 function prospectBaselineSource(c){ return PROSPECT_SOURCE_LABELS[c.id % PROSPECT_SOURCE_LABELS.length]; }
 function prospectSourceLabel(c){
   const screened = aiScreenedResults[c.id];
-  if(screened) return screened.qualified ? 'AI Agent Qualified' : 'AI Agent Reviewed';
+  if(screened) return screened.qualified ? 'Qualified by Kairo' : 'Reviewed by Kairo';
   return prospectBaselineSource(c);
 }
 function prospectSourceClasses(label){
-  if(label==='AI Agent Qualified') return 'bg-accent-50 text-accent-700';
-  if(label==='AI Agent Reviewed') return 'bg-zinc-100 text-zinc-500';
+  if(label==='Qualified by Kairo') return 'bg-accent-50 text-accent-700';
+  if(label==='Reviewed by Kairo') return 'bg-zinc-100 text-zinc-500';
   if(label==='Added by Recruiter') return 'bg-zinc-100 text-zinc-600';
   return 'bg-forest-50 text-forest-600';
 }
@@ -13814,7 +13857,7 @@ function runProspectAiAgent(){
     aiScreenedResults[c.id] = { qualified: pct>=70, pct: pct };
     if(pct>=70) qualified++;
   });
-  toast('AI Agent screened '+rows.length+' prospect'+(rows.length===1?'':'s')+' — '+qualified+' qualified (≥70% match).');
+  toast('Kairo screened '+rows.length+' prospect'+(rows.length===1?'':'s')+' — '+qualified+' qualified (≥70% match).');
   refreshProspectsTable();
 }
 function prospectsList(){
@@ -13874,7 +13917,7 @@ function renderProspectsTab(){
       segmentedFilterHTML(filters, prospectsFilter, 'setProspectsFilter', filterCounts)+
       '<div class="flex items-center gap-2 flex-wrap">'+
         '<input oninput="setProspectsSearch(this.value)" placeholder="Search by name, company, job ID, skills, designation, location, email, phone or experience…" class="text-sm border border-zinc-200 rounded-lg px-3 py-2 w-80 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500 placeholder:text-zinc-400" />'+
-        '<button onclick="runProspectAiAgent()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 px-3.5 py-2 rounded-lg transition shrink-0">'+icon('sparkles','w-3.5 h-3.5')+'Run AI Agent</button>'+
+        '<button onclick="runProspectAiAgent()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 px-3.5 py-2 rounded-lg transition shrink-0">'+icon('sparkles','w-3.5 h-3.5')+'Ask Kairo to screen</button>'+
       '</div>'+
     '</div>'+
     prospectsTableHTML()+
@@ -18630,7 +18673,7 @@ const WF_CHANNELS = [
   { key:'email', label:'Email', actionType:'sendEmail' },
   { key:'sms', label:'SMS', actionType:'sendWhatsapp', note:'simulated via the same message action as WhatsApp' },
   { key:'internalChat', label:'Internal Chat', actionType:'notifyManager' },
-  { key:'aiCall', label:'AI Call Agent', actionType:'createTask', note:'creates a real recruiter task rather than placing an actual call' },
+  { key:'aiCall', label:'Kairo phone call', actionType:'createTask', note:'creates a real recruiter task rather than placing an actual call' },
   { key:'voiceBot', label:'Voice Bot', actionType:'createTask', note:'creates a real recruiter task rather than placing an actual call' },
   { key:'manualApproval', label:'Manual Approval', actionType:'notifyManager' },
   { key:'recruiterTask', label:'Recruiter Task', actionType:'createTask' },
@@ -18687,9 +18730,9 @@ function wfCreateBlank(fromTemplate){
   return wf;
 }
 function wfFindById(id){ return WORKFLOWS.find(function(w){ return w.id===id; }); }
-function wfCreateFromTemplate(idx, backDest){ const wf = wfCreateBlank(WF_TEMPLATES[idx]); logAudit('AI Workforce', 'Automation created from template', wf.name); aiCloseConfigure(); openWorkflowBuilder(wf.id, backDest); }
+function wfCreateFromTemplate(idx, backDest){ const wf = wfCreateBlank(WF_TEMPLATES[idx]); logAudit('Kairo', 'Automation created from template', wf.name); aiCloseConfigure(); openWorkflowBuilder(wf.id, backDest); }
 function wfWizardProgressHTML(){
-  const labels = ['What','Why','How','AI','Preview'];
+  const labels = ['What','Why','How','Kairo','Preview'];
   return '<div class="flex items-center justify-center gap-2 mb-8">'+labels.map(function(l,i){
     const stepNum = i+1;
     const state = stepNum<wfWizardStep ? 'done' : stepNum===wfWizardStep ? 'current' : 'todo';
@@ -18771,21 +18814,21 @@ function wfDuplicate(id){
   const copy = JSON.parse(JSON.stringify(src));
   copy.id = 'wf'+(wfNextId++); copy.name = src.name+' (Copy)'; copy.status = 'Draft'; copy.runCount = 0;
   WORKFLOWS.unshift(copy);
-  logAudit('AI Workforce', 'Automation duplicated', copy.name);
+  logAudit('Kairo', 'Automation duplicated', copy.name);
   aiTeamActiveTab = wfDestForAgentKey(src.agentKey);
   showView('kairo-team');
 }
 function wfDelete(id){
   const wf = wfFindById(id);
   WORKFLOWS = WORKFLOWS.filter(function(w){ return w.id!==id; });
-  if(wf) logAudit('AI Workforce', 'Automation deleted', wf.name);
+  if(wf) logAudit('Kairo', 'Automation deleted', wf.name);
   aiTeamActiveTab = wfDestForAgentKey(wf?wf.agentKey:null);
   showView('kairo-team');
 }
 function wfSetStatus(id, status){
   const wf = wfFindById(id); if(!wf) return;
   wf.status = status;
-  logAudit('AI Workforce', 'Automation '+status.toLowerCase(), wf.name);
+  logAudit('Kairo', 'Automation '+status.toLowerCase(), wf.name);
   const el = document.getElementById('workflow-status-badge');
   if(el) el.outerHTML = wfStatusBadgeHTML(wf);
   else { aiTeamActiveTab = wfDestForAgentKey(wf.agentKey); showView('kairo-team'); }
@@ -19106,7 +19149,7 @@ function wfRunTest(){
       if(!manualLineupIds.includes(c.id)){ manualLineupIds.push(c.id); movedToProspect++; }
     });
   }
-  logAudit('AI Workforce', 'Automation test run', wf.name+' \u2014 '+matches.length+' candidate'+(matches.length===1?'':'s')+' matched'+(messagesSkipped?' ('+messagesSkipped+' message step(s) skipped \u2014 template not approved)':''));
+  logAudit('Kairo', 'Automation test run', wf.name+' \u2014 '+matches.length+' candidate'+(matches.length===1?'':'s')+' matched'+(messagesSkipped?' ('+messagesSkipped+' message step(s) skipped \u2014 template not approved)':''));
   const resultsEl = document.getElementById('wf-test-results');
   if(resultsEl) resultsEl.outerHTML = wfTestResultsHTML(matches, wf, hasMessaging && !templateApproved, { movedToProspect:movedToProspect, blockedDuplicate:blockedDuplicate, interested:interested, connectionsQuotaBlocked:connectionsQuotaBlocked, stoppedNotAccepted:stoppedNotAccepted, whatsappQuotaBlocked:whatsappQuotaBlocked });
 }
@@ -19387,7 +19430,7 @@ function liSaveToTemplateLibrary(){
   const def = step ? (WF_ACTIONS.find(function(x){ return x.key===step.type; }) || WF_ACTIONS[0]) : WF_ACTIONS[0];
   const name = def.label+' template \u2014 '+wfComposerDraft.message.slice(0,30)+(wfComposerDraft.message.length>30?'\u2026':'');
   LI_TEMPLATE_LIBRARY.push({ id:'tpl'+(LI_TEMPLATE_LIBRARY.length+1), name:name, message:wfComposerDraft.message, subject:wfComposerDraft.subject||'', channel:def.channel, createdAt:'Just now' });
-  logAudit('AI Workforce', 'Saved to Template Library', name);
+  logAudit('Kairo', 'Saved to Template Library', name);
   toast('Saved \u2014 reusable in any future campaign.');
   renderComposerInPlace();
 }
@@ -19622,7 +19665,7 @@ function wfTemplateStatusBadgeClasses(status){
 function wfSetTemplateStatus(status){
   const wf = wfFindById(wfEditingId); if(!wf) return;
   wf.templateStatus = status;
-  logAudit('AI Workforce', 'Template '+status.toLowerCase(), wf.name);
+  logAudit('Kairo', 'Template '+status.toLowerCase(), wf.name);
   const el = document.getElementById('wf-template-status-card');
   if(el) el.innerHTML = wfTemplateStatusCardInnerHTML(wf);
 }
@@ -19667,7 +19710,7 @@ function liWizardDeleteStep(idx){
   const wf = wfFindById(wfEditingId); if(!wf || !wf.steps[idx]) return;
   if(wf.steps[idx].locked) return;
   wf.steps.splice(idx,1);
-  logAudit('AI Workforce', 'Campaign step removed', wf.name);
+  logAudit('Kairo', 'Campaign step removed', wf.name);
   liWizardGoTo(idx>0 ? idx-1 : 'prospects');
 }
 function liWizardToggleAddMenu(){ liAddMenuOpen = !liAddMenuOpen; renderLinkitWizardScreen(); }
@@ -19677,7 +19720,7 @@ function liWizardAddStep(actionKey){
   wf.steps.push({ kind:'do', type:actionKey, param:'' });
   const newIdx = wf.steps.length-1;
   liAddMenuOpen = false;
-  logAudit('AI Workforce', 'Campaign step added', (WF_ACTIONS.find(function(a){return a.key===actionKey;})||{}).label);
+  logAudit('Kairo', 'Campaign step added', (WF_ACTIONS.find(function(a){return a.key===actionKey;})||{}).label);
   liWizardGoTo(newIdx);
 }
 function liWizardAddDelay(){
@@ -19686,7 +19729,7 @@ function liWizardAddDelay(){
   wf.steps.push({ kind:'wait', days:2, time:'16:00' });
   const newIdx = wf.steps.length-1;
   liAddMenuOpen = false;
-  logAudit('AI Workforce', 'Campaign step added', 'Wait / Delay');
+  logAudit('Kairo', 'Campaign step added', 'Wait / Delay');
   liWizardGoTo(newIdx);
 }
 function renderLinkitWizardScreen(){ const el = document.getElementById('main-content'); if(el) el.innerHTML = renderLinkitWizard(); }
@@ -19702,7 +19745,7 @@ function liStepRailMeta(s, allSteps){
 }
 function liWizardSaveAndExit(){
   const wf = wfFindById(wfEditingId);
-  logAudit('AI Workforce', 'Campaign saved', wf ? wf.name : '');
+  logAudit('Kairo', 'Campaign saved', wf ? wf.name : '');
   showView(liWizardBackDest);
 }
 function renderLinkitWizard(){
@@ -19780,7 +19823,7 @@ function liImportedCandidatesForUrl(url){
 }
 function liWizardTriggerEnrichment(wf){
   wf.enrichmentTriggeredAt = 'Just now';
-  logAudit('AI Workforce', 'Enrichment run', wf.name+' \u2014 '+(wf.prospectCandidateIds||[]).length+' contacts');
+  logAudit('Kairo', 'Enrichment run', wf.name+' \u2014 '+(wf.prospectCandidateIds||[]).length+' contacts');
   renderLinkitWizardScreen();
 }
 function liEnrichmentPanelHTML(wf, candidates){
@@ -19873,7 +19916,7 @@ function liSaveAsList(){
   const wf = wfFindById(wfEditingId); if(!wf || !(wf.prospectCandidateIds||[]).length) return;
   const name = 'List from '+wf.name+' \u2014 '+(wf.prospectCandidateIds||[]).length+' candidates';
   LI_LISTS.push({ id:'list'+(LI_LISTS.length+1), name:name, source:wf.prospectSource, candidateIds:(wf.prospectCandidateIds||[]).slice(), jobId:wf.prospectJobId||null, createdAt:'Just now' });
-  logAudit('AI Workforce', 'Saved a reusable list', name);
+  logAudit('Kairo', 'Saved a reusable list', name);
   toast('Saved \u2014 you can reuse this list in any future campaign.');
   renderLinkitWizardScreen();
 }
@@ -19983,7 +20026,7 @@ function liUniBoxSetReplyFrom(spId){
   const wf = wfFindById(liUniBoxSelected.workflowId); if(!wf) return;
   wf.senderProfileId = spId;
   liUniBoxReplyFromOpen = false;
-  logAudit('AI Workforce', 'Uni Box reply-from changed', (liSenderProfileRecruiter(LI_SENDER_PROFILES.find(function(sp){return sp.id===spId;}))||{}).name);
+  logAudit('Kairo', 'Uni Box reply-from changed', (liSenderProfileRecruiter(LI_SENDER_PROFILES.find(function(sp){return sp.id===spId;}))||{}).name);
   refreshUniBoxContext();
 }
 let UNI_BOX_EXTRA_MESSAGES = {}; // key: candidateId+'-'+workflowId -> array of {text, at}
@@ -20386,13 +20429,13 @@ function liListsToggleBulkTarget(){ LI_LISTS_BULK_TARGET_OPEN = !LI_LISTS_BULK_T
 function liListsTriggerEnrichment(listId){
   const list = LI_LISTS.find(function(l){ return l.id===listId; }); if(!list) return;
   list.enrichmentTriggeredAt = 'Just now';
-  logAudit('AI Workforce', 'Enrichment run', list.name+' \u2014 '+list.candidateIds.length+' contacts');
+  logAudit('Kairo', 'Enrichment run', list.name+' \u2014 '+list.candidateIds.length+' contacts');
   renderLiListsHubScreen();
 }
 function liDeleteList(listId){
   LI_LISTS = LI_LISTS.filter(function(l){ return l.id!==listId; });
   LI_LISTS_SELECTED = LI_LISTS_SELECTED.filter(function(id){ return id!==listId; });
-  logAudit('AI Workforce', 'List deleted', listId);
+  logAudit('Kairo', 'List deleted', listId);
   renderLiListsHubScreen();
 }
 function liListsSendToAutomation(workflowId){
@@ -20410,7 +20453,7 @@ function liListsSendToAutomation(workflowId){
   }
   wf.prospectSource = 'list';
   wf.prospectCandidateIds = Array.from(new Set((wf.prospectCandidateIds||[]).concat(candidateIds)));
-  logAudit('AI Workforce', 'Sent lists to automation', wf.name+' \u2014 '+candidateIds.length+' candidates');
+  logAudit('Kairo', 'Sent lists to automation', wf.name+' \u2014 '+candidateIds.length+' candidates');
   toast(candidateIds.length+' candidates sent to \u201c'+wf.name+'\u201d.');
   LI_LISTS_SELECTED = [];
   LI_LISTS_BULK_TARGET_OPEN = false;
@@ -20684,7 +20727,7 @@ function liConnectDraftNext(){
 function liConfirmAccountConnected(){
   const name = liConnectDraft.firstName+' '+liConnectDraft.lastName;
   LI_SENDER_PROFILES.push({ id:'sp'+(LI_SENDER_PROFILES.length+1), name:name, accountType:liConnectDraft.type, connected:true, idVerified:false, tier:'free', tierSynced:true, dailyConnectionLimit:15, dailyVisitLimit:15, connectionsToday:0, visitsToday:0, connectionsThisWeek:0, pendingInvites:0, invitesSentTotal:0, invitesAcceptedTotal:0, activeDays:[1,2,3,4,5] });
-  logAudit('AI Workforce', 'Account connected', name+' \u2014 '+liConnectDraft.type);
+  logAudit('Kairo', 'Account connected', name+' \u2014 '+liConnectDraft.type);
   toast(name+' connected.');
   liConnectDraft = { type:'linkedin', firstName:'', lastName:'', step:'form' };
   liConnectMenuOpen = false;
@@ -20701,13 +20744,13 @@ function liToggleConnectMenu(){ liConnectMenuOpen = !liConnectMenuOpen; renderSe
 function liVerifySenderProfile(spId){
   const sp = LI_SENDER_PROFILES.find(function(x){ return x.id===spId; }); if(!sp) return;
   sp.idVerified = true;
-  logAudit('AI Workforce', 'LinkedIn sender profile ID verified', spId);
+  logAudit('Kairo', 'LinkedIn sender profile ID verified', spId);
   renderSettingsScreen();
 }
 function renderSettingsScreen(){ const el = document.getElementById('main-content'); if(el) el.innerHTML = renderSettings(); }
 function liDisconnectSenderProfile(spId){
   LI_SENDER_PROFILES = LI_SENDER_PROFILES.filter(function(sp){ return sp.id!==spId; });
-  logAudit('AI Workforce', 'LinkedIn sender profile disconnected', spId);
+  logAudit('Kairo', 'LinkedIn sender profile disconnected', spId);
 }
 function liUpdateSenderProfileCap(spId, key, value){
   const sp = LI_SENDER_PROFILES.find(function(x){ return x.id===spId; }); if(!sp) return;
@@ -20722,7 +20765,7 @@ function liRefreshSubscriptionStatus(){
   const sp = wf && wf.senderProfileId ? LI_SENDER_PROFILES.find(function(x){ return x.id===wf.senderProfileId; }) : LI_SENDER_PROFILES[0];
   if(sp) sp.tierSynced = true;
   LINKEDIN_ACCOUNT_SYNCED = true;
-  logAudit('AI Workforce', 'LinkedIn subscription refreshed', sp ? LI_TIER_INFO[sp.tier].label+' detected' : 'No sender profile assigned');
+  logAudit('Kairo', 'LinkedIn subscription refreshed', sp ? LI_TIER_INFO[sp.tier].label+' detected' : 'No sender profile assigned');
   toast('LinkedIn account status refreshed.');
   renderLinkitWizardScreen();
 }
@@ -20731,7 +20774,7 @@ function liSetGlobalAccountTier(tier){
   const sp = wf && wf.senderProfileId ? LI_SENDER_PROFILES.find(function(x){ return x.id===wf.senderProfileId; }) : LI_SENDER_PROFILES[0];
   if(sp){ sp.tier = tier; sp.tierSynced = true; }
   LINKEDIN_ACCOUNT_SYNCED = true;
-  logAudit('AI Workforce', 'LinkedIn account type updated', LI_TIER_INFO[tier].label);
+  logAudit('Kairo', 'LinkedIn account type updated', LI_TIER_INFO[tier].label);
   liTierSettingsOpen = false;
   renderLinkitWizardScreen();
 }
@@ -20771,7 +20814,7 @@ function liWizardAdvanceFromConnect(idx){
     return;
   }
   wf.steps.splice(idx+1, 0, { kind:'do', type:'liMessage', param:'' });
-  logAudit('AI Workforce', 'Message step auto-added', wf.name);
+  logAudit('Kairo', 'Message step auto-added', wf.name);
   liWizardGoTo(idx+1);
 }
 function liWizardAddFollowUp(idx){
@@ -20782,7 +20825,7 @@ function liWizardAddFollowUp(idx){
     return;
   }
   wf.steps.splice(idx+1, 0, { kind:'do', type:'liFollowUp', param:'' });
-  logAudit('AI Workforce', 'Follow-up step auto-added', wf.name);
+  logAudit('Kairo', 'Follow-up step auto-added', wf.name);
   liWizardGoTo(idx+1);
 }
 function liWizardExpandNote(){
@@ -21018,7 +21061,7 @@ function liWizardDuplicateMessageStep(idx){
   const copy = JSON.parse(JSON.stringify(wf.steps[idx]));
   copy.locked = false;
   wf.steps.splice(idx+1, 0, copy);
-  logAudit('AI Workforce', 'Message step duplicated', wf.name);
+  logAudit('Kairo', 'Message step duplicated', wf.name);
   liWizardGoTo(idx+1);
 }
 function liWizardRestoreVersion(idx, versionIdx){
@@ -21148,7 +21191,7 @@ function liWizardResponseCardHTML(wf, steps, matches){
 function liWizardLaunch(){
   const wf = wfFindById(wfEditingId); if(!wf) return;
   wfSetStatus(wf.id, 'Published');
-  logAudit('AI Workforce', 'Campaign launched', wf.name);
+  logAudit('Kairo', 'Campaign launched', wf.name);
   toast(wf.name+' is live.');
   showView(liWizardBackDest);
 }
@@ -21386,7 +21429,7 @@ function aiOpenInfo(key){ aiInfoOpenFor = key; document.getElementById('ai-info-
 function aiCloseInfo(){ aiInfoOpenFor = null; document.getElementById('ai-info-root').innerHTML = ''; }
 function aiInfoModalHTML(key){
   const e = AI_EMPLOYEES[key];
-  return '<div class="fixed inset-0 z-[300] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="AI Employee Info">'+
+  return '<div class="fixed inset-0 z-[300] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="About Kairo">'+
     '<div class="modal-backdrop absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onclick="aiCloseInfo()"></div>'+
     '<div class="modal-panel relative w-full max-w-md card p-6 shadow-2xl">'+
       '<div class="flex items-start justify-between gap-3 mb-4">'+
@@ -21432,7 +21475,7 @@ function aiOpenAdvanced(key, destId){
       existing.steps = [
         { kind:'do', type:'liVisitReactConnect', param:'', locked:true },
       ];
-      logAudit('AI Workforce', 'Default LinkedIn sequence applied', 'Visit Profile + React + Connection Request (protected, timing auto-managed)');
+      logAudit('Kairo', 'Default LinkedIn sequence applied', 'Visit Profile + React + Connection Request (protected, timing auto-managed)');
     }
   }
   if(key==='linkit'){ openLinkitWizard(existing.id, destId); return; }
@@ -21440,7 +21483,7 @@ function aiOpenAdvanced(key, destId){
 }
 function aiSaveConfigure(destId){
   const key = aiConfigureOpenFor;
-  logAudit('AI Workforce', AI_EMPLOYEES[key].name+' configuration updated', JSON.stringify(AI_EMPLOYEE_SETTINGS[key]));
+  logAudit('Kairo', AI_EMPLOYEES[key].name+' configuration updated', JSON.stringify(AI_EMPLOYEE_SETTINGS[key]));
   aiCloseConfigure();
   toast(AI_EMPLOYEES[key].name+' will now work the way you described.');
   cwRefresh();
@@ -22676,7 +22719,7 @@ const PERMISSION_MODULES = [
   { id:'team', label:'Team Management', actions:['View Team','Manage Team Work','View Performance','View as Recruiter'] },
   { id:'clients', label:'Clients', actions:['View','Create','Edit','Delete','Assign Recruiter','View Contracts','Edit Contracts'] },
   { id:'reports', label:'Reports & Analytics', actions:['View','Export','Schedule','Dashboard Configuration'] },
-  { id:'ai', label:'AI', actions:['Configure','Prompt Library','Agent Access','Automation','Workflow Configuration'] },
+  { id:'ai', label:'Kairo', actions:['Configure','Prompt Library','Agent Access','Automation','Workflow Configuration'] },
   { id:'security', label:'Security & Audit', actions:['View Audit Log','Edit Security Settings','Manage API Tokens'] },
 ];
 function fullPermSet(){ const p={}; PERMISSION_MODULES.forEach(function(m){ p[m.id]=m.actions.slice(); }); return p; }
@@ -23566,7 +23609,7 @@ const SETUP_CATALOG = [
   { id:'user-management', label:'User Management', category:'People & Access', desc:'Invite, suspend, and assign role/department to every user.', icon:'users' },
   { id:'master-data', label:'Data Intelligence', category:'Recruitment Infrastructure', desc:'Organization-wide data health, plus the taxonomy that powers every picker.', icon:'doc' },
   { id:'payroll-billing', label:'Payroll & Billing', category:'Finance', desc:'Invoicing, payment status, revenue \u2014 not visible to recruiters.', icon:'trending' },
-  { id:'integrations', label:'Integrations', category:'Communication & Integrations', desc:'Messaging, AI models, productivity, HR platforms, storage, identity, developer.', icon:'sparkles' },
+  { id:'integrations', label:'Integrations', category:'Communication & Integrations', desc:'Messaging, productivity, HR platforms, storage, identity, developer.', icon:'sparkles' },
   { id:'audit-center', label:'Audit Log', category:'Security & Compliance', desc:'Every organization, role, permission and integration change \u2014 searchable.', icon:'clock' },
   { id:'security-settings', label:'Security Settings', category:'Security & Compliance', desc:'SSO, 2FA, session policy, IP whitelist, device history \u2014 configuration intent.', icon:'shield' },
   { id:'feature-flags', label:'Feature Flags', category:'Product & Billing', desc:'Real, functional module gates \u2014 add-ons and enterprise-tier features, plus live plan usage.', icon:'zap' },
@@ -23687,7 +23730,7 @@ function fairnessReportHTML(){
   const d = fairnessData(), MIN = 5;
   const list = function(items){ return '<ul class="space-y-1.5 text-sm text-zinc-700">'+items.map(function(t){ return '<li class="flex gap-2"><span class="text-accent-500">\u2022</span><span>'+t+'</span></li>'; }).join('')+'</ul>'; };
   return '<div class="card p-6 mt-8" id="fairness-report">'+
-    '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-1">FAIRNESS AND AI USE</p>'+
+    '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-1">FAIRNESS AND HOW KAIRO DECIDES</p>'+
     '<p class="text-sm text-zinc-600 mb-4">A first version. It shows what the matching looks at, how people move through hiring by the one group-type field we hold, and what we do not collect yet.</p>'+
     '<p class="text-[10px] font-semibold text-zinc-400 tracking-widest mb-2">WHAT THE MATCH PERCENTAGE USES</p>'+
     list(['Required skills the candidate has, against the skills the job lists. Experience and location are explained beside it, not scored.','It does not use name, age, gender, photo, accent or any inferred trait.','The join, response and counter-offer figures on a candidate are indicative values typed on the record. They are not trained predictions, and a workflow rule can still read them, so check any rule that does.','No candidate is rejected by Oontu on its own. Rejections, client submissions, requisition approvals, offers and vendor access are decided by a person.'])+
@@ -26218,7 +26261,10 @@ function createHttpAuthAdapter(cfg){
     createInvitation: function(p){ return call('POST','/invitations', { email:p.email, name:p.name, role:p.role }); },
     changePassword: function(p){ return call('POST','/account/password', { currentPassword:p.currentPassword||undefined, newPassword:p.newPassword }); },
     selectWorkspace: function(p){ return call('POST','/auth/session/workspace', { workspaceId:p.workspaceId }); },
-    signOut: function(){ return call('POST','/auth/sign-out', {}); }
+    signOut: function(){ return call('POST','/auth/sign-out', {}); },
+    trustDevice: function(){ return call('POST','/auth/devices', {}); },
+    deviceSignIn: function(p){ return call('POST','/auth/devices/sign-in', { token:p.token }); },
+    forgetDevice: function(p){ return call('DELETE','/auth/devices/current', { token:p.token }); }
   };
 }
 
@@ -26238,12 +26284,14 @@ function createAuthSimulator(){
       workspaces:{
         ws_northstar:{ id:'ws_northstar', name:'Northstar Talent Partners' },
         ws_harbor:{ id:'ws_harbor', name:'Harbor Recruiting' },
-        ws_acme:{ id:'ws_acme', name:'Acme Corp', ssoDomain:'acme.example', ssoProvider:'Acme Corp’s identity provider', ssoDefaultRole:'recruiter' }
+        ws_acme:{ id:'ws_acme', name:'Acme Corp', ssoDomain:'acme.example', ssoProvider:'Acme Corp’s identity provider', ssoDefaultRole:'recruiter' },
+        ws_0_incomplete:{ id:'ws_0_incomplete', name:'Incomplete Demo Agency', type:'Staffing agency' }   // the fixed demo owner whose setup is unfinished
       },
       accounts:{
         'alex@northstar.example':{ name:'Alex Morgan', pw:SAMPLE_PASSWORD, memberships:[{ workspaceId:'ws_northstar', role:'admin' }] },
         'sam@harbor.example':{ name:'Sam Rivera', pw:SAMPLE_PASSWORD, memberships:[{ workspaceId:'ws_northstar', role:'recruiter' }, { workspaceId:'ws_harbor', role:'manager' }] },
-        'lee@acme.example':{ name:'Lee Chen', pw:SAMPLE_PASSWORD, memberships:[{ workspaceId:'ws_acme', role:'hiring_manager' }] }
+        'lee@acme.example':{ name:'Lee Chen', pw:SAMPLE_PASSWORD, memberships:[{ workspaceId:'ws_acme', role:'hiring_manager' }] },
+        'test@incomplete.com':{ name:'Test Owner', pw:SAMPLE_PASSWORD, emailVerified:true, memberships:[{ workspaceId:'ws_0_incomplete', role:'owner' }] }
       },
       invitations:{
         'inv-valid-3f9a2c7d':{ workspaceId:'ws_northstar', email:'jordan@northstar.example', role:'recruiter', inviterName:'Alex Morgan', status:'pending', expiresAt:t+7*864e5 },
@@ -26251,7 +26299,7 @@ function createAuthSimulator(){
         'inv-revoked-5e77109a':{ workspaceId:'ws_northstar', email:'riley@northstar.example', role:'manager', inviterName:'Alex Morgan', status:'revoked', expiresAt:t+7*864e5 },
         'inv-existing-9c4d17b3':{ workspaceId:'ws_acme', email:'sam@harbor.example', role:'manager', inviterName:'Lee Chen', status:'pending', expiresAt:t+7*864e5 }
       },
-      challenges:{}, sends:{}, failures:{}, outbox:[], inviteMail:[], resets:{}, resetSends:{}, resetMail:[], verifies:{}, verifySends:{}, verifyMail:[], session:null, pendingSso:null, seq:1
+      challenges:{}, sends:{}, failures:{}, outbox:[], inviteMail:[], resets:{}, resetSends:{}, resetMail:[], verifies:{}, verifySends:{}, verifyMail:[], welcomeMail:[], devices:{}, session:null, pendingSso:null, seq:1
     };
   }
   seed();
@@ -26262,7 +26310,7 @@ function createAuthSimulator(){
   const SEED_ACCOUNTS = Object.keys(db.accounts), SEED_WORKSPACES = Object.keys(db.workspaces);
   function persist(){
     try {
-      const o = { accounts:{}, workspaces:{}, existing:EXISTING_WORKSPACES.filter(function(w){ return !w.sample && w.workspaceId; }) };
+      const o = { accounts:{}, workspaces:{}, devices:db.devices, existing:EXISTING_WORKSPACES.filter(function(w){ return !w.sample && w.workspaceId; }) };
       Object.keys(db.accounts).forEach(function(k){ if(SEED_ACCOUNTS.indexOf(k) < 0) o.accounts[k] = db.accounts[k]; });
       Object.keys(db.workspaces).forEach(function(k){ if(SEED_WORKSPACES.indexOf(k) < 0) o.workspaces[k] = db.workspaces[k]; });
       localStorage.setItem(STORE_KEY, JSON.stringify(o));
@@ -26271,7 +26319,7 @@ function createAuthSimulator(){
   (function restore(){
     try {
       const o = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); if(!o) return;
-      Object.assign(db.accounts, o.accounts || {}); Object.assign(db.workspaces, o.workspaces || {});
+      Object.assign(db.accounts, o.accounts || {}); Object.assign(db.workspaces, o.workspaces || {}); Object.assign(db.devices, o.devices || {});
       (o.existing || []).forEach(function(w){ if(!EXISTING_WORKSPACES.some(function(x){ return x.workspaceId === w.workspaceId; })) EXISTING_WORKSPACES.push(w); });
     } catch(e){}
   })();
@@ -26288,7 +26336,7 @@ function createAuthSimulator(){
     const a = db.accounts[email];
     return a ? a.memberships.map(function(m){ const w = db.workspaces[m.workspaceId]; return { id:w.id, name:w.name, role:m.role, roleLabel:AUTH_ROLE_LABELS[m.role]||m.role }; }) : [];
   }
-  function userOf(email){ const a = db.accounts[email]; return { email:email, name:a ? a.name : (db.oauthNames && db.oauthNames[email]) || '', emailVerified: !(a && a.emailVerified===false), setupPending: !!(a && a.setupPending) }; }
+  function userOf(email){ const a = db.accounts[email]; return { email:email, name:a ? a.name : (db.oauthNames && db.oauthNames[email]) || '', emailVerified: !(a && a.emailVerified===false), setupPending: !!(a && a.setupPending), hasPassword: !!(a && a.pw) }; }
   /* Corporate workspaces need a work email on a domain no other workspace has claimed. */
   function corporateEmailProblem(email, ownWorkspaceId){
     const domain = emailDomainOf(email);
@@ -26322,7 +26370,7 @@ function createAuthSimulator(){
   function membershipResult(s, workspaceId, role, label){
     s.activeWorkspaceId = workspaceId;
     const w = db.workspaces[workspaceId];
-    return { ok:true, workspace:{ id:workspaceId, name:w.name, type:w.type||null, domain:w.domain||null, verification:w.verification||null }, role:role, roleLabel:label||AUTH_ROLE_LABELS[role]||role, method:s.method, user:userOf(s.email) };
+    return { ok:true, workspace:{ id:workspaceId, name:w.name, type:w.type||null, domain:w.domain||null, verification:w.verification||null, demoComplete:!!w.demoComplete }, role:role, roleLabel:label||AUTH_ROLE_LABELS[role]||role, method:s.method, user:userOf(s.email) };
   }
 
   sim.session = function(){
@@ -26340,7 +26388,7 @@ function createAuthSimulator(){
     if(sends.length >= POLICY.maxSendsPerWindow) return reply({ ok:false, error:'rate_limited', retryAfterSec: Math.ceil((POLICY.sendWindowSec*1000-(t-sends[0]))/1000) });
     sends.push(t);
     const code = genCode();
-    db.challenges[email] = { code:code, expiresAt:t+POLICY.codeTtlSec*1000, attempts:0, used:false }; // a new code replaces any earlier one
+    db.challenges[email] = { code:code, expiresAt:t+POLICY.codeTtlSec*1000, attempts:0, used:false, intent:p && p.intent }; // a new code replaces any earlier one
     db.outbox.push({ to:email, code:code, at:t });
     // Identical answer whether or not the address has an account, so this can't be used to discover accounts.
     return reply({ ok:true, codeLength:POLICY.codeLength, expiresInSec:POLICY.codeTtlSec, resendInSec:POLICY.resendCooldownSec });
@@ -26358,8 +26406,21 @@ function createAuthSimulator(){
       return reply({ ok:false, error:'invalid_code', attemptsLeft:POLICY.maxAttempts-ch.attempts });
     }
     ch.used = true; // single use
+    /* PROTOTYPE ONLY: signing in with any address we do not know opens a complete demo workspace, so every sign-in lands in the
+       dashboard. (Create workspace is unaffected: it asks for a "signup" code.) window.AUTH_OPEN_SIGNIN = false turns this off,
+       and the auth tests do. A real server would offer to create a workspace instead. */
+    if(ch.intent === 'signin' && !db.accounts[email] && AUTH_IS_PROTOTYPE && window.AUTH_OPEN_SIGNIN !== false) provisionDemoAccount(email);
     return reply(signIn(email, 'email_code'));
   };
+  /* A complete demo workspace for an address nobody has used: named from the address, with the owner role and nothing left to set up. */
+  function provisionDemoAccount(email){
+    const local = email.split('@')[0], domain = (email.split('@')[1] || '').split('.')[0];
+    const title = function(s){ return s.replace(/[._+-]+/g, ' ').trim().split(/\s+/).map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' '); };
+    const person = title(local) || 'Owner', company = isFreeEmailDomain(email.split('@')[1]) ? person + '’s workspace' : (title(domain) || 'Demo workspace');
+    const id = 'ws_' + (db.seq++) + '_' + Math.random().toString(36).slice(2, 8);
+    db.workspaces[id] = { id:id, name:company, type:'Staffing agency', demoComplete:true };
+    db.accounts[email] = { name:person, pw:SAMPLE_PASSWORD, emailVerified:true, memberships:[{ workspaceId:id, role:'owner' }] };
+  }
   sim.passwordSignIn = function(p){
     const email = norm(p && p.email), pw = String(p && p.password || '');
     if(!AUTH_EMAIL_RE.test(email) || !pw) return reply({ ok:false, error:'invalid_credentials' });
@@ -26651,9 +26712,28 @@ function createAuthSimulator(){
     if(!s) return reply({ ok:false, error:'unauthenticated' });
     const a = db.accounts[s.email];
     if(!a || !a.workspaceId) return reply({ ok:false, error:'forbidden' });
+    const first = a.setupPending;
     a.setupPending = false;
+    /* One welcome email, once, when a new workspace goes live. No verification link: the code already proved the address. */
+    if(first){ const ws = db.workspaces[a.workspaceId] || {}; db.welcomeMail.push({ to:s.email, name:a.name || '', workspace:ws.name || '', subject:(ws.name || 'Your workspace') + ' is live on Oontu', at:now() }); }
     return reply(membershipResult(s, a.workspaceId, 'owner'));
   };
+  /* Trusted device: after a code sign-in this browser may come back for 30 days without a new code ("Continue as …").
+     Signing out forgets it. PROTOTYPE: the token is kept in localStorage; a real server sets an httpOnly cookie. */
+  sim.trustDevice = function(){
+    const s = liveSession();
+    if(!s) return reply({ ok:false, error:'unauthenticated' });
+    const token = 'dev-' + genCode() + genCode(), expiresAt = now() + 30 * 864e5;
+    db.devices[token] = { email:s.email, expiresAt:expiresAt };
+    return reply({ ok:true, token:token, expiresAt:expiresAt });
+  };
+  sim.deviceSignIn = function(p){
+    const d = db.devices[String(p && p.token || '')];
+    if(!d || now() > d.expiresAt || !db.accounts[d.email]) return reply({ ok:false, error:'device_not_trusted' });
+    return reply(signIn(d.email, 'trusted_device'));
+  };
+  sim.forgetDevice = function(p){ delete db.devices[String(p && p.token || '')]; return reply({ ok:true }); };
+  sim._welcomeMail = function(){ return db.welcomeMail.slice(); };
   /* Asking an existing company workspace's owner to let you in. */
   sim.requestToJoin = function(p){
     // Asked from the sign-up form, usually before any account exists: the request carries the email and name, and
@@ -26757,7 +26837,7 @@ function createAuthSimulator(){
   sim.policy = POLICY;
   sim._reset = function(){
     sim._offset = 0; seed();
-    try { localStorage.removeItem(STORE_KEY); } catch(e){}   // tests start from the samples only
+    try { localStorage.removeItem(STORE_KEY); localStorage.removeItem('oontu.trustedDevice'); localStorage.removeItem('oontu.proto.pwnudge'); } catch(e){}   // tests start from the samples only
     EXISTING_WORKSPACES = EXISTING_WORKSPACES.filter(function(w){ return w.sample; });
     EXISTING_WORKSPACES.forEach(function(w){ delete w.workspaceId; });
   };
@@ -26820,7 +26900,8 @@ function createAuthSimulator(){
       { email:'alex@northstar.example', note:'One workspace (Admin). Can invite people from Team members.' },
       { email:'sam@harbor.example', note:'Member of two workspaces.' },
       { email:'lee@acme.example', note:'Organisation uses single sign-on.' },
-      { email:'', note:'Any other address signs up as a new user.' }
+      { email:'test@incomplete.com', note:'Owner whose setup is unfinished: Home shows only what is left (2 of 7 done). Always starts the same way.' },
+      { email:'', note:'Any other address opens a complete workspace, straight into the dashboard.' }
     ],
     invitations:[
       { token:'inv-valid-3f9a2c7d', label:'Valid', note:'for jordan@northstar.example' },
@@ -27263,6 +27344,8 @@ function authStartOver(){
 /* Called by sign-out and "Restart onboarding". Ends the session and returns to Sign in. */
 function authResetForSignOut(){
   wsPersist();   // what this person set up is kept for the next sign-in
+  authForgetThisDevice();   // signing out means the next sign-in asks for a code again
+  clearTimeout(pwNudgeTimer);
   if(authApi){ try { authApi.signOut(); } catch(e){} }
   authAppSession = { method:'', email:'' };
   signupActiveLeadId = null;   // the next sign-up starts its own lead
@@ -27304,15 +27387,20 @@ function workspaceDisplayName(full, max){
 function authEnter(res, kind){
   const role = AUTH_ROLE_TO_APP[res.role] || 'recruiter';
   const forgot = authFlow.forgot;
-  authAppSession = { method:res.method || '', email:(res.user && res.user.email) || '', emailVerified: !(res.user && res.user.emailVerified===false), workspaceId:(res.workspace && res.workspace.id) || '', role:res.role || '' };
+  authAppSession = { method:res.method || '', email:(res.user && res.user.email) || '', emailVerified: !(res.user && res.user.emailVerified===false), workspaceId:(res.workspace && res.workspace.id) || '', role:res.role || '', hasPassword:!!(res.user && res.user.hasPassword) };
   myConnApply();
+  if(authAppSession.method==='email_code') authTrustThisDevice();   // 30 days without a new code on this browser
+  pwNudgeStart();
   authPwPanel = { error:'', ok:false, busy:false };
   wsSessionSeq++;
   if(authAppSession.emailVerified===false && !(verifyNotice && verifyNotice.email===authNormEmail(authAppSession.email))) verifyNotice = { email:authNormEmail(authAppSession.email), read:false, done:false };
   // "Complete your workspace": the setup of the workspace this admin or owner is in (found by workspace, else by owner email).
+  if(authNormEmail(authAppSession.email)===DEMO_INCOMPLETE_EMAIL) wsSeedIncompleteDemo();   // the fixed demo owner always starts with the same unfinished list
+  if(res.workspace && res.workspace.demoComplete && !WS_PLANS[res.workspace.id]) wsPlanStart(res.workspace.id, 'plan-network', [], { status:'active' });   // any other address: a complete, paid workspace
   wsSetup = (role==='admin' && wsSetupFor(authAppSession.email, authAppSession.workspaceId)) || null;
   // An owner of a workspace made through Create workspace whose saved setup is gone (an older sign-up): start the list, nothing is skipped silently.
-  if(!wsSetup && role==='admin' && res.role==='owner' && res.workspace && /^ws_\d+_/.test(res.workspace.id || '')){
+  // A complete demo workspace (any other address that signed in) has nothing left to set up.
+  if(!wsSetup && role==='admin' && res.role==='owner' && res.workspace && !res.workspace.demoComplete && /^ws_\d+_/.test(res.workspace.id || '')){
     const t = res.workspace.type || 'Staffing agency';
     suApplySetup({ type:t, team:[], teamSkipped:true }); wsSetup = wsSetupStart(t, authAppSession.email, null); wsSetup.workspaceId = res.workspace.id;
   }
@@ -27383,7 +27471,7 @@ async function authChangePassword(){
   authPwPanel.busy = true; authPasswordPanelRefresh();
   const res = await authApi.changePassword({ currentPassword:currentPassword, newPassword:newPassword });
   authPwPanel.busy = false;
-  if(res.ok){ authPwPanel.ok = true; try { logAudit('Auth', 'Password changed', authAppSession.email); } catch(e){} toast('Password updated'); }
+  if(res.ok){ authPwPanel.ok = true; authAppSession.hasPassword = true; pwNudgeMark({ done:true }); try { logAudit('Auth', 'Password changed', authAppSession.email); } catch(e){} toast('Password updated'); }
   else authPwPanel.error = authMessage(res);
   authPasswordPanelRefresh();
 }
@@ -27672,7 +27760,7 @@ const OA = (function(){
   'use strict';
   // ---------- brand artwork (inlined master SVGs) ----------
   const LOGO = OONTU_LOGO_PRIMARY;
-  const MARK = `<svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="-1.99 -32.50 188.93 140.05" role="img" aria-label="Oontu"><title>Oontu</title><g transform="translate(-338.3531,-259.0504) scale(0.741840)"><path d="M542.12,491.12 C535.43,490.41 526.31,488.53 521.12,486.79 C516.20,485.14 508.85,482.09 505.25,480.21 C496.98,475.89 486.11,467.67 480.61,461.58 C478.51,459.26 474.69,454.54 472.69,451.80 C471.16,449.70 466.74,442.58 465.82,440.74 C464.28,437.66 460.44,428.08 459.76,425.62 C458.08,419.59 457.60,417.33 456.71,411.38 C455.96,406.40 455.90,395.07 456.59,390.50 C457.82,382.34 459.62,375.55 462.35,368.74 C465.91,359.88 466.38,358.91 470.23,352.75 C480.54,336.20 494.86,324.03 513.62,315.87 C521.93,312.26 529.34,310.22 540.12,308.58 C544.48,307.92 558.24,307.92 562.75,308.58 C579.27,311.00 593.28,316.46 606.24,325.51 C617.77,333.56 628.02,345.05 634.71,357.43 C635.70,359.25 636.50,360.78 636.50,360.85 C636.50,360.91 636.95,361.74 637.50,362.69 C638.57,364.55 640.30,369.20 642.28,375.50 C645.40,385.47 646.67,397.49 645.65,407.25 C644.05,422.40 639.33,436.01 631.62,447.67 C625.95,456.27 621.19,461.66 613.50,468.22 C606.64,474.07 596.22,480.59 589.69,483.11 C588.83,483.44 587.06,484.15 585.75,484.69 C579.36,487.34 572.86,489.07 563.62,490.61 C558.11,491.52 548.16,491.76 542.12,491.12 Z  M556.62,449.99 C560.52,449.53 564.99,448.49 568.88,447.13 C572.95,445.71 573.69,445.38 577.25,443.30 C583.34,439.76 589.90,434.09 593.22,429.50 C596.46,425.03 599.65,419.18 600.96,415.37 C602.44,411.01 603.67,402.58 603.38,398.75 C603.02,394.12 601.81,387.40 600.84,384.67 C599.94,382.15 596.75,375.69 595.44,373.75 C592.38,369.21 591.61,368.20 589.61,366.06 C588.42,364.78 586.94,363.39 586.33,362.97 C585.71,362.54 584.67,361.72 584.01,361.14 C581.61,359.01 574.72,354.83 572.00,353.87 C571.11,353.55 569.11,352.83 567.56,352.27 C562.22,350.35 554.11,349.42 547.51,349.98 C540.77,350.55 533.41,352.54 527.95,355.26 C523.72,357.37 516.42,362.75 513.49,365.92 C511.47,368.10 507.94,372.87 506.47,375.42 C502.39,382.49 500.90,387.10 499.88,395.88 C499.26,401.27 499.43,404.34 500.76,411.24 C501.50,415.07 501.65,415.57 503.15,418.92 C505.20,423.51 506.39,425.52 509.54,429.71 C512.27,433.35 514.62,435.71 518.43,438.68 C524.40,443.33 527.79,445.17 534.65,447.46 C541.21,449.66 544.15,450.16 550.62,450.22 C552.69,450.23 555.39,450.13 556.62,449.99 Z " fill="#2F313F" fill-rule="evenodd"/><circle cx="680.9000000000001" cy="450.0" r="24.5" fill="#8C90A0"/></g></svg>`;
+  const MARK = `<svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="-1.99 -32.50 188.93 140.05" role="img" aria-label="Oontu"><title>Oontu</title><g transform="translate(-338.3531,-259.0504) scale(0.741840)"><path d="M542.12,491.12 C535.43,490.41 526.31,488.53 521.12,486.79 C516.20,485.14 508.85,482.09 505.25,480.21 C496.98,475.89 486.11,467.67 480.61,461.58 C478.51,459.26 474.69,454.54 472.69,451.80 C471.16,449.70 466.74,442.58 465.82,440.74 C464.28,437.66 460.44,428.08 459.76,425.62 C458.08,419.59 457.60,417.33 456.71,411.38 C455.96,406.40 455.90,395.07 456.59,390.50 C457.82,382.34 459.62,375.55 462.35,368.74 C465.91,359.88 466.38,358.91 470.23,352.75 C480.54,336.20 494.86,324.03 513.62,315.87 C521.93,312.26 529.34,310.22 540.12,308.58 C544.48,307.92 558.24,307.92 562.75,308.58 C579.27,311.00 593.28,316.46 606.24,325.51 C617.77,333.56 628.02,345.05 634.71,357.43 C635.70,359.25 636.50,360.78 636.50,360.85 C636.50,360.91 636.95,361.74 637.50,362.69 C638.57,364.55 640.30,369.20 642.28,375.50 C645.40,385.47 646.67,397.49 645.65,407.25 C644.05,422.40 639.33,436.01 631.62,447.67 C625.95,456.27 621.19,461.66 613.50,468.22 C606.64,474.07 596.22,480.59 589.69,483.11 C588.83,483.44 587.06,484.15 585.75,484.69 C579.36,487.34 572.86,489.07 563.62,490.61 C558.11,491.52 548.16,491.76 542.12,491.12 Z  M556.62,449.99 C560.52,449.53 564.99,448.49 568.88,447.13 C572.95,445.71 573.69,445.38 577.25,443.30 C583.34,439.76 589.90,434.09 593.22,429.50 C596.46,425.03 599.65,419.18 600.96,415.37 C602.44,411.01 603.67,402.58 603.38,398.75 C603.02,394.12 601.81,387.40 600.84,384.67 C599.94,382.15 596.75,375.69 595.44,373.75 C592.38,369.21 591.61,368.20 589.61,366.06 C588.42,364.78 586.94,363.39 586.33,362.97 C585.71,362.54 584.67,361.72 584.01,361.14 C581.61,359.01 574.72,354.83 572.00,353.87 C571.11,353.55 569.11,352.83 567.56,352.27 C562.22,350.35 554.11,349.42 547.51,349.98 C540.77,350.55 533.41,352.54 527.95,355.26 C523.72,357.37 516.42,362.75 513.49,365.92 C511.47,368.10 507.94,372.87 506.47,375.42 C502.39,382.49 500.90,387.10 499.88,395.88 C499.26,401.27 499.43,404.34 500.76,411.24 C501.50,415.07 501.65,415.57 503.15,418.92 C505.20,423.51 506.39,425.52 509.54,429.71 C512.27,433.35 514.62,435.71 518.43,438.68 C524.40,443.33 527.79,445.17 534.65,447.46 C541.21,449.66 544.15,450.16 550.62,450.22 C552.69,450.23 555.39,450.13 556.62,449.99 Z " fill="#2F313F" fill-rule="evenodd"/><circle cx="680.9000000000001" cy="450.0" r="24.5" fill="#10B981"/></g></svg>`;
   const I = {
     arrow: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
     back: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
@@ -27707,10 +27795,11 @@ const OA = (function(){
   // ---------- remembered account: the email only (nothing else is stored in this browser) ----------
   function rememberedAccount(){
     if(AUTH_IS_PROTOTYPE && /[?&]returning=1/.test(location.search)) return { name:'Alex Morgan', first:'Alex', email:'alex@northstar.example', last:'today, 09:12 · Chrome · Ahmedabad', note:'Your day’s ready — 1 approval, 2 interviews.' };
-    const email = authRememberedEmail();
+    const trusted = authTrustedEmail();   // a browser that signed in with a code and didn't sign out
+    const email = authRememberedEmail() || trusted;
     if(!email) return null;
     const name = suNameFromEmail(email);
-    return { name:name, first:name.split(' ')[0], email:email, last:'', note:'' };
+    return { name:name, first:name.split(' ')[0], email:email, last:'', note: trusted === email ? 'This browser is trusted, so no code is needed.' : '' };
   }
 
   // ---------- links ----------
@@ -27791,7 +27880,7 @@ const OA = (function(){
       if(input.value.length === 6){
         busy = true; authFlow.busy = true; paint();
         const started = Date.now();
-        if(opts.collapse){ otpCollapse(wrap); say('Verifying your code…', 'busy'); } else say('Checking…', 'busy');
+        if(opts.collapse){ otpCollapse(wrap); say('Checking it’s you…', 'busy'); } else say('Checking…', 'busy');
         let res;
         try { res = await onComplete(input.value); }
         catch(e){ console.error('Auth flow error', e); res = { ok:false, message:authMessage({ error:'server_error' }) }; }
@@ -27991,16 +28080,13 @@ const OA = (function(){
           '<button type="button" class="oa-btn oa-btn--primary" style="margin-top:30px" data-act="si-sso">Continue to ' + esc(SI.company) + '</button>' +
           '<p class="oa-msg" id="si-sso-msg" role="status"></p></div>';
       case 'done': {
-        /* No "You're in" page with a button: a short welcome that hands over by itself. The tile is the verified tick, now
-           the workspace's own tile, and it carries on into the sidebar. */
+        /* Drawn only when the welcome can't grow out of the screen in front (after the workspace picker). Same words and
+           layout as the in-place welcome: the heading, its green full stop, the line under it. */
         const e = SI.entry || {}, ws = e.workspace || {}, short = ws.shortName || workspaceDisplayName(ws.name || '');
         const who = cap(String((e.user && e.user.name) || '').trim().split(/\s+/)[0] || '');
-        const ini = short ? short.split(/\s+/).slice(0, 2).map(function(w){ return w[0]; }).join('').toUpperCase() : 'O';
         return '<div class="oa-step oa-arrive" role="status" aria-live="polite">' +
-          '<span class="oa-arrive__tile" data-arrive-tile aria-hidden="true">' + esc(ini) + '</span>' +
-          '<p class="oa-lead" style="margin-top:22px">' + g + '.</p>' +
-          '<h1 class="oa-h1" id="oa-h" style="margin-top:12px !important">Welcome back' + (who ? ', ' + esc(who) : '') + '.</h1>' +
-          '<p class="oa-sub" style="margin-top:10px !important;color:var(--oa-ink-3);font-size:16px">' + (short ? esc(short) + ' · ' : '') + 'Everything’s where you left it.</p>' +
+          '<h1 class="oa-h1" id="oa-h">Welcome back' + (who ? ', ' + esc(who) : '') + DOT.replace('oa-dotland', 'oa-dotland is-in') + '</h1>' +
+          '<p class="oa-sub">' + (short ? esc(short) + ' · ' : '') + 'Everything’s where you left it.</p>' +
           '<div class="oa-arrive__bar oa-arrive__bar--quick" aria-hidden="true"><i></i></div>' +
           '<div class="oa-actions" style="margin-top:18px"><button type="button" class="oa-link oa-link--quiet" data-act="si-enter" data-autofocus>Open now</button></div></div>';
       }
@@ -28040,7 +28126,7 @@ const OA = (function(){
       const entry = SI.entry;
       later(function(){
         if(SI.step !== 'done' || SI.entry !== entry) return;
-        flyIntoApp($('[data-arrive-tile]', root()), function(){ if(SI.entry !== entry) return; SI.entry = null; authEnter(entry, 'existing'); });
+        flyIntoApp($('.oa-dotland', root()), function(){ if(SI.entry !== entry) return; SI.entry = null; authEnter(entry, 'existing'); });
       }, T(reduced() ? 700 : 2000));
     }
     focusFirst(body);
@@ -28125,31 +28211,77 @@ const OA = (function(){
     }, msg);
   }
   /* The server confirmed a membership: show the "You're in" screen; Open my day enters the app. */
+  /* ---------- "The Oontu dot": the screen turns into the welcome where it stands ----------
+     Nothing is replaced. What the welcome doesn't need folds its height away, the heading and the line under it roll
+     (old text out the top, new text in from below, same place, same size), and the green tick from the code flies up
+     and becomes the full stop: the logo's dot finishing the sentence. Plain CSS and Web Animations, so it works in every
+     browser; with reduced motion it is a quiet cut to the same layout. */
+  function foldAway(el){
+    if(!el || el.classList.contains('is-folded')) return;
+    el.style.maxHeight = el.scrollHeight + 'px'; el.classList.add('oa-fold'); void el.offsetHeight; el.classList.add('is-folded');
+  }
+  function rollTo(el, html){
+    if(!el) return;
+    if(reduced()){ el.innerHTML = html; return; }
+    el.innerHTML = '<span class="oa-roll"><span class="oa-roll__old" aria-hidden="true">' + el.innerHTML + '</span><span class="oa-roll__new">' + html + '</span></span>';
+  }
+  const DOT = '<span class="oa-dotland"><span class="oa-sr">.</span></span>';   // the full stop, drawn as the logo's green dot
+  function dotLand(from, dot){
+    if(!dot) return;
+    const land = function(){ dot.classList.add('is-in'); };
+    if(!from || reduced() || !dot.animate){ land(); return; }
+    const to = dot.getBoundingClientRect(), d = document.createElement('span');
+    d.className = 'oa-dotfly'; d.setAttribute('aria-hidden', 'true');
+    Object.assign(d.style, { left:from.left + 'px', top:from.top + 'px', width:from.width + 'px', height:from.height + 'px' });
+    document.body.appendChild(d);
+    const dx = (to.left + to.width / 2) - (from.left + from.width / 2), dy = (to.top + to.height / 2) - (from.top + from.height / 2), s = Math.max(.05, to.width / from.width);
+    const a = d.animate([{ transform:'translate(0,0) scale(1)' }, { transform:'translate(' + (dx * .55) + 'px,' + (dy * .55 - 36) + 'px) scale(' + Math.max(s, .35) + ')', offset:.6 }, { transform:'translate(' + dx + 'px,' + dy + 'px) scale(' + s + ')' }],
+      { duration:T(640), easing:'cubic-bezier(.65,0,.25,1)', fill:'forwards' });
+    const done = function(){ if(d.isConnected){ d.remove(); land(); } };
+    a.onfinish = done; setTimeout(done, T(900));   // never left hanging
+  }
+  function morphToWelcome(res, step){
+    const ws = res.workspace || {}, short = ws.shortName || workspaceDisplayName(ws.name || '');
+    const who = cap(String((res.user && res.user.name) || '').trim().split(/\s+/)[0] || '');
+    const fill = $('.oa-verify__fill', step), from = fill ? fill.getBoundingClientRect() : null;
+    const h1 = $('#oa-h', step); let sub = $('.oa-sub', step);
+    if(!sub && h1){ sub = document.createElement('p'); sub.className = 'oa-sub'; h1.insertAdjacentElement('afterend', sub); }
+    const title = 'Welcome back' + (who ? ', ' + esc(who) : '') + DOT, line = (short ? esc(short) + ' · ' : '') + 'Everything’s where you left it.';
+    Array.prototype.forEach.call(step.children, function(c){ if(c !== h1 && c !== sub) foldAway(c); });
+    rollTo(h1, title); rollTo(sub, line);
+    const stage = $('.oa-stage', root()); if(stage) stage.classList.add('is-done');
+    const t = $('[data-title]', root()), s = $('[data-sub]', root());
+    if(t) t.textContent = 'Your day, ready'; if(s) s.textContent = 'Matches, interviews and decisions — already in order.';
+    step.insertAdjacentHTML('beforeend', '<p class="oa-sr" role="status">Verified. Welcome back' + (who ? ', ' + esc(who) : '') + '.</p>');
+    return new Promise(function(resolve){
+      later(function(){
+        if(h1) h1.innerHTML = title; if(sub) sub.innerHTML = line;   // settle the roll into plain text
+        dotLand(from, h1 && $('.oa-dotland', h1));
+        step.insertAdjacentHTML('beforeend', '<div class="oa-arrive__bar oa-arrive__bar--quick oa-tail" aria-hidden="true"><i></i></div>' +
+          '<div class="oa-actions oa-tail" style="margin-top:18px"><button type="button" class="oa-link oa-link--quiet" data-act="si-enter">Open now</button></div>');
+        SI.step = 'done'; SI.entry = res;
+        later(function(){
+          if(SI.step !== 'done' || SI.entry !== res) return;
+          flyIntoApp($('.oa-dotland', root()), function(){ if(SI.entry !== res) return; SI.entry = null; authEnter(res, 'existing'); });
+        }, T(reduced() ? 700 : 1800));
+        resolve();
+      }, T(reduced() ? 0 : 660));
+    });
+  }
+  /* Signed in: the screen in front of the person becomes the welcome. Anywhere else (the workspace picker), it is drawn. */
   function showSignedIn(res){
     SI.entry = res;
-    let swapped = false, resolveSwap;
-    const finished = new Promise(function(r){ resolveSwap = r; });   // resolves once the welcome is on screen, so the caller stays busy until then
-    const swap = function(){
-      if(swapped) return; swapped = true;
-      if(authFlow.step === 'email' && root()){ goSi('done', { entry:res }); }
-      else { SI.step = 'done'; authFlow.step = 'email'; authFlow.error = ''; authFlow.errorField = ''; authFlow.notice = ''; authRenderNow(); }
-      resolveSwap();
-    };
-    const tick = root() && $('.oa-verify', root());   // after a code: the tick becomes the workspace tile
-    if(!tick || reduced() || typeof document.startViewTransition !== 'function'){ swap(); return finished; }
-    const clear = function(){ const t = root() && $('[data-arrive-tile]', root()); if(t) t.style.viewTransitionName = ''; };
-    try {
-      tick.style.viewTransitionName = 'ws-tile';
-      document.startViewTransition(function(){ swap(); const t = $('[data-arrive-tile]', root()); if(t) t.style.viewTransitionName = 'ws-tile'; }).finished.then(clear, clear);
-      setTimeout(swap, 1200);
-    } catch(e){ swap(); }
-    return finished;
+    const step = authFlow.step === 'email' && root() && SI.step !== 'done' && $('#oa-body .oa-step', root());
+    if(step) return morphToWelcome(res, step);
+    if(authFlow.step === 'email' && root()) goSi('done', { entry:res });
+    else { SI.step = 'done'; authFlow.step = 'email'; authFlow.error = ''; authFlow.errorField = ''; authFlow.notice = ''; authRenderNow(); }
+    return Promise.resolve();
   }
 
   // ======================================================================
   //  CREATE WORKSPACE
   // ======================================================================
-  const SU_INIT = function(){ return { i:0, done:false, name:'', type:'', org:'', short:'', size:'', focus:[], partners:[], place:'', mobileCode:'', email:'', mobile:'', verified:false, created:null, result:null, err:'' }; };
+  const SU_INIT = function(){ return { i:0, done:false, name:'', type:'', org:'', short:'', size:'', plan:'', boosts:[], focus:[], partners:[], place:'', mobileCode:'', email:'', mobile:'', verified:false, created:null, result:null, err:'' }; };
   let SU = SU_INIT();
   /* Location: every country Oontu has defaults for (COUNTRIES), not a short list. The step suggests one from the
      browser (time zone, then language) and always lets the person search for another. Nothing is chosen for them. */
@@ -28215,7 +28347,7 @@ const OA = (function(){
   const FOCUS = ['IT & tech', 'BFSI', 'Sales & marketing', 'Healthcare', 'Manufacturing', 'Retail', 'Executive search', 'Contract staffing'];
   const PARTNERS = ['Hiring managers', 'Interview panels', 'Recruitment agencies', 'Leadership approvals'];
   const suSteps = function(){
-    const s = ['name', 'type', 'org', 'size', SU.type === 'corporate' ? 'partners' : 'focus', 'place', 'email', 'mobile', 'code'];
+    const s = ['name', 'type', 'org', 'size', SU.type === 'corporate' ? 'partners' : 'focus', 'place', 'plan', 'email', 'code'];   // no mobile number here: it is asked for when first needed (WhatsApp, recovery)
     return SU.verified ? s.filter(function(k){ return k !== 'email' && k !== 'code'; }) : s;
   };
   const isAg = function(){ return SU.type !== 'corporate'; };
@@ -28230,6 +28362,61 @@ const OA = (function(){
   const place = function(){ return PLACES.find(function(p){ return p.id === SU.place; }); };
   const wsType = function(){ return SU.type === 'corporate' ? 'Corporate' : 'Staffing agency'; };
 
+  /* ---------- The plan step: "Built from your answers" ----------
+     Not a price table. The recommended plan is chosen from what they told us (type, size, what they place or who hires
+     with them), each reason points back to one of their answers, and the value is shown in their own numbers. The other
+     plans are quiet links; "Compare all plans" and Boosts are folded away. */
+  const PLAN_SEATS = { 'Just me':1, '2–5':3, '6–20':10, '21–50':30, '50+':60, '1–50':1, '51–200':2, '201–1,000':5, '1,001–5,000':12, '5,000+':30 };
+  function suRecommendedPlan(){
+    const s = SU.size;
+    if(isAg()) return (s === 'Just me' || s === '2–5') ? 'plan-desk' : s === '50+' ? 'plan-network' : 'plan-floor';
+    return (s === '1–50' || s === '51–200') ? 'plan-hire' : s === '5,000+' ? 'plan-group' : 'plan-scale';
+  }
+  const suPlanId = function(){ return SU.plan || suRecommendedPlan(); };
+  function suPlanReasons(id){
+    const f = SU.focus[0], P = SU.partners, has = function(x){ return P.indexOf(x) > -1; };
+    return ({
+      'plan-desk':['Kairo Match ranks your talent pool for every job you open', 'Interview invites go out from your own calendar', 'Your careers page is live in a minute'],
+      'plan-floor':['PayTrack raises the invoice, with tax, the day someone joins', 'WhatsApp follow-ups: candidates answer faster there', 'Kairo sources ' + (f ? f + ' ' : 'your ') + 'jobs every morning'],
+      'plan-network':['Branches and partner agencies in one place', 'Contract hiring with timesheets and work orders', 'Insights that show where hiring slows down, and why'],
+      'plan-hire':['An approved requisition becomes a live job in one step', has('Hiring managers') ? 'Your hiring managers never need a licence' : 'Hiring managers and interviewers never need a licence', has('Recruitment agencies') ? 'Up to 3 of your agencies, working your jobs' : 'Your careers page, live in a minute'],
+      'plan-scale':[has('Leadership approvals') ? 'Leadership approves offers by amount, without email chains' : 'An approval matrix keeps every offer inside its salary band',
+        has('Recruitment agencies') ? 'Every agency you work with, unlimited, in one place' : 'Unlimited vendor agencies whenever you need them',
+        has('Interview panels') ? 'Kairo schedules panels around everyone’s calendar' : 'Kairo sources and schedules for every open role'],
+      'plan-group':['Every entity on one hiring standard', 'Single sign-on and an IP allowlist', 'Kairo on your own private key']
+    })[id] || [];
+  }
+  function suPlanValue(p, cur){
+    if(p.talkToUs) return 'Priced with you, for your group. Your 14 days start now.';
+    const seats = PLAN_SEATS[SU.size] || 1, monthly = seats * p.prices[cur], fee = cur === 'INR' ? 100000 : 8000;
+    const months = Math.max(1, Math.round(fee / monthly)), cover = months >= 12 ? 'a year or more' : 'about ' + months + (months === 1 ? ' month' : ' months');
+    return 'For ' + seats + (seats === 1 ? ' recruiter' : ' recruiters') + ', ' + planMoney(monthly, cur) + ' a month. ' +
+      (isAg() ? 'One placement covers ' + cover + '.' : 'One hire made without an agency fee covers ' + cover + '.');
+  }
+  function suPlanQuestion(){
+    const id = suPlanId(), p = planById(id), cur = planCurrency((place() || {}).id), all = choosablePlans(isAg() ? 'agency' : 'corporate');
+    const N = shortName() || 'your team', sizeLabel = isAg() ? (SU.size === 'Just me' ? 'just you' : SU.size + ' recruiters') : SU.size + ' employees';
+    const lean = isAg() ? 'You hire for clients with ' + sizeLabel + (SU.focus.length ? ' and place ' + SU.focus.slice(0, 2).join(' and ') + ' roles' : '') + ', so you’ll lean on:'
+      : 'You hire for ' + esc(N) + ' (' + sizeLabel + ')' + (SU.partners.length ? ' with ' + SU.partners.slice(0, 2).join(' and ').toLowerCase() : '') + ', so you’ll lean on:';
+    const boosts = BOOSTS.filter(function(b){ return !b.gives.every(function(g){ return p.entitlements.indexOf(g) > -1; }); });
+    const fee = cur === 'INR' ? '₹1,00,000' : '$8,000';
+    return { lead:'Built from your answers.', title:'Here’s what fits ' + esc(N) + '.', sub:lean,
+      ans:'<ul class="oa-plan__why">' + suPlanReasons(id).map(function(r){ return '<li><span aria-hidden="true">' + I.check + '</span>' + esc(r) + '</li>'; }).join('') + '</ul>' +
+        '<div class="oa-plan" data-plan="' + id + '">' +
+          '<p class="oa-plan__name"><b>' + esc(p.name) + '</b><span>' + esc(p.tagline) + '</span></p>' +
+          '<p class="oa-plan__price">' + (p.talkToUs ? 'Talk to us' : planMoney(p.prices[cur], cur) + ' <small>per recruiter licence a month, billed yearly</small>') + '</p>' +
+          '<p class="oa-plan__value">' + esc(suPlanValue(p, cur)) + '</p>' +
+          '<button type="button" class="oa-btn oa-btn--primary" data-act="su-pick" data-field="plan" data-value="' + id + '" data-autofocus>Start 14 days free ' + I.arrow + '</button>' +
+          '<p class="oa-hint">No card needed. Hiring managers, interviewers, clients and vendors are always free.</p>' +
+        '</div>' +
+        '<p class="oa-plan__alt">' + all.filter(function(x){ return x.id !== id; }).map(function(x){ return '<button type="button" class="oa-link" data-act="su-plan-see" data-value="' + x.id + '">' + esc(x.fit) + '? ' + esc(x.name) + '</button>'; }).join('<span aria-hidden="true"> · </span>') + '</p>' +
+        (boosts.length ? '<details class="oa-plan__more"><summary>Add a Boost <small>billed only for who uses it</small></summary><div class="oa-chips" role="group" aria-label="Boosts">' + boosts.map(function(b){
+          return '<button type="button" class="oa-chip oa-chip--sm" aria-pressed="' + (SU.boosts.indexOf(b.id) > -1) + '" data-act="su-toggle" data-field="boosts" data-value="' + b.id + '" title="' + esc(b.what) + '">' + esc(b.name) + ' · ' + planMoney(b.prices[cur], cur) + ' ' + esc(b.unit) + '</button>';
+        }).join('') + '</div></details>' : '') +
+        '<details class="oa-plan__more"><summary>Compare all plans</summary>' + all.map(function(x){
+          return '<div class="oa-plan__row"><p><b>' + esc(x.name) + '</b> · ' + esc(x.fit) + ' · ' + (x.talkToUs ? 'Talk to us' : planMoney(x.prices[cur], cur) + ' per licence') + '</p><small>' + esc(x.description) + '</small></div>';
+        }).join('') + '<small class="oa-hint" style="display:block">Value shown with an average fee of ' + fee + ' a placement.</small></details>' };
+  }
   function suQuestion(key){
     const N = first(), O = org(), ag = isAg();
     const text = function(id, o){
@@ -28282,11 +28469,9 @@ const OA = (function(){
             '<p class="oa-hint">Sets your time zone, currency and phone code. You can change them later in Settings.</p>' };
       })(),
       email: { lead:'Now let’s make it yours.', title:'Your work email?', sub:'You’ll sign in with it — no password to remember.',
-        ans:text('su-email', { field:'email', label:'Work email', type:'email', mode:'email', ac:'email', ph:'name@company.com', msg:'Teammates on your company domain can request to join.' }) },
-      mobile: { lead:'One more, for safety.', title:'Your mobile number?', sub:'Only for account recovery and setup help. Never for spam.',
-        ans:text('su-mobile', { field:'mobile', label:'Mobile number', type:'tel', mode:'tel', ac:'tel-national', ph:'98765 43210', msg:SU.verified ? 'Last one — then your workspace is ready.' : 'Next, I’ll email you a code.',
-          prefix:'<select class="oa-select" aria-label="Country code" data-cc>' + PLACES.map(function(p){ return p.code; }).filter(function(c, i, a){ return a.indexOf(c) === i; }).map(function(code){ return '<option' + ((SU.mobileCode || (place() || detectedPlace() || PLACES[0]).code) === code ? ' selected' : '') + '>' + code + '</option>'; }).join('') + '</select>' }) +
+        ans:text('su-email', { field:'email', label:'Work email', type:'email', mode:'email', ac:'email', ph:'name@company.com', msg:'Teammates on your company domain can request to join.' }) +
           '<p class="oa-hint">By continuing you agree to the ' + legalLink('terms', 'terms') + ' and ' + legalLink('privacy', 'privacy notice') + '.</p>' },
+      plan: suPlanQuestion(),
       code: { lead:'Check your inbox.', title:'Enter the code I sent.', sub:'It’s on its way to ' + esc(maskEmail(SU.email)) + '.',
         ans:'<div data-code>' + otpHTML('su-code', 'su-code-msg') + '</div>' + mailRow }
     };
@@ -28297,38 +28482,47 @@ const OA = (function(){
       '<div class="oa-ans">' + q.ans + '</div></section>';
   }
 
-  function suFlowHTML(){
-    const steps = suSteps(), total = steps.length, left = total - SU.i;
-    const pct = Math.max(4, Math.round(SU.i / total * 100));
+  function suFlowHTML(){ return suHeaderHTML(false) + suQuestion(suSteps()[SU.i]); }
+  /* The progress row and the answers trail. The welcome draws the same header (full bar, every answer, nothing clickable)
+     so its heading stands exactly where the code question's did. */
+  function suHeaderHTML(done){
+    const steps = suSteps(), total = steps.length, at = done ? total : SU.i, left = total - at;
+    const pct = done ? 100 : Math.max(4, Math.round(at / total * 100));
     const trail = [];
     const add = function(key, what, label){
       const idx = steps.indexOf(key);
-      if(label && idx > -1 && idx < SU.i) trail.push('<button type="button" data-act="su-jump" data-i="' + idx + '" aria-label="Change ' + what + ': ' + esc(label) + '">' + esc(label) + '</button>');
+      if(label && idx > -1 && idx < at) trail.push('<button type="button"' + (done ? ' disabled tabindex="-1"' : ' data-act="su-jump" data-i="' + idx + '"') + ' aria-label="' + (done ? '' : 'Change ') + what + ': ' + esc(label) + '">' + esc(label) + '</button>');
     };
     const picks = isAg() ? SU.focus : SU.partners;
     add('name', 'name', first()); add('type', 'type', SU.type ? (isAg() ? 'Agency' : 'In-house') : ''); add('org', 'organisation', shortName()); add('size', 'size', SU.size);
     add(isAg() ? 'focus' : 'partners', isAg() ? 'focus' : 'partners', picks.length ? picks.length + ' picked' : ''); add('place', 'location', (place() || {}).label);
-    add('email', 'email', SU.email.trim()); add('mobile', 'mobile', SU.mobile ? '•••• ' + SU.mobile.replace(/\D/g, '').slice(-4) : '');
-    return '<div class="oa-progress">' + (SU.i > 0 ? '<button type="button" class="oa-iconbtn" data-act="su-back" aria-label="Previous question">' + I.back + '</button>' : '') +
+    add('plan', 'plan', SU.plan ? (planById(SU.plan) || {}).name : ''); add('email', 'email', SU.email.trim()); add('mobile', 'mobile', SU.mobile ? '•••• ' + SU.mobile.replace(/\D/g, '').slice(-4) : '');
+    return '<div class="oa-progress">' + (at > 0 ? '<button type="button" class="oa-iconbtn" ' + (done ? 'disabled tabindex="-1" style="visibility:hidden"' : 'data-act="su-back"') + ' aria-label="Previous question">' + I.back + '</button>' : '') +
       '<div class="oa-progress__bar" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
-      '<span class="oa-progress__label">' + (left <= 1 ? 'last one' : left + ' to go') + '</span></div>' +
-      '<div class="oa-trail">' + trail.join('') + '</div>' + suQuestion(steps[SU.i]);
+      '<span class="oa-progress__label">' + (done ? 'done' : left <= 1 ? 'last one' : left + ' to go') + '</span></div>' +
+      '<div class="oa-trail">' + trail.join('') + '</div>';
   }
 
   function suDoneHTML(){
     /* No "all set" page: the checklist of what is left is on Home. This is a short arrival, about three seconds, that hands over by itself. */
-    const O = shortName() || 'Your workspace';
-    return '<div class="oa-step oa-arrive" role="status" aria-live="polite">' +
-      '<p class="oa-lead oa-lead--mark">' + MARK + 'Two minutes well spent.</p>' +
-      '<h1 class="oa-h1" id="oa-h" style="margin-top:12px !important">Welcome, ' + esc(first() || 'there') + '.</h1>' +
-      '<p class="oa-sub" style="margin-top:10px !important;color:var(--oa-ink-3);font-size:16px">' + esc(O) + ' is live. Opening your day…</p>' +
+    /* It grows out of the code question: same header, same place. The lead, heading and line roll from the code question's
+       words to the welcome, and the green tick lands as the heading's full stop (afterSuStep). */
+    const O = shortName() || 'Your workspace', who = esc(first() || 'there');
+    const moving = !!suTick && !reduced();
+    const roll = function(oldHtml, newHtml){ return moving ? '<span class="oa-roll"><span class="oa-roll__old" aria-hidden="true">' + oldHtml + '</span><span class="oa-roll__new">' + newHtml + '</span></span>' : newHtml; };
+    return suHeaderHTML(true) + '<section class="oa-q oa-q--still oa-arrive" role="status" aria-live="polite"><div class="oa-say">' +
+      '<p class="oa-lead oa-lead--mark" data-roll-lead>' + MARK + roll('Check your inbox.', 'Two minutes well spent.') + '</p>' +
+      '<h1 class="oa-h1" id="oa-h" style="margin-top:12px !important" data-roll-h>' + roll('Enter the code I sent.', 'Welcome, ' + who + DOT) + '</h1>' +
+      '<p class="oa-sub" style="margin-top:10px !important;color:var(--oa-ink-3);font-size:16px" data-roll-sub>' + roll('It’s on its way to ' + esc(maskEmail(SU.email)) + '.', esc(O) + ' is live. Opening your day…') + '</p></div>' +
+      '<div class="oa-ans">' +
       '<ul class="oa-arrive__ticks">' +
         '<li style="animation-delay:.35s"><span aria-hidden="true">' + I.check + '</span>Email verified</li>' +
         '<li style="animation-delay:.75s"><span aria-hidden="true">' + I.check + '</span>' + esc(O) + ' created</li>' +
-        '<li style="animation-delay:1.15s"><span aria-hidden="true">' + I.check + '</span>Your setup list is waiting on Home</li></ul>' +
+        '<li style="animation-delay:1.15s"><span aria-hidden="true">' + I.check + '</span>' + esc((planById(suPlanId()) || {}).name || 'Your plan') + ' · free until ' + new Date(Date.now() + 14 * 864e5).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) + '</li></ul>' +
       '<div class="oa-arrive__bar" aria-hidden="true"><i></i></div>' +
-      '<div class="oa-actions" style="margin-top:18px"><button type="button" class="oa-link oa-link--quiet" data-act="su-enter" data-autofocus>Open now</button></div></div>';
+      '<div data-su-tail></div></div></section>';   // "Open now" joins once the welcome has settled
   }
+  let suTick = null;   // where the green tick was when the code was accepted: the dot flies from there
   /* The hand-over. The preview tile flies into the sidebar's workspace tile (View Transitions, where the browser has them),
      everything else cross-fades. Without them, or with reduced motion, it is a plain cut. Runs once; "Open now" skips it. */
   function arriveInto(res){
@@ -28344,7 +28538,7 @@ const OA = (function(){
         '<div class="oa-obj oa-box oa-enter" style="--l:120px;--t:120px;--w:380px;--h:250px;--d:.5;--z:1"><i></i></div>' +
         '<div class="oa-obj" style="--l:150px;--t:70px;--w:320px;--d:1;--z:3"><div class="oa-enter"><div class="oa-c oa-float1" style="border-radius:20px;padding:20px">' +
           '<div class="oa-c__person" style="gap:14px"><span class="oa-ws__tile" data-ws-initials>O</span><span style="flex:1;min-width:0"><span data-ws-name><span class="oa-skel oa-skel--name"></span></span><span class="oa-ws__url" data-ws-url>your-team.oontu.app</span></span></div>' +
-          '<div class="oa-ws__rows"><div><span>Type</span><span data-ws-row="type"><span class="oa-skel" style="width:84px"></span></span></div><div><span>Team</span><span data-ws-row="team"><span class="oa-skel" style="width:84px"></span></span></div><div><span>Based in</span><span data-ws-row="place"><span class="oa-skel" style="width:84px"></span></span></div></div>' +
+          '<div class="oa-ws__rows"><div><span>Type</span><span data-ws-row="type"><span class="oa-skel" style="width:84px"></span></span></div><div><span>Team</span><span data-ws-row="team"><span class="oa-skel" style="width:84px"></span></span></div><div><span>Based in</span><span data-ws-row="place"><span class="oa-skel" style="width:84px"></span></span></div><div><span>Plan</span><span data-ws-row="plan"><span class="oa-skel" style="width:84px"></span></span></div></div>' +
           '<div class="oa-ws__state" data-ws-state><i class="oa-spin" aria-hidden="true"></i>Taking shape</div>' +
         '</div></div></div>' +
         '<div class="oa-obj" data-obj="owner" hidden style="--l:0px;--t:316px;--w:236px;--r:-4deg;--d:2.2;--z:5"><div class="oa-c oa-float3" style="padding:16px">' +
@@ -28377,6 +28571,8 @@ const OA = (function(){
     setRow('type', SU.type ? (ag ? 'Staffing agency' : 'In-house team') : '');
     setRow('team', sizeLabel);
     setRow('place', pl ? pl.label + ' · ' + pl.meta : '');
+    const atPlan = SU.done || suSteps().indexOf('plan') <= SU.i, pp = planById(suPlanId());
+    setRow('plan', atPlan && pp ? pp.name + ' · 14 days free' + (SU.boosts.length ? ' + ' + SU.boosts.length + (SU.boosts.length === 1 ? ' Boost' : ' Boosts') : '') : '');
     a.classList.toggle('is-arriving', !!SU.done);
     $('[data-ws-state]', a).innerHTML = SU.done ? '<i class="is-live"></i>Live' : '<i class="oa-spin" aria-hidden="true"></i>Taking shape';
     // owner
@@ -28431,7 +28627,7 @@ const OA = (function(){
   }
   function snapshot(){
     const steps = suSteps(), p = place();
-    return { name:SU.name, type:SU.type, org:SU.org, size:SU.size, focus:SU.focus.slice(), partners:SU.partners.slice(), place:SU.place, placeLabel:p ? p.label : '', mobileCode:SU.mobileCode, email:SU.email, mobile:SU.mobile,
+    return { plan:SU.plan, boosts:SU.boosts.slice(), planName:SU.plan ? (planById(SU.plan) || {}).name : '', name:SU.name, type:SU.type, org:SU.org, size:SU.size, focus:SU.focus.slice(), partners:SU.partners.slice(), place:SU.place, placeLabel:p ? p.label : '', mobileCode:SU.mobileCode, email:SU.email, mobile:SU.mobile,
       i:SU.i, last:steps[SU.i - 1] || null, next:steps[SU.i] || null, done:!!SU.done, verified:!!SU.verified, orgType:SU.type ? wsType() : '' };
   }
   const suNext = function(){ goSu({ i:SU.i + 1 }); };
@@ -28444,6 +28640,15 @@ const OA = (function(){
   function afterSuStep(){
     const body = $('#oa-body', root());
     updateWorkspacePreview();
+    if(SU.done){   // the roll settles, the green tick lands as the full stop, then "Open now" joins
+      const from = suTick; suTick = null;
+      later(function(){
+        if(!SU.done) return;
+        [['[data-roll-lead]', MARK], ['[data-roll-h]', ''], ['[data-roll-sub]', '']].forEach(function(x){ const el = $(x[0], body), n = el && el.querySelector('.oa-roll__new'); if(n) el.innerHTML = x[1] + n.innerHTML; });
+        dotLand(from, $('#oa-h .oa-dotland', body));
+        const tail = $('[data-su-tail]', body); if(tail) tail.outerHTML = '<div class="oa-actions oa-tail" style="margin-top:18px"><button type="button" class="oa-link oa-link--quiet" data-act="su-enter">Open now</button></div>';
+      }, T(from && !reduced() ? 660 : 0));
+    }
     if(SU.done && SU.result){ const res = SU.result; later(function(){ if(SU.done && SU.result === res) arriveInto(res); }, T(reduced() ? 700 : 3000)); }
     if(!SU.done && suSteps()[SU.i] === 'code'){
       wireOtp(body, 'Type or paste it — I’ll take it from there.', async function(code){
@@ -28455,9 +28660,10 @@ const OA = (function(){
           return { ok:false, message:'An account already uses this email. <button type="button" class="oa-link" data-act="su-signin">Sign in instead</button>' };
         }
         SU.verified = true; authFlow.verified = true; authFlow.user = r.user;
-        const out = await createNow();
+        const out = await createNow(true);   // the workspace is made while the ring spins; the welcome waits for the tick
+        if(out.ok && out.go) return { ok:true, after:function(){ const f = $('.oa-verify__fill', root()); suTick = f ? f.getBoundingClientRect() : null; out.go(); } };
         return out;
-      });
+      }, { collapse:true });
       startResend($('[data-resend]', body));
     }
     // Multi-select continue label
@@ -28483,12 +28689,12 @@ const OA = (function(){
   };
 
   /* The account is created once the email is proven: workspace first, then "setup complete". Returns { ok } for the code box. */
-  async function createNow(){
+  async function createNow(defer){
     const pl = place() || PLACES[0];
     authFlow.mobileCode = SU.mobileCode || pl.code;
     if(!SU.created){
-      const res = await authApi.createWorkspace({ name:SU.name.trim(), workspaceName:org(), type:wsType(),
-        mobileCode:authFlow.mobileCode, mobile:authMobileDigits(SU.mobile) });
+      const res = await authApi.createWorkspace({ name:SU.name.trim(), workspaceName:org(), type:wsType(), plan:suPlanId(), boosts:SU.boosts.slice(),
+        mobileCode:SU.mobile ? authFlow.mobileCode : undefined, mobile:SU.mobile ? authMobileDigits(SU.mobile) : undefined });   // the mobile number is no longer asked at sign-up
       if(!res.ok) return createFailed(res);
       SU.created = res;
     }
@@ -28496,7 +28702,9 @@ const OA = (function(){
     if(!done.ok) return createFailed(done);
     SU.result = done; SU.created = null;
     authFlow.codePending = false;
-    SU.i = 0; goSu({ done:true });
+    const go = function(){ SU.i = 0; goSu({ done:true }); };
+    if(defer) return { ok:true, go:go };   // the code question shows its tick first
+    go();
     return { ok:true };
   }
   function createFailed(res){
@@ -28525,7 +28733,9 @@ const OA = (function(){
         say(msg, 'Checking…', 'busy');
         const chk = await authApi.checkSignupEmail({ email:e, type:wsType() });
         if(!chk.ok) return err(emailProblem(chk));
-        suNext();
+        say(msg, 'Sending your code…', 'busy');   // the email is the last answer: the code goes out now
+        const sent = await sendCodeTo(e, 'signup');
+        if(sent === true) suNext(); else err(esc(authMessage(sent)));
       }, msg);
       return;
     }
@@ -28550,6 +28760,7 @@ const OA = (function(){
   }
   /* In the product: starter roles for the type, the setup checklist, then the app. */
   function enterProduct(res){
+    if(!res || SU.result !== res) return;   // once per created workspace: a second hand-over (a repeated timer, a late click) must not run with cleared answers
     const email = authNormEmail((res.user && res.user.email) || SU.email);
     const type = wsType(), pl = place() || PLACES[0];
     const teamSize = SIZE_TO_SETTINGS[SU.size] || '';
@@ -28561,6 +28772,7 @@ const OA = (function(){
     w.workspaceId = (res.workspace && res.workspace.id) || '';
     if(isAg() && SU.focus.length) w.agency.industries = SU.focus.slice();
     w.welcomeSession = wsSessionSeq + 1;   // "Welcome to Oontu" on the first visit to Home
+    if(w.workspaceId) wsPlanStart(w.workspaceId, suPlanId(), SU.boosts);   // 14 days of the chosen plan, no card
     const short = shortName();
     SU = SU_INIT();
     authEnter(Object.assign({}, res, { workspace:Object.assign({}, res.workspace, { shortName:short }) }), 'onboarded');
@@ -28593,6 +28805,12 @@ const OA = (function(){
           const msg = $('#si-email-msg', root());
           return run(async function(){
             say(msg, 'Checking…', 'busy');
+            const token = authTrustedToken(acct.email);
+            if(token){   // a trusted browser goes straight in, no code
+              const r = await authApi.deviceSignIn({ token:token });
+              if(r.ok){ await authAfterIdentity(r); return; }
+              authForgetThisDevice();
+            }
             const sso = await checkSso(acct.email);
             if(sso === 'sso') return;
             if(sso !== 'none') return say(msg, authMessage(sso), 'error');
@@ -28635,6 +28853,11 @@ const OA = (function(){
           Array.prototype.forEach.call(b.parentElement.querySelectorAll('[aria-checked]'), function(x){ x.setAttribute('aria-checked', String(x === b)); });
           updateWorkspacePreview();
           clearTimers();
+          // The plan is the last question for someone whose email is already proven (Google, Microsoft, or a code at sign-in): create now.
+          if(field === 'plan' && SU.verified){
+            const m = $('.oa-plan .oa-hint', root());
+            return run(async function(){ say(m, 'Creating your workspace…', 'busy'); const out = await createNow(); if(!out.ok) showAnswerError(out.message); }, m);
+          }
           // Already proven by a code (sign-in or Google/Microsoft): the same company-email rules apply to the type chosen now.
           if(field === 'type' && value === 'corporate' && SU.verified){
             const em = SU.email.trim().toLowerCase(), msg = $('.oa-ans', root());
@@ -28662,6 +28885,7 @@ const OA = (function(){
           const f = $('#su-short', root()); if(f){ f.focus(); f.select(); }
           return;
         }
+        case 'su-plan-see': if(authFlow.busy) return; SU.plan = b.getAttribute('data-value'); SU.boosts = []; return goSu({});   // look at another plan; the button still decides
         case 'su-next': if(authFlow.busy) return; return suNext();
         case 'su-skip': if(authFlow.busy) return; SU[b.getAttribute('data-field')] = []; return suNext();
         case 'su-back': if(authFlow.busy) return; return goSu({ i:Math.max(0, SU.i - 1) });
@@ -28743,10 +28967,11 @@ const OA = (function(){
     /* A saved sign-up picks up at the first question that has no answer. The email must be proven again with a code. */
     resumeSignUp: function(s){
       SU = SU_INIT();
-      ['name', 'type', 'org', 'size', 'place', 'mobileCode', 'email', 'mobile'].forEach(function(k){ if(s[k]) SU[k] = s[k]; });
+      SU.boosts = (s.boosts || []).slice();
+      ['name', 'type', 'org', 'size', 'place', 'plan', 'mobileCode', 'email', 'mobile'].forEach(function(k){ if(s[k]) SU[k] = s[k]; });
       SU.focus = (s.focus || []).slice(); SU.partners = (s.partners || []).slice();
-      const steps = suSteps(), need = ['name', 'type', 'org', 'size', SU.type === 'corporate' ? 'partners' : 'focus', 'place'];
-      const has = { name:SU.name, type:SU.type, org:SU.org, size:SU.size, focus:SU.focus.length || s.skippedFocus, partners:SU.partners.length || s.skippedFocus, place:SU.place };
+      const steps = suSteps(), need = ['name', 'type', 'org', 'size', SU.type === 'corporate' ? 'partners' : 'focus', 'place', 'plan'];
+      const has = { name:SU.name, type:SU.type, org:SU.org, size:SU.size, focus:SU.focus.length || s.skippedFocus, partners:SU.partners.length || s.skippedFocus, place:SU.place, plan:SU.plan };
       SU.i = Math.max(0, steps.indexOf(need.find(function(k){ return !has[k]; }) || 'email'));
       authFlow.intent = 'signup'; authFlow.email = SU.email || ''; authGo('signup');
     },
@@ -28795,6 +29020,9 @@ function authDevToolsHTML(captionInShell){
       (mail ? '<p>Code for '+authEsc(mail.to)+': <code class="au-dev__code">'+mail.code+'</code> <span class="au-dev__dim">sent '+t(mail.at)+'</span></p>'+
           (authFlow.codePending ? '<button type="button" class="au-link" onclick="authApi._expireCode(authFlow.codeEmail); toast(\'Code expired (prototype)\')">Make this code expire</button>' : '')
         : '<p class="au-dev__dim">No code sent to this address yet.</p>')+
+      (authApi._welcomeMail && authApi._welcomeMail().length ? '<p class="au-dev__h">Welcome emails</p><ul>'+authApi._welcomeMail().slice(-3).map(function(m){
+        return '<li>To '+authEsc(m.to)+': <b>'+authEsc(m.subject)+'</b> <span class="au-dev__dim">What’s waiting on Home, the trial end date and a one-tap sign-in link. Sent '+t(m.at)+'</span></li>';
+      }).join('')+'</ul>' : '')+
       '<p class="au-dev__h">Sample accounts</p><p class="au-dev__dim">Password for all of them: <code class="au-dev__code">'+authEsc(authApi.samples.password)+'</code></p><ul>'+authApi.samples.accounts.map(function(a){
         return '<li>'+(a.email ? '<button type="button" class="au-link" onclick="authFlow.email=\''+a.email+'\'; authSwitchIntent(\'signin\')">'+a.email+'</button> ' : '')+'<span class="au-dev__dim">'+a.note+'</span></li>';
       }).join('')+'</ul>'+
@@ -29498,16 +29726,29 @@ let WS_PROFILES = {};   // PROTOTYPE: the workspace profile saved in Settings, p
    person who signs in again finds their workspace as they left it, with only what is still unfinished on the list. A real server
    keeps this on the workspace. */
 const WS_STORE_KEY = 'oontu.proto.workspaces';
+/* The fixed demo account for an unfinished profile: test@incomplete.com, the owner of "Incomplete Demo Agency". It is set up again at every
+   sign-in with the same two items done, so the demo is always the same, and it is never saved. */
+const DEMO_INCOMPLETE_EMAIL = 'test@incomplete.com';
+function wsSeedIncompleteDemo(){
+  const w = wsSetupStart('Staffing agency', DEMO_INCOMPLETE_EMAIL, null, '6–20', { country:'IN', city:'Ahmedabad' });
+  w.workspaceId = 'ws_0_incomplete'; w.companyName = 'Incomplete Demo Agency';
+  w.done['agency-profile'] = true; w.done['agency-tools'] = true;
+  // On Floor, day 5 of 14, with a few results already, so the trial card and the locks can be shown.
+  const now = Date.now(), ivs = typeof hmInterviews!=='undefined' ? hmInterviews.length : 0;
+  wsPlanStart('ws_0_incomplete', 'plan-floor', [], { startedAt:now - 5 * 864e5, trialEndsAt:now + 9 * 864e5, base:{ jobs:JOBS.length - 3, subs:SUBMISSIONS.length - 18, ivs:ivs - 5 } });
+  return w;
+}
 function wsRestore(){
   try {
     const o = JSON.parse(localStorage.getItem(WS_STORE_KEY) || 'null'); if(!o) return;
     Object.keys(o.setups || {}).forEach(function(e){
+      if(e===DEMO_INCOMPLETE_EMAIL) return;
       const w = o.setups[e];
       w.hiddenSession = -1; w.welcomeSession = -1;   // session markers belong to one visit, not to the saved list
       w.readySession = w.readyShown ? -2 : -1;        // a list finished and already celebrated stays quiet
       WS_SETUPS[e] = w;
     });
-    WS_PROFILES = o.profiles || {};
+    WS_PROFILES = o.profiles || {}; WS_PLANS = o.plans || {};
   } catch(e){}
 }
 wsRestore();
@@ -29515,13 +29756,14 @@ function wsPersist(){
   try {
     const setups = {}, profiles = Object.assign({}, WS_PROFILES);
     Object.keys(WS_SETUPS).forEach(function(e){
+      if(e===DEMO_INCOMPLETE_EMAIL) return;
       const w = WS_SETUPS[e]; let p = null;
       try { wsItems(w).forEach(function(k){ if(wsItemDone(k, w)) w.done[k] = true; }); p = wsProgress(w); } catch(x){}   // items done by adding a client or job are saved as done
       setups[e] = Object.assign({}, w, { readyShown: !!(p && p.done===p.total && w.readySession!==-1) });
     });
-    if(authAppSession && authAppSession.workspaceId && state.role==='admin') profiles[authAppSession.workspaceId] = JSON.parse(JSON.stringify(ORG_STRUCTURE.profile));
+    if(authAppSession && authAppSession.workspaceId && authAppSession.workspaceId!=='ws_0_incomplete' && state.role==='admin') profiles[authAppSession.workspaceId] =JSON.parse(JSON.stringify(ORG_STRUCTURE.profile));
     WS_PROFILES = profiles;
-    localStorage.setItem(WS_STORE_KEY, JSON.stringify({ setups:setups, profiles:profiles }));
+    localStorage.setItem(WS_STORE_KEY, JSON.stringify({ setups:setups, profiles:profiles, plans:Object.keys(WS_PLANS || {}).filter(function(k){ return k!=='ws_0_incomplete'; }).reduce(function(o, k){ o[k] = WS_PLANS[k]; return o; }, {}) }));
   } catch(e){}
 }
 window.addEventListener('pagehide', wsPersist);
@@ -29535,6 +29777,54 @@ const MY_CONN_KEY = 'oontu.proto.myconn';
 let MY_CONN = {};
 try { MY_CONN = JSON.parse(localStorage.getItem(MY_CONN_KEY) || '{}') || {}; } catch(e){ MY_CONN = {}; }
 let MY_CONN_DEFAULT = null;   // the demo personas' connections, kept so a tracked person's state never leaks into them
+/* ---------- Trusted device (30 days) ---------- */
+const TRUST_KEY = 'oontu.trustedDevice';
+function authTrustRecord(){ try { const t = JSON.parse(localStorage.getItem(TRUST_KEY) || 'null'); return t && t.until > Date.now() ? t : null; } catch(e){ return null; } }
+function authTrustedEmail(){ const t = authTrustRecord(); return t ? t.email : ''; }
+function authTrustedToken(email){ const t = authTrustRecord(); return t && t.email === authNormEmail(email) ? t.token : ''; }
+function authTrustThisDevice(){
+  if(!authApi || !authApi.trustDevice) return;
+  const email = authNormEmail(authAppSession.email);
+  authApi.trustDevice().then(function(r){ if(r && r.ok) try { localStorage.setItem(TRUST_KEY, JSON.stringify({ email:email, token:r.token, until:r.expiresAt })); } catch(e){} }).catch(function(){});
+}
+function authForgetThisDevice(){
+  try { const t = JSON.parse(localStorage.getItem(TRUST_KEY) || 'null'); if(t && authApi && authApi.forgetDevice) authApi.forgetDevice({ token:t.token }); localStorage.removeItem(TRUST_KEY); } catch(e){}
+}
+
+/* ---------- "Faster next time": a password, suggested, never required ----------
+   Someone who signs in with email codes and has no password sees one quiet card on Home, two minutes into the session
+   (never during the welcome). "Codes are fine" hides it; it comes back once, on their third code sign-in, then never again. */
+const PW_NUDGE_KEY = 'oontu.proto.pwnudge';
+let pwNudgeTimer = null, pwNudgeReady = false;
+function pwNudgeState(){ try { return (JSON.parse(localStorage.getItem(PW_NUDGE_KEY) || '{}') || {})[authNormEmail(authAppSession.email)] || {}; } catch(e){ return {}; } }
+function pwNudgeMark(patch){
+  try { const all = JSON.parse(localStorage.getItem(PW_NUDGE_KEY) || '{}') || {}, k = authNormEmail(authAppSession.email); all[k] = Object.assign({}, all[k] || {}, patch); localStorage.setItem(PW_NUDGE_KEY, JSON.stringify(all)); } catch(e){}
+  pwNudgeRefresh();
+}
+function pwNudgeStart(){
+  clearTimeout(pwNudgeTimer); pwNudgeReady = false;
+  if(authAppSession.method==='email_code') pwNudgeMark({ codeSignIns:(pwNudgeState().codeSignIns || 0) + 1 });
+  const ms = typeof window.OONTU_PW_NUDGE_MS === 'number' ? window.OONTU_PW_NUDGE_MS : 120000;
+  pwNudgeTimer = setTimeout(function(){ pwNudgeReady = true; pwNudgeRefresh(); }, ms);
+}
+function pwNudgeHTML(){
+  const st = pwNudgeState(), codeUser = authAppSession.method==='email_code' || authAppSession.method==='trusted_device';
+  if(!pwNudgeReady || !authAppSession.email || authAppSession.hasPassword || !codeUser || state.role==='candidate' || st.done) return '';
+  const again = st.dismissed && (st.codeSignIns || 0) >= 3 && !st.askedAgain;
+  if(st.dismissed && !again) return '';
+  return '<section id="pw-nudge" class="card ws-card" aria-labelledby="pw-nudge-h"><div class="ws-card__head"><div class="min-w-0">'+
+    '<h3 id="pw-nudge-h" class="ws-card__title">'+(again ? 'You’ve signed in with a code '+st.codeSignIns+' times' : 'Faster next time?')+'</h3>'+
+    '<p class="ws-card__sub">'+(again ? 'Want a password for next time? Codes keep working too.' : 'Set a password, or keep using email codes. Both are safe.')+'</p></div>'+
+    '<div class="flex items-center gap-2 shrink-0"><button type="button" class="btn-quiet text-sm" onclick="pwNudgeDismiss()">Codes are fine</button>'+
+    '<button type="button" class="btn-primary app-btn" onclick="pwNudgeOpen()">Set password</button></div></div></section>';
+}
+function pwNudgeSlotHTML(){ return '<div id="pw-nudge-slot">'+pwNudgeHTML()+'</div>'; }
+function pwNudgeRefresh(){ const s = document.getElementById('pw-nudge-slot'); if(s) s.innerHTML = pwNudgeHTML(); }
+function pwNudgeDismiss(){ const st = pwNudgeState(); pwNudgeMark(st.dismissed ? { askedAgain:true } : { dismissed:true }); }
+function pwNudgeOpen(){
+  showView('settings'); if(typeof sGo==='function') sGo('account');
+  setTimeout(function(){ const f = document.getElementById('auth-pw-new'); if(f){ f.scrollIntoView({ block:'center' }); f.focus({ preventScroll:true }); } }, 40);
+}
 function myConnTracked(){ return !!(authAppSession.workspaceId && /^ws_\d+_/.test(authAppSession.workspaceId) && authAppSession.role && authAppSession.role!=='owner' && authAppSession.role!=='candidate'); }
 function myConnApply(){
   if(typeof WSX==='undefined') return;
@@ -32899,7 +33189,7 @@ const LEAD_OUTCOMES = [
   { key:'call_back', label:'Call back later' }
 ];
 const LEAD_DROP_REASONS = ['Too many steps', 'Wanted a demo first', 'Pricing', 'Didn’t verify email', 'Just exploring', 'Other'];
-const LEAD_STOP_STEPS = ['Workspace type', 'Team size', 'Location', 'Name', 'Email', 'Mobile', 'Password'];
+const LEAD_STOP_STEPS = ['Workspace type', 'Team size', 'Location', 'Name', 'Plan', 'Email', 'Email code'];   // in sign-up order; the mobile number is no longer asked at sign-up
 
 /* PROTOTYPE: sample leads, stuck from 3 hours to 6 days. Timestamps are relative to now. `at` is the question on
    screen when they left; `reached` the last one answered. in_product: signed up, setup checklist not finished. */
@@ -32921,22 +33211,22 @@ function seedSignupLeads(){
   };
   [
     lead({ n:1, country:'India', city:'Mumbai', teamSize:'6\u201320', name:'Aarav Shah', email:'aarav@zenithstaffing.in', mobile:'+91 98201 44562', type:'Staffing agency', h:3, reached:'mobile', at:'su-password' }),
-    lead({ n:2, country:'India', city:'Bengaluru', teamSize:'1\u20135', name:'Meera Iyer', email:'meera.iyer@gmail.com', type:'Staffing agency', h:9, reached:'email', at:'su-mobile', method:'google' }),
-    lead({ n:3, country:'India', city:'Pune', teamSize:'200+', name:'Rohit Verma', email:'rohit@kalpatech.co.in', type:'Corporate', h:26, reached:'email', at:'su-mobile' }),
+    lead({ n:2, country:'India', city:'Bengaluru', teamSize:'1\u20135', name:'Meera Iyer', email:'meera.iyer@gmail.com', type:'Staffing agency', h:9, reached:'email', at:'su-password', method:'google' }),
+    lead({ n:3, country:'India', city:'Pune', teamSize:'200+', name:'Rohit Verma', email:'rohit@kalpatech.co.in', type:'Corporate', h:26, reached:'email', at:'su-password' }),
     lead({ n:4, country:'India', city:'Hyderabad', teamSize:'21\u201350', name:'Sneha Kulkarni', email:'sneha@talentbridge.in', mobile:'+91 97654 30981', type:'Staffing agency', h:30, reached:'mobile', at:'su-password' }),
     lead({ n:5, country:'United Arab Emirates', city:'Dubai', teamSize:'51\u2013200', name:'Imran Qureshi', email:'imran@nexoralabs.com', mobile:'+91 98110 76235', type:'Corporate', h:40, reached:'in_product', status:'in_product', company:'Nexora Labs', checklist:{ done:2, total:6 } }),
-    lead({ n:6, country:'India', city:'Chennai', teamSize:'6\u201320', name:'Kavya Reddy', email:'kavya@brightminds.in', type:'Staffing agency', h:72, reached:'email', at:'su-mobile' }),
+    lead({ n:6, country:'India', city:'Chennai', teamSize:'6\u201320', name:'Kavya Reddy', email:'kavya@brightminds.in', type:'Staffing agency', h:72, reached:'location', at:'su-plan' }),
     lead({ n:7, country:'India', city:'Mumbai', teamSize:'51\u2013200', name:'Arjun Malhotra', email:'arjun@finvista.in', mobile:'+91 98731 66420', type:'Corporate', h:144, reached:'mobile', at:'su-type' }),
     lead({ n:8, country:'India', city:'Delhi', teamSize:'21\u201350', name:'Pooja Nair', email:'pooja@hirewise.in', mobile:'+91 94471 20853', type:'Staffing agency', h:96, reached:'mobile', at:'su-password',
       followUp:{ assignedTo:'Nisha Gupta', events:[{ at:ago(80), text:'Assigned to Nisha Gupta' }],
         calls:[{ at:ago(78), by:'Nisha Gupta', outcome:'call_back', reason:'Wanted a demo first', nextDate:new Date(Date.now()+2*864e5).toISOString().slice(0,10), note:'Wants a demo with her partner on Thursday.' }] } }),
     lead({ n:11, country:'United Kingdom', city:'London', teamSize:'6\u201320', name:'Nikhil Bose', email:'nikhil@talentsprint.in', mobile:'+91 98300 41275', type:'Staffing agency', h:52, reached:'verified', verified:true, status:'in_product', company:'TalentSprint', checklist:{ done:3, total:7 } }),
     // closed: shown with "Show closed"
-    lead({ n:9, country:'India', city:'Ahmedabad', teamSize:'200+', name:'Vikram Joshi', email:'vikram@orbitretail.in', mobile:'+91 98450 11736', type:'Corporate', h:190, reached:'email', at:'su-mobile', company:'Orbit Retail', status:'not_interested',
+    lead({ n:9, country:'India', city:'Ahmedabad', teamSize:'200+', name:'Vikram Joshi', email:'vikram@orbitretail.in', mobile:'+91 98450 11736', type:'Corporate', h:190, reached:'email', at:'su-password', company:'Orbit Retail', status:'not_interested',
       followUp:{ assignedTo:'Rahul Desai', events:[], calls:[{ at:ago(150), by:'Rahul Desai', outcome:'not_interested', reason:'Pricing', note:'Comparing with their current ATS; budget next quarter.' }] } }),
     lead({ n:12, country:'India', city:'Delhi', teamSize:'6–20', name:'Tanvi Arora', email:'tanvi@hirebridge.in', mobile:'+91 99100 52378', type:'Staffing agency', h:260, reached:'mobile', at:'su-password', status:'not_interested',
       followUp:{ assignedTo:'Nisha Gupta', events:[], calls:[{ at:ago(230), by:'Nisha Gupta', outcome:'not_interested', reason:'Too many steps', note:'Wanted to try it in two minutes; gave up at the password.' }] } }),
-    lead({ n:13, country:'United Kingdom', city:'London', teamSize:'51–200', name:'Oliver Grant', email:'oliver@northgate.example', mobile:'+44 7700 900412', type:'Corporate', h:310, reached:'email', at:'su-mobile', company:'Northgate', status:'not_interested',
+    lead({ n:13, country:'United Kingdom', city:'London', teamSize:'51–200', name:'Oliver Grant', email:'oliver@northgate.example', mobile:'+44 7700 900412', type:'Corporate', h:310, reached:'email', at:'su-password', company:'Northgate', status:'not_interested',
       followUp:{ assignedTo:'Rahul Desai', events:[], calls:[{ at:ago(280), by:'Rahul Desai', outcome:'not_interested', reason:'Pricing', note:'Already pays for another ATS until March.' }] } }),
     lead({ n:10, country:'India', city:'Kolkata', teamSize:'6\u201320', name:'Ananya Das', email:'ananya@peopleloop.in', mobile:'+91 96740 28819', type:'Staffing agency', h:120, reached:'verified', verified:true, company:'PeopleLoop', status:'completed', done:true, checklist:{ done:7, total:7 },
       followUp:{ assignedTo:'Farhan Ali', events:[{ at:ago(100), text:'Resume link sent by email and WhatsApp' }, { at:ago(98), text:'Finished setup' }],
@@ -32956,9 +33246,9 @@ function leadStuckLabel(l){
 /* Where the person stopped, in words: the screen they were on, or the step after the last one they finished. */
 function leadStoppedAt(l){
   if(leadInProduct(l)) return 'Setup '+(l.checklist ? l.checklist.done+' of '+l.checklist.total : 'not started');
-  const byScreen = { 'su-type':0, 'su-size':1, 'su-location':2, 'su-name':3, 'oauth-sim':3, 'su-email':4, 'su-join':4, 'su-mobile':5, 'su-password':6 };
+  const byScreen = { 'su-type':0, 'su-size':1, 'su-location':2, 'su-name':3, 'oauth-sim':3, 'su-plan':4, 'su-email':5, 'su-join':5, 'su-mobile':6, 'su-password':6 };
   if(l.currentStep && l.currentStep in byScreen) return LEAD_STOP_STEPS[byScreen[l.currentStep]];
-  return LEAD_STOP_STEPS[{ type_chosen:1, team_size:2, location:3, name:4, email:5, mobile:6, password:6 }[l.stepReached] || 0];
+  return LEAD_STOP_STEPS[{ type_chosen:1, team_size:2, location:4, name:0, email:6, mobile:6, password:6 }[l.stepReached] || 0];
 }
 /* Signed up and in the product, with the "Complete your workspace" checklist not finished yet. */
 function leadInProduct(l){ return l.status==='in_product' && !l.setupDone; }
@@ -33192,6 +33482,7 @@ function signupSheetHTML(){
         (st.flash ? '<p class="text-sm rounded-xl px-3.5 py-2.5 '+(st.flash.tone==='grey' ? 'bg-zinc-100 text-zinc-600' : 'bg-forest-50 text-forest-600')+'" role="status">'+st.flash.text+'</p>' : '')+
         '<dl>'+
           row('Workspace type', escapeHtml(l.workspaceType || '—'))+
+          (l.plan ? row('Plan picked', escapeHtml(l.plan) + ' · 14 days free') : '')+
           row('Team size', escapeHtml(l.teamSize || '—'))+
           row('Based in', escapeHtml([l.city, l.country].filter(Boolean).join(', ') || '—'))+
           (l.companyName ? row('Company', escapeHtml(l.companyName)) : '')+
@@ -33785,12 +34076,12 @@ PLATFORM_PERMISSION_MODULES.find(function(m){ return m.id==='platform-plan'; }).
 })();
 
 const ENTITLEMENT_CATALOG = [
-  { id:'candidate-search', label:'Candidate Search & AI Matching', description:'Boolean/keyword/prompt search and AI-ranked candidate matching.', relatedModule:null },
+  { id:'candidate-search', label:'Candidate search & Kairo Match', description:'Boolean, keyword and plain-language search, ranked by Kairo.', relatedModule:null },
   { id:'talent-pool', label:'Talent Pool & Prospecting', description:'Prospect creation, qualification and the recruitment journey pipeline.', relatedModule:'talentpool' },
   { id:'interviews', label:'Interview Scheduling', description:'Scheduling, rescheduling and feedback collection for interviews.', relatedModule:'interviews' },
   { id:'offers-placements', label:'Offers & Placements', description:'Offer extension, approval routing, joining and placement tracking.', relatedModule:'placements' },
   { id:'reports', label:'Reports & Analytics', description:'Pipeline, recruiter and business reporting.', relatedModule:'reports' },
-  { id:'ai-agents', label:'AI Agents & Automation', description:'Cowork AI agents, workflow automation and prompt library.', relatedModule:'ai' },
+  { id:'ai-agents', label:'Kairo at work & automation', description:'Kairo’s workflows, automation and message library.', relatedModule:'ai' },
   { id:'communication', label:'Communication Suite', description:'Email, WhatsApp and templated candidate/client messaging.', relatedModule:'communication' },
   { id:'integrations', label:'Integrations', description:'Third-party connectors (job boards, calendars, etc).', relatedModule:'integrations' },
 ];
@@ -36722,6 +37013,7 @@ function ncSetAndRender(path, value){ ncSet(path, value); ncRender(); }
 /* ---- Open / close ---- */
 let ncReturnTo = '';   // 'job': opened from job creation's client picker; saving or cancelling goes back there
 function openNewClientPage(from){
+  if(wsReadOnlyBlocked()) return;
   if(!canI('clients','Create')){ toast('Your role doesn’t allow adding clients.'); return; }
   ncReturnTo = from==='job' && jobDraft ? 'job' : '';
   ncForm = ncBlank(); ncEditId = null; ncEditingAddr = {}; ncEditingContacts = {}; ncEditingContacts[ncForm.contacts[0].id] = true; ncTab = 'other'; ncGst = null; ncNewCf = null; ncDiscardOpen = false; ncShowMore = false;
@@ -38424,6 +38716,8 @@ const LEVEL_RANK = { person:0, off:1, suggest:2, auto:3 };
 const LEVEL_LABEL = { auto:'Automatic', suggest:'Suggest', off:'Off', person:'Always a person' };
 function currentUserId(){ const me = currentActingUser(); return me ? me.id : 'anon'; }
 function currentTenantPlanId(){
+  const wp = (typeof WS_PLANS!=='undefined' && WS_PLANS && typeof authAppSession!=='undefined' && authAppSession.workspaceId) ? WS_PLANS[authAppSession.workspaceId] : null;
+  if(wp) return wp.planId;   // a workspace made through Create workspace runs on the plan it chose
   const sub = PLATFORM_SUBSCRIPTIONS.find(function(s){ return s.tenantId===CURRENT_ORGANIZATION_ID && ['active','trial'].indexOf(s.status)>-1; });
   if(sub) return sub.planId;
   const p = PLATFORM_PLANS.find(function(x){ return x.name===ORG_STRUCTURE.subscription.plan; });
@@ -38520,7 +38814,7 @@ Object.defineProperty(TENANT_FEATURE_FLAGS.linkedinOutreach, 'enabled', { get:fu
   ['agent-interviews','Kairo: Interviews','Scheduling and reminder agent.'], ['agent-offers-joining','Kairo: Offer & Joining','Offer and pre-joining risk agent.'],
   ['linkit','LinkIt LinkedIn outreach','LinkedIn connect-and-nurture sequences.'], ['whatsapp-tiering','WhatsApp Business tiering','Tier-based daily caps.'],
   ['advanced-analytics','Advanced analytics & forecasting','Bottleneck diagnosis and composite scoring.'], ['sso-scim','SSO & SCIM','Google, Azure AD and Okta.'],
-  ['ip-allowlist','IP allowlist','Restrict sign-in to approved networks.'], ['byo-model-key','Bring your own model key','Optional, Enterprise only.'],
+  ['ip-allowlist','IP allowlist','Restrict sign-in to approved networks.'], ['byo-model-key','Private intelligence key','Optional, Enterprise only.'],
   ['oontu-jobs-website','Oontu jobs website','List jobs on the Oontu jobs website.'], ['marketplace-listing','Marketplace listing','Be found by companies.'], ['vendors','Vendors','Invite and manage vendors.']
 ].forEach(function(e){ if(!ENTITLEMENT_CATALOG.find(function(x){ return x.id===e[0]; })) ENTITLEMENT_CATALOG.push({ id:e[0], label:e[1], description:e[2], relatedModule:null }); });
 (function(){
@@ -38530,7 +38824,187 @@ Object.defineProperty(TENANT_FEATURE_FLAGS.linkedinOutreach, 'enabled', { get:fu
   grant(plan('plan-growth'), ['agents-core','oontu-jobs-website','marketplace-listing','vendors']);
   const ent = plan('plan-enterprise'); if(ent) ent.entitlements = ENTITLEMENT_CATALOG.map(function(e){ return e.id; });
 })();
-function planHasEntitlement(id){ const p = planById(currentTenantPlanId()); return !!p && p.entitlements.indexOf(id)>-1; }
+
+/* ---------- Plans people choose when they create a workspace ----------
+   Named after how the business works, priced per recruiter licence a month (billed yearly). Hiring managers,
+   interviewers, client contacts and vendors are always free. Boosts add one thing, billed only for whoever uses it.
+   Prices are starting points: the Oontu team edits them in Super Admin › Plans. The older Starter / Growth / Enterprise
+   plans stay for existing workspaces and are marked Legacy. */
+[ ['clients-billing','Clients and PayTrack invoicing','Client accounts, terms, invoices with tax.'], ['contract-hiring','Contract hiring and timesheets','Work orders, timesheets and conversions.'],
+  ['approvals-matrix','Approval matrix','Who approves what, by amount and level.'], ['salary-bands','Salary bands and budgets','Offers stay in range.'],
+  ['branches','Branches','Several offices in one workspace.'], ['multi-entity','Several entities','Group companies in one workspace.'], ['custom-roles','Custom roles','Roles beyond the standard set.'],
+  ['careers-page','Careers page','Your own page for open jobs.'], ['requisitions','Requisitions','Approved hiring requests become jobs.']
+].forEach(function(e){ if(!ENTITLEMENT_CATALOG.find(function(x){ return x.id===e[0]; })) ENTITLEMENT_CATALOG.push({ id:e[0], label:e[1], description:e[2], relatedModule:null }); });
+PLATFORM_PLANS.forEach(function(p){ if(['plan-starter','plan-growth','plan-enterprise'].indexOf(p.id)>-1) p.legacy = true; });
+(function(){
+  const base = ['candidate-search','talent-pool','interviews','agents-core','communication','careers-page','integrations'];
+  const add = function(id, o){ if(!planById(id)) PLATFORM_PLANS.push(Object.assign({ id:id, status:'active', billingInterval:'annual', currency:'USD', trialDays:14, userLimit:null, jobLimit:null, createdAt:'2026-10-31T00:00:00.000Z' }, o)); };
+  add('plan-desk', { name:'Desk', audience:'agency', tagline:'Your own recruiting desk.', fit:'1–5 recruiters', price:19, prices:{ INR:1499, USD:19 },
+    description:'Jobs, talent pool, Kairo Match, interviews, email and a careers page.', entitlements:base.slice() });
+  add('plan-floor', { name:'Floor', audience:'agency', tagline:'A busy recruiting floor.', fit:'6–50 recruiters', price:39, prices:{ INR:2999, USD:39 }, recommended:true,
+    description:'Everything in Desk, plus clients and PayTrack invoicing, offers and placements, WhatsApp, approvals, reports, and Kairo sourcing and follow-ups.',
+    entitlements:base.concat(['clients-billing','offers-placements','whatsapp-tiering','reports','oontu-jobs-website','marketplace-listing','approvals-matrix','agent-talent-discovery','agent-engagement','ai-agents']) });
+  add('plan-network', { name:'Network', audience:'agency', tagline:'Branches, partners and sub-vendors.', fit:'50+ recruiters', price:65, prices:{ INR:4999, USD:65 },
+    description:'Everything in Floor, plus branches, a vendor network, contract hiring and timesheets, advanced insights, single sign-on and custom roles.',
+    entitlements:ENTITLEMENT_CATALOG.map(function(e){ return e.id; }).filter(function(id){ return ['linkit','requisitions','multi-entity','salary-bands'].indexOf(id)<0; }) });
+  add('plan-hire', { name:'Hire', audience:'corporate', tagline:'A team that hires every month.', fit:'Up to about 200 employees', price:25, prices:{ INR:1999, USD:25 },
+    description:'Requisitions, a careers page, interviews, free hiring-manager links and up to 3 vendor agencies.', entitlements:base.concat(['requisitions','vendors']) });
+  add('plan-scale', { name:'Scale', audience:'corporate', tagline:'Hiring is a function now.', fit:'200–5,000 employees', price:49, prices:{ INR:3999, USD:49 }, recommended:true,
+    description:'Everything in Hire, plus an approval matrix, salary bands and budgets, unlimited vendors, insights, and Kairo sourcing and scheduling.',
+    entitlements:base.concat(['requisitions','vendors','marketplace-listing','approvals-matrix','salary-bands','reports','offers-placements','agent-talent-discovery','agent-interviews','ai-agents']) });
+  add('plan-group', { name:'Group', audience:'corporate', tagline:'Many entities, one standard.', fit:'Group companies', price:null, prices:{}, talkToUs:true,
+    description:'Everything in Scale, plus several entities, single sign-on, an IP allowlist and a private intelligence key.',
+    entitlements:ENTITLEMENT_CATALOG.map(function(e){ return e.id; }).filter(function(id){ return ['linkit','clients-billing','branches'].indexOf(id)<0; }) });
+  // Kairo's agents that come with a plan (the rest can be added).
+  [['talent-discovery',['plan-floor','plan-network','plan-scale','plan-group']], ['engagement',['plan-floor','plan-network','plan-group']],
+   ['interviews',['plan-scale','plan-network','plan-group']], ['offers-joining',['plan-network','plan-group']]].forEach(function(x){
+    const a = typeof agentById==='function' && agentById(x[0]); if(a) x[1].forEach(function(id){ if(a.includedInPlans.indexOf(id)<0) a.includedInPlans.push(id); });
+  });
+})();
+function choosablePlans(audience){ return PLATFORM_PLANS.filter(function(p){ return !p.legacy && p.status==='active' && p.audience===audience; }); }
+function planIsTop(id){ return ['plan-enterprise','plan-network','plan-group'].indexOf(id)>-1; }
+
+/* Boosts: one thing on top of any plan, billed only for whoever or whatever uses it. */
+const BOOSTS = [
+  { id:'boost-linkedin', name:'LinkedIn Reach', unit:'per recruiter who switches it on', prices:{ INR:999, USD:12 }, gives:['linkit'], what:'Connect-and-follow-up sequences from each recruiter’s own LinkedIn.' },
+  { id:'boost-whatsapp', name:'WhatsApp Line', unit:'per number', prices:{ INR:1999, USD:25 }, gives:['whatsapp-tiering'], what:'Your WhatsApp Business number in every conversation.' },
+  { id:'boost-contract', name:'Contract Desk', unit:'per active contractor', prices:{ INR:149, USD:2 }, gives:['contract-hiring'], what:'Work orders, timesheets and conversions.' },
+  { id:'boost-vendors', name:'Vendor Network', unit:'per workspace', prices:{ INR:2999, USD:39 }, gives:['vendors'], what:'Invite partner agencies to work your jobs.' },
+  { id:'boost-insights', name:'Advanced Insights', unit:'per workspace', prices:{ INR:2499, USD:29 }, gives:['advanced-analytics'], what:'Where hiring slows down, and why.' },
+  { id:'boost-sso', name:'Single sign-on', unit:'per workspace', prices:{ INR:4999, USD:59 }, gives:['sso-scim'], what:'Google, Microsoft Entra or Okta sign-in.' }
+];
+function boostById(id){ return BOOSTS.find(function(b){ return b.id===id; }); }
+/* A price in the workspace's currency: rupees for India, dollars elsewhere. */
+function planCurrency(iso){ return (iso || (ORG_STRUCTURE.profile && ORG_STRUCTURE.profile.countryIso) || 'IN')==='IN' ? 'INR' : 'USD'; }
+function planMoney(n, cur){ return n==null ? '' : cur==='INR' ? '₹' + Number(n).toLocaleString('en-IN') : '$' + Number(n).toLocaleString('en-US'); }
+
+/* The plan of a workspace made through Create workspace: { planId, boosts, status:'trial'|'active', startedAt, trialEndsAt, base }.
+   PROTOTYPE: kept with the setup lists in localStorage. The demo company (Northstar) keeps its own subscription. */
+var WS_PLANS = WS_PLANS || {};   // var, not let: the plan is read during page load; wsRestore (earlier in the file) may have filled it already
+function wsPlanCurrent(){ return (typeof authAppSession!=='undefined' && authAppSession.workspaceId && WS_PLANS[authAppSession.workspaceId]) || null; }
+function wsPlanState(wp){
+  wp = wp || wsPlanCurrent(); if(!wp) return null;
+  const left = Math.ceil((wp.trialEndsAt - Date.now()) / 864e5);
+  return { plan:planById(wp.planId), boosts:(wp.boosts || []).map(boostById).filter(Boolean), status: wp.status==='active' ? 'active' : left > 0 ? 'trial' : 'readonly', daysLeft:Math.max(0, left), trialEndsAt:wp.trialEndsAt };
+}
+function wsPlanStart(workspaceId, planId, boosts, o){
+  const now = Date.now();
+  WS_PLANS[workspaceId] = Object.assign({ planId:planId, boosts:(boosts || []).slice(), status:'trial', startedAt:now, trialEndsAt:now + 14 * 864e5,
+    base:{ jobs:JOBS.length, subs:SUBMISSIONS.length, ivs:(typeof hmInterviews!=='undefined' ? hmInterviews.length : 0) } }, o || {});
+  return WS_PLANS[workspaceId];
+}
+function planHasEntitlement(id){
+  const p = planById(currentTenantPlanId());
+  if(p && p.entitlements.indexOf(id)>-1) return true;
+  const st = wsPlanState(); return !!(st && st.boosts.some(function(b){ return b.gives.indexOf(id)>-1; }));
+}
+function wsIsOwner(){ return typeof authAppSession!=='undefined' && authAppSession.role==='owner'; }
+/* After the trial: everything stays readable for 30 days, nothing new is created until a plan is chosen. */
+function wsReadOnlyBlocked(){
+  const st = wsPlanState(); if(!st || st.status!=='readonly') return false;
+  toast(wsIsOwner() ? 'Your trial has ended. Choose a plan on Home to keep working. Nothing is lost.' : 'This workspace’s trial has ended. Ask your owner to choose a plan.');
+  return true;
+}
+
+/* ---- Locks: visible, never hidden. A page the plan doesn't include shows a lock; opening it explains, and the owner can try it. ---- */
+const NAV_PLAN_GATES = { 'client-management':'clients-billing', 'admin-paytrack':'clients-billing', 'payroll-billing':'clients-billing', 'contract-hiring':'contract-hiring', 'vendors':'vendors', 'marketplace':'marketplace-listing', 'requisitions':'requisitions' };
+function navPlanLocked(navId){ const ent = NAV_PLAN_GATES[navId]; return !!(ent && wsPlanCurrent() && !planHasEntitlement(ent)); }
+/* The smallest way to get a feature: a Boost if one gives it, else the first plan of this kind of workspace that includes it. */
+function planUnlockFor(ent){
+  const cur = planCurrency(), st = wsPlanState(), aud = st && st.plan ? st.plan.audience : 'agency';
+  const boost = BOOSTS.find(function(b){ return b.gives.indexOf(ent)>-1; });
+  const plan = choosablePlans(aud).find(function(p){ return p.entitlements.indexOf(ent)>-1; });
+  return { boost:boost, plan:plan, cur:cur };
+}
+let planLock = null;
+function planLockOpen(navId){ planLock = { navId:navId, ent:NAV_PLAN_GATES[navId] }; planLockRender(); }
+function planLockClose(){ planLock = null; planLockRender(); }
+function planLockRender(){
+  let root = document.getElementById('plan-lock-root');
+  if(!root){ root = document.createElement('div'); root.id = 'plan-lock-root'; document.body.appendChild(root); }
+  if(!planLock){ root.innerHTML = ''; return; }
+  const e = entitlementById(planLock.ent) || { label:'This', description:'' }, u = planUnlockFor(planLock.ent), owner = wsIsOwner();
+  const planLine = u.plan ? 'Included in <b>' + escapeHtml(u.plan.name) + '</b>' + (u.plan.talkToUs ? '' : ', from ' + planMoney(u.plan.prices[u.cur], u.cur) + ' per recruiter licence a month') + '.' : '';
+  const boostLine = u.boost ? 'Or add <b>' + escapeHtml(u.boost.name) + '</b> on its own: ' + planMoney(u.boost.prices[u.cur], u.cur) + ' ' + escapeHtml(u.boost.unit) + '.' : '';
+  root.innerHTML = '<div class="fixed inset-0 z-[95] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="plan-lock-h" onkeydown="if(event.key===\'Escape\') planLockClose()">'+
+    '<div class="absolute inset-0 bg-zinc-900/40" onclick="planLockClose()"></div>'+
+    '<div class="relative w-full max-w-md bg-white rounded-2xl border border-zinc-200 shadow-2xl p-6">'+
+      '<p class="text-xs font-semibold text-zinc-400 tracking-widest flex items-center gap-1.5">'+icon('lock','w-3.5 h-3.5')+'NOT ON YOUR PLAN YET</p>'+
+      '<h3 id="plan-lock-h" tabindex="-1" class="text-lg font-semibold text-ink mt-2 outline-none">'+escapeHtml(e.label)+'</h3>'+
+      '<p class="text-sm text-zinc-600 mt-1">'+escapeHtml(e.description)+'</p>'+
+      '<p class="text-sm text-zinc-700 mt-4">'+planLine+(boostLine ? '<br>'+boostLine : '')+'</p>'+
+      (owner ? '<p class="text-xs text-zinc-500 mt-2">You’re on a trial, so trying it costs nothing today.</p>' : '<p class="text-sm text-zinc-600 mt-3">Ask your owner to unlock it.</p>')+
+      '<div class="flex flex-wrap justify-end gap-2 mt-6"><button type="button" class="btn-secondary app-btn" onclick="planLockClose()">Not now</button>'+
+        (owner && u.boost ? '<button type="button" class="btn-secondary app-btn" onclick="planTry(\'boost\')">Add '+escapeHtml(u.boost.name)+'</button>' : '')+
+        (owner && u.plan && !u.plan.talkToUs ? '<button type="button" class="btn-primary app-btn" onclick="planTry(\'plan\')">Try '+escapeHtml(u.plan.name)+'</button>' : '')+
+      '</div></div></div>';
+  const h = document.getElementById('plan-lock-h'); if(h) h.focus();
+}
+function planTry(kind){
+  const wp = wsPlanCurrent(); if(!planLock || !wp || !wsIsOwner()) return;
+  const u = planUnlockFor(planLock.ent), nav = planLock.navId;
+  if(kind==='boost' && u.boost){ if(wp.boosts.indexOf(u.boost.id)<0) wp.boosts.push(u.boost.id); toast(u.boost.name+' added. Billed only for who uses it.'); }
+  else if(u.plan){ wp.planId = u.plan.id; toast('You’re now trying '+u.plan.name+'. Same trial, same end date.'); }
+  planLockClose(); wsPersist(); renderSidebar(); showView(nav);
+}
+
+/* ---- "Your 14 days so far": the trial shown as results, on the owner's Home ---- */
+function wsTrialNumbers(wp){
+  const b = wp.base || {}, ivs = typeof hmInterviews!=='undefined' ? hmInterviews.length : 0;
+  const jobs = Math.max(0, JOBS.length - (b.jobs||0)), subs = Math.max(0, SUBMISSIONS.length - (b.subs||0)), iv = Math.max(0, ivs - (b.ivs||0));
+  return { jobs:jobs, subs:subs, ivs:iv, hours:Math.round(subs*0.5 + iv*0.75 + jobs*1) };
+}
+function wsTrialCardHTML(){
+  const wp = wsPlanCurrent(), st = wsPlanState(wp);
+  if(!st || st.status==='active' || !wsIsOwner() || !st.plan) return '';
+  const n = wsTrialNumbers(wp), cur = planCurrency(), p = st.plan, used = 14 - st.daysLeft;
+  const end = new Date(st.trialEndsAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  const ro = st.status==='readonly';
+  const line = ro ? 'Your trial has ended. Everything stays readable for 30 days; choose a plan to keep working.'
+    : st.daysLeft<=4 && (n.subs || n.ivs) ? 'Built from your numbers: '+n.subs+' candidates submitted and '+n.ivs+' interviews booked in '+used+' days. '+p.name+' keeps it going from '+planMoney(p.prices[cur], cur)+' per recruiter licence a month.'
+    : (n.jobs || n.subs || n.ivs) ? 'Free until '+end+'. No card needed.' : 'Your numbers start with your first job. Free until '+end+'.';
+  return '<section id="trial-card" class="card ws-card" aria-labelledby="trial-card-h"><div class="ws-card__head"><div class="min-w-0">'+
+    '<h3 id="trial-card-h" class="ws-card__title">'+(ro ? 'Your trial has ended' : 'Your 14 days so far')+'</h3>'+
+    '<p class="ws-card__sub">'+escapeHtml(p.name)+(st.boosts.length ? ' + '+st.boosts.map(function(b){ return b.name; }).join(', ') : '')+' · '+(ro ? 'read-only' : st.daysLeft+(st.daysLeft===1 ? ' day' : ' days')+' left')+'</p></div>'+
+    '<div class="flex items-center gap-2 shrink-0"><button type="button" class="btn-quiet text-sm" onclick="wsPlanCompareOpen()">Compare plans</button>'+
+    '<button type="button" class="btn-primary app-btn" onclick="wsPlanChoose()">Choose '+escapeHtml(p.name)+'</button></div></div>'+
+    '<div class="trial-nums"><div><b>'+n.jobs+'</b><span>Jobs opened</span></div><div><b>'+n.subs+'</b><span>Candidates submitted</span></div><div><b>'+n.ivs+'</b><span>Interviews booked</span></div><div><b>'+n.hours+' h</b><span>Kairo saved you</span></div></div>'+
+    '<p class="ws-card__sub" style="margin-top:12px">'+escapeHtml(line)+'</p></section>';
+}
+function wsPlanChoose(planId){
+  const wp = wsPlanCurrent(); if(!wp || !wsIsOwner()) return;
+  if(planId) wp.planId = planId;
+  const p = planById(wp.planId), when = new Date(Math.max(Date.now(), wp.trialEndsAt)).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  wp.status = 'active'; wsPersist(); planCompare = false; wsPlanCompareRender();
+  toast(p.name+' is yours. Billing starts on '+when+'. You can change it any time.');
+  renderSidebar(); showView(DEFAULT_VIEW[state.role]);
+}
+let planCompare = false;
+function wsPlanCompareOpen(){ planCompare = true; wsPlanCompareRender(); }
+function wsPlanCompareClose(){ planCompare = false; wsPlanCompareRender(); }
+function wsPlanCompareRender(){
+  let root = document.getElementById('plan-compare-root');
+  if(!root){ root = document.createElement('div'); root.id = 'plan-compare-root'; document.body.appendChild(root); }
+  const st = wsPlanState(); if(!planCompare || !st){ root.innerHTML = ''; return; }
+  const cur = planCurrency(), list = choosablePlans(st.plan.audience);
+  root.innerHTML = '<div class="fixed inset-0 z-[95] flex justify-end" role="dialog" aria-modal="true" aria-labelledby="plan-compare-h" onkeydown="if(event.key===\'Escape\') wsPlanCompareClose()">'+
+    '<div class="absolute inset-0 bg-zinc-900/40" onclick="wsPlanCompareClose()"></div>'+
+    '<div class="relative w-full max-w-lg h-full bg-white border-l border-zinc-200 shadow-2xl overflow-y-auto p-6">'+
+      '<h3 id="plan-compare-h" tabindex="-1" class="text-lg font-semibold text-ink outline-none">Plans</h3>'+
+      '<p class="text-sm text-zinc-500 mt-1">Per recruiter licence a month, billed yearly. Hiring managers, interviewers, clients and vendors are always free.</p>'+
+      list.map(function(p){
+        const on = p.id===st.plan.id;
+        return '<div class="mt-4 p-4 rounded-2xl border '+(on ? 'border-zinc-900' : 'border-zinc-200')+'"><div class="flex items-baseline justify-between gap-3"><p class="font-semibold text-ink">'+escapeHtml(p.name)+' <span class="text-sm font-normal text-zinc-500">'+escapeHtml(p.fit)+'</span></p>'+
+          '<p class="text-sm font-semibold">'+(p.talkToUs ? 'Talk to us' : planMoney(p.prices[cur], cur))+'</p></div>'+
+          '<p class="text-sm text-zinc-600 mt-1">'+escapeHtml(p.description)+'</p>'+
+          (on ? '<p class="text-xs text-zinc-500 mt-2">Your plan now</p>' : p.talkToUs ? '' : '<button type="button" class="btn-secondary app-btn mt-3" onclick="wsPlanChoose(\''+p.id+'\')">Choose '+escapeHtml(p.name)+'</button>')+'</div>';
+      }).join('')+
+      '<p class="text-sm font-semibold text-ink mt-6">Boosts</p><p class="text-xs text-zinc-500">One thing on top of any plan, billed only for whoever or whatever uses it.</p>'+
+      BOOSTS.map(function(b){ return '<div class="flex justify-between gap-3 py-2 border-b border-zinc-100 text-sm"><span><b class="font-medium text-ink">'+escapeHtml(b.name)+'</b><span class="block text-xs text-zinc-500">'+escapeHtml(b.what)+'</span></span><span class="text-right whitespace-nowrap">'+planMoney(b.prices[cur], cur)+'<span class="block text-xs text-zinc-500">'+escapeHtml(b.unit)+'</span></span></div>'; }).join('')+
+      '<div class="flex justify-end mt-6"><button type="button" class="btn-secondary app-btn" onclick="wsPlanCompareClose()">Close</button></div>'+
+    '</div></div>';
+  const h = document.getElementById('plan-compare-h'); if(h) h.focus();
+}
 
 /* ============================================================
    SETTINGS — shell, helpers and the "You" sections.
@@ -39151,7 +39625,7 @@ let CONNECTORS = [
   { id:'attendance', name:'Attendance and time', cat:'Attendance and time', desc:'Contract hiring timesheets.', status:'not_connected', corp:true, used:['Contract hiring'] },
   { id:'storage', name:'Cloud storage', cat:'Storage', desc:'Store CVs and documents in your own drive.', status:'connected', by:'Priya Sharma', health:'Healthy', last:'today', perms:'Read and write a folder', used:['Resumes','Documents'] },
   { id:'api', name:'Developer access', cat:'Developer', desc:'API keys and webhooks, to build your own integrations.', status:'connected', by:'Priya Sharma', health:'Healthy', last:'today', perms:'2 active tokens', used:['Your own systems'] },
-  { id:'byo', name:'Bring your own model key', cat:'Developer', desc:'Optional. Use your own AI provider key for Kairo.', status:'not_connected', plan:'byo-model-key', used:['Kairo'] },
+  { id:'byo', name:'Private intelligence key', cat:'Developer', desc:'Enterprise only. Kairo runs on your organisation’s own key.', status:'not_connected', plan:'byo-model-key', used:['Kairo'] },
   { id:'hrms', name:'Oontu HRMS', cat:'HR systems', desc:'Coming later. Oontu does not connect to third-party HR systems.', status:'coming_soon', used:[] },
 ];
 let sConnPending = null;
@@ -39827,7 +40301,7 @@ function cwRunStep(run){
   if(op.op === 'task'){ const t = cwTemplateText({ text:op.s.title }, c, wf); CW.tasks.push({ at:cwNow(), text:t, ownerId:wf.ownerId, runId:run.id }); if(!CW.seeding && typeof PERSONAL_TASKS !== 'undefined' && wf.ownerId === currentUserId()) PERSONAL_TASKS.unshift({ id:'pt-cw' + run.id + run.pc, text:t, type:'task', reminderTime:null, completed:false, createdAt:nowTimestamp() }); cwLog(run, 'Task', 'Created', t); run.pc++; return; }
   if(op.op === 'notify'){ const t = cwTemplateText({ text:op.s.text }, c, wf); CW.notes.push({ at:cwNow(), to:op.s.to === 'manager' ? 'manager' : wf.ownerId, text:t }); cwLog(run, 'Notify', 'Sent', (op.s.to === 'manager' ? 'Manager: ' : 'Owner: ') + t); run.pc++; return; }
   if(op.op === 'start'){ const w2 = wfFindById(op.s.workflowId); if(w2 && w2.status === 'Live' && !WORKFLOW_RUNS.some(function(r){ return r.workflowId === w2.id && r.personKey === run.personKey; })) cwStartRun(w2, c); cwLog(run, 'Start workflow', 'Done', w2 ? w2.name : 'missing'); run.pc++; return; }
-  if(op.op === 'webhook'){ if(!planHasEntitlement('sso-scim') && planById(currentTenantPlanId()).name !== 'Enterprise') { cwLog(run, 'Webhook', 'Skipped', 'Webhooks need the Enterprise plan'); run.pc++; return; } cwLog(run, 'Webhook', 'Sent', 'POST ' + (op.s.url || 'configured endpoint')); run.pc++; return; }
+  if(op.op === 'webhook'){ if(!planHasEntitlement('sso-scim') && !planIsTop(currentTenantPlanId())) { cwLog(run, 'Webhook', 'Skipped', 'Webhooks need the Enterprise plan'); run.pc++; return; } cwLog(run, 'Webhook', 'Sent', 'POST ' + (op.s.url || 'configured endpoint')); run.pc++; return; }
   if(op.op === 'approve'){ if(!run.approved){ const ap = CW_APPROVALS.find(function(a){ return a.runId === run.id && a.pc === run.pc; }); if(!ap){ CW_APPROVALS.push({ id:'ap' + CW_APPROVALS.length + Date.now(), runId:run.id, pc:run.pc, wfId:wf.id, personKey:run.personKey, name:c.name, channel:'internal', text:op.s.text || 'Approve the next step', createdAt:new Date().toISOString(), status:'pending', ownerId:wf.ownerId }); cwLog(run, 'Approve', 'Held', 'Waiting for ' + cwOwnerName(wf) + ' to approve'); } cwHold(run, 'held', 'Waiting for approval', 60 * 24); return; } run.approved = false; run.pc++; return; }
   if(!isMsg){ run.pc++; return; }
   // from here on: a message. 4. quiet hours in the person's timezone
@@ -40595,7 +41069,7 @@ function cwbEditor(w, T, can, adv){
   } else if(s.kind === 'start'){
     body = fld('Workflow', 'The person also starts in this one.', fSel([['', 'Choose a workflow']].concat(WORKFLOWS.filter(function(x){ return x.id !== w.id && x.status === 'Live'; }).map(function(x){ return [x.id, x.name]; })), s.workflowId, "cwbSet('" + s.id + "','workflowId', this.value)", 'Workflow', !can));
   } else if(s.kind === 'webhook'){
-    const ent = planById(currentTenantPlanId()).name === 'Enterprise';
+    const ent = planIsTop(currentTenantPlanId());
     body = ent ? fld('URL', 'Receives a signed POST for each person.', '<input class="app-input s-ctl" style="width:260px" aria-label="Webhook URL" value="' + cwEsc(s.url) + '"' + (can ? ' onchange="cwbSet(\'' + s.id + '\',\'url\', this.value)"' : ' disabled') + ' />') : sNote('Webhooks need the Enterprise plan. Ask your Owner to upgrade in Plan & billing.');
   }
   return sCard('Step ' + nth + ' · ' + cwbStepText(s), '', body, can ? sBtn('Remove', "cwbRemove('" + s.id + "')", 'ghost') : '');
@@ -48716,7 +49190,7 @@ function jnAudit(a, d, meta){ try { if(typeof logPlatformAudit === 'function' &&
 const JN_STEP = { name:'name', type:'type_chosen', size:'team_size', place:'location', email:'email', mobile:'mobile', code:'verified' };
 const JN_ORDER = ['name', 'type_chosen', 'team_size', 'location', 'email', 'mobile', 'verified', 'in_product'];
 /* where the next question sits among the stops the follow-up screens already name */
-const JN_SCREEN = { type:'su-type', org:'su-size', size:'su-size', focus:'su-size', partners:'su-size', place:'su-location', email:'su-email', mobile:'su-mobile', code:'su-password' };
+const JN_SCREEN = { type:'su-type', org:'su-size', size:'su-size', focus:'su-size', partners:'su-size', place:'su-location', plan:'su-plan', email:'su-email', mobile:'su-mobile', code:'su-password' };
 function joinLeadSync(snap){
   if(!snap || (!snap.name && !snap.email)) return null;
   let l = JN.leadId ? signupLeadById(JN.leadId) : null;
@@ -48727,9 +49201,9 @@ function joinLeadSync(snap){
   }
   signupActiveLeadId = l.id;
   const cap = function(s){ return String(s || '').replace(/^./, function(c){ return c.toUpperCase(); }); };
-  const extra = { name:cap(snap.name), workspaceType:snap.orgType || l.workspaceType, companyName:snap.org || l.companyName, teamSize:snap.size || l.teamSize, country:snap.placeLabel || l.country,
+  const extra = { plan:snap.planName || l.plan || '', name:cap(snap.name), workspaceType:snap.orgType || l.workspaceType, companyName:snap.org || l.companyName, teamSize:snap.size || l.teamSize, country:snap.placeLabel || l.country,
     email:snap.email ? String(snap.email).trim().toLowerCase() : l.email, mobile:snap.mobile ? ((snap.mobileCode || '') + ' ' + snap.mobile).trim() : l.mobile, emailVerified:l.emailVerified || !!snap.verified,
-    resume:snap.done ? null : { snap:{ name:snap.name, type:snap.type, org:snap.org, size:snap.size, focus:snap.focus, partners:snap.partners, place:snap.place, mobileCode:snap.mobileCode, email:snap.email, mobile:snap.mobile, skippedFocus:snap.i > 5 }, savedAt:jnNow() } };
+    resume:snap.done ? null : { snap:{ name:snap.name, type:snap.type, org:snap.org, size:snap.size, focus:snap.focus, partners:snap.partners, place:snap.place, plan:snap.plan, boosts:snap.boosts, mobileCode:snap.mobileCode, email:snap.email, mobile:snap.mobile, skippedFocus:snap.i > 5 }, savedAt:jnNow() } };
   if(snap.done){ extra.status = 'in_product'; extra.emailVerified = true; }
   /* the questions come in the order of the create-workspace screen (name first), so progress is kept in that order here */
   const step = snap.done ? 'in_product' : (JN_STEP[snap.last] || null), at = JN_ORDER.indexOf(step), was = JN_ORDER.indexOf(l.stepReached);

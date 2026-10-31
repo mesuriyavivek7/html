@@ -14,10 +14,10 @@
       ok(Math.round(sb.getBoundingClientRect().width)===240, 'expanded width ' + sb.getBoundingClientRect().width);
       toggleSidebar(); await sleep(900);
       ok(state.sidebarOpen===false && Math.round(sb.getBoundingClientRect().width)===64, 'collapsed width ' + sb.getBoundingClientRect().width);
-      ok(Math.round(q('.sb-logo-mark').getBoundingClientRect().height)===28, 'the symbol is 28 px tall when collapsed: ' + q('.sb-logo-mark').getBoundingClientRect().height);
+      ok(Math.round(q('.sb-logo-mark').getBoundingClientRect().height)===32, 'the symbol is 32 px tall when collapsed: ' + q('.sb-logo-mark').getBoundingClientRect().height);
       toggleSidebar(); await sleep(900);
       ok(state.sidebarOpen===true && Math.round(sb.getBoundingClientRect().width)>=236, 'expanded again ' + sb.getBoundingClientRect().width);
-      ok(Math.round(q('.sb-logo-full').getBoundingClientRect().height)===34, 'the logo is 34 px tall: ' + q('.sb-logo-full').getBoundingClientRect().height);
+      ok(Math.round(q('.sb-logo-full').getBoundingClientRect().height)===40, 'the logo is 40 px tall: ' + q('.sb-logo-full').getBoundingClientRect().height);
     });
     await t('sidebar header: 64 px like the top bar, one shared line; logo over the nav icons; toggle on hover; Ctrl+\ and memory', async function(){
       var h = q('.sb-head').getBoundingClientRect(), tb = q('#topbar').getBoundingClientRect();
