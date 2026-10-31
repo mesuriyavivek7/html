@@ -1442,7 +1442,7 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 .oa-aside__title{font-size:clamp(48px,6vw,104px);line-height:.93;font-weight:600;letter-spacing:-.055em;max-width:660px}
 .oa-aside__title--sm{font-size:clamp(44px,5.2vw,84px)}
 .oa-aside__sub{margin-top:18px !important;font-size:18px;line-height:27px;color:var(--oa-ink-2);max-width:460px}
-.oa-dot{display:inline-block;color:var(--oa-mint);transform-origin:50% 80%;animation:oa-breathe 3.2s ease-in-out infinite}
+.oa-dot{display:inline-block;color:#10B981;transform-origin:50% 80%;animation:oa-breathe 3.2s ease-in-out infinite}
 .oa-aside__stage-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:36px 0 12px;position:relative;z-index:1}
 .oa-stage{position:relative;width:600px;height:470px;flex:none;--mx:0;--my:0}
 .oa-aside__foot{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--oa-ink-3)}
@@ -1543,6 +1543,38 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 .oa-ws__tile{position:relative;width:52px;height:52px;border-radius:14px;background:var(--oa-ink);color:#F9FAFB;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;flex:none}
 .oa-ws__tile::after{content:"";position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;background:var(--oa-mint);border:2px solid #fff}
 .oa-ws__name{display:block;font-size:19px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oa-ws__name.is-long{font-size:16px;color:var(--oa-ink-2)}
+/* Sign-in: six boxes -> one ring -> a tick -> the workspace tile */
+.oa-otp.is-collapsing .oa-otp__box{transform:translateX(var(--dx,0)) scale(.28);opacity:0;border-radius:50%;color:transparent;transition:transform .6s cubic-bezier(.65,0,.25,1),opacity .32s ease .3s,border-radius .4s ease,color .15s}
+.oa-otp.is-collapsing .oa-otp__sep{opacity:0;transition:opacity .2s}
+.oa-verify{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;opacity:0;transform:scale(.5);pointer-events:none}
+.oa-otp.is-collapsing .oa-verify{opacity:1;transform:none;transition:opacity .3s ease .35s,transform .5s cubic-bezier(.2,.9,.3,1.25) .35s}
+.oa-verify svg{display:block;overflow:visible}
+.oa-verify circle,.oa-verify path{transform-box:fill-box;transform-origin:center}
+.oa-verify__track{fill:none;stroke:var(--oa-line);stroke-width:3}
+.oa-verify__ring{fill:none;stroke:var(--oa-ink);stroke-width:3;stroke-linecap:round;stroke-dasharray:36 115;animation:oa-verify-spin .9s linear infinite}
+.oa-verify__fill{fill:#10B981;opacity:0;transform:scale(.4)}
+.oa-verify__tick{fill:none;stroke:#fff;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40}
+.oa-otp.is-verified .oa-verify__ring{animation:none;opacity:0;transition:opacity .2s}
+.oa-otp.is-verified .oa-verify__fill{opacity:1;transform:none;transition:opacity .2s,transform .4s cubic-bezier(.2,.9,.3,1.3)}
+.oa-otp.is-verified .oa-verify__tick{stroke-dashoffset:0;transition:stroke-dashoffset .4s ease .2s}
+@keyframes oa-verify-spin{to{transform:rotate(360deg)}}
+.oa-arrive__tile{position:relative;width:56px;height:56px;border-radius:16px;background:var(--oa-ink);color:#F9FAFB;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600}
+.oa-arrive__tile::after{content:"";position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;background:#10B981;border:2px solid #fff}
+.oa-arrive__bar--quick i{animation-duration:2s}
+@media (prefers-reduced-motion:reduce){.oa-otp.is-collapsing .oa-otp__box,.oa-otp.is-collapsing .oa-verify{transition:none}.oa-verify__ring{animation:none}.oa-otp.is-verified .oa-verify__fill,.oa-otp.is-verified .oa-verify__tick{transition:none}}
+.oa-arrive__ticks{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:10px}
+.oa-arrive__ticks li{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--oa-ink-2);opacity:0;animation:oa-in .45s var(--oa-ease) both}
+.oa-arrive__ticks li span{display:flex;width:20px;height:20px;border-radius:50%;background:#10B981;color:#fff;align-items:center;justify-content:center;flex:none}
+.oa-arrive__ticks li svg{width:12px;height:12px}
+.oa-arrive__bar{height:3px;border-radius:3px;background:var(--oa-line);overflow:hidden;margin-top:24px;max-width:320px}
+.oa-arrive__bar i{display:block;height:100%;background:#10B981;transform-origin:left;animation:oa-fill 3s linear both}
+@keyframes oa-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes oa-tilepop{0%{transform:scale(1)}35%{transform:scale(1.16)}100%{transform:scale(1)}}
+.oa-aside.is-arriving .oa-ws__tile{animation:oa-tilepop .9s var(--oa-ease) both}
+::view-transition-group(ws-tile){animation-duration:.7s;animation-timing-function:cubic-bezier(.2,0,0,1)}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.45s}
+@media (prefers-reduced-motion:reduce){.oa-arrive__ticks li{opacity:1;animation:none}.oa-arrive__bar i{animation:none}.oa-aside.is-arriving .oa-ws__tile{animation:none}}
 .oa-ws__url{display:block;margin-top:4px;font:600 12px 'JetBrains Mono',ui-monospace,monospace;color:var(--oa-ink-3)}
 .oa-skel{display:inline-block;height:10px;border-radius:5px;background:#EEF0F3}
 .oa-skel--name{width:150px;height:14px;border-radius:7px;background:var(--oa-line);margin:4px 0}
@@ -2754,8 +2786,8 @@ const ICONS = {
   logout: '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H2.25" />',
 };
 function icon(name, cls) { return '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="'+(cls||'w-5 h-5')+'">'+(ICONS[name]||'')+'</svg>'; }
-const OONTU_LOGO_PRIMARY = `<svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="-80.63 -111.75 707.19 298.54" role="img" aria-label="Oontu"><title>Oontu</title><g transform="translate(-338.3531,-259.0504) scale(0.741840)"><path d="M430.86,296.94 A30.0,30.0 0 0 1 457.22,274.82 L1255.32,205.00 A30.0,30.0 0 0 1 1286.91,242.65 L1217.25,502.62 A30.0,30.0 0 0 1 1190.89,524.75 L392.79,594.57 A30.0,30.0 0 0 1 361.20,556.92 Z" fill="#2F313F"/><path d="M542.12,491.12 C535.43,490.41 526.31,488.53 521.12,486.79 C516.20,485.14 508.85,482.09 505.25,480.21 C496.98,475.89 486.11,467.67 480.61,461.58 C478.51,459.26 474.69,454.54 472.69,451.80 C471.16,449.70 466.74,442.58 465.82,440.74 C464.28,437.66 460.44,428.08 459.76,425.62 C458.08,419.59 457.60,417.33 456.71,411.38 C455.96,406.40 455.90,395.07 456.59,390.50 C457.82,382.34 459.62,375.55 462.35,368.74 C465.91,359.88 466.38,358.91 470.23,352.75 C480.54,336.20 494.86,324.03 513.62,315.87 C521.93,312.26 529.34,310.22 540.12,308.58 C544.48,307.92 558.24,307.92 562.75,308.58 C579.27,311.00 593.28,316.46 606.24,325.51 C617.77,333.56 628.02,345.05 634.71,357.43 C635.70,359.25 636.50,360.78 636.50,360.85 C636.50,360.91 636.95,361.74 637.50,362.69 C638.57,364.55 640.30,369.20 642.28,375.50 C645.40,385.47 646.67,397.49 645.65,407.25 C644.05,422.40 639.33,436.01 631.62,447.67 C625.95,456.27 621.19,461.66 613.50,468.22 C606.64,474.07 596.22,480.59 589.69,483.11 C588.83,483.44 587.06,484.15 585.75,484.69 C579.36,487.34 572.86,489.07 563.62,490.61 C558.11,491.52 548.16,491.76 542.12,491.12 Z M977.25,486.09 C960.06,485.01 946.60,478.06 937.84,465.73 C933.74,459.96 931.58,454.81 929.56,446.00 L928.91,443.12 L928.82,416.26 C928.74,392.00 928.69,389.35 928.32,388.94 C927.98,388.56 927.46,388.50 924.38,388.50 C921.72,388.50 920.73,388.41 920.36,388.15 C919.89,387.80 919.87,387.29 919.81,370.40 C919.74,353.24 919.75,353.00 920.25,352.50 C920.70,352.05 921.07,352.00 924.34,352.00 C927.44,352.00 927.98,351.94 928.32,351.56 C928.67,351.18 928.73,349.85 928.81,341.37 C928.90,332.11 928.93,331.53 929.47,329.75 C930.66,325.81 932.88,323.09 935.88,321.94 C938.18,321.05 942.97,319.69 952.50,317.21 C953.53,316.94 956.51,316.12 959.12,315.38 C961.74,314.64 965.30,313.64 967.03,313.14 C970.48,312.17 971.00,312.10 971.45,312.55 C971.68,312.78 971.75,317.45 971.75,332.03 C971.75,349.14 971.79,351.26 972.14,351.61 C972.49,351.95 973.99,352.00 984.91,352.00 C992.96,352.00 997.45,352.09 997.77,352.26 C998.24,352.51 998.25,352.97 998.25,370.01 C998.25,386.76 998.23,387.52 997.78,387.97 C997.34,388.41 996.66,388.44 984.97,388.48 C973.97,388.52 972.59,388.57 972.19,388.93 C971.76,389.32 971.74,390.47 971.81,412.73 C971.88,435.69 971.90,436.16 972.41,437.76 C974.25,443.50 977.16,446.19 982.83,447.39 C986.01,448.06 988.83,447.82 994.61,446.37 C997.71,445.59 1000.10,444.64 1003.60,442.80 C1007.18,440.92 1007.32,440.71 1006.93,438.12 C1006.70,436.62 1006.62,425.85 1006.62,394.42 C1006.62,353.42 1006.63,352.70 1007.11,352.35 C1007.79,351.86 1048.16,351.82 1048.82,352.31 C1049.21,352.60 1049.25,355.58 1049.32,392.12 C1049.40,431.32 1049.40,431.64 1049.92,433.38 C1050.65,435.84 1050.87,436.34 1052.32,438.88 C1054.96,443.50 1058.79,446.07 1064.96,447.37 C1070.06,448.44 1077.06,447.16 1081.22,444.39 C1085.42,441.60 1088.28,437.43 1089.29,432.62 C1089.80,430.17 1089.81,429.52 1089.90,394.12 C1089.95,374.32 1089.99,356.92 1089.99,355.46 C1090.00,353.37 1090.09,352.70 1090.39,352.39 C1090.74,352.04 1092.98,352.00 1111.22,352.00 C1128.47,352.00 1131.73,352.06 1132.14,352.35 C1132.62,352.70 1132.62,353.39 1132.62,391.29 C1132.62,433.17 1132.67,431.57 1131.20,438.36 C1129.71,445.27 1127.01,451.48 1122.71,457.88 C1118.26,464.50 1113.74,469.08 1106.88,473.91 C1103.40,476.36 1101.39,477.54 1097.62,479.37 C1093.47,481.39 1090.49,482.48 1086.12,483.61 C1071.24,487.46 1057.48,487.05 1042.88,482.32 C1038.40,480.87 1032.00,477.55 1028.38,474.79 C1027.55,474.17 1026.42,473.32 1025.88,472.90 C1019.14,467.85 1013.11,459.31 1009.87,450.25 C1009.55,449.36 1009.17,448.16 1009.02,447.59 C1008.74,446.54 1008.12,446.03 1007.67,446.48 C1007.54,446.61 1007.23,447.49 1006.99,448.43 C1006.75,449.36 1005.94,452.26 1005.18,454.88 C1002.42,464.46 1002.23,465.61 1002.04,474.18 C1001.93,478.75 1001.78,481.32 1001.60,481.50 C1000.85,482.24 990.80,484.98 986.50,485.61 C983.88,485.99 979.39,486.23 977.25,486.09 Z M711.37,485.51 C705.90,484.79 697.34,482.65 693.12,480.96 C687.73,478.79 680.59,474.57 675.80,470.73 C673.16,468.61 667.31,462.62 665.12,459.80 C661.72,455.40 657.64,448.09 655.68,442.88 C654.59,439.98 652.75,433.53 652.37,431.26 C650.81,422.05 650.90,412.31 652.61,404.76 C653.94,398.88 656.80,391.48 659.70,386.38 C661.15,383.84 664.57,378.72 666.55,376.12 C668.35,373.77 674.29,367.79 677.09,365.52 C680.43,362.81 687.19,358.46 691.01,356.57 C695.76,354.22 702.09,352.08 708.50,350.65 C718.55,348.42 730.97,348.76 740.88,351.54 C748.18,353.59 756.31,357.13 761.00,360.29 C762.31,361.17 764.11,362.39 765.00,362.99 C766.98,364.32 776.01,373.29 777.46,375.38 C783.60,384.17 785.19,387.34 788.89,398.10 C790.81,403.69 791.87,411.38 791.67,418.38 C791.45,426.45 790.13,432.41 786.17,443.25 C785.12,446.13 783.43,449.26 780.77,453.23 C777.17,458.62 775.98,460.07 771.40,464.62 C766.66,469.34 764.08,471.52 760.91,473.46 C759.87,474.10 758.08,475.20 756.94,475.91 C753.98,477.76 748.83,480.27 745.58,481.47 C742.02,482.77 733.70,484.89 730.12,485.41 C725.77,486.03 715.75,486.09 711.37,485.51 Z M797.31,483.57 C797.00,483.51 796.62,483.22 796.46,482.93 C796.25,482.52 796.17,472.11 796.15,442.38 L796.14,402.38 L796.70,399.13 C797.55,394.24 799.19,388.61 800.81,384.98 C801.55,383.33 805.55,376.39 807.04,374.18 C808.52,371.98 815.69,364.76 818.38,362.76 C825.22,357.67 828.44,355.96 836.03,353.39 C842.52,351.19 846.47,350.30 852.88,349.61 C864.31,348.38 878.73,351.12 889.25,356.52 C893.76,358.83 898.85,362.67 902.75,366.68 C906.43,370.47 907.95,372.49 910.16,376.53 C913.99,383.52 915.69,388.82 916.73,396.96 C917.24,400.94 917.25,401.97 917.25,441.83 C917.25,478.36 917.21,482.70 916.86,483.19 L916.47,483.75 L896.28,483.75 C879.24,483.75 876.02,483.69 875.61,483.40 C875.13,483.05 875.12,482.26 874.98,443.08 C874.87,413.74 874.76,402.74 874.54,401.68 C874.13,399.72 873.13,397.13 872.24,395.74 C870.84,393.56 868.25,391.34 865.70,390.14 C862.46,388.61 860.87,388.25 857.32,388.25 C853.62,388.25 851.46,388.76 847.91,390.47 C845.72,391.53 845.10,391.97 843.56,393.59 C841.17,396.11 839.66,399.16 838.89,403.05 C838.55,404.74 838.50,409.82 838.50,443.68 C838.49,474.37 838.43,482.50 838.18,483.00 L837.86,483.62 L817.87,483.65 C806.87,483.67 797.62,483.63 797.31,483.57 Z M556.62,449.99 C560.52,449.53 564.99,448.49 568.88,447.13 C572.95,445.71 573.69,445.38 577.25,443.30 C583.34,439.76 589.90,434.09 593.22,429.50 C596.46,425.03 599.65,419.18 600.96,415.37 C602.44,411.01 603.67,402.58 603.38,398.75 C603.02,394.12 601.81,387.40 600.84,384.67 C599.94,382.15 596.75,375.69 595.44,373.75 C592.38,369.21 591.61,368.20 589.61,366.06 C588.42,364.78 586.94,363.39 586.33,362.97 C585.71,362.54 584.67,361.72 584.01,361.14 C581.61,359.01 574.72,354.83 572.00,353.87 C571.11,353.55 569.11,352.83 567.56,352.27 C562.22,350.35 554.11,349.42 547.51,349.98 C540.77,350.55 533.41,352.54 527.95,355.26 C523.72,357.37 516.42,362.75 513.49,365.92 C511.47,368.10 507.94,372.87 506.47,375.42 C502.39,382.49 500.90,387.10 499.88,395.88 C499.26,401.27 499.43,404.34 500.76,411.24 C501.50,415.07 501.65,415.57 503.15,418.92 C505.20,423.51 506.39,425.52 509.54,429.71 C512.27,433.35 514.62,435.71 518.43,438.68 C524.40,443.33 527.79,445.17 534.65,447.46 C541.21,449.66 544.15,450.16 550.62,450.22 C552.69,450.23 555.39,450.13 556.62,449.99 Z M726.44,446.48 C732.34,445.42 736.62,443.16 741.57,438.50 C744.48,435.76 745.86,433.90 747.41,430.63 C750.21,424.70 751.00,416.54 749.40,410.07 C748.03,404.55 746.02,401.12 741.27,396.16 C736.74,391.43 728.80,388.25 721.52,388.25 C717.99,388.25 715.39,388.76 711.30,390.27 C707.11,391.81 704.44,393.58 701.23,396.94 C697.19,401.16 694.67,405.81 693.61,411.00 C692.50,416.42 692.57,420.59 693.86,426.38 C694.77,430.48 697.76,435.29 701.74,439.05 C706.04,443.12 710.02,445.24 715.38,446.34 C719.26,447.13 722.56,447.17 726.44,446.48 Z" fill="#F9FAFB" fill-rule="evenodd"/><circle cx="1167.5" cy="450.0" r="24.5" fill="#8C90A0"/></g></svg>`;
-const OONTU_LOGO_SYMBOL = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect x="20" y="20" width="472" height="472" rx="108" fill="#2F313F"/><circle cx="220" cy="230" r="105" fill="none" stroke="#F9FAFB" stroke-width="48"/><circle cx="354" cy="350" r="29" fill="#8C90A0"/></svg>`;
+const OONTU_LOGO_PRIMARY = `<svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="-80.63 -111.75 707.19 298.54" role="img" aria-label="Oontu"><title>Oontu</title><g transform="translate(-338.3531,-259.0504) scale(0.741840)"><path d="M430.86,296.94 A30.0,30.0 0 0 1 457.22,274.82 L1255.32,205.00 A30.0,30.0 0 0 1 1286.91,242.65 L1217.25,502.62 A30.0,30.0 0 0 1 1190.89,524.75 L392.79,594.57 A30.0,30.0 0 0 1 361.20,556.92 Z" fill="#2F313F"/><path d="M542.12,491.12 C535.43,490.41 526.31,488.53 521.12,486.79 C516.20,485.14 508.85,482.09 505.25,480.21 C496.98,475.89 486.11,467.67 480.61,461.58 C478.51,459.26 474.69,454.54 472.69,451.80 C471.16,449.70 466.74,442.58 465.82,440.74 C464.28,437.66 460.44,428.08 459.76,425.62 C458.08,419.59 457.60,417.33 456.71,411.38 C455.96,406.40 455.90,395.07 456.59,390.50 C457.82,382.34 459.62,375.55 462.35,368.74 C465.91,359.88 466.38,358.91 470.23,352.75 C480.54,336.20 494.86,324.03 513.62,315.87 C521.93,312.26 529.34,310.22 540.12,308.58 C544.48,307.92 558.24,307.92 562.75,308.58 C579.27,311.00 593.28,316.46 606.24,325.51 C617.77,333.56 628.02,345.05 634.71,357.43 C635.70,359.25 636.50,360.78 636.50,360.85 C636.50,360.91 636.95,361.74 637.50,362.69 C638.57,364.55 640.30,369.20 642.28,375.50 C645.40,385.47 646.67,397.49 645.65,407.25 C644.05,422.40 639.33,436.01 631.62,447.67 C625.95,456.27 621.19,461.66 613.50,468.22 C606.64,474.07 596.22,480.59 589.69,483.11 C588.83,483.44 587.06,484.15 585.75,484.69 C579.36,487.34 572.86,489.07 563.62,490.61 C558.11,491.52 548.16,491.76 542.12,491.12 Z M977.25,486.09 C960.06,485.01 946.60,478.06 937.84,465.73 C933.74,459.96 931.58,454.81 929.56,446.00 L928.91,443.12 L928.82,416.26 C928.74,392.00 928.69,389.35 928.32,388.94 C927.98,388.56 927.46,388.50 924.38,388.50 C921.72,388.50 920.73,388.41 920.36,388.15 C919.89,387.80 919.87,387.29 919.81,370.40 C919.74,353.24 919.75,353.00 920.25,352.50 C920.70,352.05 921.07,352.00 924.34,352.00 C927.44,352.00 927.98,351.94 928.32,351.56 C928.67,351.18 928.73,349.85 928.81,341.37 C928.90,332.11 928.93,331.53 929.47,329.75 C930.66,325.81 932.88,323.09 935.88,321.94 C938.18,321.05 942.97,319.69 952.50,317.21 C953.53,316.94 956.51,316.12 959.12,315.38 C961.74,314.64 965.30,313.64 967.03,313.14 C970.48,312.17 971.00,312.10 971.45,312.55 C971.68,312.78 971.75,317.45 971.75,332.03 C971.75,349.14 971.79,351.26 972.14,351.61 C972.49,351.95 973.99,352.00 984.91,352.00 C992.96,352.00 997.45,352.09 997.77,352.26 C998.24,352.51 998.25,352.97 998.25,370.01 C998.25,386.76 998.23,387.52 997.78,387.97 C997.34,388.41 996.66,388.44 984.97,388.48 C973.97,388.52 972.59,388.57 972.19,388.93 C971.76,389.32 971.74,390.47 971.81,412.73 C971.88,435.69 971.90,436.16 972.41,437.76 C974.25,443.50 977.16,446.19 982.83,447.39 C986.01,448.06 988.83,447.82 994.61,446.37 C997.71,445.59 1000.10,444.64 1003.60,442.80 C1007.18,440.92 1007.32,440.71 1006.93,438.12 C1006.70,436.62 1006.62,425.85 1006.62,394.42 C1006.62,353.42 1006.63,352.70 1007.11,352.35 C1007.79,351.86 1048.16,351.82 1048.82,352.31 C1049.21,352.60 1049.25,355.58 1049.32,392.12 C1049.40,431.32 1049.40,431.64 1049.92,433.38 C1050.65,435.84 1050.87,436.34 1052.32,438.88 C1054.96,443.50 1058.79,446.07 1064.96,447.37 C1070.06,448.44 1077.06,447.16 1081.22,444.39 C1085.42,441.60 1088.28,437.43 1089.29,432.62 C1089.80,430.17 1089.81,429.52 1089.90,394.12 C1089.95,374.32 1089.99,356.92 1089.99,355.46 C1090.00,353.37 1090.09,352.70 1090.39,352.39 C1090.74,352.04 1092.98,352.00 1111.22,352.00 C1128.47,352.00 1131.73,352.06 1132.14,352.35 C1132.62,352.70 1132.62,353.39 1132.62,391.29 C1132.62,433.17 1132.67,431.57 1131.20,438.36 C1129.71,445.27 1127.01,451.48 1122.71,457.88 C1118.26,464.50 1113.74,469.08 1106.88,473.91 C1103.40,476.36 1101.39,477.54 1097.62,479.37 C1093.47,481.39 1090.49,482.48 1086.12,483.61 C1071.24,487.46 1057.48,487.05 1042.88,482.32 C1038.40,480.87 1032.00,477.55 1028.38,474.79 C1027.55,474.17 1026.42,473.32 1025.88,472.90 C1019.14,467.85 1013.11,459.31 1009.87,450.25 C1009.55,449.36 1009.17,448.16 1009.02,447.59 C1008.74,446.54 1008.12,446.03 1007.67,446.48 C1007.54,446.61 1007.23,447.49 1006.99,448.43 C1006.75,449.36 1005.94,452.26 1005.18,454.88 C1002.42,464.46 1002.23,465.61 1002.04,474.18 C1001.93,478.75 1001.78,481.32 1001.60,481.50 C1000.85,482.24 990.80,484.98 986.50,485.61 C983.88,485.99 979.39,486.23 977.25,486.09 Z M711.37,485.51 C705.90,484.79 697.34,482.65 693.12,480.96 C687.73,478.79 680.59,474.57 675.80,470.73 C673.16,468.61 667.31,462.62 665.12,459.80 C661.72,455.40 657.64,448.09 655.68,442.88 C654.59,439.98 652.75,433.53 652.37,431.26 C650.81,422.05 650.90,412.31 652.61,404.76 C653.94,398.88 656.80,391.48 659.70,386.38 C661.15,383.84 664.57,378.72 666.55,376.12 C668.35,373.77 674.29,367.79 677.09,365.52 C680.43,362.81 687.19,358.46 691.01,356.57 C695.76,354.22 702.09,352.08 708.50,350.65 C718.55,348.42 730.97,348.76 740.88,351.54 C748.18,353.59 756.31,357.13 761.00,360.29 C762.31,361.17 764.11,362.39 765.00,362.99 C766.98,364.32 776.01,373.29 777.46,375.38 C783.60,384.17 785.19,387.34 788.89,398.10 C790.81,403.69 791.87,411.38 791.67,418.38 C791.45,426.45 790.13,432.41 786.17,443.25 C785.12,446.13 783.43,449.26 780.77,453.23 C777.17,458.62 775.98,460.07 771.40,464.62 C766.66,469.34 764.08,471.52 760.91,473.46 C759.87,474.10 758.08,475.20 756.94,475.91 C753.98,477.76 748.83,480.27 745.58,481.47 C742.02,482.77 733.70,484.89 730.12,485.41 C725.77,486.03 715.75,486.09 711.37,485.51 Z M797.31,483.57 C797.00,483.51 796.62,483.22 796.46,482.93 C796.25,482.52 796.17,472.11 796.15,442.38 L796.14,402.38 L796.70,399.13 C797.55,394.24 799.19,388.61 800.81,384.98 C801.55,383.33 805.55,376.39 807.04,374.18 C808.52,371.98 815.69,364.76 818.38,362.76 C825.22,357.67 828.44,355.96 836.03,353.39 C842.52,351.19 846.47,350.30 852.88,349.61 C864.31,348.38 878.73,351.12 889.25,356.52 C893.76,358.83 898.85,362.67 902.75,366.68 C906.43,370.47 907.95,372.49 910.16,376.53 C913.99,383.52 915.69,388.82 916.73,396.96 C917.24,400.94 917.25,401.97 917.25,441.83 C917.25,478.36 917.21,482.70 916.86,483.19 L916.47,483.75 L896.28,483.75 C879.24,483.75 876.02,483.69 875.61,483.40 C875.13,483.05 875.12,482.26 874.98,443.08 C874.87,413.74 874.76,402.74 874.54,401.68 C874.13,399.72 873.13,397.13 872.24,395.74 C870.84,393.56 868.25,391.34 865.70,390.14 C862.46,388.61 860.87,388.25 857.32,388.25 C853.62,388.25 851.46,388.76 847.91,390.47 C845.72,391.53 845.10,391.97 843.56,393.59 C841.17,396.11 839.66,399.16 838.89,403.05 C838.55,404.74 838.50,409.82 838.50,443.68 C838.49,474.37 838.43,482.50 838.18,483.00 L837.86,483.62 L817.87,483.65 C806.87,483.67 797.62,483.63 797.31,483.57 Z M556.62,449.99 C560.52,449.53 564.99,448.49 568.88,447.13 C572.95,445.71 573.69,445.38 577.25,443.30 C583.34,439.76 589.90,434.09 593.22,429.50 C596.46,425.03 599.65,419.18 600.96,415.37 C602.44,411.01 603.67,402.58 603.38,398.75 C603.02,394.12 601.81,387.40 600.84,384.67 C599.94,382.15 596.75,375.69 595.44,373.75 C592.38,369.21 591.61,368.20 589.61,366.06 C588.42,364.78 586.94,363.39 586.33,362.97 C585.71,362.54 584.67,361.72 584.01,361.14 C581.61,359.01 574.72,354.83 572.00,353.87 C571.11,353.55 569.11,352.83 567.56,352.27 C562.22,350.35 554.11,349.42 547.51,349.98 C540.77,350.55 533.41,352.54 527.95,355.26 C523.72,357.37 516.42,362.75 513.49,365.92 C511.47,368.10 507.94,372.87 506.47,375.42 C502.39,382.49 500.90,387.10 499.88,395.88 C499.26,401.27 499.43,404.34 500.76,411.24 C501.50,415.07 501.65,415.57 503.15,418.92 C505.20,423.51 506.39,425.52 509.54,429.71 C512.27,433.35 514.62,435.71 518.43,438.68 C524.40,443.33 527.79,445.17 534.65,447.46 C541.21,449.66 544.15,450.16 550.62,450.22 C552.69,450.23 555.39,450.13 556.62,449.99 Z M726.44,446.48 C732.34,445.42 736.62,443.16 741.57,438.50 C744.48,435.76 745.86,433.90 747.41,430.63 C750.21,424.70 751.00,416.54 749.40,410.07 C748.03,404.55 746.02,401.12 741.27,396.16 C736.74,391.43 728.80,388.25 721.52,388.25 C717.99,388.25 715.39,388.76 711.30,390.27 C707.11,391.81 704.44,393.58 701.23,396.94 C697.19,401.16 694.67,405.81 693.61,411.00 C692.50,416.42 692.57,420.59 693.86,426.38 C694.77,430.48 697.76,435.29 701.74,439.05 C706.04,443.12 710.02,445.24 715.38,446.34 C719.26,447.13 722.56,447.17 726.44,446.48 Z" fill="#F9FAFB" fill-rule="evenodd"/><circle cx="1167.5" cy="450.0" r="24.5" fill="#10B981"/></g></svg>`;
+const OONTU_LOGO_SYMBOL = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect x="20" y="20" width="472" height="472" rx="108" fill="#2F313F"/><circle cx="220" cy="230" r="105" fill="none" stroke="#F9FAFB" stroke-width="48"/><circle cx="354" cy="350" r="29" fill="#10B981"/></svg>`;
 /* Oontu Brand System 1.0 logos: the primary lockup (charcoal, mint dot) and the box symbol for the collapsed rail. */
 function oontuBrandLogoHTML(heightPx, withSidebarId){
   let svg = OONTU_LOGO_PRIMARY.replace('<svg ', '<svg style="height:'+heightPx+'px;width:auto;display:block" '+(withSidebarId ? 'id="sidebar-logo" ' : ''));
@@ -3399,7 +3431,7 @@ function renderSidebar(){
   document.getElementById('role-name').textContent = meta.name;
   document.getElementById('role-label').textContent = meta.label;
   document.getElementById('role-avatar').textContent = meta.initials;
-  const wsName = document.getElementById('ws-name'); if(wsName) wsName.textContent = meta.title;
+  const wsName = document.getElementById('ws-name'); if(wsName){ wsName.textContent = meta.title; wsName.title = (ORG_STRUCTURE.profile && ORG_STRUCTURE.profile.legalName) || meta.title; }
   const wsInit = document.getElementById('ws-initials'); if(wsInit) wsInit.textContent = meta.title.split(/[\s·]+/).filter(Boolean).slice(0,2).map(function(w){ return w.charAt(0).toUpperCase(); }).join('');
   document.getElementById('role-trigger').setAttribute('aria-label', 'Workspace and account: '+meta.title+', '+meta.name+', '+meta.label);
   document.querySelectorAll('.role-opt').forEach(function(btn){ btn.querySelector('.role-check').classList.add('hidden'); });
@@ -5693,6 +5725,7 @@ function renderRecruiterDashboard(){
 
   const lede = attention.length ? oPlural(attention.length, 'thing')+' need you today. Everything else is moving.' : 'Your desk is clear. Nothing is waiting on you.';
   return oDashShell([
+    myConnectCardHTML(),
     oPageHead({ title:oGreeting()+', '+oFirstName(), lede:lede, actions:[{ label:'New job', icon:'brief', onclick:'openJobCreate()' }, { label:'Add candidate', icon:'plus', primary:true, onclick:"showView('talent-pool')" }] }),
     numbers,
     '<div class="o-cols">'+oAttentionCard(attention, { id:'rec', empty:'Nothing needs you right now.', emptyAction:['Open jobs', "showView('jobs')"] })+
@@ -5794,6 +5827,7 @@ function renderManagerDashboard(){
     }).join('')+'</ul></section>' : '';
 
   return oDashShell([
+    myConnectCardHTML(),
     teamPermissionNoticeHTML(),
     oPageHead({ ctx:oDateLine()+(teamsManagedBy(me.id).length ? ' · '+teamsManagedBy(me.id).map(function(t){ return t.name; }).join(', ') : ''), title:oGreeting()+', '+oFirstName(),
       lede: attention.length ? oPlural(attention.length, 'thing')+' need you today. Your team is moving on the rest.' : 'Your team is on track. Nothing is waiting on you.',
@@ -5893,6 +5927,7 @@ function renderAdminDashboard(){
 
   return oDashShell([
     state.role==='admin' ? wsSetupCardHTML('home') : '',
+    myConnectCardHTML(),
     oPageHead({ ctx:oDateLine()+' · '+(ORG_STRUCTURE.profile.brandName || ''), title: welcome ? 'Welcome to Oontu, '+oFirstName()+'.' : oGreeting()+', '+oFirstName(),
       lede: attention.length ? oPlural(attention.length, 'thing')+' need you. Everything else is on track.' : 'Everything is on track. Nothing needs you right now.',
       actions:[{ label:'Invite a teammate', icon:'users', onclick:"showView('team-members')" }, { label:'New job', icon:'plus', primary:true, onclick:'openJobCreate()' }] }),
@@ -5949,6 +5984,7 @@ function renderHmDashboard(){
     '<div id="hm-rec-seg-body">'+recBody(hmViewMode)+'</div></section>';
 
   return oDashShell([
+    myConnectCardHTML(),
     oPageHead({ ctx:oDateLine()+' · '+myClient, title:oGreeting()+', '+oFirstName(),
       lede: attention.length ? oPlural(attention.length, 'decision')+' wait for you.' : 'Nothing is waiting for your decision.',
       actions:[{ label:'Add new job', icon:'plus', primary:true, onclick:'hmOpenJobCreate()' }] }),
@@ -26219,7 +26255,27 @@ function createAuthSimulator(){
     };
   }
   seed();
-  function reply(v){ return new Promise(function(r){ setTimeout(function(){ r(JSON.parse(JSON.stringify(v))); }, sim._latency); }); }
+  /* PROTOTYPE ONLY: accounts and workspaces made through Create workspace survive a page reload (they are kept in this browser's
+     localStorage under 'oontu.proto.accounts'), so a person who signed up can come back and sign in. The three sample accounts are
+     always re-seeded. A real server keeps all of this in its database. */
+  const STORE_KEY = 'oontu.proto.accounts';
+  const SEED_ACCOUNTS = Object.keys(db.accounts), SEED_WORKSPACES = Object.keys(db.workspaces);
+  function persist(){
+    try {
+      const o = { accounts:{}, workspaces:{}, existing:EXISTING_WORKSPACES.filter(function(w){ return !w.sample && w.workspaceId; }) };
+      Object.keys(db.accounts).forEach(function(k){ if(SEED_ACCOUNTS.indexOf(k) < 0) o.accounts[k] = db.accounts[k]; });
+      Object.keys(db.workspaces).forEach(function(k){ if(SEED_WORKSPACES.indexOf(k) < 0) o.workspaces[k] = db.workspaces[k]; });
+      localStorage.setItem(STORE_KEY, JSON.stringify(o));
+    } catch(e){}
+  }
+  (function restore(){
+    try {
+      const o = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); if(!o) return;
+      Object.assign(db.accounts, o.accounts || {}); Object.assign(db.workspaces, o.workspaces || {});
+      (o.existing || []).forEach(function(w){ if(!EXISTING_WORKSPACES.some(function(x){ return x.workspaceId === w.workspaceId; })) EXISTING_WORKSPACES.push(w); });
+    } catch(e){}
+  })();
+  function reply(v){ persist(); return new Promise(function(r){ setTimeout(function(){ r(JSON.parse(JSON.stringify(v))); }, sim._latency); }); }
   function norm(e){ return String(e||'').trim().toLowerCase(); }
   function liveSession(){
     const s = db.session;
@@ -26701,6 +26757,7 @@ function createAuthSimulator(){
   sim.policy = POLICY;
   sim._reset = function(){
     sim._offset = 0; seed();
+    try { localStorage.removeItem(STORE_KEY); } catch(e){}   // tests start from the samples only
     EXISTING_WORKSPACES = EXISTING_WORKSPACES.filter(function(w){ return w.sample; });
     EXISTING_WORKSPACES.forEach(function(w){ delete w.workspaceId; });
   };
@@ -27109,7 +27166,7 @@ async function authAfterIdentity(res){
 }
 async function authSelectWorkspaceNow(id){
   const res = await authApi.selectWorkspace({ workspaceId:id });
-  if(res.ok){ OA.showSignedIn(res); return; }   // "You're in"; Open my day calls authEnter
+  if(res.ok){ await OA.showSignedIn(res); return; }   // the welcome; it opens the app by itself, or "Open now" does
   authSetError(res, '');
 }
 function authSelectWorkspace(id){
@@ -27205,6 +27262,7 @@ function authStartOver(){
 }
 /* Called by sign-out and "Restart onboarding". Ends the session and returns to Sign in. */
 function authResetForSignOut(){
+  wsPersist();   // what this person set up is kept for the next sign-in
   if(authApi){ try { authApi.signOut(); } catch(e){} }
   authAppSession = { method:'', email:'' };
   signupActiveLeadId = null;   // the next sign-up starts its own lead
@@ -27222,14 +27280,43 @@ function authValidReturnTo(v){
 /* How the person in the app signed in, kept so Settings knows whether a new password needs the current one. */
 let authAppSession = { method:'', email:'' };
 /* The server has confirmed a membership. Open the app as that person, in that workspace. */
+/* A company name does two jobs. The legal name (as typed) is for invoices, contracts and emails. The display name is for
+   everything you look at: the sidebar, the preview card, greetings and the workspace address. It is worked out from the
+   legal name: cut at the first separator, drop trailing legal words, then keep whole words up to `max` characters.
+   "Oontu – The recruitment operating system" -> "Oontu".  "Brightpath Talent Solutions and Consulting Pvt Ltd" -> "Brightpath Talent". */
+const WS_NAME_TRAIL = ['pvt', 'private', 'ltd', 'limited', 'llp', 'llc', 'inc', 'incorporated', 'corp', 'corporation', 'gmbh', 'plc', 'pte', 'co', 'technologies', 'technology', 'solutions', 'services', 'consulting', 'consultants', 'and', '&'];
+function workspaceDisplayName(full, max){
+  max = max || 24;
+  let s = String(full || '').replace(/\s+/g, ' ').trim();
+  if(!s) return '';
+  const head = s.split(/\s[–—-]\s|\s?[|:(]\s?/)[0].trim();
+  if(head.length >= 2) s = head;
+  const words = s.split(' ');
+  while(words.length > 1 && WS_NAME_TRAIL.indexOf(words[words.length-1].toLowerCase().replace(/[.,()]/g, '')) > -1) words.pop();
+  s = words.join(' ');
+  if(s.length > max){
+    const keep = [];
+    for(let i = 0; i < words.length && keep.concat(words[i]).join(' ').length <= max; i++) keep.push(words[i]);
+    s = keep.length ? keep.join(' ') : s.slice(0, max - 1).trim() + '…';
+  }
+  return s;
+}
 function authEnter(res, kind){
   const role = AUTH_ROLE_TO_APP[res.role] || 'recruiter';
   const forgot = authFlow.forgot;
-  authAppSession = { method:res.method || '', email:(res.user && res.user.email) || '', emailVerified: !(res.user && res.user.emailVerified===false) };
+  authAppSession = { method:res.method || '', email:(res.user && res.user.email) || '', emailVerified: !(res.user && res.user.emailVerified===false), workspaceId:(res.workspace && res.workspace.id) || '', role:res.role || '' };
+  myConnApply();
   authPwPanel = { error:'', ok:false, busy:false };
   wsSessionSeq++;
   if(authAppSession.emailVerified===false && !(verifyNotice && verifyNotice.email===authNormEmail(authAppSession.email))) verifyNotice = { email:authNormEmail(authAppSession.email), read:false, done:false };
-  wsSetup = (role==='admin' && WS_SETUPS[authNormEmail(authAppSession.email)]) || null;   // "Complete your workspace", for an owner who signed up
+  // "Complete your workspace": the setup of the workspace this admin or owner is in (found by workspace, else by owner email).
+  wsSetup = (role==='admin' && wsSetupFor(authAppSession.email, authAppSession.workspaceId)) || null;
+  // An owner of a workspace made through Create workspace whose saved setup is gone (an older sign-up): start the list, nothing is skipped silently.
+  if(!wsSetup && role==='admin' && res.role==='owner' && res.workspace && /^ws_\d+_/.test(res.workspace.id || '')){
+    const t = res.workspace.type || 'Staffing agency';
+    suApplySetup({ type:t, team:[], teamSkipped:true }); wsSetup = wsSetupStart(t, authAppSession.email, null); wsSetup.workspaceId = res.workspace.id;
+  }
+  if(res.workspace && WS_PROFILES[res.workspace.id] && kind!=='created' && kind!=='onboarded') Object.assign(ORG_STRUCTURE.profile, WS_PROFILES[res.workspace.id]);   // what was saved in Settings > Workspace
   if(wsSetup && wsSetup.hiddenSession>-1 && wsSetup.hiddenSession!==wsSessionSeq) wsSetup.hiddenSession = -1;   // "Hide for now" lasts one session
   state.role = role;
   const name = res.user && res.user.name;
@@ -27241,9 +27328,11 @@ function authEnter(res, kind){
   }
   const created = kind==='created' || kind==='onboarded';
   if(res.workspace && res.workspace.name){
-    ORG_STRUCTURE.profile.brandName = res.workspace.name;
+    const shown = res.workspace.shortName || workspaceDisplayName(res.workspace.name) || res.workspace.name;   // what people see; the legal name stays full
+    ORG_STRUCTURE.profile.brandName = created && res.workspace.shortName ? res.workspace.shortName : res.workspace.name;
     if(created) ORG_STRUCTURE.profile.legalName = res.workspace.name;
-    if(ROLE_META[role]) ROLE_META[role].title = res.workspace.name;
+    if(ROLE_META[role]) ROLE_META[role].title = shown;
+    const keep = WS_PROFILES[res.workspace.id]; if(keep && keep.brandName && !created) ORG_STRUCTURE.profile.brandName = keep.brandName;
   }
   try { logAudit('Auth', created ? 'Workspace created' : kind==='invite' ? 'Invitation accepted' : 'Signed in',
     (res.workspace ? res.workspace.name : '')+(res.roleLabel ? ', '+res.roleLabel : '')); } catch(e){}
@@ -27253,6 +27342,7 @@ function authEnter(res, kind){
   enterApp();
   if(returnTo && RENDERERS[returnTo]) showView(returnTo);
   if(forgot){ showView('settings'); toast('You’re signed in. Set a new password below.'); }
+  wsPersist();
 }
 
 /* ---------- Settings > Password: set or change your own password ---------- */
@@ -27603,6 +27693,8 @@ const OA = (function(){
   const cap = function(s){ return s ? s[0].toUpperCase() + s.slice(1) : ''; };
   const slugify = function(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'your-team'; };
   const reduced = function(){ try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){ return false; } };
+  /* Motion lengths in ms. window.OONTU_MOTION_SCALE (default 1) shortens them, for the automated tests only. */
+  const T = function(ms){ return Math.round(ms * (typeof window.OONTU_MOTION_SCALE === 'number' ? window.OONTU_MOTION_SCALE : 1)); };
   let timers = [];
   const later = function(fn, ms){ timers.push(setTimeout(fn, ms)); };
   const clearTimers = function(){ timers.forEach(clearTimeout); timers = []; };
@@ -27659,7 +27751,24 @@ const OA = (function(){
       '<p class="oa-msg" id="' + statusId + '" role="status" aria-live="polite"></p>';
   }
   // Wires one real input to six visual boxes. onComplete(code) returns a Promise of { ok, message }.
-  function wireOtp(container, defaultMsg, onComplete){
+  /* Sign-in only (opts.collapse): the six boxes slide together into one ring while the code is checked, the ring completes
+     into a tick, and only then does the screen change. A wrong code reverses it. onComplete may return { ok, after } where
+     `after` is the step that leaves this screen; it runs after the tick. */
+  const VERIFY_HTML = '<span class="oa-verify" aria-hidden="true"><svg viewBox="0 0 56 56" width="56" height="56"><circle class="oa-verify__track" cx="28" cy="28" r="24"/><circle class="oa-verify__ring" cx="28" cy="28" r="24"/><circle class="oa-verify__fill" cx="28" cy="28" r="24"/><path class="oa-verify__tick" d="M17 29.5l7.5 7.5L39 20"/></svg></span>';
+  const pause = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+  function otpCollapse(wrap){
+    const mid = wrap.getBoundingClientRect(); const cx = mid.left + mid.width / 2;
+    Array.prototype.forEach.call(wrap.querySelectorAll('.oa-otp__box'), function(b){ const r = b.getBoundingClientRect(); b.style.setProperty('--dx', (cx - (r.left + r.width / 2)) + 'px'); });
+    if(!wrap.querySelector('.oa-verify')) wrap.insertAdjacentHTML('beforeend', VERIFY_HTML);
+    void wrap.offsetWidth; wrap.classList.add('is-collapsing');
+  }
+  async function otpVerified(wrap, started){
+    await pause(Math.max(0, T(reduced() ? 300 : 1100) - (Date.now() - started)));   // never so fast that the motion is missed
+    wrap.classList.add('is-verified');
+    await pause(T(reduced() ? 150 : 700));
+  }
+  function wireOtp(container, defaultMsg, onComplete, opts){
+    opts = opts || {};
     const wrap = $('[data-otp]', container), input = $('.oa-otp__input', container), msg = $('.oa-msg', container);
     const boxes = Array.prototype.slice.call(wrap.querySelectorAll('.oa-otp__box'));
     let busy = false;
@@ -27680,12 +27789,22 @@ const OA = (function(){
       input.value = input.value.replace(/\D/g, '').slice(0, 6);
       wrap.classList.remove('is-error', 'oa-shake'); input.removeAttribute('aria-invalid'); say(esc(defaultMsg)); paint();
       if(input.value.length === 6){
-        busy = true; authFlow.busy = true; paint(); say('Checking…', 'busy');
+        busy = true; authFlow.busy = true; paint();
+        const started = Date.now();
+        if(opts.collapse){ otpCollapse(wrap); say('Verifying your code…', 'busy'); } else say('Checking…', 'busy');
         let res;
         try { res = await onComplete(input.value); }
         catch(e){ console.error('Auth flow error', e); res = { ok:false, message:authMessage({ error:'server_error' }) }; }
+        if(res.ok && res.after){
+          if(opts.collapse){ await otpVerified(wrap, started); say('Verified.'); }
+          try { await res.after(); } catch(e){ console.error('Auth flow error', e); }
+          busy = false; authFlow.busy = false; repaintOther();
+          return;
+        }
+        if(!res.ok && opts.collapse) await pause(Math.max(0, T(reduced() ? 200 : 900) - (Date.now() - started)));   // a "no" takes as long to read as a "yes"
         busy = false; authFlow.busy = false; repaintOther();
         if(!res.ok){
+          wrap.classList.remove('is-collapsing', 'is-verified');   // the boxes slide back out
           input.value = ''; wrap.classList.add('is-error'); void wrap.offsetWidth; wrap.classList.add('oa-shake');
           input.setAttribute('aria-invalid', 'true'); say(res.message, 'error'); paint(); input.focus();
         }
@@ -27871,12 +27990,20 @@ const OA = (function(){
           '<p class="oa-sub">Your company handles this one. Back in a moment.</p>' +
           '<button type="button" class="oa-btn oa-btn--primary" style="margin-top:30px" data-act="si-sso">Continue to ' + esc(SI.company) + '</button>' +
           '<p class="oa-msg" id="si-sso-msg" role="status"></p></div>';
-      case 'done':
-        return '<div class="oa-step">' +
-          '<span aria-hidden="true" style="width:56px;height:56px;border-radius:16px;background:var(--oa-ink);color:var(--oa-mint);display:flex;align-items:center;justify-content:center">' + I.checkLg + '</span>' +
-          '<h1 class="oa-h1" id="oa-h" style="margin-top:20px !important">You’re in.</h1>' +
-          '<p class="oa-sub">Everything’s where you left it.</p>' +
-          '<button type="button" class="oa-btn oa-btn--primary" style="margin-top:30px" data-act="si-enter" data-autofocus>Open my day ' + I.arrow + '</button></div>';
+      case 'done': {
+        /* No "You're in" page with a button: a short welcome that hands over by itself. The tile is the verified tick, now
+           the workspace's own tile, and it carries on into the sidebar. */
+        const e = SI.entry || {}, ws = e.workspace || {}, short = ws.shortName || workspaceDisplayName(ws.name || '');
+        const who = cap(String((e.user && e.user.name) || '').trim().split(/\s+/)[0] || '');
+        const ini = short ? short.split(/\s+/).slice(0, 2).map(function(w){ return w[0]; }).join('').toUpperCase() : 'O';
+        return '<div class="oa-step oa-arrive" role="status" aria-live="polite">' +
+          '<span class="oa-arrive__tile" data-arrive-tile aria-hidden="true">' + esc(ini) + '</span>' +
+          '<p class="oa-lead" style="margin-top:22px">' + g + '.</p>' +
+          '<h1 class="oa-h1" id="oa-h" style="margin-top:12px !important">Welcome back' + (who ? ', ' + esc(who) : '') + '.</h1>' +
+          '<p class="oa-sub" style="margin-top:10px !important;color:var(--oa-ink-3);font-size:16px">' + (short ? esc(short) + ' · ' : '') + 'Everything’s where you left it.</p>' +
+          '<div class="oa-arrive__bar oa-arrive__bar--quick" aria-hidden="true"><i></i></div>' +
+          '<div class="oa-actions" style="margin-top:18px"><button type="button" class="oa-link oa-link--quiet" data-act="si-enter" data-autofocus>Open now</button></div></div>';
+      }
     }
     return '';
   }
@@ -27904,12 +28031,34 @@ const OA = (function(){
     if(SI.step === 'code'){
       wireOtp(body, 'Type or paste it — we’ll take it from there.', async function(code){
         const r = await authApi.verifyCode({ email:authFlow.codeEmail || authFlow.email, code:code });
-        if(r.ok){ authFlow.codePending = false; await authAfterIdentity(r); return { ok:true }; }
+        if(r.ok){ authFlow.codePending = false; return { ok:true, after:function(){ return authAfterIdentity(r); } }; }   // the screen changes after the tick
         return { ok:false, message:authMessage(r) };
-      });
+      }, { collapse:true });
       startResend($('[data-resend]', body));
     }
+    if(done && SI.entry){   // the welcome hands over by itself; "Open now" skips it
+      const entry = SI.entry;
+      later(function(){
+        if(SI.step !== 'done' || SI.entry !== entry) return;
+        flyIntoApp($('[data-arrive-tile]', root()), function(){ if(SI.entry !== entry) return; SI.entry = null; authEnter(entry, 'existing'); });
+      }, T(reduced() ? 700 : 2000));
+    }
     focusFirst(body);
+  }
+  /* Hand a screen over to the app. The tile on screen flies into the sidebar's workspace tile (View Transitions, where the
+     browser has them); otherwise it is a plain cut. `enter` runs exactly once, even if the transition never gets a frame. */
+  function flyIntoApp(tile, enter){
+    let entered = false;
+    const once = function(){ if(entered) return false; entered = true; enter(); return true; };
+    if(!tile || reduced() || typeof document.startViewTransition !== 'function'){ once(); return; }
+    const clear = function(){ const d = document.getElementById('ws-initials'); if(d) d.style.viewTransitionName = ''; };
+    try {
+      tile.style.viewTransitionName = 'ws-tile';
+      document.startViewTransition(function(){
+        if(once()){ const d = document.getElementById('ws-initials'); if(d) d.style.viewTransitionName = 'ws-tile'; }
+      }).finished.then(clear, clear);
+      setTimeout(once, 1500);   // a hidden tab or a slow frame never leaves the person stuck on the welcome
+    } catch(e){ once(); }
   }
   /* A company that uses single sign-on takes over; the reply is kept until the person presses Continue. */
   function ssoCompany(res){
@@ -27978,21 +28127,87 @@ const OA = (function(){
   /* The server confirmed a membership: show the "You're in" screen; Open my day enters the app. */
   function showSignedIn(res){
     SI.entry = res;
-    if(authFlow.step === 'email' && root()){ goSi('done', { entry:res }); return; }
-    SI.step = 'done'; authFlow.step = 'email'; authFlow.error = ''; authFlow.errorField = ''; authFlow.notice = '';
-    authRenderNow();
+    let swapped = false, resolveSwap;
+    const finished = new Promise(function(r){ resolveSwap = r; });   // resolves once the welcome is on screen, so the caller stays busy until then
+    const swap = function(){
+      if(swapped) return; swapped = true;
+      if(authFlow.step === 'email' && root()){ goSi('done', { entry:res }); }
+      else { SI.step = 'done'; authFlow.step = 'email'; authFlow.error = ''; authFlow.errorField = ''; authFlow.notice = ''; authRenderNow(); }
+      resolveSwap();
+    };
+    const tick = root() && $('.oa-verify', root());   // after a code: the tick becomes the workspace tile
+    if(!tick || reduced() || typeof document.startViewTransition !== 'function'){ swap(); return finished; }
+    const clear = function(){ const t = root() && $('[data-arrive-tile]', root()); if(t) t.style.viewTransitionName = ''; };
+    try {
+      tick.style.viewTransitionName = 'ws-tile';
+      document.startViewTransition(function(){ swap(); const t = $('[data-arrive-tile]', root()); if(t) t.style.viewTransitionName = 'ws-tile'; }).finished.then(clear, clear);
+      setTimeout(swap, 1200);
+    } catch(e){ swap(); }
+    return finished;
   }
 
   // ======================================================================
   //  CREATE WORKSPACE
   // ======================================================================
-  const SU_INIT = function(){ return { i:0, done:false, name:'', type:'', org:'', size:'', focus:[], partners:[], place:'', mobileCode:'', email:'', mobile:'', verified:false, created:null, result:null, err:'' }; };
+  const SU_INIT = function(){ return { i:0, done:false, name:'', type:'', org:'', short:'', size:'', focus:[], partners:[], place:'', mobileCode:'', email:'', mobile:'', verified:false, created:null, result:null, err:'' }; };
   let SU = SU_INIT();
-  const PLACES = [
-    { id:'IN', label:'India', meta:'IST · ₹ INR', code:'+91' }, { id:'AE', label:'UAE', meta:'GST · AED', code:'+971' },
-    { id:'GB', label:'United Kingdom', meta:'GMT · £ GBP', code:'+44' }, { id:'US', label:'United States', meta:'ET/PT · $ USD', code:'+1' },
-    { id:'SG', label:'Singapore', meta:'SGT · S$ SGD', code:'+65' }
-  ];
+  /* Location: every country Oontu has defaults for (COUNTRIES), not a short list. The step suggests one from the
+     browser (time zone, then language) and always lets the person search for another. Nothing is chosen for them. */
+  const placeUtc = function(tz){
+    try { const v = new Intl.DateTimeFormat('en-US', { timeZone:tz, timeZoneName:'shortOffset' }).formatToParts(new Date()).find(function(x){ return x.type === 'timeZoneName'; }).value; return v === 'GMT' ? 'UTC+0' : v.replace('GMT', 'UTC'); }
+    catch(e){ return String(tz).split('/').pop().replace(/_/g, ' '); }
+  };
+  const placeSymbol = function(cur){
+    try { const p = new Intl.NumberFormat('en', { style:'currency', currency:cur, currencyDisplay:'narrowSymbol' }).formatToParts(0).find(function(x){ return x.type === 'currency'; }); return p ? p.value : cur; }
+    catch(e){ return cur; }
+  };
+  const PLACES = COUNTRIES.map(function(c){
+    return { id:c.iso, label:c.name, code:c.dial, meta:placeUtc(c.tz) + ' · ' + placeSymbol(c.currency) + ' ' + c.currency, c:c };
+  });
+  const PLACE_TOP = ['IN', 'AE', 'GB', 'US', 'SG', 'AU', 'CA', 'DE'];
+  const PLACE_ALIAS = { uk:'GB', 'great britain':'GB', england:'GB', usa:'US', america:'US', 'u.s.':'US', uae:'AE', emirates:'AE', holland:'NL', 'south korea':'KR' };
+  /* Time zones that are not the main one of their country. The main ones come from COUNTRIES. */
+  const PLACE_TZ_MORE = { 'Asia/Calcutta':'IN', 'America/Chicago':'US', 'America/Denver':'US', 'America/Los_Angeles':'US', 'America/Phoenix':'US', 'America/Anchorage':'US', 'America/Detroit':'US', 'Pacific/Honolulu':'US',
+    'Europe/Belfast':'GB', 'Australia/Melbourne':'AU', 'Australia/Brisbane':'AU', 'Australia/Perth':'AU', 'Australia/Adelaide':'AU', 'Australia/Darwin':'AU', 'America/Vancouver':'CA', 'America/Edmonton':'CA', 'America/Winnipeg':'CA',
+    'America/Halifax':'CA', 'America/Montreal':'CA', 'Asia/Saigon':'VN', 'Europe/Busingen':'DE', 'America/Tijuana':'MX', 'America/Monterrey':'MX', 'America/Fortaleza':'BR', 'America/Manaus':'BR' };
+  /* A suggestion, never a decision. window.OONTU_DETECT_COUNTRY ('' for none, or an ISO code) overrides it, for a server-side
+     lookup (a CDN country header) or for tests. Returns a PLACES entry, or null when nothing is certain. */
+  function detectedPlace(){
+    let iso = '';
+    if(typeof window.OONTU_DETECT_COUNTRY === 'string') iso = window.OONTU_DETECT_COUNTRY;
+    else {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const hit = COUNTRIES.find(function(c){ return c.tz === tz; });
+        iso = hit ? hit.iso : (PLACE_TZ_MORE[tz] || '');
+        if(!iso) (navigator.languages || [navigator.language || '']).some(function(l){ const m = /-([A-Za-z]{2})$/.exec(l || ''); if(m && countryByIso(m[1].toUpperCase())){ iso = m[1].toUpperCase(); return true; } return false; });
+      } catch(e){ iso = ''; }
+    }
+    return PLACES.find(function(p){ return p.id === iso; }) || null;
+  }
+  const placeChip = function(p, note){
+    return '<button type="button" class="oa-chip oa-chip--sm" data-act="su-pick" data-field="place" data-value="' + p.id + '">' + esc(p.label) + (note ? ' · ' + esc(note) : '') + '</button>';
+  };
+  /* The countries that match what was typed (name, ISO code, alias, dial code or a city); the main markets when empty. */
+  function placeResultsHTML(query, skip){
+    const q = String(query || '').trim().toLowerCase();
+    if(!q) return PLACE_TOP.map(function(id){ return PLACES.find(function(p){ return p.id === id; }); }).filter(function(p){ return p && p.id !== skip; }).map(function(p){ return placeChip(p); }).join('');
+    const hits = [];
+    PLACES.forEach(function(p){
+      const n = p.label.toLowerCase(), qd = q.replace(/^\+/, '');
+      let s = -1, city = '';
+      if(n.indexOf(q) === 0 || p.id.toLowerCase() === q || PLACE_ALIAS[q] === p.id) s = 0;
+      else if(n.split(' ').some(function(w){ return w.indexOf(q) === 0; })) s = 1;
+      else if(/^\d+$/.test(qd) && p.code === '+' + qd) s = 2;
+      else {
+        city = (p.c.cities || []).find(function(x){ return x.toLowerCase().indexOf(q) === 0; }) || '';
+        if(city) s = 1; else if(n.indexOf(q) > -1) s = 2;
+      }
+      if(s > -1) hits.push({ p:p, s:s, city:city });
+    });
+    hits.sort(function(a, b){ return a.s - b.s || a.p.label.localeCompare(b.p.label); });
+    return hits.length ? hits.slice(0, 10).map(function(h){ return placeChip(h.p, h.city); }).join('') : '<p class="oa-hint" style="margin:0 !important">No match. Try the country name.</p>';
+  }
   const AG_SIZES = ['Just me', '2–5', '6–20', '21–50', '50+'];
   const CO_SIZES = ['1–50', '51–200', '201–1,000', '1,001–5,000', '5,000+'];
   /* The sizes people pick here, as the sizes Settings > Workspace keeps (TEAM_SIZES). */
@@ -28006,6 +28221,12 @@ const OA = (function(){
   const isAg = function(){ return SU.type !== 'corporate'; };
   const first = function(){ return cap(SU.name.trim().split(/\s+/)[0] || ''); };
   const org = function(){ return SU.org.trim(); };
+  /* The name people see everywhere: worked out from the legal name, or the one they typed over it. The legal name (org) is what Oontu keeps for documents. */
+  const shortName = function(){ return (SU.short || '').trim() || workspaceDisplayName(org()); };
+  const shortLineHTML = function(){
+    const n = shortName();
+    return n ? 'I’ll call it <b>' + esc(n) + '</b> wherever you see it. <button type="button" class="oa-link" data-act="su-short-edit">Edit</button>' : '';
+  };
   const place = function(){ return PLACES.find(function(p){ return p.id === SU.place; }); };
   const wsType = function(){ return SU.type === 'corporate' ? 'Corporate' : 'Staffing agency'; };
 
@@ -28025,7 +28246,10 @@ const OA = (function(){
       }).join('') + '</div>';
     };
     const Q = {
-      name: { lead:'Hi, I’m Oontu.', title:'What should I call you?', sub:'Your first name is plenty.',
+      name: { lead:'Hi, I’m Oontu.', title:'What should I call you?',
+        sub:SU.fromSignIn === 'new' ? 'There’s no Oontu workspace for ' + esc(maskEmail(SU.email)) + ' yet, so let’s create yours. The email is already verified.'
+          : SU.fromSignIn === 'noworkspace' ? 'You’re not in a workspace right now. Create one, or ask an admin to invite you.'
+          : 'Your first name is plenty.',
         ans:text('su-name', { field:'name', label:'First name', type:'text', ac:'given-name', ph:'First name', msg:'Press Enter to continue.' }) },
       type: { lead:'Nice to meet you, ' + esc(N) + '.', title:'How does your team hire?', sub:'This shapes everything I set up for you.',
         ans:'<div class="oa-choices" role="radiogroup" aria-labelledby="oa-h">' + [
@@ -28037,22 +28261,31 @@ const OA = (function(){
         }).join('') + '</div>' },
       org: { lead:ag ? 'Agencies are my favourite kind of busy.' : 'In-house hiring — good, I know the drill.', title:ag ? 'What’s your agency called?' : 'What’s your company called?',
         sub:'It becomes your workspace address.',
-        ans:text('su-org', { field:'org', label:'Organisation name', type:'text', ac:'organization', ph:ag ? 'e.g. Brightpath Talent' : 'e.g. Finvest Labs', msg:O ? 'Your address: ' + slugify(O) + '.oontu.app' : 'You can change it later.' }) },
-      size: { lead:O ? esc(O) + ' — love it.' : 'Love it.', title:ag ? 'How many recruiters will use Oontu?' : 'How big is ' + esc(O || 'your company') + '?',
+        ans:text('su-org', { field:'org', label:'Organisation name', type:'text', ac:'organization', ph:ag ? 'e.g. Brightpath Talent' : 'e.g. Finvest Labs', msg:O ? 'Your address: ' + slugify(shortName()) + '.oontu.app' : 'You can change it later.' }) +
+          '<p class="oa-hint" data-short-line aria-live="polite">' + shortLineHTML() + '</p>' },
+      size: { lead:O ? esc(shortName()) + ' — love it.' : 'Love it.', title:ag ? 'How many recruiters will use Oontu?' : 'How big is ' + esc(shortName() || 'your company') + '?',
         sub:ag ? 'A rough number is fine.' : 'Employees, roughly.', ans:chips(ag ? AG_SIZES : CO_SIZES, 'size', false) + '<p class="oa-hint">One tap — I’ll move on.</p>' },
       focus: { lead:'Got it.', title:'What do you place most?', sub:'Pick any. I’ll tune matching and job templates.',
         ans:chips(FOCUS, 'focus', true) + '<div class="oa-actions" style="margin-top:24px"><button type="button" class="oa-btn oa-btn--primary oa-btn--inline" data-act="su-next" data-count>Continue ' + I.arrow + '</button><button type="button" class="oa-link oa-link--quiet" data-act="su-skip" data-field="focus" style="text-decoration:underline">Skip for now</button></div>' },
       partners: { lead:'Got it.', title:'Who hires alongside you?', sub:'Pick any. I’ll set up the right access for each.',
         ans:chips(PARTNERS, 'partners', true) + '<div class="oa-actions" style="margin-top:24px"><button type="button" class="oa-btn oa-btn--primary oa-btn--inline" data-act="su-next" data-count>Continue ' + I.arrow + '</button><button type="button" class="oa-link oa-link--quiet" data-act="su-skip" data-field="partners" style="text-decoration:underline">Skip for now</button></div>' },
-      place: { lead:'Almost there.', title:'Where’s your team based?', sub:'Looks like India from here — just confirm.',
-        ans:'<button type="button" class="oa-place" data-act="su-pick" data-field="place" data-value="IN"><span class="oa-place__flag" aria-hidden="true">IN</span><span><b>Yes, India</b><small>IST (UTC+5:30) · ₹ INR · +91</small></span><span class="oa-account__go" aria-hidden="true">' + I.arrow + '</span></button>' +
-          '<p class="oa-hint" style="margin:18px 0 10px !important">Somewhere else?</p><div class="oa-chips">' +
-          PLACES.slice(1).map(function(p){ return '<button type="button" class="oa-chip oa-chip--sm" data-act="su-pick" data-field="place" data-value="' + p.id + '">' + p.label + '</button>'; }).join('') + '</div>' },
+      place: (function(){
+        const d = detectedPlace();
+        const card = d ? '<button type="button" class="oa-place" data-act="su-pick" data-field="place" data-value="' + d.id + '"><span class="oa-place__flag" aria-hidden="true">' + d.id + '</span><span><b>Yes, ' + esc(d.label) + '</b><small>' + esc(d.meta) + ' · ' + esc(d.code) + '</small></span><span class="oa-account__go" aria-hidden="true">' + I.arrow + '</span></button>' : '';
+        return { lead:'Almost there.', title:'Where’s your team based?',
+          sub:d ? 'Looks like ' + esc(d.label) + ' from here — just confirm.' : 'Pick a country. I’ll set your time zone, currency and phone code.',
+          ans:card +
+            '<p class="oa-hint" style="margin:' + (d ? '18px 0 10px' : '0 0 10px') + ' !important">' + (d ? 'Somewhere else?' : 'Search for it, or tap a common one.') + '</p>' +
+            '<form data-form="su-place" novalidate><label for="su-place-q" class="oa-sr">Search country or city</label>' +
+            '<input class="oa-input" id="su-place-q" type="search" autocomplete="off" spellcheck="false" placeholder="Search country or city" style="height:48px;margin-bottom:12px"' + (d ? '' : ' data-autofocus') + '></form>' +
+            '<div class="oa-chips" role="group" aria-label="Countries" data-place-results>' + placeResultsHTML('', d && d.id) + '</div>' +
+            '<p class="oa-hint">Sets your time zone, currency and phone code. You can change them later in Settings.</p>' };
+      })(),
       email: { lead:'Now let’s make it yours.', title:'Your work email?', sub:'You’ll sign in with it — no password to remember.',
         ans:text('su-email', { field:'email', label:'Work email', type:'email', mode:'email', ac:'email', ph:'name@company.com', msg:'Teammates on your company domain can request to join.' }) },
       mobile: { lead:'One more, for safety.', title:'Your mobile number?', sub:'Only for account recovery and setup help. Never for spam.',
         ans:text('su-mobile', { field:'mobile', label:'Mobile number', type:'tel', mode:'tel', ac:'tel-national', ph:'98765 43210', msg:SU.verified ? 'Last one — then your workspace is ready.' : 'Next, I’ll email you a code.',
-          prefix:'<select class="oa-select" aria-label="Country code" data-cc>' + PLACES.map(function(p){ return '<option' + ((SU.mobileCode || (place() || PLACES[0]).code) === p.code ? ' selected' : '') + '>' + p.code + '</option>'; }).join('') + '</select>' }) +
+          prefix:'<select class="oa-select" aria-label="Country code" data-cc>' + PLACES.map(function(p){ return p.code; }).filter(function(c, i, a){ return a.indexOf(c) === i; }).map(function(code){ return '<option' + ((SU.mobileCode || (place() || detectedPlace() || PLACES[0]).code) === code ? ' selected' : '') + '>' + code + '</option>'; }).join('') + '</select>' }) +
           '<p class="oa-hint">By continuing you agree to the ' + legalLink('terms', 'terms') + ' and ' + legalLink('privacy', 'privacy notice') + '.</p>' },
       code: { lead:'Check your inbox.', title:'Enter the code I sent.', sub:'It’s on its way to ' + esc(maskEmail(SU.email)) + '.',
         ans:'<div data-code>' + otpHTML('su-code', 'su-code-msg') + '</div>' + mailRow }
@@ -28073,7 +28306,7 @@ const OA = (function(){
       if(label && idx > -1 && idx < SU.i) trail.push('<button type="button" data-act="su-jump" data-i="' + idx + '" aria-label="Change ' + what + ': ' + esc(label) + '">' + esc(label) + '</button>');
     };
     const picks = isAg() ? SU.focus : SU.partners;
-    add('name', 'name', first()); add('type', 'type', SU.type ? (isAg() ? 'Agency' : 'In-house') : ''); add('org', 'organisation', org()); add('size', 'size', SU.size);
+    add('name', 'name', first()); add('type', 'type', SU.type ? (isAg() ? 'Agency' : 'In-house') : ''); add('org', 'organisation', shortName()); add('size', 'size', SU.size);
     add(isAg() ? 'focus' : 'partners', isAg() ? 'focus' : 'partners', picks.length ? picks.length + ' picked' : ''); add('place', 'location', (place() || {}).label);
     add('email', 'email', SU.email.trim()); add('mobile', 'mobile', SU.mobile ? '•••• ' + SU.mobile.replace(/\D/g, '').slice(-4) : '');
     return '<div class="oa-progress">' + (SU.i > 0 ? '<button type="button" class="oa-iconbtn" data-act="su-back" aria-label="Previous question">' + I.back + '</button>' : '') +
@@ -28083,25 +28316,24 @@ const OA = (function(){
   }
 
   function suDoneHTML(){
-    const ag = isAg(), O = org() || 'Your workspace', slug = slugify(org());
-    const todo = ag
-      ? [['Add your logo', '1 min'], ['Invite your recruiters', '2 min'], ['Add your first client', '2 min'], ['Open your first job', '3 min'], ['Connect email & WhatsApp', '2 min']]
-      : [['Add your logo & careers page', '2 min'], ['Invite hiring managers', '2 min'], ['Add your vendor agencies', '2 min'], ['Open your first job', '3 min'], ['Set up approvals', '2 min']];
-    const items = [['Account verified', 'Signed in with ' + SU.email.trim(), true], [O + ' created', slug + '.oontu.app', true]].concat(todo.map(function(t){ return [t[0], 'About ' + t[1], false]; }));
-    const doneN = 2, total = items.length, off = (176 - 176 * doneN / total).toFixed(1);
-    return '<div class="oa-step">' +
-      '<div class="oa-done-head"><svg class="oa-ring" width="68" height="68" viewBox="0 0 68 68" role="img" aria-label="' + doneN + ' of ' + total + ' setup steps done">' +
-        '<circle cx="34" cy="34" r="28" stroke="#E9EBEF"/><circle class="oa-ring__val" cx="34" cy="34" r="28" transform="rotate(-90 34 34)" style="stroke-dashoffset:' + off + '"/>' +
-        '<text x="34" y="39" text-anchor="middle">' + doneN + '/' + total + '</text></svg><p class="oa-lead" style="margin:0">Two minutes well spent.</p></div>' +
-      '<h1 class="oa-h1" id="oa-h" style="margin-top:18px !important">You’re all set, ' + esc(first() || 'there') + '.</h1>' +
-      '<p class="oa-sub" style="color:var(--oa-ink-3);font-size:16px">' + esc(O) + ' is live. These make it shine — do them now, or whenever suits you.</p>' +
-      '<ul class="oa-list">' + items.map(function(t, k){
-        return '<li class="' + (t[2] ? 'is-done' : '') + '" style="animation-delay:' + (0.08 * k).toFixed(2) + 's">' +
-          '<span class="oa-list__mark" aria-hidden="true">' + (t[2] ? I.check : '') + '</span><span><b>' + esc(t[0]) + '</b><small>' + esc(t[1]) + '</small></span>' +
-          (t[2] ? '<span class="oa-sr">Done</span>' : '<a href="#/app" data-act="su-task" data-task="' + esc(t[0]) + '">Do it →</a>') + '</li>';
-      }).join('') + '</ul>' +
-      '<div class="oa-actions" style="margin-top:24px"><button type="button" class="oa-btn oa-btn--primary oa-btn--inline" data-act="su-enter" data-autofocus>Open ' + esc(org() || 'my workspace') + ' ' + I.arrow + '</button>' +
-      '<button type="button" class="oa-link oa-link--quiet" data-act="su-enter">I’ll finish these later</button></div></div>';
+    /* No "all set" page: the checklist of what is left is on Home. This is a short arrival, about three seconds, that hands over by itself. */
+    const O = shortName() || 'Your workspace';
+    return '<div class="oa-step oa-arrive" role="status" aria-live="polite">' +
+      '<p class="oa-lead oa-lead--mark">' + MARK + 'Two minutes well spent.</p>' +
+      '<h1 class="oa-h1" id="oa-h" style="margin-top:12px !important">Welcome, ' + esc(first() || 'there') + '.</h1>' +
+      '<p class="oa-sub" style="margin-top:10px !important;color:var(--oa-ink-3);font-size:16px">' + esc(O) + ' is live. Opening your day…</p>' +
+      '<ul class="oa-arrive__ticks">' +
+        '<li style="animation-delay:.35s"><span aria-hidden="true">' + I.check + '</span>Email verified</li>' +
+        '<li style="animation-delay:.75s"><span aria-hidden="true">' + I.check + '</span>' + esc(O) + ' created</li>' +
+        '<li style="animation-delay:1.15s"><span aria-hidden="true">' + I.check + '</span>Your setup list is waiting on Home</li></ul>' +
+      '<div class="oa-arrive__bar" aria-hidden="true"><i></i></div>' +
+      '<div class="oa-actions" style="margin-top:18px"><button type="button" class="oa-link oa-link--quiet" data-act="su-enter" data-autofocus>Open now</button></div></div>';
+  }
+  /* The hand-over. The preview tile flies into the sidebar's workspace tile (View Transitions, where the browser has them),
+     everything else cross-fades. Without them, or with reduced motion, it is a plain cut. Runs once; "Open now" skips it. */
+  function arriveInto(res){
+    if(!SU.done || !SU.result) return;
+    flyIntoApp($('[data-ws-initials]', root()), function(){ enterProduct(res); });
   }
 
   function signUpAside(){
@@ -28135,16 +28367,17 @@ const OA = (function(){
   }
   function updateWorkspacePreview(){
     const a = $('.oa-aside', root()); if(!a || !$('[data-ws-initials]', a)) return;
-    const O = org(), ag = isAg(), pl = place();
+    const O = shortName(), ag = isAg(), pl = place();
     const setRow = function(k, v){ const el = $('[data-ws-row="' + k + '"]', a); const now = el.getAttribute('data-v') || ''; if(now === v) return; el.setAttribute('data-v', v); el.innerHTML = v ? '<b>' + esc(v) + '</b>' : '<span class="oa-skel" style="width:84px"></span>'; };
     $('[data-ws-initials]', a).textContent = O ? O.split(/\s+/).slice(0, 2).map(function(w){ return w[0]; }).join('').toUpperCase() : 'O';
     const nameEl = $('[data-ws-name]', a);
-    if((nameEl.getAttribute('data-v') || '') !== O){ nameEl.setAttribute('data-v', O); nameEl.innerHTML = O ? '<span class="oa-ws__name" style="animation:oa-in .4s var(--oa-ease) both">' + esc(O) + '</span>' : '<span class="oa-skel oa-skel--name"></span>'; }
+    if((nameEl.getAttribute('data-v') || '') !== O){ nameEl.setAttribute('data-v', O); nameEl.innerHTML = O ? '<span class="oa-ws__name' + (O.length > 18 ? ' is-long' : '') + '" title="' + esc(org()) + '" style="animation:oa-in .4s var(--oa-ease) both">' + esc(O) + '</span>' : '<span class="oa-skel oa-skel--name"></span>'; }
     $('[data-ws-url]', a).textContent = slugify(O) + '.oontu.app';
     const sizeLabel = SU.size ? (ag ? (SU.size === 'Just me' ? 'Just you, for now' : SU.size + ' recruiters') : SU.size + ' employees') : '';
     setRow('type', SU.type ? (ag ? 'Staffing agency' : 'In-house team') : '');
     setRow('team', sizeLabel);
     setRow('place', pl ? pl.label + ' · ' + pl.meta : '');
+    a.classList.toggle('is-arriving', !!SU.done);
     $('[data-ws-state]', a).innerHTML = SU.done ? '<i class="is-live"></i>Live' : '<i class="oa-spin" aria-hidden="true"></i>Taking shape';
     // owner
     showObj($('[data-obj="owner"]', a), !!first());
@@ -28211,6 +28444,7 @@ const OA = (function(){
   function afterSuStep(){
     const body = $('#oa-body', root());
     updateWorkspacePreview();
+    if(SU.done && SU.result){ const res = SU.result; later(function(){ if(SU.done && SU.result === res) arriveInto(res); }, T(reduced() ? 700 : 3000)); }
     if(!SU.done && suSteps()[SU.i] === 'code'){
       wireOtp(body, 'Type or paste it — I’ll take it from there.', async function(code){
         const r = await authApi.verifyCode({ email:SU.email.trim().toLowerCase(), code:code });
@@ -28324,10 +28558,12 @@ const OA = (function(){
     ORG_STRUCTURE.profile.teamSize = teamSize;
     applyCountryDefaults(pl.id, '');
     const w = wsSetupStart(type, email, null, teamSize, { country:pl.id, city:'' });
+    w.workspaceId = (res.workspace && res.workspace.id) || '';
     if(isAg() && SU.focus.length) w.agency.industries = SU.focus.slice();
     w.welcomeSession = wsSessionSeq + 1;   // "Welcome to Oontu" on the first visit to Home
+    const short = shortName();
     SU = SU_INIT();
-    authEnter(res, 'onboarded');
+    authEnter(Object.assign({}, res, { workspace:Object.assign({}, res.workspace, { shortName:short }) }), 'onboarded');
   }
 
   // ======================================================================
@@ -28420,6 +28656,12 @@ const OA = (function(){
           const cnt = $('[data-count]', root()); if(cnt) cnt.firstChild.textContent = arr.length ? 'Continue with ' + arr.length + ' ' : 'Continue ';
           updateWorkspacePreview(); return;
         }
+        case 'su-short-edit': {
+          const line = $('[data-short-line]', root()); if(!line) return;
+          line.innerHTML = '<label for="su-short" class="oa-sr">Name to show</label><input class="oa-input" id="su-short" maxlength="24" autocomplete="off" value="' + esc(shortName()) + '" style="height:44px;margin-top:6px" aria-describedby="su-short-hint"><span id="su-short-hint" class="oa-hint" style="display:block">Up to 24 characters. Your full name stays on invoices and documents.</span>';
+          const f = $('#su-short', root()); if(f){ f.focus(); f.select(); }
+          return;
+        }
         case 'su-next': if(authFlow.busy) return; return suNext();
         case 'su-skip': if(authFlow.busy) return; SU[b.getAttribute('data-field')] = []; return suNext();
         case 'su-back': if(authFlow.busy) return; return goSu({ i:Math.max(0, SU.i - 1) });
@@ -28434,12 +28676,24 @@ const OA = (function(){
       const kind = f.getAttribute('data-form');
       if(kind === 'si-email') return onEmailSubmit(f);
       if(kind === 'si-password') return onPasswordSubmit(f);
+      if(kind === 'su-place'){ const hit = $('[data-place-results] [data-act="su-pick"]', root()); if(hit) hit.click(); return; }   // Enter picks the top match
       if(kind === 'su-text') return suSubmitText(f.getAttribute('data-field'), $('input', f), $('.oa-msg', f));
     });
     el.addEventListener('input', function(e){
       const input = e.target;
       if(!input.closest || !input.closest('.oa-root')) return;
-      if(input.matches('#su-org')){ const m = $('#su-org-msg', root()); SU.org = input.value; m.className = 'oa-msg'; m.textContent = org() ? 'Your address: ' + slugify(org()) + '.oontu.app' : 'You can change it later.'; updateWorkspacePreview(); return; }
+      if(input.matches('#su-org')){
+        const m = $('#su-org-msg', root()), sl = $('[data-short-line]', root());
+        SU.org = input.value; SU.short = ''; m.className = 'oa-msg'; m.textContent = org() ? 'Your address: ' + slugify(shortName()) + '.oontu.app' : 'You can change it later.';
+        if(sl) sl.innerHTML = shortLineHTML();
+        updateWorkspacePreview(); return;
+      }
+      if(input.matches('#su-short')){
+        SU.short = input.value; const m = $('#su-org-msg', root());
+        if(m) m.textContent = 'Your address: ' + slugify(shortName()) + '.oontu.app';
+        updateWorkspacePreview(); return;
+      }
+      if(input.matches('#su-place-q')){ const box = $('[data-place-results]', root()), d = detectedPlace(); if(box) box.innerHTML = placeResultsHTML(input.value, d && d.id); return; }
       if(input.matches('#su-name')){ SU.name = input.value; updateWorkspacePreview(); }
       if(input.matches('#su-email')) SU.email = input.value;
       if(input.matches('#su-mobile')){ input.value = input.value.replace(/[^\d ]/g, '').slice(0, 14); SU.mobile = input.value; }
@@ -28450,6 +28704,9 @@ const OA = (function(){
         if(m && m.hasAttribute('data-default')){ m.className = 'oa-msg'; m.textContent = m.getAttribute('data-default'); }
         else if(m){ m.className = 'oa-msg'; m.textContent = ''; }
       }
+    });
+    el.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' && e.target.id === 'su-short' && e.target.closest('.oa-root')){ e.preventDefault(); const f = $('form[data-form="su-text"]', root()); if(f && f.requestSubmit) f.requestSubmit(); }
     });
     el.addEventListener('change', function(e){
       const s = e.target;
@@ -28496,6 +28753,7 @@ const OA = (function(){
     /* An email proven by a code or by Google or Microsoft, with no workspace yet: sign-up without the email and code questions. */
     startVerifiedSignup: function(res){
       SU = SU_INIT(); SU.verified = true;
+      SU.fromSignIn = (res.workspaces && res.workspaces.length) ? 'none' : (res.user && res.user.name ? 'noworkspace' : 'new');   // why they are here, said on the first question
       SU.email = authNormEmail(res.user && res.user.email);
       SU.name = cap(String((res.user && res.user.name) || '').trim().split(/\s+/)[0] || '');
       authFlow.intent = 'signup';
@@ -28780,6 +29038,7 @@ async function suResume(){
   const lead = SIGNUP_LEADS.filter(function(l){ return l.email===email; }).pop();
   if(lead){ signupActiveLeadId = lead.id; signupLeadTouch('in_product', { status:'in_product', resume:null }); }
   if(!WS_SETUPS[email]){ suApplySetup({ type:type, team:[], teamSkipped:true }); wsSetupStart(type, email, lead ? lead.id : null); }
+  if(WS_SETUPS[email] && res.workspace) WS_SETUPS[email].workspaceId = res.workspace.id;
   authEnter(res, 'onboarded');
 }
 
@@ -29234,6 +29493,89 @@ async function suSaveWorkspaceName(){
    Shown to the owner on Home (until hidden for the session, or for one session after it is all done) and in
    Settings > Workspace setup. Each item opens its screen in a side sheet; saving ticks it. */
 let WS_SETUPS = {};     // PROTOTYPE: one checklist per owner email; a real server keeps this on the workspace
+let WS_PROFILES = {};   // PROTOTYPE: the workspace profile saved in Settings, per workspace id
+/* PROTOTYPE ONLY: the setup lists and workspace profiles are kept in this browser's localStorage ('oontu.proto.workspaces'), so a
+   person who signs in again finds their workspace as they left it, with only what is still unfinished on the list. A real server
+   keeps this on the workspace. */
+const WS_STORE_KEY = 'oontu.proto.workspaces';
+function wsRestore(){
+  try {
+    const o = JSON.parse(localStorage.getItem(WS_STORE_KEY) || 'null'); if(!o) return;
+    Object.keys(o.setups || {}).forEach(function(e){
+      const w = o.setups[e];
+      w.hiddenSession = -1; w.welcomeSession = -1;   // session markers belong to one visit, not to the saved list
+      w.readySession = w.readyShown ? -2 : -1;        // a list finished and already celebrated stays quiet
+      WS_SETUPS[e] = w;
+    });
+    WS_PROFILES = o.profiles || {};
+  } catch(e){}
+}
+wsRestore();
+function wsPersist(){
+  try {
+    const setups = {}, profiles = Object.assign({}, WS_PROFILES);
+    Object.keys(WS_SETUPS).forEach(function(e){
+      const w = WS_SETUPS[e]; let p = null;
+      try { wsItems(w).forEach(function(k){ if(wsItemDone(k, w)) w.done[k] = true; }); p = wsProgress(w); } catch(x){}   // items done by adding a client or job are saved as done
+      setups[e] = Object.assign({}, w, { readyShown: !!(p && p.done===p.total && w.readySession!==-1) });
+    });
+    if(authAppSession && authAppSession.workspaceId && state.role==='admin') profiles[authAppSession.workspaceId] = JSON.parse(JSON.stringify(ORG_STRUCTURE.profile));
+    WS_PROFILES = profiles;
+    localStorage.setItem(WS_STORE_KEY, JSON.stringify({ setups:setups, profiles:profiles }));
+  } catch(e){}
+}
+window.addEventListener('pagehide', wsPersist);
+document.addEventListener('visibilitychange', function(){ if(document.hidden) wsPersist(); });
+/* ---------- A teammate's own setup: mailbox and calendar ----------
+   The owner's list is about the workspace. A person who joins one made through Create workspace has just one thing of
+   their own to do before outreach and interviews work: connect their mailbox and calendar. Home shows only what is still
+   unconnected, each as one tap, and the card is gone when both are done. The demo personas start connected, as before.
+   PROTOTYPE: kept per email in localStorage ('oontu.proto.myconn'); a real server keeps it on the person's account. */
+const MY_CONN_KEY = 'oontu.proto.myconn';
+let MY_CONN = {};
+try { MY_CONN = JSON.parse(localStorage.getItem(MY_CONN_KEY) || '{}') || {}; } catch(e){ MY_CONN = {}; }
+let MY_CONN_DEFAULT = null;   // the demo personas' connections, kept so a tracked person's state never leaks into them
+function myConnTracked(){ return !!(authAppSession.workspaceId && /^ws_\d+_/.test(authAppSession.workspaceId) && authAppSession.role && authAppSession.role!=='owner' && authAppSession.role!=='candidate'); }
+function myConnApply(){
+  if(typeof WSX==='undefined') return;
+  if(!MY_CONN_DEFAULT) MY_CONN_DEFAULT = JSON.parse(JSON.stringify(WSX.accounts));
+  const email = authNormEmail(authAppSession.email), m = MY_CONN[email] || {};
+  ['mail', 'calendar'].forEach(function(k){
+    const a = WSX.accounts[k], d = MY_CONN_DEFAULT[k];
+    if(!myConnTracked()){ Object.assign(a, d); return; }
+    a.status = m[k] ? 'connected' : 'not_connected'; a.account = m[k] ? email : ''; a.last = m[k] ? 'just now' : '';
+  });
+}
+function myConnSave(){
+  if(!myConnTracked()) return;
+  const a = WSX.accounts;
+  MY_CONN[authNormEmail(authAppSession.email)] = { mail:a.mail.status==='connected', calendar:a.calendar.status==='connected' };
+  try { localStorage.setItem(MY_CONN_KEY, JSON.stringify(MY_CONN)); } catch(e){}
+}
+function myConnectCardHTML(){
+  if(!myConnTracked() || state.role==='admin' && authAppSession.role==='owner') return '';
+  const a = WSX.accounts;
+  const todo = [['mail', 'Connect your mailbox', 'Emails to candidates and clients go out from your own address.'], ['calendar', 'Connect your calendar', 'Interview invites use your calendar and your availability.']].filter(function(x){ return a[x[0]].status!=='connected'; });
+  if(!todo.length) return '';
+  return '<section id="my-conn-card" class="card ws-card" aria-labelledby="my-conn-h">'+
+    '<div class="ws-card__head"><div class="min-w-0"><h3 id="my-conn-h" class="ws-card__title">'+(todo.length===2 ? 'Two things before you start' : 'One thing left')+'</h3>'+
+      '<p class="ws-card__sub">Connected once, for you. Takes a few seconds.</p></div></div>'+
+    '<ul class="ws-list">'+todo.map(function(x){
+      return '<li><button type="button" class="ws-item" onclick="myConnect(\''+x[0]+'\')"><span class="first-run__check" aria-hidden="true"></span>'+
+        '<span class="ws-item__text"><span class="ws-item__title">'+x[1]+'</span><span class="ws-item__meta">'+x[2]+'</span></span>'+icon('chevronRight','w-4 h-4 ws-item__arrow')+'</button></li>';
+    }).join('')+'</ul></section>';
+}
+function myConnect(key){
+  sAccount(key, 'connect');
+  WSX.accounts[key].account = authNormEmail(authAppSession.email);
+  myConnSave();
+  const c = document.getElementById('my-conn-card'), html = myConnectCardHTML();
+  if(c){ if(html) c.outerHTML = html; else { c.remove(); toast('Mailbox and calendar are connected. You’re all set.'); } }
+}
+function wsSetupFor(email, workspaceId){
+  const all = Object.keys(WS_SETUPS).map(function(k){ return WS_SETUPS[k]; });
+  return (workspaceId && all.find(function(w){ return w.workspaceId===workspaceId; })) || WS_SETUPS[authNormEmail(email)] || null;
+}
 let wsSetup = null;     // the signed-in owner's checklist, or null (demo personas, invited teammates)
 let wsSessionSeq = 0;   // one per sign-in, for "Hide for now" and the one-session "ready" state
 function wsSetupStart(type, email, leadId, teamSize, loc){
@@ -29288,7 +29630,7 @@ function wsSetupCardHTML(where){
   wsSyncLead(w);
   const p = wsProgress(w);
   if(p.done===p.total){
-    if(w.readySession<0) w.readySession = wsSessionSeq;
+    if(w.readySession===-1) w.readySession = wsSessionSeq;
     if(where==='home' && w.readySession!==wsSessionSeq) return '';   // "ready" shows for one session, then the card is gone
     return '<section id="ws-card" data-where="'+where+'" class="card ws-card ws-card--ready" aria-labelledby="ws-card-h">'+
       '<span class="ws-ready__icon" aria-hidden="true">'+icon('check','w-5 h-5')+'</span>'+
@@ -29319,7 +29661,7 @@ function wsSetupCardHTML(where){
       (where==='home' ? '<button type="button" class="btn-quiet text-sm" onclick="wsHideForNow()">Hide for now</button>' : '')+
     '</div>'+
     kairoNoteHTML(escapeHtml(kairo), [{ label:next.cta || 'Open '+next.noun, onclick:"wsOpenItem('"+p.next+"')" }])+
-    '<ul class="ws-list">'+wsItems(w).map(row).join('')+'</ul>'+
+    '<ul class="ws-list">'+wsItems(w).filter(function(k){ return where!=='home' || !wsItemDone(k, w) || (k==='agency-team' && RECRUITER_ROSTER.some(function(r){ return r.inviteState==='queued'; })); }).map(row).join('')+'</ul>'+   // on Home only what is still unfinished; Settings lists everything
     '<div class="ws-card__foot">'+
       '<button type="button" class="btn-quiet text-sm" onclick="wsOpenDefaults()">Your defaults</button>'+
       (AUTH_IS_PROTOTYPE && where==='home' && w.simDays<3 ? '<button type="button" class="ws-proto" onclick="wsSimulateDays()">Prototype · Simulate 3 days</button>' : '')+
@@ -29329,6 +29671,7 @@ function wsSetupCardHTML(where){
 function wsRefreshCard(){
   const c = document.getElementById('ws-card');
   if(c){ const html = wsSetupCardHTML(c.getAttribute('data-where')); if(html) c.outerHTML = html; else c.remove(); }
+  wsPersist();
 }
 function wsHideForNow(){
   if(!wsSetup) return;
@@ -32591,6 +32934,10 @@ function seedSignupLeads(){
     // closed: shown with "Show closed"
     lead({ n:9, country:'India', city:'Ahmedabad', teamSize:'200+', name:'Vikram Joshi', email:'vikram@orbitretail.in', mobile:'+91 98450 11736', type:'Corporate', h:190, reached:'email', at:'su-mobile', company:'Orbit Retail', status:'not_interested',
       followUp:{ assignedTo:'Rahul Desai', events:[], calls:[{ at:ago(150), by:'Rahul Desai', outcome:'not_interested', reason:'Pricing', note:'Comparing with their current ATS; budget next quarter.' }] } }),
+    lead({ n:12, country:'India', city:'Delhi', teamSize:'6–20', name:'Tanvi Arora', email:'tanvi@hirebridge.in', mobile:'+91 99100 52378', type:'Staffing agency', h:260, reached:'mobile', at:'su-password', status:'not_interested',
+      followUp:{ assignedTo:'Nisha Gupta', events:[], calls:[{ at:ago(230), by:'Nisha Gupta', outcome:'not_interested', reason:'Too many steps', note:'Wanted to try it in two minutes; gave up at the password.' }] } }),
+    lead({ n:13, country:'United Kingdom', city:'London', teamSize:'51–200', name:'Oliver Grant', email:'oliver@northgate.example', mobile:'+44 7700 900412', type:'Corporate', h:310, reached:'email', at:'su-mobile', company:'Northgate', status:'not_interested',
+      followUp:{ assignedTo:'Rahul Desai', events:[], calls:[{ at:ago(280), by:'Rahul Desai', outcome:'not_interested', reason:'Pricing', note:'Already pays for another ATS until March.' }] } }),
     lead({ n:10, country:'India', city:'Kolkata', teamSize:'6\u201320', name:'Ananya Das', email:'ananya@peopleloop.in', mobile:'+91 96740 28819', type:'Staffing agency', h:120, reached:'verified', verified:true, company:'PeopleLoop', status:'completed', done:true, checklist:{ done:7, total:7 },
       followUp:{ assignedTo:'Farhan Ali', events:[{ at:ago(100), text:'Resume link sent by email and WhatsApp' }, { at:ago(98), text:'Finished setup' }],
         calls:[{ at:ago(101), by:'Farhan Ali', outcome:'will_finish', reason:'Didn’t verify email', note:'Verification email was in spam.' }] } })
@@ -32616,6 +32963,13 @@ function leadStoppedAt(l){
 /* Signed up and in the product, with the "Complete your workspace" checklist not finished yet. */
 function leadInProduct(l){ return l.status==='in_product' && !l.setupDone; }
 function leadLastCall(l){ const c = (l.followUp && l.followUp.calls) || []; return c[c.length-1] || null; }
+/* The call that closed a "Not interested" lead: who, when, why, and what they said. Null for any other lead. */
+function leadClosure(l){
+  if(l.status!=='not_interested') return null;
+  const calls = ((l.followUp && l.followUp.calls) || []).filter(function(c){ return c.outcome==='not_interested'; });
+  const c = calls[calls.length-1];
+  return { reason:(c && c.reason) || l.closedReason || 'No reason given', at:c ? c.at : l.lastActivityAt, by:c ? c.by : '', note:(c && c.note) || '' };
+}
 function leadIsClosed(l){ return l.setupDone || l.status==='completed' || l.status==='not_interested' || l.status==='restarted'; }
 function fmtShortDate(iso){ return new Date(iso).toLocaleDateString('en-IN', { day:'numeric', month:'short' }); }
 /* The follow-up status, following flow 01: Within 24 h → Reminder sent → Call needed → Assigned → an outcome. */
@@ -32647,6 +33001,11 @@ function signupsNeedingFollowUp(){
 let suLeadFilter = 'All', suLeadSearch = '', suLeadShowClosed = false, suLeadCountry = '';
 function oontuSignupsRows(){
   const q = suLeadSearch.trim().toLowerCase();
+  if(suLeadFilter==='Not interested') return followUpLeads().filter(function(l){
+    if(l.status!=='not_interested') return false;   // out of the follow-up queue, kept here for review
+    if(suLeadCountry && l.country!==suLeadCountry) return false;
+    return !q || (l.name+' '+l.email+' '+l.mobile+' '+(l.companyName||'')+' '+leadClosure(l).reason).toLowerCase().indexOf(q)>-1;
+  }).sort(function(a, b){ return new Date(leadClosure(b).at) - new Date(leadClosure(a).at); });
   return followUpLeads().filter(function(l){
     if(!suLeadShowClosed && leadIsClosed(l)) return false;
     if((suLeadFilter==='Setup not finished') !== leadInProduct(l)) return false;   // in-product owners have their own filter
@@ -32665,12 +33024,26 @@ function oontuSignupsRows(){
 }
 function leadNeedsCall(l){ const k = leadFollowUp(l).key; return k==='call_needed' || k==='needs_help'; }
 function oontuSignupsTableHTML(){
-  const rows = oontuSignupsRows();
+  const rows = oontuSignupsRows(), ni = suLeadFilter==='Not interested';
   return '<div id="oontu-signups-table">'+(rows.length ? '<div class="card rounded-2xl overflow-x-auto"><table class="w-full text-sm">'+
     '<thead><tr class="border-b border-zinc-100 text-left text-[11px] text-zinc-400">'+
-      ['Name','Mobile','Type','Team size','Country','Stopped at','Stuck for','Follow-up','Assigned to'].map(function(h){ return '<th class="px-4 py-2.5 font-medium whitespace-nowrap">'+h+'</th>'; }).join('')+'</tr></thead>'+
+      (ni ? ['Name','Mobile','Type','Team size','Country','Drop-off reason','Note','Closed on','Assigned to'] : ['Name','Mobile','Type','Team size','Country','Stopped at','Stuck for','Follow-up','Assigned to']).map(function(h){ return '<th class="px-4 py-2.5 font-medium whitespace-nowrap">'+h+'</th>'; }).join('')+'</tr></thead>'+
     '<tbody>'+rows.map(function(l){
       const fu = leadFollowUp(l), muted = fu.key==='fresh', closed = leadIsClosed(l);
+      if(ni){
+        const cl = leadClosure(l);
+        return '<tr class="border-b border-zinc-50 last:border-0 hover:bg-zinc-50 cursor-pointer" tabindex="0" onclick="openSignupSheet(\''+l.id+'\')" onkeydown="if(event.key===\'Enter\') openSignupSheet(\''+l.id+'\')">'+
+          '<td class="px-4 py-2.5"><span class="font-medium text-ink">'+escapeHtml(l.name || 'No name yet')+'</span><span class="block text-xs text-zinc-400">'+escapeHtml(l.email)+'</span></td>'+
+          '<td class="px-4 py-2.5 whitespace-nowrap">'+(l.mobile ? escapeHtml(l.mobile) : '<span class="text-zinc-300">—</span>')+'</td>'+
+          '<td class="px-4 py-2.5 whitespace-nowrap">'+escapeHtml(l.workspaceType || '—')+'</td>'+
+          '<td class="px-4 py-2.5 whitespace-nowrap">'+(l.teamSize ? escapeHtml(l.teamSize) : '<span class="text-zinc-300">—</span>')+'</td>'+
+          '<td class="px-4 py-2.5 whitespace-nowrap">'+(l.country ? ((countryByName(l.country) || {}).flag || '')+' '+escapeHtml(l.country) : '<span class="text-zinc-300">—</span>')+'</td>'+
+          '<td class="px-4 py-2.5 whitespace-nowrap"><span class="inline-block text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">'+escapeHtml(cl.reason)+'</span></td>'+
+          '<td class="px-4 py-2.5 max-w-[220px]"><span class="block truncate text-zinc-500" title="'+escapeHtml(cl.note)+'">'+(cl.note ? escapeHtml(cl.note) : '<span class="text-zinc-300">—</span>')+'</span></td>'+
+          '<td class="px-4 py-2.5 whitespace-nowrap">'+fmtShortDate(cl.at)+'</td>'+
+          '<td class="px-4 py-2.5 whitespace-nowrap">'+(l.followUp && l.followUp.assignedTo ? escapeHtml(l.followUp.assignedTo) : '<span class="text-zinc-300">Unassigned</span>')+'</td>'+
+        '</tr>';
+      }
       return '<tr class="border-b border-zinc-50 last:border-0 hover:bg-zinc-50 cursor-pointer'+(muted || closed ? ' text-zinc-400' : '')+'" tabindex="0" onclick="openSignupSheet(\''+l.id+'\')" onkeydown="if(event.key===\'Enter\') openSignupSheet(\''+l.id+'\')">'+
         '<td class="px-4 py-2.5"><span class="font-medium '+(muted || closed ? 'text-zinc-500' : 'text-ink')+'">'+escapeHtml(l.name || 'No name yet')+'</span><span class="block text-xs text-zinc-400">'+escapeHtml(l.email)+'</span></td>'+
         '<td class="px-4 py-2.5 whitespace-nowrap">'+(l.mobile ? escapeHtml(l.mobile) : '<span class="text-zinc-300">—</span>')+'</td>'+
@@ -32683,7 +33056,23 @@ function oontuSignupsTableHTML(){
         '<td class="px-4 py-2.5 whitespace-nowrap">'+(l.followUp && l.followUp.assignedTo ? escapeHtml(l.followUp.assignedTo) : '<span class="text-zinc-300">Unassigned</span>')+'</td>'+
       '</tr>';
     }).join('')+'</tbody></table></div>'
-    : '<div class="card rounded-2xl py-12 text-center empty-state text-sm">No sign-ups match this filter.</div>')+'</div>';
+    : '<div class="card rounded-2xl py-12 text-center empty-state text-sm">'+(ni ? 'Nobody has said they’re not interested.' : 'No sign-ups match this filter.')+'</div>')+'</div>';
+}
+/* Why people turn Oontu down: the reason on the call that closed each "Not interested" lead. Shown on that tab only. */
+function oontuNotInterestedSummaryHTML(){
+  const closed = followUpLeads().filter(function(l){ return l.status==='not_interested'; }), counts = {};
+  closed.forEach(function(l){ const r = leadClosure(l).reason; counts[r] = (counts[r]||0)+1; });
+  const reasons = Object.keys(counts).sort(function(a, b){ return counts[b]-counts[a] || a.localeCompare(b); });
+  if(suLeadFilter!=='Not interested' || !closed.length) return '<div id="oontu-signups-ni"></div>';
+  const max = counts[reasons[0]], pct = function(n){ return Math.round(n/closed.length*100); };
+  return '<div id="oontu-signups-ni" class="card rounded-2xl p-5 mb-4">'+
+    '<h3 class="text-sm font-semibold text-ink">Why people say no</h3>'+
+    '<p class="text-xs text-zinc-500 mt-0.5">'+closed.length+(closed.length===1 ? ' sign-up' : ' sign-ups')+' closed as not interested, by the reason given on the call. Most common: <span class="font-medium text-zinc-700">'+escapeHtml(reasons[0])+'</span> ('+pct(counts[reasons[0]])+'%).</p>'+
+    '<div class="mt-4 space-y-2.5">'+reasons.map(function(r){
+      return '<div class="flex items-center gap-3 text-sm"><span class="w-40 shrink-0 text-zinc-600">'+escapeHtml(r)+'</span>'+
+        '<span class="flex-1 h-2 rounded-full bg-zinc-100 overflow-hidden"><span class="block h-full rounded-full" style="width:'+Math.round(counts[r]/max*100)+'%;background:#2F313F"></span></span>'+
+        '<span class="w-16 text-right tabular-nums text-zinc-700">'+counts[r]+' <span class="text-xs text-zinc-400">'+pct(counts[r])+'%</span></span></div>';
+    }).join('')+'</div></div>';
 }
 function oontuSignupsKairoHTML(){
   const open = followUpLeads().filter(function(l){ return !leadIsClosed(l); });
@@ -32718,8 +33107,11 @@ function oontuSignupsStopsHTML(){
 function refreshOontuSignups(){
   const t = document.getElementById('oontu-signups-table'); if(t) t.outerHTML = oontuSignupsTableHTML();
   const s = document.getElementById('oontu-signups-stops'); if(s) s.outerHTML = oontuSignupsStopsHTML();
+  const n = document.getElementById('oontu-signups-ni'); if(n) n.outerHTML = oontuNotInterestedSummaryHTML();
+  const c = document.getElementById('lead-ni-count'); if(c) c.textContent = leadNotInterestedCount();
   if(state.role==='oontu') renderSidebar();   // the follow-up count beside the nav item
 }
+function leadNotInterestedCount(){ return followUpLeads().filter(function(l){ return l.status==='not_interested'; }).length; }
 function setSignupFilter(v){ suLeadFilter = v; document.querySelectorAll('[data-lead-filter]').forEach(function(b){ const on = b.getAttribute('data-lead-filter')===v; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on); }); refreshOontuSignups(); }
 function renderOontuSignups(){
   return '<div class="content-shell max-w-6xl">'+
@@ -32727,8 +33119,9 @@ function renderOontuSignups(){
     sectionTitle('Incomplete sign-ups', 'People who started signing up but haven’t finished.')+
     oontuSignupsKairoHTML()+
     '<div class="flex flex-wrap items-center gap-3 mb-4">'+
-      '<div class="seg" role="group" aria-label="Filter sign-ups">'+['All','Agency','Corporate','Setup not finished'].map(function(f){
-        return '<button type="button" data-lead-filter="'+f+'" class="seg__btn'+(suLeadFilter===f ? ' is-on' : '')+'" aria-pressed="'+(suLeadFilter===f)+'" onclick="setSignupFilter(\''+f+'\')">'+f+'</button>';
+      '<div class="seg" role="group" aria-label="Filter sign-ups">'+['All','Agency','Corporate','Setup not finished','Not interested'].map(function(f){
+        return '<button type="button" data-lead-filter="'+f+'" class="seg__btn'+(suLeadFilter===f ? ' is-on' : '')+'" aria-pressed="'+(suLeadFilter===f)+'" onclick="setSignupFilter(\''+f+'\')">'+f+
+          (f==='Not interested' ? ' <span id="lead-ni-count" class="text-[11px] text-zinc-400 tabular-nums">'+leadNotInterestedCount()+'</span>' : '')+'</button>';
       }).join('')+'</div>'+
       '<select aria-label="Country" onchange="suLeadCountry=this.value; refreshOontuSignups()" class="text-sm border border-zinc-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500">'+
         '<option value="">All countries</option>'+Array.from(new Set(followUpLeads().map(function(l){ return l.country; }).filter(Boolean))).sort().map(function(c){ return '<option'+(suLeadCountry===c ? ' selected' : '')+'>'+escapeHtml(c)+'</option>'; }).join('')+
@@ -32737,6 +33130,7 @@ function renderOontuSignups(){
       '<span class="flex-1"></span>'+
       '<label class="inline-flex items-center gap-2 text-sm text-zinc-600 cursor-pointer"><input type="checkbox"'+(suLeadShowClosed ? ' checked' : '')+' onchange="suLeadShowClosed=this.checked; refreshOontuSignups()" class="w-4 h-4 accent-[#2F313F]" />Show closed</label>'+
     '</div>'+
+    oontuNotInterestedSummaryHTML()+
     oontuSignupsTableHTML()+
     oontuSignupsStopsHTML()+
     '<div id="signup-sheet-root"></div>'+
@@ -32779,7 +33173,7 @@ function leadTimeline(l){
 }
 function signupSheetHTML(){
   const l = signupLeadById(suLeadSheet.id); if(!l) return '';
-  const st = suLeadSheet, fu = leadFollowUp(l), closed = leadIsClosed(l), call = leadLastCall(l);
+  const st = suLeadSheet, fu = leadFollowUp(l), closed = leadIsClosed(l), cl = leadClosure(l);
   const input = 'w-full border border-zinc-200 rounded-xl px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-500';
   const label = function(id, text){ return '<label for="'+id+'" class="block text-xs font-medium text-zinc-600 mb-1.5">'+text+'</label>'; };
   const err = function(k){ return st.errors[k] ? '<p class="text-xs text-terracotta-600 mt-1" role="alert">'+st.errors[k]+'</p>' : ''; };
@@ -32805,14 +33199,15 @@ function signupSheetHTML(){
           row('Stuck for', closed ? '—' : leadStuckLabel(l))+
           row('Signed up with', l.method==='google' ? 'Google' : l.method==='microsoft' ? 'Microsoft' : 'Email')+
           row('Email verified', l.emailVerified ? 'Yes' : 'Not yet')+
-          (l.status==='not_interested' && call ? row('Closed because', escapeHtml(call.reason || 'Not interested')) : '')+
+          (cl ? row('Status', 'Not interested')+row('Closed because', escapeHtml(cl.reason))+row('Closed on', time(cl.at)+(cl.by ? ' by '+escapeHtml(cl.by) : ''))+(cl.note ? row('What they said', escapeHtml(cl.note)) : '') : '')+
         '</dl>'+
+        (cl ? '<p class="text-sm rounded-xl px-3.5 py-2.5 bg-zinc-50 text-zinc-600">This sign-up is out of the follow-up queue. If they change their mind, log a new call below with the new outcome and they go back in. Earlier calls stay in the timeline.</p>' : '')+
         '<div>'+label('lead-assign', 'Assign to')+
-          '<select id="lead-assign" class="'+input+'" onchange="assignSignupLead(this.value)"'+(closed ? ' disabled' : '')+'>'+
+          '<select id="lead-assign" class="'+input+'" onchange="assignSignupLead(this.value)"'+(closed && !cl ? ' disabled' : '')+'>'+
             '<option value="">Unassigned</option>'+OONTU_FOLLOWUP_TEAM.map(function(p){ return '<option value="'+escapeHtml(p.name)+'"'+(l.followUp.assignedTo===p.name ? ' selected' : '')+'>'+escapeHtml(p.name)+' · '+p.role+'</option>'; }).join('')+
           '</select></div>'+
-        (closed ? '' : '<form class="space-y-3" onsubmit="event.preventDefault(); logSignupCall()" novalidate>'+
-          '<p class="text-sm font-semibold text-ink">Log call</p>'+
+        (closed && !cl ? '' : '<form class="space-y-3" onsubmit="event.preventDefault(); logSignupCall()" novalidate>'+
+          '<p class="text-sm font-semibold text-ink">'+(cl ? 'Log a new call' : 'Log call')+'</p>'+
           '<fieldset><legend class="block text-xs font-medium text-zinc-600 mb-1.5">Outcome</legend><div class="grid grid-cols-2 gap-2">'+LEAD_OUTCOMES.map(function(o){
             const on = st.call.outcome===o.key;
             return '<label class="ct-choice'+(on ? ' is-on' : '')+'"><input type="radio" name="lead-outcome" value="'+o.key+'"'+(on ? ' checked' : '')+' onchange="suLeadSheet.call.outcome=this.value; suLeadSheet.errors.outcome=\'\'; renderSignupSheet(true)" /><span class="ct-choice__title">'+o.label+'</span></label>';
@@ -32853,16 +33248,21 @@ function logSignupCall(){
   const me = currentPlatformUser(), by = me ? me.name : 'Oontu team';
   l.followUp.calls.push({ at:nowTimestamp(), by:by, outcome:c.outcome, reason:c.reason, nextDate:c.nextDate || null, note:String(c.note||'').trim() });
   if(!l.followUp.assignedTo) l.followUp.assignedTo = by;
-  const label = LEAD_OUTCOMES.find(function(o){ return o.key===c.outcome; }).label;
+  const label = LEAD_OUTCOMES.find(function(o){ return o.key===c.outcome; }).label, wasClosed = l.status==='not_interested';
   logPlatformAudit('Sign-up call logged', (l.name || l.email)+' — '+label+' · '+c.reason, { entityId:l.id });
   st.flash = { text:'Call logged.' };
-  if(c.outcome==='will_finish'){
-    leadEvent(l, 'Customer said they will finish setup themselves');
-  } else if(c.outcome==='not_interested'){
+  if(c.outcome==='not_interested'){
+    if(!wasClosed) l.statusBeforeClosed = l.status;
     l.status = 'not_interested'; l.closedReason = c.reason;
-    leadEvent(l, 'Closed: not interested');
-    st.flash = { text:'Lead closed. Reason kept: '+escapeHtml(c.reason)+'.', tone:'grey' };
+    leadEvent(l, wasClosed ? 'Not interested again: reason updated to '+c.reason : 'Closed: not interested');
+    st.flash = { text:'Moved to Not interested. Reason kept: '+escapeHtml(c.reason)+'.', tone:'grey' };
+  } else if(wasClosed){
+    l.status = l.statusBeforeClosed || 'in_progress'; delete l.statusBeforeClosed; l.closedReason = '';
+    leadEvent(l, 'Back in the follow-up queue: interest changed ('+label+')');
+    logPlatformAudit('Sign-up reopened', (l.name || l.email)+' — no longer not interested ('+label+')', { entityId:l.id });
+    st.flash = { text:'Back in the follow-up queue. The earlier call stays in the timeline.' };
   }
+  if(c.outcome==='will_finish') leadEvent(l, 'Customer said they will finish setup themselves');
   st.call = { outcome:'', reason:'', nextDate:'', note:'' };
   renderSignupSheet(); refreshOontuSignups();
 }
@@ -38400,6 +38800,7 @@ function sAccount(key, action){
   const a = WSX.accounts[key];
   if(action==='disconnect'){ a.status = 'not_connected'; logAudit('Settings','Disconnected '+a.provider,'Own account'); toast(a.provider+' disconnected. Features that used it will ask you to reconnect.'); }
   else { a.status = 'connected'; a.last = 'just now'; logAudit('Settings', (action==='connect' ? 'Connected ' : 'Reconnected ')+a.provider, 'Own account'); toast(a.provider+' connected'); }
+  myConnSave();   // a teammate's own connections are kept for their next sign-in
   settingsRefresh();
 }
 function sec_prefs(ed){
