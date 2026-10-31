@@ -5125,6 +5125,43 @@ function computeTodaysBriefing(){
   if(totalPlacements) wins.push({ icon:'check', text:totalPlacements+' placement'+(totalPlacements===1?'':'s')+' made so far.', onclick:"showView('paytrack')" });
   return { critical:critical, attention:attention, wins:wins };
 }
+/* ---- Flow analytics: statistics computed from each submission's stageHistory (no model, no invented rates).
+   A journey "reached" a step if any history entry is that stage or a later one. Every figure carries its sample size. ---- */
+const FLOW_STEPS = [
+  { key:'sent', label:'Sent to client', stages:['Submitted','Shortlisted','Interview Scheduled','Feedback Given','Approved','Offer Pending Approval','Offer Extended','Offer Accepted','Joined','Lock-in Completed'] },
+  { key:'shortlisted', label:'Shortlisted', stages:['Shortlisted','Interview Scheduled','Feedback Given','Approved','Offer Pending Approval','Offer Extended','Offer Accepted','Joined','Lock-in Completed'] },
+  { key:'interview', label:'Interview', stages:['Interview Scheduled','Feedback Given','Approved','Offer Pending Approval','Offer Extended','Offer Accepted','Joined','Lock-in Completed'] },
+  { key:'offer', label:'Offer', stages:['Offer Pending Approval','Offer Extended','Offer Accepted','Joined','Lock-in Completed'] },
+  { key:'accepted', label:'Offer accepted', stages:['Offer Accepted','Joined','Lock-in Completed'] },
+  { key:'joined', label:'Joined', stages:['Joined','Lock-in Completed'] }
+];
+function flowReachedAt(sb, key){
+  const step = FLOW_STEPS.find(function(s){ return s.key===key; });
+  const hit = (sb.stageHistory||[]).filter(function(h){ return step && step.stages.indexOf(h.stage)>-1; }).map(function(h){ return new Date(h.at).getTime(); }).filter(function(t){ return !isNaN(t); });
+  return hit.length ? Math.min.apply(null, hit) : null;
+}
+function flowFunnel(subs){
+  const rows = FLOW_STEPS.map(function(s){ return { key:s.key, label:s.label, n: subs.filter(function(sb){ return flowReachedAt(sb, s.key)!==null; }).length }; });
+  rows.forEach(function(r, i){ r.pctOfPrev = i>0 && rows[i-1].n>0 ? Math.round(r.n/rows[i-1].n*100) : null; });
+  return rows;
+}
+function flowDwellDays(subs, fromKey, toKey){
+  const gaps = subs.map(function(sb){ const a = flowReachedAt(sb, fromKey), b = flowReachedAt(sb, toKey); return a!==null && b!==null && b>=a ? (b-a)/86400000 : null; }).filter(function(g){ return g!==null; });
+  return { n:gaps.length, avg: gaps.length ? Math.round(gaps.reduce(function(s,g){ return s+g; },0)/gaps.length*10)/10 : null };
+}
+function flowBySource(subs){
+  const by = {};
+  subs.forEach(function(sb){ if(flowReachedAt(sb,'sent')===null) return; const k = sb.source || 'Unknown'; (by[k] = by[k] || []).push(sb); });
+  return Object.keys(by).map(function(k){ const f = flowFunnel(by[k]); return { source:k, sent:f[0].n, interview:f[2].n, offer:f[3].n, joined:f[5].n }; }).sort(function(a,b){ return b.sent-a.sent; });
+}
+function flowStalled(days){
+  const limit = days || 7, now = Date.now();
+  return SUBMISSIONS.filter(function(sb){
+    if(sb.hold || ['rejected','withdrawn','in_review','ready'].indexOf(sb.status)>-1 || sb.stage==='Joined' || sb.stage==='Lock-in Completed') return false;
+    const t = new Date(sb.updatedAt).getTime();
+    return !isNaN(t) && (now-t)/86400000 >= limit;
+  }).map(function(sb){ return { sb:sb, days: Math.floor((now-new Date(sb.updatedAt).getTime())/86400000) }; }).sort(function(a,b){ return b.days-a.days; });
+}
 function computeRecruiterRevenue(name){
   const joined = PAYTRACK_JOINED.filter(function(p){ return p.recruiter===name; });
   const revenue = joined.reduce(function(sum,p){ return sum + (p.joiningSalary||0)*100000*0.0833; }, 0);
@@ -5881,7 +5918,7 @@ function renderHmDashboard(){
   const attention = [];
   recommended.forEach(function(c){
     const m = bestJobMatch(c);
-    attention.push({ tone:'neutral', icon:'user', title:'Review '+c.name, meta:c.role+(m ? ' · matched to '+m.job.title : '')+' · '+c.joinProb+'% match', cta:'Review', onclick:'openCandidate('+c.id+')' });
+    attention.push({ tone:'neutral', icon:'user', title:'Review '+c.name, meta:c.role+(m ? ' · best match '+m.job.title+' ('+m.pct+'% of required skills)' : ''), cta:'Review', onclick:'openCandidate('+c.id+')' });
   });
   fb.forEach(function(p){ attention.push({ tone: p.daysWaiting>=3 ? 'danger' : 'warn', icon:'clock', title:'Feedback due · '+p.candidate, meta:p.role+' · waiting '+oPlural(p.daysWaiting, 'day'), cta:'Give feedback', onclick:"showView('hm-feedback')" }); });
   pendingApprovalsForApprover().filter(function(r){ return r.entityType==='Job' || r.entityType==='JobCreation'; }).forEach(function(r){
@@ -12442,7 +12479,13 @@ function kairoForJob(j){
   out.dismissed = gone.length;
   return out;
 }
-function kairoDismiss(jobId, key){ const j = jobById(jobId); j.kairoDismissed = (j.kairoDismissed||[]).concat([key]); refreshKairoJob(jobId); }
+/* Every suggestion is logged: shown once it is acted on or dismissed, so the team can see what Kairo's advice led to. */
+function kairoLogOutcome(jobId, key, outcome){
+  const j = jobById(jobId); if(!j) return; (j.kairoLog = j.kairoLog || []).push({ key:key, outcome:outcome, at:new Date().toISOString(), by:(currentActingUser()||{}).name || null });
+  logAudit('Kairo', 'Suggestion ' + outcome, j.title + ' · ' + key, { entityType:'Job', entityId:j.id, jobId:j.id });
+}
+function kairoAccept(jobId, key){ kairoLogOutcome(jobId, key, 'accepted'); }
+function kairoDismiss(jobId, key){ const j = jobById(jobId); kairoLogOutcome(jobId, key, 'dismissed'); j.kairoDismissed = (j.kairoDismissed||[]).concat([key]); refreshKairoJob(jobId); }
 function kairoRestore(jobId){ const j = jobById(jobId); j.kairoDismissed = []; refreshKairoJob(jobId); }
 function refreshKairoJob(jobId){ const j = jobById(jobId), el = document.getElementById('kairo-job'); if(j && el) el.outerHTML = kairoJobHTML(j); const b = document.getElementById('kairo-top'); if(j && b) b.outerHTML = kairoTopHTML(j); }
 const KAIRO_TONE = { accent:'bg-accent-50 text-accent-600', gold:'bg-gold-50 text-gold-700', red:'bg-terracotta-50 text-terracotta-600' };
@@ -12454,7 +12497,7 @@ function kairoTopHTML(j){
     '<span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 '+KAIRO_TONE[first.tone||'accent']+'">'+icon(first.icon,'w-4 h-4')+'</span>'+
     '<div class="min-w-0 flex-1"><p class="text-sm font-medium text-ink">'+escapeHtml(first.title)+'</p><p class="text-xs text-zinc-500 truncate">'+escapeHtml(first.why)+'</p></div>'+
     (k.doNext.length>1 ? '<button type="button" onclick="document.getElementById(\'kairo-job\').scrollIntoView({behavior:\'smooth\'})" class="shrink-0 text-xs font-medium text-accent-700 hover:text-accent-900">See all '+k.doNext.length+'</button>' : '')+
-    (first.action ? '<button type="button" onclick="'+first.action.onclick+'" class="shrink-0 h-8 px-3 rounded-lg text-xs font-semibold text-white bg-accent-600 hover:bg-accent-700">'+escapeHtml(first.action.label)+'</button>' : '')+
+    (first.action ? '<button type="button" onclick="kairoAccept(\''+j.id+'\',\''+first.key+'\'); '+first.action.onclick+'" class="shrink-0 h-8 px-3 rounded-lg text-xs font-semibold text-white bg-accent-600 hover:bg-accent-700">'+escapeHtml(first.action.label)+'</button>' : '')+
   '</div>';
 }
 function kairoJobHTML(j){
@@ -12464,7 +12507,7 @@ function kairoJobHTML(j){
       return '<li class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white px-3.5 py-3">'+
         '<span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 '+KAIRO_TONE[x.tone||'accent']+'">'+icon(x.icon,'w-4 h-4')+'</span>'+
         '<div class="min-w-0 flex-1"><p class="text-sm font-medium text-ink">'+escapeHtml(x.title)+'</p><p class="text-xs text-zinc-500 mt-0.5">'+escapeHtml(x.why)+'</p></div>'+
-        '<div class="flex items-center gap-1 shrink-0">'+(x.action ? '<button type="button" onclick="'+x.action.onclick+'" class="h-8 px-3 rounded-lg text-xs font-medium btn-primary">'+escapeHtml(x.action.label)+'</button>' : '')+
+        '<div class="flex items-center gap-1 shrink-0">'+(x.action ? '<button type="button" onclick="kairoAccept(\''+j.id+'\',\''+x.key+'\'); '+x.action.onclick+'" class="h-8 px-3 rounded-lg text-xs font-medium btn-primary">'+escapeHtml(x.action.label)+'</button>' : '')+
           '<button type="button" onclick="kairoDismiss(\''+j.id+'\',\''+x.key+'\')" title="Dismiss" aria-label="Dismiss" class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-300 hover:text-zinc-600 hover:bg-zinc-100">'+icon('x','w-3.5 h-3.5')+'</button></div>'+
       '</li>'; }).join('')+'</ul>'
     : '<p class="text-sm text-zinc-500 rounded-xl border border-dashed border-zinc-200 px-4 py-5 text-center">Nothing urgent — this job is moving.</p>';
@@ -12492,7 +12535,7 @@ function kairoJobHTML(j){
     '<div class="flex flex-wrap items-center gap-3 mb-4">'+
       '<span class="w-9 h-9 rounded-xl bg-accent-50 text-accent-600 flex items-center justify-center">'+icon('sparkles','w-4 h-4')+'</span>'+
       '<div class="min-w-0 flex-1"><h2 class="text-[17px] font-semibold text-zinc-900 tracking-tight">Kairo for this job</h2>'+
-        '<p class="text-xs text-zinc-500">Next moves, candidate signals and client guidance — from this job’s pipeline, talent pool and conversations.</p></div>'+
+        '<p class="text-xs text-zinc-500">Next moves, candidate signals and client guidance — from this job’s pipeline, talent pool and conversations. Each line says why. Kairo suggests; people decide, and anything that sends, submits or approves still goes through you.'+(function(){ const lg = j.kairoLog || []; return lg.length ? ' Logged so far: '+lg.filter(function(x){ return x.outcome==='accepted'; }).length+' acted on, '+lg.filter(function(x){ return x.outcome==='dismissed'; }).length+' dismissed.' : ''; })()+'</p></div>'+
       (k.dismissed ? '<button type="button" onclick="kairoRestore(\''+j.id+'\')" class="text-xs font-medium text-zinc-500 hover:text-zinc-800">Show '+k.dismissed+' dismissed</button>' : '')+
     '</div>'+
     '<div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 items-start">'+
@@ -12594,7 +12637,12 @@ function computeMatchReasoning(c, job){
   const jobMinNum = parseInt((job.minExp||'0'),10) || 0;
   const expSignal = cExpNum>=jobMinNum ? (cExpNum>=jobMinNum+3 ? 'well above the minimum \u2014 may be looking for more scope than this role offers' : 'meets the experience bar') : 'below the stated minimum \u2014 worth a closer look before outreach';
   const locSignal = c.loc===job.loc ? 'same city as the role' : 'different city \u2014 relocation or remote fit not yet confirmed';
-  return { matchedRequired:matchedRequired, missingRequired:missingRequired, matchedPreferred:matchedPreferred, expSignal:expSignal, locSignal:locSignal, cExp:c.exp, jobMinExp:job.minExp };
+  const noticeDays = parseInt((c.notice||''),10);
+  const noticeSignal = !isNaN(noticeDays) ? (noticeDays<=30 ? 'notice of '+noticeDays+' days — can start soon' : 'notice of '+noticeDays+' days — expect a longer wait before joining') : 'notice period not recorded';
+  const ctc = /(\d+)\s*[–-]\s*(\d+)/.exec(c.salary||'');
+  const budgetMax = job.comp && job.comp.currency==='INR' && job.comp.fixedMax ? Number(job.comp.fixedMax)/100000 : null;
+  const compSignal = ctc && budgetMax ? (Number(ctc[1])<=budgetMax ? 'expected '+c.salary+' starts within the ₹'+budgetMax+' LPA budget' : 'expected pay starts above the ₹'+budgetMax+' LPA budget — confirm before outreach') : 'pay fit not checked — candidate or job pay is not recorded';
+  return { matchedRequired:matchedRequired, missingRequired:missingRequired, matchedPreferred:matchedPreferred, expSignal:expSignal, locSignal:locSignal, noticeSignal:noticeSignal, compSignal:compSignal, cExp:c.exp, jobMinExp:job.minExp };
 }
 function matchReasoningHTML(c, job){
   const r = computeMatchReasoning(c, job);
@@ -12604,13 +12652,39 @@ function matchReasoningHTML(c, job){
     (r.matchedPreferred.length ? '<p><span class="font-medium text-accent-600">'+icon('sparkles','w-3 h-3 inline mr-0.5')+' Bonus overlap:</span> '+r.matchedPreferred.join(', ')+' \u2014 adjacent skills the role would value but doesn\u2019t strictly require</p>' : '')+
     '<p><span class="font-medium text-zinc-600">Experience:</span> '+r.cExp+' vs. '+r.jobMinExp+' required \u2014 '+r.expSignal+'</p>'+
     '<p><span class="font-medium text-zinc-600">Location:</span> '+r.locSignal+'</p>'+
+    '<p><span class="font-medium text-zinc-600">Availability:</span> '+r.noticeSignal+'</p>'+
+    '<p><span class="font-medium text-zinc-600">Pay:</span> '+r.compSignal+'</p>'+
+    (function(){ const f = computeJobFit(c, job); return '<p><span class="font-medium text-zinc-600">Detailed fit (proposed):</span> '+f.pct+'% — '+f.parts.filter(function(p){ return p.weight; }).map(function(p){ return p.label.toLowerCase()+' '+p.got+'/'+p.weight; }).join(', ')+(f.adjacent.length ? '; near skills counted half: '+f.adjacent.join(', ') : '')+'. Shown for comparison; the ranking still uses the skills match.</p>'; })()+
+    '<p class="text-[10px] text-zinc-400">Rule-based checks of the recorded fields. They do not change the skills match percentage, and they are not predictions.</p>'+
   '</div>';
 }
 function computeJobMatchPct(c, job){
+  if(MATCH_MODEL === 'detailed') return computeJobFit(c, job).pct;
   const jobSkills = job.skills.map(function(s){ return s.toLowerCase(); });
   const cSkills = c.skills.map(function(s){ return s.toLowerCase(); });
   const overlap = jobSkills.filter(function(s){ return cSkills.includes(s); }).length;
   return jobSkills.length ? Math.round((overlap/jobSkills.length)*100) : 0;
+}
+/* Detailed fit (proposed model, shown beside the skills match and NOT used for ranking until approved).
+   Job-related suitability only: required skills (a near skill earns half credit), preferred skills, and experience against the minimum.
+   Notice, pay and location are availability checks shown separately, so likelihood of joining never mixes with suitability. */
+let MATCH_MODEL = 'skills';   /* 'detailed' switches every ranking to computeJobFit; leave on 'skills' until the owner approves the before/after comparison */
+const SKILL_ADJACENCY = { 'java':['kotlin','scala','spring boot'], 'spring boot':['java','microservices'], 'kotlin':['java'], 'react':['react native','javascript','typescript','next.js'], 'react native':['react'], 'javascript':['typescript','react','node.js'], 'typescript':['javascript','react','node.js'], 'node.js':['javascript','typescript'], 'aws':['azure','gcp'], 'azure':['aws','gcp'], 'gcp':['aws','azure'], 'kubernetes':['docker','openshift'], 'docker':['kubernetes'], 'python':['r','pyspark'], 'sql':['postgresql','mysql'], 'postgresql':['sql','mysql'], 'mysql':['sql','postgresql'] };
+const FIT_WEIGHTS = { required:60, preferred:15, experience:25 };
+function computeJobFit(c, job){
+  const have = (c.skills||[]).map(function(s){ return String(s).toLowerCase(); });
+  const req = (job.skills||[]), pref = (job.preferredSkills||[]);
+  const near = function(s){ const a = SKILL_ADJACENCY[String(s).toLowerCase()] || []; return a.some(function(x){ return have.indexOf(x) > -1; }); };
+  let reqPts = 0; const adj = [];
+  req.forEach(function(s){ if(have.indexOf(String(s).toLowerCase()) > -1) reqPts += 1; else if(near(s)){ reqPts += 0.5; adj.push(s); } });
+  const prefHit = pref.filter(function(s){ return have.indexOf(String(s).toLowerCase()) > -1; }).length;
+  const exp = parseInt(c.exp||'0', 10) || 0, min = parseInt(job.minExp||'0', 10) || 0;
+  const cov = req.length ? reqPts/req.length : 1;
+  const expScore = (!min ? 1 : exp >= min ? 1 : Math.max(0, exp/min)) * cov;   /* experience counts in proportion to the required skills the person has: years in other skills don't help this role */
+  const w = FIT_WEIGHTS, hasPref = pref.length > 0;
+  const wReq = hasPref ? w.required : w.required + w.preferred, wPref = hasPref ? w.preferred : 0;
+  const total = (req.length ? reqPts/req.length*wReq : 0) + (hasPref ? prefHit/pref.length*wPref : 0) + expScore*w.experience;
+  return { pct:Math.round(total), parts:[ { label:'Required skills', weight:wReq, got:req.length ? Math.round(reqPts/req.length*wReq) : 0 }, { label:'Preferred skills', weight:wPref, got:hasPref ? Math.round(prefHit/pref.length*wPref) : 0 }, { label:'Experience', weight:w.experience, got:Math.round(expScore*w.experience) } ], adjacent:adj };
 }
 /* Ordered pipeline stages, earliest → latest, used to rank a candidate's most-advanced application */
 const PIPELINE_STAGE_ORDER = ['Submitted','Shortlisted','Applied Directly','Recommended','Interview Scheduled','Feedback Given','Approved','Offer Pending Approval','Offer Extended','Offer Accepted','Revenue at Risk','Joined','Lock-in Completed','Rejected','Withdrawn'];
@@ -17463,7 +17537,7 @@ function kairoActivitySummary(c, events){
   return c.name+' has been active in the system for 16 days. Submitted to '+companies.length+' compan'+(companies.length===1?'y':'ies')+
     (latest ? ('. Currently at "'+latest.status+'" with '+latest.company+'.') : '. No active submissions yet.')+
     (lastComm ? (' Last contacted via WhatsApp by '+lastComm.owner+'.') : '')+
-    ' Candidate shows '+(c.intent==='High'?'high':'moderate')+' engagement and a '+c.joinProb+'% predicted join probability.';
+    ' Candidate shows '+(c.intent==='High'?'high':'moderate')+' engagement. Join score '+c.joinProb+'% is an indicative prototype figure, not a trained prediction.';
 }
 function activityImportanceClasses(imp){
   if(imp==='critical') return 'border-l-2 border-zinc-400';
@@ -17617,10 +17691,10 @@ function candidateTabBody(c, tab){
   // this section is removed rather than kept as a redundant summary of itself.
   return '<div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">'+
       '<div class="bg-white border border-zinc-200 rounded-2xl p-3 text-center">'+gaugeCompact(c.availScore,'Availability')+'</div>'+
-      '<div class="bg-white border border-zinc-200 rounded-2xl p-3 text-center">'+gaugeCompact(c.joinProb,'Join Probability')+'</div>'+
-      '<div class="bg-white border border-zinc-200 rounded-2xl p-3 text-center">'+gaugeCompact(c.counterRisk,'Counter Offer Risk','dark')+'</div>'+
+      '<div class="bg-white border border-zinc-200 rounded-2xl p-3 text-center">'+gaugeCompact(c.joinProb,'Join score (indicative)')+'</div>'+
+      '<div class="bg-white border border-zinc-200 rounded-2xl p-3 text-center">'+gaugeCompact(c.counterRisk,'Counter-offer signal (indicative)','dark')+'</div>'+
       '<div class="bg-white border border-zinc-200 rounded-2xl p-3 text-center">'+gaugeCompact(c.trust,'Trust Score')+'</div>'+
-      '<div class="bg-white border border-zinc-200 rounded-2xl p-3 text-center">'+gaugeCompact(c.respProb,'Response Probability')+'</div>'+
+      '<div class="bg-white border border-zinc-200 rounded-2xl p-3 text-center">'+gaugeCompact(c.respProb,'Response score (indicative)')+'</div>'+
     '</div>'+
     '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">'+
       '<div class="space-y-4">'+
@@ -18204,13 +18278,20 @@ function intelBottlenecks(){
         action:'Source more candidates', onclick:"showView('talent-pool'); switchTalentPoolTab('search');" });
     }
   });
+  flowStalled(7).slice(0,4).forEach(function(x){
+    const c = byId(x.sb.candidateId), j = jobById(x.sb.jobId);
+    if(!c || !j) return;
+    items.push({ icon:'clock', tone:'gold', title:c.name+' at '+j.client+' — no movement for '+x.days+' days',
+      detail:'Rule: no stage change in 7+ days. Last entry: '+(((x.sb.stageHistory||[]).slice(-1)[0]||{}).reason || x.sb.stage),
+      action:'Open candidate', onclick:'openCandidate('+c.id+')' });
+  });
   return items;
 }
 function intelPipelineRisk(){
   const items = [];
   CANDIDATES.filter(function(c){ return c.counterRisk>=60; }).forEach(function(c){
     items.push({ icon:'bell', tone:'terracotta', title:c.name+' \u2014 high counter-offer risk',
-      detail:'Counter-offer risk at '+c.counterRisk+'%, based on tenure and recent engagement signals',
+      detail:'Counter-offer signal at '+c.counterRisk+'% — an indicative figure on the candidate record, not a trained prediction',
       action:'Schedule follow-up', onclick:"openFollowUpModal({candidateId:"+c.id+"})" });
   });
   CANDIDATES.filter(function(c){ return c.respProb<=40; }).forEach(function(c){
@@ -18356,7 +18437,7 @@ function wfTriggerOptionsFor(wf){
   return OTHER_TRIGGERS;
 }
 const WF_CONDITION_FIELDS = [
-  { key:'matchScore', label:'Relevance / Match Score (%)', type:'number', extract:function(c){ return c.joinProb; }, relevantFor:['Candidate Added','Manual Trigger'] },
+  { key:'matchScore', label:'Relevance / Match Score (%)', type:'number', extract:function(c){ const b = bestJobMatch(c); return b ? b.pct : 0; }, relevantFor:['Candidate Added','Manual Trigger'] },
   { key:'stage', label:'Moved To Stage', type:'select', options: PIPELINE_STAGE_ORDER, extract:function(c){
       const entries = candidatePipelineEntries(c);
       const active = entries.find(function(e){ return e.status!=='Closed'; }) || entries[0];
@@ -21507,20 +21588,20 @@ function placementRevenueByRecruiter(){
 }
 function computeRecruiterScore(recruiterName){
   const myJobs = JOBS.filter(function(j){ return j.recruiter===recruiterName; });
-  // decisionHistory and hmInterviews carry no recruiter-attribution field in the current schema,
-  // so submission quality and interview conversion are genuinely org-wide signals here, not
-  // per-recruiter \u2014 disclosed in the UI rather than presented as personal numbers they aren't.
-  const approvedCount = decisionHistory.filter(function(d){ return d.decision==='Approved'; }).length;
-  const totalDecisions = decisionHistory.length || 1;
-  const submissionQuality = Math.round((approvedCount/totalDecisions)*100);
-  const interviewConversion = approvedCount ? Math.round((hmInterviews.length/approvedCount)*100) : 0;
+  // Per-recruiter now: each submission carries its sourcing recruiter and a stage history.
+  // Quality = share of journeys sent to a client that were shortlisted; conversion = share that reached interview.
+  const meRec = RECRUITER_ROSTER.find(function(r){ return r.name===recruiterName; });
+  const f = flowFunnel(SUBMISSIONS.filter(function(s){ return meRec && s.recruiterId===meRec.id; }));
+  const sentN = f[0].n;
+  const submissionQuality = sentN ? Math.round(f[1].n/sentN*100) : 0;
+  const interviewConversion = sentN ? Math.round(f[2].n/sentN*100) : 0;
   const revenueByRecruiter = placementRevenueByRecruiter();
   const revenue = revenueByRecruiter[recruiterName] || 0;
   const avgDaysOpen = myJobs.length ? Math.round(myJobs.reduce(function(s,j){ return s+j.daysOpen; },0)/myJobs.length) : 0;
   const slaScore = Math.max(0, 100 - avgDaysOpen*2); // faster average days-open \u2192 higher SLA score; a real formula, deliberately simple and disclosed as such
   const outreachVolume = Math.min(100, myJobs.reduce(function(s,j){ return s+(j.submitted||0); },0)*10);
   const composite = Math.round(submissionQuality*0.30 + interviewConversion*0.25 + slaScore*0.20 + Math.min(100,revenue/5000)*0.15 + outreachVolume*0.10);
-  return { submissionQuality, interviewConversion, slaScore, revenue, avgDaysOpen, outreachVolume, composite, jobCount:myJobs.length };
+  return { submissionQuality, interviewConversion, slaScore, revenue, avgDaysOpen, outreachVolume, composite, jobCount:myJobs.length, sentCount:sentN };
 }
 function renderRecruiterAnalytics(){
   const me = 'Priya Sharma';
@@ -21545,7 +21626,7 @@ function renderRecruiterAnalytics(){
         return oNumCard(s[0], s[1]);
       }).join('')+
     '</div>'+
-    '<p class="text-[11px] text-zinc-400 mb-6">Submission Quality and Interview Conversion are org-wide today \u2014 the current data model doesn\u2019t attribute a decision or interview to the specific recruiter who sourced it. SLA and Revenue are genuinely yours.</p>'+
+    '<p class="text-[11px] text-zinc-400 mb-6">Submission Quality (shortlisted \u00f7 sent to client) and Interview Conversion (reached interview \u00f7 sent) are counted from your own submissions: '+myScore.sentCount+' sent so far. With a small count, treat them as a guide only.</p>'+
     '<div class="card p-6 mb-6">'+
       '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-1">HIRING VELOCITY</p>'+
       '<p class="text-sm text-zinc-600">Average '+myScore.avgDaysOpen+' days open across your '+myScore.jobCount+' active job'+(myScore.jobCount===1?'':'s')+'.</p>'+
@@ -21581,7 +21662,14 @@ function revenueAnalyticsHTML(){
   '</div>';
 }
 function renderReports(){
-  const months = [{label:'Feb',v:2},{label:'Mar',v:3},{label:'Apr',v:2},{label:'May',v:4},{label:'Jun',v:3},{label:'Jul',v:2}];
+  const fSubs = SUBMISSIONS.slice(), ff = flowFunnel(fSubs);
+  const monthMap = {};
+  fSubs.forEach(function(sb){ const t = flowReachedAt(sb,'joined'); if(t===null) return; const d = new Date(t), k = d.getFullYear()*100+d.getMonth(); monthMap[k] = (monthMap[k]||0)+1; });
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = Object.keys(monthMap).map(Number).sort().slice(-6).map(function(k){ return { label:MONTH_NAMES[k%100], v:monthMap[k] }; });
+  const toOffer = flowDwellDays(fSubs,'sent','offer'), toHire = flowDwellDays(fSubs,'sent','joined'), toInterview = flowDwellDays(fSubs,'sent','interview');
+  const dayCard = function(label, d){ return oNumCard(label, d.avg===null ? '—' : d.avg+' days', d.avg===null ? 'No journeys have reached this yet' : 'From '+d.n+' journey'+(d.n===1?'':'s')); };
+  const sources = flowBySource(fSubs);
   const funnel = ['Recommended','Applied Directly','Interview Scheduled','Approved','Offer Extended','Offer Accepted','Joined'];
   const stageCounts = funnel.map(function(stage){
     let count = 0;
@@ -21599,33 +21687,44 @@ function renderReports(){
       if(dropPct>worstDropoff.pct) worstDropoff = { fromIdx:i, pct:dropPct };
     }
   }
-  const benchmarkDropoff = 35; // industry-typical stage-to-stage drop-off, used only as a comparison reference point
   return '<div class="content-shell max-w-5xl">'+
     sectionTitle('Reports', 'Your performance, at a glance.')+
     '<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">'+
-      [['16','Placements (Q2)','check','forest'],['1.8 days','Avg Time to Submit','send','navy'],['21 days','Avg Time to Hire','clock','gold'],['91%','Efficiency Score','sparkles','purple']].map(function(s){
-        return oNumCard(s[1], s[0]);
-      }).join('')+
+      oNumCard('Placements joined', ff[5].n, 'Counted from '+fSubs.length+' journeys on record')+
+      dayCard('Avg days to interview', toInterview)+
+      dayCard('Avg days to offer', toOffer)+
+      dayCard('Avg days to join', toHire)+
     '</div>'+
     revenueAnalyticsHTML()+
     '<div class="card p-6 mb-6">'+
       '<div class="flex items-center justify-between mb-1"><p class="text-xs font-semibold text-zinc-400 tracking-widest">PIPELINE BOTTLENECK DIAGNOSIS</p><button onclick="aiOpenInfo(\'linkit\')" class="text-zinc-300 hover:text-accent-600" title="How this is computed">'+icon('bell','w-3.5 h-3.5')+'</button></div>'+
       '<p class="text-xs text-zinc-400 mb-4">Computed live from every candidate\u2019s real pipeline stage \u2014 not a static report.</p>'+
-      (worstDropoff.pct>0 ? '<div class="rounded-xl border '+(worstDropoff.pct>benchmarkDropoff?'border-terracotta-200 bg-terracotta-50':'border-forest-200 bg-forest-50')+' p-4 mb-4">'+
-        '<p class="text-sm font-semibold text-zinc-900">'+worstDropoff.pct+'% of candidates drop off between '+stageCounts[worstDropoff.fromIdx].stage+' and '+stageCounts[worstDropoff.fromIdx+1].stage+(worstDropoff.pct>benchmarkDropoff?' \u2014 '+(worstDropoff.pct-benchmarkDropoff)+' points above the '+benchmarkDropoff+'% benchmark for this stage.':', in line with the typical '+benchmarkDropoff+'% benchmark.')+'</p>'+
-        (worstDropoff.pct>benchmarkDropoff ? '<p class="text-xs text-zinc-600 mt-1">This is your real biggest leak right now \u2014 worth reviewing what happens to candidates at the '+stageCounts[worstDropoff.fromIdx].stage+' stage before they\u2019d move to '+stageCounts[worstDropoff.fromIdx+1].stage+'.</p>' : '')+
+      (worstDropoff.pct>0 ? '<div class="rounded-xl border border-zinc-200 bg-zinc-50 p-4 mb-4">'+
+        '<p class="text-sm font-semibold text-zinc-900">The biggest drop is between '+stageCounts[worstDropoff.fromIdx].stage+' ('+stageCounts[worstDropoff.fromIdx].count+') and '+stageCounts[worstDropoff.fromIdx+1].stage+' ('+stageCounts[worstDropoff.fromIdx+1].count+'): '+worstDropoff.pct+'%.</p>'+
+        '<p class="text-xs text-zinc-600 mt-1">Counted from today\u2019s pipeline stages. No outside comparison figure is used; compare it with your own earlier periods.</p>'+
       '</div>' : '<p class="text-xs text-zinc-400 mb-4">Not enough real pipeline movement yet to diagnose a bottleneck.</p>')+
       '<div class="space-y-2">'+stageCounts.map(function(sc, i){
         const maxCount = stageCounts[0].count || 1;
         return '<div class="flex items-center gap-3"><span class="text-xs text-zinc-500 w-32 shrink-0 truncate">'+sc.stage+'</span><div class="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden"><div class="h-full '+(i===worstDropoff.fromIdx+1?'bg-terracotta-400':'bg-accent-500')+'" style="width:'+Math.max(4,Math.round(sc.count/maxCount*100))+'%"></div></div><span class="text-xs font-medium text-zinc-700 w-6 text-right">'+sc.count+'</span></div>';
       }).join('')+'</div>'+
     '</div>'+
+    '<div class="card p-6 mb-6">'+
+      '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-1">STAGE CONVERSION — FROM EACH JOURNEY’S HISTORY</p>'+
+      '<p class="text-xs text-zinc-400 mb-4">A journey counts at a step once it has reached it. Percentages are of the step before. Small counts move a lot; read them with the number beside them.</p>'+
+      '<div class="space-y-2">'+ff.map(function(r){
+        return '<div class="flex items-center gap-3"><span class="text-xs text-zinc-500 w-32 shrink-0 truncate">'+r.label+'</span><div class="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden"><div class="h-full bg-accent-500" style="width:'+Math.max(r.n?4:0, Math.round(r.n/(ff[0].n||1)*100))+'%"></div></div><span class="text-xs font-medium text-zinc-700 w-24 text-right">'+r.n+(r.pctOfPrev!==null ? ' · '+r.pctOfPrev+'%' : '')+'</span></div>';
+      }).join('')+'</div>'+
+      (sources.length ? '<p class="text-[10px] font-semibold text-zinc-400 tracking-widest mt-5 mb-2">BY SOURCE</p><div class="space-y-1">'+sources.map(function(s){
+        return '<div class="flex items-center justify-between text-xs"><span class="text-zinc-700">'+s.source+'</span><span class="text-zinc-500">'+s.sent+' sent · '+s.interview+' interview · '+s.offer+' offer · '+s.joined+' joined</span></div>';
+      }).join('')+'</div>' : '<p class="text-xs text-zinc-400 mt-4">Nothing has been sent to a client yet, so there is no conversion to show.</p>')+
+      '<p class="text-xs text-zinc-500 mt-5 border-t border-zinc-100 pt-3">No forecast is shown. A fill-time or offer-acceptance forecast has to be trained and checked on a real history of finished jobs and decided offers. Here there are '+ff[5].n+' joined and '+ff[3].n+' that reached an offer, so the averages above are what we can stand behind.</p>'+
+    '</div>'+
     '<div class="card p-6">'+
       '<div class="flex items-start justify-between gap-4 mb-5">'+
-        '<p class="text-xs font-medium text-zinc-400">PLACEMENTS PER MONTH</p>'+
+        '<p class="text-xs font-medium text-zinc-400">PLACEMENTS PER MONTH (BY JOINING DATE)</p>'+
         iconChip('chart','navy','w-9 h-9 rounded-xl')+
       '</div>'+
-      barChart(months,4)+
+      (months.length ? barChart(months, Math.max.apply(null, months.map(function(m){ return m.v; }))) : '<p class="text-sm text-zinc-400">No joinings recorded yet.</p>')+
     '</div>'+
   '</div>';
 }
@@ -23538,11 +23637,40 @@ function auditCenterBodyHTML(){
     '</table></div>' : '<div class="card rounded-2xl py-12 text-center empty-state text-sm">No matching activity yet \u2014 changes made anywhere in Setup appear here automatically.</div>')+
   '</div>';
 }
+/* Fairness and AI use: what ranking looks at, how outcomes differ by the one group-type field recorded (city), and what is not collected. */
+function fairnessData(){
+  const by = {}, kl = [];
+  SUBMISSIONS.forEach(function(sb){
+    if(flowReachedAt(sb, 'sent') === null) return; const c = byId(sb.candidateId); const city = c && c.loc ? String(c.loc).split(',')[0].trim() : 'Not recorded';
+    const r = by[city] = by[city] || { city:city, sent:0, shortlisted:0, interview:0 }; r.sent++; if(flowReachedAt(sb, 'shortlisted') !== null) r.shortlisted++; if(flowReachedAt(sb, 'interview') !== null) r.interview++;
+  });
+  JOBS.forEach(function(j){ (j.kairoLog || []).forEach(function(x){ kl.push(x); }); });
+  return { rows:Object.keys(by).map(function(k){ return by[k]; }).sort(function(a, b){ return b.sent - a.sent; }), accepted:kl.filter(function(x){ return x.outcome === 'accepted'; }).length, dismissed:kl.filter(function(x){ return x.outcome === 'dismissed'; }).length };
+}
+function fairnessReportHTML(){
+  const d = fairnessData(), MIN = 5;
+  const list = function(items){ return '<ul class="space-y-1.5 text-sm text-zinc-700">'+items.map(function(t){ return '<li class="flex gap-2"><span class="text-accent-500">\u2022</span><span>'+t+'</span></li>'; }).join('')+'</ul>'; };
+  return '<div class="card p-6 mt-8" id="fairness-report">'+
+    '<p class="text-xs font-semibold text-zinc-400 tracking-widest mb-1">FAIRNESS AND AI USE</p>'+
+    '<p class="text-sm text-zinc-600 mb-4">A first version. It shows what the matching looks at, how people move through hiring by the one group-type field we hold, and what we do not collect yet.</p>'+
+    '<p class="text-[10px] font-semibold text-zinc-400 tracking-widest mb-2">WHAT THE MATCH PERCENTAGE USES</p>'+
+    list(['Required skills the candidate has, against the skills the job lists. Experience and location are explained beside it, not scored.','It does not use name, age, gender, photo, accent or any inferred trait.','The join, response and counter-offer figures on a candidate are indicative values typed on the record. They are not trained predictions, and a workflow rule can still read them, so check any rule that does.','No candidate is rejected by Oontu on its own. Rejections, client submissions, requisition approvals, offers and vendor access are decided by a person.'])+
+    '<p class="text-[10px] font-semibold text-zinc-400 tracking-widest mt-5 mb-2">HOW PEOPLE MOVE THROUGH, BY CANDIDATE CITY</p>'+
+    (d.rows.length ? '<div class="o-table-wrap" style="margin-top:0"><table class="o-table"><thead><tr><th>City</th><th>Sent to a client</th><th>Shortlisted</th><th>Reached interview</th></tr></thead><tbody>'+d.rows.map(function(r){
+      const sm = r.sent < MIN; return '<tr><td>'+escapeHtml(r.city)+(sm ? ' <span class="text-xs text-zinc-400">(small sample)</span>' : '')+'</td><td>'+r.sent+'</td><td>'+r.shortlisted+' ('+Math.round(r.shortlisted/r.sent*100)+'%)</td><td>'+r.interview+' ('+Math.round(r.interview/r.sent*100)+'%)</td></tr>'; }).join('')+'</tbody></table></div>'+
+      '<p class="text-xs text-zinc-500 mt-2">Under '+MIN+' sent, a percentage means very little. A gap here is a reason to look at the jobs and the briefs, not a finding on its own.</p>' : '<p class="text-sm text-zinc-500">Nothing has been sent to a client yet.</p>')+
+    '<p class="text-[10px] font-semibold text-zinc-400 tracking-widest mt-5 mb-2">NOT COLLECTED YET</p>'+
+    list(['Gender, age band, disability and similar group data are not collected in this workspace, so pass-through cannot be compared across them. Collect them only with a lawful basis, the person\u2019s consent and a stated purpose, and keep them out of ranking.','A bias check each quarter is recommended once that data exists. Until then, review the city table above and the rejection reasons on each job.'])+
+    '<p class="text-[10px] font-semibold text-zinc-400 tracking-widest mt-5 mb-2">HUMAN CONTROL</p>'+
+    list(['Kairo suggestions logged: '+d.accepted+' acted on, '+d.dismissed+' dismissed.','Messages Kairo drafts wait for a person to approve them, and carry a line saying so unless that is switched off in Settings.'])+
+  '</div>';
+}
 function renderAuditCenter(){
   return '<div class="content-shell max-w-5xl">'+
     breadcrumbHTML([{label:'Setup', onclick:"showView('setup-hub')"}, {label:'Audit Log'}], "showView('setup-hub')")+
     sectionTitle('Audit Log', 'Every organization, role, permission, master data and integration change made in Setup, in order \u2014 this is a live read of the same log every action above writes to.')+
     auditCenterBodyHTML()+
+    fairnessReportHTML()+
   '</div>';
 }
 
@@ -38026,7 +38154,7 @@ const WSX = {
     vendor:{ mode:'always', cond:'', source:'matrix', skip:'Owner', sla:48, escalate:false } },
   matrix:[ { cond:'Offer above band B3', chain:['Hiring Manager','TA Head','Owner'], mode:'sequential' }, { cond:'Requisition over budget', chain:['Department head','Owner'], mode:'sequential' } ],
   hiring:{ clientLogin:false, distribute:'round-robin', slaHours:24, notifyManager:true, dupWindow:90, sameJobBlock:true, ownerLock:true, preApproval:true, maxProfiles:5, mandatory:'Notice period, current CTC, expected CTC', maskContacts:true, consent:true, replacementDays:90,
-    internalFirst:7, referralBonus:'₹25,000', vendorWindow:6, vendorConsent:48, vendorCap:20, hideScorecard:true },
+    internalFirst:7, referralBonus:'₹25,000', vendorWindow:6, vendorConsent:48, vendorCap:20, hideScorecard:true, aiDisclose:true },
   templates:{ processes:[ 'Fintech Corp · 4 rounds','RetailX · 3 rounds','Default · 3 rounds' ], feedback:['Technical scorecard','Culture round','Client round'], offers:['India offer letter','Contract offer letter'],
     messages:[ ['Application received','Email','Approved'], ['Interview invite','Email','Approved'], ['Interview reminder','WhatsApp','Approved'], ['Follow-up after a quiet week','WhatsApp','Pending approval'] ],
     reasons:[], jd:['Engineering role','Sales role','Operations role'] },
@@ -39057,7 +39185,7 @@ const CW_FIELDS = [
   { key:'exp', label:'Experience (years)', type:'number', get:function(c){ return parseInt(c.exp, 10) || 0; } },
   { key:'respProb', label:'Response probability (%)', type:'number', get:function(c){ return c.respProb; } },
   { key:'counterRisk', label:'Counter-offer risk (%)', type:'number', get:function(c){ return c.counterRisk; } },
-  { key:'matchScore', label:'Match score (%)', type:'number', get:function(c){ return c.joinProb; } },
+  { key:'matchScore', label:'Match score (%)', type:'number', get:function(c){ const b = bestJobMatch(c); return b ? b.pct : 0; } },
   { key:'skills', label:'Skills', type:'text', get:function(c){ return (c.skills || []).join(', '); } },
   { key:'role', label:'Current role', type:'text', get:function(c){ return c.role; } },
   { key:'lastReply', label:'Days since last reply', type:'number', get:function(c){ return Math.round((100 - c.respProb) / 10); } },
@@ -39198,8 +39326,11 @@ function cwFinish(run, status, reason){ run.status = status; run.holdReason = ''
 function cwTemplateText(s, c, wf){
   const job = JOBS.find(function(j){ return j.status === 'Active'; }) || JOBS[0] || {};
   const vals = { first_name:(c.name || '').split(' ')[0], full_name:c.name || '', job_title:job.title || c.role || 'the role', company:job.client || 'the client', recruiter_name:cwOwnerName(wf), notice_period:c.notice || '' };
-  return String(s.text || '').replace(/\{\{(\w+)(?:\|([^}]*))?\}\}/g, function(m, k, fb){ const v = vals[k]; return v ? v : (fb != null ? fb : ''); });
+  const body = String(s.text || '').replace(/\{\{(\w+)(?:\|([^}]*))?\}\}/g, function(m, k, fb){ const v = vals[k]; return v ? v : (fb != null ? fb : ''); });
+  return body && cwDisclosureOn() ? body + CW_DISCLOSURE : body;
 }
+const CW_DISCLOSURE = '\n\nDrafted by Kairo, Oontu’s assistant, and approved by a person on our team.';
+function cwDisclosureOn(){ try { return sGet('hiring.aiDisclose') !== false; } catch(e){ return true; } }
 function cwLedger(entry){ entry.id = 'led' + (CW_LED_NEXT++); entry.at = entry.at || cwNow(); SEND_LEDGER.push(entry); return entry; }
 function cwSendEmail(run, wf, c, s){
   const owner = s.sender || wf.ownerId, mb = cwMailbox(owner) || cwMailbox('RP-088');
@@ -40813,6 +40944,7 @@ function sec_contactPrefs(ed){
       sRow('WhatsApp STOP', 'A reply of “STOP” adds the person here.', oBadge('neutral', 'Always on')) +
       sRow('Messages per person', 'Across all agents and channels. Interview and offer logistics are exempt, up to 4 per interview.', '<select class="app-input app-select s-ctl" aria-label="Messages per week"' + (ed ? ' onchange="cwSetWeekly(this.value)"' : ' disabled') + '>' + [1, 2, 3].map(function(n){ return '<option value="' + n + '"' + (CW.caps.perPersonWeek === n ? ' selected' : '') + '>1 a day, ' + n + ' a week</option>'; }).join('') + '</select>') +
       sRow('Quiet hours', 'In the person’s own timezone. A message outside them waits for the next window.', '<span class="s-val">09:00 to 19:00, Monday to Saturday</span>') +
+      sRow('Say when Kairo wrote the message', 'Adds one line at the end of every message Kairo drafted, so people know. A person still approves it first.', sSwitch(sGet('hiring.aiDisclose'), 'hiring.aiDisclose', ed, 'AI disclosure')) +
       (sIsCorporate() ? '' : sRow('Clients’ employees', 'People who work at an active client are never contacted.', '<span class="s-val">' + CLIENTS.length + ' clients</span>')));
 }
 function cwSuppressAdd(){ const k = (document.getElementById('sup-who') || {}).value, why = (document.getElementById('sup-why') || {}).value; if(!k){ toast('Choose a person.'); return; } cwSuppress(k, why); WORKFLOW_RUNS.forEach(function(r){ if(r.personKey === k && ['queued','running','waiting','held'].indexOf(r.status) > -1) cwFinish(r, 'stopped', 'On the suppression list: ' + why); }); toast('Added. Every running sequence for them has stopped.'); settingsRefresh(); }
@@ -44088,7 +44220,7 @@ window.clientSetTab = clSetTab;
 (function hookOpen(){ const o = window.openClientDetail; if(typeof o !== 'function' || o.__cl) return; window.openClientDetail = function(){ const r = o.apply(this, arguments); setTimeout(clPostAcct, 40); return r; }; window.openClientDetail.__cl = true; })();
 
 function clTabBody(c, tab){
-  if(tab === 'jobs') return clJobsTab(c); if(tab === 'contacts') return clContactsTab(c); if(tab === 'locations') return clLocationsTab(c); if(tab === 'terms') return clTermsTab(c);
+  if(tab === 'jobs') return clJobsTab(c) + clSignalsHTML(c); if(tab === 'contacts') return clContactsTab(c); if(tab === 'locations') return clLocationsTab(c); if(tab === 'terms') return clTermsTab(c);
   if(tab === 'billing') return clBillingTab(c); if(tab === 'documents') return clDocsTab(c); if(tab === 'activity') return clActivityTab(c); return clOverviewTab(c);
 }
 function clPipeTip(j){ const subs = submissionsForJob(j.id), by = {}; subs.forEach(function(s){ by[s.stage] = (by[s.stage] || 0) + 1; }); const lines = Object.keys(by).map(function(k){ return by[k] + ' ' + cle(k.toLowerCase()); }); return clTip(subs.length + ' candidates', j.title, lines.length ? lines : ['No candidates yet']); }
@@ -44618,6 +44750,32 @@ function clAcctHTML(c){
 }
 
 /* ---------- Overview: needs you, hiring progress, one aside ---------- */
+/* Client signals: counts over the client's own journeys. Rules and sample sizes are shown; nothing is predicted. */
+const CLIENT_SIGNAL_RULES = { waitDays:5, minSample:3 };
+function clientSignals(c){
+  const ids = clientJobs(c).map(function(j){ return j.id; }), subs = SUBMISSIONS.filter(function(s){ return ids.indexOf(s.jobId) > -1; }), now = Date.now();
+  const replies = [], waiting = [];
+  subs.forEach(function(sb){
+    if(!sb.sent || !sb.sent.at) return; const t0 = new Date(sb.sent.at).getTime(); if(isNaN(t0)) return;
+    const first = (sb.stageHistory || []).filter(function(h){ const t = new Date(h.at).getTime(); return t > t0 && ['Shortlisted', 'Rejected', 'Interview Scheduled', 'Offer Extended'].indexOf(h.stage) > -1 && !/^Followed up/.test(h.reason || ''); })[0];
+    if(first) replies.push((new Date(first.at).getTime() - t0) / 86400000);
+    else if(['rejected', 'withdrawn'].indexOf(sb.status) < 0 && !sb.hold && (now - t0) / 86400000 >= CLIENT_SIGNAL_RULES.waitDays) waiting.push({ sb:sb, days:Math.floor((now - t0) / 86400000) });
+  });
+  const why = {}; subs.forEach(function(sb){ if(sb.rejectReason && sb.rejectReason.code){ const k = sb.rejectReason.label || sb.rejectReason.code; why[k] = (why[k] || 0) + 1; } });
+  const nRej = Object.keys(why).reduce(function(s, k){ return s + why[k]; }, 0);
+  const jobsOld = clientOpenJobs(c).filter(function(j){ return (j.daysOpen || 0) > 30; });
+  return { n:subs.length, replies:replies.length, avgDays: replies.length ? Math.round(replies.reduce(function(s, d){ return s + d; }, 0) / replies.length * 10) / 10 : null, waiting:waiting, why:why, nRej:nRej, jobsOld:jobsOld, openJobs:clientOpenJobs(c).length, funnel:flowFunnel(subs) };
+}
+function clSignalsHTML(c){
+  const s = clientSignals(c); if(!s.n) return '';
+  const f = s.funnel, small = s.replies < CLIENT_SIGNAL_RULES.minSample;
+  const reasons = Object.keys(s.why).sort(function(a, b){ return s.why[b] - s.why[a]; }).map(function(k){ return cle(k) + ' ' + s.why[k]; }).join(' · ');
+  return '<section class="cl-sec"><h2>Client signals</h2>' +
+    '<p class="cl-muted">Counted from this client’s own profiles. ' + (small ? 'Fewer than ' + CLIENT_SIGNAL_RULES.minSample + ' replies so far, so read these as a guide only.' : '') + '</p>' +
+    '<div class="cl-need"><div><b>Reply speed</b><p class="cl-muted">' + (s.avgDays === null ? 'No replies yet.' : 'Average ' + s.avgDays + ' days from sending a profile to the first decision, from ' + s.replies + ' repl' + (s.replies === 1 ? 'y' : 'ies') + '.') + (s.waiting.length ? ' ' + s.waiting.length + ' profile' + (s.waiting.length === 1 ? ' has' : 's have') + ' waited ' + CLIENT_SIGNAL_RULES.waitDays + '+ days for a first reply.' : '') + '</p></div></div>' +
+    '<div class="cl-need"><div><b>Requirement quality</b><p class="cl-muted">' + (s.nRej ? 'Reasons given for ' + s.nRej + ' not selected: ' + reasons + '.' : 'No coded rejections yet.') + (s.jobsOld.length ? ' ' + s.jobsOld.length + ' of ' + s.openJobs + ' open job' + (s.openJobs === 1 ? ' is' : 's are') + ' over 30 days old.' : '') + ' Skills, experience and pay reasons point to a brief worth revisiting with the client.</p></div></div>' +
+    '<div class="cl-need"><div><b>Progress</b><p class="cl-muted">' + f[0].n + ' sent · ' + f[2].n + ' reached interview · ' + f[3].n + ' offers · ' + f[5].n + ' joined.</p></div></div></section>';
+}
 function clOverviewTab(c){
   const flags = clFlags(c).slice(0, 3), jobs = clientOpenJobs(c), mc = clMainContact(c), own = clientOwner(c), ag = c.agreement || {}, last = (c.activity || []).slice().sort(function(a, b){ return new Date(b.at) - new Date(a.at); })[0];
   const need = flags.length ? '<section class="cl-sec"><h2>Needs you</h2>' + flags.map(function(f){ return '<div class="cl-need"><div><span class="att">' + cle(f.text) + '</span><p class="cl-muted">' + cle(f.detail) + '</p></div><button type="button" class="cl-btn" onclick="clFlagAct(\'' + c.id + '\',\'' + (f.loc || '') + '\',\'' + cle(f.act).replace(/'/g, '’') + '\',\'' + (f.kind || '') + '\',\'' + (f.job || '') + '\')">' + cle(f.act) + '</button></div>'; }).join('') + '</section>' : '';
@@ -47056,6 +47214,7 @@ function pjCard(sb){
 .co-login{ max-width:460px; margin:20px auto; } .co-dev{ margin:12px 0 0; padding:8px 10px; border:1px dashed #D9D8D2; border-radius:8px; font-size:12px; color:#6B6F80; } .co-dev b{ color:#2F313F; letter-spacing:.12em; }
 .co-jobcard{ cursor:pointer; } .co-jobcard:hover{ border-color:#2F313F; } .co-hm{ margin:0 0 12px; }
 @media (max-width:640px){ .co-dl{ grid-template-columns:1fr; } .co-days{ grid-template-columns:repeat(4,minmax(0,1fr)); } .co-reasons{ grid-template-columns:1fr; } }
+.co-insights{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; margin:14px 0; } .co-insight{ border:1px solid #E7E6E1; border-radius:12px; padding:14px 16px; background:#fff; } .co-insight__t{ margin:0 0 2px; font:600 14px var(--font); color:#2F313F; } .co-insight__l{ margin:8px 0 0; padding:0; list-style:none; display:grid; gap:6px; font:400 13px var(--font); color:#2F313F; }
 </style><script id="corp-script">
 /* ============================================================
    CORPORATE JOURNEY (flow map C3 to C10, E7, E8)
@@ -47557,6 +47716,33 @@ function coSiteApply(jobId, f){
 /* ============================================================
    Housekeeping that runs on navigation (a scheduled job in production)
 ============================================================ */
+/** Insights are counts and rules over the records above. The limits are shown on screen. Nothing here is a forecast. */
+const CO_RULES = { reqStuckDays:5, sheetWaitDays:3, contractSoonDays:30, vendorSample:5 };
+function coInsights(){
+  const now = coNow(), r = CO_RULES, out = { reqs:{ ageing:[], stuck:[], byStep:{}, openHeads:0 }, vendors:[], contracts:{ soon:[], sheetsWaiting:[], missing:[], overRate:[], noCard:[] } };
+  CO.reqs.forEach(function(rq){
+    if(['Closed', 'Filled', 'Draft'].indexOf(rq.status) >= 0) return;
+    const age = Math.floor((now - rq.createdAt) / CO_D); out.reqs.ageing.push({ rq:rq, days:age });
+    if(rq.status === 'Job open') out.reqs.openHeads += rq.headcount;
+    if(rq.status === 'Pending approval'){
+      const cur = (rq.chain || []).find(function(s){ return s.status !== 'Approved'; }); const last = (rq.history || []).slice(-1)[0]; const wait = last ? Math.floor((now - last.at) / CO_D) : 0;
+      if(cur){ const k = cur.label; out.reqs.byStep[k] = out.reqs.byStep[k] || { n:0, oldest:0 }; out.reqs.byStep[k].n++; out.reqs.byStep[k].oldest = Math.max(out.reqs.byStep[k].oldest, wait); if(wait >= r.reqStuckDays) out.reqs.stuck.push({ rq:rq, step:cur.label, days:wait }); }
+    }
+  });
+  out.reqs.ageing.sort(function(a, b){ return b.days - a.days; });
+  CO.vendors.filter(function(v){ return v.status === 'Active'; }).forEach(function(v){
+    const s = coVendorStats(v), tried = s.sent + s.blocked; out.vendors.push({ v:v, s:s, tried:tried, dupRate: tried ? Math.round(s.blocked / tried * 100) : null, small: s.sent < r.vendorSample, noShortlist: s.sent >= r.vendorSample && s.shortlisted === 0 });
+  });
+  CO.contracts.forEach(function(wo){
+    if(['Active', 'Extended'].indexOf(wo.status) < 0) return;
+    if(wo.end > now && wo.end - now <= r.contractSoonDays * CO_D) out.contracts.soon.push({ wo:wo, days:Math.ceil((wo.end - now) / CO_D) });
+    const card = coRateFor(wo.role); if(!card) out.contracts.noCard.push(wo); else if(wo.rate > card.max || wo.rate < card.min) out.contracts.overRate.push({ wo:wo, card:card });
+    const weeks = []; for(let w = coMonday(Math.max(wo.start, now - 28 * CO_D)); w + 6 * CO_D < Math.min(now, wo.end); w += 7 * CO_D) weeks.push(w);
+    const have = weeks.filter(function(w){ const s = coSheetFor(wo.id, w); return s && s.status !== 'Draft'; }).length; if(weeks.length > have) out.contracts.missing.push({ wo:wo, weeks:weeks.length - have });
+  });
+  CO.sheets.filter(function(s){ return s.status === 'Submitted' && s.submittedAt && now - s.submittedAt >= r.sheetWaitDays * CO_D; }).forEach(function(s){ out.contracts.sheetsWaiting.push({ s:s, wo:coWoBy(s.woId), days:Math.floor((now - s.submittedAt) / CO_D) }); });
+  return out;
+}
 function coSweep(){
   const now = coNow(); CO.lastSweep = now; const out = { lapsed:0, reminded:0, filled:0, ending:0 };
   CO.vsubs.forEach(function(vs){ if(vs.consent.state === 'pending' && now > vs.consent.dueAt){ coConsentLapse(vs); out.lapsed++; } });
@@ -47677,6 +47863,33 @@ function coOffNote(){ return coVendorsOn() ? '' : '<p class="co-note">' + coAtt(
 function coNotCorp(name){ return '<div class="content-shell o-page">' + oPageHead({ ctx:coBrand(), title:name }) + coEmpty('This page is for company hiring teams', 'Your workspace works with clients instead.') + '</div>'; }
 function coSeedNow(){ if(!CO.seeded) try { coSeedCorp(true); } catch(e){ console.error(e); } }
 
+/* ---------- insights: rules over the records, with the rule stated ---------- */
+function coInsightCard(title, rule, rows, none){
+  return '<section class="co-insight" aria-label="' + coEsc(title) + '"><p class="co-insight__t">' + coEsc(title) + '</p><p class="co-sub">' + coEsc(rule) + '</p>' +
+    (rows.length ? '<ul class="co-insight__l">' + rows.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul>' : '<p class="co-sub">' + coEsc(none) + '</p>') + '</section>';
+}
+function coReqInsightsHTML(){
+  const i = coInsights().reqs, steps = Object.keys(i.byStep);
+  return '<div class="co-insights">' +
+    coInsightCard('Oldest open requisitions', 'Counted from the day each was created. Open headcount now: ' + i.openHeads + '.', i.ageing.slice(0, 3).map(function(x){ return '<b>' + coEsc(x.rq.title) + '</b> · ' + x.days + ' day' + (x.days === 1 ? '' : 's') + ' · ' + coEsc(coReqLabel(x.rq)); }), 'Nothing open yet.') +
+    coInsightCard('Where approvals wait', 'Rule: flagged after ' + CO_RULES.reqStuckDays + ' days with no movement.', steps.map(function(k){ return '<b>' + coEsc(k) + '</b> · ' + i.byStep[k].n + ' waiting · longest ' + i.byStep[k].oldest + ' day' + (i.byStep[k].oldest === 1 ? '' : 's') + (i.byStep[k].oldest >= CO_RULES.reqStuckDays ? ' ' + coAtt('Stuck') : ''); }), 'No requisition is waiting for approval.') + '</div>';
+}
+function coVenInsightsHTML(){
+  const v = coInsights().vendors;
+  return '<div class="co-insights">' + coInsightCard('Vendor quality and duplicates', 'Duplicate rate is blocked sends divided by all sends. Under ' + CO_RULES.vendorSample + ' sent, treat the figures as a guide only.', v.map(function(x){
+    return '<b>' + coEsc(x.v.name) + '</b> · ' + x.s.sent + ' sent · ' + (x.dupRate === null ? 'no sends' : x.dupRate + '% blocked as duplicates') + ' · ' + (x.s.agreed ? x.s.agreed + ' agreed' : 'none agreed yet') + ' · ' + x.s.shortlisted + ' shortlisted' + (x.noShortlist ? ' ' + coAtt('None shortlisted') : '') + (x.small ? ' <span class="co-sub">(small sample)</span>' : ''); }), 'No active vendors yet.') + '</div>';
+}
+function coConInsightsHTML(){
+  const c = coInsights().contracts;
+  const rows = [].concat(
+    c.soon.map(function(x){ return '<b>' + coEsc(x.wo.contractor) + '</b> · ends in ' + x.days + ' day' + (x.days === 1 ? '' : 's') + ' · extend, convert or let it end'; }),
+    c.sheetsWaiting.map(function(x){ return '<b>' + coEsc(x.wo ? x.wo.contractor : 'Contractor') + '</b> · a week has waited ' + x.days + ' days for ' + coEsc(x.wo ? x.wo.approver : 'the approver'); }),
+    c.missing.map(function(x){ return '<b>' + coEsc(x.wo.contractor) + '</b> · ' + x.weeks + ' recent week' + (x.weeks === 1 ? '' : 's') + ' with no time sent'; }),
+    c.overRate.map(function(x){ return '<b>' + coEsc(x.wo.contractor) + '</b> · ' + coInr(x.wo.rate) + ' per ' + x.wo.unit + ' is outside the ' + coEsc(x.card.role) + ' card (' + coInr(x.card.min) + ' to ' + coInr(x.card.max) + ')'; }),
+    c.noCard.map(function(wo){ return '<b>' + coEsc(wo.contractor) + '</b> · no rate card for ' + coEsc(wo.role); }));
+  return '<div class="co-insights">' + coInsightCard('Needs a look', 'Rules: ends within ' + CO_RULES.contractSoonDays + ' days, time waiting ' + CO_RULES.sheetWaitDays + '+ days, weeks in the last 4 with no time, rate outside its card. Contract workers are counted apart from permanent headcount.', rows, 'No contract needs attention right now.') + '</div>';
+}
+
 /* ---------- requisitions ---------- */
 function coReqLabel(rq){
   if(rq.status === 'Pending approval'){ const s = rq.chain.find(function(x){ return x.status === 'Pending' || x.status === 'Waiting'; }); return 'Waiting on ' + (s ? s.label : 'approval'); }
@@ -47697,7 +47910,7 @@ function renderRequisitions(){
   const tot = CO.reqs.filter(function(r){ return r.status === 'Job open'; }).reduce(function(s, r){ return s + r.reserved; }, 0);
   return '<div class="content-shell o-page">' + oPageHead({ ctx:coBrand(), title:'Requisitions', lede:'Ask for a hire in a sentence. Approvals follow your rules, and the job opens by itself once approved.', actions:coCanReq('Create') ? [{ label:'New requisition', primary:true, icon:'plus', onclick:'coReqNewOpen()' }] : [] }) +
     oNumbers([{ label:'Waiting for approval', value:cnt('waiting'), note:'Before a job can open' }, { label:'Jobs open', value:cnt('open'), note:'From approved requisitions' }, { label:'Budget reserved', value:'₹' + (Math.round(tot * 10) / 10) + ' L', note:'Highest pay times headcount' }]) +
-    coTabs('co-reqtabs', [['all', 'All', cnt('all')], ['mine', 'Raised by me', cnt('mine')], ['waiting', 'Waiting', cnt('waiting')], ['open', 'Open', cnt('open')], ['draft', 'Drafts', cnt('draft')], ['closed', 'Closed', cnt('closed')]], t, 'coSetTab') +
+    coReqInsightsHTML() + coTabs('co-reqtabs', [['all', 'All', cnt('all')], ['mine', 'Raised by me', cnt('mine')], ['waiting', 'Waiting', cnt('waiting')], ['open', 'Open', cnt('open')], ['draft', 'Drafts', cnt('draft')], ['closed', 'Closed', cnt('closed')]], t, 'coSetTab') +
     (rows.length ? '<div class="o-table-wrap"><table class="o-table"><thead><tr><th>Role</th><th>Department</th><th>Hires</th><th>Pay</th><th>Band</th><th>Status</th><th>Raised by</th></tr></thead><tbody>' + rows.map(function(r){
       return '<tr class="co-row" tabindex="0" onclick="coReqOpen(\'' + r.id + '\')" onkeydown="if(event.key===\'Enter\')coReqOpen(\'' + r.id + '\')"><td><b>' + coEsc(r.title) + '</b>' + (r.hireType !== 'New' ? ' <span class="co-sub">' + coEsc(r.hireType) + '</span>' : '') + '</td><td>' + coEsc(r.department) + '</td><td>' + r.headcount + '</td><td>' + coEsc('₹' + r.ctcMin + '–' + r.ctcMax + ' LPA') + '</td><td>' + coEsc(r.band) + '</td><td>' + (r.status === 'Changes requested' ? coAtt('Changes requested') : coNeutral(coReqLabel(r))) + '</td><td>' + coEsc(r.raisedBy) + '</td></tr>'; }).join('') + '</tbody></table></div>'
       : coEmpty('Nothing here yet', t === 'all' ? 'Raise the first requisition and Kairo drafts it from one sentence.' : 'Nothing matches this view.', coCanReq('Create') && t === 'all' ? '<button type="button" class="o-btn o-btn--primary" onclick="coReqNewOpen()">New requisition</button>' : '')) + '</div>';
@@ -47787,7 +48000,7 @@ function renderVendors(){
   if(!coCorp()) return coNotCorp('Vendors'); coSeedNow(); const t = CO.ui.vtab || 'Active', list = CO.vendors.filter(function(v){ return t === 'all' || (t === 'Closed' ? ['Paused', 'Removed', 'Declined'].indexOf(v.status) >= 0 : v.status === t); });
   const n = function(k){ return CO.vendors.filter(function(v){ return k === 'Closed' ? ['Paused', 'Removed', 'Declined'].indexOf(v.status) >= 0 : v.status === k; }).length; };
   return '<div class="content-shell o-page">' + oPageHead({ ctx:coBrand(), title:'Vendors', lede:'Agencies that send you candidates. Each sees only the jobs you share, signs in with a one-time code, and cannot send a duplicate.', actions:coCanVen('Add') || coOwnerWide() ? [{ label:'Add vendor', primary:true, icon:'plus', onclick:'coVendorAddOpen()' }, { label:'Vendor sign-in page', onclick:"location.hash='#/vendor'" }] : [{ label:'Vendor sign-in page', onclick:"location.hash='#/vendor'" }] }) +
-    coOffNote() + coTabs('co-vtabs', [['Active', 'Active', n('Active')], ['Pending approval', 'Waiting for approval', n('Pending approval')], ['Closed', 'Paused or removed', n('Closed')]], t, 'coVTab') +
+    coOffNote() + coVenInsightsHTML() + coTabs('co-vtabs', [['Active', 'Active', n('Active')], ['Pending approval', 'Waiting for approval', n('Pending approval')], ['Closed', 'Paused or removed', n('Closed')]], t, 'coVTab') +
     (list.length ? '<div class="o-table-wrap"><table class="o-table"><thead><tr><th>Vendor</th><th>Recruits for</th><th>Tier</th><th>Fee</th><th>Open roles</th><th>Joined</th><th>Status</th></tr></thead><tbody>' + list.map(function(v){ const s = coVendorStats(v); return '<tr class="co-row" tabindex="0" onclick="coVendorOpen(\'' + v.id + '\')" onkeydown="if(event.key===\'Enter\')coVendorOpen(\'' + v.id + '\')"><td><b>' + coEsc(v.name) + '</b><br><span class="co-sub">' + coEsc(v.contact) + '</span></td><td>' + coEsc(v.domains.slice(0, 3).join(', ')) + '</td><td>' + coEsc(v.tier) + '</td><td>' + v.feePct + '%</td><td>' + s.openRoles + '</td><td>' + s.joined + '</td><td>' + coNeutral(v.status) + '</td></tr>'; }).join('') + '</tbody></table></div>' : coEmpty('No vendors here', 'Add a vendor or find one in the marketplace.', '<button type="button" class="o-btn" onclick="showView(\'marketplace\')">Open the marketplace</button>')) + '</div>';
 }
 RENDERERS['vendors'] = renderVendors;
@@ -47841,7 +48054,7 @@ function renderContractHiring(){
   return '<div class="content-shell o-page">' + oPageHead({ ctx:coBrand(), title:'Contract hiring', lede:'Work orders, weekly time and invoices. An invoice is built only from time your approver has approved.', actions:coCanVen('Add') || coOwnerWide() ? [{ label:'New work order', primary:true, icon:'plus', onclick:'coWoOpen()' }] : [] }) +
     (CO.notices.length ? '<p class="co-note">' + CO.notices.slice(-2).map(function(n){ return coAtt(n.text); }).join(' ') + '</p>' : '') +
     oNumbers([{ label:'Running', value:run.length, note:'Work orders' }, { label:'Time to approve', value:wait.length, note:'Weeks waiting' }, { label:'Ready to pay', value:CO.invoices.filter(function(i){ return i.status === 'Ready to pay'; }).length, note:'Invoices' }]) +
-    coTabs('co-ctabs', [['orders', 'Work orders'], ['time', 'Timesheets', wait.length], ['invoices', 'Invoices'], ['rates', 'Rate cards']], t, 'coCTab') + body + '</div>';
+    coConInsightsHTML() + coTabs('co-ctabs', [['orders', 'Work orders'], ['time', 'Timesheets', wait.length], ['invoices', 'Invoices'], ['rates', 'Rate cards']], t, 'coCTab') + body + '</div>';
 }
 RENDERERS['contract-hiring'] = renderContractHiring;
 function coWoListHTML(){
