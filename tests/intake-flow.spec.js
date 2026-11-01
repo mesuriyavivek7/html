@@ -14,7 +14,7 @@
   function eq(a, b, m){ if(a!==b) throw new Error((m ? m+': ' : '')+'expected '+JSON.stringify(b)+', got '+JSON.stringify(a)); }
   const base = { jobs:JOBS.length, cands:CANDIDATES.length, subs:SUBMISSIONS.length, appr:APPROVAL_REQUESTS.length };
   // The product default is now "no approval" (Settings → Policies → New jobs need approval, off).
-  // These tests exercise the approval rules, so they start from approval on, reviewed by the Tenant Admin.
+  // These tests exercise the approval rules, so they start from approval on, reviewed by the Owner.
   const POLICY0 = JSON.stringify(Object.assign({}, JOB_APPROVAL_POLICY, { mode:'mandatory', reviewer:'admin' }));
   let seq = 0;
 
@@ -23,13 +23,13 @@
     APPLICATION_EVENTS.length = 0; DUPLICATE_REVIEWS.length = 0; CANDIDATE_FINDING_REQUESTS.length = 0;
     Object.keys(CHANNEL_ADAPTERS).forEach(function(k){ delete CHANNEL_ADAPTERS[k]; });
     Object.assign(JOB_APPROVAL_POLICY, JSON.parse(POLICY0));
-    state.role = 'admin';                     // acts as the Tenant Admin (Priya Sharma)
+    state.role = 'admin';                     // acts as the Owner (Priya Sharma)
     document.getElementById('onboarding').classList.add('hidden');
   }
   function user(name){ return RECRUITER_ROSTER.find(function(r){ return r.name===name; }); }
   const ADMIN = function(){ return user('Priya Sharma'); }, MANAGER = function(){ return user('Arjun Kapoor'); }, RECRUITER = function(){ return user('Divya Menon'); };
   const OTHER_ORG = { id:'RP-X1', name:'Outside Admin', assignedRoleId:'role_founder', organizationId:'org-other' };
-  function as(role){ state.role = role; }     // admin -> Priya (Tenant Admin), manager -> Arjun (Recruiter Manager)
+  function as(role){ state.role = role; }     // admin -> Priya (Owner), manager -> Arjun (Recruiter Manager)
 
   function liveJob(over){
     seq++;
@@ -72,7 +72,7 @@
       eq(ingest(j, applicant(1)).error, 'job_not_live', 'no applications while it is not live');
       assert(auditHas('Job submitted for approval'), 'submission audited');
       const req = APPROVAL_REQUESTS.find(function(r){ return r.entityId===j.id; });
-      eq(req.approverUserId, ADMIN().id, 'reviewer is the tenant admin by default');
+      eq(req.approverUserId, ADMIN().id, 'reviewer is the Owner by default');
       as('admin'); decideApproval(req.id, 'Approved', 'Looks good');
       eq(j.status, 'Active'); assert(j.liveAt, 'live time recorded'); assert(j.candidateFinding, 'candidate finding requested once live');
       assert(auditHas('Job approved and published'), 'approval audited');
@@ -112,7 +112,7 @@
       eq(setJobApprovalPolicy({ mode:'sometimes', reviewer:'admin' }).error, 'invalid_mode');
     });
 
-    await test('A2c Only the Tenant Admin can change the approval policy, and creating a job is the only right needed to publish', async function(){
+    await test('A2c Only the Owner can change the approval policy, and creating a job is the only right needed to publish', async function(){
       eq(setJobApprovalPolicy({ mode:'direct', reviewer:'admin' }, MANAGER()).error, 'forbidden');
       eq(setJobApprovalPolicy({ mode:'direct', reviewer:'admin' }, RECRUITER()).error, 'forbidden');
       eq(JOB_APPROVAL_POLICY.mode, 'mandatory', 'unchanged');
@@ -422,7 +422,7 @@
     });
 
     /* ---- G. what people see ---- */
-    await test('G1 Settings shows the approval policy to the Tenant Admin only, and saving it takes effect', async function(){
+    await test('G1 Settings shows the approval policy to the Owner only, and saving it takes effect', async function(){
       settingsSection = 'approvals';
       as('admin'); assert(/Job approval/.test(renderSettings()), 'admin sees it');
       as('manager'); assert(!/Job approval/.test(renderSettings()), 'a manager does not');

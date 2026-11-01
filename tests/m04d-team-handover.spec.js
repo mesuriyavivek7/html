@@ -76,10 +76,10 @@
 
     await t('the last active Owner can’t be suspended; nobody suspends themselves', async function(){
       asAdmin(); var me = currentActingUser(); ok(!canTeamAction('suspend', me), 'not yourself'); toasts = []; tmAskSuspend(me.id); ok(!hoState, 'no hand-over for yourself');
-      ok(/only active Super Admin|your own account/.test(tmSuspendBlocker(me)), 'blocker: ' + tmSuspendBlocker(me));
+      ok(/only active Owner|your own account/.test(tmSuspendBlocker(me)), 'blocker: ' + tmSuspendBlocker(me));
       var r = handOverWork(me, {}); ok(!r.ok && me.userStatus !== 'Suspended', 'handOverWork refuses too');
       var second = person('Second Owner', 'role_founder', null); ok(canTeamAction('suspend', second) && !tmSuspendBlocker(second), 'another Owner can be suspended while one stays');
-      second.userStatus = 'Suspended'; ok(/only active Super Admin/.test(tmSuspendBlocker(rosterById(OWNER))) || tmSuspendBlocker(rosterById(OWNER)), 'the last active Owner is blocked');
+      second.userStatus = 'Suspended'; ok(/only active Owner/.test(tmSuspendBlocker(rosterById(OWNER))) || tmSuspendBlocker(rosterById(OWNER)), 'the last active Owner is blocked');
     });
 
     await t('People in Settings shows my Reports to tree; team_manager routes like reports_to', async function(){

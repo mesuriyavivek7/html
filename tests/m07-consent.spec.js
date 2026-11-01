@@ -77,7 +77,7 @@
       ok(sb.stage === 'Rejected' && journeyStatus(sb).key === 'not_interested' && sb.stageHistory.slice(-1)[0].reason === 'Candidate declined to be represented for ' + j.client, 'Not interested: ' + journeyStatus(sb).label);
       ok(rq.status === 'Cancelled', 'review closed'); ok(audit(/Candidate declined to be represented/), 'audited'); ok(FM.notices.slice(n0).some(function(n){ return n.to === rec.id && /said no/.test(n.text); }), 'owner told');
       ok(/You said no/.test(coConsentPage()), 'the page says so');
-      actAs(rec2.id); var again = submitOneToJob(j, c, 'Test'); asOwner();
+      FM.offset = T0 + 8 * 24 * H; actAs(rec2.id); var again = submitOneToJob(j, c, 'Test'); asOwner();   // after 7 days no note is needed (M7 follow-up)
       ok(again.ok && again.sub === sb && sb.recruiterId === rec2.id && sb.consent.state === 'pending' && sb.consent.token !== CO.pg.arg, 'another recruiter starts fresh with a new link: ' + (again.reason || again.code));
     });
 
@@ -102,6 +102,30 @@
       CO.pg = { kind:'consent', arg:a.consent.token }; ok(!coConsentDo(true).ok, 'the same link answers once');
       openSendToClient([b.id]); csSend(); ok(b.stage === 'Ready to Send', 'another client: still blocked'); csClose();
       openSendToClient([d.id]); csSend(); ok(d.stage === 'Ready to Send', 'another job at the same client: still blocked');
+    });
+
+    await t('after a No, asking again within 7 days needs a note; never more than 2 links in 30 days; both audited', async function(){
+      var j = mkJob([rec, rec2, rm]), c = mkCand(); actAs(rec.id); var r = submitOneToJob(j, c, 'Test'); asOwner(); var sb = r.sub; tap(sb, false);
+      actAs(rec2.id); var again = submitOneToJob(j, c, 'Test'); asOwner();
+      ok(!again.ok && again.code === 'consent_declined_recently' && /said no on .+ add a note on why/i.test(again.reason) && sb.stage === 'Rejected', 'refused without a note: ' + again.reason);
+      ok(audit(/Consent request refused .+said no/), 'refusal audited');
+      actAs(rec2.id); var withNote = submitOneToJob(j, c, 'Test', { consentNote:'Candidate called back and wants to be considered' }); asOwner();
+      ok(withNote.ok && sb.consent.state === 'pending' && /Candidate called back/.test(sb.consent.askNote) && audit(/asked again after a No: Candidate called back/), 'with a note: asked again, audited');
+      FM.offset = T0 + 49 * H; fmSlaSweep(); ok(sb.consent.state === 'expired', 'second link expired');
+      var third = requestConsent(sb, null, { note:'Trying once more' }); ok(third && third.refused && /Two links have gone to .+ in the last 30 days/.test(third.reason) && sb.consent.state === 'expired', 'third link refused: ' + (third && third.reason));
+      ok(AUDIT_LOG.filter(function(a){ return a.action === 'Consent request refused'; }).length >= 2, 'audited');
+      openPipelineDetail(sb.id); await sleep(10); ok(/Two links have gone/.test(document.getElementById('pd-consent').textContent) && document.getElementById('pd-call-' + sb.id) && !/Send a new link/.test(document.getElementById('pd-consent').textContent), 'the drawer offers only to record a call'); pdClose();
+      FM.offset = T0 + 31 * 24 * H; var later = requestConsent(sb); ok(later && !later.refused && sb.consent.state === 'pending', 'after 30 days a link can go again');
+    });
+
+    await t('journeys sent before consent existed show "Sent before consent was recorded"; nothing treats them as missing consent', async function(){
+      var old = SUBMISSIONS.filter(function(s){ return journeySent(s) && !s.consent && !/^m7/.test(s.jobId); }); ok(old.length === 27, '27 sent before consent: ' + old.length);
+      var n0 = FM.notices.length, a0 = AUDIT_LOG.length; FM.offset = T0 + 60 * 24 * H; fmSlaSweep(); FM.offset = T0;
+      ok(!FM.notices.slice(n0).some(function(n){ return old.some(function(s){ return s.id === n.subId; }) && /agree|consent|didn’t answer/i.test(n.text); }), 'no notice about them');
+      ok(!AUDIT_LOG.slice(a0).some(function(a){ return /Consent/.test(a.action || '') && old.some(function(s){ return (a.detail || '').indexOf((byId(s.candidateId) || {}).name) === 0; }); }), 'no consent audit about them');
+      old.forEach(function(s){ ok(consentPreRecord(s) && /Sent before consent was recorded/.test(consentStatusHTML(s, 'pd')) && !/Not agreed|Not asked|No answer/.test(consentStatusHTML(s, 'pd')), s.id + ' label'); });
+      openPipelineDetail(old[0].id); await sleep(10); ok(/Sent before consent was recorded/.test(document.getElementById('pd-consent').textContent), 'shown in the drawer'); pdClose();
+      ok(old.every(function(s){ return journeyStatus(s).key !== 'ready'; }) && old.every(function(s){ return !/Not agreed/.test(pipeLabel(s).text); }), 'statuses unaffected');
     });
 
     await t('a company workspace keeps its vendor consent', async function(){

@@ -129,9 +129,9 @@
 
     await t('the sweep gives an old unowned applicant an owner, audits it, and starts the SLA clock so it does not move in the same sweep', async function(){
       var j = mkJob({ assignedRecruiters:['RP-081','RP-071'], applicantRouting:'round_robin' }), sb = inbound(j, null, 'Old Unowned'); sb.recruiterId = null; sb.createdAt = new Date(Date.now() - 30 * 86400000).toISOString();
-      FM.offset = 25 * 3600000; var out = fmSlaSweep(), at = fmNow(); FM.offset = 0;
+      FM.offset = 25 * 3600000; var from = fmNow(), out = fmSlaSweep(), at = fmNow(); FM.offset = 0;   // the app clock just before and after the sweep
       ok(sb.recruiterId === 'RP-081' && out.assigned >= 1, 'assigned: ' + sb.recruiterId); ok(/Owner assigned: had none/.test(lastReason(sb)) && audit(/Owner assigned: had none/), 'audited');
-      ok(new Date(sb.slaFrom).getTime() === at && sb.ownerHistory.length === 1, 'clock starts now; not moved in the same sweep');
+      var sla = new Date(sb.slaFrom).getTime(); ok(sla >= from && sla <= at && sb.ownerHistory.length === 1, 'clock starts now (during this sweep); not moved in the same sweep');
       var s9 = subById('sub-9'); ok(s9 && s9.recruiterId, 'the seeded unowned applicant (sub-9) has an owner: ' + (s9 && s9.recruiterId));
     });
 

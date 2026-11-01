@@ -32,7 +32,7 @@
     var NOMONEY = role('role_c4_nomoney', 'Client viewer', { clients:['View'], jobs:['View'] });
 
     await t('Owner, Recruiter Manager and Recruiter: menus and Homes as today (Recruiter gains Clients; the manager’s Intelligence and Team change groups)', async function(){
-      as('admin'); ok(shown() === 'admin-dashboard,approval-center,all-tasks,jobs,talent-pool,interviews,client-management,kairo-team,li-uni-box,admin-revenue,admin-paytrack,payroll-billing,reports,recruiter-analytics,admin-recruiters,intelligence,team-members,settings', shown());
+      as('admin'); ok(shown() === 'admin-dashboard,approval-center,all-tasks,jobs,talent-pool,interviews,client-management,kairo-team,li-uni-box,admin-revenue,admin-paytrack,reports,recruiter-analytics,admin-recruiters,intelligence,team-members,settings', shown());
       ok(homeFor('role_founder') === 'admin-dashboard' && homeForMe() === 'admin-dashboard', 'Owner Home');
       as('manager'); ok(shown() === 'manager-dashboard,approval-center,manager-todo,jobs,talent-pool,interviews,client-management,kairo-team,li-uni-box,intelligence,manager-team,settings', shown());
       ok(homeFor('role_recmgr') === 'manager-dashboard' && homeForMe() === 'manager-dashboard', 'RM Home');
@@ -49,7 +49,7 @@
     });
 
     await t('custom Accounts role (billing only) sees only PayTrack and Billing and lands on PayTrack; Sourcer sees the talent pool, Cowork and LinkIt', async function(){
-      var u = person('Accounts Person', ACC.id); actAs(u.id); ok(homeFor(ACC.id) === 'admin-paytrack', 'Home is PayTrack'); ok(shown() === 'admin-paytrack,payroll-billing,settings', shown());
+      var u = person('Accounts Person', ACC.id); actAs(u.id); ok(homeFor(ACC.id) === 'admin-paytrack', 'Home is PayTrack'); ok(shown() === 'admin-paytrack,settings', shown());   // M8: Billing is PayTrack (the route redirects)
       ok(document.querySelector('#sidebar-nav .nav-item[data-nav="admin-paytrack"]').textContent.trim() === 'Home', 'PayTrack is their Home entry');
       var s = person('Sourcer Person', SRC.id); actAs(s.id); ok(homeFor(SRC.id) === 'dashboard', 'Sourcer: My day'); ok(navItemAllowed(SRC, 'kairo-team') && !navItemAllowed(SRC, 'jobs'), 'the role allows Cowork, not Jobs');
       ok(shown() === (oAgentsOn() ? 'dashboard,my-todo,talent-pool,kairo-team,li-uni-box,settings' : 'dashboard,my-todo,talent-pool,li-uni-box,settings'), 'Cowork follows the agents switch as before: ' + shown());

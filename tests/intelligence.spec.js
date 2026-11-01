@@ -30,6 +30,22 @@
       var a = computeRecruiterScore('Priya Sharma'); ok(typeof a.sentCount === 'number', 'sentCount reported');
       var f = flowFunnel(SUBMISSIONS.filter(function(s){ return s.recruiterId === 'RP-088'; })); ok(a.sentCount === f[0].n, 'matches the funnel');
     });
+    await t('below 5 sent, the score and quality funnel say “Too few to score yet”, never 100% from one record', async function(){
+      var few = RECRUITER_ROSTER.find(function(r){ var s = computeRecruiterScore(r.name); return s.sentCount > 0 && s.sentCount < RECRUITER_SCORE_RULES.minSent; }), s = computeRecruiterScore(few.name), q = computeRecruiterQualityFunnel(few.name);
+      ok(RECRUITER_SCORE_RULES.minSent === 5, 'default minimum is 5 sent');
+      ok(s.tooFew && s.submissionQuality === null && s.interviewConversion === null && s.composite === null, few.name + ': no rate and no score from ' + s.sentCount + ' sent');
+      ok(q.tooFew && q.submissions === s.sentCount, 'the quality funnel is marked too few');
+      var p = computeRecruiterScore('Priya Sharma'); ok(!p.tooFew && typeof p.composite === 'number' && p.sentCount >= 5, 'enough sends: scored as before');
+      var html = renderRecruiterAnalytics(), txt = html.replace(/<[^>]+>/g, ' ');
+      ok(txt.indexOf(few.name) > -1 && txt.indexOf('Too few to score yet (' + s.sentCount + ' sent)') > -1, 'the leaderboard says too few');
+      var board = txt.slice(txt.indexOf('TEAM LEADERBOARD')); ok(!/100%/.test(board), 'no 100% on the leaderboard');
+      var me = RECRUITER_ROSTER.find(function(r){ return r.name === few.name; }), extra = [];
+      try {   // reaching the minimum turns the score on
+        for(var i = s.sentCount; i < 5; i++){ var c = CANDIDATES.find(function(x){ return !SUBMISSIONS.some(function(y){ return y.candidateId === x.id && y.jobId === 'j1'; }) && extra.indexOf(x.id) < 0; }); extra.push(c.id);
+          var sb = createSubmission('j1', c.id, { source:'Test', recruiterId:me.id, stage:'Submitted', reason:'test' }); sb.sent = { at:new Date().toISOString(), by:me.name }; }
+        var s5 = computeRecruiterScore(few.name); ok(!s5.tooFew && typeof s5.composite === 'number' && s5.sentCount === 5, 'at 5 sent the score shows: ' + JSON.stringify(s5));
+      } finally { for(var k = SUBMISSIONS.length - 1; k >= 0; k--) if(SUBMISSIONS[k].jobId === 'j1' && extra.indexOf(SUBMISSIONS[k].candidateId) > -1) SUBMISSIONS.splice(k, 1); }
+    });
     await t('a journey with no movement for 7+ days shows in Intelligence as a rule, not a prediction', async function(){
       var c = CANDIDATES[0], sb = createSubmission('j1', c.id, { source:'Test', stage:'Submitted' }) || findSubmission('j1', c.id);
       sb.updatedAt = new Date(Date.now() - 9 * 86400000).toISOString(); sb.hold = null;
@@ -77,8 +93,8 @@
     });
     await t('messages Kairo drafts say so unless the switch is off', async function(){
       var c = { name:'Asha Rao', notice:'30 Days' }, step = { text:'Hi {{first_name|there}}, a role at {{company}}.' };
-      WSX.hiring.aiDisclose = true; ok(/Drafted by Kairo/.test(cwTemplateText(step, c, { ownerId:'RP-088' })), 'line added');
-      WSX.hiring.aiDisclose = false; ok(!/Drafted by Kairo/.test(cwTemplateText(step, c, { ownerId:'RP-088' })), 'line removed when off'); WSX.hiring.aiDisclose = true;
+      WSX.hiring.aiDisclose = true; ok(/Drafted by Kairo/.test(cwTemplateText(step, c, { ownerId:'RP-088' }, 'template')), 'line added');   // M10: the line depends on how it was sent
+      WSX.hiring.aiDisclose = false; ok(!/Drafted by Kairo/.test(cwTemplateText(step, c, { ownerId:'RP-088' }, 'template')), 'line removed when off'); WSX.hiring.aiDisclose = true;
     });
     await t('Audit Center carries the fairness report and says what is not collected', async function(){
       as('admin'); var html = renderAuditCenter(); ok(/FAIRNESS AND AI USE/.test(html) && /NOT COLLECTED YET/.test(html) && /does not use name, age, gender/.test(html), 'sections');

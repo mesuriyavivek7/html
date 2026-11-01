@@ -25,7 +25,7 @@
       ok(heads().join() === 'Hiring,Outreach,Insights,Workspace', heads().join());
     });
     await t('owner: Money visible, Insights folds and remembers, Workspace last; opening a page inside opens its group', async function(){
-      as('admin'); ok(shown().join() === 'admin-dashboard,approval-center,all-tasks,jobs,talent-pool,interviews,client-management,kairo-team,li-uni-box,admin-revenue,admin-paytrack,payroll-billing,team-members,settings', shown().join());
+      as('admin'); ok(shown().join() === 'admin-dashboard,approval-center,all-tasks,jobs,talent-pool,interviews,client-management,kairo-team,li-uni-box,admin-revenue,admin-paytrack,team-members,settings', shown().join());
       ok(heads().join() === 'Hiring,Outreach,Money,Workspace', heads().join()); var fold = document.querySelector('#sidebar-nav .o-nav-fold'); ok(fold && /Insights/.test(fold.textContent) && fold.getAttribute('aria-expanded') === 'false', 'Insights folded');
       toggleNavGroup('Insights'); ok(shown().indexOf('reports') > -1 && shown().indexOf('intelligence') > -1, 'opens'); ok(JSON.parse(localStorage.getItem('oontu.navGroups')).Insights === true, 'remembered'); toggleNavGroup('Insights'); ok(shown().indexOf('reports') === -1, 'closes');
       showView('reports'); ok(shown().indexOf('reports') > -1 && document.querySelector('.nav-item[data-nav=reports]').classList.contains('active'), 'its page opens the group'); showView('admin-dashboard');

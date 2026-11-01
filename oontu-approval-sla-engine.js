@@ -46,11 +46,11 @@
      1. CONFIGURATION  (edited from Settings › Approval rules)
      ------------------------------------------------------------------------ */
   APS.config = APS.config || {
-    utcOffsetMinutes: 330,               // IST
+    timeZone: 'Asia/Kolkata',            // used only when the page has no workspace time zone (wsTz)
     workweek: [1, 2, 3, 4, 5, 6],        // 0 = Sunday … 6 = Saturday
     dayStart: '09:30',
     dayEnd: '18:30',
-    holidays: ['2026-01-26', '2026-08-15', '2026-10-02', '2026-12-25'], // YYYY-MM-DD, IST
+    holidays: ['2026-01-26', '2026-08-15', '2026-10-02', '2026-12-25'], // YYYY-MM-DD, in the workspace time zone
     tickMs: 60 * 1000,
     digestAt: '09:30',                   // morning summary, business days only
     storageKey: 'oontu.aps.v1',
@@ -308,8 +308,21 @@
   };
 
   function hm(s) { var p = String(s).split(':'); return (+p[0]) * 60 + (+p[1] || 0); }
-  function ist(ms) { var d = new Date(ms + APS.config.utcOffsetMinutes * 60000); return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), dow: d.getUTCDay(), min: d.getUTCHours() * 60 + d.getUTCMinutes() + d.getUTCSeconds() / 60 }; }
-  function fromIst(y, m, d, minOfDay) { return Date.UTC(y, m, d) + minOfDay * 60000 - APS.config.utcOffsetMinutes * 60000; }
+  /* Business hours are counted in the workspace time zone (Intl, so daylight saving is right). No fixed offsets.
+     The page's wsTz() wins; APS.config.timeZone is the fallback when the engine runs on its own (the Node checks). */
+  function tzName() { return (typeof wsTz === 'function' && wsTz()) || APS.config.timeZone || 'UTC'; }
+  var tzFmt = {};
+  function wallParts(ms, tz) {
+    var f = tzFmt[tz] || (tzFmt[tz] = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }));
+    var o = {}; f.formatToParts(new Date(ms)).forEach(function (x) { if (x.type !== 'literal') o[x.type] = +x.value; }); if (o.hour === 24) o.hour = 0; return o;
+  }
+  function ist(ms) { var o = wallParts(ms, tzName()); return { y: o.year, m: o.month - 1, d: o.day, dow: new Date(Date.UTC(o.year, o.month - 1, o.day)).getUTCDay(), min: o.hour * 60 + o.minute + o.second / 60 }; }
+  // The UTC instant of a wall time (y, m, d, minute of day) in the workspace time zone; two passes settle daylight saving.
+  function fromIst(y, m, d, minOfDay) {
+    var tz = tzName(), want = Date.UTC(y, m, d) + minOfDay * 60000, t = want;
+    for (var i = 0; i < 2; i++) { var o = wallParts(t, tz); t += want - Date.UTC(o.year, o.month - 1, o.day, o.hour, o.minute, o.second); }
+    return t;
+  }
   function ymd(y, m, d) { return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
   function isWorkday(y, m, d) {
     var dow = new Date(Date.UTC(y, m, d)).getUTCDay();

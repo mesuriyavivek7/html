@@ -1118,8 +1118,8 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       showView('setup-hub'); assert(document.querySelector('#ws-setup-section #ws-card'), 'still in Settings > Workspace setup');
       const defs = document.getElementById('ws-defaults');
       eq(Array.from(defs.querySelectorAll('.ws-defs__row')).map(function(r){ return r.querySelector('dt').textContent+'='+r.querySelector('dd').textContent; }).join('|'),
-        'Team size=6\u201320|Country=\ud83c\uddee\ud83c\uddf3 India|City (head office)=Not set|Currency=INR (\u20b9)|Timezone=Asia/Kolkata (IST, UTC+5:30)|Date format=DD MMM YYYY|Data region=India|Roles=Owner, Recruiter Manager, Recruiter|Approvals=Follow the reporting line|New applicants=Shared round-robin across the job team|Client duplicate window=90 days|Submission reply time=48 hours', 'Your defaults, read-only');
-      eq(defs.querySelectorAll('button').length, 11, 'each with Edit or Change, except data region');
+        'Team size=6\u201320|Country=\ud83c\uddee\ud83c\uddf3 India|City (head office)=Not set|Currency=INR (\u20b9)|Timezone=Asia/Kolkata (IST, UTC+5:30)|Date format=DD MMM YYYY|Data region=India|Roles=Owner, Recruiter Manager, Recruiter|Approvals=Follow the reporting line|Submission review=On for the Recruiter role|New applicants=Shared round-robin across the job team|Client duplicate window=90 days|Submission reply time=48 hours', 'Your defaults, read-only');
+      eq(defs.querySelectorAll('button').length, 12, 'each with Edit or Change, except data region');
       assert(/Data regionIndiaContact us to change/.test(defs.textContent), 'data region needs Oontu');
       wsSessionSeq++; showView('admin-dashboard'); assert(document.getElementById('ws-card'), 'back next session');
       wsOpenItem('first-client'); await idle();

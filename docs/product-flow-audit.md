@@ -204,3 +204,47 @@ Agency holds are one record (`sb.hold`, with source and check-back date), starte
 | B8 | Right to represent was a tick box in the send dialog; nothing recorded who agreed or how; the candidate was never asked | **Fixed** (agency) | `tests/m07-consent.spec.js`; see `implementation-progress.md`, 2026-11-01 · M7 |
 
 Submitting a candidate sends them a link (WhatsApp and email) to agree to be put forward to that client for that job. Nothing is sent to the client without their yes or a recorded call; No closes the journey as Not interested and blocks nobody; no answer in 48 hours tells the owner. Ready now means agreed with required fields complete. Company workspaces keep their vendor consent. Also: an agency hold checked back three times with no change now reaches the owner's manager (M6 follow-up).
+
+## 16. M8 update (2026-11-01) · PayTrack end to end
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B9 | A hire who leaves inside the window reopens the job but PayTrack doesn't react | **Fixed** (agency) | `tests/m08-paytrack.spec.js`; see `implementation-progress.md`, 2026-11-01 · M8 |
+| B10 | Commission is a fixed 10% with no rule, split or "payable when" | **Fixed** (agency) | same spec |
+| B13 | Money shows in four places | **Fixed** (agency) | same spec |
+| B16 | Only the Owner can raise an invoice | **Fixed** (agency) | same spec |
+
+PayTrack is the one money screen (Placements · Invoices · Collections · Commission); Revenue, Home cards and the client Billing tab read it. Invoices follow the client's terms (at joining or after the window), are numbered per agency and year, held with a reason, and paid in full or in part. Leaving inside the window opens a linked free replacement or a credit note per the client's terms. Commission follows the Owner's rule and split, payable after full payment and the window. Billing actions follow four permissions. Company workspaces are unchanged.
+
+## 17. M9 update (2026-11-01) · contract and temporary staff for agencies
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B7 | Contract and temporary hires had no agency path: no assignment, time, client approval, monthly invoice or worker pay | **Fixed** (agency) | `tests/m09a-assignments.spec.js`, `tests/m09b-contract-money.spec.js`; see `implementation-progress.md`, 2026-11-01 · M9 |
+
+A Contract or Temporary hire becomes an assignment at Joined (rates with a minimum-margin approval, per-day time from the worker's link, one-tap client approval, Kairo's flags, attendance import, lifecycle). Monthly invoices are built from approved time in PayTrack with the M8 machinery and the client location's tax rules; gross pay exports for payroll; conversion to permanent creates a normal placement; commission follows the monthly margin. Corporate contract hiring shares the same time engine and is unchanged.
+
+## 18. M10 update (2026-11-01) · honest Kairo disclosure
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B19 | Every message Kairo drafted said "approved by a person on our team", including automatic sends that no person looked at | **Fixed** | `tests/m10-disclosure.spec.js`; see `implementation-progress.md`, 2026-11-01 · M10 |
+
+The line now depends on how each message was actually sent, recorded on the send ledger: "approved by a person on our team" only when a person approved that message; "from a template our team approved" for automatic acknowledgements, follow-ups, reminders, consent and time links. A person's own message gets no line, and with the switch off neither line is added. The Settings help explains both.
+
+## 19. M11 update (2026-11-01) · names, role templates and team-size defaults
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B12 | The top role was called "Super Admin" or "Tenant Admin" across role names, toasts, errors, help and audit text | **Fixed** (agency and corporate) | `tests/m11-names-templates.spec.js`; see `implementation-progress.md`, 2026-11-01 · M11 |
+| C5 (decision) | The team size answered at sign-up didn't set any starting rules | **Fixed** (agency) | same spec |
+
+Inside a workspace the top role is "Owner" everywhere; "Oontu Super Admin" stays on Oontu's own screens. Saved records keep their old label and are shown as Owner. Create role offers Admin, Account manager, Accounts and Sourcer (never seeded); each fills the editor and nothing is created until Save. A new permission, "Submit to job", keeps everyone who could submit able to; the Sourcer template doesn't have it. The team size at sign-up sets submission review and applicant sharing once (1–5: review off, applicants to the job lead; 6 or more: review on for Recruiters, round-robin), shown in Workspace defaults with Change; a later team-size change touches neither Settings nor jobs. (This C5 is the decision-list item; the vendors row C5 in section 2 is a different item.)
+
+## 20. M12 update (2026-11-02) · end to end
+
+The whole agency journey runs end to end for all four team shapes in `tests/agency-e2e.spec.js`. The summary for reading is `docs/OONTU_AGENCY_READY_REPORT.md`. B15 was not a code issue. It was missing from this audit until now:
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B15 | The flow map (v8) showed the old 4-question sign-up; the product asks 9 questions with a code | **Fixed in the flow map (no code change)**, from v9 | Flow map v9; sign-up covered by `tests/auth-flow.spec.js` |

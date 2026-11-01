@@ -188,4 +188,23 @@ t('cancelled bulk modal leaves no bypass behind', () => {
   assert.strictEqual(ok, false); assert.ok(!APS._bypass['req:b5']);
 });
 
+// ---- a workspace in Europe/London: business hours follow daylight saving (BST = UTC+1 until 25 Oct 2026, then GMT) ----
+t('London: 09:30 opens at 08:30 UTC in summer and 09:30 UTC in winter', () => {
+  APS.config.timeZone = 'Europe/London';
+  try {
+    assert.strictEqual(APS.addBusinessMinutes(Date.UTC(2026, 6, 14, 6, 0), 60), Date.UTC(2026, 6, 14, 9, 30));    // Tue 07:00 BST → 09:30 + 60 = 10:30 BST
+    assert.strictEqual(APS.addBusinessMinutes(Date.UTC(2026, 0, 13, 7, 0), 60), Date.UTC(2026, 0, 13, 10, 30));   // Tue 07:00 GMT → 10:30 GMT
+  } finally { APS.config.timeZone = 'Asia/Kolkata'; }
+});
+t('London: a clock change over the weekend is counted right', () => {
+  APS.config.timeZone = 'Europe/London';
+  try {
+    // Sat 24 Oct 18:00 BST (17:00Z) + 60: 30 minutes on Saturday, Sunday off (clocks go back), Monday 09:30 GMT + 30 = 10:00Z
+    assert.strictEqual(APS.addBusinessMinutes(Date.UTC(2026, 9, 24, 17, 0), 60), Date.UTC(2026, 9, 26, 10, 0));
+    // and the reverse direction: Sat 28 Mar 18:00 GMT + 60 → Mon 30 Mar 10:00 BST = 09:00Z (clocks went forward on Sunday)
+    assert.strictEqual(APS.addBusinessMinutes(Date.UTC(2026, 2, 28, 18, 0), 60), Date.UTC(2026, 2, 30, 9, 0));
+    const a = Date.UTC(2026, 9, 23, 15, 0), b = APS.addBusinessMinutes(a, 600); assert.strictEqual(APS.businessMinutesBetween(a, b), 600);
+  } finally { APS.config.timeZone = 'Asia/Kolkata'; }
+});
+
 console.log('\n' + passed + ' checks passed');

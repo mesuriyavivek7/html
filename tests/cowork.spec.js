@@ -10,7 +10,8 @@
   async function t(name, fn){ var before = errs.length; try { await fn(); if(errs.length>before) throw new Error(errs.slice(before).join(' | ')); results.push({ name:name, pass:true }); } catch(e){ results.push({ name:name, pass:false, error:String(e.stack||e.message).slice(0, 500) }); } }
   function ok(c, m){ if(!c) throw new Error(m || 'assertion failed'); }
   function as(role){ state.role = role; previewAsRoleId = null; renderSidebar(); }
-  function tue10(){ var d = new Date(CW.clock); d.setHours(10, 0, 0, 0); while(d.getDay() !== 2) d.setDate(d.getDate() - 1); cwSetClock(d.getTime()); return d.getTime(); }
+  function wsAt(day, h, m){ var a = day.split('-'); return wsWallMs(+a[0], +a[1], +a[2], h, m || 0); }   // a wall time in the workspace zone (not the browser's)
+  function tue10(){ var day = wsDay(CW.clock); while(wsDow(day) !== 2) day = wsAddDays(day, -1); var t = wsAt(day, 10); cwSetClock(t); return t; }
   function main(){ return q('#main-content'); }
   function sentFor(runId){ return SEND_LEDGER.filter(function(l){ return l.runId === runId && l.status === 'sent'; }); }
   function newWf(agentId, steps, o){
@@ -103,7 +104,7 @@
       // replay of the same step never sends twice
       run.pc = 0; run.status = 'waiting'; run.nextAt = cwNow(); cwSetClock(cwNow() + 26 * CW_HOUR); cwEngineTick(0, { enrol:0 }); ok(sentFor(run.id).filter(function(l){ return l.action === 'send'; }).length >= 1 && SEND_LEDGER.filter(function(l){ return l.runId === run.id && l.status === 'sent' && l.channel === 'email'; }).length === 1, 'the email is not sent twice');
       // quiet hours
-      var d = new Date(cwNow()); d.setHours(22, 0, 0, 0); cwSetClock(d.getTime()); var c2 = freshPerson([c.id]); var run2 = cwStartRun(wf1, c2); cwEngineTick(0, { enrol:0 });
+      var d = new Date(wsAt(wsDay(cwNow()), 22)); cwSetClock(d.getTime()); var c2 = freshPerson([c.id]); var run2 = cwStartRun(wf1, c2); cwEngineTick(0, { enrol:0 });
       ok(sentFor(run2.id).length === 0 && /Quiet hours/.test(run2.log.map(function(l){ return l.why; }).join()), 'quiet hours reschedule'); ok(run2.nextAt > cwNow() && cwInWindow(run2.nextAt), 'rescheduled into the window');
       // frequency cap across agents: one person, two agents, same day
       tue10(); var c3 = freshPerson([c.id, c2.id]); var wfX = newWf('engagement', [emailStep()], { name:'T-X' }), wfY = newWf('offers-joining', [emailStep()], { name:'T-Y' }); wfX.__t = wfY.__t = 1;

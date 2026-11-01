@@ -61,7 +61,7 @@
     await t('candidate entries show the status and the next action by status; Ready → "Submit to the job"', async function(){
       var n = 0;
       CANDIDATES.forEach(function(c){ candidatePipelineEntries(c).forEach(function(e){ var sb = e.jobId ? findSubmission(e.jobId, c.id) : null; if(!sb || e.placement) return; n++;
-        var js = journeyStatus(sb); ok(e.label === js.label && e.nextAction === journeyNextAction(js), c.name + ': ' + e.label + ' / ' + e.nextAction); }); });
+        var js = journeyStatus(sb); ok(e.label === js.label && (e.nextAction === journeyNextAction(js) || (e.assignmentId && /^On assignment until /.test(e.nextAction))), c.name + ': ' + e.label + ' / ' + e.nextAction); }); });   // M9: a contract hire's next action is their assignment
       ok(n > 20, n + ' entries checked');
       ok(JOURNEY_NEXT_ACTION.ready === 'Submit to the job', 'Ready next action');
       var ready = mkSub('Recommended'); recordConsentCall(ready, 'Called the candidate, agreed'); var e = candidatePipelineEntries(byId(ready.candidateId)).find(function(x){ return x.jobId === ready.jobId; });

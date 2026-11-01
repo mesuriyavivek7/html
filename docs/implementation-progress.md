@@ -1072,3 +1072,392 @@ All in one run.
 **Not verified**
 - Nothing in M7 was opened in a browser: the consent page (agency Yes/No, done, expired), the send dialog's consent lines and call field, the drawer card, the locked setting, and the owner notices are covered by specs only.
 - `subPhase` treats a sourced journey that was never sent as "client" (an old quirk; M5a's status already reads it right). The drawer card uses the status, not the phase.
+
+## 2026-11-01 · M7 follow-ups · asking again, and journeys sent before consent
+
+Backup: `backups/recruitment-os-prototype.pre-m7b-consent-limits.html`.
+- After a candidate says No, asking again within 7 days needs a note on why. Submitting again without one is refused ("<name> said no on <date>. To ask again within 7 days, add a note on why."), audited "Consent request refused". With a note, the link goes out and the audit carries the note. The drawer of the closed journey has "Ask again" with the note field.
+- Never more than 2 consent links per candidate, client and job in 30 days (counting earlier requests and earlier attempts on the journey). A third is refused with the reason ("Two links have gone to <name> for <client> · <job> in the last 30 days. Call them and record it instead."), audited; the dialog and drawer then offer only "Record call".
+- The 27 journeys sent before consent existed show "Right to represent · Sent before consent was recorded" in the drawer. No report, notice, audit or block treats them as missing consent (they are never asked, never expire, never blocked).
+- `tests/m07-consent.spec.js`: 2 tests added (9 tests). One line of an existing m07 test changed to follow the new 7-day rule:
+
+| Line | Before | After |
+|---|---|---|
+| 80 | `actAs(rec2.id); var again = submitOneToJob(j, c, 'Test'); asOwner();` | `FM.offset = T0 + 8 * 24 * H; actAs(rec2.id); var again = submitOneToJob(j, c, 'Test'); asOwner();   // after 7 days no note is needed (M7 follow-up)` |
+
+- Results: all 30 browser specs pass in one run (m07 9/9); approval engine checks 32/32. Numbers: none change.
+
+## 2026-11-01 · M8 · PayTrack end to end (B9, B10, B13, B16; flow map section 15; decisions C2, C3, C4)
+
+Backup before any change: `backups/recruitment-os-prototype.pre-m8-paytrack.html`. Source read: `Oontu-Agency-Flow-v10.pdf` section 15, the role tables and decisions C2–C4.
+
+**What was there**
+- Joining created the placement with the fee from the client's terms version. Raising an invoice only flipped a status (holds from `clInvoiceHold` via the clients script); recording payment was all-or-nothing; both were Owner-only (`ptRequireTenantAdmin`). No invoice numbers, due dates, part payments or overdue.
+- The lock-in sweep ran once at load against a fixed 12 Jul 2026 and wrote a fixed 10% "recruiter incentive".
+- Nothing happened when a hire left: no way to record it, no replacement, no credit.
+- Money in four places: Billing (`payroll-billing`, the same PayTrack body), Revenue (a hard-coded chart), Home cards (`odMoney`, own sums), the client Billing tab (`clientMoney`). `admin-paytrack` was an empty "Nothing here yet" page.
+
+**Changes (agency workspaces)**
+- **One record.** The placement holds `invoice`, `credit`, `commission` and `left`; `invoiceStatus` / `paymentStatus` stay as its summary for older readers.
+- **Billing permissions (B16).** billing · Raise invoice, Record payment, Approve credit, Pay commission. Owner: all four. Admin: Raise invoice and Record payment (money going out stays with the Owner and the Accounts template). Recruiters and Recruiter Managers: none. The Owner can give any of them to any role in Roles. Every action is audited.
+
+  | Template | PayTrack |
+  |---|---|
+  | Owner | All · raise, record, approve credit, pay commission |
+  | Admin | Raise invoices and record payments; no credit approvals or commission payouts |
+  | Accounts (M11) | All four |
+  | Recruiter Manager | Team placements, no money |
+  | Recruiter | Own placements, no money (own commission only if the Owner turns it on, C2) |
+
+- **Invoices.** Client terms (versioned) gain "When to invoice: At joining (default) / After the replacement window". A draft is made at joining (or when the window passes) with the fee and tax worked out and frozen (amounts plus the clients script's `clSnapshot`); a hold (`clInvoiceHold`: registration, PO, lapsed LUT, no tax rule) shows its reason and blocks Raise until fixed (the snapshot is frozen again once a hold clears). Raise assigns the number, sends it to the client's invoice contact (`clientRoute(c,'Invoices')`, simulated, client activity line) and sets the due date from payment days. Then Part paid / Paid / Overdue. When overdue, Kairo drafts a reminder (audited, the client owner told); a person sends it.
+- **Numbers.** Sequential per agency and financial year from the workspace invoice prefix: `NST-26-27/0001`. Never reused, even when an invoice is credited or cancelled. Credit notes: their own series `CN-NST-26-27/0001`, always pointing to the invoice they reduce. Invoices raised before M8 keep their old numbers.
+- **Leaving (B9).** "Record that <name> left" (date and reason) in the PayTrack placement drawer; any move out of Joined is handled the same way. Inside the window: the journey moves to Withdrawn, the commission is cancelled with a reason, and the client's terms decide:
+  - Free replacement (default, versioned): a replacement job linked to the original (`replacementOf` / `replacementJobs`), same client, terms version and hiring process, no new fee, flagged on both jobs; the original job stays filled (the opening moves to the replacement); the placement shows "Left in window · replacement open". A hire on the replacement job carries no fee, no invoice and no commission.
+  - Credit note: a request through the approval engine (billing · Approve credit, guarded and ticked like every decision), then a credit note against the invoice (or the unraised draft is cancelled).
+  After the window: recorded on the placement and the journey only (no replacement, credit or cancel). The journey drawer and the job page show the same "Left on <date> · <reason>" line.
+- **Commission (B10).** Owner setting in Settings › Hiring › Commission: % of the fee (default 10), sourcer share (default 30, the closer gets the rest; 100% when the same person), "Show recruiters their own commission" (off, C2). Sourcer = the journey's first owner (intake owner or whoever added them); closer = the owner at Joined. Expected → Payable (the invoice is paid in full, credit included, and the window has passed) → Approved → Paid (billing · Pay commission), each audited; the people paid are told. Left in the window: cancelled with a reason. Contract staff: `ptCommissionBase` calls `ptContractMargin` when it exists (M9). The fixed 10% incentive is gone.
+- **Legacy placements.** Seeded placements keep their stored amounts, labelled "Recorded before commission rules" (₹ amount where one was stored); they are never recalculated and still count in totals. Only new placements use the rule.
+- **One clock.** `PAYTRACK_TODAY` is only the date the seeds were written against; seeded dates are shifted once to today so their ages stay the same (still shown as "Oct 5", with an ISO date alongside). Every window, overdue and commission check uses `ptToday()` = the flow rules' `fmNow()`.
+- **One money screen (B13).** PayTrack (`admin-paytrack`) has tabs Placements · Invoices · Collections · Commission and a Billed · Collected · Outstanding · Overdue strip from `ptMoney()`. Billing is removed from the menu and `payroll-billing` opens PayTrack. Revenue, the Home money cards (`odMoney`) and the client Billing tab (`clientMoney`) read `ptMoney()`. The client Billing tab shows "Part paid · ₹x of ₹y" and sends money changes to PayTrack ("Open in PayTrack"). Recruiters keep their no-money PayTrack view; with C2 on they see "My commission" with their own lines only.
+
+**Company workspaces:** unchanged (no PayTrack or Billing; Revenue keeps its own page; joining creates no invoice or commission; the sweep does nothing).
+
+**Numbers that changed**
+
+| Where | Before | After | Why |
+|---|---|---|---|
+| Revenue page | a fixed chart (Feb–Jul ₹28–38L) and fixed client totals | Billed ₹27.69L · Collected ₹13.99L · Outstanding ₹13.7L · Overdue ₹9.9L, fees by month of joining, top clients by billed | reads PayTrack |
+| PayTrack KPI "This month" | ₹3.8L · −5 vs last month | ₹0.0L · −4 vs last month | the seeds keep their ages but fall in other calendar months (shifted from 12 Jul to today) |
+| Seeded placement dates | e.g. Sneha Patel joined Jun 15, Ananya Iyer completed Jun 1 | Oct 5, Sep 21 (same ages) | one clock |
+| Home money cards, every client's billed / collected / outstanding / overdue, all report and dashboard numbers | — | unchanged | |
+
+**Changed lines in existing specs** (approved: the Billing menu item)
+
+| Spec · line | Before | After |
+|---|---|---|
+| sidebar · 28 | `…li-uni-box,admin-revenue,admin-paytrack,payroll-billing,team-members,settings` | `…li-uni-box,admin-revenue,admin-paytrack,team-members,settings` |
+| m04c-menu-home · 35 | `…li-uni-box,admin-revenue,admin-paytrack,payroll-billing,reports,…` | `…li-uni-box,admin-revenue,admin-paytrack,reports,…` |
+| m04c-menu-home · 52 | `ok(shown() === 'admin-paytrack,payroll-billing,settings', shown());` | `ok(shown() === 'admin-paytrack,settings', shown());   // M8: Billing is PayTrack (the route redirects)` |
+
+`light` and `screens-crawl` walk the menu, so each visits one screen fewer (88 → 87, 87 → 86); no line changed. New: `tests/m08-paytrack.spec.js` (13 tests).
+
+**Tests executed (actual results)**
+
+| Spec | Result |
+|---|---|
+| m08-paytrack (new) | 13 / 13 |
+| sidebar (1 line changed) | 6 / 6 |
+| m04c-menu-home (2 lines changed) | 9 / 9 |
+| light (one menu screen fewer) | 87 / 87 |
+| screens-crawl (one menu screen fewer) | 86 / 86 |
+| clients | 31 / 31 |
+| approvals | 14 / 14 |
+| m07-consent | 9 / 9 |
+| m06-one-hold | 8 / 8 |
+| m05b-status-everywhere | 10 / 10 |
+| m05a-status-numbers | 11 / 11 |
+| m04d-team-handover | 5 / 5 |
+| m04b-data-scope | 10 / 10 |
+| m04a-approval-routing | 14 / 14 |
+| m03-submission-rules | 10 / 10 |
+| m02-applicant-owner | 15 / 15 |
+| m01-offer | 9 / 9 |
+| agency-shapes | 5 / 5 |
+| auth-flow | 75 / 75 |
+| campaigns | 21 / 21 |
+| corporate | 20 / 20 |
+| cowork-journey | 12 / 12 |
+| cowork | 11 / 11 |
+| design-system | 8 / 8 |
+| flow-rules | 12 / 12 |
+| intake-flow | 31 / 31 |
+| intelligence | 13 / 13 |
+| interviews | 15 / 15 |
+| settings | 15 / 15 |
+| signup-recovery | 11 / 11 |
+| submission-flow | 19 / 19 |
+| approval engine checks | 32 / 32 |
+
+All 31 browser specs in one run.
+
+**Not verified**
+- Opened in a browser (screenshots, 1440 px): PayTrack's Invoices tab and the placement drawer. Not opened: the Collections and Commission tabs, recording a leave, the replacement job page, the credit note approval in Approvals, the Settings commission card, the Revenue page, the client Billing tab with a part payment, the recruiter "My commission" block, phone width.
+- The fee on a new placement still comes from the clients script's hook (the client's current terms version at joining), as before M8.
+
+## 2026-11-01 · M8 follow-ups · fee version, sourcer, a demo month
+
+Backup: `backups/recruitment-os-prototype.pre-m8b-followups.html`.
+- **Fee version.** A placement's fee and terms version come from the M1 offer record: the version in force when the client's offer was recorded (the offer stores `fee.amount`, `fee.termsVersion`, `fee.recordedAt`; the "Offer recorded" audit names both). Both are frozen on the placement (`feeFromOffer`, `offerRecordedAt`), and the invoice is drafted from them. The journey drawer shows "Offer fee ₹x · terms v<n> (recorded <date>)" to people who can see money; the placement drawer shows "Fee from terms v<n>", and "(in force when the offer was recorded)" when the terms changed before joining.
+- **Sourcer.** `sb.sourcedBy = { id, name, how, at }`, set once and audited ("Sourced by"), on the first action on the candidate for this journey: added from the pool, submitted, opened by its owner, or screened. An owner the SLA rule moved away before they opened it is never the sourcer. Commission's sourcer is `sourcedBy`; journeys from before this (no `sourcedBy`) count the closer as both.
+- **Demo month.** A seeded placement (Kiran Rao · Meridian Health, a client with no target or jobs) secured this calendar month, invoiced the M8 way and paid today, so PayTrack "This month" isn't empty.
+- **Numbers that changed (demo record only):** Home "Revenue earned" ₹20.69L → ₹23.33L; PayTrack "Revenue realized" ₹20.7L (9) → ₹23.3L (10), "This month" ₹0.0L · −4 → ₹2.6L · −3; Revenue page Billed ₹27.69L → ₹30.33L, Collected ₹13.99L → ₹16.63L; Meridian Health billed ₹3.8L → ₹6.44L, collected ₹0 → ₹2.64L. Every other client, the dashboards and the reports are unchanged.
+- **Spec lines changed** (`tests/m08-paytrack.spec.js`, the M8 helper): `place()` now adds the candidate while acting as the sourcer (`actAs(sourcer); createSubmission(…); asOwner();`, was created as the Owner), and the joining part moved to `join()`, which keeps an offer already recorded (`sb.offer ? { ok:true } : recordOffer(…)`). Two tests added (15 tests).
+- Results: all 31 browser specs pass in one run (m08 15/15); approval engine checks 32/32.
+
+## 2026-11-01 · M9 step 1 · the corporate time engine split into shared functions
+
+Backup before any change: `backups/recruitment-os-prototype.pre-m9-contracts.html`.
+- New shared, pure functions (in the corporate script, before the work-order code), each taking the record, the sheet list, the clock and its own words, and keeping no state of their own: `ctWeekCheck` (running, per-day limit, not in the future, inside the dates, something entered, not locked), `ctDecide` (approve, or send back with a note), `ctAmount` (rate × time per hour or per day), `ctReadyTime` (approved-and-unbilled, waiting, billed), `ctExtendCheck` (running, later end, length limit, reason), `ctTimeFormHTML` (the worker's week form).
+- Corporate `coSheetSubmit`, `coSheetDecide`, `coSheetAmount`, `coInvoiceBuild`, `coWoExtend` and `coTimePage` keep their names, arguments, messages, audit lines and HTML, and now call the shared functions with `CO.contracts` / `CO.sheets`. Corporate invoices (`CO.invoices`, flat 18%) are unchanged.
+- Proof: the same 25 corporate cases run on the backup and on the split file give byte-identical results (every success and refusal message, the time page HTML for two weeks, invoice lines and totals, extensions, audit lines). `corporate.spec` 20/20, all 31 browser specs in one run, approval engine checks 32/32. No spec line changed.
+- Not yet built: anything on the agency side.
+
+## 2026-11-01 · M9 step 2a · contract and temporary staff: assignment and time (no money yet)
+
+Backup before any change: `backups/recruitment-os-prototype.pre-m9a-assignments.html`. The test runner now launches its own Chrome profile and runs two specs at a time, so a crash in the person's Chrome can't stop it.
+
+**Changes (agency workspaces)**
+- **Joined on a Contract or Temporary job** (job hiring type) opens the assignment form instead of creating a PayTrack placement; the journey ends at Joined and the assignment carries on (`ASSIGNMENTS`). Fields: start and end, rate per hour/day/month, pay rate, markup % (default from the client's versioned contract terms) or a typed bill rate, tracking (days, hours, shifts, attendance import; Temporary defaults to days), hours in a day, overtime after 9 h a day / 48 h a week (editable), notice days, client approver. Linked to the journey, job, client, client location and terms version.
+- **Minimum margin.** Client terms (versioned) gain "Contract staff: markup on pay %" and "minimum margin %" (default 10). A rate whose margin is below it waits for contracts · Approve rates through the approval engine (guarded and ticked like every decision); the assignment is "Pending approval" until then.
+- **Worker link** `#/time/<token>`: one token per assignment, revoked or reissued from the assignment (the old link then says "This link does not work"), stops at Ended or Terminated, shows only that worker's own weeks. Time is per day with real dates (`dates[7]` on each week), entered as hours, days or shifts. Built on the shared engine (`ctWeekCheck`, `ctTimeFormHTML`).
+- **Client approver's link** `#/time-ok/<token>`, no login: approve, or send back with a comment (required); the owner is told on send-back. Reminders when last week's time is late (2 days) and when an approval is late (2 days), audited.
+- **Kairo flags** (shown to the worker and the approver, never blocking): worked on a holiday (the workspace list plus days each client location adds), over 9 h a day or 48 h a week (or 2+ shifts a day), the same worker on another assignment the same day, weekdays with no time.
+- **Attendance import:** a CSV per client and month (worker, date, hours or shifts), checked row by row with errors shown before anything is imported; imported days are marked "Imported" and go through the same checks and approval link.
+- **Lifecycle:** Kairo alert 30 days before the end; extend (shared `ctExtendCheck`); change the rate from an effective date (approval when below the minimum margin); end on the end date, or early with the notice period, after which it is Terminated. "On assignment until <date>" on the job page and the candidate (and the journey drawer's assignment panel).
+- **Permissions:** contracts · View / Manage / Approve rates. Owner all; Admin View and Manage; Recruiter Manager and Recruiter View. Recruiters see the pay rate; bill rate and margin only with money permission. Not a module in company workspaces.
+
+**Company workspaces:** unchanged. `corporate.spec` 20/20 with no line changed; corporate work orders, timesheets and the corporate time page behave as before.
+
+**Numbers:** none change (every report, dashboard and money number identical).
+
+**Tests executed:** `tests/m09a-assignments.spec.js` (new) 9/9; all 32 browser specs pass in one run; approval engine checks 32/32. No existing spec line changed.
+
+**Not verified:** opened in a browser (screenshots, 1440 px): the assignment form, the client approver's page. Not opened: the worker's page (rendered by the spec), the assignment panel in the drawer, the action forms (extend, change rate, end, add a holiday, import), the job page line, phone width.
+
+## 2026-11-01 · M9 · rate privacy check on step 2a
+
+A new m09a test checks rate privacy on every page (10 tests). What it found exposed, now fixed:
+- **Audit log text:** "Assignment created" and "Rate sent for approval" said "margin 4.8% is below the minimum 10%". Margin figures are gone from the audit text (they stay on the approval request, shown only to people who can see money).
+- **Recruiter Manager:** saw the bill rate and margin in the assignment panel, because "can see money" also counted Clients · View Contracts (which M4c gives Recruiter Managers for client fee terms). Bill rates and margins now need billing · View (Owner, Admin, Accounts).
+- **Scope:** assignment lines on the job page and the candidate listed every assignment on the job, whoever owned the journey (names and dates, no money). They now follow the viewer's journey scope: a Recruiter sees their own, a Recruiter Manager their team's.
+- **Approvals:** minimum-margin rate requests (and M8's credit-note requests) did not appear in Approvals at all, so the Owner could only decide them in code. They are now rows: "Rate from <date> · <client> · below the minimum margin" (pay, bill and margin only for people who can see money); "Credit note · against <invoice>" (amount only for money roles).
+- Already clean: the client approver's page (time, dates, Kairo flags only), the worker's page (no rates), notifications.
+
+## 2026-11-01 · M9 step 2b · contract and temporary staff: money (B7)
+
+Backup before any change: `backups/recruitment-os-prototype.pre-m9b-money.html`.
+- **Monthly invoices** (`asBuildInvoice`, the Contracts view → "Build invoice"): from approved time only (the shared `ctReadyTime`), split at calendar-month boundaries day by day, each day priced at the rate in force on that day (a mid-month rate change makes two lines). Waiting days are listed, never billed; a billed day is never billed again. Per hour, per day (hours ÷ hours in a day; a day or shift counts as one) or per month (a share of the month's working days). Each month's invoice is an invoice record on the assignment (`a.invoices[]`) handled by M8: the same numbering (`NST-26-27/…`), frozen tax snapshot, holds, part payments, overdue and Kairo reminder drafts.
+- **Tax:** from the client location's rules (`clTaxFor`, now taking a supply type), on the whole bill; nothing hardcoded on the agency path. The GST service code comes from the rule pack (998513 contract staffing, 998514 temporary staffing). **TDS per supply type:** the rule pack's TDS entry now holds rates per supply type; placement fees keep 194J as before; contract staffing has no rate in the pack, so the invoice shows "TDS for contract staffing is not set in the rule pack. Confirm the TDS rate for each supply type (placement fee, contract staffing) with your accountant." No rate was invented. Corporate keeps its flat 18%.
+- **M8 generalised:** PayTrack reads every record with invoices (`ptMoneyRecords()`: placements plus each month's contract invoice; `ptInvoicesOf(record)` gives a record's list). Invoices, Collections, Commission, totals, the client Billing tab and the sweep include contract invoices; permanent placement totals are unchanged. No m08 line changed.
+- **Gross pay** (Contracts view → "Gross pay before deductions (CSV)", billing · View): approved time × pay rate per worker, per month and rate period, titled "Gross pay before deductions", with the note "PF, ESI, professional tax and TDS on salary are not worked out here. Gross pay only; your payroll provider works out deductions." Audited.
+- **Conversion to permanent:** client terms (versioned) gain "Conversion to permanent, % of CTC" (default: the permanent fee) and "Waived after N months" (default 9). Converting creates a normal M8 placement (invoice, commission, replacement window), linked both ways (`convertedFrom` / `convertedTo`); the assignment is Converted and the worker link stops. Temporary: no conversion fee unless the terms set one.
+- **Commission on monthly margin:** Settings commission gains "for contract staff: % of monthly margin" (`contractPct`, default 10); each month's invoice carries its commission, payable when that month's invoice is paid in full (credit included), with the same sourcer/closer split; approved and paid as in M8.
+- **Contracts view** inside PayTrack (a fifth tab for people with contracts · View; no new menu item): each assignment with status, dates, pay rate (bill rate only for money roles), the month's approved and waiting days, its invoice and "Build invoice"; the gross-pay export and both notes.
+
+**Numbers:** none change (all reports, dashboards and money identical before and after; no seeded assignments).
+
+**Tests executed:** `tests/m09b-contract-money.spec.js` (new) 5/5, including one full cycle across a month boundary with a mid-month rate change, a part payment and commission becoming payable. `tests/m09a-assignments.spec.js` 10/10. Full suite: 32 of 33 in one run, the other (m02, its known exact-millisecond clock check) 15/15 alone. Corporate 20/20 and m08 15/15 with no line changed. Approval engine checks 32/32.
+
+**Not verified:** not opened in a browser: the Contracts tab, building and raising a contract invoice on screen, the CSV download, the conversion, the Approvals rows for rates and credit notes, the new terms fields, phone width.
+
+## 2026-11-01 · M9 follow-ups · a steady clock check, a demo assignment, the approver link after the end
+
+Backup before any change: `backups/recruitment-os-prototype.pre-m10-disclosure.html` (shared with M10).
+- **m02 clock check made steady:** the "clock starts now" check no longer compares exact milliseconds after moving the clock. It reads the app clock before and after the sweep and checks the start time falls between them. The full suite passed in one run, twice in a row.
+- **Demo assignment (agency workspaces only; the seed returns early in corporate):** Sana Qureshi applies to SwiftLog's Warehouse Supervisor job through the careers page (the normal inbound path makes her profile and journey). She is put forward with consent recorded by call, joins, and becomes assignment AS-0001: pay ₹1,500/day, bill ₹1,680/day (SwiftLog's 12% contract markup), owner Arjun Kapoor. Last month has two approved weeks; that month's invoice NST-26-27/0002 is raised and part paid (₹9,912 of ₹19,824 incl. IGST 18%), with commission Expected (10% of the ₹1,800 monthly margin). The invoice is built by `asBuildInvoiceCore`, which `asBuildInvoice` now calls after its "Raise invoice" permission check.
+- **Approver link after the end:** once an assignment is Converted, Ended or Terminated, the client's `#/time-ok/<token>` link shows "This link no longer works", except for a week that is still Submitted and waiting for approval, which can still be decided.
+- **Audit text without margin:** for contract records, audit lines say "(amount on the invoice)" instead of a ₹ figure (`ptAuditText`), so the commission line no longer shows the margin to people who can read the audit log but not money. The privacy check caught this once the demo seed added a contract invoice.
+
+**Numbers that change (before → after; corporate workspaces unchanged):**
+
+| Where | Before | After |
+|---|---|---|
+| Funnel (all journeys) | Sent 27 · Shortlisted 8 · Interview 7 · Offer 2 · Accepted 2 · Joined 1 | Sent 28 · Shortlisted 9 · Interview 8 · Offer 3 · Accepted 3 · Joined 2 |
+| By source | Talent Pool, Seed Data | + Careers page: sent 1, interview 1, offer 1, joined 1 |
+| Recruiter score · Arjun Kapoor | composite 16, quality 0%, interview 0%, sent 0, outreach 0 | composite 72, quality 100%, interview 100%, sent 1, outreach 10 (revenue ₹1,02,000 unchanged) |
+| Quality funnel · Arjun Kapoor | submissions 0, accepted 0 | submissions 1, accepted 1 |
+| Fairness · Pune | sent 10, shortlisted 4, interview 4 | sent 11, shortlisted 5, interview 5 |
+| Bottlenecks · Warehouse Supervisor | "Only 0 candidates recommended so far" | "Only 1 candidate recommended so far" |
+| Dashboard · Joined | 1 | 2 |
+| Home · unpaid invoices | 6 | 7 |
+| Home · to collect | ₹13.7L | ₹13.78L |
+| Revenue page · Billed / Collected / Outstanding | ₹30.33L / ₹16.63L / ₹13.7L | ₹30.5L / ₹16.71L / ₹13.78L (Overdue ₹9.9L unchanged) |
+| SwiftLog · billing | billed ₹90,000 · collected ₹90,000 · outstanding 0 | billed ₹1,06,800 · collected ₹98,400 · outstanding ₹8,400 · overdue 0 |
+
+Revenue and the client tab count the invoice before tax (₹16,800 billed, ₹8,400 collected); the invoice itself shows the total with IGST.
+
+**Spec lines changed (before → after):**
+- `tests/m02-applicant-owner.spec.js` 133–134: `FM.offset = 25 * 3600000; var out = fmSlaSweep(), at = fmNow(); FM.offset = 0;` … `new Date(sb.slaFrom).getTime() === at` → `var from = fmNow(), out = fmSlaSweep(), at = fmNow();` … `sla >= from && sla <= at` (same meaning: the clock starts during this sweep and isn't moved twice).
+- `tests/m05b-status-everywhere.spec.js` 64: `e.nextAction === journeyNextAction(js)` → also accepts `On assignment until …` when the entry belongs to an assignment (M9: a contract hire's next action is their assignment; the demo seed is the first such journey).
+- `tests/m09a-assignments.spec.js`: one test added (converted, ended or terminated → the approver link stops, except for a week still waiting); now 11 tests.
+
+**Tests executed:** full suite 34/34, twice in a row, in the runner's own Chrome profile; approval engine `node test/aps.test.js` 32/32; `tests/corporate.spec.js` 20/20 with no lines changed.
+
+**Not verified:** not opened in a browser: the demo assignment on the Contracts tab, PayTrack, Revenue and the SwiftLog billing tab; the "This link no longer works" page.
+
+## 2026-11-01 · M10 · honest Kairo disclosure (B19; flow map section 17)
+
+Backup before any change: `backups/recruitment-os-prototype.pre-m10-disclosure.html`.
+- **Two wordings, chosen by how the message was sent:** "Drafted by Kairo, Oontu's assistant, and approved by a person on our team." only when a person approved that message (a step held for review and approved). "Drafted by Kairo, Oontu's assistant, from a template our team approved." for automatic sends without a per-message check: acknowledgements, follow-ups, reminders, consent links and time links.
+- **Recorded on the send ledger:** each sent entry carries `disclosure` (`'approved'`, `'template'` or none) and, for approved ones, `approvedBy`. The wording follows the message, not the agent: the same agent with and without review gets different lines. The approver sees the line the message will carry. Consent links are now on the ledger too (`action: 'consent'`), and overdue reminders (`action: 'overdue reminder'`, sent by a person) carry the approved line.
+- **Switch off:** neither line is added and the ledger records none.
+- **A person's own message** (e.g. "Tell candidate" in the pipeline) gets no line; a template filled in without a send gets none either.
+- **Settings help** for "Say when Kairo wrote the message" explains both lines and that messages you write yourself get no line.
+
+**Numbers:** none change.
+
+**Spec lines changed (before → after):**
+- `tests/intelligence.spec.js` 80–81: `cwTemplateText(step, c, { ownerId:'RP-088' })` → `cwTemplateText(step, c, { ownerId:'RP-088' }, 'template')` (M10: the line depends on how it was sent; without it, no line is added).
+
+**Tests executed:** `tests/m10-disclosure.spec.js` (new) 4/4: automatic acknowledgement and consent links → template wording; a reviewed campaign message → approved wording, and the same agent without review → template; a person's own message → none; switch off → none, plus the Settings help. Full suite 34/34 twice; engine 32/32; corporate 20/20 unchanged.
+
+**Not verified:** not opened in a browser: the Settings help text, the line in the approval queue preview, the ledger view of a consent link.
+
+## 2026-11-01 · M10 follow-up · small samples in the recruiter score
+
+Backup before any change: `backups/recruitment-os-prototype.pre-m10b-score-sample.html`.
+- Below a minimum of 5 sent submissions (`RECRUITER_SCORE_RULES.minSent`), the recruiter score has no quality rate, no interview rate and no composite score. Screens say "Too few to score yet (<n> sent)", the same way client signals mark small samples. Counts (submitted, shortlisted, interviewed, accepted) still show.
+- Where: Recruiter Analytics (the score ring, both rate cards, the leaderboard: scored people are ranked, the rest are listed after it unranked), the Home performance card (Offer ratio "—" with the note), the recruiter Home "My month" funnel, the Owner Home "Team performance · Quality" list (too few: listed last, no "accepted" figure) and the recruiter profile pipeline.
+
+**Numbers that change (before → after):**
+
+| Recruiter | Sent | Before | After |
+|---|---|---|---|
+| Arjun Kapoor | 1 | score 72 · quality 100% · interview 100% · ranked 1st | Too few to score yet (1 sent), unranked |
+| Divya Menon | 1 | score 70 · quality 100% · interview 100% · ranked 2nd | Too few to score yet (1 sent), unranked |
+| Akash Shah | 0 | score 14 · 0% · 0% · ranked 10th | Too few to score yet (0 sent) |
+| Neha Kulkarni, Rohit Bansal, Sana Iqbal, Vivek Menon, Kavya Iyer, Rhea Malhotra | 0 | score 20 · 0% · 0% · ranked 4th–9th | Too few to score yet (0 sent) |
+| Priya Sharma | 26 | score 54 · 27% · 23% · ranked 3rd | unchanged, now ranked 1st (the only one scored) |
+
+**Spec lines changed:** none. One test added to `tests/intelligence.spec.js` (now 14 tests). It checks no rate or score below 5, the leaderboard text, no 100% on the leaderboard, and the score turning on at 5 sent.
+
+**Tests executed:** full suite 34/34 twice in a row; engine 32/32; corporate 20/20 unchanged.
+
+**Not verified:** not opened in a browser: Recruiter Analytics, the Home cards and the recruiter profile with the new text.
+
+## 2026-11-01 · M11 · names, role templates and team-size defaults (B12, C5; flow map 01, 03, 04)
+
+Backup before any change: `backups/recruitment-os-prototype.pre-m11-names-templates.html`.
+
+**1. Names (B12).** The top role is "Owner" inside every workspace, agency and corporate (the demo's seeded role was "Super Admin"; the ids `role_founder` and `state.role 'admin'` are unchanged). 44 strings changed: main script 40, light script 2 (override errors), join script 1, settings script 1. Answered wordings: "The Owner or an Admin sets these.", "the Owner or an Admin" in the sign-in notice, invite error, hold-override errors and join approval. Two more with the same wording were found while working: "Ask the Owner or an Admin to fix the records." (duplicate journeys) and "Contact the Owner or an Admin of your Oontu workspace." (sign-in help). Oontu Platform Settings now says "each workspace Owner's own Setup screens". Kept: "Oontu Super Admin" on Oontu's screens and in the persona switcher, "primary tenant administrator" on Oontu's create-tenant form, transfer ownership's "you become an Admin", and the import alias "super admin" → Owner. Code comments are not changed.
+- **Saved records are never edited.** `shownRoleName()` shows an old "Tenant Admin" / "Super Admin" / "Tenant Super Admin" label as "Owner" only when displayed: in the audit log (Settings and the old view), the Kairo activity lines, approvals (approver and decided-by, in the Approvals engine and the older request screens), the submission review timeline and decline reasons.
+
+**2. "Submit to job" and role templates (flow map 04).**
+- New permission **Candidates · Submit to job**. Agency submit checks use it (`submissionGate` behind `submitOneToJob`, and `jobWsCanSubmit`, which gates the send dialog `openSubmitPicker` and the submit buttons); corporate keeps talent pool Add and its role editor doesn't show the new action. The old check was talent pool **Add**, not Recommend, so every role with Add or Recommend gets it once (`grantSubmitToJob`; one audit line at load: "Submit to job — Owner, Admin, Recruiter Manager, Recruiter"). After that it is an ordinary permission. Roles made from templates or clones don't get it automatically.
+- **Create role** (Settings › Roles, agency, for people who can manage roles): Admin, Account manager, Accounts, Sourcer, or Blank. A template fills the editor (permissions, data scope, approval powers) as a draft marked "not saved"; edits change only the draft; Save role creates it (a name already in use is refused) with the audit line "Role created · from the X template"; Discard drops it. Not seeded: sign-up still seeds Owner, Recruiter Manager, Recruiter.
+
+| Template | Permissions | Scope | Home |
+|---|---|---|---|
+| Admin | everything except plan & add-ons, approve credit, pay commission, Cowork subscription and the danger zone; billing View, Raise invoice, Record payment; contracts View, Manage | All | Owner Home |
+| Account manager | clients View, Edit, View Contracts; jobs View, Create, Edit; candidates View, Send to Client; approvals; approves submissions | clients and jobs Own; pipeline Assigned jobs (includes their clients' jobs) | My day |
+| Accounts | billing View and all four; contracts View; clients View, View Contracts | billing, contracts, clients All | PayTrack |
+| Sourcer | talent pool View, Add, Move; candidates View, Edit; jobs View; Cowork Use agents, Create workflows | talent pool All; jobs Assigned; Cowork Own | My day |
+
+- **Account manager approvals:** the client's owner counts as being on the job (`canSeeApprovalWork`), and "Assigned jobs" pipeline scope includes the client's owner. No existing agency role uses that scope for pipeline. The reporting line still decides who reviews.
+- **Cowork:** the owner filter already existed (`cwWfVisible`: own workflows, a manager's team, and workflows marked shared). Nothing changed there; the spec checks a Sourcer sees their own and not another person's.
+
+**3. Team-size defaults (C5).** `applyTeamSizeDefaults` runs once at sign-up (agency): 1–5 → submission review off, new applicants to the job lead; 6 or more → review on (Recruiters need it; the Owner and Recruiter Managers already skip it), round-robin. Audited. Workspace defaults and the sign-up "How your agency works" screen show "Submission review" and "New applicants" from the current settings, with Change. The later Team size sheet only changes the answer: never Settings or jobs.
+
+**4. Join ratio** on the Home performance card: joined ÷ accepted offers from the recruiter's own journeys, with the small-sample rule (below 5 accepted: "Too few to score yet (n accepted)"). Before: 200% (placements ÷ approved decisions). After: "—" with "Join ratio: Too few to score yet (1 accepted)." The quality funnel gains a `joined` count; nothing else moved (reports, dashboard and money identical).
+
+**Spec lines changed (before → after):**
+- `tests/m04d-team-handover.spec.js` 79: `/only active Super Admin|your own account/` → `/only active Owner|your own account/`; 82: `/only active Super Admin/` → `/only active Owner/`.
+- `tests/auth-flow.spec.js` 1121: adds `Submission review=On for the Recruiter role|` after `Approvals=Follow the reporting line|`; 1122: `length, 11` → `length, 12`.
+- `tests/intake-flow.spec.js` 17, 26, 32, 75, 115, 425: "Tenant Admin" → "Owner" in comments, one message and two test titles (no checks change).
+- `tests/flow-rules.spec.js` 83 (not in the plan; follows from the approved "the Owner or an Admin" wording): `/manager or an admin/` → `/manager, the Owner or an Admin/`.
+- auth-flow sign-up lines 704, 709, 742 didn't move.
+
+**Tests executed:** `tests/m11-names-templates.spec.js` (new) 7/7; full suite 35/35 twice; engine 32/32; `tests/corporate.spec.js` 20/20, no lines changed.
+
+**Not verified:** not opened in a browser: Create role and the template editor, the Workspace defaults rows, the renamed strings on screen, the Home performance card.
+
+## 2026-11-02 · M11 fix · no lazy permission grants; shared workflows
+
+Backup before any change: `backups/recruitment-os-prototype.pre-m12-e2e.html` (shared with M12).
+- **"Submit to job" is a one-time update at load** (`submitToJobUpdate`), not a grant on first use. Each role that existed before M11 with talent pool Add or Recommend gets it, with **one audit line per role** ("Owner: Submit to job …", the same for Admin, Recruiter Manager, Recruiter). Every role is marked so it never runs twice.
+- **Roles made after M11 get it only when the Owner ticks it:** templates, Blank, and the old New role box. A clone copies the source role's ticks as they are. The agency sign-up seeds (Recruiter Manager, Recruiter) carry it written in, so a new agency can submit.
+- **Also gated:** shortlisting an applicant (`pipeShortlistApplicant`) puts them forward, so it now needs "Submit to job" too. The add-candidate form offers no jobs to a role without it.
+- **Shared workflows:** a Sourcer sees and uses them (Duplicate makes their own draft copy). Only the owner, the Owner or an Admin can edit, pause or delete one; people who approve agent messages may also pause or resume it. These guards are now in `cwWorkflowToggle` and `cwDelete` themselves, not only in the menu.
+  - A copy of someone else's workflow keeps only the copier's own LinkedIn accounts, and rotation becomes "my account". It never sends as another person; the duplicate line is audited.
+  - `cwWfVisible` now judges "manager" by the Team · View Team permission rather than the persona signed in, so a Sourcer seen through "View as" isn't treated as a manager.
+
+**Spec lines changed:** in `tests/m11-names-templates.spec.js` (new in M11):
+- the grant test now checks one audit line per role (was one combined line)
+- a role made after load is not granted by use (was: granted)
+- the load update grants a pre-M11 role once and never twice
+- two tests added: the Sourcer (template → add a candidate → open a job → can't submit, after a reload and a second use) and shared workflows
+
+## 2026-11-02 · M12 · end-to-end test and the agency-ready report
+
+- **New `tests/agency-e2e.spec.js`, 8 tests.** It runs the whole journey for each of the four shapes, plus the four Classic-only cases: leaves in the window, contract monthly invoice, consent No, duplicate with override. What it covers and the three shortcuts it takes are written at the top of the spec and in `docs/OONTU_AGENCY_READY_REPORT.md` section 1.
+- **New `docs/OONTU_AGENCY_READY_REPORT.md`:** fixed B1–B20 (B15 marked in the final round: fixed in the flow map, no code change), still not built, simulated, server rules by module, risks and checks by eye, build order.
+
+**Spec lines changed:** `tests/m08-paytrack.spec.js` 37, 40, 172. `new Date(fmNow()).toISOString().slice(0, 10)` → `ptLocalDay(new Date(fmNow()))` for the offer and joining dates.
+- Why: in UTC these fell a day early between 00:00 and 05:30 IST, so "the drawer says where the fee came from" failed.
+- It failed the same way on the pre-M12 backup, so it isn't caused by this round. The product records the local day.
+
+**Tests executed:** full suite 36/36 twice; engine 32/32; corporate 20/20, no lines changed; `tests/agency-e2e.spec.js` 8/8; `tests/m11-names-templates.spec.js` 9/9.
+
+## 2026-11-02 · Final round (part 1) · B15, clones, time zone search
+
+Backup before any change: `backups/recruitment-os-prototype.pre-final-round.html`.
+- **B15** marked "Fixed in the flow map (no code change)" in `product-flow-audit.md` (section 20) and the ready report. Flow map v8 showed the old 4-question sign-up; the product asks 9 questions with a code; corrected from v9.
+- **Clone (agency):** opens as a "not saved" draft with the source role's ticks, "Submit to job" included and shown ticked. The editor says "A copy of X, with the same ticks, including Submit to job". Save role writes the audit line "Role cloned · X → name". Corporate keeps its immediate clone.
+- **Time zone:** the product code was searched for business days built from UTC; the list is in the round's report. No product dates changed yet: the instruction for what business days must use was cut off.
+
+**Spec lines changed:** none; one test added to `tests/m11-names-templates.spec.js` (now 10).
+**Tests executed:** full suite 36/36 twice; engine 32/32; corporate 20/20, no lines changed.
+**Not verified:** not opened in a browser: the clone draft in Settings › Roles.
+
+## 2026-11-02 · Final round (part 2) · business days in the workspace time zone
+
+Backup before any change: `backups/recruitment-os-prototype.pre-tz.html`.
+- **One helper family** (main script, before PayTrack): `wsTz()`, which reads `ORG_STRUCTURE.profile.timezone` (stored as a label; the zone is its first word; Asia/Kolkata if unreadable), with `wsParts`, `wsDay`, `wsMonth`, `wsDayStart`, `wsWallMs`, `wsAddDays`, `wsAddMonths`, `wsDaysBetween`, `wsDow` and `wsFmt`. It is built on `Intl.DateTimeFormat` with `timeZone`; there are no fixed offsets. `calDay` is only for seed strings such as "Jun 15".
+- **Pointed at it:** `ptLocalDay`, `ptStartOfDay`, `ptParseDate`, `ptDaysBetween`, `ptFmtDate`, `PT_SEED_SHIFT`, `ptFy`, `clIso`, `coIso`, `coIsoMs`, `coMonday` (`asIso` follows `ptLocalDay`). PayTrack, terms, contracts and the shared time engine therefore no longer depend on the browser's zone.
+- **Day arithmetic instead of 24-hour blocks:**
+  - replacement window end (`ptWindowEnd`)
+  - invoice due date (`ptDueIso`: due on the day paymentDays after raising; overdue from the next day)
+  - client due date (`clRecDue`)
+  - contract weeks (`asWeekDates`), month bounds (`asMonthBounds`), workdays (`asWorkdays`), last month (`asLastMonth`)
+  - the revenue months chart
+  - client FY start (`CL_FY_START`, set at load) and last FY
+  - Oontu subscription renewal, period end and due date (`wsAddMonths`, `wsAddDays`)
+- **Every business-day hit from the table** is fixed: 14590, 44807, 48070, 44563, the Oontu console lines, `sToday`, and delegation (the hard-coded 5:30 is removed). Also fixed:
+  - the agent "trial · N days left" count, which parsed a date as UTC
+  - the console invoice overdue check
+  - the "Paid" day on console invoices
+- **Date formatters** in the money, client, contract, corporate-time and light code now show dates in the workspace zone: `ptFmtDate`, `clDate`, `fmDate`, `coDate`, `coDay`, `asFmt`, `asMonthLabel`, plus the client renewal and "since" lines.
+- **Approval engine** (both `oontu-approval-sla-engine.js` and the copy in the page): `utcOffsetMinutes: 330` is replaced by the workspace zone through Intl. The page's `wsTz()` wins; `APS.config.timeZone` is the fallback when the engine runs alone. 2 London checks added (34 in all), including the October and March clock changes.
+- **Removed:** the unused date picker (6 functions).
+- **Unchanged:** timestamps (created, sent, decided) stay UTC instants, and stored dates are never rewritten.
+  - Found: seeded client terms v1 dates are a day early when the page loads between 00:00 and 05:30 IST, in the old code.
+  - Not changed: harmless, because v1 only starts a day earlier.
+- **Not changed (still the browser's clock):**
+  - interview calendars and slot finding
+  - campaign send windows and slot suggestions
+  - Cowork quiet hours and day keys
+  - follow-up presets
+  - some older displays in the main script (52 date formatters there)
+
+**New spec:** `tests/time-zone.spec.js`, 8 tests. The rules run at 00:30 and 23:30 IST and with the workspace in Europe/London; it passes with the browser in UTC and in Asia/Kolkata.
+**Spec lines changed:** none. `test/aps.test.js` has 2 London tests (4 assertions) added.
+
+## 2026-11-02 · Final round (part 3) · interviews, Kairo send windows, any browser zone
+
+Backup before any change: `backups/recruitment-os-prototype.pre-tz2.html`.
+- **Interviews:** the start stays a UTC instant (`iv.at`). It is shown in the workspace zone with the zone named, e.g. "Wed, Jan 6, 10:00 AM IST", using `ivFmtT`, `ivFmtD`, `ivWhen` and the new `wsTime` and `wsZoneAbbr`.
+  - When the viewer's browser is in another zone, their own time follows in brackets: "(4:30 AM your time)", from `wsViewerNote` and `ivLocal`.
+  - The note is added on screens and on the candidate and client links only. Stored `iv.date` strings never carry one viewer's time.
+  - Workspace-zone working: slot finding (09:30–18:30, not Sundays), the day, week and month grids (`ivMid`, `ivMonday` = `coMonday`, `ivShiftMonth`), list grouping (`ivDayGroup`) and Home's "Today" (`oIsToday`).
+  - The `.ics` already carried UTC (`DTSTART:…Z`); unchanged.
+  - The seeded interviews used the browser's hour on a workspace day; they now use the workspace hour.
+- **Kairo send windows**, all in the workspace zone:
+  - Cowork: `cwInWindow`, `cwIsWorkday`, `cwNextWindow`, `cwDayKey` (now `wsDay`), the engine's start clock, `cwFmtTime`, and LinkedIn active hours (`cwLiInActive`)
+  - Campaigns: send hours in `cpSendCheck`, `cpNextWeekday`, `cpSlotAt`, `cpSlots`, `CP_ISO`, `cpDate`, `cpDateMs`, `cpWhen`
+- **Unchanged, as asked:** follow-up presets stay on the user's own clock, and the ~50 older displays in the main script stay as they are.
+- **Spec lines changed (before → after).** All of them set clock times with the browser's `setHours`, which is wrong once times are in the workspace zone; each now uses a `wsAt(day, h, m)` helper (a wall time in the workspace zone):
+  - `tests/m09b-contract-money.spec.js` 42: `first = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime() … mid = new Date(now.getFullYear(), now.getMonth() - 1, 15).getTime()` → `first = wsDayStart(wsYmd(lm[0], lm[1], 1)) … mid = wsDayStart(wsYmd(lm[0], lm[1], 15))` (last month from `wsParts(fmNow())`)
+  - `tests/cowork.spec.js` 13 (`tue10`): `new Date(CW.clock); d.setHours(10, 0, 0, 0); while(d.getDay() !== 2) …` → `wsDay(CW.clock); while(wsDow(day) !== 2) …; wsAt(day, 10)`
+  - `tests/cowork.spec.js` 106: `new Date(cwNow()); d.setHours(22, 0, 0, 0)` → `new Date(wsAt(wsDay(cwNow()), 22))`
+  - `tests/campaigns.spec.js` 14 (`tue10`, 11:00), the same change
+  - `tests/campaigns.spec.js` 143: "Sunday 11:00" built with `getDay`/`setHours` → `wsDay`/`wsDow`/`wsAt`
+  - `tests/m10-disclosure.spec.js` 24 (`tue10`), the same change
+- **New tests** in `tests/time-zone.spec.js` (now 10):
+  - an interview booked from the client link stores 04:30 UTC, shows "10:00 AM IST", lands on 6 Jan, has `.ics` `DTSTART:20270106T043000Z`, and shows the viewer note only in a non-IST browser
+  - a campaign step is held at 02:00 and 23:30 IST (18:00 UTC, daytime for a UTC browser), sends at 11:00 IST, and is held at 23:30 in London
+
+**Tests executed:** full suite 37/37 twice (normal); full suite 37/37 once with the browser in UTC; engine 34/34; corporate 20/20, no lines changed.
+**Not verified:** not opened in a browser:
+- the interview screens and links with the zone name and the "your time" note
+- the month and week grids
+- campaign slot suggestions

@@ -11,7 +11,8 @@
   function ok(c, m){ if(!c) throw new Error(m || 'assertion failed'); }
   function as(role){ state.role = role; previewAsRoleId = null; renderSidebar(); }
   function main(){ return q('#main-content'); }
-  function tue10(){ var d = new Date(CW.clock); d.setHours(11, 0, 0, 0); while(d.getDay() !== 2) d.setDate(d.getDate() - 1); cwSetClock(d.getTime()); return d.getTime(); }
+  function wsAt(day, h, m){ var a = day.split('-'); return wsWallMs(+a[0], +a[1], +a[2], h, m || 0); }   // a wall time in the workspace zone (not the browser's)
+  function tue10(){ var day = wsDay(CW.clock); while(wsDow(day) !== 2) day = wsAddDays(day, -1); var t = wsAt(day, 11); cwSetClock(t); return t; }
   function java(){ return CAMPAIGNS.find(function(c){ return c.jobId === 'j1'; }); }
   var BANNED = /\bAI\b|magic|smart|intelligent|✨|funnel optimi[sz]ation|conversion/i;
 
@@ -140,7 +141,7 @@
       cwEngineTick(CW_HOUR, { enrol:0 }); ok(SEND_LEDGER.filter(function(l){ return l.personKey === personKeyOf(a) && l.status === 'sent'; }).length === 1, 'frequency cap: not twice in a day');
       var e2 = cpEligible(c2, a); ok(!e2.ok && /Waits its turn|Contacted in the last 30 days|Already/.test(e2.reason), 'collision lock / cool-off: ' + e2.reason); cpNote(c2, e2.code, a, e2.reason); ok(c2.log.some(function(l){ return /Skipped Eng Alpha/.test(l.text); }) || c2.dedupe.waits + c2.dedupe.skipped + c2.dedupe.notAgain > 0, 'skip logged with the reason');
       /* quiet hours: Sunday sends nothing */
-      var d = new Date(CW.clock); while(d.getDay() !== 0) d.setDate(d.getDate() - 1); d.setHours(11, 0, 0, 0); cwSetClock(d.getTime()); var dl = mkCand(914, 'Eng Delta'); var n0 = SEND_LEDGER.length; cwEngineTick(0, { enrol:0 }); var p2 = cpPeopleOf(c1).find(function(x){ return x.candidateId === 914; }); ok(p2, 'enrolled on the Sunday tick'); ok(SEND_LEDGER.length === n0 || SEND_LEDGER.slice(n0).every(function(l){ return l.campaignId !== c1.id; }), 'no campaign send on a Sunday'); ok(/send hours/i.test(p2.holdReason || ''), 'reason: ' + p2.holdReason);
+      var sun = wsDay(CW.clock); while(wsDow(sun) !== 0) sun = wsAddDays(sun, -1); var d = new Date(wsAt(sun, 11)); cwSetClock(d.getTime()); var dl = mkCand(914, 'Eng Delta'); var n0 = SEND_LEDGER.length; cwEngineTick(0, { enrol:0 }); var p2 = cpPeopleOf(c1).find(function(x){ return x.candidateId === 914; }); ok(p2, 'enrolled on the Sunday tick'); ok(SEND_LEDGER.length === n0 || SEND_LEDGER.slice(n0).every(function(l){ return l.campaignId !== c1.id; }), 'no campaign send on a Sunday'); ok(/send hours/i.test(p2.holdReason || ''), 'reason: ' + p2.holdReason);
       tue10();
       /* pause all and a paused campaign send nothing */
       c1.status = 'paused'; var n1 = SEND_LEDGER.length; cwEngineTick(CW_DAY, { enrol:0 }); ok(SEND_LEDGER.slice(n1).every(function(l){ return l.campaignId !== c1.id; }), 'paused sends nothing'); c1.status = 'running';
