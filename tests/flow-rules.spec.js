@@ -70,8 +70,8 @@
       var c = mkCand('Client Reply'), sb = createSubmission('j1', c.id, { source:'Manual', recruiterId:currentActingUser().id, stage:'Submitted' }); sb.sent = { at:new Date().toISOString() };
       openPipelineDetail(sb.id); await sleep(10); ok(q('#fm-reply-card'), 'card in the drawer'); q('#fm-reply').value = 'We like the profile, let us set up an interview'; fmClientRead(sb.id); await sleep(5);
       ok(/Kairo reads this as Shortlisted/.test(q('#fm-reply-card').textContent) && sb.stage === 'Submitted', 'proposed only: ' + sb.stage);
-      fmClientApply(sb.id, 'On Hold', 'Client asked to wait'); ok(sb.stage === 'On Hold' && sb.holdCheckAt > Date.now() + 6 * 86400000, 'on hold, check-back set'); ok(sb.notes.some(function(n){ return /Client replied/.test(n.text); }), 'reply kept');
-      FM.offset = 8 * 86400000; var out = fmSlaSweep(); FM.offset = 0; ok(out.checkedBack >= 1 && sb.holdChecks === 1 && /Checked back/.test(sb.notes[sb.notes.length - 1].text), 'Kairo checked back');
+      fmClientApply(sb.id, 'On Hold', 'Client asked to wait'); ok(sb.stage === 'Submitted' && sb.hold && sb.hold.source === 'client reply' && sb.hold.checkAt > Date.now() + 6 * 86400000, 'on hold, stage kept, check-back set (M6)'); ok(sb.notes.some(function(n){ return /Client replied/.test(n.text); }), 'reply kept');
+      FM.offset = 8 * 86400000; var out = fmSlaSweep(); FM.offset = 0; ok(out.checkedBack >= 1 && sb.hold.checks === 1 && /Checked back/.test(sb.notes[sb.notes.length - 1].text), 'Kairo checked back');
       fmClientApply(sb.id, 'Rejected', 'Not a fit'); ok(sb.stage === 'Rejected' && sb.rejectReason.code === 'client', 'client rejection carries a reason'); pdClose();
     });
     await t('AR-5: a same-job override needs a reason and a timeline; a recruiter asks, the manager or admin decides, the owner is told, and it returns if nothing moves', async function(){

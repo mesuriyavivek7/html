@@ -102,7 +102,7 @@
       as('admin'); setJobApprovalPolicy({ mode:'direct', reviewer:'admin' });
       eq(publishAs('manager', null).status, 'Active');
       as('admin'); eq(setJobApprovalPolicy({ mode:'mandatory', reviewer:'team_manager' }).ok, true);
-      const creator = RECRUITER_ROSTER.find(function(r){ return managerOf(r.id) && r.id!==MANAGER().id && managerOf(r.id).id===MANAGER().id; });
+      const creator = RECRUITER();   // Divya Menon (Recruiter) reports to Arjun: a member's job is reviewed by their manager (since M4d team_manager routes by Reports to)
       if(creator) eq(jobReviewerFor(creator).user.id, MANAGER().id, 'team manager reviews their team member');
       eq(jobReviewerFor(MANAGER()).user.id, ADMIN().id, 'a manager is never their own reviewer, so the admin reviews');
       eq(jobReviewerFor(MANAGER()).fellBack, true);
@@ -174,7 +174,7 @@
       eq(e.receivedAt, '2026-10-01T09:30:00.000Z'); eq(e.externalId, 'IND-77'); eq(e.artifact.name, 'cv.pdf');
       eq(e.fields.name.origin, 'extracted'); eq(e.extraction.status, 'complete');
       assert(JSON.stringify(AUDIT_LOG.slice(0,5)).indexOf('store://cv')<0, 'the CV reference is not copied into the audit log');
-      eq(r.submission.stage, 'Submitted'); eq(r.submission.recruiterId, null, 'no owner is assigned silently');
+      eq(r.submission.stage, 'Applied Directly'); assert(r.submission.recruiterId, 'an owner is assigned');
     });
 
     await test('B2 An application stays visible when extraction fails, and can be completed later', async function(){
@@ -241,7 +241,7 @@
       eq(journeysFor(j, first.candidate).length, 1, 'still one journey');
       eq(second.submission.id, sub.id); eq(second.event.journey, 'existing');
       eq(sub.stage, 'Interview Scheduled', 'the journey was not reset'); eq(sub.recruiterId, 'RP-081', 'ownership untouched'); eq(sub.updatedAt, updated);
-      eq(j.submitted, 1, 'counted once');
+      eq(j.submitted, 0, 'an applicant is not counted as submitted');
       eq(candidateApplicationEvents(first.candidate.id).length, 2, 'both applications are on record');
       const third = ingest(j, applicant(6), 'LinkedIn');            // another portal, no external ID
       assert(third.event && third.event.state==='recorded', 'another portal is another genuine application');
@@ -411,7 +411,7 @@
       const j2 = liveJob({});
       await Promise.all(Array.from({ length:25 }, function(){ return Promise.resolve().then(function(){ return ingest(j2, applicant(51), 'Indeed'); }); }));
       eq(eventsFor(j2).length, 1, '25 identical deliveries with no ID'); eq(SUBMISSIONS.filter(function(s){ return s.jobId===j2.id; }).length, 1);
-      eq(j2.submitted, 1);
+      eq(j2.submitted, 0);
       // two people correct the same decision from the same version: exactly one wins
       ingest(j2, applicant(51, { note:'x' }), 'Indeed');
       const rv = DUPLICATE_REVIEWS[0]; decideDuplicateReview(rv.id, 'duplicate_delivery', 'same', ADMIN());
@@ -453,7 +453,7 @@
     });
 
     await test('G4 Applicants shows applications that need details and possible duplicates, with flags', async function(){
-      const j = liveJob({ recruiterId:null, recruiter:null, assignedRecruiters:[] });
+      const j = liveJob({ recruiterId:null, recruiter:null, assignedRecruiters:[], jobLeadId:'RP-092' });   // since M4b the manager sees only his own tree's applicants; as job lead, the applicant is his
       ingest(j, { extractionError:'OCR failed', externalId:'Z1' }, 'Indeed');
       ingest(j, applicant(60), 'Indeed'); ingest(j, applicant(60, { note:'v2' }), 'Indeed');
       as('manager');

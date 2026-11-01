@@ -223,6 +223,18 @@
       return parts.join(' → ') || (r && (r.entityType + ' ' + r.entityId)) || 'Request';
     },
 
+    /* Who owes the follow-through after approval. A submission's "Send to client" goes to the requester if their role
+       can send; otherwise to the reviewer who approved it. */
+    followThroughOwner: function (item) {
+      var r = item.raw || {};
+      if (item.source === 'req' && r.entityType === 'SubmissionReview') {
+        // Only a role we know can't send hands it to the approver; if the app can't tell, it stays with the requester.
+        var roleId = r.requestedByRole, can = roleId === 'role_founder' ? true : call('roleHasPermission', roleId, 'candidates', 'Send to Client');
+        if (can === false) return item.approver;
+      }
+      return item.requester;
+    },
+
     /* Is the follow-through after approval done? Return true when nothing is owed. */
     followThroughDone: function (src, r) {
       if (src !== 'req') return true;
@@ -231,9 +243,9 @@
         return !s || (s.stage !== 'Ready to Send' && s.status !== 'ready_to_send');
       }
       if (r.entityType === 'Offer') {
-        var list = g('OFFERED_CANDIDATES') || [];
-        var o = list.find ? list.find(function (x) { return x.id === r.entityId; }) : null;
-        return !o || o.status === 'Offer Extended' || o.status === 'Accepted' || o.status === 'Declined' || o.status === 'Withdrawn';
+        var o = call('offerById', r.entityId);
+        if (o === undefined) { var list = g('OFFERED_CANDIDATES') || []; o = list.find ? list.find(function (x) { return x.id === r.entityId; }) : null; }
+        return !o || ['Offer Extended', 'Offer Accepted', 'Joined', 'Declined', 'Withdrawn', 'Rejected'].indexOf(o.status) > -1;
       }
       return true;
     },
@@ -502,6 +514,7 @@
     APS.adapter.toast(q.length === 1 ? q[0] : q.length + ' approvals need your attention. Open Approvals to see them.');
   }
 
+  function ftOwner(item) { return APS.adapter.followThroughOwner ? APS.adapter.followThroughOwner(item) : item.requester; }
   APS.reconcile = function (item, now, all) {
     var S = APS.state.items;
     var st = S[item.key];
@@ -517,7 +530,7 @@
         // pick up anything owed afterwards so an approved-but-never-sent item is not lost.
         st.phase = 'closed'; st.closedAt = item.decidedAt || created; st.legacy = true;
         var since = item.decidedAt || created;
-        if (item.status === 'approved' && P.afterApprove && !APS.adapter.followThroughDone(item.source, item.raw)) startPhase(st, 'followThrough', APS.resolveOwner(item.requester, now), since);
+        if (item.status === 'approved' && P.afterApprove && !APS.adapter.followThroughDone(item.source, item.raw)) startPhase(st, 'followThrough', APS.resolveOwner(ftOwner(item), now), since);
         else if (item.status === 'returned' && P.onReturn && !all.some(function (o) { return o.key !== item.key && o.type === item.type && o.entityId === item.entityId && (o.createdAt || 0) > since; })) startPhase(st, 'return', APS.resolveOwner(item.requester, now), since);
       }
       st.lastStatus = item.status;
@@ -532,7 +545,7 @@
         if (item.status === 'approved') {
           closePhase(st, item.decidedAt || now, 'approved');
           if (P.afterApprove && !APS.adapter.followThroughDone(item.source, item.raw)) {
-            startPhase(st, 'followThrough', APS.resolveOwner(item.requester, now), item.decidedAt || now);
+            startPhase(st, 'followThrough', APS.resolveOwner(ftOwner(item), now), item.decidedAt || now);
             events.push(['phase', 'followThrough']);
           }
         } else if (item.status === 'returned') {

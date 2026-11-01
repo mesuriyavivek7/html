@@ -78,7 +78,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       assert(authApi._outboxCount('anita.rao@infosys.com') === 1, 'the owner is emailed');
       assert(leadEventsText(JN.leadId).indexOf('Asked to join Infosys') > -1, 'the lead remembers');
       jnModal(''); state.role = 'admin'; ORG_STRUCTURE.profile.domain = 'infosys.com'; showView('team-members'); assert(q('#jn-join-card') && /Ravi Kumar/.test(q('#jn-join-card').textContent), 'the owner sees it in Team members');
-      state.role = 'recruiter'; showView('team-members'); assert(!q('#jn-join-card'), 'a recruiter does not'); state.role = 'admin';
+      state.role = 'recruiter'; showView('team-members'); assert(/You don’t have access to this/.test(q('#blocked-modal-root').textContent) && /Your role can’t open this page/.test(q('#blocked-modal-root').textContent), 'a recruiter can’t open Team members, so never sees the request'); closeBlockedState(); state.role = 'admin';
       assert(jnJoinApprove(list[0].id), 'approved'); eq(authApi._joinRequest(list[0].id).status, 'approved'); assert(authApi._inviteMail().some(function(m){ return m.to === 'ravi@infosys.com'; }), 'the invitation went to the person'); assert(audit(/Join request approved/), 'audited'); ORG_STRUCTURE.profile.domain = '';
     });
     await test('R7 the owner can decline with a reason; a join rule of "straight away" admits at once; "invite only" refuses a direct request; asking too often is stopped', async function(){

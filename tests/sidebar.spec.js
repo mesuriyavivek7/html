@@ -17,12 +17,12 @@
     try { localStorage.removeItem('oontu.navGroups'); } catch(e){} NAV_GROUP_OPEN = {};
 
     await t('recruiter: start of day, Hiring, Outreach, Insights, then Settings at the bottom', async function(){
-      as('recruiter'); ok(shown().join() === 'dashboard,my-todo,jobs,talent-pool,interviews,kairo-team,li-uni-box,intelligence,paytrack,settings', shown().join()); ok(heads().join() === 'Hiring,Outreach,Insights', heads().join());
+      as('recruiter'); ok(shown().join() === 'dashboard,my-todo,jobs,talent-pool,interviews,client-management,kairo-team,li-uni-box,intelligence,paytrack,settings', shown().join()); ok(heads().join() === 'Hiring,Outreach,Insights', heads().join());
       ok(!document.querySelector('#sidebar-nav .o-nav-fold'), 'nothing daily is folded away');
     });
-    await t('recruiter manager: Approvals next to Home; Clients with hiring; Team with insights', async function(){
-      as('manager'); ok(shown().join() === 'manager-dashboard,approval-center,manager-todo,jobs,talent-pool,interviews,client-management,kairo-team,li-uni-box,manager-team,intelligence,settings', shown().join());
-      ok(heads().join() === 'Hiring,Outreach,Team and insights', heads().join());
+    await t('recruiter manager: Approvals next to Home; Clients with hiring; Intelligence in Insights; Team under Workspace', async function(){
+      as('manager'); ok(shown().join() === 'manager-dashboard,approval-center,manager-todo,jobs,talent-pool,interviews,client-management,kairo-team,li-uni-box,intelligence,manager-team,settings', shown().join());
+      ok(heads().join() === 'Hiring,Outreach,Insights,Workspace', heads().join());
     });
     await t('owner: Money visible, Insights folds and remembers, Workspace last; opening a page inside opens its group', async function(){
       as('admin'); ok(shown().join() === 'admin-dashboard,approval-center,all-tasks,jobs,talent-pool,interviews,client-management,kairo-team,li-uni-box,admin-revenue,admin-paytrack,payroll-billing,team-members,settings', shown().join());
@@ -41,7 +41,7 @@
     });
     await t('nothing is lost: every page that had a sidebar entry still has one', async function(){
       Object.keys(NAV_LAYOUT).forEach(function(r){ var ids = []; NAV[r].forEach(function(g){ (g.items || [g]).forEach(function(i){ ids.push(i.id); }); }); ok(ids.length === new Set(ids).size, r + ' has no duplicates'); NAV_LAYOUT[r].forEach(function(g){ g[1].forEach(function(id){ ok(ids.indexOf(id) > -1 || ['oontu-agents'].indexOf(id) > -1, r + ' misses ' + id); }); }); });
-      as('recruiter'); state.sidebarOpen = false; applySidebarVisibility(); ok(document.querySelectorAll('#sidebar-nav .nav-item').length === 10, 'all items reachable in the collapsed rail'); state.sidebarOpen = true; applySidebarVisibility();
+      as('recruiter'); state.sidebarOpen = false; applySidebarVisibility(); ok(document.querySelectorAll('#sidebar-nav .nav-item').length === 11, 'all items reachable in the collapsed rail');   // 11 since M4c: Clients state.sidebarOpen = true; applySidebarVisibility();
     });
 
     var pre = document.createElement('pre'); pre.id = 'auth-test-results'; pre.textContent = JSON.stringify(results); document.body.appendChild(pre);

@@ -19,7 +19,6 @@
     window.submitOneToJob = realOne; window.createSubmission = realCreate; window.requestSubmissionReview = realReview;
     toasts = []; window.toast = function(m){ toasts.push(String(m)); };
     viewingAsFromManager = false; managerViewAsRecruiterId = null; previewAsRoleId = null; state.role = 'admin';
-    SUBMISSION_POLICY.recruiterSubmissionsNeedReview = true;
     ['cx','oc','iv','cf','cs'].forEach(function(k){ const r = document.getElementById(k+'-root'); if(r) r.innerHTML = ''; }); pdSubId = null;
     prospectSelection.clear(); prospectPickerJobIds = new Set(); ts.apply = null; selectedJobIds = []; assigningCandidateId = null;
     ['submission-results-modal','intake-review-modal'].forEach(function(id){ const m = document.getElementById(id); if(m) m.remove(); });

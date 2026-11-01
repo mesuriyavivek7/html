@@ -45,7 +45,7 @@ Audit date: 2026-10-28. Statuses: **Implemented** (behaviour exists and is cover
 | A3 | Distribution rule and approval routing → Job Open | Implemented | intake spec A1–A2c |
 | A4 | Job Lead + recruiters; workload shown; manager adds from own tree | Partial | Team panel exists; workload and Kairo suggestions not checked by a spec |
 | A4 | Member removed → unreviewed applicants redistributed; submitted keep owner | Implemented (this pass) | `removeRecruiterFromJob` wrapper; flow-rules spec A4 |
-| A5 | Channels: careers page, client widget, boards, social with UTM, recruiter personal link | Implemented | share links with `utm_content`, platform intake |
+| A5 | Channels: careers page, client widget, boards, social with UTM, recruiter personal link | Implemented (the personal link now routes the applicant since M2, section 6) | share links with `utm_content`, platform intake |
 | A5 | Recruiter's personal link always wins over round-robin | Implemented | stated rule in job create and Settings |
 | A5 | Auto-acknowledgement on WhatsApp or email | Implemented | Engagement agent template |
 | A5 | Not opened within SLA → reassign to the next recruiter, notify the manager | Implemented (this pass) | `fmSlaSweep`; flow-rules spec A5 |
@@ -55,11 +55,11 @@ Audit date: 2026-10-28. Statuses: **Implemented** (behaviour exists and is cover
 | A6 | Kairo follows up twice then "Not reachable" | Implemented (pass 2) | Engagement workflows follow up; no "Not reachable" status |
 | A7 | Same job, same candidate: show owner, date, stage; manager-override request | Implemented (pass 2, AR-5) | Owner, date and stage shown (this pass); override waits for AR-5 |
 | A7 | Same client, other job, inside the duplicate window: warn, note required | Implemented (this pass) | `fmClientWindowHit` in `submitOneToJob`; flow-rules spec A7 |
-| A7 | Ownership lock, saved to pool, pre-submission approval, client-ready profile, send by email/WhatsApp/review link, SLA follow-up | Implemented | submission spec, interviews secure links, `pipeChase` |
+| A7 | Ownership lock, saved to pool, pre-submission approval (per job since M3, section 7), client-ready profile, send by email/WhatsApp/review link, SLA follow-up | Implemented | submission spec, interviews secure links, `pipeChase` |
 | A8 | Feedback by review link / by hand | Implemented | client secure link, pipeline |
 | A8 | Kairo reads an email/WhatsApp reply and proposes a status; recruiter confirms | Implemented (this pass) | client-reply card in the submission drawer; flow-rules spec A8 |
 | A8 | On hold → Kairo checks back in 7 days | Implemented (this pass) | `holdCheckAt` in `fmSlaSweep` |
-| A9 | Record offer, internal approval, client extends, response, counter, declined → backups | Implemented | offer flows, campaigns journey |
+| A9 | Record offer, internal approval, client extends, response, counter, declined → backups | Implemented (one offer record since M1, see section 5) | `tests/m01-offer.spec.js`, campaigns journey |
 | A9 | Placement lowers the job's open count; job Filled when all openings are filled | Implemented (this pass) | `fmAfterJoin`; job page shows "1 of 2 open"; flow-rules spec A9 |
 | A9 | Replacement window from joining; invoice in PayTrack | Implemented | PayTrack, clients terms |
 | A9 | Contract hire → agency is employer of record (E8) | Implemented (pass 2) | E8 does not exist (AR-2) |
@@ -75,7 +75,7 @@ Audit date: 2026-10-28. Statuses: **Implemented** (behaviour exists and is cover
 | C10 | **Contract and contingent hiring** (rate cards, SOW, work orders) | Implemented (pass 2) | AR-2 |
 | C11 | Consent, purpose limit, retention, rights, region, explainable scores, audit | Partial | Consent, explainable reasons and audit exist; erasure and retention jobs missing |
 | E1 | Roles: matrix × scope, reports-to without loops, deactivation forces hand-over | Implemented | settings spec, auth 27 |
-| E2 | Approval engine | Implemented | approvals spec + 32 engine checks |
+| E2 | Approval engine | Implemented (one routing rule since M4a, section 8) | approvals spec + 32 engine checks |
 | E3 | Intake engine | Implemented | intake spec (31 checks) |
 | E4 | Interview loop (slots, confirm, reminders, no-show, feedback, hold) | Implemented | interviews spec; hold check-back added in this pass |
 | E5 | Pre-joining tracker (check-ins, risk alerts, backed out → backups) | Implemented (pass 2) | Implemented inside Cowork campaigns; not yet for submissions outside a campaign |
@@ -112,3 +112,95 @@ Approved by the owner of this work: AR-1 (yes, with a live-domain rule and Oontu
 | A7 | Same-job override: reason, timeline, returns if nothing moves | flow-rules spec |
 
 Still not built: the Employee portal (internal jobs and referrals), e-sign for offer letters, the referral bonus clock, live mailbox and WhatsApp reading, one-tap approvals on WhatsApp, LinkedIn multi-account sourcing (declined, see `approval-required-changes.md`).
+
+## 5. M1 update (2026-10-31) · one offer record
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B6 | Offers were kept in three places (`sb.offer`, `OFFERED_CANDIDATES`, campaign `p.offer`); a recruiter's "Joined" moved the journey but PayTrack refused the placement ("No accepted offer on file"); placements matched by name and took the job's recruiter; two joining dates; the offer approval rule ignored Settings → Approvals | **Fixed** | `tests/m01-offer.spec.js` (9 tests); see `implementation-progress.md`, 2026-10-31 |
+
+What changed, in short: `sb.offer` is the only offer record and `recordOffer()` the only way to make or revise one. `offerException()` is the one approval rule (Settings → Approvals → Offer, with the C7 condition). A joining creates its placement first, by journey id, and moves the journey to Joined once. `OFFERED_CANDIDATES` is now a read-only list built from the journeys.
+
+Still open after M1: approval routing is the requester's manager, else the Owner (M4 replaces it); the old "Offer Pending Approval" stage is still listed in filters and labels but nothing sets it (M5); contract and temporary hires still become a PayTrack placement, with no contract assignment (M9).
+
+## 6. M2 update (2026-10-31) · applicants get an owner
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B1 | New applicants were created at 'Submitted' with no owner; the personal link (`utm_content`) was never read; the job's routing and job lead were saved but unused; the SLA sweep skipped unowned applicants and did nothing on a one-recruiter job; applicants counted as submitted | **Fixed** | `tests/m02-applicant-owner.spec.js` (15 tests); see `implementation-progress.md`, 2026-10-31 · M2 |
+
+New applicants start at 'Applied Directly' (shown as "Applied") with an owner chosen by `applicantOwnerFor()`: personal link, then the job's routing, then the job lead, then the Owner. Still open after M2: `fmManagerOf` uses teams, not Reports to (M4); the 'Applied Directly' stored value and the seeded `job.submitted` counts are cleaned up in M5.
+
+## 7. M3 update (2026-10-31) · submission rules, review and sending
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B2 | Review before the client was a hardcoded workspace switch, not the job's "Approval before sending to the client"; seeded jobs had no rules; the job form ignored Settings defaults; required fields were never checked | **Fixed** | `tests/m03-submission-rules.spec.js`; see `implementation-progress.md`, 2026-10-31 · M3 |
+| B3 | The send dialog ignored the job's contacts rule and its profile limit; a Recruiter could not send a Ready profile; the "Send to client" follow-through was owed by someone who could not send | **Fixed** | same spec |
+
+Still open after M3: "Reason for change" and "Interview availability" have no profile field, so they are not enforced; the reviewer search is replaced in M4; the right-to-represent tick box in M7.
+
+## 8. M4a update (2026-10-31) · approval routing
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B4 | Approvals were routed in five separate ways (team manager, one-hop Reports to, nearest manager-type role on the job, Super Admin); role approve powers and the Settings skip roles were never read; SLA notices used teams; lists decided visibility by persona | **Fixed** (routing in M4a, data scope in M4b, section 9) | `tests/m04a-approval-routing.spec.js` (13 tests); see `implementation-progress.md`, 2026-10-31 · M4a |
+
+One rule, `approverFor()`, now routes submission, offer, client, job and job access approvals up the Reports to line, with skip roles, approve powers, delegates and the Owner fallback, and stores the route on each request. Still open: data scope (M4b), menu and Home from permissions (M4c), Team actions and suspend hand-over (M4d); the job policy's "team manager" reviewer still uses teams.
+
+## 9. M4b update (2026-10-31) · data scope
+
+B4 is now fully fixed. `canIOn()` is the one scope rule for lists, detail views and actions: team is the whole Reports to tree, assigned is on the job, own is mine; the Owner is the top of every tree. Agency defaults follow flow 04, with a "Pipeline" scope for journeys. Recruiters see their assigned jobs and own journeys, the whole talent pool and all clients; Recruiter Managers see their tree. Outside your scope a job, journey or client opens to the blocked state, and a locked candidate shows only its owner, stage and date. Evidence: `tests/m04b-data-scope.spec.js` (10 tests); see `implementation-progress.md`, 2026-10-31 · M4b. Still open: menu and Home from permissions (M4c), Team actions and suspend hand-over (M4d); corporate lists keep their own rules.
+
+## 10. M4c update (2026-10-31) · menu and Home from permissions
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B5 | The menu and Home came from the persona, not the role: a custom role got its persona's menu; one permission entry gated the sidebar; the blocked panel said "Team mismatch" | **Fixed** | `tests/m04c-menu-home.spec.js` (9 tests); see `implementation-progress.md`, 2026-10-31 · M4c |
+
+Agency staff get one menu filtered by their role's permissions, one Home from `homeFor()`, and the blocked state (in plain words) for screens their role can't open. Client money on agency screens follows Clients · View Contracts. Still open: Team actions and suspend hand-over (M4d); money visibility everywhere else (M8).
+
+## 11. M4d update (2026-11-01) · team actions and suspend hand-over
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B17 | Every Team action was Owner-only, whatever the role's team permissions; Settings › People and the Team page disagreed on who could act | **Fixed** | `tests/m04d-team-handover.spec.js`, `tests/agency-shapes.spec.js`; see `implementation-progress.md`, 2026-11-01 · M4d |
+| B11 | Two suspend paths: Team suspended with no hand-over; Settings handed everything to one person without owner history, missing campaigns, client accounts and the job lead | **Fixed** | same specs |
+
+Team actions follow `canTeamAction()` (permission based; a Recruiter Manager changes reports to inside their own tree). Suspending always opens one hand-over that moves jobs, journeys (with owner history), approvals (re-routed when needed), campaigns, client accounts and direct reports, each to its own person, with an audit line per category. M4 (B4, B5, B11, B17) is complete. Still to merge later: the job policy's "team manager" and "reports to" options now behave the same.
+
+
+## 12. M5a update (2026-11-01) · one status list, part 1: the numbers
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B20 | Funnel, recruiter dashboard and job counts read stage "Submitted" or a stored counter instead of the send record; portal applicants could count as sent; revenue used a flat 8.33%; placement states sat in the candidate stage order | **Fixed** | `tests/m05a-status-numbers.spec.js`; see `implementation-progress.md`, 2026-11-01 · M5a |
+| B14 | No single status per candidate per job; stage names and statuses disagreed | **Partly fixed**: `journeyStatus()` gives the flow 18 status and five mismatched seed journeys are corrected; screens show it in M5b | same spec |
+
+Also fixed: the sign-in screen was blank on open since M4b (`checkScope` threw at load before `scopeApplies` existed, which stopped `authBoot()`); recruiter score outreach now counts only the recruiter's own sends.
+
+Still open: one status shown everywhere (M5b); Ready from consent and required fields (M7).
+
+## 13. M5b update (2026-11-01) · one status everywhere
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B14 | No single status per candidate per job; screens showed stored stage names and their own phase words | **Fixed** (agency) | `tests/m05b-status-everywhere.spec.js`; see `implementation-progress.md`, 2026-11-01 · M5b |
+
+Every agency list, filter and label reads `journeyStatus()`: job chips, the pipeline drawer, Talent Pool tabs, the Lineup (six steps, status filters and board, no drag), candidate entries and next actions, the candidate's own portal (a candidate view), job page counts and messages. Company workspaces keep their pre-M5b words; their "client" wording is listed for a separate corporate pass. M5 (B14, B20) is complete.
+
+## 14. M6 update (2026-11-01) · one hold
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B18 | Four agency hold paths with three different records; only the stage "On Hold" one was checked back; holds survived a cleared round, an offer or the client's "not a fit"; ending a hold was mostly silent | **Fixed** (agency) | `tests/m06-one-hold.spec.js`; see `implementation-progress.md`, 2026-11-01 · M6 |
+
+Agency holds are one record (`sb.hold`, with source and check-back date), started and ended only by `setHold`/`clearHold` with history and audit, checked back every 7 days whichever path set them (Kairo when its follow-ups are on, a reminder to the owner when off), and shown as stalled once past their check-back date. Company workspaces keep their own hold paths.
+
+## 15. M7 update (2026-11-01) · the candidate confirms right to represent
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| B8 | Right to represent was a tick box in the send dialog; nothing recorded who agreed or how; the candidate was never asked | **Fixed** (agency) | `tests/m07-consent.spec.js`; see `implementation-progress.md`, 2026-11-01 · M7 |
+
+Submitting a candidate sends them a link (WhatsApp and email) to agree to be put forward to that client for that job. Nothing is sent to the client without their yes or a recorded call; No closes the journey as Not interested and blocks nobody; no answer in 48 hours tells the owner. Ready now means agreed with required fields complete. Company workspaces keep their vendor consent. Also: an agency hold checked back three times with no change now reaches the owner's manager (M6 follow-up).
