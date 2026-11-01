@@ -28,13 +28,12 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
   async function suText(v){ const f = q('form[data-form=su-text]'); assert(f, 'a text question is showing'); const inp = q('input.oa-input', f); inp.value = v; inp.dispatchEvent(new Event('input', { bubbles:true })); submitForm('form[data-form=su-text]'); await idle(); await sleep(10); }
   async function suPick(value){ const b = q('[data-act=su-pick][data-value="' + value + '"]'); assert(b, 'no choice ' + value); b.click(); await sleep(340); await idle(); }
   async function suSkip(){ click('[data-act=su-skip]'); await sleep(10); await idle(); }
-  async function suPlan(){ const b = q('[data-act=su-pick][data-field=plan]'); assert(b, 'the plan question'); b.click(); await sleep(340); await idle(); }
   async function signUpTo(stop, type, o){
     o = Object.assign({ name:'Dana', org:type === 'corporate' ? 'Startup Corp' : 'Startup Talent', size:type === 'corporate' ? '51–200' : '6–20', place:'IN', email:'dana@startup.example', mobile:'98250 41207' }, o || {});
     if(authFlow.step !== 'signup') authSwitchIntent('signup'); await sleep(10);
-    const order = ['name', 'type', 'org', 'size', type === 'corporate' ? 'partners' : 'focus', 'place', 'plan', 'email'];
+    const order = ['name', 'type', 'org', 'size', type === 'corporate' ? 'partners' : 'focus', 'place', 'email'];
     for(let i = 0; i < order.length; i++){ const k = order[i]; if(k === stop) return;
-      if(k === 'name') await suText(o.name); else if(k === 'type') await suPick(type); else if(k === 'org') await suText(o.org); else if(k === 'size') await suPick(o.size); else if(k === 'focus' || k === 'partners') await suSkip(); else if(k === 'place') await suPick(o.place); else if(k === 'plan') await suPlan(); else if(k === 'email') await suText(o.email); }
+      if(k === 'name') await suText(o.name); else if(k === 'type') await suPick(type); else if(k === 'org') await suText(o.org); else if(k === 'size') await suPick(o.size); else if(k === 'focus' || k === 'partners') await suSkip(); else if(k === 'place') await suPick(o.place); else if(k === 'email') await suText(o.email); }
   }
   async function test(name, fn){ reset(); try { await fn(); results.push({ name:name, pass:true }); } catch(e){ results.push({ name:name, pass:false, error:String(e && e.message || e) }); } finally { EXISTING_WORKSPACES = JSON.parse(SAMPLES); state.role = 'recruiter'; } }
   function audit(re){ return (typeof AUDIT_LOG !== 'undefined' ? AUDIT_LOG : []).concat(typeof PLATFORM_AUDIT_LOG !== 'undefined' ? PLATFORM_AUDIT_LOG : []).some(function(a){ return re.test((a.action || '') + ' ' + (a.detail || '') + ' ' + (a.details || '')); }); }
@@ -44,7 +43,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
     await test('R1 every answered question is saved as a sign-up lead, with the answers to resume from', async function(){
       const before = SIGNUP_LEADS.length; await signUpTo('org', 'corporate', { name:'Ravi', email:'ravi@newco.example' });
       eq(SIGNUP_LEADS.length, before + 1, 'one lead after the first answers'); let l = signupLeadById(JN.leadId); eq(l.name, 'Ravi'); eq(l.stepReached, 'type_chosen'); eq(l.workspaceType, 'Corporate'); assert(l.resume && l.resume.snap.next === undefined && l.resume.snap.type === 'corporate', 'resume answers kept');
-      await suText('Newco Ltd'); await suPick('51–200'); await suSkip(); await suPick('IN'); await suPlan(); l = signupLeadById(JN.leadId); eq(l.stepReached, 'location'); eq(l.plan, 'Hire', 'the plan they picked is on the lead'); eq(l.companyName, 'Newco Ltd'); eq(l.teamSize, '51–200'); eq(SIGNUP_LEADS.length, before + 1, 'still one lead');
+      await suText('Newco Ltd'); await suPick('51–200'); await suSkip(); await suPick('IN'); l = signupLeadById(JN.leadId); eq(l.stepReached, 'location'); eq(l.companyName, 'Newco Ltd'); eq(l.teamSize, '51–200'); eq(SIGNUP_LEADS.length, before + 1, 'still one lead');
       await suText('ravi@newco.example'); eq(signupLeadById(JN.leadId).email, 'ravi@newco.example'); eq(signupLeadById(JN.leadId).stepReached, 'email'); assert(followUpLeads().some(function(x){ return x.id === JN.leadId; }), 'now on the follow-up list');
       assert(authApi._outboxCount('ravi@newco.example') === 1, 'the code goes out with the email');
       assert(leadFollowUp(signupLeadById(JN.leadId)).key === 'fresh', 'a fresh lead is inside the first 24 hours');
@@ -54,7 +53,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       authSwitchIntent('signin'); OA.resetSignUp(); const r = joinResume(l.id); assert(r.ok, 'resumed'); await sleep(30); const s = OA.snapshot(); eq(s.next, 'org', 'back on the question after the last answer'); eq(s.name, 'Maya'); eq(s.type, 'agency');
       assert(leadTimeline(l).some(function(e){ return /resume link/i.test(e.text); }), 'the timeline says so');
       l.status = 'not_interested'; assert(!joinResume(l.id).ok, 'a closed lead cannot be resumed'); assert(!joinResume('lead-none').ok, 'nor an unknown one');
-      l.status = 'in_progress'; l.resume.snap.type = 'corporate'; l.resume.snap.partners = []; l.resume.snap.org = 'Zed'; l.resume.snap.size = '1–50'; l.resume.snap.place = 'IN'; l.resume.snap.skippedFocus = true; l.resume.snap.plan = 'plan-hire'; joinResume(l.id); await sleep(30); eq(OA.snapshot().next, 'email', 'everything answered → the email question, to prove it again');
+      l.status = 'in_progress'; l.resume.snap.type = 'corporate'; l.resume.snap.partners = []; l.resume.snap.org = 'Zed'; l.resume.snap.size = '1–50'; l.resume.snap.place = 'IN'; l.resume.snap.skippedFocus = true; joinResume(l.id); await sleep(30); eq(OA.snapshot().next, 'email', 'everything answered → the email question, to prove it again');
     });
     await test('R3 a finished sign-up closes the lead into "In product"', async function(){
       await signUpTo('code', 'agency', { name:'Dana', email:'dana@fresh.example' }); const l = signupLeadById(JN.leadId); eq(l.stepReached, 'email');

@@ -1138,6 +1138,43 @@ html[data-theme="comfort"] .home-stat__value, html[data-theme="comfort"] .home-c
 @media (max-width:720px){ .trial-nums { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 .nav-item.is-plan-locked .o-nav-item__label { opacity:.7; }
 .nav-lock { margin-left:auto; display:inline-flex; color:#8C90A0; }
+/* Setup pill: the setup list, out of the way, in the top bar */
+.ws-pill-slot { position:relative; display:inline-flex; align-items:center; margin-right:6px; }
+.ws-pill { display:inline-flex; align-items:center; gap:8px; height:32px; padding:0 12px 0 8px; border-radius:999px; border:1px solid #E7E6E1; background:#fff; color:#2F313F; font-size:13px; font-weight:500; line-height:1; cursor:pointer; white-space:nowrap; transition:border-color .15s, box-shadow .15s, transform .15s; }
+.ws-pill:hover { border-color:#D2D5DD; box-shadow:0 2px 10px rgba(47,49,63,.08); }
+.ws-pill:active { transform:scale(.97); }
+.ws-pill b { font-weight:600; font-variant-numeric:tabular-nums; }
+.ws-pill.is-pulse { animation:ws-pill-pulse 1.3s ease-out 1; }
+@keyframes ws-pill-pulse { 0% { box-shadow:0 0 0 0 rgba(16,185,129,.35); } 100% { box-shadow:0 0 0 10px rgba(16,185,129,0); } }
+.ws-ring__track { fill:none; stroke:#E7E6E1; stroke-width:2.5; }
+.ws-ring__val { fill:none; stroke:#10B981; stroke-width:2.5; stroke-linecap:round; transform:rotate(-90deg); transform-origin:50% 50%; transition:stroke-dashoffset .6s cubic-bezier(.2,0,0,1); }
+.ws-pill.is-ready { cursor:default; border-color:#A7F3D0; background:#ECFDF5; color:#065F46; animation:ws-pill-pulse 1.3s ease-out 1; }
+.ws-pill.is-leaving { opacity:0; transform:scale(.9); transition:opacity .35s, transform .35s; }
+.ws-pill__dot { width:8px; height:8px; border-radius:50%; background:#10B981; }
+.ws-pop { position:absolute; top:calc(100% + 8px); right:0; width:340px; max-width:calc(100vw - 32px); background:#fff; border:1px solid #E7E6E1; border-radius:16px; box-shadow:0 16px 40px rgba(47,49,63,.14); padding:16px; z-index:130; transform-origin:top right; animation:ws-pop-in .22s cubic-bezier(.2,0,0,1) both; }
+@keyframes ws-pop-in { from { opacity:0; transform:scale(.94) translateY(-4px); } to { opacity:1; transform:none; } }
+.ws-pop__title { font-size:15px; font-weight:600; color:#2F313F; outline:none; margin:0 0 8px; }
+.ws-pop__kairo { display:flex; gap:8px; align-items:flex-start; margin:12px 0 0; font-size:13px; line-height:19px; color:#555968; padding:10px 12px; border-radius:12px; background:#F7F7F5; }
+.ws-pop__kairo svg { flex:none; margin-top:2px; color:#B07A1A; }
+.ws-pop__list { list-style:none; margin:8px 0 0; padding:0; }
+.ws-pop__item { width:100%; display:flex; align-items:center; gap:10px; padding:9px 6px; border-radius:10px; font-size:14px; color:#2F313F; text-align:left; background:none; border:0; cursor:pointer; }
+.ws-pop__item:hover, .ws-pop__item:focus-visible { background:#F7F7F5; }
+.ws-pop__item.is-next { font-weight:600; }
+.ws-pop__item svg { margin-left:auto; color:#8C90A0; }
+.ws-pop__foot { display:flex; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:1px solid #F0F0EE; }
+.ws-card--leaving { overflow:hidden; height:0 !important; margin-top:0 !important; margin-bottom:0 !important; padding-top:0 !important; padding-bottom:0 !important; border-width:0 !important; transition:height .76s cubic-bezier(.45,0,.15,1), margin .76s cubic-bezier(.45,0,.15,1), padding .76s cubic-bezier(.45,0,.15,1); }
+.ws-ghost { position:fixed; z-index:120; overflow:hidden; background:#fff; border:1px solid #E7E6E1; box-shadow:0 14px 36px rgba(47,49,63,.16); pointer-events:none; }
+.ws-ghost__head { padding:24px 26px; white-space:nowrap; }
+.ws-row { position:relative; }
+.ws-skip { position:absolute; right:40px; top:50%; transform:translateY(-50%); padding:4px 10px; border-radius:999px; border:1px solid transparent; background:transparent; font-size:12px; font-weight:500; color:#6E717C; opacity:0; cursor:pointer; transition:opacity .15s, background .15s, border-color .15s, color .15s; }
+.ws-row:hover .ws-skip, .ws-row:focus-within .ws-skip, .ws-skip--back { opacity:1; }
+.ws-skip:hover, .ws-skip:focus-visible { background:#F7F7F5; border-color:#E7E6E1; color:#2F313F; }
+.ws-pop__list .ws-skip { right:30px; }
+@media (hover:none) { .ws-skip { opacity:1; } }
+.ws-item.is-skipped .ws-item__title { color:#8C90A0; }
+.ws-row.is-skipping { overflow:hidden; height:0 !important; opacity:0; transform:translateX(18px); transition:height .36s .1s cubic-bezier(.2,0,0,1), opacity .22s ease, transform .3s cubic-bezier(.2,0,0,1); }
+@media (max-width:640px) { .ws-pill__text { display:none; } .ws-pill { padding:0 7px; } }
+@media (prefers-reduced-motion:reduce) { .ws-pill.is-pulse, .ws-pill.is-ready, .ws-pop { animation:none; } .ws-card--leaving { transition:none; } .ws-ring__val { transition:none; } }
 .ws-card__prog { display:flex; align-items:center; gap:10px; margin-top:8px; }
 .ws-bar { display:block; width:160px; height:6px; border-radius:999px; background:#E7E6E1; overflow:hidden; }
 .ws-bar > span { display:block; height:100%; border-radius:999px; background:#2F313F; transition:width .3s ease; }
@@ -1785,6 +1822,15 @@ html:not([data-theme="comfort"]) .o-nav-item:hover:not(.active){ background:var(
 #sidebar.rail .o-role-menu{ position:fixed; left:72px; right:auto; bottom:12px; width:240px; }
 .o-menu__head{ margin:0; padding:8px 10px 4px; font-size:12px; font-weight:600; color:var(--n-500); }
 .o-menu__item{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; height:36px; padding:0 10px; border:0; border-radius:var(--r-control); background:transparent; color:var(--n-700); font:500 14px var(--font); text-align:left; cursor:pointer; transition:background var(--t-fast); }
+/* Account type switch (prototype only): Staffing | Corporate, tagged Demo */
+.acct-switch { padding-bottom:4px; }
+.acct-switch .o-menu__head { display:flex; align-items:center; gap:6px; }
+.demo-tag { display:inline-flex; align-items:center; height:16px; padding:0 6px; border-radius:999px; border:1px solid #F3DDA6; background:#FFF4DC; color:#8A5300; font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
+.acct-seg { display:flex; gap:2px; margin:2px 8px 0; padding:3px; border-radius:10px; background:#F2F3F6; }
+.acct-seg button { flex:1; height:30px; border:0; border-radius:8px; background:transparent; color:#6B6F80; font-size:13px; font-weight:500; cursor:pointer; transition:background .2s, color .2s, box-shadow .2s; }
+.acct-seg button:hover { color:#2F313F; }
+.acct-seg button[aria-checked="true"] { background:#fff; color:#2F313F; font-weight:600; box-shadow:0 1px 3px rgba(47,49,63,.12); }
+.acct-hint { margin:6px 10px 2px; font-size:11px; line-height:15px; color:#8C90A0; }
 .o-menu__item:hover{ background:var(--n-50); }
 .o-menu__item--quiet{ color:var(--n-500); }
 .o-menu__item--danger{ justify-content:flex-start; color:var(--danger-fg); font-weight:600; }
@@ -2729,6 +2775,7 @@ body.cl-on .app-toast{ background:#fff !important; color:#2F313F !important; bor
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/></svg>
       </button>
       <p class="o-topbar__title"><span id="topbar-title">Home</span><span class="o-topbar__date"> · <span id="topbar-date"></span></span><span id="topbar-subtitle" hidden></span><span id="org-verify-slot" class="o-topbar__verify"></span></p>
+      <span id="ws-pill-slot" class="ws-pill-slot"></span><!-- the setup list, when it isn't on Home: a small ring and "Setup 2/7" -->
       <button id="topbar-msg" type="button" onclick="toggleMessages()" aria-label="Messages" title="Messages" class="o-icon-btn o-topbar__btn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 12a8 8 0 0 1-11.7 7.1L3.5 20.5l1.4-5A8 8 0 1 1 20.5 12Z"/></svg>
       </button>
@@ -28347,7 +28394,7 @@ const OA = (function(){
   const FOCUS = ['IT & tech', 'BFSI', 'Sales & marketing', 'Healthcare', 'Manufacturing', 'Retail', 'Executive search', 'Contract staffing'];
   const PARTNERS = ['Hiring managers', 'Interview panels', 'Recruitment agencies', 'Leadership approvals'];
   const suSteps = function(){
-    const s = ['name', 'type', 'org', 'size', SU.type === 'corporate' ? 'partners' : 'focus', 'place', 'plan', 'email', 'code'];   // no mobile number here: it is asked for when first needed (WhatsApp, recovery)
+    const s = ['name', 'type', 'org', 'size', SU.type === 'corporate' ? 'partners' : 'focus', 'place', 'email', 'code'];   // no mobile number here: it is asked for when first needed (WhatsApp, recovery)
     return SU.verified ? s.filter(function(k){ return k !== 'email' && k !== 'code'; }) : s;
   };
   const isAg = function(){ return SU.type !== 'corporate'; };
@@ -28363,6 +28410,8 @@ const OA = (function(){
   const wsType = function(){ return SU.type === 'corporate' ? 'Corporate' : 'Staffing agency'; };
 
   /* ---------- The plan step: "Built from your answers" ----------
+     PARKED: taken out of Create workspace on 2026-10-31 at the user's request ("for now"). Nothing calls suPlanQuestion;
+     to bring it back, add 'plan' after 'place' in suSteps and `plan: suPlanQuestion()` to the questions.
      Not a price table. The recommended plan is chosen from what they told us (type, size, what they place or who hires
      with them), each reason points back to one of their answers, and the value is shown in their own numbers. The other
      plans are quiet links; "Compare all plans" and Boosts are folded away. */
@@ -28471,7 +28520,6 @@ const OA = (function(){
       email: { lead:'Now let’s make it yours.', title:'Your work email?', sub:'You’ll sign in with it — no password to remember.',
         ans:text('su-email', { field:'email', label:'Work email', type:'email', mode:'email', ac:'email', ph:'name@company.com', msg:'Teammates on your company domain can request to join.' }) +
           '<p class="oa-hint">By continuing you agree to the ' + legalLink('terms', 'terms') + ' and ' + legalLink('privacy', 'privacy notice') + '.</p>' },
-      plan: suPlanQuestion(),
       code: { lead:'Check your inbox.', title:'Enter the code I sent.', sub:'It’s on its way to ' + esc(maskEmail(SU.email)) + '.',
         ans:'<div data-code>' + otpHTML('su-code', 'su-code-msg') + '</div>' + mailRow }
     };
@@ -28496,7 +28544,7 @@ const OA = (function(){
     const picks = isAg() ? SU.focus : SU.partners;
     add('name', 'name', first()); add('type', 'type', SU.type ? (isAg() ? 'Agency' : 'In-house') : ''); add('org', 'organisation', shortName()); add('size', 'size', SU.size);
     add(isAg() ? 'focus' : 'partners', isAg() ? 'focus' : 'partners', picks.length ? picks.length + ' picked' : ''); add('place', 'location', (place() || {}).label);
-    add('plan', 'plan', SU.plan ? (planById(SU.plan) || {}).name : ''); add('email', 'email', SU.email.trim()); add('mobile', 'mobile', SU.mobile ? '•••• ' + SU.mobile.replace(/\D/g, '').slice(-4) : '');
+    add('email', 'email', SU.email.trim()); add('mobile', 'mobile', SU.mobile ? '•••• ' + SU.mobile.replace(/\D/g, '').slice(-4) : '');
     return '<div class="oa-progress">' + (at > 0 ? '<button type="button" class="oa-iconbtn" ' + (done ? 'disabled tabindex="-1" style="visibility:hidden"' : 'data-act="su-back"') + ' aria-label="Previous question">' + I.back + '</button>' : '') +
       '<div class="oa-progress__bar" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
       '<span class="oa-progress__label">' + (done ? 'done' : left <= 1 ? 'last one' : left + ' to go') + '</span></div>' +
@@ -28518,7 +28566,7 @@ const OA = (function(){
       '<ul class="oa-arrive__ticks">' +
         '<li style="animation-delay:.35s"><span aria-hidden="true">' + I.check + '</span>Email verified</li>' +
         '<li style="animation-delay:.75s"><span aria-hidden="true">' + I.check + '</span>' + esc(O) + ' created</li>' +
-        '<li style="animation-delay:1.15s"><span aria-hidden="true">' + I.check + '</span>' + esc((planById(suPlanId()) || {}).name || 'Your plan') + ' · free until ' + new Date(Date.now() + 14 * 864e5).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) + '</li></ul>' +
+        '<li style="animation-delay:1.15s"><span aria-hidden="true">' + I.check + '</span>Your setup list is waiting on Home</li></ul>' +
       '<div class="oa-arrive__bar" aria-hidden="true"><i></i></div>' +
       '<div data-su-tail></div></div></section>';   // "Open now" joins once the welcome has settled
   }
@@ -28538,7 +28586,7 @@ const OA = (function(){
         '<div class="oa-obj oa-box oa-enter" style="--l:120px;--t:120px;--w:380px;--h:250px;--d:.5;--z:1"><i></i></div>' +
         '<div class="oa-obj" style="--l:150px;--t:70px;--w:320px;--d:1;--z:3"><div class="oa-enter"><div class="oa-c oa-float1" style="border-radius:20px;padding:20px">' +
           '<div class="oa-c__person" style="gap:14px"><span class="oa-ws__tile" data-ws-initials>O</span><span style="flex:1;min-width:0"><span data-ws-name><span class="oa-skel oa-skel--name"></span></span><span class="oa-ws__url" data-ws-url>your-team.oontu.app</span></span></div>' +
-          '<div class="oa-ws__rows"><div><span>Type</span><span data-ws-row="type"><span class="oa-skel" style="width:84px"></span></span></div><div><span>Team</span><span data-ws-row="team"><span class="oa-skel" style="width:84px"></span></span></div><div><span>Based in</span><span data-ws-row="place"><span class="oa-skel" style="width:84px"></span></span></div><div><span>Plan</span><span data-ws-row="plan"><span class="oa-skel" style="width:84px"></span></span></div></div>' +
+          '<div class="oa-ws__rows"><div><span>Type</span><span data-ws-row="type"><span class="oa-skel" style="width:84px"></span></span></div><div><span>Team</span><span data-ws-row="team"><span class="oa-skel" style="width:84px"></span></span></div><div><span>Based in</span><span data-ws-row="place"><span class="oa-skel" style="width:84px"></span></span></div></div>' +
           '<div class="oa-ws__state" data-ws-state><i class="oa-spin" aria-hidden="true"></i>Taking shape</div>' +
         '</div></div></div>' +
         '<div class="oa-obj" data-obj="owner" hidden style="--l:0px;--t:316px;--w:236px;--r:-4deg;--d:2.2;--z:5"><div class="oa-c oa-float3" style="padding:16px">' +
@@ -28571,8 +28619,6 @@ const OA = (function(){
     setRow('type', SU.type ? (ag ? 'Staffing agency' : 'In-house team') : '');
     setRow('team', sizeLabel);
     setRow('place', pl ? pl.label + ' · ' + pl.meta : '');
-    const atPlan = SU.done || suSteps().indexOf('plan') <= SU.i, pp = planById(suPlanId());
-    setRow('plan', atPlan && pp ? pp.name + ' · 14 days free' + (SU.boosts.length ? ' + ' + SU.boosts.length + (SU.boosts.length === 1 ? ' Boost' : ' Boosts') : '') : '');
     a.classList.toggle('is-arriving', !!SU.done);
     $('[data-ws-state]', a).innerHTML = SU.done ? '<i class="is-live"></i>Live' : '<i class="oa-spin" aria-hidden="true"></i>Taking shape';
     // owner
@@ -28627,7 +28673,7 @@ const OA = (function(){
   }
   function snapshot(){
     const steps = suSteps(), p = place();
-    return { plan:SU.plan, boosts:SU.boosts.slice(), planName:SU.plan ? (planById(SU.plan) || {}).name : '', name:SU.name, type:SU.type, org:SU.org, size:SU.size, focus:SU.focus.slice(), partners:SU.partners.slice(), place:SU.place, placeLabel:p ? p.label : '', mobileCode:SU.mobileCode, email:SU.email, mobile:SU.mobile,
+    return { name:SU.name, type:SU.type, org:SU.org, size:SU.size, focus:SU.focus.slice(), partners:SU.partners.slice(), place:SU.place, placeLabel:p ? p.label : '', mobileCode:SU.mobileCode, email:SU.email, mobile:SU.mobile,
       i:SU.i, last:steps[SU.i - 1] || null, next:steps[SU.i] || null, done:!!SU.done, verified:!!SU.verified, orgType:SU.type ? wsType() : '' };
   }
   const suNext = function(){ goSu({ i:SU.i + 1 }); };
@@ -28693,7 +28739,7 @@ const OA = (function(){
     const pl = place() || PLACES[0];
     authFlow.mobileCode = SU.mobileCode || pl.code;
     if(!SU.created){
-      const res = await authApi.createWorkspace({ name:SU.name.trim(), workspaceName:org(), type:wsType(), plan:suPlanId(), boosts:SU.boosts.slice(),
+      const res = await authApi.createWorkspace({ name:SU.name.trim(), workspaceName:org(), type:wsType(),
         mobileCode:SU.mobile ? authFlow.mobileCode : undefined, mobile:SU.mobile ? authMobileDigits(SU.mobile) : undefined });   // the mobile number is no longer asked at sign-up
       if(!res.ok) return createFailed(res);
       SU.created = res;
@@ -28772,7 +28818,6 @@ const OA = (function(){
     w.workspaceId = (res.workspace && res.workspace.id) || '';
     if(isAg() && SU.focus.length) w.agency.industries = SU.focus.slice();
     w.welcomeSession = wsSessionSeq + 1;   // "Welcome to Oontu" on the first visit to Home
-    if(w.workspaceId) wsPlanStart(w.workspaceId, suPlanId(), SU.boosts);   // 14 days of the chosen plan, no card
     const short = shortName();
     SU = SU_INIT();
     authEnter(Object.assign({}, res, { workspace:Object.assign({}, res.workspace, { shortName:short }) }), 'onboarded');
@@ -28853,9 +28898,9 @@ const OA = (function(){
           Array.prototype.forEach.call(b.parentElement.querySelectorAll('[aria-checked]'), function(x){ x.setAttribute('aria-checked', String(x === b)); });
           updateWorkspacePreview();
           clearTimers();
-          // The plan is the last question for someone whose email is already proven (Google, Microsoft, or a code at sign-in): create now.
-          if(field === 'plan' && SU.verified){
-            const m = $('.oa-plan .oa-hint', root());
+          // Someone whose email is already proven (Google, Microsoft, or a code at sign-in) has no email or code question: the last answer creates the workspace.
+          if(SU.verified && field === suSteps()[suSteps().length - 1]){
+            const m = $('.oa-ans .oa-hint', root());
             return run(async function(){ say(m, 'Creating your workspace…', 'busy'); const out = await createNow(); if(!out.ok) showAnswerError(out.message); }, m);
           }
           // Already proven by a code (sign-in or Google/Microsoft): the same company-email rules apply to the type chosen now.
@@ -28967,11 +29012,10 @@ const OA = (function(){
     /* A saved sign-up picks up at the first question that has no answer. The email must be proven again with a code. */
     resumeSignUp: function(s){
       SU = SU_INIT();
-      SU.boosts = (s.boosts || []).slice();
-      ['name', 'type', 'org', 'size', 'place', 'plan', 'mobileCode', 'email', 'mobile'].forEach(function(k){ if(s[k]) SU[k] = s[k]; });
+      ['name', 'type', 'org', 'size', 'place', 'mobileCode', 'email', 'mobile'].forEach(function(k){ if(s[k]) SU[k] = s[k]; });
       SU.focus = (s.focus || []).slice(); SU.partners = (s.partners || []).slice();
-      const steps = suSteps(), need = ['name', 'type', 'org', 'size', SU.type === 'corporate' ? 'partners' : 'focus', 'place', 'plan'];
-      const has = { name:SU.name, type:SU.type, org:SU.org, size:SU.size, focus:SU.focus.length || s.skippedFocus, partners:SU.partners.length || s.skippedFocus, place:SU.place, plan:SU.plan };
+      const steps = suSteps(), need = ['name', 'type', 'org', 'size', SU.type === 'corporate' ? 'partners' : 'focus', 'place'];
+      const has = { name:SU.name, type:SU.type, org:SU.org, size:SU.size, focus:SU.focus.length || s.skippedFocus, partners:SU.partners.length || s.skippedFocus, place:SU.place };
       SU.i = Math.max(0, steps.indexOf(need.find(function(k){ return !has[k]; }) || 'email'));
       authFlow.intent = 'signup'; authFlow.email = SU.email || ''; authGo('signup');
     },
@@ -29900,10 +29944,29 @@ const WS_ITEMS = {
 };
 function wsItems(w){ w = w || wsSetup; return (w.type==='Corporate' ? WORKSPACE_STEPS_CORPORATE : WORKSPACE_STEPS_AGENCY).filter(function(k){ return !WS_ITEMS[k].show || WS_ITEMS[k].show(w); }); }
 function wsItemDone(k, w){ w = w || wsSetup; const it = WS_ITEMS[k]; return !!(w.done[k] || (it.isDone && it.isDone(w))); }
+/* Skipped: the owner doesn't want it now. It leaves the pending list (Home and the top-bar pill) and waits in
+   Settings › Workspace setup, where "Bring back" returns it. Finishing it later still counts. */
+function wsItemSkipped(k, w){ w = w || wsSetup; return !!(w.skipped && w.skipped[k]) && !wsItemDone(k, w); }
 function wsProgress(w){
   w = w || wsSetup;
-  const keys = wsItems(w), done = keys.filter(function(k){ return wsItemDone(k, w); });
-  return { done:done.length, total:keys.length, next:keys.find(function(k){ return !wsItemDone(k, w); }) || null };
+  const all = wsItems(w), keys = all.filter(function(k){ return !wsItemSkipped(k, w); }), done = keys.filter(function(k){ return wsItemDone(k, w); });
+  return { done:done.length, total:keys.length, skipped:all.length - keys.length, next:keys.find(function(k){ return !wsItemDone(k, w); }) || null };
+}
+function wsCountText(p){ return p.done+' of '+p.total+' done'+(p.skipped ? ' · '+p.skipped+' skipped' : ''); }
+function wsSkip(k, ev){
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  const w = wsSetup; if(!w || !WS_ITEMS[k]) return;
+  const finish = function(){ (w.skipped = w.skipped || {})[k] = true; wsRefreshCard(); };
+  const rows = document.querySelectorAll('[data-ws-row="'+k+'"]');
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(rows.length && !reduce){ Array.prototype.forEach.call(rows, function(r){ r.style.height = r.offsetHeight + 'px'; void r.offsetHeight; r.classList.add('is-skipping'); }); setTimeout(finish, 420); }
+  else finish();
+  toast(WS_ITEMS[k].title+' skipped. It’s in Settings › Workspace setup.', { undo:function(){ if(w.skipped) delete w.skipped[k]; wsRefreshCard(); } });
+}
+function wsUnskip(k, ev){
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  const w = wsSetup; if(!w || !w.skipped) return;
+  delete w.skipped[k]; wsRefreshCard(); toast(WS_ITEMS[k].title+' is back on your list.');
 }
 /* The Super Admin's Incomplete sign-ups list shows how far each owner is ("Setup not finished"). */
 function wsSyncLead(w){
@@ -29919,15 +29982,22 @@ function wsSetupCardHTML(where){
   if(!w || state.role!=='admin') return '';
   wsSyncLead(w);
   const p = wsProgress(w);
+  const skippedRow = function(k){
+    return '<li class="ws-row" data-ws-row="'+k+'"><button type="button" class="ws-item is-skipped" onclick="wsOpenItem(\''+k+'\')">'+
+      '<span class="first-run__check" aria-hidden="true"></span><span class="ws-item__text"><span class="ws-item__title">'+WS_ITEMS[k].title+'</span><span class="ws-item__meta">Skipped</span></span>'+
+      icon('chevronRight','w-4 h-4 ws-item__arrow')+'</button>'+
+      '<button type="button" class="ws-skip ws-skip--back" onclick="wsUnskip(\''+k+'\', event)" aria-label="Bring back '+WS_ITEMS[k].title+'">Bring back</button></li>';
+  };
+  const skippedList = where!=='home' && p.skipped ? '<p class="ws-card__sub" style="margin-top:14px">Skipped for now</p><ul class="ws-list">'+wsItems(w).filter(function(k){ return wsItemSkipped(k, w); }).map(skippedRow).join('')+'</ul>' : '';
   if(p.done===p.total){
     if(w.readySession===-1) w.readySession = wsSessionSeq;
     if(where==='home' && w.readySession!==wsSessionSeq) return '';   // "ready" shows for one session, then the card is gone
     return '<section id="ws-card" data-where="'+where+'" class="card ws-card ws-card--ready" aria-labelledby="ws-card-h">'+
       '<span class="ws-ready__icon" aria-hidden="true">'+icon('check','w-5 h-5')+'</span>'+
       '<div><h3 id="ws-card-h" class="ws-card__title">Your workspace is ready</h3>'+
-      '<p class="ws-card__sub">Everything on the setup list is done. You can change any of it in Settings.</p></div></section>';
+      '<p class="ws-card__sub">'+(p.skipped ? 'Everything you kept on the list is done. What you skipped waits in Settings › Workspace setup.' : 'Everything on the setup list is done. You can change any of it in Settings.')+'</p>'+skippedList+'</div></section>';
   }
-  if(where==='home' && w.hiddenSession===wsSessionSeq) return '';
+  if(where==='home' && (w.hiddenSession===wsSessionSeq || (w.snoozeUntil && Date.now() < w.snoozeUntil))) return '';   // hidden: the pill in the top bar holds it
   const next = WS_ITEMS[p.next], left = p.total-p.done;
   const kairo = w.simDays>=3
     ? left+' setup item'+(left===1 ? '' : 's')+' left. Want to finish your '+next.noun+' now?'
@@ -29936,22 +30006,23 @@ function wsSetupCardHTML(where){
     const it = WS_ITEMS[k], done = wsItemDone(k, w);
     const badge = k==='agency-team' && RECRUITER_ROSTER.some(function(r){ return r.inviteState==='queued'; })
       ? RECRUITER_ROSTER.filter(function(r){ return r.inviteState==='queued'; }).length+' queued' : '';
-    return '<li><button type="button" class="ws-item'+(done ? ' is-done' : '')+(k===p.next ? ' is-next' : '')+'" onclick="wsOpenItem(\''+k+'\')">'+
+    return '<li class="ws-row" data-ws-row="'+k+'"><button type="button" class="ws-item'+(done ? ' is-done' : '')+(k===p.next ? ' is-next' : '')+'" onclick="wsOpenItem(\''+k+'\')">'+
       '<span class="first-run__check'+(done ? ' is-done' : '')+'" aria-hidden="true">'+(done ? icon('check','w-3.5 h-3.5') : '')+'</span>'+
       '<span class="ws-item__text"><span class="ws-item__title">'+it.title+'</span>'+(it.meta ? '<span class="ws-item__meta">'+it.meta+'</span>' : '')+'</span>'+
       (badge ? '<span class="ws-item__state">'+badge+'</span>' : '')+
       '<span class="sr-only">'+(done ? ', done' : ', not done')+'</span>'+
-      icon('chevronRight','w-4 h-4 ws-item__arrow')+'</button></li>';
+      icon('chevronRight','w-4 h-4 ws-item__arrow')+'</button>'+
+      (done ? '' : '<button type="button" class="ws-skip" onclick="wsSkip(\''+k+'\', event)" aria-label="Skip '+it.title+' for now">Skip</button>')+'</li>';
   };
   return '<section id="ws-card" data-where="'+where+'" class="card ws-card" aria-labelledby="ws-card-h">'+
     '<div class="ws-card__head">'+
       '<div class="min-w-0"><h3 id="ws-card-h" class="ws-card__title">Complete your workspace</h3>'+
-        '<div class="ws-card__prog"><span class="ws-bar" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="'+p.total+'" aria-valuenow="'+p.done+'"><span style="width:'+Math.round(p.done/p.total*100)+'%"></span></span>'+
-        '<span class="ws-card__count">'+p.done+' of '+p.total+' done</span></div></div>'+
+        '<div class="ws-card__prog"><span class="ws-bar" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="'+p.total+'" aria-valuenow="'+p.done+'"><span style="width:'+(p.total ? Math.round(p.done/p.total*100) : 100)+'%"></span></span>'+
+        '<span class="ws-card__count">'+wsCountText(p)+'</span></div></div>'+
       (where==='home' ? '<button type="button" class="btn-quiet text-sm" onclick="wsHideForNow()">Hide for now</button>' : '')+
     '</div>'+
     kairoNoteHTML(escapeHtml(kairo), [{ label:next.cta || 'Open '+next.noun, onclick:"wsOpenItem('"+p.next+"')" }])+
-    '<ul class="ws-list">'+wsItems(w).filter(function(k){ return where!=='home' || !wsItemDone(k, w) || (k==='agency-team' && RECRUITER_ROSTER.some(function(r){ return r.inviteState==='queued'; })); }).map(row).join('')+'</ul>'+   // on Home only what is still unfinished; Settings lists everything
+    '<ul class="ws-list">'+wsItems(w).filter(function(k){ return !wsItemSkipped(k, w); }).filter(function(k){ return where!=='home' || !wsItemDone(k, w) || (k==='agency-team' && RECRUITER_ROSTER.some(function(r){ return r.inviteState==='queued'; })); }).map(row).join('')+'</ul>'+skippedList+   // on Home only what is still unfinished; Settings lists everything
     '<div class="ws-card__foot">'+
       '<button type="button" class="btn-quiet text-sm" onclick="wsOpenDefaults()">Your defaults</button>'+
       (AUTH_IS_PROTOTYPE && where==='home' && w.simDays<3 ? '<button type="button" class="ws-proto" onclick="wsSimulateDays()">Prototype · Simulate 3 days</button>' : '')+
@@ -29961,14 +30032,120 @@ function wsSetupCardHTML(where){
 function wsRefreshCard(){
   const c = document.getElementById('ws-card');
   if(c){ const html = wsSetupCardHTML(c.getAttribute('data-where')); if(html) c.outerHTML = html; else c.remove(); }
+  wsPillRender();   // the ring fills as items are finished
   wsPersist();
 }
+/* "Hide for now" doesn't make the list disappear: the card folds away and flies into a small pill in the top bar
+   (a progress ring and "Setup 2/7"). The pill opens a small panel with only what is left. Polite: one soft pulse per
+   session, no blinking, never over the page. Owners and admins only. */
 function wsHideForNow(){
   if(!wsSetup) return;
+  const card = document.getElementById('ws-card');
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const from = card ? card.getBoundingClientRect() : null, head = card && card.querySelector('.ws-card__head');
   wsSetup.hiddenSession = wsSessionSeq;
-  wsRefreshCard();
-  toast('Hidden for now. It’s back next time you sign in, and in Settings.');
+  wsPillRender();
+  const pill = document.getElementById('ws-pill');
+  const say = function(){ toast('Setup is in the top bar whenever you want it.'); };
+  if(!card){ say(); return; }
+  card.removeAttribute('id'); card.removeAttribute('data-where');   // it is leaving; the page no longer counts it
+  if(reduce || !pill || !pill.animate || !from){ card.remove(); say(); return; }
+  const ease = 'cubic-bezier(.45,0,.15,1)';
+  pill.style.visibility = 'hidden';
+  // Beat 1 (0–380ms): the list steps out, bottom row first; Kairo's note, the footer and the button fade.
+  const rows = Array.prototype.slice.call(card.querySelectorAll('.ws-list > li')).reverse();
+  rows.forEach(function(r, i){ r.animate([{ opacity:1, transform:'none' }, { opacity:0, transform:'translateY(-6px)' }], { duration:240, delay:i * 30, easing:ease, fill:'forwards' }); });
+  Array.prototype.forEach.call(card.children, function(c){ if(c !== head && !c.classList.contains('ws-list')) c.animate([{ opacity:1 }, { opacity:0 }], { duration:220, easing:ease, fill:'forwards' }); });
+  const btn = head && head.querySelector('button'); if(btn) btn.animate([{ opacity:1 }, { opacity:0 }], { duration:180, fill:'forwards' });
+  // Beat 2 (360–1180ms): the shell lifts off carrying its heading, folds down to the heading, then travels into the pill.
+  setTimeout(function(){
+    const to = pill.getBoundingClientRect(), hh = head ? head.getBoundingClientRect().height + 32 : 90;
+    const g = document.createElement('div'); g.className = 'ws-ghost'; g.setAttribute('aria-hidden', 'true');
+    if(head){ const h = head.cloneNode(true); h.querySelectorAll('button').forEach(function(b){ b.remove(); }); h.className = 'ws-ghost__head'; g.appendChild(h); }
+    Object.assign(g.style, { left:from.left + 'px', top:from.top + 'px', width:from.width + 'px', height:from.height + 'px' });
+    document.body.appendChild(g);
+    card.style.height = card.offsetHeight + 'px'; card.style.visibility = 'hidden'; void card.offsetHeight;
+    card.classList.add('ws-card--leaving');   // the page below slides up while the shell travels
+    const fly = g.animate([
+      { left:from.left + 'px', top:from.top + 'px', width:from.width + 'px', height:from.height + 'px', borderRadius:'20px', offset:0 },
+      { left:from.left + 'px', top:from.top + 'px', width:from.width + 'px', height:hh + 'px', borderRadius:'18px', offset:.34 },
+      { left:(to.left - 8) + 'px', top:(to.top - 4) + 'px', width:(to.width + 16) + 'px', height:(to.height + 8) + 'px', borderRadius:'999px', offset:.9 },
+      { left:to.left + 'px', top:to.top + 'px', width:to.width + 'px', height:to.height + 'px', borderRadius:'999px', offset:1 }
+    ], { duration:820, easing:ease, fill:'forwards' });
+    const inner = g.firstChild; if(inner) inner.animate([{ opacity:1 }, { opacity:1, offset:.3 }, { opacity:0, offset:.55 }, { opacity:0 }], { duration:820, fill:'forwards' });
+    // Beat 3 (1180–1700ms): the pill appears and its ring draws up to where setup stands, with one soft pulse.
+    let landed = false;
+    const land = function(){
+      if(landed) return; landed = true;
+      if(g.isConnected) g.animate([{ opacity:1 }, { opacity:0 }], { duration:160, fill:'forwards' }).onfinish = function(){ g.remove(); };
+      if(card.isConnected) card.remove();
+      pill.style.visibility = '';
+      pill.animate([{ opacity:0, transform:'scale(.92)' }, { opacity:1, transform:'none' }], { duration:260, easing:ease });
+      const v = pill.querySelector('.ws-ring__val');
+      if(v){ const dash = parseFloat(v.style.strokeDasharray) || 44; v.animate([{ strokeDashoffset:dash }, { strokeDashoffset:parseFloat(v.style.strokeDashoffset) || dash }], { duration:640, delay:120, easing:ease, fill:'backwards' }); }
+      pill.classList.remove('is-pulse'); void pill.offsetWidth; pill.classList.add('is-pulse');
+      say();
+    };
+    fly.onfinish = land; setTimeout(land, 1100);   // never left mid-air
+  }, 360);
 }
+
+/* ---- The setup pill and its panel ---- */
+let wsPillOpen = false;
+function wsPillVisible(){
+  const w = wsSetup;
+  if(!w || state.role!=='admin' || !document.getElementById('ws-pill-slot')) return false;
+  if(w.snoozeUntil && Date.now() < w.snoozeUntil) return false;
+  const p = wsProgress(w); if(p.done===p.total) return false;
+  return !(state.activeNav===DEFAULT_VIEW.admin && w.hiddenSession!==wsSessionSeq);   // not while the full card is on Home
+}
+function wsRingSVG(done, total){
+  const c = 2 * Math.PI * 7, f = total ? done / total : 0;
+  return '<svg class="ws-ring" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle class="ws-ring__track" cx="9" cy="9" r="7"/><circle class="ws-ring__val" cx="9" cy="9" r="7" style="stroke-dasharray:'+c.toFixed(2)+';stroke-dashoffset:'+(c * (1 - f)).toFixed(2)+'"/></svg>';
+}
+function wsPillRender(){
+  const slot = document.getElementById('ws-pill-slot'); if(!slot) return;
+  const w = wsSetup;
+  // Everything done while the pill was showing: it turns into the green dot, says so, and goes.
+  if(w && state.role==='admin' && w.pillShown && !w.pillReadySaid){ const p = wsProgress(w); if(p.done===p.total){
+    w.pillReadySaid = true; wsPillOpen = false;
+    slot.innerHTML = '<span class="ws-pill is-ready" role="status"><span class="ws-pill__dot" aria-hidden="true"></span><span class="ws-pill__text">Workspace ready</span></span>';
+    setTimeout(function(){ const r = slot.querySelector('.is-ready'); if(r){ r.classList.add('is-leaving'); setTimeout(function(){ if(r.isConnected) r.remove(); }, 400); } }, 2200);
+    return;
+  } }
+  if(!wsPillVisible()){ if(!slot.querySelector('.is-ready')) slot.innerHTML = ''; wsPillOpen = false; return; }
+  const p = wsProgress(w), pulse = w.pillPulsed !== wsSessionSeq;
+  w.pillShown = true; if(pulse) w.pillPulsed = wsSessionSeq;
+  slot.innerHTML = '<button type="button" id="ws-pill" class="ws-pill'+(pulse ? ' is-pulse' : '')+'" aria-expanded="'+wsPillOpen+'" aria-haspopup="dialog" aria-label="Workspace setup, '+p.done+' of '+p.total+' done" onclick="wsPillToggle()">'+
+    wsRingSVG(p.done, p.total)+'<span class="ws-pill__text">Setup <b>'+p.done+'/'+p.total+'</b></span></button>'+(wsPillOpen ? wsPopHTML() : '');
+  if(wsPillOpen){ const h = document.getElementById('ws-pop-h'); if(h) h.focus({ preventScroll:true }); }
+}
+function wsPopHTML(){
+  const w = wsSetup, p = wsProgress(w), next = WS_ITEMS[p.next], left = p.total - p.done;
+  const kairo = w.simDays>=3 ? left+' setup item'+(left===1 ? '' : 's')+' left. Want to finish your '+next.noun+' now?' : next.kairo;
+  return '<div id="ws-pop" class="ws-pop" role="dialog" aria-labelledby="ws-pop-h" onkeydown="if(event.key===\'Escape\'){ wsPillToggle(); document.getElementById(\'ws-pill\').focus(); }">'+
+    '<p id="ws-pop-h" class="ws-pop__title" tabindex="-1">Complete your workspace</p>'+
+    '<div class="ws-card__prog"><span class="ws-bar" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="'+p.total+'" aria-valuenow="'+p.done+'"><span style="width:'+(p.total ? Math.round(p.done/p.total*100) : 100)+'%"></span></span><span class="ws-card__count">'+wsCountText(p)+'</span></div>'+
+    '<p class="ws-pop__kairo">'+icon('sparkles','w-3.5 h-3.5')+'<span><b>Kairo</b> '+escapeHtml(kairo)+'</span></p>'+
+    '<ul class="ws-pop__list">'+wsItems(w).filter(function(k){ return !wsItemDone(k, w) && !wsItemSkipped(k, w); }).map(function(k){
+      return '<li class="ws-row" data-ws-row="'+k+'"><button type="button" class="ws-pop__item'+(k===p.next ? ' is-next' : '')+'" onclick="wsPillGo(\''+k+'\')"><span class="first-run__check" aria-hidden="true"></span><span>'+WS_ITEMS[k].title+'</span>'+icon('chevronRight','w-4 h-4')+'</button>'+
+        '<button type="button" class="ws-skip" onclick="wsSkip(\''+k+'\', event)" aria-label="Skip '+WS_ITEMS[k].title+' for now">Skip</button></li>';
+    }).join('')+'</ul>'+
+    '<div class="ws-pop__foot"><button type="button" class="btn-quiet text-sm" onclick="wsPillShowOnHome()">Show on Home</button><button type="button" class="btn-quiet text-sm" onclick="wsPillSnooze()">Remind me tomorrow</button></div></div>';
+}
+function wsPillToggle(){ wsPillOpen = !wsPillOpen; wsPillRender(); }
+function wsPillGo(k){ wsPillOpen = false; wsPillRender(); wsOpenItem(k); }
+function wsPillShowOnHome(){
+  if(!wsSetup) return; wsPillOpen = false; wsSetup.hiddenSession = -1; showView(DEFAULT_VIEW.admin);
+  const c = document.getElementById('ws-card'), reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!c || reduce || !c.animate) return;   // the card settles back in, its rows following one by one
+  const ease = 'cubic-bezier(.2,0,0,1)';
+  c.animate([{ opacity:0, transform:'translateY(-10px) scale(.985)' }, { opacity:1, transform:'none' }], { duration:480, easing:ease });
+  Array.prototype.forEach.call(c.querySelectorAll('.ws-list > li'), function(r, i){ r.animate([{ opacity:0, transform:'translateY(8px)' }, { opacity:1, transform:'none' }], { duration:360, delay:160 + i * 45, easing:ease, fill:'backwards' }); });
+}
+function wsPillSnooze(){ if(!wsSetup) return; wsSetup.snoozeUntil = Date.now() + 864e5; wsPillOpen = false; wsPillRender(); wsPersist(); toast('Out of the way until tomorrow. It’s always in Settings › Workspace setup.'); }
+document.addEventListener('click', function(e){ const slot = document.getElementById('ws-pill-slot'); if(wsPillOpen && slot && (e.composedPath ? e.composedPath() : []).indexOf(slot) < 0){ wsPillOpen = false; wsPillRender(); } });   // the path, not the target: the clicked button is redrawn
+(function(){ const sv = showView; showView = function(){ const r = sv.apply(this, arguments); try { wsPillRender(); } catch(e){} return r; }; })();   // the pill follows every screen change
 /* PROTOTYPE: moves the clock on so Kairo's reminder shows. */
 function wsSimulateDays(){ if(!wsSetup) return; wsSetup.simDays = 3; wsRefreshCard(); }
 function wsOpenDefaults(){
@@ -33189,7 +33366,7 @@ const LEAD_OUTCOMES = [
   { key:'call_back', label:'Call back later' }
 ];
 const LEAD_DROP_REASONS = ['Too many steps', 'Wanted a demo first', 'Pricing', 'Didn’t verify email', 'Just exploring', 'Other'];
-const LEAD_STOP_STEPS = ['Workspace type', 'Team size', 'Location', 'Name', 'Plan', 'Email', 'Email code'];   // in sign-up order; the mobile number is no longer asked at sign-up
+const LEAD_STOP_STEPS = ['Workspace type', 'Team size', 'Location', 'Name', 'Email', 'Email code'];   // in sign-up order; the mobile number is no longer asked at sign-up
 
 /* PROTOTYPE: sample leads, stuck from 3 hours to 6 days. Timestamps are relative to now. `at` is the question on
    screen when they left; `reached` the last one answered. in_product: signed up, setup checklist not finished. */
@@ -33215,7 +33392,7 @@ function seedSignupLeads(){
     lead({ n:3, country:'India', city:'Pune', teamSize:'200+', name:'Rohit Verma', email:'rohit@kalpatech.co.in', type:'Corporate', h:26, reached:'email', at:'su-password' }),
     lead({ n:4, country:'India', city:'Hyderabad', teamSize:'21\u201350', name:'Sneha Kulkarni', email:'sneha@talentbridge.in', mobile:'+91 97654 30981', type:'Staffing agency', h:30, reached:'mobile', at:'su-password' }),
     lead({ n:5, country:'United Arab Emirates', city:'Dubai', teamSize:'51\u2013200', name:'Imran Qureshi', email:'imran@nexoralabs.com', mobile:'+91 98110 76235', type:'Corporate', h:40, reached:'in_product', status:'in_product', company:'Nexora Labs', checklist:{ done:2, total:6 } }),
-    lead({ n:6, country:'India', city:'Chennai', teamSize:'6\u201320', name:'Kavya Reddy', email:'kavya@brightminds.in', type:'Staffing agency', h:72, reached:'location', at:'su-plan' }),
+    lead({ n:6, country:'India', city:'Chennai', teamSize:'6\u201320', name:'Kavya Reddy', email:'kavya@brightminds.in', type:'Staffing agency', h:72, reached:'location', at:'su-email' }),
     lead({ n:7, country:'India', city:'Mumbai', teamSize:'51\u2013200', name:'Arjun Malhotra', email:'arjun@finvista.in', mobile:'+91 98731 66420', type:'Corporate', h:144, reached:'mobile', at:'su-type' }),
     lead({ n:8, country:'India', city:'Delhi', teamSize:'21\u201350', name:'Pooja Nair', email:'pooja@hirewise.in', mobile:'+91 94471 20853', type:'Staffing agency', h:96, reached:'mobile', at:'su-password',
       followUp:{ assignedTo:'Nisha Gupta', events:[{ at:ago(80), text:'Assigned to Nisha Gupta' }],
@@ -33246,9 +33423,9 @@ function leadStuckLabel(l){
 /* Where the person stopped, in words: the screen they were on, or the step after the last one they finished. */
 function leadStoppedAt(l){
   if(leadInProduct(l)) return 'Setup '+(l.checklist ? l.checklist.done+' of '+l.checklist.total : 'not started');
-  const byScreen = { 'su-type':0, 'su-size':1, 'su-location':2, 'su-name':3, 'oauth-sim':3, 'su-plan':4, 'su-email':5, 'su-join':5, 'su-mobile':6, 'su-password':6 };
+  const byScreen = { 'su-type':0, 'su-size':1, 'su-location':2, 'su-name':3, 'oauth-sim':3, 'su-email':4, 'su-join':4, 'su-mobile':5, 'su-password':5 };
   if(l.currentStep && l.currentStep in byScreen) return LEAD_STOP_STEPS[byScreen[l.currentStep]];
-  return LEAD_STOP_STEPS[{ type_chosen:1, team_size:2, location:4, name:0, email:6, mobile:6, password:6 }[l.stepReached] || 0];
+  return LEAD_STOP_STEPS[{ type_chosen:1, team_size:2, location:4, name:0, email:5, mobile:5, password:5 }[l.stepReached] || 0];
 }
 /* Signed up and in the product, with the "Complete your workspace" checklist not finished yet. */
 function leadInProduct(l){ return l.status==='in_product' && !l.setupDone; }
@@ -33482,7 +33659,6 @@ function signupSheetHTML(){
         (st.flash ? '<p class="text-sm rounded-xl px-3.5 py-2.5 '+(st.flash.tone==='grey' ? 'bg-zinc-100 text-zinc-600' : 'bg-forest-50 text-forest-600')+'" role="status">'+st.flash.text+'</p>' : '')+
         '<dl>'+
           row('Workspace type', escapeHtml(l.workspaceType || '—'))+
-          (l.plan ? row('Plan picked', escapeHtml(l.plan) + ' · 14 days free') : '')+
           row('Team size', escapeHtml(l.teamSize || '—'))+
           row('Based in', escapeHtml([l.city, l.country].filter(Boolean).join(', ') || '—'))+
           (l.companyName ? row('Company', escapeHtml(l.companyName)) : '')+
@@ -49012,7 +49188,7 @@ function coBlockPage(t, s){ return coShell('<section class="sl-card sl-center"><
 function coPgDraw(){
   const pg = CO.pg; if(!pg) return; const root = coRoot(), keep = root.querySelector('.sl-main'), top = keep ? keep.scrollTop : 0; let html = '';
   try {
-    if(!CO.seeded && !coCorp() && pg.kind !== 'consent') html = coBlockPage('This page opens from a company workspace', 'Switch to the corporate demo from the menu at the bottom left, then open this page again.');
+    if(!CO.seeded && !coCorp() && pg.kind !== 'consent') html = coBlockPage('This page opens from a company workspace', 'Set Account type to Corporate (Demo) in the menu at the bottom left, then open this page again.');
     else html = pg.kind === 'vendor' ? coVendorPage() : pg.kind === 'hm' ? coHmPage() : pg.kind === 'consent' ? coConsentPage() : pg.kind === 'time' ? coTimePage() : coJobsPage();
   } catch(e){ console.error('portal', e); html = coBlockPage('Something went wrong', 'Reload the page and try again.'); }
   root.innerHTML = html; const m = root.querySelector('.sl-main'); if(m) m.scrollTop = top;
@@ -49145,10 +49321,35 @@ function coDemoOff(){ if(!CO.demo) return; ORG_STRUCTURE.profile.orgType = CO.de
 (function addMenu(){
   const menu = document.getElementById('role-menu'); if(!menu || document.getElementById('co-menu-demo')) return;
   const sep = menu.querySelector('.o-menu__sep:last-of-type'); const wrap = document.createElement('div'); wrap.id = 'co-menu-demo';
-  wrap.innerHTML = '<div class="o-menu__sep"></div><p class="o-menu__head">Try other journeys</p><button type="button" class="o-menu__item" onclick="CO.demo ? coDemoOff() : coDemoOn()" id="co-menu-toggle">Corporate demo workspace</button><button type="button" class="o-menu__item" onclick="toggleRoleMenu(true);if(!CO.demo)coDemoOn();location.hash=\'#/vendor\'">Vendor sign-in page</button><button type="button" class="o-menu__item" onclick="toggleRoleMenu(true);if(!CO.demo)coDemoOn();location.hash=\'#/jobs\'">Oontu jobs website</button>';
-  const first = menu.querySelector('.o-menu__item--quiet'); menu.insertBefore(wrap, first ? first.previousElementSibling && first.previousElementSibling.classList.contains('o-menu__sep') ? first.previousElementSibling : first : null);
-  const t = document.getElementById('role-trigger'); if(t) t.addEventListener('click', function(){ const b = document.getElementById('co-menu-toggle'); if(b) b.textContent = CO.demo ? 'Back to the agency workspace' : 'Corporate demo workspace'; });
+  /* The one place in the prototype to switch account type, for developers comparing the two. Marked Demo: a real
+     workspace's type is fixed at sign-up (changing it needs Oontu support). */
+  wrap.innerHTML = '<div class="o-menu__sep"></div>'+
+    '<div class="acct-switch"><p class="o-menu__head" id="acct-switch-h">Account type <span class="demo-tag">Demo</span></p>'+
+      '<div class="acct-seg" role="radiogroup" aria-labelledby="acct-switch-h">'+
+        '<button type="button" role="radio" data-acct="agency" onclick="acctTypeSwitch(\'agency\')">Staffing</button>'+
+        '<button type="button" role="radio" data-acct="corporate" onclick="acctTypeSwitch(\'corporate\')">Corporate</button></div>'+
+      '<p class="acct-hint">For developers: see what changes between the two.</p></div>'+
+    '<p class="o-menu__head">Pages outside the app</p><button type="button" class="o-menu__item" onclick="toggleRoleMenu(true);if(!coCorp())acctTypeSwitch(\'corporate\');location.hash=\'#/vendor\'">Vendor sign-in page</button><button type="button" class="o-menu__item" onclick="toggleRoleMenu(true);if(!coCorp())acctTypeSwitch(\'corporate\');location.hash=\'#/jobs\'">Oontu jobs website</button>';
+  // Just above "Your settings" (its separator), right after the people you can view as.
+  const settings = menu.querySelector('[onclick*="showView(\'settings\')"]'), sepBefore = settings && settings.previousElementSibling;
+  const ref = sepBefore && sepBefore.classList.contains('o-menu__sep') ? sepBefore : settings;
+  if(ref && ref.parentNode) ref.parentNode.insertBefore(wrap, ref); else menu.appendChild(wrap);
+  const t = document.getElementById('role-trigger'); if(t) t.addEventListener('click', acctSwitchSync);
+  acctSwitchSync();
 })();
+function acctTypeCurrent(){ return coCorp() ? 'corporate' : 'agency'; }
+function acctSwitchSync(){ Array.prototype.forEach.call(document.querySelectorAll('[data-acct]'), function(b){ b.setAttribute('aria-checked', String(b.getAttribute('data-acct') === acctTypeCurrent())); }); }
+function acctTypeSwitch(t){
+  if(t === acctTypeCurrent()) return;
+  if(t === 'corporate'){
+    if(CO.agencyView){ ORG_STRUCTURE.profile.orgType = 'Corporate'; CO.agencyView = null; state.role = 'admin'; renderSidebar(); toggleRoleMenu(true); showView(DEFAULT_VIEW.admin); toast('Corporate account (demo)'); }
+    else coDemoOn();   // the Northwind Health demo company
+  } else {
+    if(CO.demo && CO.demo.orgType !== 'Corporate') coDemoOff();
+    else { CO.demo = null; CO.agencyView = true; ORG_STRUCTURE.profile.orgType = 'Staffing agency'; state.role = 'admin'; renderSidebar(); toggleRoleMenu(true); showView(DEFAULT_VIEW.admin); toast('Staffing agency account (demo)'); }
+  }
+  acctSwitchSync();
+}
 window.addEventListener('load', function(){ try { coRoute(); } catch(e){ console.error(e); } });
 
 </script>
@@ -49190,7 +49391,7 @@ function jnAudit(a, d, meta){ try { if(typeof logPlatformAudit === 'function' &&
 const JN_STEP = { name:'name', type:'type_chosen', size:'team_size', place:'location', email:'email', mobile:'mobile', code:'verified' };
 const JN_ORDER = ['name', 'type_chosen', 'team_size', 'location', 'email', 'mobile', 'verified', 'in_product'];
 /* where the next question sits among the stops the follow-up screens already name */
-const JN_SCREEN = { type:'su-type', org:'su-size', size:'su-size', focus:'su-size', partners:'su-size', place:'su-location', plan:'su-plan', email:'su-email', mobile:'su-mobile', code:'su-password' };
+const JN_SCREEN = { type:'su-type', org:'su-size', size:'su-size', focus:'su-size', partners:'su-size', place:'su-location', email:'su-email', mobile:'su-mobile', code:'su-password' };
 function joinLeadSync(snap){
   if(!snap || (!snap.name && !snap.email)) return null;
   let l = JN.leadId ? signupLeadById(JN.leadId) : null;
@@ -49201,9 +49402,9 @@ function joinLeadSync(snap){
   }
   signupActiveLeadId = l.id;
   const cap = function(s){ return String(s || '').replace(/^./, function(c){ return c.toUpperCase(); }); };
-  const extra = { plan:snap.planName || l.plan || '', name:cap(snap.name), workspaceType:snap.orgType || l.workspaceType, companyName:snap.org || l.companyName, teamSize:snap.size || l.teamSize, country:snap.placeLabel || l.country,
+  const extra = { name:cap(snap.name), workspaceType:snap.orgType || l.workspaceType, companyName:snap.org || l.companyName, teamSize:snap.size || l.teamSize, country:snap.placeLabel || l.country,
     email:snap.email ? String(snap.email).trim().toLowerCase() : l.email, mobile:snap.mobile ? ((snap.mobileCode || '') + ' ' + snap.mobile).trim() : l.mobile, emailVerified:l.emailVerified || !!snap.verified,
-    resume:snap.done ? null : { snap:{ name:snap.name, type:snap.type, org:snap.org, size:snap.size, focus:snap.focus, partners:snap.partners, place:snap.place, plan:snap.plan, boosts:snap.boosts, mobileCode:snap.mobileCode, email:snap.email, mobile:snap.mobile, skippedFocus:snap.i > 5 }, savedAt:jnNow() } };
+    resume:snap.done ? null : { snap:{ name:snap.name, type:snap.type, org:snap.org, size:snap.size, focus:snap.focus, partners:snap.partners, place:snap.place, mobileCode:snap.mobileCode, email:snap.email, mobile:snap.mobile, skippedFocus:snap.i > 5 }, savedAt:jnNow() } };
   if(snap.done){ extra.status = 'in_product'; extra.emailVerified = true; }
   /* the questions come in the order of the create-workspace screen (name first), so progress is kept in that order here */
   const step = snap.done ? 'in_product' : (JN_STEP[snap.last] || null), at = JN_ORDER.indexOf(step), was = JN_ORDER.indexOf(l.stepReached);
