@@ -1101,9 +1101,9 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       assert(/Connected/.test(document.querySelector('.ws-sheet').textContent)); await saveSheet();
       wsOpenItem('agency-marketplace'); document.getElementById('su-market').click();
       assert(document.getElementById('su-chips-specialisations'), 'chips once listed'); suAgency().specialisations.push('Fintech hiring'); await saveSheet();
-      eq(ORG_STRUCTURE.profile.marketplaceListed, true); eq(ORG_STRUCTURE.profile.marketplaceSpecialisations.join(), 'Fintech hiring');
+      eq(WSX.careers.market.listed, true);   // K6: one source, the Settings switch eq(ORG_STRUCTURE.profile.marketplaceSpecialisations.join(), 'Fintech hiring');
       wsOpenItem('jobs-site'); eq(document.getElementById('su-jobsite').getAttribute('aria-checked'), 'false', 'off by default'); await saveSheet();
-      eq(ORG_STRUCTURE.profile.jobsWebsiteAllowed, false);
+      eq(WSX.careers.jobsWebsite, false);   // K6: one source, the Settings switch
       wsOpenItem('agency-team'); await saveSheet(); eq(document.getElementById('su-inv-email-0-err').textContent, 'Add at least one email to invite.');
       wsSetup.team[0].email = 'dana@startup.example'; await saveSheet(); assert(/your own email/.test(document.getElementById('su-inv-email-0-err').textContent));
       wsSetup.team[0].email = 'meena@talent-one.example'; wsSetup.team[0].roleId = 'role_recmgr'; suTeamAdd();

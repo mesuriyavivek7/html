@@ -316,11 +316,16 @@
     var f = tzFmt[tz] || (tzFmt[tz] = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }));
     var o = {}; f.formatToParts(new Date(ms)).forEach(function (x) { if (x.type !== 'literal') o[x.type] = +x.value; }); if (o.hour === 24) o.hour = 0; return o;
   }
-  function ist(ms) { var o = wallParts(ms, tzName()); return { y: o.year, m: o.month - 1, d: o.day, dow: new Date(Date.UTC(o.year, o.month - 1, o.day)).getUTCDay(), min: o.hour * 60 + o.minute + o.second / 60 }; }
+  // The zone's offset is read from Intl once per 15-minute slot and cached (offsets only change on such boundaries),
+  // then the wall time is plain arithmetic: same answers as asking Intl every time, without the cost.
+  var tzOff = {};
+  function offsetMin(ms, tz) { var slot = Math.floor(ms / 900000), k = tz + '|' + slot, v = tzOff[k]; if (v != null) return v;
+    var o = wallParts(slot * 900000, tz); v = Math.round((Date.UTC(o.year, o.month - 1, o.day, o.hour, o.minute, o.second) - slot * 900000) / 60000); tzOff[k] = v; return v; }
+  function ist(ms) { var d = new Date(ms + offsetMin(ms, tzName()) * 60000), sec = d.getUTCSeconds() + d.getUTCMilliseconds() / 1000; return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), dow: d.getUTCDay(), min: d.getUTCHours() * 60 + d.getUTCMinutes() + Math.floor(sec) / 60 }; }
   // The UTC instant of a wall time (y, m, d, minute of day) in the workspace time zone; two passes settle daylight saving.
   function fromIst(y, m, d, minOfDay) {
     var tz = tzName(), want = Date.UTC(y, m, d) + minOfDay * 60000, t = want;
-    for (var i = 0; i < 2; i++) { var o = wallParts(t, tz); t += want - Date.UTC(o.year, o.month - 1, o.day, o.hour, o.minute, o.second); }
+    for (var i = 0; i < 2; i++) { t = want - offsetMin(t, tz) * 60000; }
     return t;
   }
   function ymd(y, m, d) { return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }

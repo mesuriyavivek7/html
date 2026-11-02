@@ -8,7 +8,7 @@ This is a plain summary of what was fixed, what is still missing, what is only p
 
 | Check | Result |
 |---|---|
-| Full suite (37 spec files, in a separate Chrome profile) | 37 of 37 in run 1, 37 of 37 in run 2, and 37 of 37 with the browser in UTC |
+| Full suite (38 spec files, in a separate Chrome profile) | 38 of 38 twice (after the K1–K8 review); 37 of 37 with the browser in UTC before it |
 | Approval engine checks (`node test/aps.test.js`) | 34 of 34 (2 London checks added) |
 | Corporate spec | 20 of 20, no lines changed since before M1 |
 | New end-to-end spec `tests/agency-e2e.spec.js` | 8 of 8 |
@@ -71,6 +71,12 @@ Also fixed along the way (no B number):
 - **Join Ratio:** it was 200%; it now uses the same small-sample rule.
 - **Role templates and team-size defaults:** both added (C5).
 - **Submitting:** a role without "Submit to job" can't submit by any path. That includes shortlisting an applicant, which used to slip past.
+- **Final review K1–K8:**
+  - Money only for money roles: recruiter Home, Intelligence, client money and campaign revenue need billing · View, while fee terms stay on View Contracts. A privacy sweep proves it (`tests/k-review.spec.js`).
+  - No typed-in figures shown as facts.
+  - One source for the jobs website and marketplace; agency jobs on the jobs website.
+  - The phone note bar.
+  - The corporate demo menu error.
 - **Shared Cowork workflows:** only their owner can edit, pause or delete them, and a copy always sends from your own accounts.
 
 ## 3. Still not built from the flow map, and why
@@ -282,3 +288,20 @@ Two rules for the whole build:
 
 - The page never decides alone. Every check above runs on the server, and the screens only show what the server allows.
 - Each module ships with its spec ported from `tests/`. Those specs are the definition of done.
+
+## 8. Demo data (added 3 November 2026)
+
+The account menu has the demo controls: Demo company (Kesar Staffing, Northstar Talent Partners, Vistaar HR Services; Start from sign-up or Open with demo data), Sign in as, Demo clock, and Simulate application on a job's Applicants tab. The three companies are built by the product's own functions, the same on every load; `tests/demo-data.spec.js` checks the guide's counts, the story records, every member's menu, money and privacy.
+
+Measured on a MacBook (headless Chrome):
+
+| What | Kesar | Northstar | Vistaar | Target |
+|---|---|---|---|---|
+| Switch company (reload + build + Home) | 0.5 s | 0.8 s | 11–12 s | 3 s |
+| Home | | | 0.08 s | 2 s |
+| Job list, Approvals | | | 0.05 s, 0.06 s | 1 s |
+| Talent pool / a search | | | 0.63 s / 0.41 s (0.38 s is the "searching" pause) | 1 s |
+| PayTrack Invoices | | | 0.05 s | 1.5 s |
+| A contract month (all 30 assignments) | | | under 0.01 s | 2 s |
+
+Vistaar misses the switch target. All 4,500 journeys go through the real steps on every open. Choices for this are in the round's report.

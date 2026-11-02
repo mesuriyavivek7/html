@@ -1461,3 +1461,94 @@ Backup before any change: `backups/recruitment-os-prototype.pre-tz2.html`.
 - the interview screens and links with the zone name and the "your time" note
 - the month and week grids
 - campaign slot suggestions
+
+## 2026-11-02 · Final review K1–K8
+
+Backup before any change: `backups/recruitment-os-prototype.pre-k-review.html`.
+- **K1 · recruiter Home:** never shows the placement fee.
+  - With Settings › Commission › "Show recruiters their own commission" on, "My month" shows "My commission" and the Placements card adds "₹x my commission". The amount is the person's own commission lines from PayTrack for placements this month (workspace time), exact (`recMyCommissionThisMonth`).
+  - Off: placements only, no ₹.
+- **K2 · Intelligence:** "Revenue intelligence" with ₹ only for billing · View; everyone else gets a Placements count card.
+- **K3 · money vs fee terms:** a new `clCanSeeAccountMoney()` requires billing · View (or the Owner). It covers:
+  - client list money and its totals
+  - overview "Revenue this year" and "Outstanding"
+  - the Billing tab (and its PayTrack link), overdue, PO and fee-due prompts
+  - the revenue target
+
+  Fee terms (the Terms tab, a job's fee, the offer fee) stay on clients · View Contracts. Campaigns show "Placements expected" unless billing · View. Company workspaces keep their rule.
+- **K4 · typed-in figures:** the `RECRUITERS` seed and the unused `leaderboardHTML` are removed.
+  - Org productivity is computed (`orgProductivityRows`): placements and fees from PayTrack (fees only with billing · View), sent from journeys, and the shortlist rate only from 5 sent ("Too few to score yet (n sent)"). The efficiency and average-fill columns are gone.
+  - All tasks: "Join / Response probability (indicative)", "Counter-offer risk (indicative)".
+  - Workflow fields: "Response Probability (%) · indicative, typed in", "Counter-Offer Risk (%) · indicative, typed in".
+- **K5 · corporate demo menu:** inserted next to its reference inside the reference's own parent, so there's no `insertBefore` error at load and "Try other journeys › Corporate demo workspace" appears.
+- **K6 · one source each:**
+  - The sign-up answers write `careers.jobsWebsite` and `careers.market.listed` (audited). `profile.jobsWebsiteAllowed` and `profile.marketplaceListed` are no longer written or read.
+  - The jobs website lists the agency's live jobs when allowed, except opted-out ones (`onJobSite === false`). The client is shown as "Confidential client" when `careers.hideClient` is on.
+  - Agency applications go through intake as "Oontu jobs" (counted as inbound). A company workspace lists only its own jobs, as before.
+- **K7 · phone:** under 640 px the note (all toasts) is a full-width bar at the bottom. While it shows, the main content reserves its real height (measured), so nothing is covered. Measured at 390 × 844: the bar is 0–390 px wide, 776–844 px tall; the main content ends at 776; overlap 0.
+- **K8 · Settings › Account:** "Only the Owner or an Admin can change this" and "Ask the Owner or an Admin to change it". The same lock note on integrations cards was "an Admin" and now reads "the Owner or an Admin".
+
+**New spec:** `tests/k-review.spec.js`, 9 tests: K1 on/off, K2, the K3 privacy sweep (every menu page plus every client page and tab, as Recruiter and Recruiter Manager), K4, K5, K6 (twice), K7, K8.
+
+**Spec lines changed (before → after):**
+- `tests/auth-flow.spec.js` 1104: `eq(ORG_STRUCTURE.profile.marketplaceListed, true)` → `eq(WSX.careers.market.listed, true)` (K6)
+- `tests/auth-flow.spec.js` 1106: `eq(ORG_STRUCTURE.profile.jobsWebsiteAllowed, false)` → `eq(WSX.careers.jobsWebsite, false)` (K6)
+- `tests/cowork.spec.js`, rotation test: one line added before the workflow is made, resetting any test account's pacing cursor that is ahead of the test's clock.
+  - Why: a time-of-day flake. Earlier tests run at the engine's real-time start clock, then `tue10` moves the clock back, so in the evening every sender waited past the 30-hour loop.
+  - It fails the same way on the committed HEAD (M1–M7), so it isn't caused by this work.
+
+**Tests executed:** full suite 38/38 twice; engine 34/34; corporate 20/20, no lines changed.
+
+## 2026-11-03 · Demo data round (demo guide, Demo data tab)
+
+Backup before any change: `backups/recruitment-os-prototype.pre-demo-data.html`.
+
+**Demo controls (account menu, agency):**
+- **Demo company:** Kesar Staffing, Northstar Talent Partners or Vistaar HR Services, each with "Start from sign-up" (empty workspace, the 9-question wizard runs, the person who signs up becomes the Owner) or "Open with demo data".
+- **Switching:** a company is chosen for the browser tab, the page reloads and builds it, so nothing from the previous company survives. "Leave the demo" goes back to the default page.
+- **Sign in as:** every member, with role and Reports to; the menu, Home and data follow that person's role. With a demo company, the Recruiter, Recruiter Manager and Owner personas are hidden; Hiring Manager, Candidate and Oontu stay.
+- **Demo clock:** +1 day, +1 week, +1 month, back to today. It moves the app clock (`fmNow`), the approvals clock and the Cowork send clock together, then runs the sweeps: SLA, holds, consent, windows, overdue, assignments, interviews, approvals, Cowork.
+- **Simulate application** (a job's Applicants tab): a source (careers page, Naukri, Indeed or LinkedIn, a recruiter's personal link, the Oontu jobs website), a name and a CV, through `ingestApplicationEvent`.
+
+**Seeds** (`<script id="demo-script">`): built by the real functions, with a seeded random generator (the same on every load).
+- **Functions used:**
+  - Add client form (`ncSave`), terms, New job (`publishJob`)
+  - Team invites and edits (`tmSubmit`), roles from Create role
+  - intake, `pipeShortlistApplicant` / `submitOneToJob`, consent answers, reviews, send to client, the client review link (book, not a fit)
+  - interview outcomes, offers (with approvals), joining
+  - PayTrack raise and payments, assignments, weekly time, monthly invoices, campaigns
+- **Dates:** each step runs at its own past date, so created times, audit lines, interviews, invoices and payments carry believable dates. Interviews fall in the next 2 weeks.
+
+| | Kesar | Northstar | Vistaar |
+|---|---|---|---|
+| People | 3 | 15 | 65 |
+| Clients | 4 | 12 | 40 |
+| Jobs open + closed | 6 + 3 | 25 + 15 | 120 + 80 |
+| Candidates / journeys | 60 / 70 | 600 / 700 | 4,000 / 4,500 |
+| Placements | 5 | 40 | 300 |
+| Raised invoices | 5 | | 240 |
+| Contract workers | 0 | 2 | 30 × 8 weeks |
+| Campaigns | | 10 | 6 |
+| Approvals waiting | 0 | 20 | 60 |
+| Plan | Starter | Growth | Enterprise |
+
+**Product fixes found while building:**
+- **New-workspace candidate ids:** `nextCandidateId` returned −Infinity in an empty pool, so every applicant in a new workspace merged into one candidate.
+- **Reviews on closed journeys:** a journey closed (Rejected or Withdrawn) while in review left its review in someone's Approvals; it now closes with an audit line.
+- **Intelligence:** the page crashed outside the Northstar seed. It hard-coded "Priya Sharma" and showed a typed-in `successRate`; the closure rate is now joined ÷ sent from the person's own journeys, with the 5-sent minimum.
+
+**Performance work:**
+- intake lookup in one pass with cached normalised values
+- id lookups through a checked index (`idFind`)
+- the approval engine and `wsParts` reading time-zone offsets from Intl once per 15-minute slot (the tick was 6 s at Vistaar size, now 0.3 s)
+- date formatters cached (the talent pool was 47 s, now 0.6 s)
+- the talent pool groups journeys once per render and shows 50 rows at a time
+- any table, list or card grid over 50 rows pages itself ("Show 50 more")
+
+**Seed gap fixed in demo mode only:** today's seeded SwiftLog job had no organisation id, so nobody could be assigned to it.
+
+**New spec:** `tests/demo-data.spec.js`, 9 tests. **Existing spec lines changed:** none.
+
+**Tests executed:**
+- full suite: 38/39, then 39/39, then 39/39. Run 1 hit the known corporate exact-millisecond consent check (line 95); the corporate spec is unchanged.
+- engine 34/34

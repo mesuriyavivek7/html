@@ -147,6 +147,7 @@
       LI_SENDER_PROFILES.splice(LI_SENDER_PROFILES.indexOf(np), 1); LI_SENDER_PROFILES.splice(LI_SENDER_PROFILES.indexOf(mine), 1);
       // rotation
       CW_LI_POLICY.allowRotation = true; var accs = ['sp1','sp2','sp3']; var steps = [cwStep('li', { action:'visit' }), cwStep('li', { action:'invite', text:'Hi {{first_name}}' })];
+      accs.forEach(function(id){ var sp = LI_SENDER_PROFILES.find(function(x){ return x.id === id; }); if(sp && sp.cursor > cwNow()) sp.cursor = cwNow(); });   // earlier steps can leave a pacing cursor ahead of this test's clock (tue10 moves it back), which made this fail in the evening
       var wfR = newWf('linkedin', steps, { name:'T-Rot', limits:{ sender:'rotate', senders:accs } }); wfR.__t = 1; wfR.limits.window = '00:00-23:59'; wfR.limits.sender = 'rotate'; wfR.limits.senders = accs;
       var pool = CANDIDATES.filter(function(x){ return !cwSuppression(personKeyOf(x)) && !cwNoPoach(x) && !cwLiFirstDegree(x); }); pool.forEach(function(x){ cwStartRun(wfR, x); });
       for(var h = 0; h < 30; h++){ var d2 = new Date(cwNow()); cwSetClock(cwNow() + CW_HOUR); cwEngineTick(0, { enrol:0 }); }
