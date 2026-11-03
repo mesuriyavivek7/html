@@ -363,6 +363,24 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       ORG_STRUCTURE.profile.orgType = 'Staffing agency'; CO.demo = null; CO.agencyView = null;
     });
 
+    await test('01m Developer tools: three folding groups, one open at a time, the clock moves with the menu still open', async function(){
+      state.role = 'admin'; renderSidebar(); showView('admin-dashboard'); APS.clockOffsetMs = 0; apClockAhead = 0; DEV_OPEN = ''; devToolsSync();
+      eq(document.querySelector('.acct-switch .o-menu__head').textContent.replace(/\s+/g, ' ').trim(), 'Developer tools Demo');
+      eq(Array.from(document.querySelectorAll('#dev-grps .dev-grp summary > span:first-of-type')).map(function(s){ return s.textContent; }).join('|'), 'Pages outside the app|Secure links|Approval clock');
+      assert(!document.querySelector('#ap-dev') && !document.querySelector('#iv-dev'), 'no loose prototype blocks left in the menu');
+      Array.from(document.querySelectorAll('#dev-grps .dev-grp')).forEach(function(d){ assert(d.querySelector('.dev-why') && d.querySelector('.dev-why').textContent.length > 40, d.getAttribute('data-dev') + ' says what it is for'); });
+      const grp = function(id){ return document.querySelector('#dev-grps .dev-grp[data-dev="' + id + '"]'); };
+      grp('links').open = true; devToggle(grp('links')); grp('clock').open = true; devToggle(grp('clock'));
+      assert(grp('clock').open && !grp('links').open, 'one open at a time');
+      toggleRoleMenu(); assert(!document.getElementById('role-menu').classList.contains('hidden'), 'menu open');
+      assert(/Real time/.test(grp('clock').querySelector('summary').textContent) && grp('clock').querySelector('.is-quiet').disabled, 'real time, nothing to reset');
+      grp('clock').querySelector('button[onclick="apClock(9)"]').click(); await sleep(20);
+      assert(!document.getElementById('role-menu').classList.contains('hidden'), 'the menu stays open after a redraw');
+      assert(grp('clock').open, 'and the clock group stays open'); assert(/\+1 day/.test(grp('clock').querySelector('summary').textContent) && /1 day of working time ahead/.test(grp('clock').querySelector('.dev-clock').textContent), 'readout moved');
+      grp('clock').querySelector('.is-quiet').click(); await sleep(20); eq(APS.clockOffsetMs, 0, 'reset'); assert(/Real time/.test(grp('clock').querySelector('summary').textContent));
+      toggleRoleMenu(true); DEV_OPEN = '';
+    });
+
     await test('01c A wrong code slides the boxes back out with an error; "Open now" skips the welcome', async function(){
       await enterEmail('alex@northstar.example');
       const t0 = Date.now();
