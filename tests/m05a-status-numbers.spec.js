@@ -120,7 +120,7 @@
 
     await t('"Offer Pending Approval" is gone from filters and labels; screens read the status (M5b); the briefing counts offers', async function(){
       ok(!('Offer Pending Approval' in LINEUP_STAGE_LABELS) && !('Offer Pending Approval' in O_STAGE_LABEL) && !('Offer Pending Approval' in STAGE_NEXT_ACTION), 'no label');
-      var rs = SUBMISSIONS.find(function(x){ return x.stage === 'Ready to Send'; }); ok(rs && pipeLabel(rs).text === 'Ready to send' && pipeLabel(rs).text === journeyStatus(rs).label, 'labels from the status (M5b)');
+      var rs = SUBMISSIONS.find(function(x){ return x.stage === 'Ready to Send'; }); ok(rs && /^(Ready to send|Waiting for .+’s yes|No answer · call them|Not asked yet)$/.test(pipeLabel(rs).text) && pipeLabel(rs).text === journeyStatus(rs).label, 'labels from the status (M5b): ' + pipeLabel(rs).text);
       var waiting = SUBMISSIONS.filter(function(x){ return x.offer && x.offer.status === 'Pending approval'; }).length;
       var line = computeTodaysBriefing().critical.find(function(c){ return /waiting on approval/.test(c.text); });
       ok(waiting ? (line && line.text.indexOf(waiting + ' offer') === 0 && /approval-center/.test(line.onclick)) : !line, 'briefing: ' + waiting + ' offers waiting');

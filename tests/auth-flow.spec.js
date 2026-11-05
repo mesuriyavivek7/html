@@ -523,7 +523,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       eq(suTitle(), 'What do you place most?'); assert(qa('.oa-chip').length===8, 'eight industries');
       qa('.oa-chip')[0].click(); qa('.oa-chip')[1].click(); eq(q('[data-count]').textContent.trim(), 'Continue with 2'); await click('[data-act=su-next]');
       eq(suTitle(), 'Where’s your team based?'); await suPick('IN');
-      eq(suTitle(), 'Your work email?'); eq(suProgress(), '3 to go'); await suText('dana@startup.example');
+      eq(suTitle(), 'Your email?'); eq(suProgress(), '3 to go'); await suText('dana@startup.example');
       eq(suTitle(), 'Your mobile number?'); assert(/Next, I’ll email you a code\./.test(oaText()));
       assert(/By continuing you agree to the terms and privacy notice\./.test(oaText()), 'terms and privacy');
       assert(!q('input[type=password]'), 'no password anywhere');
@@ -562,7 +562,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       setv('#su-name', 'Dana'); eq(q('#su-name').getAttribute('aria-invalid'), 'false', 'typing clears the red'); eq(oaMsg(), 'Press Enter to continue.');
       await signUpTo('org', 'agency'); await suText('x'); assert(/at least 2 characters/.test(oaMsg()), oaMsg());
       await suText('Startup Talent'); await suPick('6–20'); await suSkip(); await suPick('IN');
-      await suText('not-an-email'); assert(/valid work email/.test(oaMsg()), 'invalid email: '+oaMsg()); eq(suTitle(), 'Your work email?');
+      await suText('not-an-email'); assert(/valid work email/.test(oaMsg()), 'invalid email: '+oaMsg()); eq(suTitle(), 'Your email?');
       await suText('dana@gmail.com'); eq(suTitle(), 'Your mobile number?', 'an agency can use Gmail');
       await suText(''); eq(oaMsg(), AUTH_MESSAGES.mobile_required);
       await suText('12345 67890'); assert(/10-digit Indian/.test(oaMsg()), 'Indian number rule');
@@ -670,7 +670,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
     await test('03b An email that already has an account offers sign-in on the email question', async function(){
       await signUpTo('email', 'agency');
       await suText('alex@northstar.example');
-      eq(suTitle(), 'Your work email?'); assert(/already uses this email/.test(oaMsg()), oaMsg()); assert(q('#oa-body [data-act=su-signin]'), 'Sign in instead');
+      eq(suTitle(), 'Your email?'); assert(/already uses this email/.test(oaMsg()), oaMsg()); assert(q('#oa-body [data-act=su-signin]'), 'Sign in instead');
       q('[data-act=su-signin]').click(); await idle();
       eq(authFlow.step, 'email'); eq(q('#si-email').value, 'alex@northstar.example', 'the email carries over');
       eq((await authApi.passwordSignIn({ email:'alex@northstar.example', password:'Harbor-Lights-42' })).error, 'invalid_credentials', 'existing password untouched');
@@ -684,6 +684,15 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       eq((await authApi.checkSignupEmail({ email:'dana@gmail.com', type:'Corporate' })).error, 'personal_email', 'and the email check does');
       ['gmail.com','yahoo.com','outlook.com','hotmail.com','live.com','icloud.com','rediffmail.com','proton.me','protonmail.com','aol.com','zoho.com','yandex.com','gmx.com','mail.com'].forEach(function(d){ assert(isFreeEmailDomain(d), d); });
       await suText('dana@startup.example'); eq(suTitle(), 'Your mobile number?');
+    });
+
+    await test('03f K10 An agency is asked “Your email?”; the company-domain hint shows only for a company domain', async function(){
+      await signUpTo('email', 'agency');
+      eq(suTitle(), 'Your email?'); eq(oaMsg(), '', 'no domain hint before a domain is typed');
+      setv('#su-email', 'dana@gmail.com'); eq(oaMsg(), '', 'no domain hint on a public domain');
+      setv('#su-email', 'dana@rediffmail.com'); eq(oaMsg(), '');
+      setv('#su-email', 'dana@startup.example'); eq(oaMsg(), 'Teammates on your company domain can request to join.');
+      reset(); await signUpTo('email', 'corporate'); eq(suTitle(), 'Your work email?'); eq(oaMsg(), 'Teammates on your company domain can request to join.', 'corporate unchanged');
     });
 
     await test('03g Corporate on a domain that already has a workspace: ask the owner to invite you', async function(){

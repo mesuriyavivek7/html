@@ -305,3 +305,14 @@ Measured on a MacBook (headless Chrome):
 | A contract month (all 30 assignments) | | | under 0.01 s | 2 s |
 
 Vistaar misses the switch target. All 4,500 journeys go through the real steps on every open. Choices for this are in the round's report.
+
+### Update, 4 November 2026: walk-through fixes
+
+- **Vistaar open:** Home is on screen 1.3 s after navigation, and the history fills in behind a "Loading history…" note. It is complete at about 12 s.
+  - The page stays usable while history loads; the build pauses while a dialog is open.
+  - The longest pause after Home is about 0.6 s, at the very end.
+- **Approval engine tick:** the full Vistaar tick went from 0.58 s to 0.025 s.
+- **Rule for the server (K14):** when a recruiter starts a journey from a candidate that a Sourcer (Talent pool · Add, no Submit to job) added to the pool, the Sourcer is the journey's sourcer for commission.
+- **Consent on screen (U1):** a journey shows "Ready to send" only once the candidate has agreed or a call is recorded. A recorded call cancels the open link. The server must apply both rules.
+- **Secure links:** a send to a contact whose link has expired issues a new link; an expired link is never reused.
+- **Workspace name (K17):** every message, page and document reads the workspace's current name. A server should print it from the workspace record, never a stored copy.

@@ -33,7 +33,7 @@
         'Recruiter Manager':[home === 'manager-dashboard', has('approval-center'), !has('admin-paytrack'), !has('admin-revenue')],
         Recruiter:[home === 'dashboard', !has('admin-paytrack'), !has('admin-revenue'), !has('team-members')], 'Trainee Recruiter':[home === 'dashboard', !has('admin-paytrack'), !has('team-members')],
         Accounts:[home === 'admin-paytrack', has('admin-paytrack'), !has('jobs'), !has('talent-pool')], 'Account manager':[has('client-management'), has('jobs'), !has('team-members'), !has('admin-paytrack')],
-        Sourcer:[has('talent-pool'), !has('client-management'), !has('approval-center'), !has('admin-paytrack')], 'Contract coordinator':[!has('admin-paytrack'), !has('admin-revenue'), !has('team-members')] }[r];
+        Sourcer:[has('talent-pool'), !has('client-management'), !has('approval-center'), !has('admin-paytrack')], 'Contract coordinator':[home === 'admin-paytrack', has('admin-paytrack'), !has('admin-revenue'), !has('team-members')] }[r];
       if(!rule) bad.push(u.name + ': unexpected role ' + r); else if(rule.some(function(x){ return !x; })) bad.push(u.name + ' (' + r + '): menu ' + m.join(','));
     });
     demoAct(demoOwnerOf().id); ok(!bad.length, label + ': ' + bad.slice(0, 6).join(' | '));

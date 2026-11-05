@@ -90,7 +90,8 @@
 
     await t('reminders when time or an approval is late', async function(){
       var a = start().a, w = asSubmitWeek(a, wk(2), [8,8,8,8,8,0,0]).sheet;
-      FM.offset = T0 + 3 * D; fmSlaSweep(); ok(audit(new RegExp('Time reminder sent to the worker .+' )) && a.alerts.time, 'the worker is reminded');
+      FM.offset = T0 + 3 * D; if(fmNow() - coMonday(fmNow()) <= 2 * D) FM.offset += 2 * D;   // past the week's 2 days' grace, whichever weekday the suite runs on
+      fmSlaSweep(); ok(audit(new RegExp('Time reminder sent to the worker .+' )) && a.alerts.time, 'the worker is reminded');
       ok(w.remindedAt && audit(/Approval reminder sent to the client .+Ravi Menon/), 'the approver is reminded');
     });
 

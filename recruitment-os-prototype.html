@@ -5115,7 +5115,8 @@ function computeTodaysBriefing(){
 
   const liveOffers = offersList().filter(function(o){ return o.status==='Offer Extended' || o.status==='Offer Accepted'; }), liveFees = liveOffers.map(offerRevenue);
   const revenueInMotion = liveFees.reduce(function(sum, f){ return sum + f.amount; }, 0), byDefault = liveFees.some(function(f){ return f.basis==='default'; });
-  if(revenueInMotion>0) wins.push({ icon:'trending', text:'\u20b9'+(revenueInMotion/100000).toFixed(1)+'L in live offers right now'+(byDefault ? ' (some at the workspace default 8.33%)' : '')+'.', onclick:"setWorkQueueTab('offers'); document.getElementById('recruiter-work-queue-anchor').scrollIntoView({behavior:'smooth'})" });
+  // K2: the offers' fee value is company money: only for people who can see billing; everyone else gets the count.
+  if(revenueInMotion>0) wins.push({ icon:'trending', text:(canI('billing','View') ? '\u20b9'+(revenueInMotion/100000).toFixed(1)+'L in live offers right now'+(byDefault ? ' (some at the workspace default 8.33%)' : '') : liveFees.length+' live offer'+(liveFees.length===1?'':'s')+' right now')+'.', onclick:"setWorkQueueTab('offers'); document.getElementById('recruiter-work-queue-anchor').scrollIntoView({behavior:'smooth'})" });
   const relevantProfiles = JOBS.reduce(function(s,j){ return s+(j.recommended||0); },0);
   if(relevantProfiles) wins.push({ icon:'sparkles', text:'Kairo found '+relevantProfiles+' relevant profiles across your active jobs.', onclick:"showView('talent-pool')" });
   const totalPlacements = PAYTRACK_JOINED.length;
@@ -5173,7 +5174,8 @@ function journeyStatusFlow(sb, opt){
   if(o && (o.status==='Made' || o.status==='Pending approval')) return mk('offer_made', o.status==='Pending approval' ? { label:'Offer made · waiting for approval', waiting:true } : null);
   const ph = subPhase(sb);
   if(ph==='review') return mk('in_review');
-  if(ph==='ready') return mk('ready_to_send');
+  // U1: the stage stays Ready to Send; the words say what really blocks it (the candidate's yes)
+  if(ph==='ready') return mk('ready_to_send', typeof consentReadyWord==='function' ? consentReadyWord(sb) : null);
   if(ph==='process' && j){
     const st = jobProcessStages(j), at = subProcessIndex(j, sb), kind = pipeStageKind(st[at] || '');
     if(kind==='offer' || kind==='join') return mk('selected');
@@ -5957,15 +5959,15 @@ function renderAdminDashboard(){
 
   // main table: jobs at risk across the company
   const risk = open.map(function(j){
-    const subs = submissionsForJob(j.id), why = !(j.assignedRecruiters||[]).length ? 'No recruiter yet'
-      : subs.some(function(s){ return subPhase(s)==='client' && subNeedsChase(s); }) ? 'Client feedback is late'
+    const subs = submissionsForJob(j.id), why = !jobPeopleIds(j).length ? 'No recruiter yet'
+      : subs.some(function(s){ return subPhase(s)==='client' && subFeedbackLate(s); }) ? 'Client feedback is late'
       : !subs.length ? 'No submissions yet'
-      : ((j.daysOpen||0)>=14 && !hmInterviews.some(function(i){ return i.jobId===j.id; })) ? 'Open '+j.daysOpen+' days with no interviews' : '';
+      : ((jobDaysOpen(j)||0)>=14 && !hmInterviews.some(function(i){ return i.jobId===j.id; })) ? 'Open '+jobDaysOpen(j)+' days with no interviews' : '';
     return why ? { j:j, why:why } : null;
   }).filter(Boolean);
   const riskRows = risk.length ? risk.map(function(r){
     const j = r.j;
-    return '<tr onclick="openJob(\''+j.id+'\')" style="cursor:pointer"><td><b>'+oEsc(j.title)+'</b><small>'+oEsc(j.loc||'')+'</small></td><td style="color:var(--n-700)">'+oEsc(j.client)+'</td><td>'+oAvatar(j.recruiter)+'</td><td class="num">'+(j.daysOpen!=null ? j.daysOpen+' d' : '—')+'</td><td>'+oBadge('warn', r.why)+'</td></tr>';
+    return '<tr onclick="openJob(\''+j.id+'\')" style="cursor:pointer"><td><b>'+oEsc(j.title)+'</b><small>'+oEsc(j.loc||'')+'</small></td><td style="color:var(--n-700)">'+oEsc(j.client)+'</td><td>'+oAvatar(jobWorkerName(j))+'</td><td class="num">'+(jobDaysOpen(j)!=null ? jobDaysOpen(j)+' d' : '—')+'</td><td>'+oBadge('warn', r.why)+'</td></tr>';
   }).join('') : oTableEmptyRow(5, 'No jobs are at risk right now.');
   const riskTable = oTableCard({ id:'own-risk', title:'Jobs at risk across the company', sub:risk.length ? oPlural(risk.length, 'job')+' need a push' : 'Everything open is moving',
     cols:[{label:'Job'},{label:corp ? 'Department' : 'Client'},{label:'Recruiter'},{label:'Days open',right:true},{label:'Next step'}], rows:riskRows });
@@ -10366,8 +10368,10 @@ function jobWsApplicantsHTML(j){
       const src = String(sb.source||'Applied');
       const badge = ' <span class="ml-1.5 align-middle text-[10px] font-medium px-1.5 py-0.5 rounded '+(JOB_WS_SOURCE_TONE[src.split(' ')[0]]||(/^Shareable/.test(src)?'bg-forest-50 text-forest-600':'bg-zinc-100 text-zinc-600'))+'">'+escapeHtml(src.replace(/^Shareable link · /,'Link · '))+'</span>';
       const action = subPhase(sb)==='applied' && can
-        ? '<div class="flex gap-1.5 shrink-0"><button type="button" onclick="pipeRejectApplicant(\''+sb.id+'\')" class="h-8 px-3 rounded-lg text-xs font-medium text-zinc-600 hover:bg-zinc-100">Reject</button><button type="button" onclick="pipeShortlistApplicant(\''+sb.id+'\')" class="h-8 px-3 rounded-lg text-xs font-medium btn-primary">Shortlist</button></div>'
-        : '<span class="shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-full '+lab.tone+'">'+escapeHtml(lab.text)+'</span>';
+        ? (jsCorp() ? '' : '<div class="flex flex-col items-end gap-1 shrink-0">')+'<div class="flex gap-1.5 shrink-0"><button type="button" onclick="pipeRejectApplicant(\''+sb.id+'\')" class="h-8 px-3 rounded-lg text-xs font-medium text-zinc-600 hover:bg-zinc-100">Reject</button><button type="button" onclick="pipeShortlistApplicant(\''+sb.id+'\')" class="h-8 px-3 rounded-lg text-xs font-medium btn-primary">Shortlist</button></div>'+
+          // U1: what Shortlist leads to (agency): the candidate is asked to agree before the profile can go out
+          (jsCorp() ? '' : '<p class="text-[10px] text-zinc-400">Asks '+escapeHtml(pipeFirst(c))+' to agree, then you can send</p></div>')
+        : '<span class="shrink-0 flex items-center gap-1.5"><span class="text-[11px] font-medium px-2.5 py-1 rounded-full whitespace-nowrap '+lab.tone+'">'+escapeHtml(lab.text)+'</span>'+(can && !jsCorp() && typeof pipeRowActionsHTML==='function' ? pipeRowActionsHTML(sb) : '')+'</span>';
       return jobWsRow(j, c, { badge:badge, match: skills.length ? computeJobMatchPct(c, {skills:skills}) : null, action:action,
         sub:'<p class="text-[11px] text-zinc-400 truncate">Applied '+escapeHtml(sb.appliedAt||'')+(sb.applicationNote?' · '+escapeHtml(sb.applicationNote):'')+'</p>'+jobApplicantChipsHTML(sb) });
     }).join('')+'</ul>';
@@ -10660,7 +10664,7 @@ function jobWsPipelineHTML(j){
     const progress = x.ph==='process' ? '<span class="flex items-center gap-1 mt-1.5" aria-label="Stage '+(x.at+1)+' of '+st.length+'">'+st.map(function(_, i){ return '<span class="h-1 flex-1 max-w-[28px] rounded-full '+(i<x.at || x.sub.stage==='Joined' ? 'bg-forest-500' : i===x.at ? 'bg-accent-500' : 'bg-zinc-200')+'"></span>'; }).join('')+'</span>' : '';
     return jobWsRow(j, c, { open:"openPipelineDetail('"+x.sub.id+"')",
       sub:'<p class="text-[11px] '+(nx && nx.warn ? 'text-terracotta-600' : 'text-zinc-400')+' truncate">'+escapeHtml(nx ? (nx.closed ? nx.detail || nx.title : nx.title) : '')+'</p>'+progress,
-      action:'<div class="flex items-center gap-1.5 shrink-0"><span class="hidden sm:inline text-[11px] font-medium px-2.5 py-1 rounded-full whitespace-nowrap '+lab.tone+'">'+escapeHtml(lab.text)+'</span>'+(primary && !(opts&&opts.noAction) ? pipeButtonsHTML(primary, 'sm') : '')+'</div>' });
+      action:'<div class="flex items-center gap-1.5 shrink-0"><span class="hidden sm:inline text-[11px] font-medium px-2.5 py-1 rounded-full whitespace-nowrap '+lab.tone+'">'+escapeHtml(lab.text)+'</span>'+(primary && !(opts&&opts.noAction) ? (typeof pipeRowActionsHTML==='function' ? pipeRowActionsHTML(x.sub, nx) : pipeButtonsHTML(primary, 'sm')) : '')+'</div>' });
   };
   // Not with the client yet: the manager's review and anything approved but not sent.
   const canSend = canSendToClient(j);
@@ -10703,6 +10707,17 @@ const CLIENT_HIRING_PROCESS = {
   'HealthAI':['Product Case Round','Panel Round','HR Discussion','Offer','Joining'],
 };
 const CLIENT_FEEDBACK_SLA_DAYS = 2;
+// K7: "Client feedback is late" on a job: a profile waiting a working week, or twice the client's usual reply time if that is longer.
+const CLIENT_FEEDBACK_LATE_DAYS = 5;
+function subFeedbackLate(sb){
+  if(!subNeedsChase(sb)) return false; const j = jobById(sb.jobId), c = j && typeof clientForJob === 'function' ? clientForJob(j) : null, s = subSentInfo(sb);
+  return pipeDays(s.lastChaseAt || s.at) >= Math.max(CLIENT_FEEDBACK_LATE_DAYS, 2 * ((c && c.feedbackDays) || 0));
+}
+// K7: days open from the job's created date (seeded jobs without one keep their number).
+function jobDaysOpen(j){ return j && j.createdAt ? pipeDays(j.createdAt) : (j && typeof j.daysOpen === 'number' ? j.daysOpen : null); }
+// K7: who works the job: its lead, else its assigned team (not whoever created it).
+function jobWorkerName(j){ const lead = j.jobLeadId && rosterById(j.jobLeadId); if(lead) return lead.name;
+  const team = jobPeopleIds(j).map(rosterById).filter(Boolean); return team.length ? team[0].name : (j.recruiter || ''); }
 const CLIENT_REJECT_REASONS = ['Skills don’t match','Experience doesn’t match','CTC too high','Notice period too long','Location doesn’t work','Duplicate — client already has this profile','Position on hold or closed','Other'];
 const STAGE_REJECT_REASONS = ['Technical skills','Communication','Culture fit','Compensation mismatch','Position filled','Other'];
 const DROP_REASONS = ['Took another offer','Counter-offer from current employer','No longer interested','Personal reasons','Not reachable','Other'];
@@ -10804,7 +10819,7 @@ function pipeLabelCorp(sb){
 function pipeLabel(sb){
   if(jsCorp()) return pipeLabelCorp(sb);
   // The status (journeyStatus), then today's detail: the interview day, outcome due, no-show, days without client feedback.
-  const js = journeyStatus(sb), tone = JOURNEY_STATUS_TONE[js.key] || 'bg-zinc-100 text-zinc-600';
+  const js = journeyStatus(sb), tone = js.tone || JOURNEY_STATUS_TONE[js.key] || 'bg-zinc-100 text-zinc-600';
   const out = function(detail, t){ return { text:js.label+(detail ? ' · '+detail : ''), tone:t || tone }; };
   if(js.detail) return out(js.detail);
   if((js.key==='with_client' || js.key==='shortlisted') && subPhase(sb)==='client' && subNeedsChase(sb)) return out('no feedback '+pipeDays((subSentInfo(sb)||{}).at)+'d', 'bg-terracotta-50 text-terracotta-600');
@@ -10830,6 +10845,7 @@ function pipeNext(sb){
       actions:[ b('Review in Approvals', "pdClose(); showView('approval-center')") ] };
     return { title:'Waiting for '+(req ? req.approverName : 'approval'), detail:'It can go to '+j.client+' once approved.', actions:[] };
   }
+  if(ph==='ready' && typeof consentNext==='function'){ const cn = consentNext(sb); if(cn) return cn; }   // U1: waiting for the candidate's yes first
   if(ph==='ready') return canSendToClient(j)
     ? { title:'Ready to send to '+j.client, detail:'Send the profile by email, WhatsApp or the client’s portal.', actions:[ b('Send to client', "openSendToClient(['"+id+"'])") ] }
     : { title:'Waiting to be sent to '+j.client, detail:'Your manager or the Owner sends approved profiles to the client.', actions:[] };
@@ -11043,8 +11059,11 @@ function csFootHTML(){
     (over ? '<p id="cs-limit" class="w-full text-xs text-terracotta-600">'+over+'</p>' : '')+
     (corp ? '<label class="flex items-start gap-2.5 flex-1 min-w-[260px] cursor-pointer text-xs '+(s.rtr ? 'text-zinc-600' : 'text-ink')+'"><input type="checkbox" '+(s.rtr?'checked':'')+' onchange="csToggle(\'rtr\')" class="mt-0.5 w-4 h-4 rounded border-zinc-300 text-accent-600" />'+
       '<span>'+(n>1 ? 'Each candidate has' : escapeHtml(pipeFirst(byId(subById(s.subIds[0]).candidateId)))+' has')+' agreed to be put forward to <b>'+escapeHtml(j.client)+'</b> for this role <span class="text-zinc-400">(right to represent)</span></span></label>'
-      : '<p id="cs-consent-sum" class="flex-1 min-w-[260px] text-xs '+(waiting.length ? 'text-gold-700' : 'text-zinc-600')+'">'+(waiting.length
-        ? escapeHtml(waiting.map(function(sb){ return pipeFirst(byId(sb.candidateId)); }).join(', '))+' '+(waiting.length>1 ? 'haven’t' : 'hasn’t')+' agreed yet. You can send once they agree, or once you record a call.'
+      : '<p id="cs-consent-sum" class="flex-1 min-w-[260px] text-xs '+(waiting.length ? 'text-terracotta-600' : 'text-zinc-600')+'">'+(waiting.length
+        // U1: the way through, right on the line: answer as the candidate (demo) or record the call
+        ? escapeHtml(waiting.map(function(sb){ return pipeFirst(byId(sb.candidateId)); }).join(', '))+' '+(waiting.length>1 ? 'haven’t' : 'hasn’t')+' agreed yet. '+waiting.map(function(sb){ const first = pipeFirst(byId(sb.candidateId));
+            return '<span class="inline-flex flex-wrap gap-1.5 align-middle">'+(sb.consent && sb.consent.state==='pending' && typeof openAsOk==='function' && openAsOk() ? '<button type="button" class="o-btn o-btn--sm" data-act="open-as" onclick="openAsConsent(\''+sb.id+'\')">Open as '+escapeHtml(first)+' (demo)</button>' : '')+
+              '<button type="button" class="o-btn o-btn--sm" data-act="record-call" onclick="csFocusCall(\''+sb.id+'\')">Record call'+(waiting.length>1 ? ' · '+escapeHtml(first) : '')+'</button></span>'; }).join(' ')
         : (n>1 ? 'Every candidate has' : escapeHtml(pipeFirst(byId(subById(s.subIds[0]).candidateId)))+' has')+' agreed to be put forward to <b>'+escapeHtml(j.client)+'</b> for this role.')+'</p>')+
     '<button type="button" onclick="csClose()" class="h-10 px-4 rounded-xl text-sm font-medium text-zinc-500 hover:text-zinc-800">Cancel</button>'+
     '<button type="button" id="cs-send" onclick="csSend()" '+(can?'':'aria-disabled="true"')+' class="h-10 px-5 rounded-xl btn-primary text-sm font-semibold '+(can?'':'opacity-50')+'">'+label+'</button></div>';
@@ -11122,12 +11141,13 @@ function openClientFeedback(subId){
 }
 function cfClose(){ cfState = null; const r = document.getElementById('cf-root'); if(r) r.innerHTML = ''; }
 function cfSet(k, v){ if(!cfState) return; const n = document.getElementById('cf-note'); if(n) cfState.note = n.value; cfState[k] = v; if(k==='decision') cfState.tell = v==='Shortlisted'; cfRender(); }
-function pipeModalShell(id, title, sub, body, foot){
+function pipeModalShell(id, title, sub, body, foot, closeFn){
+  const close = closeFn || (id+'Close');
   return '<div class="fixed inset-0 z-[85] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="'+id+'-title">'+
-    '<div class="absolute inset-0 bg-ink/30" onclick="'+id+'Close()"></div>'+
+    '<div class="absolute inset-0 bg-ink/30" onclick="'+close+'()"></div>'+
     '<div id="'+id+'-modal" class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">'+
       '<div class="px-6 pt-6 pb-3 flex items-start justify-between gap-3"><div class="min-w-0"><p id="'+id+'-title" class="text-base font-semibold text-ink">'+title+'</p><p class="text-xs text-zinc-500 mt-0.5">'+sub+'</p></div>'+
-        '<button type="button" onclick="'+id+'Close()" aria-label="Close" class="w-8 h-8 rounded-lg hover:bg-zinc-100 flex items-center justify-center text-zinc-400">'+icon('x','w-4 h-4')+'</button></div>'+
+        '<button type="button" onclick="'+close+'()" aria-label="Close" class="w-8 h-8 rounded-lg hover:bg-zinc-100 flex items-center justify-center text-zinc-400">'+icon('x','w-4 h-4')+'</button></div>'+
       '<div class="flex-1 min-h-0 overflow-y-auto px-6 pb-4 space-y-4">'+body+'</div>'+
       '<div class="px-6 py-4 border-t border-zinc-100 flex items-center justify-end gap-2">'+foot+'</div>'+
     '</div></div>';
@@ -11207,7 +11227,8 @@ function pipeOpenSchedule(subId, ivId){
     linkSource: iv ? (iv.meetProvider==='Google Meet' ? 'auto' : 'paste') : (gmeetConnection() ? 'auto' : 'paste') };
   ivRender();
 }
-function ivClose(){ ivState = null; const r = document.getElementById('iv-root'); if(r) r.innerHTML = ''; }
+// K15: was ivClose(), which the interview sheet's ivClose() (Interviews script) overrode, so Cancel and × left this dialog open.
+function ivScheduleClose(){ ivState = null; const r = document.getElementById('iv-root'); if(r) r.innerHTML = ''; }
 function ivSet(k, v){ if(!ivState) return; ['link','venue'].forEach(function(f){ const el = document.getElementById('iv-'+f); if(el) ivState[f] = el.value; }); ivState[k] = v; ivRender(); }
 function ivRender(){
   let root = document.getElementById('iv-root'); if(!root){ root = document.createElement('div'); root.id = 'iv-root'; document.body.appendChild(root); }
@@ -11228,8 +11249,8 @@ function ivRender(){
       '<label class="flex items-center gap-2.5 text-[13px] text-zinc-700 cursor-pointer"><input type="checkbox" '+(s.confirmed?'checked':'')+' onchange="ivState.confirmed=this.checked" class="w-4 h-4 rounded border-zinc-300 text-accent-600" />'+escapeHtml(pipeFirst(c))+' has confirmed this slot</label>'+
       '<label class="flex items-center gap-2.5 text-[13px] text-zinc-700 cursor-pointer"><input type="checkbox" '+(s.tell?'checked':'')+' onchange="ivState.tell=this.checked" class="w-4 h-4 rounded border-zinc-300 text-accent-600" />Send '+escapeHtml(pipeFirst(c))+' the details on WhatsApp</label></div>';
   root.innerHTML = pipeModalShell('iv', (s.ivId ? 'Reschedule ' : 'Schedule ')+escapeHtml(s.round), escapeHtml(c.name)+' · '+escapeHtml(j.title)+' · '+escapeHtml(j.client), body,
-    '<button type="button" onclick="ivClose()" class="h-10 px-4 rounded-xl text-sm font-medium text-zinc-500 hover:text-zinc-800">Cancel</button>'+
-    '<button type="button" onclick="ivSave()" class="h-10 px-5 rounded-xl btn-primary text-sm font-semibold">'+(s.ivId ? 'Reschedule' : 'Schedule')+'</button>');
+    '<button type="button" onclick="ivScheduleClose()" class="h-10 px-4 rounded-xl text-sm font-medium text-zinc-500 hover:text-zinc-800">Cancel</button>'+
+    '<button type="button" onclick="ivSave()" class="h-10 px-5 rounded-xl btn-primary text-sm font-semibold">'+(s.ivId ? 'Reschedule' : 'Schedule')+'</button>', 'ivScheduleClose');
 }
 /* ---- Google Meet for virtual interviews ----
    Connected for the whole workspace by the Super Admin (Setup > Integrations > Google Meet),
@@ -11266,7 +11287,7 @@ function ivMeetingLinkHTML(s, field){
   if(!g) return '<div class="space-y-2"><label class="block"><span class="text-xs font-medium text-zinc-500">Meeting link <span class="font-normal text-zinc-400">(from the client’s invite)</span></span><input id="iv-link" value="'+escapeHtml(s.link)+'" placeholder="https://meet.google.com/…" class="'+field+'" /></label>'+
     '<div class="flex flex-wrap items-center gap-2 rounded-xl bg-zinc-50 px-3 py-2.5"><span class="flex-1 min-w-[180px] text-[11px] text-zinc-500">Connect Google Meet to create the link and calendar invite automatically.</span>'+
       '<button type="button" onclick="ivConnectMeet()" class="h-8 px-3 rounded-lg text-xs font-semibold border border-zinc-200 bg-white text-zinc-700 hover:border-accent-300 hover:text-accent-700">Connect my Google account</button>'+
-      (hasOrgWideAuthority() ? '<button type="button" onclick="ivClose(); showView(\'integrations\')" class="text-[11px] font-medium text-accent-700 hover:underline">Connect for the workspace</button>' : '')+'</div></div>';
+      (hasOrgWideAuthority() ? '<button type="button" onclick="ivScheduleClose(); showView(\'integrations\')" class="text-[11px] font-medium text-accent-700 hover:underline">Connect for the workspace</button>' : '')+'</div></div>';
   return '<div><p class="text-xs font-medium text-zinc-500 mb-2">Meeting link <span class="font-normal text-zinc-400">· Google Meet '+g.label.charAt(0).toLowerCase()+g.label.slice(1)+'</span></p>'+
     '<div class="flex gap-2" role="radiogroup" aria-label="Meeting link">'+opt('auto', 'Create a Google Meet link', s.ivId && s.link ? 'Keeps the same link; the invite moves to the new time' : 'Link and calendar invite are added for you')+opt('paste', 'Use the client’s link', 'Paste it from their invite')+'</div>'+
     (auto ? (s.link ? '<p class="mt-2 text-[11px] text-zinc-500">Current link: <span class="text-accent-700">'+escapeHtml(s.link.replace(/^https?:\/\//,''))+'</span></p>' : '')
@@ -11298,7 +11319,7 @@ function ivSave(){
   logAudit('Interviews', s.ivId ? 'Interview rescheduled' : 'Interview scheduled', c.name+' — '+j.title+' — '+s.round+' — '+label, { entityType:'Interview', entityId:iv.id, jobId:j.id, candidateId:c.id });
   if(s.tell) pipeTellCandidate(c, j, 'Hi '+pipeFirst(c)+', your '+s.round+' with '+j.client+' for '+j.title+' is '+(s.ivId ? 'now ' : '')+'on '+due.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' })+' at '+due.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' })+
     ' ('+s.duration+' min, '+mode.toLowerCase()+(where ? ': '+where : '')+') with '+s.interviewer+'. Please reply to confirm. All the best! — '+tsMe());
-  ivClose(); toast(s.round+' '+(s.ivId ? 'moved to ' : 'scheduled for ')+label+(meet ? (s.ivId ? ' — calendar invite updated.' : ' — Google Meet link and calendar invite created.') : '.')+' It’s on the Interviews page.'); pipeRefreshAll();
+  ivScheduleClose(); toast(s.round+' '+(s.ivId ? 'moved to ' : 'scheduled for ')+label+(meet ? (s.ivId ? ' — calendar invite updated.' : ' — Google Meet link and calendar invite created.') : '.')+' It’s on the Interviews page.'); pipeRefreshAll();
 }
 
 /* ---- Record what happened at the current stage ----
@@ -11465,12 +11486,12 @@ function cxSave(){
 
 /* ---- One candidate in one job: the whole story in a side panel ---- */
 let pdSubId = null;
-function openPipelineDetail(subId){ const sb = subById(subId); if(!sb) return; if(!journeyInScope(sb)){ scopeBlocked('candidate’s pipeline'); return; } pdSubId = subId; pdRender(); }
+function openPipelineDetail(subId){ const sb = subById(subId); if(!sb) return; if(!journeyInScope(sb) && !(typeof asContractsReach === 'function' && asContractsReach(sb))){ scopeBlocked('candidate’s pipeline'); return; } pdSubId = subId; pdRender(); }
 function pdClose(){ pdSubId = null; const r = document.getElementById('pd-root'); if(r) r.innerHTML = ''; }
 document.addEventListener('keydown', function(ev){
   if(ev.key!=='Escape') return;
   const open = ['cx','oc','iv','cf','cs'].find(function(k){ const r = document.getElementById(k+'-root'); return r && r.innerHTML; });
-  if(open){ window[open+'Close'](); ev.stopImmediatePropagation(); return; }
+  if(open){ window[open === 'iv' ? 'ivScheduleClose' : open+'Close'](); ev.stopImmediatePropagation(); return; }
   if(pdSubId){ pdClose(); ev.stopImmediatePropagation(); }
 }, true);
 function pdTimelineSteps(sb){
@@ -16981,6 +17002,9 @@ const TS_OUTCOMES = ['Interested','Call back later','No response','Not intereste
 function tsOutcomeCls(o){ return /Interested$/.test(o) && !/Not/.test(o) ? 'bg-forest-50 text-forest-700' : /Call back/.test(o) ? 'bg-accent-50 text-accent-700' : /mismatch|too long/.test(o) ? 'bg-gold-50 text-gold-700' : /Not interested|Wrong/.test(o) ? 'bg-terracotta-50 text-terracotta-600' : 'bg-zinc-100 text-zinc-600'; }
 function tsKind(t){ return t.kind || t.channel || 'Note'; }
 function tsText(t){ return t.text!=null ? t.text : (t.note||''); }
+// U1: the full message, with any link in it clickable (a link to this app's own pages opens here).
+function tsLinkify(text){ return escapeHtml(text).replace(/(https?:\/\/[^\s<]+|file:\/\/[^\s<]+)/g, function(u){ const clean = u.replace(/[).,]+$/, ''), tail = u.slice(clean.length); const same = clean.indexOf(location.href.split('#')[0]) === 0;
+  return '<a class="o-link" href="'+clean+'"'+(same ? '' : ' target="_blank" rel="noopener"')+'>'+clean+'</a>'+tail; }); }
 function tsTouches(cid){ return CANDIDATE_TOUCHES.filter(function(t){ return t.cid===cid; }).sort(function(a,b){ return b.at-a.at || CANDIDATE_TOUCHES.indexOf(b)-CANDIDATE_TOUCHES.indexOf(a); }); }
 function tsLastTouch(cid){ return tsTouches(cid)[0] || null; }
 function tsVerb(k){ return { Call:'called', WhatsApp:'sent a WhatsApp', Email:'sent an email', Note:'added a note', Meeting:'met', Applied:'submitted to' }[k] || 'contacted'; }
@@ -17229,7 +17253,7 @@ function tsQuickViewHTML(id){
           : ev.kind==='Applied' ? 'submitted to '+(job ? job.title : 'a job')+(ev.reviewer ? ' — sent to '+ev.reviewer+' for review' : '') : tsVerb(ev.kind);
         return '<li class="pl-6 relative"><span class="absolute -left-[14px] top-0 w-7 h-7 rounded-full bg-white ring-1 ring-zinc-200 text-zinc-500 flex items-center justify-center">'+icon(tsKindIcon(ev.kind),'w-3.5 h-3.5')+'</span>'+
           '<p class="text-[13px] text-zinc-700"><span class="font-medium text-ink">'+escapeHtml(ev.by===tsMe() ? 'You' : ev.by)+'</span> '+escapeHtml(head)+(ev.outcome ? ' <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full align-middle '+tsOutcomeCls(ev.outcome)+'">'+escapeHtml(ev.outcome)+'</span>' : '')+'</p>'+
-          (ev.text ? '<p class="text-[13px] text-zinc-600 mt-1 bg-zinc-50 rounded-xl px-3 py-2">'+escapeHtml(ev.text)+'</p>' : '')+
+          (ev.text ? '<p class="text-[13px] text-zinc-600 mt-1 bg-zinc-50 rounded-xl px-3 py-2 whitespace-pre-wrap break-words">'+tsLinkify(ev.text)+'</p>' : '')+
           '<p class="text-[11px] text-zinc-400 mt-1">'+tsAgo(ev.at)+(job && ev.kind!=='Applied' ? ' · about '+escapeHtml(job.title) : '')+'</p></li>'; }).join('')+'</ol>'
         : '<p class="text-[13px] text-zinc-500">Nothing yet. Calls, WhatsApp, emails, notes and follow-ups from anyone on the team show up here.</p>')+
     '</div>';
@@ -17871,7 +17895,7 @@ function candidateActivityEvents(c){
   const team = (typeof CANDIDATE_TOUCHES!=='undefined' ? CANDIDATE_TOUCHES : []).filter(function(t){ return t.cid===c.id; }).map(function(t){
     const k = t.kind || t.channel || 'Note', text = t.text!=null ? t.text : (t.note||''), job = t.jobId ? jobById(t.jobId) : null, w = when(t.at);
     const title = k==='Note' ? 'Note added' : k==='Applied' ? 'Submitted to '+(job ? job.title : 'a job') : k==='Call' ? 'Called candidate' : k==='WhatsApp' ? 'WhatsApp sent' : k==='Email' ? 'Email sent' : k;
-    const det = [['By', t.by]]; if(t.outcome) det.push(['Outcome', t.outcome]); if(text) det.push([k==='Note' ? 'Note' : 'Remark', escapeHtml(text)]); if(job) det.push(['Job', escapeHtml(job.title+' · '+(job.client||''))]); if(t.reviewer) det.push(['Review by', t.reviewer]);
+    const det = [['By', t.by]]; if(t.outcome) det.push(['Outcome', t.outcome]); if(text) det.push([k==='Note' ? 'Note' : k==='WhatsApp' || k==='Email' ? 'Message' : 'Remark', typeof tsLinkify==='function' ? tsLinkify(text) : escapeHtml(text)]);   // U1: the full message, link clickable if(job) det.push(['Job', escapeHtml(job.title+' · '+(job.client||''))]); if(t.reviewer) det.push(['Review by', t.reviewer]);
     return { at:t.at, ev:{ id:'team'+t.at+k, icon: k==='Note' ? 'doc' : k==='Applied' ? 'send' : 'chat', title:title, date:w.date, time:w.time, owner:t.by, role:ACTIVITY_ROLE_MAP[t.by]||'Recruiter', status: t.outcome || (k==='Applied' ? (t.reviewer ? (jsCorp() ? 'Pending Review' : 'In review') : (jsCorp() ? 'Submitted' : 'Submitted to the job')) : 'Logged'), company: job ? job.client : null, jobId: job ? job.id : null, importance: k==='Applied' ? 'critical' : 'operational', details:det } }; });
   (typeof followUpsForCandidate==='function' ? followUpsForCandidate(c.id) : []).forEach(function(f){ const at = new Date(f.createdAt||f.dueAt).getTime(), w = when(at);
     team.push({ at:at, ev:{ id:'fu'+f.id, icon:'calendar', title:'Follow-up '+(f.status==='Pending' ? 'scheduled' : f.status.toLowerCase())+' — '+(f.channel==='Any' ? 'any channel' : f.channel), date:w.date, time:w.time, owner:f.ownerName, role:ACTIVITY_ROLE_MAP[f.ownerName]||'Recruiter', status:f.status, company:null, jobId:f.jobId||null, importance:'operational',
@@ -18084,7 +18108,8 @@ function connectEmail(candidateId){
 
 /* ---- Submit Candidate Profile: contact info + agency branding ---- */
 let submitModalState = null;
-let agencyBranding = { name:'Northstar Talent Partners', logo:null }; // pulled automatically from tenant Settings — never re-entered per submission
+// pulled automatically from tenant Settings — never re-entered per submission. K17: always the current workspace's name.
+let agencyBranding = { get name(){ return (typeof ORG_STRUCTURE !== 'undefined' && ORG_STRUCTURE.profile && ORG_STRUCTURE.profile.brandName) || 'Your agency'; }, logo:null };
 let SPLIT_PROPOSALS = [];
 let splitProposalDraft = { candidateId:null, teammateId:'', splitPct:50, reason:'' };
 function openSplitProposalModal(candidateId){
@@ -21902,8 +21927,8 @@ function planUsageBodyHTML(){
       [['Seats', seatsUsed, ORG_STRUCTURE.subscription.seatsIncluded, ''],
        ['WhatsApp messages (today)', waUsage, waLimit, ' \u2014 real usage from the Communication Engine'],
        ['LinkedIn connections (today, all profiles)', liUsage, liLimit, ' \u2014 real usage from Linkit\u2019s compliance engine']].map(function(row){
-        const pct = Math.min(100, Math.round(row[1]/row[2]*100));
-        return '<div><div class="flex items-center justify-between mb-1"><span class="text-xs font-medium text-zinc-600">'+row[0]+'</span><span class="text-xs text-zinc-400">'+row[1]+' / '+row[2]+row[3]+'</span></div><div class="h-1.5 bg-zinc-100 rounded-full overflow-hidden"><div class="h-full '+(pct>=100?'bg-terracotta-500':'bg-accent-500')+'" style="width:'+pct+'%"></div></div></div>';
+        const pct = row[2] ? Math.min(100, Math.round(row[1]/row[2]*100)) : 0;
+        return '<div><div class="flex items-center justify-between mb-1"><span class="text-xs font-medium text-zinc-600">'+row[0]+'</span><span class="text-xs text-zinc-400">'+row[1]+' / '+(row[2]==null ? 'unlimited' : row[2])+row[3]+'</span></div><div class="h-1.5 bg-zinc-100 rounded-full overflow-hidden"><div class="h-full '+(pct>=100?'bg-terracotta-500':'bg-accent-500')+'" style="width:'+pct+'%"></div></div></div>';
       }).join('')+
     '</div>'+
   '</div>'+
@@ -22127,7 +22152,9 @@ function renderReports(){
 const WS_TZ_OK = {}, WS_TZ_FMT = {};
 function wsTzValid(tz){ if(!tz) return false; if(WS_TZ_OK[tz]!=null) return WS_TZ_OK[tz]; try { new Intl.DateTimeFormat('en-US', { timeZone:tz }); WS_TZ_OK[tz] = true; } catch(e){ WS_TZ_OK[tz] = false; } return WS_TZ_OK[tz]; }
 // The stored value is a label such as "Asia/Kolkata (IST, UTC+5:30)"; the zone is its first word.
-function wsTz(){ let raw = ''; try { raw = String((ORG_STRUCTURE && ORG_STRUCTURE.profile && ORG_STRUCTURE.profile.timezone) || ''); } catch(e){} const id = raw.trim().split(/[\s(]/)[0]; return wsTzValid(id) ? id : 'Asia/Kolkata'; }
+let WS_TZ_RAW = null, WS_TZ_ID = 'Asia/Kolkata';   // K9: the label is parsed again only when it changes
+function wsTz(){ let raw = ''; try { raw = String((ORG_STRUCTURE && ORG_STRUCTURE.profile && ORG_STRUCTURE.profile.timezone) || ''); } catch(e){} if(raw === WS_TZ_RAW) return WS_TZ_ID;
+  const id = raw.trim().split(/[\s(]/)[0]; WS_TZ_RAW = raw; WS_TZ_ID = wsTzValid(id) ? id : 'Asia/Kolkata'; return WS_TZ_ID; }
 function wsMs(x){ return x instanceof Date ? x.getTime() : typeof x==='number' ? x : /^\d{4}-\d{2}-\d{2}$/.test(String(x)) ? wsDayStart(String(x)) : Date.parse(x); }
 // Wall-clock parts of an instant in the workspace time zone: { y, m (1–12), d, h, mi, s, dow (0 = Sunday) }.
 // The zone's UTC offset, read from Intl once per 15-minute slot and cached (offsets only change on such boundaries).
@@ -26328,6 +26355,9 @@ let EXISTING_WORKSPACES = [
 ];
 function emailDomainOf(email){ return String(email||'').trim().toLowerCase().split('@')[1] || ''; }
 function isFreeEmailDomain(domain){ return FREE_EMAIL_DOMAINS.indexOf(String(domain||'').toLowerCase())>-1; }
+// K10: the sign-up email hint about teammates on the company domain; for an agency only once a company (not public) domain is typed.
+function suEmailHint(email, agency){ const hint = 'Teammates on your company domain can request to join.'; if(!agency) return hint;
+  const d = String(email||'').trim().split('@')[1] || ''; return /^[^.\s]+\.[^\s]+$/.test(d) && !isFreeEmailDomain(d) ? hint : ''; }
 
 /* ---------- Sign-up leads ----------
    PROTOTYPE: an in-memory record of everyone who starts sign-up, saved the moment step one is valid, so a person
@@ -28491,8 +28521,9 @@ const OA = (function(){
         ans:'<button type="button" class="oa-place" data-act="su-pick" data-field="place" data-value="IN"><span class="oa-place__flag" aria-hidden="true">IN</span><span><b>Yes, India</b><small>IST (UTC+5:30) · ₹ INR · +91</small></span><span class="oa-account__go" aria-hidden="true">' + I.arrow + '</span></button>' +
           '<p class="oa-hint" style="margin:18px 0 10px !important">Somewhere else?</p><div class="oa-chips">' +
           PLACES.slice(1).map(function(p){ return '<button type="button" class="oa-chip oa-chip--sm" data-act="su-pick" data-field="place" data-value="' + p.id + '">' + p.label + '</button>'; }).join('') + '</div>' },
-      email: { lead:'Now let’s make it yours.', title:'Your work email?', sub:'You’ll sign in with it — no password to remember.',
-        ans:text('su-email', { field:'email', label:'Work email', type:'email', mode:'email', ac:'email', ph:'name@company.com', msg:'Teammates on your company domain can request to join.' }) },
+      // K10: an agency may use any address ("Your email?"); the domain hint only shows for a company domain. Corporate is unchanged.
+      email: { lead:'Now let’s make it yours.', title:isAg() ? 'Your email?' : 'Your work email?', sub:'You’ll sign in with it — no password to remember.',
+        ans:text('su-email', { field:'email', label:isAg() ? 'Email' : 'Work email', type:'email', mode:'email', ac:'email', ph:'name@company.com', msg:suEmailHint(SU.email, isAg()) }) },
       mobile: { lead:'One more, for safety.', title:'Your mobile number?', sub:'Only for account recovery and setup help. Never for spam.',
         ans:text('su-mobile', { field:'mobile', label:'Mobile number', type:'tel', mode:'tel', ac:'tel-national', ph:'98765 43210', msg:SU.verified ? 'Last one — then your workspace is ready.' : 'Next, I’ll email you a code.',
           prefix:'<select class="oa-select" aria-label="Country code" data-cc>' + PLACES.map(function(p){ return '<option' + ((SU.mobileCode || (place() || PLACES[0]).code) === p.code ? ' selected' : '') + '>' + p.code + '</option>'; }).join('') + '</select>' }) +
@@ -28885,7 +28916,7 @@ const OA = (function(){
       if(!input.closest || !input.closest('.oa-root')) return;
       if(input.matches('#su-org')){ const m = $('#su-org-msg', root()); SU.org = input.value; m.className = 'oa-msg'; m.textContent = org() ? 'Your address: ' + slugify(org()) + '.oontu.app' : 'You can change it later.'; updateWorkspacePreview(); return; }
       if(input.matches('#su-name')){ SU.name = input.value; updateWorkspacePreview(); }
-      if(input.matches('#su-email')) SU.email = input.value;
+      if(input.matches('#su-email')){ SU.email = input.value; const m = $('#su-email-msg', root()); if(m && SU.type !== 'corporate' && input.getAttribute('aria-invalid') !== 'true'){ const h = suEmailHint(input.value, true); m.setAttribute('data-default', h); m.className = 'oa-msg'; m.textContent = h; } }
       if(input.matches('#su-mobile')){ input.value = input.value.replace(/[^\d ]/g, '').slice(0, 14); SU.mobile = input.value; }
       if(input.matches('#si-email')) authFlow.email = input.value;
       if(input.matches('.oa-input') && input.getAttribute('aria-invalid') === 'true'){
@@ -39224,6 +39255,23 @@ function sWithdrawConsent(i){ const x = WSX.cand.consents.splice(i,1)[0]; logAud
 function sConfirmDeleteAccount(){ if(window.confirm('Delete your account and withdraw all consent? This cannot be undone.')){ WSX.cand.consents = []; logAudit('Privacy','Account deletion requested','Candidate'); toast('Deletion requested. We will confirm by email.'); settingsRefresh(); } }
 
 /* ---------------- Workspace ---------------- */
+/* K17: the workspace's name is printed from one place. When it changes (sign-up, Settings › Company, a demo company),
+   every saved text that still carries the old name follows: the email signature, the candidate consent text, the
+   persona titles in the menu and the primary legal entity. Emails, WhatsApp, the consent page and client links read it live. */
+(function(){
+  const p = ORG_STRUCTURE.profile; let brand = p.brandName, named = brand;   // named: the last non-empty name (sign-up clears it first)
+  const swap = function(text, from, to){ return typeof text === 'string' && from && text.indexOf(from) > -1 ? text.split(from).join(to) : text; };
+  Object.defineProperty(p, 'brandName', { enumerable:true, configurable:true, get:function(){ return brand; }, set:function(v){
+    brand = v; if(!v) return; const from = named; named = v; if(!from || from === v) return;
+    try { WSX.profile.signature = swap(WSX.profile.signature, from, v); WSX.security.consentText = swap(WSX.security.consentText, from, v); } catch(e){}
+    try { Object.keys(ROLE_META).forEach(function(k){ if(ROLE_META[k] && ROLE_META[k].title === from) ROLE_META[k] = Object.assign({}, ROLE_META[k], { title:v }); }); } catch(e){}
+  } });
+  // The primary legal entity is the workspace's legal name.
+  let legal = p.legalName;
+  Object.defineProperty(p, 'legalName', { enumerable:true, configurable:true, get:function(){ return legal; }, set:function(v){
+    legal = v; if(!v) return; try { (ORG_STRUCTURE.legalEntities || []).forEach(function(le){ if(le.primary) le.name = v; }); } catch(e){}
+  } });
+})();
 function sMeter(used, total){ const pct = total ? Math.min(100, Math.round(used/total*100)) : 0; return '<span class="o-num__bar" style="width:140px;margin:0"><i style="width:'+pct+'%"></i></span>'; }
 function sOrg(key, el){ const prev = ORG_STRUCTURE.profile[key]; ORG_STRUCTURE.profile[key] = el.value; logAudit('Organization','Company profile changed', key+': '+prev+' → '+el.value); toast('Saved', { undo:function(){ ORG_STRUCTURE.profile[key] = prev; settingsRefresh(); } }); if(key==='brandName' && typeof renderSidebar==='function') renderSidebar(); settingsRefresh(); }
 function sec_overview(ed){
@@ -41628,7 +41676,8 @@ const CW_SEC_DEFS = [
   { id:'security', group:'workspace', label:'Security & audit', lede:'Sign-in rules, who must not be contacted, data requests and everything that changed.', kw:'sso two-step session timeout password ip allowlist retention consent data requests suppression do not contact unsubscribe audit log kairo for', for:'tenant', can:function(){ return sCan('security','Edit Security Settings') || sCan('security','View Audit Log'); }, edit:function(){ return sCan('security','Edit Security Settings'); },
     tabs:[ { id:'security', label:'Security', can:function(){ return sCan('security','Edit Security Settings'); }, render:function(ed){ return sec_security(ed); } },
            { id:'contact', label:'Contact preferences', can:function(){ return sCan('security','Edit Security Settings'); }, render:function(ed){ return sec_contactPrefs(ed); } },
-           { id:'audit', label:'Audit log', can:function(){ return sCan('security','View Audit Log'); }, render:function(){ return sec_audit(); }, edit:function(){ return false; } } ] },
+           // K11: the fairness report sits under the audit log (it was only on the old Setup audit page, which the menu no longer reaches)
+           { id:'audit', label:'Audit log', can:function(){ return sCan('security','View Audit Log'); }, render:function(){ return sec_audit() + fairnessReportHTML(); }, edit:function(){ return false; } } ] },
   { id:'danger', group:'workspace', label:'Danger zone', lede:'Transfer ownership, export everything, or close the workspace.', kw:'transfer ownership export close workspace', for:'tenant', can:function(){ return sIsOwner(); }, edit:function(){ return sIsOwner(); }, render:function(ed){ return sec_danger(ed); } },
   { id:'p-tenants', group:'platform', label:'Tenants', go:'oontu-tenants', kw:'workspaces create verify suspend type agency corporate', for:'oontu', can:function(){ return true; } },
   { id:'p-plans', group:'platform', label:'Plans & entitlements', go:'oontu-plans', kw:'plans entitlements users jobs agents prices linkedin seats marketplace sso ip allowlist', for:'oontu', can:function(){ return true; } },
@@ -42371,8 +42420,9 @@ function cwTenantLiHTML(tenantId){
   // The zone's offset is read from Intl once per 15-minute slot and cached (offsets only change on such boundaries),
   // then the wall time is plain arithmetic: same answers as asking Intl every time, without the cost.
   var tzOff = {};
-  function offsetMin(ms, tz) { var slot = Math.floor(ms / 900000), k = tz + '|' + slot, v = tzOff[k]; if (v != null) return v;
-    var o = wallParts(slot * 900000, tz); v = Math.round((Date.UTC(o.year, o.month - 1, o.day, o.hour, o.minute, o.second) - slot * 900000) / 60000); tzOff[k] = v; return v; }
+  // K9: one Map per zone keyed by the slot number (no string key per call): the same answers, a few times faster on big workspaces.
+  function offsetMin(ms, tz) { var slot = Math.floor(ms / 900000), m = tzOff[tz] || (tzOff[tz] = new Map()), v = m.get(slot); if (v !== undefined) return v;
+    var o = wallParts(slot * 900000, tz); v = Math.round((Date.UTC(o.year, o.month - 1, o.day, o.hour, o.minute, o.second) - slot * 900000) / 60000); m.set(slot, v); return v; }
   function ist(ms) { var d = new Date(ms + offsetMin(ms, tzName()) * 60000), sec = d.getUTCSeconds() + d.getUTCMilliseconds() / 1000; return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), dow: d.getUTCDay(), min: d.getUTCHours() * 60 + d.getUTCMinutes() + Math.floor(sec) / 60 }; }
   // The UTC instant of a wall time (y, m, d, minute of day) in the workspace time zone; two passes settle daylight saving.
   function fromIst(y, m, d, minOfDay) {
@@ -42408,18 +42458,24 @@ function cwTenantLiHTML(tenantId){
     return t;
   };
   /** Business minutes between two timestamps (0 if b <= a). */
+  // K9: each workspace day's start, end, workday flag and next midnight are worked out once (per zone, hours, workweek and
+  // holidays) and reused; the walk from day to day is the same as before, so the minutes are the same.
+  var dayCaches = {};
   APS.businessMinutesBetween = function (a, b) {
     if (b <= a) return 0;
     var start = hm(APS.config.dayStart), end = hm(APS.config.dayEnd), total = 0, t = a;
+    var sig = tzName() + '|' + start + '|' + end + '|' + APS.config.workweek.join(',') + '|' + APS.config.holidays.join(','), C = dayCaches[sig] || (dayCaches[sig] = new Map());
+    var p = ist(t), k = Date.UTC(p.y, p.m, p.d);
     for (var guard = 0; guard < 2000 && t < b; guard++) {
-      var p = ist(t);
-      var dayEndMs = fromIst(p.y, p.m, p.d, end);
-      if (isWorkday(p.y, p.m, p.d)) {
-        var from = Math.max(t, fromIst(p.y, p.m, p.d, start));
-        var to = Math.min(b, dayEndMs);
+      var c = C.get(k);
+      if (!c) { var q = new Date(k), y = q.getUTCFullYear(), m = q.getUTCMonth(), d = q.getUTCDate();
+        c = { work: isWorkday(y, m, d), s: fromIst(y, m, d, start), e: fromIst(y, m, d, end), next: fromIst(y, m, d, 24 * 60) }; C.set(k, c); }
+      if (c.work) {
+        var from = Math.max(t, c.s);
+        var to = Math.min(b, c.e);
         if (to > from) total += (to - from) / 60000;
       }
-      t = fromIst(p.y, p.m, p.d, 24 * 60);   // next IST midnight
+      t = c.next; k += 86400000;   // next IST midnight
     }
     return total;
   };
@@ -44035,7 +44091,7 @@ function slFind(token){ return SECURE_LINKS.find(function(l){ return l.token ===
 function slUrl(l){ return location.href.split('#')[0] + '#/l/' + l.token; }
 /** one link per person and purpose: reuse it when the person already has one, and widen what it covers */
 function slFor(kind, name, email, scopes, orgName){
-  let l = SECURE_LINKS.find(function(x){ return x.kind === kind && x.personName === name && (kind === 'interviewer' || x.email === email) && !x.revoked; });
+  let l = SECURE_LINKS.find(function(x){ return x.kind === kind && x.personName === name && (kind === 'interviewer' || x.email === email) && !x.revoked && (slExpire(x), slValid(x)); });   // U1: an expired link is never reused; they get a new one
   if(!l) l = slAdd({ kind:kind, personName:name, email:email, orgName:orgName, scopes:{ interviewIds:[], submissionIds:[], jobId:null } }); else if(l.orgName !== orgName) l.orgName = '';
   (scopes.interviewIds || []).forEach(function(id){ if(l.scopes.interviewIds.indexOf(id) < 0) l.scopes.interviewIds.push(id); });
   (scopes.submissionIds || []).forEach(function(id){ if(l.scopes.submissionIds.indexOf(id) < 0) l.scopes.submissionIds.push(id); });
@@ -49815,15 +49871,22 @@ function ptSourcerCloser(r){
   const sb = subById(r.submissionId), closer = (sb && sb.recruiterId) || r.recruiterId || null;
   return { sourcer:(sb && sb.sourcedBy && sb.sourcedBy.id) || closer, closer:closer };
 }
+// K14 (agency): someone who adds people to the pool but cannot submit (a Sourcer) is the sourcer of every journey a
+// recruiter starts from a candidate they found; the recruiter who runs the journey is the closer.
+function poolSourcerFor(candidateId){
+  if(typeof jsCorp === 'function' && jsCorp()) return null; const c = byId(candidateId), u = c && c.ownerId ? rosterById(c.ownerId) : null, me = currentActingUser();
+  if(!u || (me && u.id === me.id) || (u.userStatus || 'Active') !== 'Active') return null;
+  return roleHasPermission(u.assignedRoleId, 'talentpool', 'Add') && !roleHasPermission(u.assignedRoleId, 'candidates', 'Submit to job') ? u : null;
+}
 // Set once, on the first action on the candidate for this journey: added from the pool, submitted, opened by its owner, or screened.
-function setSourcedBy(sb, how){
-  if(!sb || sb.sourcedBy) return; const me = currentActingUser(); if(!me) return;
+function setSourcedBy(sb, how, who){
+  if(!sb || sb.sourcedBy) return; const me = who || currentActingUser(); if(!me) return;
   sb.sourcedBy = { id:me.id, name:me.name, how:how, at:ptIso(ptToday()) };
   logAudit('Submissions', 'Sourced by', (byId(sb.candidateId) || {}).name + ' — ' + ((jobById(sb.jobId) || {}).title || '') + ' · ' + me.name + ' (' + how + ')', { entityType:'Submission', entityId:sb.id, submissionId:sb.id, candidateId:sb.candidateId, jobId:sb.jobId });
 }
 (function(){
   const create = window.createSubmission;
-  window.createSubmission = function(jobId, candidateId, opts){ const sb = create.apply(this, arguments); try { if(sb && !sb.sourcedBy && opts && !isInboundSource(opts.source) && !/backfilled/i.test(opts.source || '')) setSourcedBy(sb, /^Submitted/.test(opts.reason || '') ? 'submitted' : 'added from the pool'); } catch(e){ console.error('sourcedBy', e); } return sb; };
+  window.createSubmission = function(jobId, candidateId, opts){ const sb = create.apply(this, arguments); try { if(sb && !sb.sourcedBy && opts && !isInboundSource(opts.source) && !/backfilled/i.test(opts.source || '')) { const found = poolSourcerFor(candidateId); if(found) setSourcedBy(sb, 'found for the pool', found); else setSourcedBy(sb, /^Submitted/.test(opts.reason || '') ? 'submitted' : 'added from the pool'); } } catch(e){ console.error('sourcedBy', e); } return sb; };
   const open = window.openPipelineDetail;
   window.openPipelineDetail = function(subId){ const sb = subById(subId), me = currentActingUser(); try { if(sb && me && sb.recruiterId === me.id) setSourcedBy(sb, 'opened'); } catch(e){} return open.apply(this, arguments); };
   const screen = window.pipeShortlistApplicant;
@@ -49981,12 +50044,15 @@ function ptCommissionHTML(){
   return '<p class="text-xs text-zinc-500 mb-3">Rule: ' + rule.pct + '% of the fee, ' + rule.sourcer + '/' + rule.closer + ' between sourcer and closer (100% when the same person). Payable when the invoice is paid in full and the replacement window has passed.</p>' + ptTable(['Placement', 'Who', 'Commission', ''], rows, 'No commission yet.');
 }
 function ptScreenHTML(){
-  const tabs = [['placements','Placements'],['invoices','Invoices'],['collections','Collections'],['commission','Commission']].concat(canI('contracts', 'View') ? [['contracts','Contracts']] : []);
+  // K3: without billing · View (a Contract coordinator) PayTrack is the Contracts tab only: no placement fees, no company totals.
+  const money = canI('billing', 'View') || hasOrgWideAuthority(); if(!money && canI('contracts', 'View')) ptTab = 'contracts';
+  const tabs = (money ? [['placements','Placements'],['invoices','Invoices'],['collections','Collections'],['commission','Commission']] : []).concat(canI('contracts', 'View') ? [['contracts','Contracts']] : []);
   const body = ptTab === 'contracts' && typeof asContractsViewHTML === 'function' ? asContractsViewHTML() : ptTab === 'invoices' ? ptInvoicesHTML() : ptTab === 'collections' ? ptCollectionsHTML() : ptTab === 'commission' ? ptCommissionHTML() : payTrackBodyHTML();
-  return '<div id="pt8-root">' + ptSummaryHTML() + '<div role="tablist" class="o-tabs mb-4" aria-label="PayTrack">' + tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="' + (ptTab === t[0]) + '" onclick="ptSetTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' + body + '</div>';
+  return '<div id="pt8-root">' + (money ? ptSummaryHTML() : '') + '<div role="tablist" class="o-tabs mb-4" aria-label="PayTrack">' + tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="' + (ptTab === t[0]) + '" onclick="ptSetTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' + body + '</div>';
 }
 function renderPayTrackScreen(){ try { ptSweep(); } catch(e){ console.error(e); }
-  return '<div class="content-shell max-w-6xl">' + sectionTitle('PayTrack', 'Placements, invoices, collections and commission, in one place.') + previewBannerHTML() + ptScreenHTML() + '</div>'; }
+  const money = canI('billing', 'View') || hasOrgWideAuthority();
+  return '<div class="content-shell max-w-6xl">' + sectionTitle('PayTrack', money ? 'Placements, invoices, collections and commission, in one place.' : 'Contract staff: assignments, weekly time and month invoices.') + previewBannerHTML() + ptScreenHTML() + '</div>'; }
 RENDERERS['admin-paytrack'] = renderPayTrackScreen;
 RENDERERS['payroll-billing'] = renderPayTrackScreen;
 (function(){ const sv = window.showView; window.showView = function(id){ if(id === 'payroll-billing'){ arguments[0] = 'admin-paytrack'; } return sv.apply(this, arguments); }; })();
@@ -50337,7 +50403,16 @@ function asPanelHTML(a){
   const weeks = ASSIGNMENT_SHEETS.filter(function(x){ return x.asId === a.id; }).sort(function(x, y){ return y.week - x.week; }).slice(0, 6);
   return '<section class="fm-reply-card" id="pd-assignment"><p class="fm-lab">' + escapeHtml(asLine(a)) + '</p>' + rows.map(function(x){ return '<p class="text-[12px]"><span class="text-zinc-400">' + x[0] + ' · </span>' + escapeHtml(String(x[1])) + '</p>'; }).join('') +
     (weeks.length ? '<p class="fm-lab mt-2">Time</p>' + weeks.map(function(x){ return '<p class="text-[12px]">Week of ' + asFmt(x.week) + ' · ' + x.total + ' ' + asUnitWord(a).toLowerCase() + ' · ' + x.status + (x.flags && x.flags.length ? ' · ' + x.flags.length + ' flag' + (x.flags.length > 1 ? 's' : '') : '') + '</p>'; }).join('') : '') +
+    asOpenAsHTML(a) +
     (mgr && asRunning(a) ? '<div class="fm-foot fm-foot--start">' + ['Extend', 'Change rate', 'End', 'Add a holiday', 'Import attendance'].map(function(k){ return '<button type="button" class="o-btn" onclick="asActionOpen(\'' + a.id + '\',\'' + k + '\')">' + k + '</button>'; }).join('') + '<button type="button" class="o-btn" onclick="asReissueUI(\'' + a.id + '\')">New worker link</button></div>' : '') + '</section>';
+}
+// U1 (demo): the worker's time link and the newest client approval link, each with Open as and Copy link.
+function asOpenAsHTML(a){
+  if(typeof openAsOk !== 'function' || !openAsOk()) return ''; const rows = [], base = location.href.split('#')[0];
+  if(a.token && asRunning(a)) rows.push(['Worker time link', a.workerName, openAsButtonsHTML(a.workerName.split(' ')[0], "openAsTime('" + a.token + "')", base + '#/time/' + a.token)]);
+  const sh = ASSIGNMENT_SHEETS.filter(function(x){ return x.asId === a.id && x.okToken; }).sort(function(x, y){ return (y.submittedAt || 0) - (x.submittedAt || 0) || y.week - x.week; })[0];
+  if(sh) rows.push(['Client approval link · week of ' + asFmt(sh.week), a.approver.name, openAsButtonsHTML(a.approver.name, "openAsTime('" + sh.okToken + "', true)", base + '#/time-ok/' + sh.okToken)]);
+  return rows.length ? '<p class="fm-lab mt-2">Links</p>' + rows.map(function(r){ return '<div class="flex flex-wrap items-center gap-2 mt-1.5" data-link="' + escapeHtml(r[0].split(' · ')[0]) + '"><span class="text-[12px] text-zinc-600 flex-1 min-w-[160px]"><span class="text-zinc-400">' + escapeHtml(r[0]) + ' · </span>' + escapeHtml(r[1]) + '</span>' + r[2] + '</div>'; }).join('') : '';
 }
 // One small form per action, in the same modal as the rest of the flow.
 let asAct = null;
@@ -50448,12 +50523,15 @@ function asConvert(id, f){
 
 /* ---- the Contracts view inside PayTrack ---- */
 let asMonthPick = null;
+// K3: contracts scope 'all' opens any contract worker's journey (to manage the assignment and its timesheets).
+function asContractsReach(sb){ return !!sb && canI('contracts', 'View') && (!scopeApplies() || scopeOf('contracts') === 'all') && !!asForJourney(sb); }
 function asContractsViewHTML(){
   const money = asSeesMoney(), month = asMonthPick || asLastMonth();
-  const list = ASSIGNMENTS.filter(function(a){ const sb = subById(a.journeyId); return sb && journeyInScope(sb); });
+  // K3: contracts scope 'all' (Contract coordinator) sees every assignment, not only journeys they own.
+  const list = ASSIGNMENTS.filter(function(a){ const sb = subById(a.journeyId); return sb && (journeyInScope(sb) || asContractsReach(sb)); });
   const rows = list.map(function(a){ const m = asMonthLines(a, month, { billed:true }), inv = (a.invoices || []).filter(function(h){ return h.month === month; }).pop(), r = asCurrentRate(a);
     const act = (asRunning(a) || a.status === 'Ended' || a.status === 'Terminated') && ptCan('Raise invoice') && !inv ? '<button type="button" class="o-btn" onclick="asBuildUI(\'' + a.id + '\')">Build invoice</button>' : '';
-    return ptRow(['<b>' + escapeHtml(a.workerName) + '</b><small>' + escapeHtml(a.ref + ' · ' + a.client + ' · ' + a.kind) + '</small>', escapeHtml(a.status) + '<small>' + escapeHtml(asFmt(a.start) + ' to ' + asFmt(a.end)) + '</small>',
+    return ptRow(['<button type="button" class="o-link font-semibold" onclick="openPipelineDetail(\'' + a.journeyId + '\')">' + escapeHtml(a.workerName) + '</button><small>' + escapeHtml(a.ref + ' · ' + a.client + ' · ' + a.kind) + '</small>', escapeHtml(a.status) + '<small>' + escapeHtml(asFmt(a.start) + ' to ' + asFmt(a.end)) + '</small>',
       escapeHtml(r.pay + ' / ' + a.unit) + (money ? '<small>bill ' + escapeHtml(String(r.bill)) + '</small>' : ''), m.days.length + ' day(s) approved' + (m.waitingDays ? '<small>' + m.waitingDays + ' waiting</small>' : ''),
       inv ? escapeHtml(ptInvoiceState(inv)) + (money ? '<small>' + ptRupees(ptInvoiceTotal(inv) || inv.feeAmount) + '</small>' : '') : '—', act]); });
   return '<div class="flex flex-wrap items-center gap-2 mb-3"><label class="text-xs text-zinc-500" for="as-month">Month</label><input type="month" id="as-month" class="app-input" style="width:170px" value="' + month + '" onchange="asMonthPick=this.value; ptRefresh()" />' +
@@ -50590,11 +50668,14 @@ function demoWorkspace(c){
   ORG_STRUCTURE.branches = (c.branches || []).map(function(b, i){ return { id:'b' + (i + 1), name:b.city + ' branch', region:b.state, code:b.city.slice(0, 3).toUpperCase(), status:'Active', timezone:'Asia/Kolkata', gstin:b.gstin, city:b.city, state:b.state }; });
   applyTeamSizeDefaults(c.teamSize, 'Staffing agency');
   if(c.plan) demoPlan(c.plan);
+  // K4: each workspace numbers its own invoices from its own prefix (Settings › Billing), starting at 0001.
+  WSX.terms.invoicePrefix = c.invoicePrefix; WSX.terms.invoiceSeq = {}; WSX.terms.creditSeq = {};
 }
 // The workspace's plan (Oontu sets it): Kesar on Starter, Northstar on Growth, Vistaar on Enterprise.
 function demoPlan(planId){
   const t = typeof tenantById === 'function' ? tenantById(CURRENT_ORGANIZATION_ID) : null, plan = planById(planId); if(!t || !plan) return;
-  t.planId = planId; t.plan = plan.name; ORG_STRUCTURE.subscription = Object.assign(ORG_STRUCTURE.subscription || {}, { plan:plan.name });
+  // K6: the seats shown everywhere come from the plan: Starter 3, Growth 15, Enterprise no cap (null).
+  t.planId = planId; t.plan = plan.name; ORG_STRUCTURE.subscription = Object.assign(ORG_STRUCTURE.subscription || {}, { plan:plan.name, seatsIncluded:plan.userLimit == null ? null : plan.userLimit });
   (PLATFORM_SUBSCRIPTIONS || []).forEach(function(sub){ if(sub.tenantId === CURRENT_ORGANIZATION_ID && ['active','trial'].indexOf(sub.status) > -1){ sub.planId = planId; sub.plan = plan.name; } });
   if(typeof logPlatformAudit === 'function') logPlatformAudit('Tenant plan set for the demo', t.name + ' — ' + plan.name, { entityId:t.id });
 }
@@ -50664,10 +50745,11 @@ function demoPoolCandidate(p, ownerId){
 const DEMO_SOURCES = [['Careers Page', 4], ['Naukri', 3], ['LinkedIn', 2], ['Indeed', 1], ['link', 2], ['Oontu jobs', 1]];
 function demoSource(){ const total = DEMO_SOURCES.reduce(function(s, x){ return s + x[1]; }, 0); let r = dR() * total; for(let i = 0; i < DEMO_SOURCES.length; i++){ r -= DEMO_SOURCES[i][1]; if(r <= 0) return DEMO_SOURCES[i][0]; } return 'Careers Page'; }
 function demoApply(job, p, t, linkOwner){
-  return demoAt(t, function(){
+  const sb = demoAt(t, function(){
     let src = demoSource(); if(src === 'link' && !linkOwner) src = 'Careers Page';
     const payload = Object.assign({}, p, src === 'link' ? { utm_content:linkOwner.id.toLowerCase(), source:'Shareable link · LinkedIn' } : { source:src });
     const r = ingestApplicationEvent(job.id, payload, { platform:src === 'link' ? 'Shareable link · LinkedIn' : src }); return r.ok ? r.submission : null; });
+  return sb;
 }
 function demoInterviewSlot(t){ // a working-hours slot 1–14 days after t (workspace time)
   const day = wsAddDays(wsDay(t), dInt(1, 14)), a = day.split('-'), dow = wsDow(day); const d2 = dow === 0 ? wsAddDays(day, 1) : day, b = d2.split('-');
@@ -50685,7 +50767,7 @@ function demoJourney(job, p, stage, ctx){
     demoAt(step(dR() * 2 + 0.2), function(){ demoAct(owner.id); pipeShortlistApplicant(sb.id); try { csClose(); } catch(e){} });
     if(stage === 'rejected' && dChance(0.4)) return demoAt(step(1), function(){ moveSubmissionStage(sb.id, 'Rejected', 'Screened out: ' + dPick(['Skills do not match','Expected pay above the range','Notice period too long'])); return sb; });
   } else {
-    c = CANDIDATES.find(function(x){ return x.email === p.email; }) || demoAt(t, function(){ return demoPoolCandidate(p, ctx.owner.id); });
+    c = CANDIDATES.find(function(x){ return x.email === p.email; }) || demoAt(t, function(){ return demoPoolCandidate(p, (ctx.sourcer || ctx.owner).id); });   // K14: a Sourcer found them
     sb = demoAt(step(dR() * 3 + 0.5), function(){ demoAct(ctx.owner.id); const r = submitOneToJob(job, c, 'Talent Pool'); return r.ok ? r.sub : null; }); if(!sb) return null;
   }
   const rq0 = APPROVAL_REQUESTS.find(function(r){ return r.entityType === 'SubmissionReview' && r.entityId === sb.id && r.status === 'Pending'; });
@@ -50699,7 +50781,12 @@ function demoJourney(job, p, stage, ctx){
     if(rq && waiting > DEMO.approvalsTarget) demoAt(step(dR() + 0.2), function(){ demoAct(rq.approverUserId); decideApproval(rq.id, 'Approved'); });
     return sb; }
   if(rq) demoAt(step(dR() * 1.5 + 0.2), function(){ demoAct(rq.approverUserId); decideApproval(rq.id, 'Approved'); });
-  demoAt(step(dR() + 0.1), function(){ const s = rosterById(sb.recruiterId) || ctx.owner; demoAct(canSubmitAs(s) ? s.id : ctx.sender.id); openSendToClient([sb.id]); if(csState) csSend(); try { csClose(); } catch(e){} });
+  let sendAt = step(dR() + 0.1);
+  // K7: a profile still with the client was sent recently: most inside the 2-day reply time, a few due a chase, about 3 in 100 a week or more late.
+  // (from the journey id, so the build's random sequence is unchanged)
+  if(stage === 'client' && ctx.now){ let h = 0; String(sb.id).split('').forEach(function(ch){ h = (h * 31 + ch.charCodeAt(0)) % 9973; }); const k = h % 100;
+    const wait = k < 3 ? 6 + (h % 7) : k < 10 ? 2 + (h % 30) / 10 : (h % 18) / 10; sendAt = Math.max(sendAt, ctx.now - wait * DEMO_DAY, job.createdAt ? new Date(job.createdAt).getTime() + DEMO_DAY / 2 : 0); t = sendAt; }
+  demoAt(sendAt, function(){ const s = rosterById(sb.recruiterId) || ctx.owner; demoAct(canSubmitAs(s) ? s.id : ctx.sender.id); openSendToClient([sb.id]); if(csState) csSend(); try { csClose(); } catch(e){} });
   if(!journeySent(sb)) return sb;
   if(stage === 'client') return sb;
   const link = slFor('client', poc.name, poc.email, { submissionIds:[sb.id], jobId:job.id }, job.client);
@@ -50742,15 +50829,21 @@ function demoSpread(total, joined){
 function demoShuffle(a){ for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(dR() * (i + 1)); const x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
 
 /* ---------- quiet while building: no redraws, no approval clock ticks, no toasts; one tick and one draw at the end ---------- */
+const DEMO_QUIET = ['toast','pipeRefreshAll','renderSidebar','ivChanged','cwRefresh','tmRefresh','tmRenderModal','settingsRefresh','fmModal'];
 function demoQuiet(fn){
   const saved = {}, noop = function(){};
-  ['toast','pipeRefreshAll','renderSidebar','ivChanged','cwRefresh','tmRefresh','tmRenderModal','settingsRefresh'].forEach(function(n){ if(typeof window[n] === 'function'){ saved[n] = window[n]; window[n] = noop; } });
+  DEMO_QUIET.forEach(function(n){ if(typeof window[n] === 'function'){ saved[n] = window[n]; window[n] = noop; } });
   const tick = window.APS && APS.tick; if(tick) APS.tick = noop;
-  try { return fn(); } finally { Object.keys(saved).forEach(function(n){ window[n] = saved[n]; }); if(tick){ APS.tick = tick; try { APS.tick(); } catch(e){} } }
+  try { return fn(); } finally { Object.keys(saved).forEach(function(n){ window[n] = saved[n]; }); if(tick){ APS.tick = tick; try { APS.tick(); } catch(e){} } demoCloseUi(); }
 }
+// K1: a build never leaves a dialog open (a contract hire's "starts on assignment" form, a send dialog, a drawer).
+function demoCloseUi(){ try { asForm = null; } catch(e){} [function(){ fmModal(''); }, function(){ csClose(); }, function(){ pdClose(); }, function(){ if(typeof closeBlockedState === 'function') closeBlockedState(); }, function(){ if(typeof ocClose === 'function') ocClose(); }].forEach(function(f){ try { f(); } catch(e){} }); }
 /* ---------- one company, built from its definition ---------- */
 function demoRunCompany(def){ return demoQuiet(function(){ return demoRunCompanyCore(def); }); }
-function demoRunCompanyCore(def){
+// K9: the build is a list of small steps (a generator). demoRunCompanyCore runs them all at once (specs, demoBuild);
+// demoBuildInBackground runs them a few milliseconds at a time so Home shows while history fills in.
+function demoRunCompanyCore(def){ const g = demoSteps(def); let r = g.next(); while(!r.done) r = g.next(); return r.value; }
+function* demoSteps(def){
   const now = DEMO_REAL_DATE.now(), T = {}, tick = function(k, t0){ T[k] = Math.round(performance.now() - t0); };
   let t0 = performance.now();
   // 1–3 · sign-up, setup, team
@@ -50779,28 +50872,34 @@ function demoRunCompanyCore(def){
     if(every && demoReuse.used < reuse && jn % every === 0){ const other = persons.filter(function(x){ return x.jobId !== job.id; }); if(other.length){ demoReuse.used++; const x = dPick(other); return Object.assign({}, x, { jobId:job.id }); } }
     const st = job.__demo.state, p = demoPerson(dChance(0.75) ? st : demoAnyState(def.stateMix || { Maharashtra:3, Gujarat:2, Karnataka:2, 'Tamil Nadu':2, Delhi:2, Kerala:1, 'West Bengal':1, Telangana:1, 'Uttar Pradesh':1, Punjab:1 }), job.title, job.__demo.skills); p.jobId = job.id; persons.push(p); return p; };
   const demoReuse = { used:0 };
+  // K14: Sourcers (Vistaar) found some of the people recruiters put forward: every 4th placement and every 9th journey, in turn
+  const sourcers = people.sourcers || []; let sk = 0;
+  const sourcerAt = function(i, every){ return sourcers.length && i % every === 1 ? sourcers[sk++ % sourcers.length] : null; };
+  yield 'jobs';
   // placements first (oldest history), then the live pipeline
-  def.placements.forEach(function(pl, i){
-    const job = pl.job ? pl.job(jobs) : (closedJobs[i % Math.max(1, closedJobs.length)] || open[i % open.length]), team = job.__demo.team, owner = team[i % team.length];
+  for(let i = 0; i < def.placements.length; i++){ const pl = def.placements[i];
+    const permClosed = closedJobs.filter(function(j){ return !asIsContractJob(j); }), permOpen = open.filter(function(j){ return !asIsContractJob(j); });   // contract hires become assignments, not placements
+    const job = pl.job ? pl.job(jobs) : (permClosed[i % Math.max(1, permClosed.length)] || permOpen[i % permOpen.length]), team = job.__demo.team, owner = team[i % team.length];
     const joinAt = now - pl.daysAgo * DEMO_DAY;
-    const sb = demoJourney(job, personFor(job), 'joined', { owner:owner, reviewer:job.__demo.lead, sender:job.__demo.lead || owner, poc:clientById(job.clientId).pocs[0], t0:joinAt - dInt(40, 60) * DEMO_DAY, joinAt:joinAt });
+    const sb = demoJourney(job, personFor(job), 'joined', { owner:owner, reviewer:job.__demo.lead, sender:job.__demo.lead || owner, poc:clientById(job.clientId).pocs[0], t0:joinAt - dInt(40, 60) * DEMO_DAY, joinAt:joinAt, sourcer:sourcerAt(i, 4) });
     if(sb && sb.__demoRecord){ demoMoney(sb.__demoRecord, pl.money, people.accounts ? people.accounts.id : null, people.owner.id); pl.record = sb.__demoRecord; }
-  });
+    yield 'placements';
+  }
   tick('placements', t0); t0 = performance.now();
   const placedNow = function(){ return PAYTRACK_JOINED.length + PAYTRACK_COMPLETED.length; };
-  plan.every(function(stage, i){   // stop at the guide's total, keeping room for contracts, the story and placements still to come
+  for(let i = 0; i < plan.length; i++){ const stage = plan[i];   // stop at the guide's total, keeping room for contracts, the story and placements still to come
     const toPlace = Math.max(0, (def.placementsTotal || 0) - placedNow());   // contract hires are assignments, not PayTrack placements
     const reserve = (def.contracts || 0) + (def.storyJourneys || 0) + toPlace + Math.ceil(toPlace * 0.5) + (toPlace ? 5 : 0);   // a little room: a hire that stops early still leaves a journey; Applied fills the rest
-    if(SUBMISSIONS.length + reserve >= def.journeys) return false;
+    if(SUBMISSIONS.length + reserve >= def.journeys) break;
     const job = open[i % open.length], team = job.__demo.team, owner = team[(i >> 1) % team.length];
     const age = stage === 'applied' ? dR() * 10 : stage === 'screening' ? dR() * 14 + 2 : dR() * 25 + 6;
-    demoJourney(job, personFor(job), stage, { owner:owner, reviewer:job.__demo.lead, sender:job.__demo.lead || owner, poc:clientById(job.clientId).pocs[0], t0:now - age * DEMO_DAY });
-    return true;
-  });
+    demoJourney(job, personFor(job), stage, { owner:owner, reviewer:job.__demo.lead, sender:job.__demo.lead || owner, poc:clientById(job.clientId).pocs[0], t0:now - age * DEMO_DAY, now:now, sourcer:sourcerAt(i, 9) });
+    yield 'journeys';
+  }
   T.nAfterPlan = SUBMISSIONS.length;
   if(def.story) def.story({ people:people, clients:clients, jobs:jobs, now:now });
-  T.nAfterStory = SUBMISSIONS.length;
-  if(def.after) def.after({ people:people, clients:clients, jobs:jobs, now:now });   // contracts and campaigns count toward the guide's totals
+  T.nAfterStory = SUBMISSIONS.length; yield 'story';
+  if(def.after){ const it = def.after({ people:people, clients:clients, jobs:jobs, now:now }); if(it && typeof it.next === 'function') yield* it; }   // contracts and campaigns count toward the guide's totals
   tick('contracts', t0); t0 = performance.now(); T.nAfterContracts = SUBMISSIONS.length;
   // once the pool is full, more journeys use people already in it (on a job they're not on)
   const topPerson = function(job){
@@ -50811,24 +50910,34 @@ function demoRunCompanyCore(def){
   const placed = function(){ return PAYTRACK_JOINED.length + PAYTRACK_COMPLETED.length; };
   let guard = 0;
   while(def.placementsTotal && placed() < def.placementsTotal && guard++ < 120){
-    const job = closedJobs.length ? closedJobs[guard % closedJobs.length] : open[guard % open.length], owner = job.__demo.team[guard % job.__demo.team.length], joinAt = now - dInt(10, def.historyDays || 170) * DEMO_DAY;
+    const pc = closedJobs.filter(function(j){ return !asIsContractJob(j); }), po = open.filter(function(j){ return !asIsContractJob(j); });
+    const job = pc.length ? pc[guard % pc.length] : po[guard % po.length], owner = job.__demo.team[guard % job.__demo.team.length], joinAt = now - dInt(10, def.historyDays || 170) * DEMO_DAY;
     if(job.status !== 'Active'){ job.status = 'Active'; }
     const sb = demoJourney(job, topPerson(job), 'joined', { owner:owner, reviewer:job.__demo.lead, sender:job.__demo.lead || owner, poc:clientById(job.clientId).pocs[0], t0:joinAt - 45 * DEMO_DAY, joinAt:joinAt });
     const raisedSoFar = ptAllRecords().filter(function(r){ return r.invoice && r.invoice.no && !r.contract; }).length;
     if(sb && sb.__demoRecord) demoMoney(sb.__demoRecord, def.invoicesRaised && raisedSoFar >= def.invoicesRaised ? 'draft' : dChance(0.7) ? 'paid' : 'raised', people.accounts ? people.accounts.id : null, people.owner.id);
+    yield 'placements';
   }
   guard = 0;
   while(SUBMISSIONS.length < def.journeys && guard++ < def.journeys){
     const job = open[guard % open.length];
     demoJourney(job, topPerson(job), 'applied', { owner:job.__demo.team[0], t0:now - dR() * 10 * DEMO_DAY });
+    yield 'journeys';
   }
   tick('journeys', t0); t0 = performance.now();
   // pool-only people (sourced, no journey yet) up to the guide's pool size
-  while(CANDIDATES.length < def.candidates){ const st = demoAnyState(def.stateMix || { Maharashtra:1 }); const j = dPick(open); demoAt(now - dInt(1, 90) * DEMO_DAY, function(){ demoPoolCandidate(demoPerson(st, j.title, j.__demo.skills), dPick(j.__demo.team).id); }); }
+  // K14: each Sourcer has found 20 to 40 people: those recruiters put forward above, and a few still only in the pool
+  const found = {}, want = {}; sourcers.forEach(function(u){ found[u.id] = CANDIDATES.filter(function(c){ return c.ownerId === u.id; }).length; want[u.id] = Math.min(40, Math.max(20, found[u.id] + 4)); });
+  while(CANDIDATES.length < def.candidates){ const st = demoAnyState(def.stateMix || { Maharashtra:1 }); const j = dPick(open);
+    demoAt(now - dInt(1, 90) * DEMO_DAY, function(){ let by = dPick(j.__demo.team).id; const low = sourcers.filter(function(u){ return found[u.id] < want[u.id]; }).sort(function(a, b){ return (want[b.id] - found[b.id]) - (want[a.id] - found[a.id]); })[0]; if(low){ by = low.id; found[low.id]++; } demoPoolCandidate(demoPerson(st, j.title, j.__demo.skills), by); }); yield 'pool'; }
   // closed jobs: filled or cancelled, by the person who manages them
-  closedJobs.forEach(function(j, i){ demoAt(now - dInt(3, 30) * DEMO_DAY, function(){ demoAct((j.__demo.closer || people.owner).id); setJobStatus(j.id, 'Closed', i % 3 === 2 ? 'Client cancelled the role' : 'Position filled'); }); });
-  tick('pool+close', t0); t0 = performance.now();
+  for(let i = 0; i < closedJobs.length; i++){ const j = closedJobs[i]; demoAt(now - dInt(3, 30) * DEMO_DAY, function(){ demoAct((j.__demo.closer || people.owner).id); setJobStatus(j.id, 'Closed', i % 3 === 2 ? 'Client cancelled the role' : 'Position filled'); }); yield 'close'; }
+  tick('pool+close', t0); t0 = performance.now(); yield 'sweep';
   // 12 · the sweep at today's date: windows, overdue, commission payable
+  // K9: applicants not opened inside the SLA move on 100 at a time (the others sit out that pass), so a background build never stalls on it
+  if(typeof fmSlaSweep === 'function'){ const due = SUBMISSIONS.filter(function(s){ return s.recruiterId && !s.openedAt && !s.dormant && subPhase(s) === 'applied'; });
+    for(let i = 100; i < due.length; i += 100){ const wait = due.slice(i), was = wait.map(function(s){ return s.dormant; }); wait.forEach(function(s){ s.dormant = true; });
+      const fi = FM.interactive; FM.interactive = false; try { demoAct(people.owner.id); fmSlaSweep(); } finally { FM.interactive = fi; wait.forEach(function(s, k){ s.dormant = was[k]; }); } yield 'sweep'; } }
   demoAct(people.owner.id); ptSweep(); if(typeof fmSlaSweep === 'function'){ const i = FM.interactive; FM.interactive = false; try { fmSlaSweep(); } finally { FM.interactive = i; } }
   DEMO.times[def.key] = T; return { people:people, clients:clients, jobs:jobs };
 }
@@ -50837,7 +50946,7 @@ function demoRunCompanyCore(def){
 const DEMO_KESAR = {
   key:'kesar', candidates:60, journeys:70, storyPeople:2, storyJourneys:1, placementsTotal:5, stateMix:{ Gujarat:8, Maharashtra:2, Delhi:1 },
   team:function(){
-    const c = { brand:'Kesar Staffing', legal:'Kesar Staffing Services LLP', city:'Ahmedabad', teamSize:'1–5', idPrefix:'KS', owner:{ name:'Meera Shah', email:'meera.kesar@gmail.com' }, gstin:demoGstin('Gujarat'), plan:'plan-starter' };
+    const c = { brand:'Kesar Staffing', legal:'Kesar Staffing Services LLP', city:'Ahmedabad', teamSize:'1–5', idPrefix:'KS', invoicePrefix:'KSR-', owner:{ name:'Meera Shah', email:'meera.kesar@gmail.com' }, gstin:demoGstin('Gujarat'), plan:'plan-starter' };
     DEMO.domain = 'kesarstaffing.in'; demoWorkspace(c); const owner = demoOwner(c); demoAct(owner.id);
     const raj = demoInvite('Raj Patel', 'role_recruiter', owner.id, 'Ahmedabad'), tanvi = demoInvite('Tanvi Desai', 'role_recruiter', owner.id, 'Ahmedabad');
     return { owner:owner, raj:raj, tanvi:tanvi, accounts:null };
@@ -50857,7 +50966,8 @@ const DEMO_KESAR = {
   placements:[ { daysAgo:150, money:'paid' }, { daysAgo:118, money:'paid' }, { daysAgo:45, money:'paid' }, { daysAgo:20, money:'raised' }, { daysAgo:75, money:'overdue' } ],
   story:function(x){
     // story: Patel Foods' Sales Executive; Nikhil Joshi applied on the careers page; Kiran Solanki is in the pool
-    const j = x.jobs[0]; demoAt(x.now - 2 * DEMO_DAY, function(){ demoAct(x.people.owner.id); ingestApplicationEvent(j.id, Object.assign(demoPerson('Gujarat', j.title, j.__demo.skills, { name:'Nikhil Joshi', city:'Ahmedabad' }), { source:'Careers Page' }), { platform:'Careers Page' }); });
+    // K5: he applied this morning, so he is still Raj's (the job lead's) inside the applicant SLA; the demo clock shows him move on
+    const j = x.jobs[0]; demoAt(x.now - 3 * 3600000, function(){ demoAct(x.people.owner.id); ingestApplicationEvent(j.id, Object.assign(demoPerson('Gujarat', j.title, j.__demo.skills, { name:'Nikhil Joshi', city:'Ahmedabad' }), { source:'Careers Page' }), { platform:'Careers Page' }); });
     demoAt(x.now - 5 * DEMO_DAY, function(){ demoPoolCandidate(demoPerson('Gujarat', 'Sales Executive', j.__demo.skills, { name:'Kiran Solanki', city:'Ahmedabad' }), x.people.raj.id); });
   }
 };
@@ -50892,7 +51002,9 @@ const DEMO_NORTHSTAR = {
   key:'northstar', candidates:600, journeys:700, approvalsTarget:20, placementsTotal:40, historyDays:180, contracts:1, stateMix:{ Maharashtra:4, Karnataka:4, 'Tamil Nadu':1, Telangana:1, Kerala:1, Delhi:1, Gujarat:1 },
   team:function(){
     DEMO.domain = 'northstartalent.com'; const R = rosterById, owner = R('RP-088'), arjun = R('RP-092'), divya = R('RP-081'); demoAct(owner.id);
-    Object.assign(ORG_STRUCTURE.profile, { city:'Pune', teamSize:'6–20' });
+    Object.assign(ORG_STRUCTURE.profile, { city:'Pune', teamSize:'6–20' }); demoPlan('plan-growth');
+    // K7: today's seeded jobs carry only a days-open number; give each the created date it implies.
+    JOBS.forEach(function(j){ if(!j.createdAt && typeof j.daysOpen === 'number') j.createdAt = new Date(Date.now() - j.daysOpen * DEMO_DAY).toISOString(); });
     const acc = demoRole('accounts', 'Accounts'), trainee = demoRole('blank', 'Trainee Recruiter', demoRecruiterLike(function(d){ d.permissions.candidates = d.permissions.candidates.filter(function(a){ return a !== 'Send to Client'; }); if(d.permissions.candidates.indexOf('Submit to job') < 0) d.permissions.candidates.push('Submit to job'); }));
     const rohan = demoInvite('Rohan Mehta', 'role_admin', owner.id, 'Pune'), kavyaRao = demoInvite('Kavya Rao', acc.id, rohan.id, 'Pune');
     demoChange(arjun, 'role_recmgr', owner.id); demoChange(divya, 'role_recmgr', owner.id);
@@ -50941,7 +51053,7 @@ const DEMO_VISTAAR = {
   stateMix:{ Maharashtra:6, Delhi:3, 'Tamil Nadu':3, Karnataka:3, Gujarat:1, Kerala:1, 'West Bengal':1, Telangana:1, 'Uttar Pradesh':2, Punjab:1 },
   team:function(){
     const hq = demoGstin('Maharashtra'), pan = hq.slice(2, 12);
-    const c = { brand:'Vistaar HR Services', legal:'Vistaar HR Services Pvt. Ltd.', city:'Mumbai', teamSize:'51–200', idPrefix:'VS', owner:{ name:'Anil Desai', email:'anil.desai@vistaarhr.in' }, gstin:hq, plan:'plan-enterprise',
+    const c = { brand:'Vistaar HR Services', legal:'Vistaar HR Services Pvt. Ltd.', city:'Mumbai', teamSize:'51–200', idPrefix:'VS', invoicePrefix:'VHR-', owner:{ name:'Anil Desai', email:'anil.desai@vistaarhr.in' }, gstin:hq, plan:'plan-enterprise',
       branches:DEMO_VISTAAR_OFFICES.slice(1).map(function(o){ return { city:o[0], state:o[1], gstin:demoGstin(o[1], pan) }; }) };
     DEMO.domain = 'vistaarhr.in'; demoWorkspace(c); const owner = demoOwner(c); demoAct(owner.id);
     const admin = demoRole('admin', 'Admin'), am = demoRole('account', 'Account manager'), src = demoRole('sourcer', 'Sourcer'), acc = demoRole('accounts', 'Accounts');
@@ -50987,7 +51099,7 @@ const DEMO_VISTAAR = {
   // 300 permanent placements over 12 months: 240 invoices raised (paid, part paid, overdue, raised), 60 still drafts (recent joiners)
   placements:(function(){ const a = []; for(let i = 0; i < 300; i++){ const d = 5 + Math.floor(i * 355 / 300); a.push({ daysAgo:d, money:i < 60 ? 'draft' : i < 80 ? 'raised' : i < 100 ? 'part' : i < 115 ? 'overdue' : 'paid' }); } return a; })(),
   story:function(x){ const j = x.jobs[0]; demoAt(x.now - 3 * DEMO_DAY, function(){ demoAct(x.people.sourcers[0].id); demoPoolCandidate(demoPerson('Maharashtra', 'Store Manager', j.__demo.skills, { name:'Pooja Naik', city:'Mumbai' }), x.people.sourcers[0].id); }); },
-  after:function(x){
+  after:function*(x){   // K9: a generator, so the background build can pause between workers
     // 30 contract assignments with up to 8 weeks of time, then each month's invoice raised by Accounts
     const cjobs = x.jobs.filter(function(j){ return j.hiringType === 'Contract' && j.status === 'Active'; }), coord = x.people.coords[0], acc = x.people.accounts;
     const swift = x.jobs[1], made = [];
@@ -50995,9 +51107,10 @@ const DEMO_VISTAAR = {
       const job = i === 0 ? swift : cjobs[i % cjobs.length], cl = clientById(job.clientId), o = job.__demo, p = i === 0 ? demoPerson('Maharashtra', job.title, o.skills, { name:'Ganesh More', city:'Chennai' }) : demoPerson(o.state, job.title, o.skills);
       const a = demoContract(job, p, { daysAgo:i === 0 ? 63 : dInt(60, 80), owner:o.team[0], reviewer:o.lead, coordinator:i % 2 ? x.people.coords[1] : coord, approver:i === 0 ? 'Prakash R' : (cl.pocs[0] || {}).name, pay:dInt(900, 1800), markup:clCommercial(cl).contractMarkup || 12, weeks:8 });
       if(a) made.push(a);
+      yield 'contracts';
     }
     const months = [1, 2].map(function(k){ const p0 = wsParts(x.now), mi = p0.y * 12 + (p0.m - 1) - k; return Math.floor(mi / 12) + '-' + String(mi % 12 + 1).padStart(2, '0'); });
-    made.forEach(function(a){ months.forEach(function(m){ demoContractMonth(a, m, acc); }); });
+    for(const a of made){ months.forEach(function(m){ demoContractMonth(a, m, acc); }); yield 'contracts'; }
     // six Cowork campaigns on busy jobs, owned by their Recruiter Managers
     x.jobs.filter(function(j){ return j.status === 'Active'; }).slice(2, 8).forEach(function(j){ demoAct(j.__demo.lead.id); cpNewCampaign(j.id, { ownerId:j.__demo.lead.id }); });
   }
@@ -51014,11 +51127,63 @@ function demoBuild(key){
   try { if(key !== 'northstar') demoClearWorkspace(); const out = demoRunCompany(d[3]); DEMO.times[key].total = Math.round(performance.now() - t0); DEMO.built = out; return out; }
   finally { FM.interactive = fi; demoAct(demoOwnerOf().id); }
 }
+/* K9: open a company without a blocking screen. The build runs in slices of a few milliseconds; Home shows after the first
+   second and fills in while "Loading history…" shows. Between slices the page is the viewer's: their sign-in, their dialogs.
+   While a dialog or drawer is open the build waits, so it never touches what the viewer is doing. */
+const DEMO_SLICE_MS = 40, DEMO_FIRST_MS = 1000, DEMO_REFRESH_MS = 1500;
+function demoUiBusy(){ return ['fm-modal-root','cs-root','pd-root','iv-root','cx-root','oc-root','cf-root','blocked-modal-root'].some(function(id){ const r = document.getElementById(id); return !!r && !!r.innerHTML.trim(); }); }
+function demoBuildInBackground(key, hooks){
+  const d = demoCompanyDef(key); if(!d) return null; hooks = hooks || {}; const t0 = performance.now(), times = {};
+  DEMO.rng = demoRng(d[2]); DEMO.company = key; DEMO.mode = 'data'; DEMO.loading = { key:key, journeys:d[3].journeys }; demoCandSeq = 0;
+  const fi0 = FM.interactive; FM.interactive = false; try { if(key !== 'northstar') demoClearWorkspace(); } finally { FM.interactive = fi0; }
+  const g = demoSteps(d[3]); let buildAs = null, lastPaint = 0;
+  // whoever is signed in (the viewer), kept exactly as they left it around each slice
+  const who = function(){ return { as:DEMO.as, role:state.role, meta:Object.assign({}, ROLE_META), vfm:viewingAsFromManager, mva:managerViewAsRecruiterId, prev:previewAsRoleId }; };
+  const back = function(w){ DEMO.as = w.as; state.role = w.role; Object.keys(w.meta).forEach(function(k){ ROLE_META[k] = w.meta[k]; }); viewingAsFromManager = w.vfm; managerViewAsRecruiterId = w.mva; previewAsRoleId = w.prev; };
+  // one slice: the build's sign-in and quiet UI in, then the viewer's back
+  const slice = function(ms){
+    const saved = {}, noop = function(){}, fi = FM.interactive, tick = window.APS && APS.tick, form = typeof asForm === 'undefined' ? null : asForm, me = who();
+    DEMO_QUIET.forEach(function(n){ if(typeof window[n] === 'function'){ saved[n] = window[n]; window[n] = noop; } }); if(tick) APS.tick = noop; FM.interactive = false;
+    if(buildAs) demoAct(buildAs);
+    let r = { done:false }; const end = performance.now() + ms;
+    try { do { r = g.next(); } while(!r.done && performance.now() < end); }
+    finally { buildAs = DEMO.as; Object.keys(saved).forEach(function(n){ window[n] = saved[n]; }); if(tick) APS.tick = tick; FM.interactive = fi;
+      try { if(typeof asForm !== 'undefined' && asForm !== form) asForm = form; } catch(e){}   // a contract hire's form the build opened (K1)
+      if(me.as) back(me); }
+    return r;
+  };
+  const paint = function(){ if(demoUiBusy()) return; const ae = document.activeElement; if(ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
+    const sc = document.scrollingElement, top = sc ? sc.scrollTop : 0; try { renderSidebar(); if(state.activeNav === homeForMe()) showView(state.activeNav); } catch(e){} if(sc) sc.scrollTop = top; demoLoadingDraw(); };
+  const first = function(){ demoAct(demoOwnerOf().id); times.homeMs = Math.round(performance.now()); lastPaint = performance.now(); demoLoadingDraw(); if(hooks.first) hooks.first(times); };
+  const finish = function(r){
+    DEMO.loading = null; DEMO.built = r.value; const T = DEMO.times[key] = Object.assign(DEMO.times[key] || {}, times, { total:Math.round(performance.now() - t0), doneMs:Math.round(performance.now()) });
+    try { if(window.APS && APS.tick) APS.tick(); } catch(e){}
+    demoLoadingDraw(); paint(); if(hooks.done) hooks.done(r.value, T);
+  };
+  // the first second runs straight through (team, clients, jobs, the first journeys), then Home
+  const r = slice(DEMO_FIRST_MS); first(); if(r.done){ finish(r); return null; }
+  const next = function(){
+    if(demoUiBusy()){ setTimeout(next, 120); return; }
+    const r = slice(DEMO_SLICE_MS); if(r.done){ finish(r); return; }
+    if(performance.now() - lastPaint > DEMO_REFRESH_MS){ lastPaint = performance.now(); paint(); }
+    setTimeout(next, 0);
+  };
+  setTimeout(next, 0); return DEMO.loading;
+}
+// The quiet "Loading history…" note while a company fills in.
+function demoLoadingDraw(){
+  let el = document.getElementById('demo-loading'); const L = DEMO.loading;
+  if(!L){ if(el) el.remove(); return; }
+  if(!el){ el = document.createElement('div'); el.id = 'demo-loading'; el.className = 'demo-loading'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); document.body.appendChild(el); }
+  const pct = Math.min(99, Math.round(SUBMISSIONS.length * 100 / Math.max(1, L.journeys)));
+  el.innerHTML = '<span class="demo-loading__dot" aria-hidden="true"></span>Loading history… <span class="demo-loading__n">' + pct + '%</span>';
+}
 function demoOwnerOf(){ return RECRUITER_ROSTER.find(function(u){ return u.assignedRoleId === CUSTOM_ROLES[0].id && u.userStatus !== 'Suspended'; }) || RECRUITER_ROSTER[0]; }
 // An empty workspace for walking sign-up yourself: the wizard runs and its answers set everything up.
 function demoStartSignup(key){
   DEMO.company = key; DEMO.mode = 'signup'; demoClearWorkspace(); CUSTOM_ROLES.length = 0; Array.prototype.push.apply(CUSTOM_ROLES, roleTemplatesForOrgType('Staffing agency'));
   Object.assign(ORG_STRUCTURE.profile, { brandName:'', legalName:'', city:'', teamSize:'' }); DEMO.as = null;
+  WSX.terms.invoicePrefix = 'INV-'; WSX.terms.invoiceSeq = {}; WSX.terms.creditSeq = {};   // K4: not Northstar's numbering
   const ob = document.getElementById('onboarding'); if(ob) ob.classList.remove('hidden');
   if(typeof authSwitchIntent === 'function') authSwitchIntent('signup');
 }
@@ -51034,7 +51199,12 @@ function demoStartSignup(key){
 // Choosing a company reloads the page, so nothing from the previous one survives; the choice is kept for this tab only.
 function demoChoose(key, mode){ try { sessionStorage.setItem(DEMO_STORE, JSON.stringify({ company:key, mode:mode })); } catch(e){} location.hash = ''; location.reload(); }
 function demoLeave(){ try { sessionStorage.removeItem(DEMO_STORE); } catch(e){} location.hash = ''; location.reload(); }
-function demoSignIn(id){ const u = demoAct(id); if(!u) return; toggleRoleMenu(true); renderSidebar(); showView(homeForMe()); toast('Signed in as ' + u.name + ' · ' + (ROLE_META[state.role] || {}).label); }
+// K8: the next member starts clean: no blocked box, dialog, drawer or sheet left from the one before.
+function demoClearOverlays(){
+  demoCloseUi(); [function(){ ivScheduleClose(); }, function(){ ivClose(); }, function(){ cxClose(); }, function(){ cfClose(); }, function(){ resetSessionPanelFlags(); }].forEach(function(f){ try { f(); } catch(e){} });
+  (typeof SESSION_OVERLAY_ROOTS !== 'undefined' ? SESSION_OVERLAY_ROOTS : []).forEach(function(id){ const el = document.getElementById(id); if(el) el.innerHTML = ''; });
+}
+function demoSignIn(id){ const u = demoAct(id); if(!u) return; demoClearOverlays(); toggleRoleMenu(true); renderSidebar(); showView(homeForMe()); toast('Signed in as ' + u.name + ' · ' + (ROLE_META[state.role] || {}).label); }
 
 /* ---------- the demo clock: one app clock for SLAs, consent expiry, holds, windows, overdue and send hours ---------- */
 DEMO.clockDays = 0;
@@ -51072,7 +51242,10 @@ function demoMenuDraw(){
 (function(){ const css = document.createElement('style'); css.textContent = '#demo-menu .demo-co{display:flex;flex-direction:column;gap:2px;padding:6px 12px}#demo-menu .demo-co.is-on .demo-co__n{font-weight:600}#demo-menu .demo-co__n{font-size:13px}#demo-menu .demo-co__b{display:flex;gap:12px;font-size:12px}' +
   '#demo-menu .demo-members{max-height:240px;overflow:auto}#demo-menu .demo-member{display:flex;flex-direction:column;align-items:flex-start;gap:0}#demo-menu .demo-member.is-on{font-weight:600}#demo-menu .demo-member__r{font-size:11px;color:var(--text-3,#6B6B66);font-weight:400}' +
   '#demo-menu .demo-clock{display:flex;flex-wrap:wrap;gap:6px;padding:4px 12px 8px}#demo-menu .demo-clock .o-btn{height:28px;padding:0 10px;font-size:12px}#role-menu{max-height:min(80vh,720px);overflow:auto}' +
-  '.demo-building{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.85);font:500 15px/1.4 system-ui}'; document.head.appendChild(css); })();
+  '.demo-building{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.85);font:500 15px/1.4 system-ui}' +
+  '.demo-loading{position:fixed;left:16px;bottom:16px;z-index:60;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--bg-card,#fff);border:1px solid var(--line,#E7E6E1);color:var(--text-2,#565A66);font:500 12px/1.4 system-ui;box-shadow:0 2px 8px rgba(0,0,0,.06)}' +
+  '.demo-loading__dot{width:8px;height:8px;border-radius:50%;background:var(--mint-600,#2f8f6b);animation:demo-pulse 1.2s ease-in-out infinite}.demo-loading__n{color:var(--text-3,#6E717C);font-variant-numeric:tabular-nums}' +
+  '@keyframes demo-pulse{0%,100%{opacity:.35}50%{opacity:1}}@media (prefers-reduced-motion:reduce){.demo-loading__dot{animation:none}}'; document.head.appendChild(css); })();
 
 /* ---------- Simulate application (a job's Applicants tab): through intake, like any portal ---------- */
 function demoSimSources(j){ return [['Careers Page','Careers page'],['Naukri','Job board · Naukri'],['Indeed','Job board · Indeed'],['LinkedIn','Job board · LinkedIn'],['link','A recruiter’s personal link'],['Oontu jobs','Oontu jobs website']]; }
@@ -51109,10 +51282,13 @@ window.addEventListener('load', function(){ let pick = null; try { pick = JSON.p
     const ob = document.getElementById('onboarding');
     if(pick.mode === 'signup'){ state.role = 'admin'; demoStartSignup(pick.company); return; }
     if(ob) ob.classList.add('hidden'); state.role = 'admin'; enterApp();
-    const cover = document.createElement('div'); cover.className = 'demo-building'; cover.textContent = 'Building ' + demoCompanyDef(pick.company)[1] + '…'; document.body.appendChild(cover);
-    setTimeout(function(){ const t0 = performance.now(); try { demoBuild(pick.company); } catch(e){ console.error(e); toast('The demo data could not be built: ' + e.message); } cover.remove();
-      DEMO.times[pick.company] = Object.assign(DEMO.times[pick.company] || {}, { switchMs:Math.round(performance.now()) });   // from navigation start: page load plus the build
-      renderSidebar(); showView(homeForMe()); }, 30);
+    // K9: a short cover for the first second, then Home while the history fills in ("Loading history…"), never a blocking screen
+    const cover = document.createElement('div'); cover.className = 'demo-building'; cover.textContent = 'Opening ' + demoCompanyDef(pick.company)[1] + '…'; document.body.appendChild(cover);
+    setTimeout(function(){
+      try { demoBuildInBackground(pick.company, {
+        first:function(t){ cover.remove(); t.switchMs = Math.round(performance.now()); renderSidebar(); showView(homeForMe()); } });   // switchMs: from navigation start to Home on screen
+      } catch(e){ console.error(e); cover.remove(); toast('The demo data could not be built: ' + e.message); }
+    }, 30);
   }, 50); });
 
 /* ============================================================ long lists: 50 rows at a time, everywhere ============================================================
@@ -51254,6 +51430,7 @@ const NAV_ITEM_ACCESS = {
   'settings':            null
 };
 function navItemAllowed(r, id){
+  if(id === 'admin-paytrack') return navCan(r, 'billing', 'View') || navCan(r, 'contracts', 'Manage');   // K3: PayTrack › Contracts for contract staff managers
   if(!(id in NAV_ITEM_ACCESS)) return true; const a = NAV_ITEM_ACCESS[id]; if(!a) return true;
   if(a[2] && !a[2](r)) return false;
   return id === 'approval-center' || id === 'team-members' ? true : navCan(r, a[0], a[1]);
@@ -51264,6 +51441,8 @@ function homeFor(roleId){
   if(r.protected || (navScope(r, 'jobs') === 'all' && navScope(r, 'journeys') === 'all')) return 'admin-dashboard';
   if(navCan(r, 'approvals', 'Approve') && navScope(r, 'journeys') === 'team') return 'manager-dashboard';
   if(navCan(r, 'billing', 'View') && !navCan(r, 'jobs', 'View') && !navCan(r, 'candidates', 'View') && !navCan(r, 'talentpool', 'View')) return 'admin-paytrack';
+  // K3: someone whose work is contract staff (Manage, no submitting, no new jobs) lands on PayTrack › Contracts
+  if(navCan(r, 'contracts', 'Manage') && !navCan(r, 'billing', 'View') && !navCan(r, 'candidates', 'Submit to job') && !navCan(r, 'jobs', 'Create')) return 'admin-paytrack';
   return 'dashboard';
 }
 function agencyStaffNav(){ return !(typeof sIsCorporate === 'function' && sIsCorporate()) && ['recruiter', 'manager', 'admin'].indexOf(state.role) > -1; }
@@ -51387,7 +51566,8 @@ function recordConsentCall(sb, note, by){
   if(note.length < 3) return { ok:false, reason:'Add how it was confirmed, e.g. “Called on +91…, agreed at 3 pm”.' };
   const w = consentWho(sb), at = new Date(fmNow()).toISOString(), who = by || fmMe();
   if(sb.consent && st === 'expired') (sb.consentHistory = sb.consentHistory || []).push(Object.assign({}, sb.consent));
-  sb.consent = Object.assign(sb.consent || { token:null, channel:'Call', sentAt:null, dueAt:null }, { state:'given', answeredAt:at, how:'call', callNote:note, by:who });
+  // U1: a call while the link is still open answers it: the link is cancelled and its page says "Already answered"
+  sb.consent = Object.assign(sb.consent || { token:null, channel:'Call', sentAt:null, dueAt:null }, { state:'given', answeredAt:at, how:'call', callNote:note, by:who }, st === 'pending' ? { linkCancelledAt:at } : {});
   sb.stageHistory.push({ stage:sb.stage, at:at, reason:w.first + ' agreed by phone to be put forward to ' + w.j.client + ': ' + note, by:who });
   logAudit('Submissions', 'Consent recorded from a call', w.c.name + ' — ' + w.j.title + ' · ' + w.j.client + ' · ' + note + ' · by ' + who, consentMeta(sb));
   return { ok:true, sub:sb };
@@ -51404,7 +51584,8 @@ function consentStatusHTML(sb, where){
   const limit = st === 'pending' || st === 'given' || st === 'declined' ? '' : consentLinkLimit(sb), recentNo = st === 'none' ? consentRecentNo(sb) : null;
   let line = '', tone = 'text-zinc-500', act = '';
   if(st === 'given'){ line = k.how === 'call' ? 'Agreed by call · ' + k.callNote : 'Agreed on ' + fmDate(k.answeredAt); tone = 'text-forest-600'; }
-  else if(st === 'pending'){ line = 'Waiting for ' + w.first + '’s yes · link sent ' + fmDate(k.sentAt); tone = 'text-gold-700'; }
+  else if(st === 'pending'){ line = 'Waiting for ' + w.first + '’s yes · link sent ' + fmDate(k.sentAt); tone = 'text-gold-700';
+    act = (openAsOk() ? '<div class="flex flex-wrap items-center gap-2 mt-2" data-open-as="consent">' + openAsButtonsHTML(w.first, "openAsConsent('" + id + "')", consentLink(k.token)) + '</div>' : '') + '<div class="flex flex-wrap items-center gap-2 mt-2">' + call + '</div>'; }   // U1: a call can be recorded while the link is open
   else if(st === 'declined'){ line = 'Said no on ' + fmDate(k.answeredAt); tone = 'text-terracotta-600'; }
   else if(limit){ line = (st === 'expired' ? 'No answer · ' : '') + limit; tone = 'text-terracotta-600'; act = '<div class="flex flex-wrap items-center gap-2 mt-2">' + call + '</div>'; }
   else if(st === 'expired'){ line = 'No answer · call and record it'; tone = 'text-terracotta-600'; act = '<div class="flex flex-wrap items-center gap-2 mt-2">' + call + ask('Send a new link') + '</div>'; }
@@ -51427,10 +51608,82 @@ function consentRedraw(where){ if(where === 'cs' && csState) csRender(); else if
 function consentAskUI(subId, where){ const sb = subById(subId); if(!sb) return; const el = document.getElementById(where + '-why-' + subId), r = requestConsent(sb, null, { note:el ? el.value : '' });
   if(r && r.refused){ toast(r.reason); if(el) el.focus(); return; } toast('Link sent to ' + consentWho(sb).first + ' by WhatsApp and email.'); consentRedraw(where); }
 function consentCallUI(subId, where){ const sb = subById(subId), el = document.getElementById(where + '-call-' + subId), r = recordConsentCall(sb, el ? el.value : ''); if(!r.ok){ toast(r.reason); if(el) el.focus(); return; } toast('Recorded. ' + consentWho(sb).first + ' can be sent.'); consentRedraw(where); }
+/* ---- U1: what really blocks a Ready to Send journey, and the next step on every row ---- */
+// The words for a journey at Ready to Send (null: it really is ready — agreed, recorded from a call, a company workspace, or sent before consent existed).
+function consentReadyWord(sb){
+  if(!sb || jsCorp() || consentPreRecord(sb)) return null; const st = consentState(sb); if(st === 'given') return null; const first = consentWho(sb).first;
+  if(st === 'pending') return { label:'Waiting for ' + first + '’s yes', tone:'bg-gold-50 text-gold-700', consent:'pending' };
+  if(st === 'expired') return { label:'No answer · call them', tone:'bg-terracotta-50 text-terracotta-600', consent:'expired' };
+  return { label:'Not asked yet', tone:'bg-gold-50 text-gold-700', consent:st };
+}
+function consentNext(sb){
+  const cw = consentReadyWord(sb); if(!cw || !canMoveInPipeline(jobById(sb.jobId))) return null; const w = consentWho(sb), id = sb.id;
+  const b = function(label, on, ghost){ return { label:label, on:on, ghost:!!ghost, danger:false }; };
+  if(cw.consent === 'pending') return { title:cw.label, consent:'pending', detail:'Link sent ' + fmDate(sb.consent.sentAt) + '. If ' + w.first + ' agreed on a call, record it.',
+    actions:[ b('Record call', "pipeOpenConsent('" + id + "')") ].concat(openAsOk() ? [ b('Open as ' + w.first, "openAsConsent('" + id + "')", true) ] : []) };
+  if(cw.consent === 'expired') return { title:cw.label, consent:'expired', warn:true, detail:w.first + ' didn’t answer the link. Call and record it, or send a new link.', actions:[ b('Record call', "pipeOpenConsent('" + id + "')") ] };
+  return { title:cw.label, consent:'none', detail:'Ask ' + w.first + ' to agree to be put forward to ' + w.j.client + '.', actions:[ b('Ask ' + w.first + ' to agree', "consentAskUI('" + id + "','row')") ] };
+}
+// The next step as buttons on an Applicants or Pipeline row: Record call / Open as, Send to client, Record feedback, Record outcome.
+function pipeRowActionsHTML(sb, nx){
+  nx = nx || pipeNext(sb); if(!nx) return ''; const j = jobById(sb.jobId), can = canMoveInPipeline(j), ph = subPhase(sb), id = sb.id, js = journeyStatus(sb);
+  const one = function(label, on){ return pipeButtonsHTML({ actions:[ { label:label, on:on } ] }, 'sm'); };
+  if(nx.consent) return pipeButtonsHTML({ actions:nx.actions }, 'sm');
+  if(!jsCorp() && can && ph === 'client' && !sb.hold) return one('Record feedback', "openClientFeedback('" + id + "')");
+  if(!jsCorp() && can && js.key === 'interviewing' && !sb.hold) return one('Record outcome', "pipeOpenOutcome('" + id + "')");
+  return nx.actions[0] ? pipeButtonsHTML({ actions:[ nx.actions[0] ] }, 'sm') : '';
+}
+// The drawer, opened at the consent box with the call note ready.
+function pipeOpenConsent(subId){ openPipelineDetail(subId); const el = document.getElementById('pd-call-' + subId); if(el){ try { el.scrollIntoView({ block:'center' }); } catch(e){} el.focus(); } }
+function csFocusCall(subId){ const el = document.getElementById('cs-call-' + subId); if(el){ try { el.scrollIntoView({ block:'center' }); } catch(e){} el.focus(); } }
+
+/* ---- U1: answering as the other person, in the demo. "Open as" opens their page; Back to app returns to the same job, drawer or send dialog. ---- */
+function openAsOk(){ return !jsCorp() && ((typeof DEMO !== 'undefined' && !!DEMO.company) || (typeof AUTH_IS_PROTOTYPE !== 'undefined' && AUTH_IS_PROTOTYPE)); }
+function openAsButtonsHTML(name, on, url){
+  return '<button type="button" class="o-btn o-btn--sm" data-act="open-as" onclick="event.stopPropagation(); ' + escapeHtml(on) + '">Open as ' + escapeHtml(name) + ' (demo)</button>' +
+    (url ? '<button type="button" class="o-btn o-btn--sm" data-act="copy-link" onclick="event.stopPropagation(); openAsCopy(\'' + escapeHtml(url) + '\')">Copy link</button>' : ''); }
+function openAsCopy(url){ const done = function(){ toast('Link copied.'); }; try { navigator.clipboard.writeText(url).then(done, function(){ toast(url); }); } catch(e){ toast(url); } }
+let OPEN_AS_BACK = null;
+function openAsGo(hash){
+  OPEN_AS_BACK = { view:state.activeNav, jobId:state.activeNav === 'jobs' && jobWsJobId && document.getElementById('job-cand-workspace') ? jobWsJobId : null, tab:jobWs.tab,
+    pd:typeof pdSubId !== 'undefined' ? pdSubId : null, cs:csState ? csState.subIds.slice() : null };
+  location.hash = hash;
+}
+function openAsReturn(){
+  const b = OPEN_AS_BACK; OPEN_AS_BACK = null; if(!b) return;
+  try { csClose(); pdClose(); } catch(e){}
+  try { if(b.jobId && jobById(b.jobId)){ openJob(b.jobId); refreshJobWorkspace(b.jobId, b.tab); } else if(b.view) showView(b.view); } catch(e){ console.error('back to app', e); }
+  if(b.cs) openSendToClient(b.cs); else if(b.pd) openPipelineDetail(b.pd);
+}
+function openAsConsent(subId){ const sb = subById(subId); if(!sb || !sb.consent || !sb.consent.token) return; openAsGo('#/consent/' + sb.consent.token); }
+function openAsLink(token){ openAsGo('#/l/' + token); }
+function openAsTime(token, ok){ openAsGo((ok ? '#/time-ok/' : '#/time/') + token); }
+// The newest link still open for this journey's client contact, and for each interviewer on its interviews.
+function slClientLinkFor(sb){ return SECURE_LINKS.filter(function(l){ return l.kind === 'client' && l.scopes.submissionIds.indexOf(sb.id) > -1 && slValid(l); }).sort(function(a, b){ return b.createdAt - a.createdAt; })[0] || null; }
+function slInterviewerLinksFor(sb){
+  const ivs = pipeAllInterviews(sb).filter(function(iv){ return iv.status !== 'Cancelled'; }).map(function(iv){ return iv.id; }), seen = {};
+  return SECURE_LINKS.filter(function(l){ return l.kind === 'interviewer' && slValid(l) && l.scopes.interviewIds.some(function(x){ return ivs.indexOf(x) > -1; }); })
+    .sort(function(a, b){ return b.createdAt - a.createdAt; }).filter(function(l){ if(seen[l.personName]) return false; seen[l.personName] = 1; return true; });
+}
+// The links on a journey, with Open as / Copy link, in the drawer (demo only).
+function openAsLinksHTML(sb){
+  if(!openAsOk() || !sb) return ''; const rows = [], cl = journeySent(sb) ? slClientLinkFor(sb) : null;
+  if(cl) rows.push(['Client review link', cl.personName, openAsButtonsHTML(cl.personName.split(' ')[0], "openAsLink('" + cl.token + "')", slUrl(cl))]);
+  slInterviewerLinksFor(sb).forEach(function(l){ rows.push(['Interviewer link', l.personName, openAsButtonsHTML(l.personName.split(' ')[0], "openAsLink('" + l.token + "')", slUrl(l))]); });
+  if(!rows.length) return '';
+  return '<section class="fm-reply-card" id="pd-links"><p class="fm-lab">Links</p>' + rows.map(function(r){ return '<div class="flex flex-wrap items-center gap-2 mt-1.5" data-link="' + escapeHtml(r[0]) + '"><span class="text-[12px] text-zinc-600 flex-1 min-w-[160px]"><span class="text-zinc-400">' + r[0] + ' · </span>' + escapeHtml(r[1]) + '</span>' + r[2] + '</div>'; }).join('') + '</section>';
+}
+(function(){
+  ['coPgBack', 'slBack'].forEach(function(fn){ const o = window[fn]; if(typeof o !== 'function' || o.__openAs) return; const w = function(){ const r = o.apply(this, arguments); try { openAsReturn(); } catch(e){ console.error('back to app', e); } return r; }; w.__openAs = true; window[fn] = w; });
+  // The drawer: the journey's links after the consent box.
+  const draw = window.pdRender;
+  window.pdRender = function(){ const r = draw.apply(this, arguments); try { const sb = subById(pdSubId), body = document.querySelector('#pd-panel .overflow-y-auto'), h = openAsLinksHTML(sb); if(sb && body && h){ const at = document.getElementById('pd-consent'); if(at) at.insertAdjacentHTML('afterend', h); else body.insertAdjacentHTML('afterbegin', h); } } catch(e){ console.error('links', e); } return r; };
+})();
 // The consent page: journey tokens first, then a company workspace's vendor tokens as before.
 function consentPageHTML(sb){
   const st = consentState(sb), w = consentWho(sb), org = w.agency;
   if(st === 'expired') return coShell('<section class="sl-card sl-center"><h1>This link has expired</h1><p>The ' + CONSENT_HOURS + ' hour window passed, so nothing was shared. If you are still interested, ask ' + coEsc(org) + ' to send it again.</p></section>', { org:org });
+  if(st === 'given' && sb.consent.how === 'call') return coShell('<section class="sl-card sl-center sl-done"><h1>Already answered</h1><p>You told ' + coEsc(org) + ' by phone that you agree to be put forward to ' + coEsc(w.j.client) + ' for ' + coEsc(w.j.title) + ', so this link is no longer needed.</p></section>', { org:org });   // U1
   if(st === 'given' || st === 'declined') return coShell('<section class="sl-card sl-center sl-done"><h1>' + (st === 'given' ? 'You agreed' : 'You said no') + '</h1><p>' + (st === 'given' ? coEsc(org) + ' will put you forward to ' + coEsc(w.j.client) + ' for ' + coEsc(w.j.title) + '. They will contact you.' : 'Nothing was shared with ' + coEsc(w.j.client) + '.') + '</p></section>', { org:org });
   return coShell('<h1 class="sl-h1">Hi ' + coEsc(w.first) + '</h1><p class="sl-lead">' + coEsc(org) + ' would like to put you forward to <b>' + coEsc(w.j.client) + '</b> for <b>' + coEsc(w.j.title) + '</b>. Tap Yes to agree.</p>' +
     '<section class="sl-card"><p>This link works until ' + fmDate(sb.consent.dueAt) + '. If you say no, nothing is shared.</p><div class="sl-actions"><button type="button" class="o-btn o-btn--primary" onclick="coConsentDo(true)">Yes</button><button type="button" class="o-btn" onclick="coConsentDo(false)">No</button></div></section>', { org:org });
@@ -51447,7 +51700,7 @@ function consentPageHTML(sb){
       const block = prior && consentRecentNo(prior) && !String(opts.consentNote || '').trim() ? consentAskBlock(prior, '') : ''; if(block){ if(!opts.dryRun) consentRefuse(prior, block); return { ok:false, code:'consent_declined_recently', category:'blocked', reason:block, candidateId:c.id, jobId:job.id, sub:prior }; } }
     const r = submit.apply(this, arguments); try { if(r && r.ok && !r.dryRun && r.sub && !jsCorp()) requestConsent(r.sub, null, { note:opts.consentNote }); } catch(e){ console.error('consent request', e); } return r; };
   const shortlist = window.pipeShortlistApplicant;
-  window.pipeShortlistApplicant = function(subId){ const r = shortlist.apply(this, arguments); try { const sb = subById(subId); if(sb && !jsCorp() && ['review','ready'].indexOf(subPhase(sb)) > -1 && requestConsent(sb) && csState) csRender(); } catch(e){ console.error('consent request', e); } return r; };
+  window.pipeShortlistApplicant = function(subId){ const r = shortlist.apply(this, arguments); try { const sb = subById(subId); if(sb && !jsCorp() && ['review','ready'].indexOf(subPhase(sb)) > -1 && requestConsent(sb)){ if(csState) csRender(); if(typeof pipeRefreshAll === 'function') pipeRefreshAll(); } } catch(e){ console.error('consent request', e); } return r; };   // U1: lists show the request at once
   // The drawer shows the status for a journey not yet sent: ask, wait, record a call.
   const draw = window.pdRender;
   window.pdRender = function(){ const r = draw.apply(this, arguments); try { const sb = subById(pdSubId), body = document.querySelector('#pd-panel .overflow-y-auto');

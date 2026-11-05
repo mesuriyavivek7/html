@@ -1552,3 +1552,32 @@ Backup before any change: `backups/recruitment-os-prototype.pre-demo-data.html`.
 **Tests executed:**
 - full suite: 38/39, then 39/39, then 39/39. Run 1 hit the known corporate exact-millisecond consent check (line 95); the corporate spec is unchanged.
 - engine 34/34
+
+## Fixes from the demo-guide walk-through (4 November 2026)
+
+Backups: `backups/recruitment-os-prototype.pre-walkthrough-fixes.html`, `backups/recruitment-os-prototype.pre-u1-k17.html`. New spec: `tests/walkthrough-fixes.spec.js` (26 tests).
+
+| Item | What changed |
+|---|---|
+| K1 | A build never leaves a dialog open (`demoCloseUi`, `fmModal` quiet during a build); contract jobs get no PayTrack placements. |
+| K2 | Kairo's "live offers" suggestion shows ₹ only with billing · View; everyone else gets a count. |
+| K3 | Contracts · Manage without billing lands on PayTrack › Contracts (Contracts tab only, no fee totals). Contracts scope "all" sees and opens every assignment. |
+| K4 | Each demo workspace numbers invoices from its own prefix (KSR-, NST-, VHR-) from 0001; Start from sign-up uses INV-. |
+| K5 | Nikhil Joshi applies 3 hours before the demo's "now", so he is Raj's (the job lead's) inside the applicant SLA. |
+| K6 | The workspace seat count comes from the plan (Starter 3, Growth 15, Enterprise no cap). |
+| K7 | Owner Home › Jobs at risk: days open from `createdAt`, recruiter = lead or team, "Client feedback is late" only at 5+ days (or twice the client's usual time). Demo client-stage profiles are sent recently. |
+| K8 | "Sign in as" clears every overlay root, dialog and drawer. |
+| K9 | The build is a generator. The demo menu opens a company in the background: Home after about 1 s, a "Loading history…" note, and a pause while a dialog is open. The approval engine's business-minutes walk caches each workspace day (tick 580 ms → 25 ms at Vistaar size). |
+| K10 | Agency sign-up asks "Your email?"; the company-domain hint shows only for a non-public domain. Corporate is unchanged. |
+| K11 | Settings › Security & audit › Audit log ends with the fairness report. |
+| K14 | Each Vistaar Sourcer found 20–33 people, and recruiters put 16–29 of them forward. New rule (agency): a recruiter starting a journey from someone a Sourcer found credits the Sourcer as sourcer. |
+| K15 | The schedule dialog's close is `ivScheduleClose` (the interview sheet's `ivClose` had overridden it). |
+| U1 (K16) | A journey at Ready to Send says what blocks it: "Waiting for <name>’s yes" (amber), "No answer · call them", "Not asked yet". It says "Ready to send" only once consent is given, recorded from a call, not needed (company workspace) or the profile was sent before consent existed; the stage is unchanged. Applicants and Pipeline rows show the next step as buttons: Record call / Open as (demo), Send to client, Record feedback, Record outcome. Shortlist carries the hint "Asks <name> to agree, then you can send". In the demo, "Open as <name> (demo)" and "Copy link" sit on the consent box, the send dialog footer, the drawer's client and interviewer links and the assignment's worker and approval links; Back to app returns to the same job, drawer or send dialog. A call can be recorded while the link is open; the link then says "Already answered". Activity shows the full message with its link clickable. An expired secure link is never reused; a new send gets a new one. |
+| K17 | The workspace name is printed from one place: `agencyBranding.name` reads it live, and a change of name (sign-up, Settings, a demo company) carries into the email signature, the consent text, the menu titles and the primary legal entity (which follows the legal name). |
+
+**Existing spec lines changed:**
+- `tests/demo-data.spec.js:36`: the Contract coordinator now has PayTrack as Home (K3).
+- `tests/auth-flow.spec.js:526, 565, 673`: the agency email question is now "Your email?" (K10).
+- `tests/m05a-status-numbers.spec.js:123`: a seed journey at Ready to Send with no consent asked is now "Not asked yet", so the label is checked against the consent words (U1).
+
+**Tests:** full suite 40/40; engine 34/34.
