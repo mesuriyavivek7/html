@@ -1581,3 +1581,47 @@ Backups: `backups/recruitment-os-prototype.pre-walkthrough-fixes.html`, `backups
 - `tests/m05a-status-numbers.spec.js:123`: a seed journey at Ready to Send with no consent asked is now "Not asked yet", so the label is checked against the consent words (U1).
 
 **Tests:** full suite 40/40; engine 34/34.
+
+## Cowork rebuild, phase 1: the shell, agent pages, Activity and the record model (6 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-cowork-phase1.html`. New spec: `tests/cowork-agents.spec.js` (18 tests). Screenshots: `docs/screenshots/cowork-phase1/`.
+
+Agency workspaces only. A company workspace keeps its Cowork, catalog and weekly limit unchanged.
+
+**Built:**
+- Cowork has two tabs, Agents and Activity, and five agent cards, with a Needs you strip and Pause all. Each agent page has Overview, Settings and Activity.
+- Settings for all five agents: levels (Auto, Suggest, Off; "Always a person" can't change), scope, daily cap, working hours and each agent's own settings. Engagement has six plays, each with a switch, template, timing and level. Save writes an audit line.
+- A Recruiter Manager's settings apply to their team's jobs without changing the workspace default.
+- One activity record for every agent action, written through `cwLedger`. Non-message actions don't count against send limits.
+- Activity feed with filters, side panel and CSV for Owner and Admin. Recruiters see their own jobs and candidates only. ₹ amounts are masked without the money permission.
+- "Kairo on this job" panel on the job page, with a pause per agent.
+- Plans limit agents: Starter has Talent Discovery and Engagement; Growth and Enterprise the first four; LinkedIn Outreach is a paid add-on for Growth and Enterprise.
+
+**Limits now in the engine:**
+- Engagement and LinkedIn share 1 a day and 2 a week.
+- Interviews: 4 messages per interview.
+- Offer & Joining: at most 2 a week before joining, plus the joining-day check; after joining, only day 7, 30 and 60.
+- Working hours apply to everything except the 2-hour interview reminder.
+- STOP stops every agent and gives the recruiter a task.
+
+**Not yet wired (later phases):** levels, plays, scope and a per-job pause are saved and shown, but the engine doesn't read them yet, because runs don't carry a job until Phase 2. The agent switch, Pause all, the plan, the daily cap, working hours and the limits above are enforced now.
+
+**Removed from the agency UI:** Campaigns tab, tiles, New campaign, the workflow builder and "Build from a sentence", Start campaign, the ₹ pipeline cards.
+
+**Still in the file for company workspaces:** the campaign screens (`cp-ui.js`) and the workflow builder (`cw-builder.js`), plus the older Cowork screen in `cw-ui.js`.
+
+**Tests:** full suite 41/41; engine 34/34.
+
+## Cowork phase 1b: every agent page, in every state (6 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-cowork-phase1b.html`. Screenshots: `docs/screenshots/cowork-phase1b/`.
+
+- **Needs you removed.** Each card has a "3 waiting" chip; each agent page opens with Waiting for you; every Suggest item is also in the owner's To do with a "Kairo · <agent>" tag, and approving in either place clears both.
+- **One page for six states** (On, Paused, Needs setup, Off, Not in your plan, On trial): header with the action for the state and viewer, What it does for you, How it works, a preview from real records ("Working on now" or "If it were on"), Settings you control, Activity. The Overview, Settings and Activity sub-tabs are replaced by this one page.
+- **Trials:** 14 days, Owner only; Keep it adds the agent; the end date passing returns it to Not in your plan, and its activity stays. Plan & billing shows the end date. LinkedIn is an add-on, not a trial.
+- **Pause is separate from Off**, and the engine honours it.
+- **Tidied:** Settings › Kairo agents is a short list with Open in Cowork; Kairo for me has no level pickers; no "People ready to call" on an agency's Home; no Campaign filter on Applicants; "Kairo · Engagement" in the candidate timeline, the Applicants badge and the job's Sources card.
+- **Demo:** two of Raj's Kesar profiles are past the client's 2-day reply time, so feedback overdue shows from day one.
+
+**Still rule-based only:** "Working on now" rows come from the same rules the agents will use; the agents don't send most of these until phases 2 to 4.
+

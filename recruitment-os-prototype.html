@@ -2563,7 +2563,7 @@ body.cl-on .app-toast{ background:#fff !important; color:#2F313F !important; bor
 .cp-calls{list-style:none;margin:10px 0 0;padding:0}.cp-calls li{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #F1F1EE;font-size:13px}.cp-calls small{display:block;color:#6B6F80}
 .cp-jobline{margin:-6px 0 14px;font-size:13px;color:#5B6075}.cp-jobline a{color:#2F313F;text-decoration:underline}
 .cp-appbar{display:flex;gap:8px;padding:12px 16px 4px}.cp-fbtn{border:1px solid #E6E6E1;background:#fff;border-radius:999px;padding:4px 12px;font-size:12px;color:#5B6075;cursor:pointer}.cp-fbtn.is-on{border-color:#8C90A0;color:#2F313F;background:#F7F7F5}.cp-readyblock{padding:4px 16px 8px}
-.cp-pipe{margin-bottom:16px}.cp-pipeline-line{margin:10px 0 0;font-size:12px;color:#6B6F80}
+
 @media (max-width:960px){.cp-stats,.cp-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.cp-two,.cp-ed{grid-template-columns:minmax(0,1fr)}.cp-ed__r{position:static}.cp-row2,.cp-row3,.cp-row4{grid-template-columns:minmax(0,1fr)}.cp-facts{grid-template-columns:minmax(0,1fr)}.cp-strip__c{border-right:0;border-bottom:1px solid #F1F1EE}}
 @media (max-width:520px){.cp-tools .seg,.cp-tools-wrap .seg{max-width:100%;overflow-x:auto}.cp-stats{grid-template-columns:minmax(0,1fr)}.cp-sug__row{flex-wrap:wrap}.cp-search{width:100%}}
 /* v3: journey, quick start, evaluation, your day */
@@ -3143,7 +3143,7 @@ const NAV = {
       {id:'settings', label:'Settings', icon:'cog'},
     ]},
     { group:'More', collapsible:true, items:[
-      {id:'my-todo', label:'To do', icon:'bell', count:function(){ return PERSONAL_TASKS.filter(function(x){ return !x.completed; }).length; }},
+      {id:'my-todo', label:'To do', icon:'bell', count:function(){ return PERSONAL_TASKS.filter(function(x){ return !x.completed; }).length + (typeof caTodoCount === 'function' ? caTodoCount() : 0); }},
       {id:'intelligence', label:'Intelligence', icon:'sparkles'},
       {id:'kairo-team', label:'Cowork', icon:'zap'},
       {id:'li-uni-box', label:'LinkIt', icon:'chat'},
@@ -3161,7 +3161,7 @@ const NAV = {
       {id:'manager-team', label:'Team', icon:'user'},
     ]},
     { group:'More', collapsible:true, items:[
-      {id:'manager-todo', label:'To do', icon:'bell'},
+      {id:'manager-todo', label:'To do', icon:'bell', count:function(){ return typeof caTodoCount === 'function' ? caTodoCount() : 0; }},
       {id:'intelligence', label:'Intelligence', icon:'sparkles'},
       {id:'kairo-team', label:'Cowork', icon:'zap'},
       {id:'li-uni-box', label:'LinkIt', icon:'chat'},
@@ -3181,7 +3181,7 @@ const NAV = {
       {id:'settings', label:'Settings', icon:'cog'},
     ]},
     { group:'More', collapsible:true, items:[
-      {id:'all-tasks', label:'Tasks', icon:'check'},
+      {id:'all-tasks', label:'Tasks', icon:'check', count:function(){ return typeof caTodoCount === 'function' ? caTodoCount() : 0; }},
       {id:'intelligence', label:'Intelligence', icon:'sparkles'},
       {id:'kairo-team', label:'Cowork', icon:'zap'},
       {id:'li-uni-box', label:'LinkIt', icon:'chat'},
@@ -10366,7 +10366,7 @@ function jobWsApplicantsHTML(j){
   return intro+att+'<ul class="divide-y divide-zinc-100">'+list.map(function(sb){
       const c = byId(sb.candidateId), at = subProcessIndex(j, sb), lab = tpSubLabel(j, sb);
       const src = String(sb.source||'Applied');
-      const badge = ' <span class="ml-1.5 align-middle text-[10px] font-medium px-1.5 py-0.5 rounded '+(JOB_WS_SOURCE_TONE[src.split(' ')[0]]||(/^Shareable/.test(src)?'bg-forest-50 text-forest-600':'bg-zinc-100 text-zinc-600'))+'">'+escapeHtml(src.replace(/^Shareable link · /,'Link · '))+'</span>';
+      const badge = ' <span class="ml-1.5 align-middle text-[10px] font-medium px-1.5 py-0.5 rounded '+(JOB_WS_SOURCE_TONE[src.split(' ')[0]]||(/^Shareable/.test(src)?'bg-forest-50 text-forest-600':'bg-zinc-100 text-zinc-600'))+'">'+escapeHtml(!jsCorp() && /^Campaign/.test(src) ? 'Kairo · Engagement' : src.replace(/^Shareable link · /,'Link · '))+'</span>';
       const action = subPhase(sb)==='applied' && can
         ? (jsCorp() ? '' : '<div class="flex flex-col items-end gap-1 shrink-0">')+'<div class="flex gap-1.5 shrink-0"><button type="button" onclick="pipeRejectApplicant(\''+sb.id+'\')" class="h-8 px-3 rounded-lg text-xs font-medium text-zinc-600 hover:bg-zinc-100">Reject</button><button type="button" onclick="pipeShortlistApplicant(\''+sb.id+'\')" class="h-8 px-3 rounded-lg text-xs font-medium btn-primary">Shortlist</button></div>'+
           // U1: what Shortlist leads to (agency): the candidate is asked to agree before the profile can go out
@@ -10589,7 +10589,7 @@ function jobSourcesCardHTML(j){
   const row = function(label, n){ return '<li class="flex items-center justify-between text-xs"><span class="text-zinc-600">'+escapeHtml(label)+'</span><span class="font-semibold text-ink">'+n+'</span></li>'; };
   return '<div id="jd-sources" class="card p-5"><div class="flex items-center justify-between mb-3"><p class="text-[10px] font-semibold text-zinc-400 tracking-widest">CANDIDATE SOURCES</p>'+
       (jobCanWorkOn(j) ? '<button type="button" onclick="openJobShare(\''+j.id+'\')" class="text-xs font-medium text-accent-700 hover:text-accent-900">Share job</button>' : '')+'</div>'+
-    '<ul class="space-y-2">'+row('Shareable link', k.linkTotal)+plat.map(function(p){ return row(p, k.platforms[p]); }).join('')+row('Talent pool (recruiters)', k.pool)+'</ul>'+
+    '<ul class="space-y-2">'+row('Shareable link', k.linkTotal)+plat.map(function(p){ return row(!jsCorp() && /^Campaign/.test(p) ? 'Kairo · Engagement' : p, k.platforms[p]); }).join('')+row('Talent pool (recruiters)', k.pool)+'</ul>'+
     (k.linkTotal ? '<p class="text-[11px] text-zinc-400 mt-3">Link: '+Object.keys(k.link).map(function(c){ return escapeHtml(c)+' '+k.link[c]; }).join(' · ')+'</p>' : '')+
   '</div>';
 }
@@ -38723,29 +38723,29 @@ function sIsOwner(){ const r = sRole(); return !!r && !!r.protected; }
 /* ---------- 2. Kairo agents as a subscription ---------- */
 let AGENT_CATALOG = [
   { id:'talent-discovery', name:'Talent Discovery', employees:['sourcing','matching','screening'], does:'Finds, screens and ranks people for every open job.', status:'available',
-    price:{ amount:4999, currency:'INR', per:'workspace/month' }, includedActions:5000, trialDays:14, includedInPlans:['plan-enterprise'], dailyCap:2000,
+    price:{ amount:4999, currency:'INR', per:'workspace/month' }, includedActions:5000, trialDays:14, includedInPlans:['plan-starter','plan-growth','plan-enterprise'], corpPlans:['plan-enterprise'], dailyCap:2000,
     channels:[],
     steps:[ { id:'score', label:'Score and rank candidates', level:'auto' }, { id:'flag', label:'Flag requirement mismatches', level:'auto' },
             { id:'shortlist', label:'Send ranked shortlist to the job owner', level:'auto' }, { id:'addPipeline', label:'Add a candidate to a pipeline', level:'suggest' },
             { id:'reject', label:'Reject an applicant', level:'person' } ] },
   { id:'engagement', name:'Engagement', employees:['engagement'], does:'Keeps candidates warm and follows up when they go quiet.', status:'available',
-    price:{ amount:2999, currency:'INR', per:'workspace/month' }, includedActions:3000, trialDays:14, includedInPlans:['plan-enterprise'], dailyCap:1500,
+    price:{ amount:2999, currency:'INR', per:'workspace/month' }, includedActions:3000, trialDays:14, includedInPlans:['plan-starter','plan-growth','plan-enterprise'], corpPlans:['plan-enterprise'], dailyCap:1500,
     channels:['email','whatsapp'],
     steps:[ { id:'ack', label:'Acknowledge new applicants', level:'auto' }, { id:'followup', label:'Follow-up messages from approved templates', level:'auto' },
             { id:'firstTouch', label:'First message to a pool candidate', level:'suggest' }, { id:'callTask', label:'Create a call task', level:'auto' } ] },
   { id:'interviews', name:'Interviews', employees:['interview'], does:'Proposes slots, sends invites and reminders, handles reschedules.', status:'available',
-    price:{ amount:2999, currency:'INR', per:'workspace/month' }, includedActions:2000, trialDays:14, includedInPlans:['plan-enterprise'], dailyCap:1000,
+    price:{ amount:2999, currency:'INR', per:'workspace/month' }, includedActions:2000, trialDays:14, includedInPlans:['plan-growth','plan-enterprise'], corpPlans:['plan-enterprise'], dailyCap:1000,
     channels:['email','whatsapp','calendar'],
     steps:[ { id:'slots', label:'Propose slots and send invites', level:'auto' }, { id:'remind', label:'Reminders 24 h and 1 h before', level:'auto' },
             { id:'resched', label:'Offer reschedule options', level:'suggest' }, { id:'chase', label:'Chase interviewer feedback', level:'auto' },
             { id:'outcome', label:'Record the stage outcome', level:'person' } ] },
   { id:'offers-joining', name:'Offer & Joining', employees:['offerJoining'], does:'Watches offers and pre-joining for risk; finds backups.', status:'available',
-    price:{ amount:2999, currency:'INR', per:'workspace/month' }, includedActions:1000, trialDays:14, includedInPlans:['plan-enterprise'], dailyCap:500,
+    price:{ amount:2999, currency:'INR', per:'workspace/month' }, includedActions:1000, trialDays:14, includedInPlans:['plan-growth','plan-enterprise'], corpPlans:['plan-enterprise'], dailyCap:500,
     channels:['email','whatsapp'],
     steps:[ { id:'checkin', label:'Pre-joining check-ins', level:'auto' }, { id:'risk', label:'Counter-offer risk alerts', level:'auto' },
             { id:'backup', label:'Suggest backup candidates', level:'suggest' }, { id:'terms', label:'Offer terms or release', level:'person' } ] },
   { id:'linkedin', name:'LinkedIn outreach', employees:['linkit'], addOnOnly:true, does:'Connect-and-nurture campaigns from connected LinkedIn accounts.', status:'available',
-    price:{ amount:1999, currency:'INR', per:'LinkedIn account/month' }, includedActions:0, trialDays:7, includedInPlans:[], dailyCap:null, channels:['linkedin'],
+    price:{ amount:1999, currency:'INR', per:'LinkedIn account/month' }, includedActions:0, trialDays:7, includedInPlans:[], corpPlans:[], addOnPlans:['plan-growth','plan-enterprise'], dailyCap:null, channels:['linkedin'],
     steps:[ { id:'sequence', label:'Run sequence steps inside account limits', level:'auto' }, { id:'template', label:'Approve message templates', level:'person' } ] },
 ];
 AGENT_CATALOG.forEach(function(a){ a.steps.forEach(function(s){ s.max = s.level; }); });
@@ -38778,17 +38778,21 @@ function currentTenantPlanId(){
   return p ? p.id : 'plan-starter';
 }
 function agentSub(agentId){ return (TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID]||{})[agentId] || { state:'none', usedThisMonth:0 }; }
-function agentPlanIncludes(agentId){ const a = agentById(agentId); return !!a && a.includedInPlans.indexOf(currentTenantPlanId())>-1; }
+function agentPlanIncludes(agentId){ const a = agentById(agentId); return !!a && (jsCorp() ? a.corpPlans || [] : a.includedInPlans).indexOf(currentTenantPlanId())>-1; }
+// Agency plans really limit agents: Starter has Talent Discovery and Engagement, Growth and Enterprise the first four, LinkedIn Outreach is a paid add-on for those two. A company workspace keeps its rule.
+function agentPlanAllows(agentId){ const a = agentById(agentId); return !!a && (jsCorp() || a.id !== 'linkedin' || (a.addOnPlans || []).indexOf(currentTenantPlanId())>-1); }   // a trial or add-on is open on any plan, except LinkedIn on Starter
+function agentTrialOver(s){ return !jsCorp() && s.state === 'trial' && !!s.trialEndsOn && wsDay(fmNow()) > s.trialEndsOn; }
+function agentEntitled(agentId){ const active = ['trial','active','cancelling'].indexOf(agentSub(agentId).state)>-1; return jsCorp() ? agentPlanIncludes(agentId) || active : agentPlanIncludes(agentId) || (agentPlanAllows(agentId) && active && !agentTrialOver(agentSub(agentId))); }
 /* The single gate: may the current user use this agent right now? */
 function agentAccess(agentId, userId){
   const a = agentById(agentId); if(!a || a.status==='disabled') return { on:false, why:'disabled-by-oontu' };
   const sub = agentSub(agentId);
-  if(!agentPlanIncludes(agentId) && ['trial','active','cancelling'].indexOf(sub.state)===-1) return { on:false, why:'not-subscribed' };
+  if(!agentEntitled(agentId)) return { on:false, why:'not-subscribed' };
   if(sub.state==='paused' || sub.state==='suspended') return { on:false, why:sub.state };
   const cfg = TENANT_AGENT_CONFIG[agentId]; if(!cfg || !cfg.enabled) return { on:false, why:'off-in-workspace' };
   if(!sCan('kairo','Use agents')) return { on:false, why:'no-permission' };
   const role = sRole();
-  if(cfg.roles && cfg.roles.length && role && cfg.roles.indexOf(role.id)===-1) return { on:false, why:'role-not-allowed' };
+  if(cfg.roles && cfg.roles.length && role && cfg.roles.indexOf(role.id)===-1 && !sCan('kairo','Configure')) return { on:false, why:'role-not-allowed' };   // a custom Admin role is never shut out
   const pref = (USER_AGENT_PREFS[userId||currentUserId()]||{})[agentId];
   if(pref && pref.enabled===false) return { on:false, why:'off-for-me' };
   return { on:true };
@@ -38798,7 +38802,7 @@ function agentStepLevel(agentId, stepId, userId){
   const a = agentById(agentId); const step = a && a.steps.find(function(s){ return s.id===stepId; }); if(!step) return 'off';
   if(step.level==='person') return 'person';
   const cfg = TENANT_AGENT_CONFIG[agentId] || {}, pref = ((USER_AGENT_PREFS[userId||currentUserId()]||{})[agentId]||{}).steps || {};
-  const levels = [step.level, (cfg.steps||{})[stepId] || step.level, pref[stepId] || step.level];
+  const levels = [jsCorp() ? step.level : (cfg.steps||{})[stepId] || step.level, (cfg.steps||{})[stepId] || step.level, pref[stepId] || (cfg.steps||{})[stepId] || step.level];   // agency: the workspace sets the level (Auto, Suggest or Off); only a person's own choice can lower it
   return levels.reduce(function(lo, l){ return LEVEL_RANK[l] < LEVEL_RANK[lo] ? l : lo; });
 }
 function anyAgentOn(){ if(state.role==='candidate' || state.role==='oontu') return false; return AGENT_CATALOG.some(function(a){ return agentAccess(a.id).on; }); }
@@ -39173,7 +39177,7 @@ function sec_kairoMe(ed){
   if(!on.length) return sCard('Kairo for me', '', sRow('No agents available','Your workspace hasn’t added Kairo agents. Your Owner can add them in Plan & billing.',''));
   return on.map(function(a){
     const pref = prefs[a.id] = prefs[a.id] || { enabled:true, steps:{} };
-    const steps = a.steps.map(function(s){
+    const steps = !jsCorp() ? '' : a.steps.map(function(s){   // agencies: levels live on the agent's page in Cowork
       const ws = (TENANT_AGENT_CONFIG[a.id].steps||{})[s.id] || s.level, cur = agentStepLevel(a.id, s.id, uid);
       if(s.level==='person') return sRow(s.label, 'Always a person. Kairo never does this on its own.', '<span class="o-badge">'+oIcon('lock', 12, 1.75)+' Always a person</span>');
       const opts = ['auto','suggest','off'].filter(function(l){ return LEVEL_RANK[l] <= LEVEL_RANK[ws]; });
@@ -39686,6 +39690,7 @@ function sConn(id, action){
 /* Kairo agents (the workspace view) */
 function sUsage(agentId){ const a = agentById(agentId), s = agentSub(agentId); return '<span class="s-val">'+(s.usedThisMonth||0).toLocaleString('en-IN')+' of '+(a.includedActions||0).toLocaleString('en-IN')+' actions this month</span>'+sMeter(s.usedThisMonth||0, a.includedActions); }
 function sAgentButtons(a){
+  if(!agentPlanAllows(a.id)) return '<span class="s-lock">Available on Growth and Enterprise</span>';
   const s = agentSub(a.id), canSub = sCan('billing','Manage plan & add-ons') && sCan('kairo','Manage subscription'), inc = agentPlanIncludes(a.id);
   if(a.status==='disabled' || s.state==='paused' || s.state==='suspended') return '<span class="o-badge o-badge--warn">Paused by Oontu</span>';
   if(inc && s.state==='none') return '';
@@ -39696,6 +39701,8 @@ function sAgentButtons(a){
   return sBtn('Cancel at period end', "agentSubscribe('"+a.id+"','cancel') && settingsRefresh()", 'ghost');
 }
 function sec_kairoAgents(ed){
+  // Agencies: levels live in one place, on each agent's page in Cowork.
+  if(!jsCorp()) return sCard('Your agents', 'Levels, scope and limits are on each agent’s page in Cowork.', AGENT_CATALOG.map(function(a){ return sRow(a.name, a.does, caStateHTML(caStatus(a.id))+sBtn('Open in Cowork', "caOpenAgent('"+a.id+"')")); }).join(''));
   const rolesAll = CUSTOM_ROLES;
   const cards = AGENT_CATALOG.map(function(a){
     const cfg = TENANT_AGENT_CONFIG[a.id], s = agentSub(a.id), st = agentStateLabel(a.id), usable = ['trial','active','cancelling'].indexOf(s.state)>-1 || agentPlanIncludes(a.id);
@@ -39767,7 +39774,7 @@ function sAddonRow(label, desc, state, actions){ return sRow(label, desc, '<span
 function sec_billing(ed){
   const sub = ORG_STRUCTURE.subscription, plan = planById(currentTenantPlanId()) || {}, seats = RECRUITER_ROSTER.length, owner = sCan('billing','Manage plan & add-ons');
   const lights = RECRUITER_ROSTER.filter(function(u){ return !roleHasPermission(u.assignedRoleId,'jobs','Edit'); }).length;
-  const agentRows = AGENT_CATALOG.map(function(a){ const st = agentStateLabel(a.id); return sAddonRow('Kairo: '+a.name, a.does+' ₹'+a.price.amount.toLocaleString('en-IN')+' per '+a.price.per.replace('/',' / ')+'.', oBadge(st[0]==='ok' ? 'success' : st[0]==='risk' ? 'danger' : st[0]==='warn' ? 'warn' : 'neutral', st[1]), sAgentButtons(a)); }).join('');
+  const agentRows = AGENT_CATALOG.map(function(a){ const st = agentStateLabel(a.id); return sAddonRow('Kairo: '+a.name, a.does+' ₹'+a.price.amount.toLocaleString('en-IN')+' per '+a.price.per.replace('/',' / ')+'.'+(!jsCorp() && agentSub(a.id).state==='trial' && agentSub(a.id).trialEndsOn ? ' Trial ends '+caShortDay(agentSub(a.id).trialEndsOn)+'.' : ''), oBadge(st[0]==='ok' ? 'success' : st[0]==='risk' ? 'danger' : st[0]==='warn' ? 'warn' : 'neutral', st[1]), sAgentButtons(a)); }).join('');
   const feat = function(key, label, desc, ent){
     const on = TENANT_FEATURE_FLAGS[key].enabled, fc = typeof featureControlByKey==='function' ? featureControlByKey(key) : null, blocked = fc && ['unavailable','disabled_temporarily'].indexOf(fc.status)>-1;
     const inc = planHasEntitlement(ent);
@@ -40155,8 +40162,9 @@ function cwAgentState(agentId){
   if(a.status === 'disabled') return { on:false, why:'Paused by Oontu' };
   const sub = agentSub(agentId);
   if(sub.state === 'paused' || sub.state === 'suspended') return { on:false, why:'Paused by Oontu' };
-  if(['trial','active','cancelling'].indexOf(sub.state) === -1 && !agentPlanIncludes(agentId)) return { on:false, why:'Not subscribed' };
+  if(!agentEntitled(agentId)) return { on:false, why:'Not subscribed' };
   const cfg = TENANT_AGENT_CONFIG[agentId]; if(!cfg || !cfg.enabled) return { on:false, why:'Off in this workspace' };
+  if(cfg.paused) return { on:false, why:'Paused by ' + cfg.paused.by };
   if(CW.pauseAll.on) return { on:false, why:'All Cowork paused by ' + CW.pauseAll.by + ': ' + CW.pauseAll.reason };
   return { on:true };
 }
@@ -40164,6 +40172,17 @@ function cwKill(wf){
   const s = cwAgentState(wf.agentId); if(!s.on) return s.why;
   if(wf.status !== 'Live') return 'Workflow ' + wf.status.toLowerCase() + (wf.pausedBy ? ' by ' + wf.pausedBy : '');
   return '';
+}
+// Agency: Interviews and Offer & Joining don't use the 1-a-day, 2-a-week limit, and their messages don't count towards it.
+function cwOwnLimitAgent(agentId){ return !jsCorp() && (agentId === 'interviews' || agentId === 'offers-joining'); }
+function cwCountsAgainstLimit(l){ return !cwOwnLimitAgent(l.agentId); }
+// Offer & Joining: at most 2 messages a week before joining, plus the joining-day check; after joining, only the day 7, 30 and 60 check-ins.
+function cwOfferLimit(run, c, s){
+  const joined = SUBMISSIONS.some(function(x){ return x.candidateId === c.id && typeof journeyJoined === 'function' && journeyJoined(x); });
+  if(joined) return [7, 30, 60].indexOf(s.checkDay) > -1 ? {} : { skip:'After joining, only the day 7, 30 and 60 check-ins go out' };
+  if(s.joiningDay) return {};
+  const n = SEND_LEDGER.filter(function(l){ return l.personKey === run.personKey && l.status === 'sent' && l.agentId === 'offers-joining' && !l.joiningDay && cwNow() - l.at < 7 * CW_DAY; }).length;
+  return n >= 2 ? { hold:'Offer & Joining limit · ' + n + ' messages this week, limit 2 before joining' } : {};
 }
 function cwOwnerName(wf){ const u = tmById(wf.ownerId); return u ? u.name : 'Priya Sharma'; }
 function cwAudit(wf, action, detail){ logAudit('Cowork', 'Kairo for ' + cwOwnerName(wf) + ' · ' + action, detail, { actor:'Kairo for ' + cwOwnerName(wf), entityType:'Workflow', entityId:wf.id }); }
@@ -40236,7 +40255,7 @@ const CW_DISCLOSURE_TEMPLATE = '\n\nDrafted by Kairo, Oontu’s assistant, from 
 function cwDisclosureLine(how){ if(!how || !cwDisclosureOn()) return ''; return how === 'approved' ? CW_DISCLOSURE : CW_DISCLOSURE_TEMPLATE; }
 function cwDisclosureKind(how){ return how && cwDisclosureOn() ? how : null; }
 function cwDisclosureOn(){ try { return sGet('hiring.aiDisclose') !== false; } catch(e){ return true; } }
-function cwLedger(entry){ entry.id = 'led' + (CW_LED_NEXT++); entry.at = entry.at || cwNow(); SEND_LEDGER.push(entry); return entry; }
+function cwLedger(entry){ entry.id = 'led' + (CW_LED_NEXT++); entry.at = entry.at || cwNow(); if(!entry.agentId && entry.workflowId){ const w = wfFindById(entry.workflowId); if(w) entry.agentId = w.agentId; } SEND_LEDGER.push(entry); return entry; }
 function cwSendEmail(run, wf, c, s){
   const owner = s.sender || wf.ownerId, mb = cwMailbox(owner) || cwMailbox('RP-088');
   if(!mb) return { blocked:'No connected mailbox. Connect Google or Microsoft in My connections.' };
@@ -40335,19 +40354,25 @@ function cwRunStep(run){
   if(op.op === 'approve'){ if(!run.approved){ const ap = CW_APPROVALS.find(function(a){ return a.runId === run.id && a.pc === run.pc; }); if(!ap){ CW_APPROVALS.push({ id:'ap' + CW_APPROVALS.length + Date.now(), runId:run.id, pc:run.pc, wfId:wf.id, personKey:run.personKey, name:c.name, channel:'internal', text:op.s.text || 'Approve the next step', createdAt:new Date().toISOString(), status:'pending', ownerId:wf.ownerId }); cwLog(run, 'Approve', 'Held', 'Waiting for ' + cwOwnerName(wf) + ' to approve'); } cwHold(run, 'held', 'Waiting for approval', 60 * 24); return; } run.approved = false; run.pc++; return; }
   if(!isMsg){ run.pc++; return; }
   // from here on: a message. 4. quiet hours in the person's timezone
-  const s = op.s, win = wf.limits.window || '09:00-19:00';
-  if(!cwInWindow(cwNow(), win) && !(s.logistics && s.channel === 'whatsapp' && false)){ const nx = cwNextWindow(cwNow(), win); cwLog(run, cwStepLabel(op), 'Skipped', 'Quiet hours · rescheduled to ' + cwFmtTime(nx)); run.status = 'waiting'; run.nextAt = nx; run.holdReason = 'Quiet hours'; return; }
-  // 5. global frequency cap, across all agents and channels
-  if(!s.logistics){
-    const day = SEND_LEDGER.filter(function(l){ return l.personKey === run.personKey && l.status === 'sent' && !l.logistics && cwNow() - l.at < CW_DAY; });
-    const week = SEND_LEDGER.filter(function(l){ return l.personKey === run.personKey && l.status === 'sent' && !l.logistics && cwNow() - l.at < 7 * CW_DAY; });
+  const s = op.s, win = wf.limits.window && wf.limits.window !== '09:00-19:00' ? wf.limits.window : (!jsCorp() && (TENANT_AGENT_CONFIG[wf.agentId] || {}).workingHours) || wf.limits.window || '09:00-19:00';   // the agent's working hours, unless a recipe sets its own window
+  // working hours apply to everything except the 2-hour interview reminder
+  if(!cwInWindow(cwNow(), win) && !(s.twoHourReminder && wf.agentId === 'interviews')){ const nx = cwNextWindow(cwNow(), win); cwLog(run, cwStepLabel(op), 'Skipped', 'Quiet hours · rescheduled to ' + cwFmtTime(nx)); run.status = 'waiting'; run.nextAt = nx; run.holdReason = 'Quiet hours'; return; }
+  // 5. the per-person limits. Engagement and LinkedIn share 1 a day and 2 a week; Interviews and Offer & Joining have their own limits (a company workspace keeps one cap for all)
+  const ownLimits = cwOwnLimitAgent(wf.agentId);
+  if(ownLimits && wf.agentId === 'offers-joining'){
+    const lim = cwOfferLimit(run, c, s); if(lim.skip){ cwLog(run, cwStepLabel(op), 'Skipped', lim.skip); run.pc++; return; } if(lim.hold){ cwLog(run, cwStepLabel(op), 'Skipped', lim.hold + ' · rescheduled'); cwHold(run, 'waiting', 'Frequency cap', 24 * 60); return; }
+  } else if(!s.logistics && !ownLimits){
+    const day = SEND_LEDGER.filter(function(l){ return l.personKey === run.personKey && l.status === 'sent' && !l.logistics && cwCountsAgainstLimit(l) && cwNow() - l.at < CW_DAY; });
+    const week = SEND_LEDGER.filter(function(l){ return l.personKey === run.personKey && l.status === 'sent' && !l.logistics && cwCountsAgainstLimit(l) && cwNow() - l.at < 7 * CW_DAY; });
     const dayCap = wf.limits.freqOverride ? Math.min(CW.caps.perPersonDay, wf.limits.freqOverride) : CW.caps.perPersonDay;
     if(day.length >= dayCap){ cwLog(run, cwStepLabel(op), 'Skipped', 'Frequency cap · ' + day.length + ' message today, limit ' + dayCap + '/day across all agents · rescheduled'); cwHold(run, 'waiting', 'Frequency cap', 24 * 60 - ((cwNow() - day[0].at) / 60000)); return; }
     if(week.length >= CW.caps.perPersonWeek){ cwLog(run, cwStepLabel(op), 'Skipped', 'Frequency cap · ' + week.length + ' messages this week, limit ' + CW.caps.perPersonWeek + '/week · rescheduled'); cwHold(run, 'waiting', 'Frequency cap', 24 * 60); return; }
   } else {
-    const n = SEND_LEDGER.filter(function(l){ return l.personKey === run.personKey && l.logistics && l.status === 'sent' && l.runId === run.id; }).length;
+    const n = SEND_LEDGER.filter(function(l){ return l.personKey === run.personKey && (l.logistics || cwOwnLimitAgent(l.agentId)) && l.status === 'sent' && l.runId === run.id; }).length;
     if(n >= CW.caps.logisticsPerInterview){ cwLog(run, cwStepLabel(op), 'Skipped', 'Logistics cap · ' + n + ' of ' + CW.caps.logisticsPerInterview + ' messages for this interview'); run.pc++; return; }
   }
+  // the agent's daily cap
+  if(!jsCorp()){ const capA = (TENANT_AGENT_CONFIG[wf.agentId] || {}).dailyCap; if(capA != null && cwSentToday(function(l){ return l.agentId === wf.agentId; }).length >= capA){ if(run.holdReason !== 'Daily cap') cwLog(run, cwStepLabel(op), 'Skipped', 'Daily cap · ' + capA + ' a day for this agent · rescheduled'); cwHold(run, 'waiting', 'Daily cap', cwNextDayMs() / 60000); return; } }
   // 6. collision lock: one person, one outreach workflow at a time
   if(cwIsOutreach(wf) && !s.logistics){
     const other = WORKFLOW_RUNS.find(function(r){ return r !== run && r.personKey === run.personKey && ['running','waiting','held','queued'].indexOf(r.status) > -1 && r.startedAt < run.startedAt && r.sent > 0 && (wfFindById(r.workflowId) || {}).status === 'Live' && cwIsOutreach(wfFindById(r.workflowId)); });
@@ -40381,8 +40406,8 @@ function cwRunStep(run){
   if(CW.failNext > 0 || (!CW.seeding && (cwHash(run.id + run.pc) % 211) === 0 && run.tries < 1)){ if(CW.failNext > 0) CW.failNext--; return cwFail(run, wf, op.op === 'li' ? 'LinkedIn session timed out' : s.channel === 'whatsapp' ? 'WhatsApp API timeout' : 'Mailbox temporarily unavailable'); }
   CW_IDEM[idem] = true;
   const textUsed = s.ab ? (cwHash(run.id) % 100 < (s.split || 50) ? s.a : s.b) : null;
-  const how = run.approved ? 'approved' : 'template', preview = cwTemplateText(textUsed || s, c, wf, how);
-  const entry = cwLedger({ disclosure:cwDisclosureKind(how), approvedBy:run.approved ? (run.approvedBy || null) : null, channel:run.lastChannel, senderId:ch.senderId || '-', sender:ch.sender || '', personKey:run.personKey, workflowId:wf.id, runId:run.id, status:'sent', reason:'', action:s.action || 'send', logistics:!!s.logistics, text:preview, variant:textUsed ? (textUsed === s.a ? 'A' : 'B') : '', at:ch.at });
+  const how = run.approved ? 'approved' : 'template', preview = run.approved && run.editedText ? run.editedText : cwTemplateText(textUsed || s, c, wf, how);   // an approver's edit is what goes out
+  const entry = cwLedger({ disclosure:cwDisclosureKind(how), approvedBy:run.approved ? (run.approvedBy || null) : null, channel:run.lastChannel, senderId:ch.senderId || '-', sender:ch.sender || '', personKey:run.personKey, workflowId:wf.id, runId:run.id, status:'sent', reason:'', action:s.action || 'send', logistics:!!s.logistics, joiningDay:!!s.joiningDay, text:preview, variant:textUsed ? (textUsed === s.a ? 'A' : 'B') : '', at:ch.at });
   run.sent++; run.tries = 0; run.pc++; run.status = 'running'; run.nextAt = cwNow(); run.approved = false; run.holdReason = '';
   if(entry.channel === 'whatsapp'){ WA_BUSINESS_ACCOUNT.messagesToday = cwSentToday(function(l){ return l.channel === 'whatsapp'; }).length; }
   if(s.action === 'invite' || s.action === 'accept'){ run.invitedAt = run.invitedAt || cwNow(); }
@@ -40451,7 +40476,7 @@ function cwRunEngine(){
 }
 function cwApprove(id, yes){
   const a = CW_APPROVALS.find(function(x){ return x.id === id; }); if(!a || a.status !== 'pending') return;
-  if(!sCan('kairo','Approve agent messages') && !sCan('kairo','Configure')){ toast('You cannot approve agent messages.'); return; }
+  if(!sCan('kairo','Approve agent messages') && !sCan('kairo','Configure') && !(a.ownerId && a.ownerId === currentUserId())){ toast('You cannot approve agent messages.'); return; }   // a recruiter approves their own Suggest items
   a.status = yes ? 'approved' : 'rejected'; a.decidedAt = new Date().toISOString(); a.decidedByName = (currentActingUser() || {}).name || 'A person';
   const run = WORKFLOW_RUNS.find(function(r){ return r.id === a.runId; });
   if(run){ if(yes){ run.approved = true; run.approvedBy = (currentActingUser() || {}).name || 'A person'; run.status = 'waiting'; run.nextAt = cwNow(); cwLog(run, 'Approval', 'Approved', 'Approved by ' + ((currentActingUser() || {}).name || 'a person')); } else { cwFinish(run, 'stopped', 'Message rejected by ' + ((currentActingUser() || {}).name || 'a person')); } }
@@ -40649,7 +40674,7 @@ function cwOffAgent(a, acc, st){
     '<p class="o-card__sub" style="margin-top:8px">' + (disabled ? 'Oontu has paused this agent for every workspace. It comes back when Oontu resumes it.' : '₹' + a.price.amount.toLocaleString('en-IN') + ' per ' + a.price.per + '. ' + a.trialDays + '-day trial.') + '</p>' +
     (cta ? '<div style="display:flex;gap:8px;margin-top:12px">' + cta + '</div>' : '') + '</div>';
 }
-function cwAskOwner(id){ logAudit('Cowork', 'Asked the Owner to add an agent', agentById(id).name); CW.notes.push({ at:cwNow(), to:'owner', text:((currentActingUser() || {}).name || 'An Admin') + ' asked to add ' + agentById(id).name + '.' }); toast('Asked the Owner. They will see it in their notifications.'); }
+function cwAskOwner(id){ const who = (currentActingUser() || {}).name || 'An Admin', text = who + ' asked to add ' + agentById(id).name + '.'; logAudit('Cowork', 'Asked the Owner to add an agent', agentById(id).name); CW.notes.push({ at:cwNow(), to:'owner', text:text }); if(!jsCorp()){ const o = caOwnerUser(); if(o) CW.tasks.push({ at:cwNow(), text:text, ownerId:o.id, ask:id }); } toast('Asked the Owner. They will see it in their ' + (jsCorp() ? 'notifications' : 'To do') + '.'); }
 
 /* ---------- overview ---------- */
 function cwApprovalsFor(id){ return CW_APPROVALS.filter(function(x){ return x.status === 'pending' && (WORKFLOWS.find(function(w){ return w.id === x.wfId; }) || {}).agentId === id; }); }
@@ -41823,7 +41848,7 @@ function cwWaQuality(v){ if(!sCanEdit('integrations')) return; const prev = WA_B
 
 /* ---------- Workspace → Cowork ---------- */
 function cwPauseCard(ed){
-  return sCard('Pause all Cowork', 'Stops every agent and every workflow at once. Nothing is sent until you resume.', CW.pauseAll.on
+  return sCard('Pause all Cowork', jsCorp() ? 'Stops every agent and every workflow at once. Nothing is sent until you resume.' : 'Stops every agent at once. Nothing is sent until you resume.', CW.pauseAll.on
     ? sRow('Paused', 'By ' + sEsc(CW.pauseAll.by) + ' · ' + sEsc(CW.pauseAll.at) + ' · ' + sEsc(CW.pauseAll.reason), oBadge('danger', 'All Cowork paused') + (ed ? sBtn('Resume all Cowork', 'cwSetPauseAll(false); settingsRefresh()', 'primary') : ''))
     : sRow('Running', 'Every agent follows its own settings below.', oBadge('success', 'Running') + (ed ? sBtn('Pause all Cowork', "cwAskPauseAll2()") : '')));
 }
@@ -41855,14 +41880,14 @@ function sec_contactPrefs(ed){
     sCard('Rules every message follows', '',
       sRow('Unsubscribe', 'Every outreach email carries an unsubscribe line. Clicking it adds the person here.', oBadge('neutral', 'Always on')) +
       sRow('WhatsApp STOP', 'A reply of “STOP” adds the person here.', oBadge('neutral', 'Always on')) +
-      sRow('Messages per person', 'Across all agents and channels. Interview and offer logistics are exempt, up to 4 per interview.', '<select class="app-input app-select s-ctl" aria-label="Messages per week"' + (ed ? ' onchange="cwSetWeekly(this.value)"' : ' disabled') + '>' + [1, 2, 3].map(function(n){ return '<option value="' + n + '"' + (CW.caps.perPersonWeek === n ? ' selected' : '') + '>1 a day, ' + n + ' a week</option>'; }).join('') + '</select>') +
+      sRow('Messages per person', jsCorp() ? 'Across all agents and channels. Interview and offer logistics are exempt, up to 4 per interview.' : 'Across Engagement and LinkedIn Outreach. Interviews keep a cap of 4 per interview; Offer & Joining has its own limits.', '<select class="app-input app-select s-ctl" aria-label="Messages per week"' + (ed ? ' onchange="cwSetWeekly(this.value)"' : ' disabled') + '>' + (jsCorp() ? [1, 2, 3] : [1, 2]).map(function(n){ return '<option value="' + n + '"' + (CW.caps.perPersonWeek === n ? ' selected' : '') + '>1 a day, ' + n + ' a week</option>'; }).join('') + '</select>') +
       sRow('Quiet hours', 'In the person’s own timezone. A message outside them waits for the next window.', '<span class="s-val">09:00 to 19:00, Monday to Saturday</span>') +
       sRow('Say when Kairo wrote the message', 'Adds one line at the end of every message Kairo drafted. When a person approved that message: “Drafted by Kairo, Oontu’s assistant, and approved by a person on our team.” When it went out on its own from an approved template (acknowledgements, follow-ups, reminders, consent and time links): “Drafted by Kairo, Oontu’s assistant, from a template our team approved.” Messages you write yourself get no line.', sSwitch(sGet('hiring.aiDisclose'), 'hiring.aiDisclose', ed, 'AI disclosure')) +
       (sIsCorporate() ? '' : sRow('Clients’ employees', 'People who work at an active client are never contacted.', '<span class="s-val">' + CLIENTS.length + ' clients</span>')));
 }
 function cwSuppressAdd(){ const k = (document.getElementById('sup-who') || {}).value, why = (document.getElementById('sup-why') || {}).value; if(!k){ toast('Choose a person.'); return; } cwSuppress(k, why); WORKFLOW_RUNS.forEach(function(r){ if(r.personKey === k && ['queued','running','waiting','held'].indexOf(r.status) > -1) cwFinish(r, 'stopped', 'On the suppression list: ' + why); }); toast('Added. Every running sequence for them has stopped.'); settingsRefresh(); }
 function cwSuppressRemove(i){ const s = SUPPRESSION_LIST.splice(i, 1)[0]; if(s){ logAudit('Cowork', 'Removed from the suppression list', s.name + ' · was ' + s.reason); toast('Removed'); } settingsRefresh(); }
-function cwSetWeekly(v){ const prev = CW.caps.perPersonWeek; CW.caps.perPersonWeek = Math.min(3, +v); logAudit('Cowork', 'Weekly message limit per person changed', prev + ' → ' + CW.caps.perPersonWeek); toast('Saved'); settingsRefresh(); }
+function cwSetWeekly(v){ const prev = CW.caps.perPersonWeek; CW.caps.perPersonWeek = Math.min(jsCorp() ? 3 : 2, +v); logAudit('Cowork', 'Weekly message limit per person changed', prev + ' → ' + CW.caps.perPersonWeek); toast('Saved'); settingsRefresh(); }
 
 /* ---------- tenant detail: LinkedIn accounts (counts and health only, never content) ---------- */
 function cwTenantLiHTML(tenantId){
@@ -46527,8 +46552,8 @@ function cpSendCheck(c, p, stepIdx){
   if(c.status !== 'running') return { blocked:'Campaign ' + c.status, hold:true };
   if(cwSuppression(key)) return { blocked:'On the do-not-contact list', stop:true };
   const win = c.rules.hours, dow = wsParts(CP_NOW()).dow; if(dow === 0 || c.rules.days.indexOf(dow) === -1 || !cwInWindow(CP_NOW(), win)) return { blocked:'Outside send hours (' + win.replace('-', ' to ') + ', never Sundays)', hold:true };
-  const day = cwSent(function(l){ return l.personKey === key; }, CP_NOW() - CP_DAY).length, wk = cwSent(function(l){ return l.personKey === key; }, CP_NOW() - 7 * CP_DAY).length;
-  if(day >= CW.caps.perPersonDay) return { blocked:'Already contacted in the last day by Oontu', hold:true }; if(wk >= CW.caps.perPersonWeek) return { blocked:'Three messages this week from Oontu already', hold:true };
+  const day = cwSent(function(l){ return l.personKey === key && cwCountsAgainstLimit(l); }, CP_NOW() - CP_DAY).length, wk = cwSent(function(l){ return l.personKey === key && cwCountsAgainstLimit(l); }, CP_NOW() - 7 * CP_DAY).length;
+  if(day >= CW.caps.perPersonDay) return { blocked:'Already contacted in the last day by Oontu', hold:true }; if(wk >= CW.caps.perPersonWeek) return { blocked:'Weekly limit reached: ' + wk + ' messages this week from Oontu already', hold:true };
   const lock = cpActiveLock(cand, c.id); if(lock && lock.state !== 'queued') return { blocked:'In another campaign right now', hold:true };
   const ch = cpChannelFor(c, p, stepIdx); if(!ch) return { blocked:'No channel they agreed to is connected', stop:true };
   const used = cwSentToday(function(l){ return l.channel === ch && l.campaignId === c.id; }).length; if(used >= (c.pace[ch] || {}).daily) return { blocked:'Daily limit for this campaign reached (' + used + ')', hold:true };
@@ -46546,7 +46571,7 @@ function cpSendStep(c, p){
   const s = c.message.steps[p.step], ab = p.step === 0 && c.message.ab && s.textB != null;
   if(p.step === 0 && c.message.ab){ p.version = cwHash(p.id) % 2 ? 'B' : 'A'; }
   const text = p.step === 0 && p.version === 'B' && s.textB ? cpRenderText(s.textB, cand, c) : chk.text;
-  cwLedger({ channel:chk.channel, senderId:c.message.senderId || c.ownerId, personKey:personKeyOf(cand), campaignId:c.id, campaignPersonId:p.id, status:'sent', action:'send', text:text, workflowId:null, runId:null });
+  cwLedger({ agentId:chk.channel === 'linkedin' ? 'linkedin' : 'engagement', jobId:c.jobId, candidateId:cand.id, channel:chk.channel, senderId:c.message.senderId || c.ownerId, personKey:personKeyOf(cand), campaignId:c.id, campaignPersonId:p.id, status:'sent', action:'send', text:text, workflowId:null, runId:null });
   p.channel = chk.channel; p.lastAt = CP_NOW(); p.state = p.state === 'queued' ? 'contacted' : p.state; cpSay(p, 'kairo', text);
   if(p.step === 0){ c.stats.reached++; if(c.bySource[p.play]) c.bySource[p.play].reached++; if(!c.message.versions) c.message.versions = []; let v = c.message.versions.find(function(x){ return x.id === p.version; }); if(!v){ v = { id:p.version, sent:0, replies:0, status:'testing' }; c.message.versions.push(v); } v.sent++; }
   if(c.byChannel[chk.channel]) c.byChannel[chk.channel].sent++;
@@ -47650,13 +47675,13 @@ function cpJobFilter(jobId, f){ CP_JF = f; refreshJobWorkspace(jobId, 'applicant
 (function(){
   const base = window.jobWsApplicantsHTML;
   window.jobWsApplicantsHTML = function(j){
-    const subs = cpJobSubs(j); if(!subs.length) return base(j);
+    const subs = cpJobSubs(j); if(!subs.length || !jsCorp()) return base(j);   // agencies have no Campaign filter
     const ready = subs.filter(function(s){ return s.campaignStage === 'Ready to call'; });
     const bar = '<div class="cp-appbar" role="group" aria-label="Applicants filter">' + [['all', 'All'], ['campaign', 'Campaign <span class="cp-cnt">' + subs.length + '</span>'], ['ready', 'Ready to call <span class="cp-cnt">' + ready.length + '</span>']].map(function(x){ return '<button type="button" class="cp-fbtn' + (CP_JF === x[0] ? ' is-on' : '') + '" aria-pressed="' + (CP_JF === x[0]) + '" onclick="cpJobFilter(\'' + j.id + '\',\'' + x[0] + '\')">' + x[1] + '</button>'; }).join('') + '</div>';
     const skills = (j.skills || []).filter(function(x){ return x !== 'General'; });
     const rowFor = function(sb){
       const c = byId(sb.candidateId); if(!c) return ''; const cam = cpById(sb.campaignId), p = cpPerson(sb.campaignPersonId);
-      const action = sb.campaignStage === 'Ready to call' ? '<button type="button" class="o-btn" onclick="cpOpen(\'' + sb.campaignId + '\',\'applicants\')">Call</button>' : '<span class="text-[11px] text-zinc-500">' + cpEsc(sb.campaignStage || '') + '</span>';
+      const action = sb.campaignStage === 'Ready to call' ? '<button type="button" class="o-btn" onclick="' + (jsCorp() ? 'cpOpen(\'' + sb.campaignId + '\',\'applicants\')' : 'cpCallOpen(\'' + sb.campaignPersonId + '\')') + '">Call</button>' : '<span class="text-[11px] text-zinc-500">' + cpEsc(sb.campaignStage || '') + '</span>';
       return jobWsRow(j, c, { badge:' <span class="ml-1.5 align-middle text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">' + cpEsc(sb.source) + '</span>', match:skills.length ? computeJobMatchPct(c, { skills:skills }) : null, action:action, sub:'<p class="text-[11px] text-zinc-400 truncate">' + (p && p.slotText ? 'Call ' + cpEsc(p.slotText) + ' · ' : '') + 'Score ' + (sb.campaignScore || '') + (cam ? ' · ' + cpEsc(cam.title) + ' campaign' : '') + '</p>' + cpAnswerChips(sb) });
     };
     if(CP_JF === 'campaign' || CP_JF === 'ready') return bar + '<ul class="divide-y divide-zinc-100">' + (CP_JF === 'ready' ? ready : subs).map(rowFor).join('') + '</ul>';
@@ -47672,7 +47697,7 @@ function cpJobFilter(jobId, f){ CP_JF = f; refreshJobWorkspace(jobId, 'applicant
   /* the job header: one quiet line */
   const rd = window.renderJobDetail;
   window.renderJobDetail = function(id){
-    const html = rd(id), j = jobById(id); if(!j || !agentAccess('engagement').on && !agentAccess('talent-discovery').on) return html;
+    const html = rd(id), j = jobById(id); if(!jsCorp() || !j || !agentAccess('engagement').on && !agentAccess('talent-discovery').on) return html;   // agency: the job page has the "Kairo on this job" panel instead
     const c = CAMPAIGNS.find(function(x){ return x.jobId === id && ['running','review','paused','draft'].indexOf(x.status) > -1 && cpVisible(x); });
     const line = c ? '<p class="cp-jobline">Campaign ' + (c.status === 'running' ? 'running' : c.status === 'paused' ? 'paused' : c.status === 'review' ? 'waiting for your check' : 'draft') + ' · ' + c.stats.ready + ' of ' + c.goal.ready + ' ready · <a href="#" onclick="cpOpen(\'' + c.id + '\'); return false">Open</a></p>' : (sCan('kairo', 'Use agents') && j.status === 'Active' ? '<p class="cp-jobline"><a href="#" onclick="cpQuick(\'' + j.id + '\'); return false">Start campaign</a></p>' : '');
     return line ? html.replace('<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-5">', line + '<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-5">') : html;
@@ -47694,8 +47719,8 @@ function cpOpenCallList(){
     const items = base(me); try {
       const rows = cpReadyCalls().filter(function(r){ return r.c.ownerId === me.id; });
       const dec = cpMyDay().filter(function(x){ return x.w >= 8 && x.c.ownerId === me.id; });
-      if(dec.length) items.unshift({ tone:'danger', icon:'check', title:dec.length === 1 ? dec[0].t : dec.length + ' hiring decisions in Cowork', meta:dec.length === 1 ? dec[0].m : dec.slice(0, 2).map(function(x){ return x.t; }).join(' · '), cta:dec.length === 1 ? dec[0].cta : 'Open', onclick:dec.length === 1 ? dec[0].on : "CP.top='campaigns'; showView('kairo-team')" });
-      if(rows.length){ items.splice(dec.length ? 1 : 0, 0,{ tone:'warn', icon:'cal', title:rows.length + (rows.length === 1 ? ' person ready to call' : ' people ready to call'), meta:'best between 6 and 8 pm', cta:'Open call list', onclick:'cpOpenCallList()' }); }
+      if(dec.length && jsCorp()) items.unshift({ tone:'danger', icon:'check', title:dec.length === 1 ? dec[0].t : dec.length + ' hiring decisions in Cowork', meta:dec.length === 1 ? dec[0].m : dec.slice(0, 2).map(function(x){ return x.t; }).join(' · '), cta:dec.length === 1 ? dec[0].cta : 'Open', onclick:dec.length === 1 ? dec[0].on : "CP.top='campaigns'; showView('kairo-team')" });
+      if(rows.length && jsCorp()){ items.splice(dec.length ? 1 : 0, 0,{ tone:'warn', icon:'cal', title:rows.length + (rows.length === 1 ? ' person ready to call' : ' people ready to call'), meta:'best between 6 and 8 pm', cta:'Open call list', onclick:'cpOpenCallList()' }); }
     } catch(e){}
     return items;
   };
@@ -47706,24 +47731,11 @@ function cpOpenCallList(){
   const base = window.tsTimeline;
   window.tsTimeline = function(cid){
     const ev = base(cid); try {
-      CAMPAIGN_PEOPLE.filter(function(p){ return p.candidateId === cid; }).forEach(function(p){ const c = cpById(p.campaignId); p.chat.forEach(function(m){ ev.push({ at:m.at, by:m.who === 'cand' ? 'Candidate' : 'Kairo for ' + cpOwner(c).name, kind:'Campaign', text:(m.who === 'cand' ? 'Replied: ' : 'Sent: ') + m.text + ' · ' + c.title + ' campaign', i:ev.length }); }); });
+      CAMPAIGN_PEOPLE.filter(function(p){ return p.candidateId === cid; }).forEach(function(p){ const c = cpById(p.campaignId); p.chat.forEach(function(m){ ev.push({ at:m.at, by:m.who === 'cand' ? 'Candidate' : 'Kairo for ' + cpOwner(c).name, kind:jsCorp() ? 'Campaign' : 'Kairo · Engagement', text:(m.who === 'cand' ? 'Replied: ' : 'Sent: ') + m.text + (jsCorp() ? ' · ' + c.title + ' campaign' : ' · ' + c.title), i:ev.length }); }); });
       ev.sort(function(a, b){ return b.at - a.at; });
     } catch(e){}
     return ev;
   };
-})();
-
-/* ---------- money: pipeline from campaigns, in the PayTrack forecast and the client target ---------- */
-function cpPipeline(clientName){ return CAMPAIGNS.filter(function(c){ return c.org === 'agency' && c.status !== 'done' && cpVisible(c) && (!clientName || cpJob(c.jobId).client === clientName); }).reduce(function(s, c){ return s + cpExpected(c).revenue; }, 0); }
-(function(){
-  const pt = window.payTrackRecruiterBodyHTML;
-  window.payTrackRecruiterBodyHTML = function(){
-    const html = pt(); if(cpIsCorp() || cpMoneyMode() === 'none') return html; const v = cpPipeline(); if(!v) return html;
-    const card = '<div class="o-card cp-pipe" id="cp-pipe">' + cpTw('<span class="stat__l">Pipeline from campaigns</span><span class="stat__v">' + (cpMoneyMode() === 'placements' ? CAMPAIGNS.filter(function(c){ return c.org === 'agency' && c.status !== 'done' && cpVisible(c); }).reduce(function(s, c){ return s + cpExpected(c).placements; }, 0).toFixed(1) + ' placements' : cpMoney(v)) + '</span>', 'Pipeline from campaigns', CAMPAIGNS.filter(function(c){ return c.org === 'agency' && c.status !== 'done' && cpVisible(c); }).slice(0, 4).map(function(c){ return [c.title, cpMoneyMode() === 'placements' ? cpExpected(c).placements : cpMoney(cpExpected(c).revenue)]; }), 'Expected fees from people ready, submitted or in interview, weighted by stage. Not yet earned.') + '</div>';
-    return card + html;
-  };
-  const ec = window.clEarnCard;
-  if(ec) window.clEarnCard = function(c){ const html = ec(c); try { const v = cpPipeline(c.name); if(v && !cpIsCorp() && cpMoneyMode() !== 'none' && cpMoneyMode() !== 'placements') return html.replace(/<\/div>$/, '<p class="cp-pipeline-line">Pipeline from campaigns · ' + cpMoney(v) + '</p></div>'); } catch(e){} return html; };
 })();
 
 /* ---------- cp-boot.js ---------- */
@@ -50567,6 +50579,636 @@ function asContractsViewHTML(){
 function asBuildUI(id){ const month = asMonthPick || (document.getElementById('as-month') || {}).value, r = asBuildInvoice(id, month); toast(r.ok ? 'Invoice drafted for ' + asMonthLabel(month) + '. Raise it from Invoices.' : r.reason); ptRefresh(); }
 </script>
 
+<script id="cowork-agents-script">
+/* ============================================================
+   COWORK: five agents, two tabs (Agents and Activity). Agency workspaces.
+   The cw* engine underneath is unchanged in what it guards: the ledger, caps, quiet hours, suppression, disclosure lines, approvals, tiers.
+   A company workspace keeps its campaign-first Cowork for now (see the campaign module and the workflow builder, both still in this file).
+============================================================ */
+const CA_ACTIONS = {
+  'talent-discovery':[ { id:'score', label:'Score and rank picks', level:'auto' }, { id:'shortlist', label:'Tell the job lead when 3 or more new picks are above the threshold', level:'auto' },
+    { id:'addPipeline', label:'Add a pick to the job', level:'suggest' }, { id:'handoff', label:'Hand a pick to Engagement', level:'suggest' }, { id:'reject', label:'Reject a candidate', level:'person' } ],
+  'engagement':[ { id:'firstTouch', label:'New job match: first message to someone not contacted before', level:'suggest' }, { id:'ack', label:'New applicant thank-you', level:'auto' }, { id:'followup', label:'Follow-up when there is no reply', level:'auto' },
+    { id:'waiting', label:'Waiting on the candidate: consent link or documents', level:'auto' }, { id:'keepWarm', label:'Keep warm while the client has the profile', level:'auto' }, { id:'reengage', label:'Re-engage pool candidates', level:'suggest' },
+    { id:'sendClient', label:'Shortlist or send to a client', level:'person' } ],
+  'interviews':[ { id:'slots', label:'Offer slots and book when both sides agree', level:'auto' }, { id:'bookOutside', label:'Book a slot outside the rules', level:'suggest' }, { id:'remind', label:'Reminders to the candidate and interviewer', level:'auto' },
+    { id:'resched', label:'Offer the next 3 free slots for a reschedule', level:'auto' }, { id:'chase', label:'Chase client feedback', level:'auto' }, { id:'draftOutcome', label:'Draft the stage outcome from the client’s reply', level:'suggest' }, { id:'outcome', label:'Record the interview outcome', level:'person' } ],
+  'offers-joining':[ { id:'summary', label:'Send the candidate a short offer summary', level:'auto' }, { id:'risk', label:'Work out dropout risk', level:'auto' }, { id:'checkin', label:'Pre-joining and after-joining check-ins', level:'auto' },
+    { id:'backup', label:'Ask for 3 backup picks when risk is High', level:'suggest' }, { id:'suggestJoined', label:'Suggest marking Joined when both sides confirm', level:'suggest' }, { id:'terms', label:'Change offer terms', level:'person' }, { id:'joined', label:'Mark Joined or Left', level:'person' } ],
+  'linkedin':[ { id:'visit', label:'Visit the profile', level:'auto' }, { id:'invite', label:'Send a connection request', level:'auto' }, { id:'template', label:'First message after they accept', level:'suggest' }, { id:'followup', label:'Follow up after 3 days', level:'auto' }, { id:'withdraw', label:'Withdraw invites still pending', level:'auto' } ],
+};
+const CA_DOES = { 'talent-discovery':'Finds people for every open job.', 'engagement':'Talks to candidates on WhatsApp, or email when WhatsApp isn’t connected.', 'interviews':'Gets interviews booked, attended and fed back.',
+  'offers-joining':'Protects the placement from offer to the end of the replacement window.', 'linkedin':'Reaches people on LinkedIn through each recruiter’s Oontu extension.' };
+/* The agent's own settings. Hard caps can be lowered, never raised (max). */
+const CA_FIELDS = {
+  'talent-discovery':[
+    { k:'threshold', label:'Match threshold', help:'Picks must score at least this.', unit:'%', def:70, min:0, max:100 }, { k:'picksPerJob', label:'Picks per job', def:10, min:1, max:50 },
+    { k:'mustHave', label:'Must-have skills', help:'Picks must have all of them.', type:'switch', def:true }, { k:'expPad', label:'Experience', help:'The job’s range, plus or minus this.', unit:'years', def:1, min:0, max:10 },
+    { k:'location', label:'Location', type:'select', def:'relocate', opts:[['same','Same city only'],['relocate','Or willing to relocate'],['remote','Or remote, if allowed']] },
+    { k:'noticeFlag', label:'Notice period', help:'Up to the job’s notice. Flag, don’t drop, up to this much more.', unit:'days', def:30, min:0, max:90 }, { k:'ctcPad', label:'Expected pay', help:'Within the job’s range plus this. Uses the candidate’s own stated figure.', unit:'%', def:10, min:0, max:50 },
+    { k:'placedDays', label:'Exclude: placed in the last', unit:'days', def:90, min:0, max:365 }, { k:'contactedDays', label:'Exclude: contacted by any agent in the last', unit:'days', def:14, min:0, max:90 },
+    { k:'rankApplicants', label:'Also rank the job’s own applicants', type:'switch', def:true }, { k:'flagMissing', label:'Flag missing required fields', type:'switch', def:true } ],
+  'engagement':[
+    { k:'channelOrder', label:'Channels and fallback', type:'select', def:'whatsapp-email', opts:[['whatsapp-email','WhatsApp, then email'],['email-whatsapp','Email, then WhatsApp'],['email','Email only'],['whatsapp','WhatsApp only']] },
+    { k:'language', label:'Language', type:'select', def:'English', opts:['English','Hindi','Gujarati'] }, { k:'tone', label:'Tone', type:'select', def:'Friendly', opts:['Friendly','Formal','Brief'] },
+    { k:'perWeek', label:'Messages per candidate per week', help:'Across Engagement and LinkedIn Outreach. At most 2.', def:2, min:1, max:2 } ],
+  'interviews':[
+    { k:'rounds', label:'Which rounds', type:'select', def:'all', opts:[['all','All rounds'],['client','Client rounds only']] }, { k:'buffer', label:'Buffer between interviews', unit:'minutes', def:30, min:0, max:120 }, { k:'minNotice', label:'Least notice for a slot', unit:'hours', def:4, min:0, max:72 },
+    { k:'remindCand1', label:'First reminder to the candidate', unit:'hours before', def:24, min:1, max:72 }, { k:'remindCand2', label:'Second reminder to the candidate', help:'The only message allowed outside working hours.', unit:'hours before', def:2, min:1, max:12 }, { k:'remindPanel', label:'Reminder to the interviewer', unit:'hours before', def:24, min:1, max:72 },
+    { k:'chase1', label:'First client feedback chase', unit:'hours after', def:24, min:1, max:96 }, { k:'chase2', label:'Second chase, then hand to the recruiter', unit:'hours after', def:48, min:1, max:168 },
+    { k:'channels', label:'Channels', type:'select', def:'whatsapp-email', opts:[['whatsapp-email','WhatsApp, then email'],['email','Email only']] } ],
+  'offers-joining':[
+    { k:'showCtc', label:'Show pay in the offer summary', help:'Off: designation and joining date only.', type:'switch', def:false }, { k:'checkDays', label:'Check-ins before joining', help:'Weekly, then these days before joining. At most 2 messages a week, plus the joining-day check.', type:'text', def:'7, 3, 1' },
+    { k:'postDays', label:'Check-ins after joining', help:'Fixed: only these go out after joining.', type:'fixed', def:'Day 7, 30 and 60' }, { k:'riskNoReply', label:'Risk: no reply in', unit:'hours', def:48, min:1, max:168 }, { k:'riskNotice', label:'Risk: notice period over', unit:'days', def:60, min:0, max:180 }, { k:'riskJoin', label:'Risk: joining date more than', unit:'days out', def:45, min:0, max:180 },
+    { k:'messageClient', label:'Message client contacts on the joining day', type:'switch', def:true }, { k:'channels', label:'Channels', type:'select', def:'whatsapp-email', opts:[['whatsapp-email','WhatsApp, then email'],['email','Email only']] } ],
+  'linkedin':[
+    { k:'invitesDay', label:'Connection requests a day', help:'Per LinkedIn account. Can go down, never above 20.', def:20, min:0, max:20 }, { k:'invitesWeek', label:'Connection requests a week', help:'Never above 100.', def:100, min:0, max:100 }, { k:'messagesDay', label:'Messages a day', help:'Never above 50.', def:50, min:0, max:50 }, { k:'visitsDay', label:'Profile visits a day', help:'Never above 80.', def:80, min:0, max:80 },
+    { k:'withdrawDays', label:'Withdraw invites still pending after', unit:'days', def:21, min:7, max:60 }, { k:'threshold', label:'Match threshold', unit:'%', def:70, min:0, max:100 },
+    { k:'autopause', label:'Auto-pause', help:'Acceptance under 20% after 50 invites, a LinkedIn warning, or more than 700 invites pending.', type:'fixed', def:'Always on' } ],
+};
+/* Engagement's plays: each can be switched on or off, and has its own template, timing and level. The recipes behind them run in the engine. */
+const CA_PLAYS = [
+  { id:'newMatch', step:'firstTouch', name:'New job match', does:'Messages picks above the threshold about the opening, with a short JD and the job link. Asks “Interested?”, then notice period, current and expected pay, and location.', tplName:'New job match', tpl:'Hi {{first_name}}, this is {{recruiter}}. We have a {{job_title}} opening that looks like a fit: {{job_link}}. Interested?', note:'Follow-ups to someone who has already answered are Auto.' },
+  { id:'thanks', step:'ack', name:'New applicant thank-you', does:'Thanks them and says what happens next.', tplName:'Application received', tpl:'Hi {{first_name}}, thanks for applying for {{job_title}}. {{recruiter}} will look at it and get back to you.' },
+  { id:'followUp', step:'followup', name:'Follow-up', does:'When there is no reply, then stops.', tplName:'Quiet candidate check-in', tpl:'Hi {{first_name}}, still open to the {{job_title}} role? A quick yes or no helps.', timing:[ { k:'days', label:'No reply after', unit:'days', def:2, min:1, max:14 }, { k:'max', label:'At most', unit:'follow-ups', def:2, min:1, max:2 } ] },
+  { id:'waiting', step:'waiting', name:'Waiting on the candidate', does:'Reminds them when the consent link is unanswered, or documents are pending.', tplName:'Waiting on the candidate', tpl:'Hi {{first_name}}, we still need your answer for the {{job_title}} role: {{link}}', timing:[ { k:'hours', label:'Remind after', unit:'hours', def:24, min:4, max:72 } ] },
+  { id:'keepWarm', step:'keepWarm', name:'Keep warm', does:'When the client has had the profile with no news: “Still with the client, I’ll update you”.', tplName:'Keep warm', tpl:'Hi {{first_name}}, your profile is still with the client for {{job_title}}. I’ll update you as soon as I hear.', timing:[ { k:'days', label:'After', unit:'days with no news', def:3, min:1, max:14 } ] },
+  { id:'reengage', step:'reengage', name:'Re-engage', does:'Pool candidates not contacted lately, who match an open job now.', tplName:'Re-engage', tpl:'Hi {{first_name}}, it’s been a while. We have a {{job_title}} opening you may like: {{job_link}}. Interested?', timing:[ { k:'days', label:'Not contacted in', unit:'days', def:60, min:14, max:365 } ] },
+];
+const CA_ACTION_WORDS = { send:'Sent a message', invite:'Sent a connection request', visit:'Visited the profile', message:'Sent a LinkedIn message', followup:'Sent a follow-up', follow:'Followed on LinkedIn', consent:'Asked them to agree', accept:'Connected on LinkedIn' };
+const CA = { tab:'agents', agent:null, sub:'overview', draft:null, needAll:false, limit:50, keep:false, open:null, f:{ agent:'', job:'', recruiter:'', result:'', date:'' } };
+let CA_SUGGEST = [], CA_SUGGEST_NEXT = 1;
+
+/* ---------- the catalog, for agencies ---------- */
+(function(){
+  AGENT_CATALOG.forEach(function(a){
+    a.corpSteps = a.steps; a.agencySteps = CA_ACTIONS[a.id]; a.agencySteps.forEach(function(s){ s.max = s.level; });
+    const corpDoes = a.does, corpName = a.name;
+    Object.defineProperty(a, 'steps', { enumerable:true, configurable:true, get:function(){ return jsCorp() ? a.corpSteps : a.agencySteps; }, set:function(v){ if(jsCorp()) a.corpSteps = v; else a.agencySteps = v; } });
+    Object.defineProperty(a, 'does', { enumerable:true, configurable:true, get:function(){ return jsCorp() ? corpDoes : CA_DOES[a.id]; }, set:function(){} });
+    Object.defineProperty(a, 'name', { enumerable:true, configurable:true, get:function(){ return jsCorp() || a.id !== 'linkedin' ? corpName : 'LinkedIn Outreach'; }, set:function(){} });
+    const cfg = TENANT_AGENT_CONFIG[a.id]; a.agencySteps.forEach(function(s){ cfg.steps[s.id] = s.level; });   // a company workspace stays capped by its own catalog's levels
+    cfg.scope = { mode:'all', clients:[], jobs:[] }; cfg.settings = {}; cfg.team = {}; cfg.saved = null;
+    CA_FIELDS[a.id].forEach(function(f){ cfg.settings[f.k] = f.def; });
+    if(a.id === 'engagement'){ cfg.plays = {}; CA_PLAYS.forEach(function(p){ const t = {}; (p.timing || []).forEach(function(x){ t[x.k] = x.def; }); cfg.plays[p.id] = { on:true, tpl:p.tpl, timing:t }; if(!WSX.templates.messages.some(function(m){ return m[0] === p.tplName; })) WSX.templates.messages.push([p.tplName, 'WhatsApp', 'Approved']); }); }
+  });
+  // The weekly limit: 2 for agencies; a company workspace keeps its own.
+  let corpWeek = CW.caps.perPersonWeek, agencyWeek = 2;
+  Object.defineProperty(CW.caps, 'perPersonWeek', { enumerable:true, configurable:true, get:function(){ return jsCorp() ? corpWeek : agencyWeek; }, set:function(v){ if(jsCorp()) corpWeek = v; else agencyWeek = Math.min(2, v); } });
+})();
+
+/* ---------- who can do what ---------- */
+function caOwnerish(){ return cwIsOwnerish(); }
+function caOwner(){ return sCan('kairo','Manage subscription'); }
+function caManager(){ return !caOwnerish() && sCan('team','View Team'); }
+function caTeamIds(){ const me = currentActingUser(); if(!me) return []; if(caOwnerish()) return RECRUITER_ROSTER.map(function(u){ return u.id; }); return caManager() ? scopeTreeIds(me) : [me.id]; }
+function caJobMine(j){ if(!j) return false; if(caOwnerish()) return true; const ids = caTeamIds(), me = currentActingUser(); return jobPeopleIds(j).some(function(x){ return ids.indexOf(x) > -1; }) || (!!me && ids.some(function(x){ const u = rosterById(x); return u && u.name === j.recruiter; })); }
+function caCanEditSettings(){ return caOwnerish() || caManager(); }
+function caHasMoney(){ return canI('billing','View'); }
+// No ₹ in Cowork without the money permission: messages can quote a pay range, so it is masked when they are shown.
+function caText(s){ s = String(s == null ? '' : s); return caHasMoney() ? s : s.replace(/₹\s?[\d.,]+\s*(?:L|LPA|Cr|K|lakh)?(?:\s*(?:–|-|to)\s*₹?\s?[\d.,]+\s*(?:L|LPA|Cr|K|lakh)?)?(?:\s*LPA)?/gi, '(pay hidden)'); }
+
+/* ---------- status ---------- */
+function caStateHTML(st){ return '<span class="ca-state ca-state--' + st.key + '" data-state="' + st.key + '">' + cwEsc(st.label) + '</span>'; }
+/* ---------- scope, and pausing on one job ---------- */
+function caInScope(id, j){ const s = TENANT_AGENT_CONFIG[id].scope; if(!j) return true; if(s.mode === 'clients') return s.clients.indexOf(j.clientId) > -1 || s.clients.indexOf(j.client) > -1; if(s.mode === 'jobs') return s.jobs.indexOf(j.id) > -1; return true; }
+function caJobPaused(id, j){ return !!j && !!j.kairoPause && j.kairoPause[id] || null; }
+function caJobToggle(id, jobId){
+  const j = jobById(jobId); if(!j || !caJobMine(j)){ toast('Only people on this job can pause an agent on it.'); return false; }
+  j.kairoPause = j.kairoPause || {}; const was = j.kairoPause[id];
+  if(was) delete j.kairoPause[id]; else j.kairoPause[id] = { by:(currentActingUser() || {}).name || 'A person', at:cwNow() };
+  logAudit('Cowork', (was ? 'Resumed ' : 'Paused ') + agentById(id).name + ' on a job', j.title + ' · ' + j.client, { entityType:'Job', entityId:j.id, jobId:j.id });
+  caRecord({ agentId:id, action:was ? 'Resumed on this job' : 'Paused on this job', jobId:j.id, why:'Changed by ' + ((currentActingUser() || {}).name || 'a person'), level:'person', result:'Done' });
+  const el = document.getElementById('kairo-on-job'); if(el) el.outerHTML = caJobPanelHTML(j); return true;
+}
+function caJobPanelHTML(j){
+  const can = caJobMine(j);
+  return '<section class="o-card ca-jobpanel" id="kairo-on-job" aria-label="Kairo on this job"><h2 class="o-card__title">Kairo on this job</h2><div class="ca-jobpanel__grid">' + CW.order.map(function(id){
+    const a = agentById(id), s = caJobState(id, j), last = caRows({ agent:id, job:j.id })[0];
+    return '<div class="ca-jobpanel__a" data-agent="' + id + '"><div class="ca-jobpanel__h"><b>' + cwEsc(a.name) + '</b>' + (s.can && can ? '<button type="button" role="switch" aria-checked="' + s.on + '" aria-label="' + cwEsc(a.name) + ' on this job" class="app-switch' + (s.on ? ' is-on' : '') + '" onclick="caJobToggle(\'' + id + '\',\'' + j.id + '\')"><span class="app-switch__dot"></span></button>' : '') + '</div><small>' + cwEsc(s.text) + '</small>' + (last ? '<small class="ca-muted">' + cwEsc(caText(last.what)) + ' · ' + cwFmtAgo(last.at) + '</small>' : '') + '</div>';
+  }).join('') + '</div></section>';
+}
+(function(){
+  const rd = window.renderJobDetail;
+  window.renderJobDetail = function(id){
+    const html = rd(id), j = jobById(id); if(jsCorp() || !j || !oAgentsOn() || !sCan('kairo','Use agents')) return html;
+    const at = '<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-5">'; return html.indexOf(at) > -1 ? html.replace(at, caJobPanelHTML(j) + at) : html;
+  };
+})();
+
+/* ---------- one activity record for every agent action, written through the ledger ---------- */
+// { id, at, agentId, action, jobId, candidateId, channel, result, why, level:'auto'|'approved'|'person', approvedBy, text, reply }
+function caRecord(o){
+  const c = o.candidateId ? byId(o.candidateId) : null;
+  return cwLedger({ at:o.at, agentId:o.agentId, action:o.action, jobId:o.jobId || null, candidateId:o.candidateId || null, personKey:c ? personKeyOf(c) : '', channel:o.channel || null, senderId:o.senderId || 'kairo',
+    status:o.sent ? 'sent' : 'logged', result:o.result || (o.sent ? 'Sent' : 'Done'), why:o.why || '', level:o.level || (o.approvedBy ? 'approved' : 'auto'), approvedBy:o.approvedBy || null, text:o.text || '', reply:o.reply || '', logistics:!!o.logistics, workflowId:null, runId:null, reason:'' });
+}
+function caRowOf(l, runs){
+  const run = l.runId ? runs.get(l.runId) : null, wf = l.workflowId ? wfFindById(l.workflowId) : null, cam = l.campaignId && typeof cpById === 'function' ? cpById(l.campaignId) : null;
+  const agentId = l.agentId || (wf && wf.agentId) || (cam ? (l.channel === 'linkedin' ? 'linkedin' : 'engagement') : l.action === 'consent' ? 'engagement' : null); if(!agentId) return null;
+  const key = String(l.personKey || ''), m = /^(?:cand:|c)(\d+)$/.exec(key), candidateId = l.candidateId || (m ? +m[1] : null); if(/^client:/.test(key)) return null;
+  const jobId = l.jobId || (cam && cam.jobId) || (run && run.jobId) || (wf && wf.jobId) || null, c = candidateId ? byId(candidateId) : null, j = jobId ? jobById(jobId) : null;
+  const person = cam && l.campaignPersonId && typeof cpPerson === 'function' ? cpPerson(l.campaignPersonId) : null, lastCand = person && person.chat ? person.chat.filter(function(x){ return x.who === 'cand' && x.at >= l.at; })[0] : null;
+  const enrolled = run && run.log ? run.log.filter(function(x){ return x.result === 'Started'; })[0] : null;
+  return { id:l.id, at:l.at, agentId:agentId, action:l.action, what:CA_ACTION_WORDS[l.action] || l.action || 'Worked', jobId:jobId, job:j, candidateId:candidateId, candidate:c, channel:l.channel || '', result:l.result || ({ sent:'Sent', blocked:'Held', failed:'Failed', logged:'Done' }[l.status] || l.status || ''),
+    why:l.why || l.reason || (enrolled && enrolled.why) || (cam ? 'Matches ' + (j ? j.title : 'the job') : ''), level:l.level || (l.approvedBy ? 'approved' : 'auto'), approvedBy:l.approvedBy || null, text:l.text || '', reply:l.reply || (lastCand ? lastCand.text : '') || (run && run.replied ? 'They replied.' : ''), senderId:l.senderId };
+}
+function caRowVisible(r){
+  if(caOwnerish()) return true; const ids = caTeamIds();
+  if(r.job && caJobMine(r.job)) return true;
+  if(r.senderId && ids.indexOf(r.senderId) > -1 && !r.job) return true;
+  if(r.candidate && ids.indexOf(r.candidate.ownerId) > -1) return true;
+  return !!r.candidateId && !r.job ? SUBMISSIONS.some(function(s){ return s.candidateId === r.candidateId && ids.indexOf(s.recruiterId) > -1; }) : false;
+}
+function caRows(f){
+  f = f || {}; const runs = new Map(); WORKFLOW_RUNS.forEach(function(r){ runs.set(r.id, r); }); const out = [], now = cwNow(), since = f.date === 'today' ? now - CW_DAY : f.date === '7' ? now - 7 * CW_DAY : f.date === '30' ? now - 30 * CW_DAY : f.since || 0;
+  SEND_LEDGER.slice().reverse().forEach(function(l){ if(l.at < since) return; if(f.agent && l.agentId && l.agentId !== f.agent) return; const r = caRowOf(l, runs); if(!r) return;
+    if(f.agent && r.agentId !== f.agent) return; if(f.job && r.jobId !== f.job) return; if(f.result && r.result !== f.result) return; if(f.recruiter && r.senderId !== f.recruiter && !(r.job && jobPeopleIds(r.job).indexOf(f.recruiter) > -1)) return; if(!caRowVisible(r)) return; out.push(r); });
+  return out.sort(function(a, b){ return b.at - a.at; });
+}
+function caChannelWord(ch){ return ({ email:'Email', whatsapp:'WhatsApp', linkedin:'LinkedIn', calendar:'Calendar' })[ch] || ch || '—'; }
+function caWhoDid(r){ return r.level === 'approved' ? 'approved by ' + (r.approvedBy || 'a person') : r.level === 'person' ? 'by a person' : 'auto'; }
+/* last-7-days numbers on each card */
+function caWeek(id){
+  const rows = caRows({ agent:id, since:cwNow() - 7 * CW_DAY }), sent = rows.filter(function(r){ return r.result === 'Sent'; });
+  const replies = WORKFLOW_RUNS.filter(function(r){ return r.agentId === id && r.replied && cwNow() - r.startedAt < 7 * CW_DAY; }).length + rows.filter(function(r){ return !r.senderId && r.reply; }).length;
+  const has = function(re){ return rows.filter(function(r){ return re.test(r.action || ''); }).length; };
+  if(id === 'talent-discovery') return [[has(/pick|score/i), 'picks'], [has(/add/i), 'added to jobs']];
+  if(id === 'engagement') return [[sent.length, 'messages'], [replies, 'replies']];
+  if(id === 'interviews') return [[has(/book/i), 'booked'], [has(/remind/i) + sent.filter(function(r){ return r.action === 'send'; }).length, 'reminders']];
+  if(id === 'offers-joining') return [[sent.length, 'check-ins'], [has(/risk/i), 'risks flagged']];
+  return [[rows.filter(function(r){ return r.action === 'invite' && r.result === 'Sent'; }).length, 'invites'], [replies, 'replies']];
+}
+/* ---------- Needs you: every Suggest item waiting for this viewer, from all agents ---------- */
+function caAddSuggest(o){ const it = Object.assign({ id:'cs' + (CA_SUGGEST_NEXT++), at:cwNow(), status:'pending' }, o); CA_SUGGEST.push(it); return it; }
+function caNeeds(agentId){
+  const ids = caTeamIds(), mine = function(owner){ return caOwnerish() || ids.indexOf(owner) > -1; }, out = [];
+  CW_APPROVALS.filter(function(a){ return a.status === 'pending'; }).forEach(function(a){ const wf = wfFindById(a.wfId) || {}, owner = a.ownerId || wf.ownerId; if(!wf.agentId || !mine(owner)) return;
+    out.push({ kind:'msg', id:a.id, agentId:wf.agentId, title:a.name + ' · ' + (a.channel ? caChannelWord(a.channel) : 'message'), why:a.why || ('First message from a recipe that needs a person: ' + (wf.name || '')), text:a.text || '', at:Date.parse(a.createdAt) || 0, jobId:wf.jobId || null }); });
+  CA_SUGGEST.filter(function(s){ return s.status === 'pending' && mine(s.ownerId); }).forEach(function(s){ out.push({ kind:'item', id:s.id, agentId:s.agentId, title:s.title, why:s.why, text:s.text || '', at:s.at, jobId:s.jobId || null }); });
+  return out.filter(function(x){ return !agentId || x.agentId === agentId; }).sort(function(a, b){ return b.at - a.at; });
+}
+function caNeedApprove(kind, id){
+  if(kind === 'msg'){ cwApprove(id, true); return; }
+  const s = CA_SUGGEST.find(function(x){ return x.id === id; }); if(!s || s.status !== 'pending') return; s.status = 'approved'; const by = (currentActingUser() || {}).name || 'A person';
+  caRecord({ agentId:s.agentId, action:s.action || s.title, jobId:s.jobId, candidateId:s.candidateId, why:s.why, level:'approved', approvedBy:by, text:s.text, result:'Approved' }); if(typeof s.run === 'function') s.run(s); toast('Approved.'); caRefresh();
+}
+function caNeedSkip(kind, id){
+  if(kind === 'msg'){ cwApprove(id, false); return; }
+  const s = CA_SUGGEST.find(function(x){ return x.id === id; }); if(!s) return; s.status = 'skipped'; caRecord({ agentId:s.agentId, action:s.action || s.title, jobId:s.jobId, candidateId:s.candidateId, why:s.why, level:'person', result:'Skipped' }); toast('Skipped.'); caRefresh();
+}
+function caNeedEdit(kind, id){
+  const it = caNeeds().find(function(x){ return x.id === id; }); if(!it) return;
+  fmModal('<h2 id="fm-h" class="fm-h">Edit before it goes</h2><p class="text-xs text-zinc-500 mb-2">' + cwEsc(it.title) + '</p><label class="cl-field"><span>Message</span><textarea id="ca-edit" class="app-input" rows="6">' + cwEsc(caText(it.text)) + '</textarea></label><div class="fm-foot"><button type="button" class="o-btn" onclick="fmModal(\'\')">Cancel</button><button type="button" class="o-btn o-btn--primary" onclick="caNeedEditSave(\'' + kind + '\',\'' + id + '\')">Approve with this text</button></div>');
+}
+function caNeedEditSave(kind, id){
+  let text = (document.getElementById('ca-edit') || {}).value || ''; if(!text.trim()){ toast('Add the message first.'); return; }
+  if(kind === 'msg'){ const a = CW_APPROVALS.find(function(x){ return x.id === id; }); if(!a) return; const line = typeof cwDisclosureLine === 'function' ? cwDisclosureLine('approved') : ''; if(line && text.indexOf(line.trim()) < 0) text += line; a.text = text; const run = WORKFLOW_RUNS.find(function(r){ return r.id === a.runId; }); if(run) run.editedText = text; logAudit('Cowork', 'Agent message edited before approval', a.name); }
+  else { const s = CA_SUGGEST.find(function(x){ return x.id === id; }); if(s) s.text = text; }
+  fmModal(''); caNeedApprove(kind, id);
+}
+function caNeedRow(n){
+  const a = agentById(n.agentId), k = n.kind, id = n.id;
+  return '<li class="o-att ca-need" style="align-items:flex-start"><span class="o-att__icon o-att__icon--warn">' + oIcon('alert', 16) + '</span><span class="o-att__text"><span class="o-att__title" style="white-space:normal">' + cwEsc(caText(n.title)) + '</span><span class="ca-need__why">' + cwEsc(a.name) + ' · ' + cwEsc(caText(n.why)) + '</span></span>' +
+    '<span class="ca-need__a">' + sBtn('Skip', "caNeedSkip('" + k + "','" + id + "')", 'ghost') + sBtn('Edit', "caNeedEdit('" + k + "','" + id + "')") + sBtn('Approve', "caNeedApprove('" + k + "','" + id + "')", 'primary') + '</span></li>';
+}
+/* ---------- the page ---------- */
+function caRender(){
+  if(!sCan('kairo','Use agents') || state.role === 'oontu' || state.role === 'candidate') return '<div class="content-shell o-page">' + oPageHead({ title:'Cowork' }) + '<div class="o-card">' + oEmpty('zap', 'Cowork isn’t part of your role.') + '</div></div>';
+  if(CA.agent) return '<div class="content-shell o-page" id="ca-root">' + caAgentPage(CA.agent) + '</div>';
+  const head = '<header class="o-page-head"><div><h1 class="o-page-head__title">Cowork</h1><p class="ca-lede">Five agents working on your jobs. Every action is logged and inside your limits.</p></div>' + (caOwnerish() ? '<div class="o-page-head__actions">' + (CW.pauseAll.on ? '<button type="button" class="o-btn o-btn--lg o-btn--primary" onclick="cwSetPauseAll(false); cwRefresh()">Resume all Cowork</button>' : '<button type="button" class="o-btn o-btn--lg" onclick="cwAskPauseAll()">Pause all Cowork</button>') + '</div>' : '') + '</header>';
+  const banner = CW.pauseAll.on ? '<div class="o-note" role="status">' + oIcon('alert', 16, 1.75) + '<span><b>All Cowork is paused</b> by ' + cwEsc(CW.pauseAll.by) + ': ' + cwEsc(CW.pauseAll.reason) + '. Nothing is sent.</span></div>' : '';
+  const tabs = '<div class="o-tabs-host"><div role="tablist" id="ca-tabs" aria-label="Cowork">' + [['agents','Agents'],['activity','Activity']].map(function(t){ return '<button type="button" role="tab" aria-selected="' + (CA.tab === t[0]) + '" onclick="CA.tab=\'' + t[0] + '\'; caRefresh()">' + t[1] + '</button>'; }).join('') + '</div></div>';
+  return '<div class="content-shell o-page" id="ca-root">' + head + banner + tabs + (CA.tab === 'activity' ? caActivityHTML('') : caAgentsHTML()) + '</div>';
+}
+function caRefresh(){ if(typeof cwRefresh === 'function') cwRefresh(); }
+function caAgentsHTML(){ return '<div class="ca-grid" id="ca-cards">' + CW.order.map(caCardHTML).join('') + '</div>'; }
+function caCloseAgent(){ CA.agent = null; CA.draft = null; caRefresh(); }
+function caRunNow(id){ cwRunEngine(); caRefresh(); }
+
+/* ---------- agent: Overview ---------- */
+function caHealth(id){
+  const out = [];
+  if(id === 'talent-discovery'){ const n = JOBS.filter(function(j){ return j.status === 'Active' && caInScope(id, j) && !caJobPaused(id, j); }).length; out.push(oPlural(n, 'open job') + ' in scope · threshold ' + TENANT_AGENT_CONFIG[id].settings.threshold + '%'); return out; }
+  if(id === 'linkedin'){ const list = caLiConnected(); out.push(oPlural(list.length, 'LinkedIn account') + ' connected'); return out; }
+  if(cwChannelConnected('whatsapp')){ const q = WA_BUSINESS_ACCOUNT.qualityRating; out.push('WhatsApp quality: ' + q.charAt(0).toUpperCase() + q.slice(1) + ' · ' + cwSentToday(function(l){ return l.channel === 'whatsapp'; }).length.toLocaleString('en-IN') + ' of ' + cwWaCap().toLocaleString('en-IN') + ' today'); }
+  else out.push('WhatsApp not connected: using email');
+  out.push(cwChannelConnected('email') ? 'Email: mailbox connected' : 'Email: no mailbox connected'); return out;
+}
+/* ---------- agent: Settings ---------- */
+function caDraftFor(id){
+  if(CA.draft && CA.draft.id === id) return CA.draft;
+  const cfg = TENANT_AGENT_CONFIG[id], me = (currentActingUser() || {}).id, team = caManager() ? (cfg.team[me] || {}) : {};
+  const m = cfg.workingHours.match(/(\d\d:\d\d)-(\d\d:\d\d)/) || [0, '09:00', '19:00'];
+  CA.draft = JSON.parse(JSON.stringify({ id:id, enabled:cfg.enabled, steps:Object.assign({}, cfg.steps, team.steps || {}), dailyCap:cfg.dailyCap, from:m[1], to:m[2], scope:cfg.scope, settings:Object.assign({}, cfg.settings, team.settings || {}), plays:Object.assign({}, cfg.plays || {}, team.plays || {}) }));
+  return CA.draft;
+}
+function caSet(path, v){ const d = CA.draft; if(!d) return; const p = path.split('.'); let o = d; for(let i = 0; i < p.length - 1; i++){ o[p[i]] = o[p[i]] || {}; o = o[p[i]]; } o[p[p.length - 1]] = v; }
+function caTog(path){ const d = CA.draft; if(!d) return; const p = path.split('.'); let o = d; for(let i = 0; i < p.length - 1; i++) o = o[p[i]]; o[p[p.length - 1]] = !o[p[p.length - 1]]; caRefresh(); }
+function caSetLevel(agentId, stepId, level){   // the one rule: "Always a person" never changes
+  const a = agentById(agentId), s = a && a.steps.find(function(x){ return x.id === stepId; }); if(!s || s.level === 'person' || ['auto','suggest','off'].indexOf(level) < 0) return false;
+  TENANT_AGENT_CONFIG[agentId].steps[stepId] = level; return true;
+}
+// The level for one job: a manager's setting for their team's jobs, else the workspace's.
+function caLevelFor(agentId, stepId, j){
+  const a = agentById(agentId), s = a && a.steps.find(function(x){ return x.id === stepId; }); if(!s) return 'off'; if(s.level === 'person') return 'person';
+  const cfg = TENANT_AGENT_CONFIG[agentId]; if(j){ const lead = rosterById(j.jobLeadId) || rosterById(j.recruiterId); let m = lead ? (cfg.team[lead.id] ? lead.id : tmManagerIdOf(lead)) : null, guard = 0; while(m && guard++ < 8){ const t = cfg.team[m]; if(t && t.steps && t.steps[stepId]) return t.steps[stepId]; const u = rosterById(m); m = u ? tmManagerIdOf(u) : null; } }
+  return cfg.steps[stepId] || s.level;
+}
+function caField(f, d, ed){
+  const v = d.settings[f.k], path = 'settings.' + f.k, dis = ed ? '' : ' disabled';
+  if(f.type === 'fixed') return sRow(f.label, f.help || '', '<span class="s-val">' + cwEsc(f.def) + '</span>');
+  if(f.type === 'switch') return sRow(f.label, f.help || '', '<button type="button" role="switch" aria-checked="' + !!v + '" aria-label="' + cwEsc(f.label) + '" class="app-switch' + (v ? ' is-on' : '') + '"' + (ed ? ' onclick="caTog(\'' + path + '\')"' : ' disabled style="opacity:.5"') + '><span class="app-switch__dot"></span></button>');
+  if(f.type === 'select') return sRow(f.label, f.help || '', '<select class="app-input app-select s-ctl" aria-label="' + cwEsc(f.label) + '"' + dis + ' onchange="caSet(\'' + path + '\', this.value)">' + f.opts.map(function(o){ const val = Array.isArray(o) ? o[0] : o, l = Array.isArray(o) ? o[1] : o; return '<option value="' + cwEsc(val) + '"' + (val === v ? ' selected' : '') + '>' + cwEsc(l) + '</option>'; }).join('') + '</select>');
+  if(f.type === 'text') return sRow(f.label, f.help || '', '<input class="app-input s-ctl" aria-label="' + cwEsc(f.label) + '" value="' + cwEsc(v) + '"' + dis + ' oninput="caSet(\'' + path + '\', this.value)">');
+  return sRow(f.label, f.help || '', '<span class="ca-num"><input class="app-input s-ctl" type="number" data-field="' + f.k + '" aria-label="' + cwEsc(f.label) + '" value="' + cwEsc(v) + '" min="' + f.min + '" max="' + f.max + '"' + dis + ' oninput="caSet(\'' + path + '\', +this.value)">' + (f.unit ? '<small>' + cwEsc(f.unit) + '</small>' : '') + '</span>');
+}
+function caLevelsHTML(a, d, ed){
+  return sCard('What it does on its own', 'Auto does it and logs it. Suggest prepares it and a person approves. Off stops it.', a.steps.filter(function(s){ return !(a.id === 'engagement' && s.level !== 'person'); }).map(function(s){
+    if(s.level === 'person') return sRow(s.label, 'Kairo never does this on its own.', '<span class="o-badge" data-always="' + s.id + '">' + oIcon('lock', 12, 1.75) + ' Always a person</span>');
+    return sRow(s.label, '', caLevelPick(a, s, d, ed));
+  }).join(''));
+}
+function caLevelPick(a, s, d, ed){ return '<select class="app-input app-select s-ctl" data-level="' + s.id + '" aria-label="' + cwEsc(s.label) + '"' + (ed ? '' : ' disabled') + ' onchange="caSet(\'steps.' + s.id + '\', this.value)">' + [['auto','Auto'],['suggest','Suggest'],['off','Off']].map(function(o){ return '<option value="' + o[0] + '"' + (d.steps[s.id] === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>'; }
+function caPlaysHTML(a, d, ed){
+  const live = caChannelLine(d);
+  return sCard('Channel', '', '<p class="ca-line" id="ca-channel">' + live + '</p>') + sCard('Plays', 'Each one has its own template, timing and level.', CA_PLAYS.map(function(p){
+    const st = d.plays[p.id], step = a.steps.find(function(s){ return s.id === p.step; }), state = cwTplStatus(p.tplName) || 'Not submitted';
+    return '<div class="ca-play" data-play="' + p.id + '"><div class="ca-play__h"><div><b>' + cwEsc(p.name) + '</b><p class="o-card__sub">' + cwEsc(p.does) + (p.note ? ' ' + cwEsc(p.note) : '') + '</p></div><button type="button" role="switch" aria-checked="' + !!st.on + '" aria-label="' + cwEsc(p.name) + '" class="app-switch' + (st.on ? ' is-on' : '') + '"' + (ed ? ' onclick="caTog(\'plays.' + p.id + '.on\')"' : ' disabled style="opacity:.5"') + '><span class="app-switch__dot"></span></button></div>' +
+      '<label class="cl-field"><span>Template <small class="ca-muted">· WhatsApp: ' + cwEsc(state) + '</small></span><textarea class="app-input" rows="2" data-tpl="' + p.id + '"' + (ed ? '' : ' disabled') + ' oninput="caSet(\'plays.' + p.id + '.tpl\', this.value)">' + cwEsc(st.tpl) + '</textarea></label>' +
+      '<div class="ca-play__row">' + (p.timing || []).map(function(t){ return '<label class="ca-num"><span>' + cwEsc(t.label) + '</span><input class="app-input s-ctl" type="number" data-timing="' + p.id + '.' + t.k + '" value="' + cwEsc(st.timing[t.k]) + '" min="' + t.min + '" max="' + t.max + '"' + (ed ? '' : ' disabled') + ' oninput="caSet(\'plays.' + p.id + '.timing.' + t.k + '\', +this.value)"><small>' + cwEsc(t.unit) + '</small></label>'; }).join('') + '<label class="ca-num"><span>Level</span>' + caLevelPick(a, step, d, ed) + '</label></div></div>';
+  }).join(''));
+}
+function caChannelLine(d){
+  const wa = cwChannelConnected('whatsapp'), em = cwChannelConnected('email');
+  if(!wa && em) return 'WhatsApp not connected: using email. <a href="#" class="o-link" onclick="settingsSection=\'integrations\'; showView(\'settings\'); return false">Connect WhatsApp</a>';
+  if(wa) return 'WhatsApp Business is live' + (em ? ', with email as the fallback.' : '.');
+  return 'Nothing is connected yet. <a href="#" class="o-link" onclick="settingsSection=\'integrations\'; showView(\'settings\'); return false">Connect WhatsApp or a mailbox</a>';
+}
+function caScopeHTML(d, ed){
+  const s = d.scope, mode = s.mode, dis = ed ? '' : ' disabled', chk = function(kind, val, label){ const on = s[kind].indexOf(val) > -1; return '<label class="s-chk"><input type="checkbox"' + (on ? ' checked' : '') + dis + ' onchange="caScopeToggle(\'' + kind + '\',\'' + val + '\')" /> ' + cwEsc(label) + '</label>'; };
+  const list = mode === 'clients' ? '<div class="s-chks ca-scopelist">' + CLIENTS.map(function(c){ return chk('clients', c.id, c.name); }).join('') + '</div>' : mode === 'jobs' ? '<div class="s-chks ca-scopelist">' + JOBS.filter(function(j){ return j.status === 'Active'; }).map(function(j){ return chk('jobs', j.id, j.title + ' · ' + j.client); }).join('') + '</div>' : '';
+  return sRow('Scope', 'Which jobs it works on.', '<select class="app-input app-select s-ctl" data-scope aria-label="Scope"' + dis + ' onchange="caSet(\'scope.mode\', this.value); caRefresh()">' + [['all','All open jobs'],['clients','Selected clients'],['jobs','Selected jobs']].map(function(o){ return '<option value="' + o[0] + '"' + (mode === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>') + (list ? '<div class="s-row">' + list + '</div>' : '');
+}
+function caScopeToggle(kind, val){ const a = CA.draft.scope[kind], i = a.indexOf(val); if(i > -1) a.splice(i, 1); else a.push(val); }
+function caSaveSettings(id){
+  if(!caCanEditSettings()){ toast('Only the Owner, an Admin or a manager can change these.'); return false; }
+  const a = agentById(id), d = caDraftFor(id), cfg = TENANT_AGENT_CONFIG[id], own = caOwnerish(), me = currentActingUser(), changes = [], who = (me || {}).name || 'A person';
+  const err = function(m){ toast(m); return false; };
+  for(const f of CA_FIELDS[id]){ if(f.type && f.type !== 'num') continue; const v = +d.settings[f.k]; if(isNaN(v)) return err(f.label + ' needs a number.'); if(v > f.max) d.settings[f.k] = f.max; if(v < f.min) d.settings[f.k] = f.min; }
+  if(own && d.from >= d.to) return err('Working hours must start before they end.');
+  if(own && d.dailyCap != null) d.dailyCap = Math.max(0, Math.min(a.dailyCap, +d.dailyCap || 0));
+  if(d.scope.mode === 'clients' && !d.scope.clients.length) return err('Pick at least one client.'); if(d.scope.mode === 'jobs' && !d.scope.jobs.length) return err('Pick at least one job.');
+  (id === 'engagement' ? CA_PLAYS : []).forEach(function(p){ (p.timing || []).forEach(function(t){ const st = d.plays[p.id].timing; st[t.k] = Math.max(t.min, Math.min(t.max, +st[t.k] || t.def)); }); if(!String(d.plays[p.id].tpl || '').trim()) d.plays[p.id].tpl = p.tpl; });
+  const note = function(label, from, to){ if(JSON.stringify(from) !== JSON.stringify(to)) changes.push(label + ': ' + (typeof from === 'object' ? JSON.stringify(from) : from) + ' → ' + (typeof to === 'object' ? JSON.stringify(to) : to)); };
+  const steps = {}; a.steps.forEach(function(s){ if(s.level === 'person') return; const lv = d.steps[s.id]; note(s.label, own ? cfg.steps[s.id] : ((cfg.team[me.id] || {}).steps || {})[s.id] || cfg.steps[s.id], lv); steps[s.id] = lv; });
+  CA_FIELDS[id].forEach(function(f){ if(f.type !== 'fixed') note(f.label, own ? cfg.settings[f.k] : ((cfg.team[me.id] || {}).settings || {})[f.k] != null ? cfg.team[me.id].settings[f.k] : cfg.settings[f.k], d.settings[f.k]); });
+  if(id === 'engagement') CA_PLAYS.forEach(function(p){ const was = (own ? cfg.plays[p.id] : ((cfg.team[me.id] || {}).plays || {})[p.id] || cfg.plays[p.id]), now = d.plays[p.id]; note(p.name + ' on', was.on, now.on); note(p.name + ' timing', was.timing, now.timing);
+    if(was.tpl !== now.tpl){ changes.push(p.name + ' template edited'); const m = WSX.templates.messages.find(function(x){ return x[0] === p.tplName; }); if(m) m[2] = 'Pending approval'; } });
+  if(own){
+    note('On', cfg.enabled, d.enabled); note('Daily cap', cfg.dailyCap, d.dailyCap); note('Working hours', cfg.workingHours, d.from + '-' + d.to); note('Scope', cfg.scope, d.scope);
+    Object.assign(cfg.steps, steps); cfg.enabled = d.enabled; cfg.dailyCap = d.dailyCap; cfg.workingHours = d.from + '-' + d.to; cfg.scope = JSON.parse(JSON.stringify(d.scope)); cfg.settings = JSON.parse(JSON.stringify(d.settings)); if(id === 'engagement'){ cfg.plays = JSON.parse(JSON.stringify(d.plays)); CW.caps.perPersonWeek = +d.settings.perWeek; }
+    cfg.saved = { by:who, at:cwNow() };
+  } else { cfg.team[me.id] = { steps:steps, settings:JSON.parse(JSON.stringify(d.settings)), plays:JSON.parse(JSON.stringify(d.plays)), saved:{ by:who, at:cwNow() } }; }
+  logAudit('Cowork', 'Agent settings saved' + (own ? '' : ' for ' + who + '’s team'), a.name + ' · ' + (changes.join(' · ') || 'no changes'));
+  CA.draft = null; toast('Saved'); caRefresh(); if(typeof renderSidebar === 'function') renderSidebar(); return true;
+}
+/* The Oontu extension, per recruiter. Simulated here: the real one runs in the recruiter's own Chrome and never asks for a LinkedIn password. */
+let CA_EXT = {};
+function caLiConnected(){ return Object.keys(CA_EXT).filter(function(k){ return CA_EXT[k].connected; }).concat((typeof LI_SENDER_PROFILES !== 'undefined' ? LI_SENDER_PROFILES : []).filter(function(p){ return p.accountType !== 'email' && p.connected && p.recruiterId && !CA_EXT[p.recruiterId] && rosterById(p.recruiterId); }).map(function(p){ return p.recruiterId; })); }
+function caLiExtHTML(){
+  const people = RECRUITER_ROSTER.filter(function(u){ return tmStatus(u) === 'Active' && (caOwnerish() || caTeamIds().indexOf(u.id) > -1) && roleHasPermission(u.assignedRoleId, 'candidates', 'Submit to job'); }).slice(0, 30), on = caLiConnected();
+  return sCard('Oontu for LinkedIn', 'Each recruiter installs the Chrome extension and signs in. It works in their own Chrome while it’s open, and never asks for a LinkedIn password.', people.map(function(u){ const yes = on.indexOf(u.id) > -1, x = CA_EXT[u.id] || {};
+    return sRow(u.name, yes ? 'Connected · last active ' + (x.at ? cwFmtAgo(x.at) : 'today') + ' · LinkedIn ' + (x.plan || 'Free') : 'Not installed', yes ? oBadge('success', 'Connected') : openAsOk() ? sBtn('Install extension (demo)', "caExtInstall('" + u.id + "')") : oBadge('neutral', 'Not installed')); }).join(''));
+}
+function caExtInstall(uid){ CA_EXT[uid] = { connected:true, plan:'Free', at:cwNow() }; logAudit('Cowork', 'LinkedIn extension connected', (rosterById(uid) || {}).name || uid); toast('Connected.'); caRefresh(); }
+
+/* ---------- Activity: one feed ---------- */
+function caActivityHTML(agentId){
+  const f = Object.assign({}, CA.f, agentId ? { agent:agentId } : {}), rows = caRows(f), all = caRows(agentId ? { agent:agentId } : {});
+  const sel = function(key, label, opts){ return '<select class="app-input app-select" aria-label="' + label + '" data-filter="' + key + '" onchange="CA.f.' + key + '=this.value; CA.limit=50; caRefresh()"><option value="">' + label + '</option>' + opts.map(function(o){ return '<option value="' + cwEsc(o[0]) + '"' + (f[key] === o[0] ? ' selected' : '') + '>' + cwEsc(o[1]) + '</option>'; }).join('') + '</select>'; };
+  const jobs = {}, people = {}, results = {}; all.forEach(function(r){ if(r.job) jobs[r.jobId] = r.job.title + ' · ' + r.job.client; if(r.senderId && rosterById(r.senderId)) people[r.senderId] = rosterById(r.senderId).name; if(r.result) results[r.result] = 1; });
+  const toList = function(o){ return Object.keys(o).map(function(k){ return [k, o[k]]; }).sort(function(a, b){ return String(a[1]).localeCompare(String(b[1])); }); };
+  const filters = '<div class="ca-filters">' + (agentId ? '' : sel('agent', 'All agents', CW.order.map(function(id){ return [id, agentById(id).name]; }))) + sel('job', 'All jobs', toList(jobs)) + sel('recruiter', 'All recruiters', toList(people)) + sel('result', 'Any result', Object.keys(results).sort().map(function(x){ return [x, x]; })) + sel('date', 'Any date', [['today','Last 24 hours'],['7','Last 7 days'],['30','Last 30 days']]) +
+    (caOwnerish() ? '<span class="ca-filters__end">' + sBtn('Export CSV', "caExportCsv('" + agentId + "')") + '</span>' : '') + '</div>';
+  const body = rows.slice(0, CA.limit).map(function(r){ const a = agentById(r.agentId);
+    return '<tr tabindex="0" data-row="' + r.id + '" onclick="caOpenRow(\'' + r.id + '\')" onkeydown="if(event.key===\'Enter\')caOpenRow(\'' + r.id + '\')"><td data-l="Time">' + cwFmtTime(r.at) + '</td>' + (agentId ? '' : '<td data-l="Agent">' + cwEsc(a.name) + '</td>') + '<td data-l="What it did"><b>' + cwEsc(caText(r.what)) + '</b><small>' + cwEsc(caText(r.why)) + '</small></td><td data-l="Candidate">' + cwEsc(r.candidate ? r.candidate.name : '—') + '</td><td data-l="Job">' + cwEsc(r.job ? r.job.title : '—') + '</td><td data-l="Channel">' + cwEsc(caChannelWord(r.channel)) + '</td><td data-l="Result">' + cwEsc(r.result) + '</td><td data-l="By">' + cwEsc(caWhoDid(r)) + '</td></tr>'; }).join('');
+  return '<section class="o-card o-card--flush" id="ca-activity"><div class="o-card__head" style="padding:0 20px"><div><h2 class="o-card__title">Activity</h2><p class="o-card__sub">' + oPlural(rows.length, 'action') + ', newest first.</p></div></div><div style="padding:0 20px 12px">' + filters + '</div>' +
+    (rows.length ? '<div class="o-table-wrap"><table class="o-table ca-table"><thead><tr><th>Time</th>' + (agentId ? '' : '<th>Agent</th>') + '<th>What it did</th><th>Candidate</th><th>Job</th><th>Channel</th><th>Result</th><th>By</th></tr></thead><tbody>' + body + '</tbody></table></div>' + (rows.length > CA.limit ? '<div style="padding:12px 20px"><button type="button" class="o-link" onclick="CA.limit+=50; caRefresh()">Show 50 more</button></div>' : '') : '<div style="padding:0 20px 20px">' + oEmpty('zap', 'Nothing here yet. Every action an agent takes shows up here.') + '</div>') + '</section>';
+}
+function caOpenRow(id){
+  const r = caRows({}).find(function(x){ return x.id === id; }); if(!r) return; const a = agentById(r.agentId);
+  let root = document.getElementById('ca-side-root'); if(!root){ root = document.createElement('div'); root.id = 'ca-side-root'; document.body.appendChild(root); }
+  const line = function(l, v){ return v ? '<p class="ca-side__l">' + l + '</p><p class="ca-side__v">' + cwEsc(caText(v)) + '</p>' : ''; };
+  root.innerHTML = '<div class="ca-side__scrim" onclick="caCloseRow()"></div><aside class="ca-side" role="dialog" aria-modal="true" aria-label="Activity detail"><div class="ca-side__h"><div><h2 class="o-card__title">' + cwEsc(caText(r.what)) + '</h2><p class="o-card__sub">' + cwEsc(a.name) + ' · ' + cwFmtTime(r.at) + ' · ' + cwEsc(caWhoDid(r)) + '</p></div><button type="button" class="o-btn o-btn--ghost" aria-label="Close" onclick="caCloseRow()">' + oIcon('x', 16) + '</button></div>' +
+    line('Candidate', r.candidate ? r.candidate.name : '') + line('Job', r.job ? r.job.title + ' · ' + r.job.client : '') + line('Channel', r.channel ? caChannelWord(r.channel) : '') + line('Result', r.result) + line('Why', r.why || 'Worked inside this agent’s settings.') + line('Message sent', r.text) + line('Reply', r.reply) + '</aside>';
+}
+function caCloseRow(){ const r = document.getElementById('ca-side-root'); if(r) r.innerHTML = ''; }
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') caCloseRow(); });
+function caExportCsv(agentId){
+  if(!caOwnerish()){ toast('Only the Owner or an Admin can export this.'); return false; }
+  const q = function(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }, rows = caRows(Object.assign({}, CA.f, agentId ? { agent:agentId } : {}));
+  const lines = [['Time','Agent','What it did','Candidate','Job','Channel','Result','By','Why'].join(',')].concat(rows.map(function(r){ return [new Date(r.at).toISOString(), agentById(r.agentId).name, r.what, r.candidate ? r.candidate.name : '', r.job ? r.job.title : '', r.channel, r.result, caWhoDid(r), r.why].map(q).join(','); }));
+  CA.lastCsv = lines.join('\n');
+  try { const blob = new Blob([CA.lastCsv], { type:'text/csv' }), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'cowork-activity.csv'; document.body.appendChild(a); a.click(); a.remove(); } catch(e){}
+  logAudit('Cowork', 'Activity exported', (lines.length - 1) + ' lines'); toast('Exported ' + (lines.length - 1) + ' lines'); return true;
+}
+
+/* ---------- STOP stops every automated message; the recruiter gets a task ---------- */
+function caStopTask(key){
+  const c = cwCand(key); if(!c) return; const sb = SUBMISSIONS.filter(function(s){ return s.candidateId === c.id && s.recruiterId && ['closed'].indexOf(subPhase(s)) < 0; })[0], owner = (sb && sb.recruiterId) || c.ownerId || null, text = c.name + ' asked us to stop messaging. Contact them yourself if needed.';
+  CW.tasks.push({ at:cwNow(), text:text, ownerId:owner, stop:true });
+  if(owner && owner === currentUserId() && typeof PERSONAL_TASKS !== 'undefined') PERSONAL_TASKS.unshift({ id:'pt-stop' + c.id, text:text, type:'task', reminderTime:null, completed:false, createdAt:nowTimestamp() });
+  if(owner && typeof fmNotify === 'function') fmNotify(owner, typeof fmName === 'function' ? fmName(owner) : '', text, sb ? sb.id : null);
+  caRecord({ agentId:'engagement', action:'Stopped all messages', candidateId:c.id, jobId:sb ? sb.jobId : null, why:'They replied STOP. Every agent stops; the recruiter has a task.', result:'Stopped', channel:'' });
+}
+(function(){
+  const base = cwSuppress;
+  cwSuppress = function(key, reason){ const added = base(key, reason); if(added && !jsCorp() && /\bstop\b|opted out|unsubscrib|not interested/i.test(String(reason || ''))) { try { caStopTask(key); } catch(e){ console.error('stop task', e); } } return added; };
+})();
+
+function caCardHTML(id){
+  const a = agentById(id), st = caStatus(id), wait = caNeeds(id).length, inPlan = st.key !== 'plan', own = caOwnerish(), cfg = TENANT_AGENT_CONFIG[id], open = "caOpenAgent('" + id + "')";
+  const sw = inPlan && own && !st.oontu && !st.all && st.key !== 'trial' ? '<button type="button" role="switch" aria-checked="' + !!cfg.enabled + '" aria-label="' + cwEsc(a.name) + '" class="app-switch' + (cfg.enabled ? ' is-on' : '') + '" onclick="event.stopPropagation(); caToggleAgent(\'' + id + '\')"><span></span></button>' : '';
+  const week = inPlan ? caWeek(id) : null, btn = function(label, on, primary){ return '<button type="button" class="o-btn' + (primary ? ' o-btn--primary' : '') + '" onclick="event.stopPropagation(); ' + on + '">' + label + '</button>'; };
+  return '<article class="o-card ca-card" data-agent="' + id + '" tabindex="0" onclick="' + open + '" onkeydown="if(event.key===\'Enter\' && event.target===this)' + open + '"><div class="ca-card__h"><h3 class="o-card__title">' + cwEsc(a.name) + '</h3><span class="ca-card__st">' + (wait ? '<button type="button" class="ca-chip" data-waiting onclick="event.stopPropagation(); caOpenAgent(\'' + id + '\',\'waiting\')">' + wait + ' waiting</button>' : '') + caStateHTML(st) + '</span></div><p class="o-card__sub">' + cwEsc(a.does) + '</p>' +
+    (st.note ? '<p class="ca-setup">' + cwEsc(st.note) + '</p>' : '') +
+    (inPlan ? '<p class="ca-card__nums">' + week.map(function(w){ return '<b>' + w[0] + '</b> ' + w[1]; }).join(' · ') + '<small> last 7 days</small></p>' : '<p class="ca-card__nums" data-would>' + cwEsc(caPreviewCount(id)) + '</p>') +
+    '<div class="ca-card__f">' + sw + '<span style="flex:1"></span>' + (!inPlan && caOwner() ? btn('Add', "caAddAgent('" + id + "')", true) : '') + (inPlan ? btn('Open', open) : '') + '</div></article>';
+}
+function caOpenAgent(id, sub){
+  CA.agent = id; CA.sub = sub || 'overview'; CA.draft = null; CA.tab = 'agents'; if(state.activeNav === 'kairo-team') caRefresh(); else { CA.keep = true; showView('kairo-team'); }
+  const el = sub && document.getElementById('ca-sec-' + sub); if(el){ try { el.scrollIntoView({ block:'start' }); } catch(e){} }
+}
+/* ---------- one page for every state: what it does, how it works, on your jobs, settings, activity ---------- */
+const CA_OUTCOMES = {
+  'talent-discovery':[ ['users','Finds the right people for every open job'], ['check','Explains each pick, so you can trust it or skip it'], ['clock','Saves you searching the pool job by job'] ],
+  'engagement':[ ['mail','Reaches every match the same day'], ['phone','Collects notice period, pay and location before you call'], ['clock','Keeps candidates informed while you wait on the client'] ],
+  'interviews':[ ['cal','Books interviews without the back-and-forth'], ['alert','Cuts no-shows with reminders and a same-day check'], ['clock','Gets client feedback in days, not weeks'] ],
+  'offers-joining':[ ['shield','Spots a likely dropout before it happens'], ['check','Keeps candidates on track from offer to joining day'], ['users','Has backups ready when an offer looks shaky'] ],
+  'linkedin':[ ['user','Reaches people who never apply'], ['shield','Stays inside safe limits on each recruiter’s own account'], ['brief','Brings replies into LinkIt and adds candidates for you'] ],
+};
+// Each step, with the action whose level it shows ('!auto' and '!person' are fixed).
+const CA_STEPS = {
+  'talent-discovery':[ ['New job or new candidate','!auto'], ['Score against every open job','score'], ['Picks on the job’s Kairo picks tab','score'], ['Tell the job lead','shortlist'], ['You add to the job','addPipeline'] ],
+  'engagement':[ ['Match or new applicant','!auto'], ['Message on WhatsApp (or email)','firstTouch'], ['Ask 3 screening questions','followup'], ['Read the reply','!auto'], ['Ready to shortlist for you','sendClient'] ],
+  'interviews':[ ['Client shortlists','!auto'], ['Ask the candidate for times','slots'], ['Confirm with the client','slots'], ['Invite and reminders','remind'], ['Same-day check','remind'], ['Chase feedback','chase'], ['You record the outcome','outcome'] ],
+  'offers-joining':[ ['Offer made','!person'], ['Offer summary to the candidate','summary'], ['Dropout risk','risk'], ['Pre-joining check-ins','checkin'], ['Joining-day check with both sides','checkin'], ['You mark Joined','joined'], ['Check-ins on days 7, 30 and 60','checkin'] ],
+  'linkedin':[ ['Build the search from the job','!auto'], ['Visit profile','visit'], ['Connect with a note','invite'], ['Message with the job link','template'], ['Follow up','followup'], ['Reply in LinkIt','!auto'], ['Candidate created with you as owner','!auto'] ],
+};
+const CA_LEVEL_TAG = { auto:'Auto', suggest:'Suggest', off:'Off', person:'Always a person' };
+function caWorking(id){ const k = caStatus(id).key; return k === 'on' || k === 'trial'; }
+function caOwnerUser(){ return RECRUITER_ROSTER.find(function(u){ return tmStatus(u) === 'Active' && roleHasPermission(u.assignedRoleId, 'kairo', 'Manage subscription'); }) || RECRUITER_ROSTER[0] || null; }
+function caOwnerFirst(){ const o = caOwnerUser(); return o ? o.name.split(' ')[0] : 'your Owner'; }
+function caDay(ms){ return wsFmt(ms, 'en-GB', { weekday:'short', day:'numeric', month:'short' }).replace(',', ''); }
+function caShortDay(iso){ const a = String(iso).split('-'); return wsFmt(wsWallMs(+a[0], +a[1], +a[2], 12, 0), 'en-GB', { day:'numeric', month:'short' }); }
+function caTrialLeft(id){ const s = agentSub(id); return s.trialEndsOn ? Math.max(0, wsDaysBetween(wsDay(fmNow()), s.trialEndsOn)) : 0; }
+function caSetupStep(id){
+  if(id === 'talent-discovery') return JOBS.some(function(j){ return j.status === 'Active'; }) ? null : { need:'Open your first job', label:'Open a job', on:'openJobCreate()' };
+  const go = "settingsSection='integrations'; showView('settings')";
+  if(id === 'linkedin') return caLiConnected().length ? null : { need:'Install the LinkedIn extension', label:'Install the Oontu extension (demo)', on:"caExtInstall('" + ((currentActingUser() || {}).id || '') + "')" };
+  if(id === 'interviews') return cwChannelConnected('calendar') ? null : { need:'Connect a calendar', label:'Connect a calendar', on:go };
+  return cwChannelConnected('whatsapp') || cwChannelConnected('email') ? null : { need:'Connect WhatsApp or a mailbox', label:'Connect WhatsApp', on:go };
+}
+function caNeedsSetup(id){ const s = caSetupStep(id); return s ? s.need : ''; }
+function caStatus(id){
+  const a = agentById(id), sub = agentSub(id), cfg = TENANT_AGENT_CONFIG[id];
+  if(a.status === 'disabled' || sub.state === 'paused' || sub.state === 'suspended') return { key:'paused', label:'Paused by Oontu', oontu:true };
+  if(!agentEntitled(id)) return { key:'plan', label:'Not in your plan' };
+  if(!cfg.enabled) return { key:'off', label:'Off' };
+  if(CW.pauseAll.on) return { key:'paused', label:'Paused', all:true };
+  if(cfg.paused) return { key:'paused', label:'Paused' };
+  const need = caNeedsSetup(id); if(need) return { key:'setup', label:'Needs setup', note:need };
+  if(sub.state === 'trial'){ const d = caTrialLeft(id); return { key:'trial', label:'Trial · ' + d + (d === 1 ? ' day left' : ' days left') }; }
+  return { key:'on', label:'On' };
+}
+function caAgentOnJob(id, j){ return caWorking(id) && caInScope(id, j) && !caJobPaused(id, j); }
+function caJobState(id, j){
+  const st = caStatus(id), p = caJobPaused(id, j);
+  if(st.key !== 'on' && st.key !== 'trial') return { text:st.note || st.label, on:false, can:false };
+  if(!caInScope(id, j)) return { text:'Not in this agent’s scope', on:false, can:false };
+  return p ? { text:'Paused on this job by ' + p.by, on:false, can:true } : { text:st.key === 'trial' ? st.label : 'On', on:true, can:true };
+}
+function caToggleAgent(id){
+  if(!caOwnerish()){ toast('Only the Owner or an Admin can turn agents on or off.'); return false; }
+  const cfg = TENANT_AGENT_CONFIG[id]; cfg.enabled = !cfg.enabled; if(cfg.enabled) cfg.paused = null;
+  logAudit('Cowork', 'Agent ' + (cfg.enabled ? 'turned on' : 'turned off'), agentById(id).name + ' · ' + (cfg.enabled ? 'off → on' : 'on → off')); CA.draft = null; caRefresh(); if(typeof renderSidebar === 'function') renderSidebar(); return true;
+}
+function caPause(id, on){
+  if(!caOwnerish()){ toast('Only the Owner or an Admin can pause an agent. You can pause it on your own job from the job page.'); return false; }
+  const cfg = TENANT_AGENT_CONFIG[id], who = (currentActingUser() || {}).name || 'A person'; cfg.paused = on ? { by:who, at:cwNow() } : null;
+  logAudit('Cowork', on ? 'Agent paused' : 'Agent resumed', agentById(id).name + ' · ' + (on ? 'on → paused' : 'paused → on')); caRefresh(); return true;
+}
+function caStartTrial(id){
+  const a = agentById(id); if(!caOwner()){ toast('Only the Owner can start a trial.'); return false; } if(id === 'linkedin') return false;
+  if(!agentSubscribe(id, 'trial')) return false; const s = agentSub(id); s.since = wsDay(fmNow()); s.trialEndsOn = wsAddDays(wsDay(fmNow()), 14); TENANT_AGENT_CONFIG[id].enabled = true; TENANT_AGENT_CONFIG[id].paused = null;
+  logAudit('Cowork', 'Trial started', a.name + ' · not in plan → trial · ends ' + caShortDay(s.trialEndsOn)); toast(a.name + ' is on. The trial ends ' + caShortDay(s.trialEndsOn) + '.'); caRefresh(); if(typeof renderSidebar === 'function') renderSidebar(); return true;
+}
+function caKeep(id){ if(!agentSubscribe(id, 'subscribe')) return false; logAudit('Cowork', 'Trial kept', agentById(id).name + ' · trial → in the plan'); toast(agentById(id).name + ' is now in your plan.'); caRefresh(); return true; }
+function caTrialOff(id){
+  if(!caOwnerish()){ toast('Only the Owner or an Admin can turn agents off.'); return false; } const a = agentById(id);
+  if(agentPlanIncludes(id)) TENANT_AGENT_CONFIG[id].enabled = false; else TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID][id] = { state:'none', usedThisMonth:0 };
+  logAudit('Cowork', 'Trial turned off', a.name + ' · trial → off'); toast(a.name + ' is off.'); caRefresh(); if(typeof renderSidebar === 'function') renderSidebar(); return true;
+}
+// A trial that has run out goes back to Not in your plan; what it did stays in Activity. (agentEntitled already stops it the moment the date passes.)
+function caTrialSweep(){
+  if(jsCorp()) return; AGENT_CATALOG.forEach(function(a){ const s = agentSub(a.id); if(s.state === 'trial' && agentTrialOver(s)){ TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID][a.id] = { state:'none', usedThisMonth:s.usedThisMonth || 0, trialEnded:s.trialEndsOn }; logAudit('Cowork', 'Trial ended', a.name + ' · trial → not in plan'); } });
+}
+let CA_ASKED = {};
+function caAskKey(id){ return id + ':' + currentUserId(); }
+function caAsk(id){ cwAskOwner(id); CA_ASKED[caAskKey(id)] = fmNow(); caRefresh(); }
+function caAddAgent(id){
+  if(!caOwner()) return;
+  if(id === 'linkedin' && agentPlanAllows(id)){ if(agentSubscribe(id, 'subscribe')){ toast(agentById(id).name + ' added.'); caRefresh(); } return; }
+  caOpenAgent(id);
+}
+function caComparePlans(){ settingsSection = 'billing'; showView('settings'); }
+function caHeaderAction(id, st){
+  const own = caOwnerish(), owner = caOwner(), q = function(t){ return '<span class="ca-muted ca-act-note" data-act-note>' + cwEsc(t) + '</span>'; }, compare = sBtn('Compare plans', 'caComparePlans()');
+  if(st.oontu) return q('Oontu has paused this agent for every workspace');
+  if(st.key === 'plan'){
+    if(owner) return id === 'linkedin' ? (agentPlanAllows(id) ? sBtn('Add for ₹' + agentById(id).price.amount.toLocaleString('en-IN') + ' per account a month', "caAddAgent('linkedin')", 'primary') : q('Available on Growth and Enterprise') + compare) : sBtn('Start 14-day trial', "caStartTrial('" + id + "')", 'primary') + compare;
+    const asked = CA_ASKED[caAskKey(id)]; return (asked ? q('Asked on ' + caShortDay(wsDay(asked))) : sBtn('Ask ' + caOwnerFirst() + ' to add it', "caAsk('" + id + "')", 'primary')) + (own && canI('billing', 'View') ? compare : '');
+  }
+  if(st.key === 'off') return own ? sBtn('Turn on', "caToggleAgent('" + id + "')", 'primary') : q('Off for your workspace');
+  if(st.key === 'setup'){ const s = caSetupStep(id); return own ? sBtn(s.label, s.on, 'primary') : q('Waiting for setup by ' + caOwnerFirst()); }
+  if(st.key === 'trial') return (owner ? sBtn('Keep it', "caKeep('" + id + "')", 'primary') : '') + (own ? sBtn('Turn off', "caTrialOff('" + id + "')") : '');
+  const demo = typeof openAsOk === 'function' && openAsOk() && st.key === 'on' ? sBtn('Run now (demo)', "caRunNow('" + id + "')") : '';
+  if(st.all) return own ? '<button type="button" class="o-btn" onclick="cwSetPauseAll(false); cwRefresh()">Resume all Cowork</button>' : '';
+  if(st.key === 'paused') return own ? sBtn('Resume', "caPause('" + id + "', false)", 'primary') : q('You can pause it for your own jobs from the job page');
+  return (own ? sBtn('Pause', "caPause('" + id + "', true)") : q('You can pause it for your own jobs from the job page')) + demo;
+}
+function caAgentPage(id){
+  const a = agentById(id), st = caStatus(id), crumb = breadcrumbHTML([{ label:'Cowork', onclick:'caCloseAgent()' }, { label:a.name }], 'caCloseAgent()'), work = st.key === 'on' || st.key === 'trial';
+  const head = '<header class="o-page-head" data-sec="header"><div><h1 class="o-page-head__title">' + cwEsc(a.name) + '</h1><p class="ca-lede">' + cwEsc(a.does) + '</p></div><div class="o-page-head__actions ca-head-acts">' + caStateHTML(st) + caHeaderAction(id, st) + '</div></header>';
+  const rows = caRows({ agent:id }), waiting = caNeeds(id);
+  return crumb + head + '<div class="s-content" id="ca-page">' + (work || waiting.length ? caWaitingHTML(id, waiting, work) : '') + caWhatHTML(id) + caHowHTML(id, st) + caPreviewHTML(id, work) + caSettingsSection(id, st) + (st.key === 'plan' && !rows.length ? '' : caRecentHTML(id, rows)) + '</div>';
+}
+function caCard(sec, title, body, extra){ return '<section class="o-card ca-sec" data-sec="' + sec + '" id="ca-sec-' + sec + '"><h2 class="o-card__title">' + cwEsc(title) + '</h2>' + (extra || '') + body + '</section>'; }
+function caWaitingHTML(id, list, work){
+  return caCard('waiting', 'Waiting for you', list.length ? '<ul class="o-list">' + list.map(caNeedRow).join('') + '</ul>' : '<p class="o-card__sub">Nothing waiting. Kairo is working inside your limits.</p>');
+}
+function caWhatHTML(id){ return caCard('what', 'What it does for you', '<ul class="ca-outcomes">' + CA_OUTCOMES[id].map(function(o){ return '<li><span class="ca-outcomes__i">' + oIcon(o[0], 18, 1.75) + '</span><span>' + cwEsc(o[1]) + '</span></li>'; }).join('') + '</ul>'); }
+function caStepLevel(id, key, st){
+  if(key === '!auto') return 'auto'; if(key === '!person') return 'person'; const a = agentById(id), s = a.steps.find(function(x){ return x.id === key; }); if(!s) return 'auto'; if(s.level === 'person') return 'person';
+  return st.key === 'on' || st.key === 'trial' ? TENANT_AGENT_CONFIG[id].steps[key] || s.level : s.level;
+}
+function caHowHTML(id, st){
+  return caCard('how', 'How it works', '<ol class="ca-steps">' + CA_STEPS[id].map(function(s, i){ const lv = caStepLevel(id, s[1], st); return '<li class="ca-step"><span class="ca-step__n">' + (i + 1) + '</span><span class="ca-step__t">' + cwEsc(s[0]) + '</span><span class="ca-tag ca-tag--' + lv + '">' + CA_LEVEL_TAG[lv] + '</span></li>'; }).join('') + '</ol>');
+}
+
+/* ---------- on your jobs right now: built from this workspace's real records, for this viewer ---------- */
+function caMyJobs(){ return JOBS.filter(function(j){ return j.status === 'Active' && caJobMine(j); }); }
+function caMineSub(sb){ if(caOwnerish()) return true; const ids = caTeamIds(); return ids.indexOf(sb.recruiterId) > -1 || caJobMine(jobById(sb.jobId)); }
+function caThreshold(){ return +TENANT_AGENT_CONFIG['talent-discovery'].settings.threshold || 70; }
+// Pool candidates scored against one job, leaving out anyone already in it or on the suppression list. Reused until the pool or the threshold changes.
+let CA_SCORE_MEMO = { key:'', jobs:{} };
+function caJobPicks(j){
+  const key = CANDIDATES.length + ':' + SUBMISSIONS.length + ':' + SUPPRESSION_LIST.length; if(CA_SCORE_MEMO.key !== key) CA_SCORE_MEMO = { key:key, jobs:{} }; if(CA_SCORE_MEMO.jobs[j.id]) return CA_SCORE_MEMO.jobs[j.id];
+  const inJob = {}; SUBMISSIONS.forEach(function(s){ if(s.jobId === j.id) inJob[s.candidateId] = 1; });
+  const out = []; CANDIDATES.forEach(function(c){ if(inJob[c.id] || cwSuppression(personKeyOf(c))) return; out.push({ c:c, s:cwScore(c, j) }); });
+  out.sort(function(a, b){ return b.s.score - a.s.score; }); return (CA_SCORE_MEMO.jobs[j.id] = out);
+}
+function caOfferRisk(sb){
+  const cfg = TENANT_AGENT_CONFIG['offers-joining'].settings, now = fmNow(), c = byId(sb.candidateId) || {}, o = sb.offer, why = [];
+  const words = CANDIDATE_TOUCHES.filter(function(t){ return t.cid === c.id; }).map(function(t){ return String(t.text != null ? t.text : t.note || ''); }).join(' ').toLowerCase(); let high = false;
+  if(o.status !== 'Accepted' && now - Math.min(now, Date.parse(o.at) || now) > (+cfg.riskNoReply || 48) * 3600000) why.push('no reply in ' + cfg.riskNoReply + ' hours');
+  if(/more time/.test(words)) why.push('asked for more time');
+  if(/another offer|other offer|counter[- ]offer/.test(words)){ why.push('mentioned another offer'); high = true; }
+  const nd = typeof cwNoticeDays === 'function' ? cwNoticeDays(c.notice) : 0; if(nd > (+cfg.riskNotice || 60)) why.push('notice period is ' + nd + ' days');
+  const jd = o.doj ? wsDaysBetween(wsDay(now), o.doj) : 0; if(jd > (+cfg.riskJoin || 45)) why.push('joining is ' + jd + ' days out');
+  return { level:high || why.length >= 2 ? 'High' : why.length === 1 ? 'Medium' : 'Low', why:why.length ? why.join(', ') : 'no warning signs' };
+}
+function caNextCheck(sb){
+  const o = sb.offer, now = fmNow(); if(o.status !== 'Accepted') return 'asks for their answer ' + (now - (Date.parse(o.at) || now) > 48 * 3600000 ? 'today' : 'within 48 hours');
+  const dj = wsDaysBetween(wsDay(now), o.doj), next = [7, 3, 1].find(function(n){ return dj > n; }); return next ? 'next check-in ' + caShortDay(wsAddDays(o.doj, -next)) : 'joining-day check ' + caShortDay(o.doj);
+}
+function caPreview(id, work){
+  const W = function(would, will){ return work ? will : would; }, now = fmNow(), cfg = TENANT_AGENT_CONFIG[id].settings, groups = [];
+  if(id === 'talent-discovery'){
+    const th = caThreshold(), jobs = caMyJobs(), rows = jobs.slice(0, 6).map(function(j){ const n = caJobPicks(j).filter(function(x){ return x.s.score >= th; }).length; return j.title + ' · ' + j.client + ': ' + n + ' above ' + th + '%'; });
+    groups.push({ label:'Open jobs', rows:rows, more:Math.max(0, jobs.length - 6), none:'No open jobs on your desk yet.' });
+    if(jobs[0]) groups.push({ label:'Top 3 for ' + jobs[0].title, rows:caJobPicks(jobs[0]).slice(0, 3).map(function(x){ return W('Would pick ', 'Picks ') + x.c.name + ' · ' + x.s.score + '%' + (x.s.score < th ? ' (below the threshold)' : ''); }), none:'Nobody in the pool to score yet.' });
+  } else if(id === 'engagement'){
+    const contacted = {}; SEND_LEDGER.forEach(function(l){ if(l.status === 'sent') contacted[String(l.personKey).replace('cand:', 'c')] = 1; });
+    const th = caThreshold(), jobs = caMyJobs(), match = []; jobs.slice(0, 6).forEach(function(j){ caJobPicks(j).filter(function(x){ return x.s.score >= th && !contacted[personKeyOf(x.c)]; }).slice(0, 3).forEach(function(x){ match.push(W('Would message ', 'Messaging ') + x.c.name + ' about ' + j.title + ' · ' + x.s.score + '% match'); }); });
+    groups.push({ label:'Matched, never contacted', rows:match, none:'Nobody above the ' + th + '% threshold is waiting for a first message.' });
+    const cons = SUBMISSIONS.filter(function(s){ return s.consent && s.consent.state === 'pending' && now - Date.parse(s.consent.sentAt) > 24 * 3600000 && caMineSub(s); });
+    groups.push({ label:'Consent unanswered for more than 24 hours', rows:cons.map(function(s){ return W('Would remind ', 'Reminding ') + (byId(s.candidateId) || {}).name + ' about ' + (jobById(s.jobId) || {}).client + ' · asked ' + pipeAgo(s.consent.sentAt); }), none:'No consent link has been waiting that long.' });
+    const warm = SUBMISSIONS.filter(function(s){ return subPhase(s) === 'client' && !s.hold && caMineSub(s) && journeySent(s) && pipeDays((subSentInfo(s) || {}).at) >= 3; });
+    groups.push({ label:'With the client for more than 3 days, no update', rows:warm.map(function(s){ return W('Would update ', 'Updating ') + (byId(s.candidateId) || {}).name + ': still with ' + (jobById(s.jobId) || {}).client + ' · ' + pipeDays((subSentInfo(s) || {}).at) + ' days'; }), none:'No profile has been with a client that long.' });
+  } else if(id === 'interviews'){
+    const up = hmInterviews.filter(function(iv){ const t = ivTime(iv); return iv.jobId && ['Completed','Cancelled','No Show'].indexOf(iv.status) < 0 && t > now && t <= now + 7 * CW_DAY && caJobMine(jobById(iv.jobId)); }).sort(function(a, b){ return ivTime(a) - ivTime(b); });
+    groups.push({ label:'Next 7 days', rows:up.map(function(iv){ return W('Would remind ', 'Will remind ') + iv.candidate + ' ' + cfg.remindCand1 + ' h before ' + (iv.round || 'the interview') + ' on ' + caDay(ivTime(iv)); }), none:'No interviews in the next 7 days.' });
+    const late = SUBMISSIONS.filter(function(s){ return subPhase(s) === 'client' && !s.hold && subNeedsChase(s) && caMineSub(s); }).map(function(s){ const j = jobById(s.jobId) || {}, d = pipeDays((subSentInfo(s) || {}).at); return { d:d, t:'Client feedback overdue · ' + j.client + ': ' + W('would chase for ', 'chasing for ') + (byId(s.candidateId) || {}).name + ' · ' + d + ' days waiting' }; });
+    hmInterviews.forEach(function(iv){ const t = ivTime(iv); if(!iv.jobId || !t || t > now || iv.outcome || ['Completed','Cancelled','No Show'].indexOf(iv.status) > -1 || !caJobMine(jobById(iv.jobId))) return; const d = Math.floor((now - t) / CW_DAY); late.push({ d:d, t:'Client feedback overdue · ' + (jobById(iv.jobId) || {}).client + ': ' + iv.candidate + ', ' + (iv.round || 'interview') + ' · ' + d + ' days waiting' }); });
+    groups.push({ label:'Client feedback overdue', rows:late.sort(function(a, b){ return b.d - a.d; }).map(function(x){ return x.t; }), none:'No client feedback is overdue.' });
+  } else if(id === 'offers-joining'){
+    const live = SUBMISSIONS.filter(function(s){ return s.offer && !journeyJoined(s) && ['Rejected','Withdrawn'].indexOf(s.stage) < 0 && caMineSub(s); });
+    groups.push({ label:'Offers out', rows:live.filter(function(s){ return s.offer.status === 'Made' || s.offer.status === 'Pending approval'; }).map(function(s){ const r = caOfferRisk(s); return (byId(s.candidateId) || {}).name + ' · ' + (jobById(s.jobId) || {}).title + ' · ' + r.level + ' risk: ' + r.why + ' · ' + W('would ', 'Kairo ') + caNextCheck(s).replace(/^asks/, work ? 'asks' : 'ask'); }), none:'No offers are out.' });
+    const soon = live.filter(function(s){ if(s.offer.status !== 'Accepted' || !s.offer.doj) return false; const d = wsDaysBetween(wsDay(now), s.offer.doj); return d >= 0 && d <= 14; });
+    groups.push({ label:'Joining in the next 14 days', rows:soon.map(function(s){ return (byId(s.candidateId) || {}).name + ' joins ' + (jobById(s.jobId) || {}).client + ' on ' + caShortDay(s.offer.doj) + ' · ' + caNextCheck(s); }), none:'Nobody joins in the next 14 days.' });
+    const ins = PAYTRACK_JOINED.filter(function(r){ if(typeof ptWindowPassed !== 'function' || ptWindowPassed(r)) return false; const sb = subById(r.submissionId); return sb ? caMineSub(sb) : caOwnerish(); });
+    groups.push({ label:'Inside the replacement window', rows:ins.map(function(r){ const dj = typeof ptRecDate === 'function' ? ptRecDate(r, 'doj') : null, day = dj ? Math.floor((now - dj.getTime()) / CW_DAY) : 0, nx = [7, 30, 60].find(function(n){ return n > day; }); return r.name + ' · ' + (r.company || r.client) + ' · day ' + day + (nx ? ' · ' + W('would check in', 'checks in') + ' on day ' + nx : ''); }), none:'No placements are inside a replacement window.' });
+  } else {
+    const on = caLiConnected(), people = RECRUITER_ROSTER.filter(function(u){ return tmStatus(u) === 'Active' && roleHasPermission(u.assignedRoleId, 'candidates', 'Submit to job') && caTeamIds().indexOf(u.id) > -1; });
+    groups.push({ label:'Extension', rows:people.map(function(u){ return u.name + ': ' + (on.indexOf(u.id) > -1 ? 'Connected' : 'Not installed'); }), none:'No recruiters yet.' });
+    const jobs = caMyJobs(); groups.push({ label:'Open jobs, and the search for each', rows:jobs.map(function(j){ return j.title + ' · ' + ((j.skills || []).filter(function(x){ return x !== 'General'; }).slice(0, 3).join(', ') || 'no skills listed') + ' · ' + String(j.loc || '').split(',')[0]; }), none:'No open jobs on your desk yet.' });
+    groups.push({ label:'The sequence and its limits', rows:[ 'Visit, connect with a note, message with the job link, follow up after 3 days, stop on any reply', cfg.invitesDay + ' invites a day, ' + cfg.invitesWeek + ' a week, ' + cfg.messagesDay + ' messages a day, ' + cfg.visitsDay + ' profile visits a day, inside working hours' ] });
+  }
+  return groups;
+}
+function caPreviewCount(id){   // the one real number on a card for an agent that isn't in the plan
+  const g = caPreview(id, false), n = function(i){ return g[i].rows.length + (g[i].more || 0); };
+  if(id === 'interviews') return n(0) + (n(0) === 1 ? ' interview' : ' interviews') + ' this week it would handle';
+  if(id === 'offers-joining') return n(0) + (n(0) === 1 ? ' offer' : ' offers') + ' it would watch';
+  if(id === 'linkedin') return n(1) + (n(1) === 1 ? ' job' : ' jobs') + ' it could search';
+  if(id === 'talent-discovery') return n(0) + (n(0) === 1 ? ' job' : ' jobs') + ' it would find people for';
+  return g.reduce(function(s, x){ return s + x.rows.length; }, 0) + ' candidates it would message';
+}
+function caPreviewHTML(id, work){
+  const CAP = 8, body = caPreview(id, work).map(function(g){ const list = g.rows.slice(0, CAP), more = (g.rows.length - list.length) + (g.more || 0);
+    return '<div class="ca-prev" data-group="' + cwEsc(g.label) + '"><h3 class="ca-prev__h">' + cwEsc(g.label) + (g.rows.length || g.more ? ' <small>' + (g.rows.length + (g.more || 0)) + '</small>' : '') + '</h3>' + (list.length ? '<ul>' + list.map(function(r){ return '<li>' + cwEsc(caText(r)) + '</li>'; }).join('') + '</ul>' + (more ? '<p class="ca-muted ca-prev__more">and ' + more + ' more</p>' : '') : '<p class="ca-muted ca-prev__more">' + cwEsc(g.none) + '</p>') + '</div>'; }).join('');
+  const health = work ? '<ul class="ca-health" id="ca-health">' + caHealth(id).map(function(h){ return '<li>' + cwEsc(h) + '</li>'; }).join('') + '</ul>' : '';
+  return caCard('preview', work ? 'Working on now' : 'If it were on', body + health);
+}
+function caRecentHTML(id, rows){
+  const list = rows.slice(0, 10);
+  return caCard('activity', 'Activity', list.length ? '<ul class="ca-recent">' + list.map(function(r){ return '<li tabindex="0" data-row="' + r.id + '" onclick="caOpenRow(\'' + r.id + '\')" onkeydown="if(event.key===\'Enter\')caOpenRow(\'' + r.id + '\')"><span class="ca-recent__t">' + cwFmtTime(r.at) + '</span><span class="ca-recent__w"><b>' + cwEsc(caText(r.what)) + '</b>' + (r.candidate ? ' · ' + cwEsc(r.candidate.name) : '') + (r.job ? ' · ' + cwEsc(r.job.title) : '') + '<small>' + cwEsc(caText(r.why)) + '</small></span><span class="ca-recent__r">' + cwEsc(r.result) + ' · ' + cwEsc(caWhoDid(r)) + '</span></li>'; }).join('') + '</ul><button type="button" class="o-link" style="margin-top:8px" onclick="caSeeAllActivity(\'' + id + '\')">See all in Activity</button>' : '<p class="o-card__sub">Nothing yet. Every action it takes shows up here.</p>');
+}
+function caSeeAllActivity(id){ CA.agent = null; CA.draft = null; CA.tab = 'activity'; CA.f = { agent:id, job:'', recruiter:'', result:'', date:'' }; CA.limit = 50; caRefresh(); }
+function caSettingsSection(id, st){
+  const can = caCanEditSettings() && st.key !== 'plan', note = st.key === 'plan' ? 'Available once it’s added' : can ? (caOwnerish() ? '' : 'These settings apply to your team’s jobs. The agent’s switch, scope and limits are set by the Owner or an Admin.') : 'Your Owner sets these';
+  return '<section class="ca-sec ca-sec--set' + (can ? '' : ' is-ro') + '" data-sec="settings" id="ca-sec-settings"><h2 class="o-card__title">Settings you control</h2>' + (note ? '<p class="o-card__sub ca-setnote">' + cwEsc(note) + '</p>' : '') + caSettingsHTML(id, can, st) + '</section>';
+}
+function caSettingsHTML(id, can, st){
+  const a = agentById(id), d = caDraftFor(id), own = can && caOwnerish(), ed = can, cfg = TENANT_AGENT_CONFIG[id], me = (currentActingUser() || {}).id, saved = caManager() ? (cfg.team[me] || {}).saved : cfg.saved;
+  const limits = sCard('Scope and limits', 'Working hours are in the workspace time zone, Monday to Saturday.', caScopeHTML(d, own) +
+    (d.dailyCap != null ? sRow('Daily cap', 'Up to ' + a.dailyCap.toLocaleString('en-IN') + ' a day (set by Oontu).', '<input class="app-input s-ctl" type="number" data-field="dailyCap" aria-label="Daily cap" value="' + cwEsc(d.dailyCap) + '" min="0" max="' + a.dailyCap + '"' + (own ? '' : ' disabled') + ' oninput="caSet(\'dailyCap\', +this.value)">') : '') +
+    sRow('Working hours', id === 'interviews' ? 'The 2-hour interview reminder is the only message sent outside them.' : '', '<span class="ca-num"><input class="app-input s-ctl" type="time" aria-label="From" data-field="from" value="' + cwEsc(d.from) + '"' + (own ? '' : ' disabled') + ' oninput="caSet(\'from\', this.value)"><small>to</small><input class="app-input s-ctl" type="time" aria-label="To" data-field="to" value="' + cwEsc(d.to) + '"' + (own ? '' : ' disabled') + ' oninput="caSet(\'to\', this.value)"></span>'));
+  const own2 = sCard(id === 'engagement' ? 'Language, tone and limits' : 'How it works', '', CA_FIELDS[id].map(function(f){ return caField(f, d, ed); }).join(''));
+  const live = st && (st.key === 'on' || st.key === 'trial' || st.key === 'setup' || st.key === 'paused'), li = id === 'linkedin' && st && st.key !== 'plan' ? caLiExtHTML() + (live && typeof cwLiAccountsHTML === 'function' ? cwLiAccountsHTML() : '') : '';
+  const save = can ? '<div class="ca-save"><span class="ca-muted" id="ca-saved">' + (saved ? 'Last saved by ' + cwEsc(saved.by) + ', ' + cwFmtTime(saved.at) : 'Every change is written to the audit log.') + '</span>' + sBtn('Save', "caSaveSettings('" + id + "')", 'primary') + '</div>' : '';
+  return (id === 'engagement' ? caPlaysHTML(a, d, ed) + caLevelsHTML(a, d, ed) : caLevelsHTML(a, d, ed)) + own2 + limits + li + save;
+}
+
+/* ---------- To do: one inbox. Every Suggest item is here too; approving in either place clears both. Tasks from Kairo (STOP, asked to add an agent) are here as well. ---------- */
+function caMyTodo(){
+  const me = currentUserId(), mine = function(owner){ return owner === me; }, out = [];
+  CW_APPROVALS.filter(function(a){ return a.status === 'pending'; }).forEach(function(a){ const wf = wfFindById(a.wfId) || {}; if(wf.agentId && mine(a.ownerId || wf.ownerId)) out.push(caNeeds(wf.agentId).find(function(n){ return n.id === a.id; })); });
+  CA_SUGGEST.filter(function(s){ return s.status === 'pending' && mine(s.ownerId); }).forEach(function(s){ out.push(caNeeds(s.agentId).find(function(n){ return n.id === s.id; })); });
+  return out.filter(Boolean);
+}
+function caMyTasks(){ const me = currentUserId(); return CW.tasks.filter(function(t){ return t.ownerId === me && (t.ask || t.stop) && !t.done; }); }
+function caTodoCount(){ if(jsCorp() || !sCan('kairo', 'Use agents')) return 0; try { return caMyTodo().length + caMyTasks().length; } catch(e){ return 0; } }
+function caTaskDone(i){ const t = caMyTasks()[i]; if(t){ t.done = true; logAudit('Cowork', 'Kairo task done', t.text); } caAfterChange(); }
+function caTodoHTML(){
+  const items = caMyTodo(), tasks = caMyTasks(); if(!items.length && !tasks.length) return '';
+  return '<section class="o-card" id="ca-todo" style="margin-bottom:16px" aria-label="From Kairo"><h2 class="o-card__title">From Kairo</h2><ul class="o-list">' +
+    items.map(function(n){ const a = agentById(n.agentId); return '<li class="o-att ca-need" data-todo="' + n.id + '" style="align-items:flex-start"><span class="o-att__text"><span class="ca-tag ca-tag--kairo">Kairo · ' + cwEsc(a.name) + '</span><span class="o-att__title" style="white-space:normal">' + cwEsc(caText(n.title)) + '</span><span class="ca-need__why">' + cwEsc(caText(n.why)) + '</span></span><span class="ca-need__a">' + sBtn('Skip', "caNeedSkip('" + n.kind + "','" + n.id + "')", 'ghost') + sBtn('Edit', "caNeedEdit('" + n.kind + "','" + n.id + "')") + sBtn('Approve', "caNeedApprove('" + n.kind + "','" + n.id + "')", 'primary') + '</span></li>'; }).join('') +
+    tasks.map(function(t, i){ const a = agentById(t.ask || 'engagement'); return '<li class="o-att ca-need" data-task style="align-items:flex-start"><span class="o-att__text"><span class="ca-tag ca-tag--kairo">Kairo · ' + cwEsc(a.name) + '</span><span class="o-att__title" style="white-space:normal">' + cwEsc(t.text) + '</span></span><span class="ca-need__a">' + (t.ask ? sBtn('Open', "caOpenAgent('" + t.ask + "')") : '') + sBtn('Done', 'caTaskDone(' + i + ')', 'primary') + '</span></li>'; }).join('') + '</ul></section>';
+}
+function caAfterChange(){ if(typeof renderSidebar === 'function') renderSidebar(); if(['my-todo','manager-todo','all-tasks'].indexOf(state.activeNav) > -1) showView(state.activeNav); else caRefresh(); }
+(function(){
+  ['my-todo','manager-todo','all-tasks'].forEach(function(k){ const base = RENDERERS[k]; RENDERERS[k] = function(){ const h = base.apply(this, arguments); if(jsCorp()) return h; let t = ''; try { t = caTodoHTML(); } catch(e){ console.error('kairo to do', e); } if(!t) return h; const at = h.indexOf('</h2></div>'); return at > -1 ? h.slice(0, at + 11) + t + h.slice(at + 11) : t + h; }; });
+  ['caNeedApprove','caNeedSkip'].forEach(function(fn){ const o = window[fn]; window[fn] = function(){ const r = o.apply(this, arguments); caAfterChange(); return r; }; });
+  // a demo clock jump past a trial's end, and every sweep
+  const sw = window.fmSlaSweep; window.fmSlaSweep = function(){ const r = sw.apply(this, arguments); try { caTrialSweep(); } catch(e){ console.error('trial sweep', e); } return r; };
+})();
+/* ---------- the route: agencies get this page; a company workspace keeps its Cowork ---------- */
+(function(){
+  const corp = window.renderCowork;
+  window.renderCowork = function(){ return jsCorp() ? corp() : caRender(); };
+  window.renderAiTeamHub = window.renderCowork;
+  RENDERERS['kairo-team'] = function(){ if(!CA.keep && !jsCorp()){ CA.agent = null; CA.draft = null; } CA.keep = false; return window.renderCowork(); };
+  // The workflow builder isn't part of the agency product: its doors lead to the agent's Settings.
+  const owb = window.openWorkflowBuilder, olw = window.openLinkitWizard;
+  window.openWorkflowBuilder = function(){ if(jsCorp()) return owb.apply(this, arguments); caOpenAgent('engagement', 'settings'); };
+  window.openLinkitWizard = function(){ if(jsCorp()) return olw.apply(this, arguments); caOpenAgent('linkedin', 'settings'); };
+  if(!window.__caTimer) window.__caTimer = setInterval(function(){   // the engine keeps moving while Cowork is open
+    if(!document.getElementById('ca-root') || document.hidden || CW.pauseAll.on || CA.agent) return; const ae = document.activeElement; if(ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
+    cwEngineTick(10 * 60000, { enrol:1 }); if(!document.querySelector('#ca-side-root > aside') && !document.querySelector('#fm-modal-root > *')){ const m = document.getElementById('main-content'), top = m ? m.scrollTop : 0; caRefresh(); if(m) m.scrollTop = top; }
+  }, 30000);
+})();
+(function(){ const css = document.createElement('style'); css.textContent =
+  '.ca-lede{margin:4px 0 0;font-size:14px;line-height:20px;color:var(--text-2)}.ca-state{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--text-2);white-space:nowrap}.ca-state::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--line-strong,#D9D8D2)}.ca-state--on{color:var(--text-1)}.ca-state--on::before{background:var(--text-1)}.ca-state--paused,.ca-state--setup{color:var(--warn-fg)}.ca-state--paused::before,.ca-state--setup::before{background:var(--warn-fg)}' +
+  '.ca-card{cursor:pointer}.ca-card__st{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}.ca-chip{font:500 12px/1 inherit;padding:5px 9px;border-radius:999px;background:var(--warn-bg);color:var(--warn-fg);cursor:pointer}.ca-head-acts{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.ca-act-note{font-size:13px}.ca-state--trial{color:var(--text-1)}.ca-state--trial::before{background:var(--text-1)}' +
+  '.ca-sec .o-card__title{margin-bottom:10px}.ca-outcomes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0}.ca-outcomes li{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:20px;color:var(--text-1)}.ca-outcomes__i{flex:none;width:32px;height:32px;border-radius:10px;background:var(--bg-subtle);color:var(--text-2);display:flex;align-items:center;justify-content:center}' +
+  '.ca-steps{display:flex;gap:0;list-style:none;margin:0;padding:0;overflow-x:auto}.ca-step{flex:1 1 0;min-width:112px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:0 12px 4px 0;position:relative}.ca-step__n{width:22px;height:22px;border-radius:50%;background:var(--bg-subtle);color:var(--text-2);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;z-index:1}.ca-step:not(:last-child)::after{content:"";position:absolute;top:11px;left:22px;right:0;height:1px;background:var(--line)}.ca-step__t{font-size:13px;line-height:18px;color:var(--text-1)}.ca-tag{font-size:11px;line-height:16px;padding:1px 7px;border-radius:999px;background:var(--bg-subtle);color:var(--text-2);white-space:nowrap}.ca-tag--suggest{background:var(--warn-bg);color:var(--warn-fg)}.ca-tag--person{background:var(--text-1);color:#fff}.ca-tag--kairo{display:inline-block;margin-bottom:4px}' +
+  '.ca-prev{padding:10px 0;border-top:1px solid var(--line)}.ca-prev:first-of-type{border-top:0;padding-top:0}.ca-prev__h{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--text-1)}.ca-prev__h small{font-weight:400;color:var(--text-3)}.ca-prev ul{margin:0;padding:0;list-style:none}.ca-prev li{font-size:13px;line-height:20px;color:var(--text-2);padding:2px 0}.ca-prev__more{margin:2px 0 0;font-size:13px}.ca-health{margin:10px 0 0;padding:10px 0 0;border-top:1px solid var(--line);list-style:none;font-size:13px;color:var(--text-2)}' +
+  '.ca-sec--set{display:flex;flex-direction:column;gap:12px}.ca-sec--set>.o-card__title{margin:8px 0 0}.ca-setnote{margin:-6px 0 0}.ca-sec--set.is-ro .s-card{opacity:.6}' +
+  '.ca-recent{list-style:none;margin:0;padding:0}.ca-recent li{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;color:var(--text-2)}.ca-recent b{font-weight:600;color:var(--text-1)}.ca-recent small{display:block;color:var(--text-3);font-size:12px}.ca-recent__r{white-space:nowrap}' +
+  '@media (max-width:760px){.ca-outcomes{grid-template-columns:minmax(0,1fr)}.ca-steps{flex-direction:column;gap:10px;overflow:visible}.ca-step{flex-direction:row;align-items:center;flex-wrap:wrap;min-width:0;padding:0}.ca-step:not(:last-child)::after{display:none}.ca-step__t{flex:1 1 60%}.ca-recent li{grid-template-columns:minmax(0,1fr)}.ca-head-acts{width:100%}}' +
+  '.ca-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:8px}@media (max-width:760px){.ca-grid{grid-template-columns:minmax(0,1fr)}}' +
+  '.ca-card{display:flex;flex-direction:column;gap:8px;min-width:0}.ca-card__h{display:flex;align-items:center;justify-content:space-between;gap:8px}.ca-card__nums{margin:0;font-size:13px;color:var(--text-2)}.ca-card__nums b{color:var(--text-1);font-weight:600}.ca-card__nums small{color:var(--text-3);font-size:12px}.ca-card__wait{margin:0;font-size:13px;color:var(--warn-fg);font-weight:500}.ca-setup{margin:0;font-size:13px;color:var(--warn-fg)}.ca-card__f{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:8px}' +
+  '#ca-needs{margin:8px 0 12px}.ca-need__why{display:block;font-size:13px;line-height:18px;color:var(--text-3);white-space:normal;margin-top:2px}.ca-need__a{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}@media (max-width:640px){.ca-need{flex-wrap:wrap}.ca-need__a{width:100%;justify-content:flex-end}}' +
+  '.ca-jobpanel{margin-bottom:16px}.ca-jobpanel__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:10px}.ca-jobpanel__a{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:13px}.ca-jobpanel__a small{font-size:12px;color:var(--text-2)}.ca-jobpanel__h{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px}.ca-jobpanel__h b{font-weight:600;color:var(--text-1)}.ca-muted,.ca-jobpanel__a small.ca-muted{color:var(--text-3);font-weight:400}' +
+  '.ca-num{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}.ca-num input{width:92px}.ca-num small{font-size:12px;color:var(--text-3)}.ca-play{padding:12px 0;border-bottom:1px solid var(--line)}.ca-play:last-child{border-bottom:0}.ca-play__h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}.ca-play__h b{font-weight:600;font-size:14px}.ca-play .cl-field{display:block;margin-bottom:8px}.ca-play .cl-field span{font-size:12px;color:var(--text-2)}.ca-play textarea{width:100%}.ca-play__row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.ca-play__row .ca-num{font-size:12px;color:var(--text-2)}.ca-line{margin:0;font-size:13px;color:var(--text-2)}.ca-scopelist{max-height:200px;overflow:auto;width:100%}' +
+  '.ca-save{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px}.ca-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ca-filters select{width:auto;max-width:190px}.ca-filters__end{margin-left:auto}' +
+  '.ca-table tbody tr{cursor:pointer}.ca-table td small{display:block;white-space:normal;max-width:300px}@media (max-width:760px){.ca-table{min-width:0!important}.ca-table thead{display:none}.ca-table,.ca-table tbody,.ca-table tr,.ca-table td{display:block;width:100%}.ca-table tr{padding:10px 16px;border-bottom:1px solid var(--line)}.ca-table td{border:0!important;padding:2px 0!important;height:auto!important;white-space:normal}.ca-table td[data-l]::before{content:attr(data-l) " · ";color:var(--text-3);font-size:12px}.ca-filters select{max-width:100%;flex:1 1 45%}.ca-filters__end{margin-left:0}}' +
+  '.ca-side__scrim{position:fixed;inset:0;z-index:88;background:rgba(47,49,63,.3)}.ca-side{position:fixed;top:0;right:0;bottom:0;z-index:89;width:min(440px,100vw);background:var(--bg-card,#fff);border-left:1px solid var(--line);padding:20px;overflow-y:auto}.ca-side__h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.ca-side__l{margin:12px 0 2px;font-size:12px;color:var(--text-3)}.ca-side__v{margin:0;font-size:13px;color:var(--text-1);white-space:pre-wrap;word-break:break-word}';
+  document.head.appendChild(css); })();
+</script>
 <script id="demo-script">
 /* ============================================================
    DEMO DATA · three demo agencies built by the product's own functions (demo guide, Demo data tab).
@@ -50668,6 +51310,8 @@ function demoWorkspace(c){
   ORG_STRUCTURE.branches = (c.branches || []).map(function(b, i){ return { id:'b' + (i + 1), name:b.city + ' branch', region:b.state, code:b.city.slice(0, 3).toUpperCase(), status:'Active', timezone:'Asia/Kolkata', gstin:b.gstin, city:b.city, state:b.state }; });
   applyTeamSizeDefaults(c.teamSize, 'Staffing agency');
   if(c.plan) demoPlan(c.plan);
+  // Kesar has no WhatsApp number yet, so Engagement falls back to email; the others are connected.
+  const wa = CONNECTORS.find(function(x){ return x.id === 'whatsapp'; }); if(wa) wa.status = c.noWhatsapp ? 'not_connected' : 'connected';
   // K4: each workspace numbers its own invoices from its own prefix (Settings › Billing), starting at 0001.
   WSX.terms.invoicePrefix = c.invoicePrefix; WSX.terms.invoiceSeq = {}; WSX.terms.creditSeq = {};
 }
@@ -50675,6 +51319,8 @@ function demoWorkspace(c){
 function demoPlan(planId){
   const t = typeof tenantById === 'function' ? tenantById(CURRENT_ORGANIZATION_ID) : null, plan = planById(planId); if(!t || !plan) return;
   // K6: the seats shown everywhere come from the plan: Starter 3, Growth 15, Enterprise no cap (null).
+  // The plan decides the agents: included ones are on, LinkedIn Outreach is a paid add-on these companies bought, anything else is off.
+  TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID] = {}; AGENT_CATALOG.forEach(function(a){ const inc = a.includedInPlans.indexOf(planId) > -1, addOn = (a.addOnPlans || []).indexOf(planId) > -1; TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID][a.id] = inc || addOn ? { state:'active', since:sToday(-90), renewsOn:sToday(275), usedThisMonth:0 } : { state:'none', usedThisMonth:0 }; });
   t.planId = planId; t.plan = plan.name; ORG_STRUCTURE.subscription = Object.assign(ORG_STRUCTURE.subscription || {}, { plan:plan.name, seatsIncluded:plan.userLimit == null ? null : plan.userLimit });
   (PLATFORM_SUBSCRIPTIONS || []).forEach(function(sub){ if(sub.tenantId === CURRENT_ORGANIZATION_ID && ['active','trial'].indexOf(sub.status) > -1){ sub.planId = planId; sub.plan = plan.name; } });
   if(typeof logPlatformAudit === 'function') logPlatformAudit('Tenant plan set for the demo', t.name + ' — ' + plan.name, { entityId:t.id });
@@ -50939,6 +51585,9 @@ function* demoSteps(def){
     for(let i = 100; i < due.length; i += 100){ const wait = due.slice(i), was = wait.map(function(s){ return s.dormant; }); wait.forEach(function(s){ s.dormant = true; });
       const fi = FM.interactive; FM.interactive = false; try { demoAct(people.owner.id); fmSlaSweep(); } finally { FM.interactive = fi; wait.forEach(function(s, k){ s.dormant = was[k]; }); } yield 'sweep'; } }
   demoAct(people.owner.id); ptSweep(); if(typeof fmSlaSweep === 'function'){ const i = FM.interactive; FM.interactive = false; try { fmSlaSweep(); } finally { FM.interactive = i; } }
+  // LinkedIn Outreach: who has the extension connected in each demo company
+  CA_EXT = {}; (def.linkedinPeople ? def.linkedinPeople(people) : []).forEach(function(u){ if(u) CA_EXT[u.id] = { connected:true, plan:'Free', at:now - DEMO_DAY }; });
+  if(typeof LI_SENDER_PROFILES !== 'undefined' && def.key !== 'northstar') LI_SENDER_PROFILES.forEach(function(p){ p.connected = false; });
   DEMO.times[def.key] = T; return { people:people, clients:clients, jobs:jobs };
 }
 
@@ -50946,7 +51595,7 @@ function* demoSteps(def){
 const DEMO_KESAR = {
   key:'kesar', candidates:60, journeys:70, storyPeople:2, storyJourneys:1, placementsTotal:5, stateMix:{ Gujarat:8, Maharashtra:2, Delhi:1 },
   team:function(){
-    const c = { brand:'Kesar Staffing', legal:'Kesar Staffing Services LLP', city:'Ahmedabad', teamSize:'1–5', idPrefix:'KS', invoicePrefix:'KSR-', owner:{ name:'Meera Shah', email:'meera.kesar@gmail.com' }, gstin:demoGstin('Gujarat'), plan:'plan-starter' };
+    const c = { brand:'Kesar Staffing', legal:'Kesar Staffing Services LLP', city:'Ahmedabad', teamSize:'1–5', idPrefix:'KS', invoicePrefix:'KSR-', noWhatsapp:true, owner:{ name:'Meera Shah', email:'meera.kesar@gmail.com' }, gstin:demoGstin('Gujarat'), plan:'plan-starter' };
     DEMO.domain = 'kesarstaffing.in'; demoWorkspace(c); const owner = demoOwner(c); demoAct(owner.id);
     const raj = demoInvite('Raj Patel', 'role_recruiter', owner.id, 'Ahmedabad'), tanvi = demoInvite('Tanvi Desai', 'role_recruiter', owner.id, 'Ahmedabad');
     return { owner:owner, raj:raj, tanvi:tanvi, accounts:null };
@@ -50966,6 +51615,8 @@ const DEMO_KESAR = {
   placements:[ { daysAgo:150, money:'paid' }, { daysAgo:118, money:'paid' }, { daysAgo:45, money:'paid' }, { daysAgo:20, money:'raised' }, { daysAgo:75, money:'overdue' } ],
   story:function(x){
     // story: Patel Foods' Sales Executive; Nikhil Joshi applied on the careers page; Kiran Solanki is in the pool
+    // Two of Raj's profiles are past the client's 2-day reply time, so Home and Cowork › Interviews show feedback overdue from day one.
+    SUBMISSIONS.filter(function(sb){ return subPhase(sb) === 'client' && !sb.hold && sb.sent && (rosterById(sb.recruiterId) || {}).name === 'Raj Patel'; }).slice(0, 2).forEach(function(sb, i){ sb.sent.at = new Date(x.now - (3 + i) * DEMO_DAY).toISOString(); });
     // K5: he applied this morning, so he is still Raj's (the job lead's) inside the applicant SLA; the demo clock shows him move on
     const j = x.jobs[0]; demoAt(x.now - 3 * 3600000, function(){ demoAct(x.people.owner.id); ingestApplicationEvent(j.id, Object.assign(demoPerson('Gujarat', j.title, j.__demo.skills, { name:'Nikhil Joshi', city:'Ahmedabad' }), { source:'Careers Page' }), { platform:'Careers Page' }); });
     demoAt(x.now - 5 * DEMO_DAY, function(){ demoPoolCandidate(demoPerson('Gujarat', 'Sales Executive', j.__demo.skills, { name:'Kiran Solanki', city:'Ahmedabad' }), x.people.raj.id); });
@@ -50999,7 +51650,7 @@ function demoContractMonth(a, month, acc){
 
 /* ---------- Northstar Talent Partners (Pune and Bengaluru): review, teams, consent, money split; extends today's seed ---------- */
 const DEMO_NORTHSTAR = {
-  key:'northstar', candidates:600, journeys:700, approvalsTarget:20, placementsTotal:40, historyDays:180, contracts:1, stateMix:{ Maharashtra:4, Karnataka:4, 'Tamil Nadu':1, Telangana:1, Kerala:1, Delhi:1, Gujarat:1 },
+  key:'northstar', linkedinPeople:function(){ return [RECRUITER_ROSTER.find(function(u){ return u.name === 'Arjun Kapoor'; }), RECRUITER_ROSTER.find(function(u){ return u.name === 'Neha Kulkarni'; })]; }, candidates:600, journeys:700, approvalsTarget:20, placementsTotal:40, historyDays:180, contracts:1, stateMix:{ Maharashtra:4, Karnataka:4, 'Tamil Nadu':1, Telangana:1, Kerala:1, Delhi:1, Gujarat:1 },
   team:function(){
     DEMO.domain = 'northstartalent.com'; const R = rosterById, owner = R('RP-088'), arjun = R('RP-092'), divya = R('RP-081'); demoAct(owner.id);
     Object.assign(ORG_STRUCTURE.profile, { city:'Pune', teamSize:'6–20' }); demoPlan('plan-growth');
@@ -51049,7 +51700,7 @@ const DEMO_NORTHSTAR = {
 /* ---------- Vistaar HR Services (Mumbai HQ; branches Pune, Delhi, Chennai, Bengaluru): roles, privacy, volume, contract staff ---------- */
 const DEMO_VISTAAR_OFFICES = [['Mumbai','Maharashtra'],['Pune','Maharashtra'],['New Delhi','Delhi'],['Chennai','Tamil Nadu'],['Bengaluru','Karnataka']];
 const DEMO_VISTAAR = {
-  key:'vistaar', candidates:4000, journeys:4500, approvalsTarget:60, placementsTotal:300, invoicesRaised:240, historyDays:360, storyPeople:31, contracts:30,   // the story person and 30 contract workers
+  key:'vistaar', linkedinPeople:function(p){ return p.offices.map(function(o){ return o.recs[0]; }); }, candidates:4000, journeys:4500, approvalsTarget:60, placementsTotal:300, invoicesRaised:240, historyDays:360, storyPeople:31, contracts:30,   // the story person and 30 contract workers
   stateMix:{ Maharashtra:6, Delhi:3, 'Tamil Nadu':3, Karnataka:3, Gujarat:1, Kerala:1, 'West Bengal':1, Telangana:1, 'Uttar Pradesh':2, Punjab:1 },
   team:function(){
     const hq = demoGstin('Maharashtra'), pan = hq.slice(2, 12);
@@ -51532,8 +52183,10 @@ function requestConsent(sb, by, opts){
   if(sb.consent) (sb.consentHistory = sb.consentHistory || []).push(sb.consent);
   sb.consent = { token:token, state:'pending', channel:'WhatsApp and email', sentAt:new Date(t).toISOString(), dueAt:t + CONSENT_HOURS * 3600000, answeredAt:null, how:null, callNote:'', by:who, askNote:String(opts.note || '').trim() };
   const text = 'Hi ' + w.first + ', ' + w.agency + ' would like to put you forward to ' + w.j.client + ' for ' + w.j.title + '. Tap Yes to agree: ' + consentLink(token) + ' (the link works for ' + CONSENT_HOURS + ' hours).' + cwDisclosureLine('template');
-  tsLog(w.c.id, 'WhatsApp', text, { jobId:w.j.id, consentToken:token, disclosure:cwDisclosureKind('template') }); tsLog(w.c.id, 'Email', text, { jobId:w.j.id, consentToken:token, disclosure:cwDisclosureKind('template') });
-  ['whatsapp', 'email'].forEach(function(ch){ cwLedger({ channel:ch, senderId:'kairo', personKey:'cand:' + w.c.id, workflowId:null, runId:null, status:'sent', reason:'', action:'consent', text:text, disclosure:cwDisclosureKind('template') }); });
+  // the channels that are really connected: with WhatsApp not connected the link goes by email only
+  const chans = cwChannelConnected('whatsapp') ? ['whatsapp', 'email'] : ['email'];
+  chans.forEach(function(ch){ tsLog(w.c.id, ch === 'whatsapp' ? 'WhatsApp' : 'Email', text, { jobId:w.j.id, consentToken:token, disclosure:cwDisclosureKind('template') }); });
+  chans.forEach(function(ch){ cwLedger({ at:t, agentId:'engagement', jobId:w.j.id, candidateId:w.c.id, why:'Shortlisted, so they are asked to agree before the profile goes to ' + w.j.client, channel:ch, senderId:'kairo', personKey:'cand:' + w.c.id, workflowId:null, runId:null, status:'sent', reason:'', action:'consent', text:text, disclosure:cwDisclosureKind('template') }); });
   sb.stageHistory.push({ stage:sb.stage, at:new Date(t).toISOString(), reason:(st === 'expired' ? 'New consent link sent to ' : 'Consent link sent to ') + w.first + ' by WhatsApp and email', by:who });
   logAudit('Submissions', st === 'expired' ? 'Consent link sent again' : 'Consent requested', w.c.name + ' — ' + w.j.title + ' · ' + w.j.client + ' · link sent by WhatsApp and email, due ' + fmDate(sb.consent.dueAt) + ' · by ' + who + (sb.consent.askNote ? ' · asked again after a No: ' + sb.consent.askNote : ''), consentMeta(sb));
   return sb.consent;

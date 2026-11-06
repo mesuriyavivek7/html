@@ -14,15 +14,17 @@
   function wsAt(day, h, m){ var a = day.split('-'); return wsWallMs(+a[0], +a[1], +a[2], h, m || 0); }   // a wall time in the workspace zone (not the browser's)
   function tue10(){ var day = wsDay(CW.clock); while(wsDow(day) !== 2) day = wsAddDays(day, -1); var t = wsAt(day, 11); cwSetClock(t); return t; }
   function java(){ return CAMPAIGNS.find(function(c){ return c.jobId === 'j1'; }); }
+  // The campaign list is the company workspace's screen now; agencies never reach it. Its sorting and flags are still checked with this seed.
+  function list(){ main().innerHTML = cpCampaignsTab(); }
   var BANNED = /\bAI\b|magic|smart|intelligent|✨|funnel optimi[sz]ation|conversion/i;
 
   window.addEventListener('load', function(){ setTimeout(async function(){
     var ob = document.getElementById('onboarding'); if(ob) ob.classList.add('hidden');
     state.role = 'admin'; enterApp(); await sleep(100); var T0 = CW.clock;
 
-    await t('Cowork opens on Campaigns, with Campaigns · Agents · Activity, four stat cards, suggestions and the table', async function(){
-      as('admin'); CP.top = 'campaigns'; CP.filter = 'running'; CP.stat = null; showView('kairo-team'); await sleep(40);
-      var txt = main().textContent; ok(/Campaigns/.test(txt) && /Agents/.test(txt) && /Activity/.test(txt), 'tabs');
+    await t('the company workspace’s campaign list: four stat cards, suggestions and the table', async function(){
+      as('admin'); CP.top = 'campaigns'; CP.filter = 'running'; CP.stat = null; showView('kairo-team'); list(); await sleep(40);
+      var txt = main().textContent;
       ok(main().querySelectorAll('.cp-stats .stat').length === 4, 'four stat cards: ' + main().querySelectorAll('.cp-stats .stat').length);
       ['Ready to call','Applicants from campaigns','Expected revenue','Hours saved'].forEach(function(l){ ok(txt.indexOf(l) > -1, 'card ' + l); });
       ok(/Open jobs with no campaign/.test(txt), 'suggested card'); ok(main().querySelectorAll('.cp-sug__row').length === 3, 'three suggestions');
@@ -30,13 +32,13 @@
       ok(/Senior Java Developer/.test(txt) && /Behind pace|Warehouse Supervisor/.test(txt), 'seed rows');
     });
     await t('stat cards sort and filter, and a second click clears', async function(){
-      showView('kairo-team'); CP.filter = 'running'; CP.stat = null; cpRefresh(); var order0 = [].map.call(main().querySelectorAll('.cp-row b'), function(b){ return b.textContent; }).join('|');
-      CP.stat = 'ready'; cpRefresh(); var first = main().querySelector('.cp-row b').textContent; ok(first === 'Senior Java Developer', 'most ready first: ' + first);
-      ok(main().querySelector('.stat.is-on'), 'card is pressed'); CP.stat = null; cpRefresh(); ok([].map.call(main().querySelectorAll('.cp-row b'), function(b){ return b.textContent; }).join('|') === order0, 'cleared');
-      CP.stat = 'apps'; cpRefresh(); ok(main().querySelectorAll('.cp-row').length >= 3, 'applicants filter'); CP.stat = null; CP.filter = 'running'; cpRefresh();
+      CP.filter = 'running'; CP.stat = null; list(); var order0 = [].map.call(main().querySelectorAll('.cp-row b'), function(b){ return b.textContent; }).join('|');
+      CP.stat = 'ready'; list(); var first = main().querySelector('.cp-row b').textContent; ok(first === 'Senior Java Developer', 'most ready first: ' + first);
+      ok(main().querySelector('.stat.is-on'), 'card is pressed'); CP.stat = null; list(); ok([].map.call(main().querySelectorAll('.cp-row b'), function(b){ return b.textContent; }).join('|') === order0, 'cleared');
+      CP.stat = 'apps'; list(); ok(main().querySelectorAll('.cp-row').length >= 3, 'applicants filter'); CP.stat = null; CP.filter = 'running'; list();
     });
     await t('only flags are amber: Behind pace, first messages wait, LinkedIn needs sign-in, Done is muted', async function(){
-      CP.filter = 'all'; cpRefresh(); var txt = main().textContent;
+      CP.filter = 'all'; list(); var txt = main().textContent;
       ok(/Behind pace/.test(txt), 'behind pace'); ok(/messages wait for you/.test(txt), 'review flag'); ok(/LinkedIn account needs sign-in/.test(txt), 'paused flag'); ok(/Done · 2 hired/.test(txt), 'done muted');
       ok(main().querySelectorAll('.cp-flagcell .att').length >= 3, 'amber flags'); ok(!main().querySelector('.cp-flagcell .cp-muted') || /Done/.test(main().querySelector('.cp-flagcell .cp-muted').textContent), 'done is muted'); CP.filter = 'running';
     });
@@ -130,8 +132,7 @@
       var nn = mkCand(906, 'Test Foxtrot'), pn = cpEnqueue(c, nn, 'pool'); pn.state = 'contacted'; ok(cpHandleReply(pn, '2') === 'notNow', 'not now'); ok(pn.reengageOn && new Date(pn.reengageOn) > new Date(CP_NOW() + 80 * CP_DAY), 're-engage about 90 days out');
       var ob = mkCand(907, 'Test Golf'), po = cpEnqueue(c, ob, 'pool'); po.state = 'contacted'; cpHandleReply(po, 'STOP'); ok(po.state === 'optedOut' && cwSuppression(personKeyOf(ob)), 'STOP suppresses'); ok(!cpEligible(fresh('j6'), ob).ok, 'and no other campaign can reach them');
       /* Jobs → Applicants shows it */
-      as('admin'); openJob('j5'); refreshJobWorkspace('j5', 'applicants'); await sleep(30); var html = main().textContent; ok(/Test Alpha/.test(html) && /Campaign/.test(html), 'in Jobs → Applicants'); ok(/Ready to call/.test(html), 'ready view'); ok(/Pre-screen/.test(html), 'answers on the card');
-      cpJobFilter('j5', 'ready'); await sleep(10); ok(/Test Alpha/.test(main().textContent) && !/Test Bravo/.test(main().textContent), 'ready filter'); CP_JF = 'all';
+      as('admin'); openJob('j5'); refreshJobWorkspace('j5', 'applicants'); await sleep(30); var html = main().textContent; ok(/Test Alpha/.test(html) && /Kairo · Engagement/.test(html) && !/Campaign/.test(html), 'in Jobs → Applicants, tagged Kairo · Engagement: ' + (html.match(/.{30}Campaign.{30}/) || [])[0]); ok(/Pre-screen/.test(html), 'answers on the card');
     });
     await t('the engine: a running campaign sends in the name of the owner inside the rules; frequency cap and collision lock hold across two campaigns', async function(){
       var t0 = tue10(); as('admin'); var a = mkCand(911, 'Eng Alpha'), b = mkCand(912, 'Eng Bravo'); var c1 = fresh('j5'); var c2 = fresh('j6'); c2.jobId = 'j5';
@@ -188,9 +189,9 @@
       ok(c.bySource.boards.paused, 'boards paused'); cpMoveUndo(c.id, 'pause-boards'); ok(!c.bySource.boards.paused, 'undone'); c.bySource.boards.paused = true; c.moves.find(function(x){ return x.id === 'pause-boards'; }).status = 'auto';
       var c2 = CAMPAIGNS.find(function(x){ return x.jobId === 'j21'; }); var P = cpPace(c2); ok(P.behind, 'Warehouse is behind pace'); cpEvalMoves(c2); ok(c2.moves.some(function(x){ return /Add 120 talent-pool/.test(x.text); }), 'widening moves when behind'); cpMoveApply(c2.id, 'extend'); ok(cpDaysLeft(c2) >= 7, 'date extended: ' + cpDaysLeft(c2));
     });
-    await t('money by role: Owner sees Expected revenue, Recruiter sees Placements expected with no ₹, corporate sees Agency fees saved and the job link is hidden', async function(){
-      as('admin'); CP.top = 'campaigns'; CP.filter = 'running'; CP.stat = null; showView('kairo-team'); await sleep(20); ok(/Expected revenue/.test(main().textContent) && /₹/.test(main().textContent), 'owner');
-      as('recruiter'); showView('kairo-team'); await sleep(20); var tx = main().textContent; ok(/Placements expected/.test(tx), 'recruiter label'); ok(!/Expected revenue/.test(tx), 'no revenue'); ok(!/₹/.test(main().querySelector('.cp-table').textContent) && !/₹/.test(main().querySelector('.cp-stats').textContent), 'no rupee in the table or cards'); ok(main().querySelectorAll('.cp-row').length >= 1 && CAMPAIGNS.filter(cpVisible).every(function(x){ return x.ownerId === currentUserId() || x.createdBy === currentUserId(); }), 'own campaigns only');
+    await t('money by role: the campaign list still follows it (Owner, Recruiter), corporate sees Agency fees saved and the job link is hidden', async function(){
+      as('admin'); CP.top = 'campaigns'; CP.filter = 'running'; CP.stat = null; showView('kairo-team'); list(); await sleep(20); ok(/Expected revenue/.test(main().textContent) && /₹/.test(main().textContent), 'owner');
+      as('recruiter'); showView('kairo-team'); list(); await sleep(20); var tx = main().textContent; ok(/Placements expected/.test(tx), 'recruiter label'); ok(!/Expected revenue/.test(tx), 'no revenue'); ok(!/₹/.test(main().querySelector('.cp-table').textContent) && !/₹/.test(main().querySelector('.cp-stats').textContent), 'no rupee in the table or cards'); ok(main().querySelectorAll('.cp-row').length >= 1 && CAMPAIGNS.filter(cpVisible).every(function(x){ return x.ownerId === currentUserId() || x.createdBy === currentUserId(); }), 'own campaigns only');
       cwSetClock(T0); var orgType = ORG_STRUCTURE.profile.orgType; ORG_STRUCTURE.profile.orgType = 'Corporate';
       try { as('admin'); showView('kairo-team'); await sleep(20); tx = main().textContent; ok(/Agency fees saved/.test(tx), 'TA head'); ok(/Open requisitions with no campaign/.test(tx), 'corporate suggestion title'); ok(/Staff Nurse \(ICU\)/.test(tx) && /Pharmacist/.test(tx), 'corporate campaigns'); ok(!/Fintech Corp/.test(tx), 'no agency campaigns'); ok(main().querySelectorAll('.cp-sug__row').length === 2, 'two suggestions: ' + main().querySelectorAll('.cp-sug__row').length);
         CP.filter = 'all'; cpRefresh(); ok(/Behind pace/.test(main().textContent) && /Waiting for your approval/.test(main().textContent), 'corporate flags'); CP.filter = 'done'; cpRefresh(); ok(/Medical Coder/.test(main().textContent) && /Done · 9 hired/.test(main().textContent), 'done with 9 hired'); CP.filter = 'running';
@@ -209,18 +210,18 @@
       document.querySelectorAll('#main-content *').forEach(function(el){ var cs = getComputedStyle(el); [cs.color, cs.backgroundColor, cs.borderTopColor].forEach(function(col){ var m = /rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?/.exec(col); if(!m || (m[4] !== undefined && +m[4] === 0)) return; var R = +m[1], G = +m[2], B = +m[3]; if(G > R + 24 && G > B + 24) bad.push('green ' + col + ' ' + el.className); if(R > G + 60 && R > B + 60 && R > 170 && !(R > 200 && G > 120 && B < 80)) bad.push('red ' + col + ' ' + el.className); }); if(+cs.fontWeight > 600) bad.push('weight ' + cs.fontWeight + ' ' + el.className); var bg = /rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?/.exec(cs.backgroundColor); if(bg && (bg[4] === undefined || +bg[4] > .5) && +bg[1] < 90 && +bg[2] < 90 && +bg[3] < 90) bad.push('dark ' + cs.backgroundColor + ' ' + el.className); });
       ok(!bad.length, bad.slice(0, 5).join(' | '));
     });
-    await t('results outside Cowork: job header line, Start campaign link, recruiter Home, candidate timeline, PayTrack pipeline', async function(){
-      as('admin'); openJob('j1'); await sleep(20); ok(/Campaign running · 9 of 12 ready/.test(main().textContent), 'job header line');
-      openJob('j26'); ok(/Start campaign/.test(main().textContent), 'start link on a job with none');
-      as('recruiter'); showView('dashboard'); await sleep(30); ok(/people ready to call/.test(main().textContent) && /best between 6 and 8 pm/.test(main().textContent), 'Home needs you: ' + (main().textContent.match(/\d+ people? ready to call/) || ['none'])[0]);
+    await t('results outside Cowork: the job page has the Kairo panel and no campaign links, no people ready to call on Home, Kairo · Engagement in the timeline, no ₹ pipeline card', async function(){
+      as('admin'); openJob('j1'); await sleep(20); ok(!/Campaign running/.test(main().textContent) && /Kairo on this job/.test(main().textContent), 'job panel, no campaign line');
+      openJob('j26'); ok(!/Start campaign/.test(main().textContent), 'no Start campaign link');
+      as('recruiter'); showView('dashboard'); await sleep(30); ok(!/ready to call/.test(main().textContent), 'an agency’s Home has no people ready to call'); ok(cpReadyCalls().length, 'the list itself still works (company workspace)');
       cpOpenCallList(); ok(/Open brief/.test(document.getElementById('cp-modal-root').textContent), 'call list'); cpModal('');
-      var ev = tsTimeline(101); ok(ev.some(function(e){ return e.kind === 'Campaign' && /Senior Java Developer campaign/.test(e.text); }), 'timeline has campaign messages'); openCandidate(101); await sleep(20); ok(/Rohan Deshmukh/.test(document.body.innerText), 'profile opens');
-      as('admin'); showView('admin-paytrack'); showView('paytrack'); await sleep(20); ok(/Pipeline from campaigns/.test(main().textContent) || true, 'paytrack'); ok(typeof cpPipeline === 'function' && cpPipeline() > 0, 'pipeline value ' + cpPipeline());
+      var ev = tsTimeline(101); ok(ev.some(function(e){ return e.kind === 'Kairo · Engagement' && /Senior Java Developer/.test(e.text) && !/campaign/.test(e.text); }), 'the timeline says Kairo · Engagement'); openCandidate(101); await sleep(20); ok(/Rohan Deshmukh/.test(document.body.innerText), 'profile opens');
+      as('admin'); showView('admin-paytrack'); showView('paytrack'); await sleep(20); ok(!/Pipeline from campaigns/.test(main().textContent), 'no pipeline card on PayTrack');
     });
     await t('suggested campaigns start with one click and appear in the list; pause and resume show reasons; a job closed pauses', async function(){
-      as('admin'); CP.top = 'campaigns'; CP.filter = 'running'; showView('kairo-team'); await sleep(20); var row = main().querySelector('.cp-sug__row'); var title = row.querySelector('b').textContent; var n = CAMPAIGNS.length; var j = cpSuggested()[0].job;
+      as('admin'); CP.top = 'campaigns'; CP.filter = 'running'; showView('kairo-team'); await sleep(20); var n = CAMPAIGNS.length; var j = cpSuggested()[0].job;
       if(!cpHasPay(j)){ cpStartSuggested(j.id); await sleep(30); ok(q('#cp-editor-root'), 'no pay range opens the editor'); CP.draft = null; CP.editId = null; showView('kairo-team'); await sleep(10); j = cpSuggested().map(function(x){ return x.job; }).find(cpHasPay); }
-      tue10(); cpStartSuggested(j.id); await sleep(30); ok(CAMPAIGNS.length >= n && CAMPAIGNS.some(function(c){ return c.jobId === j.id; }), 'created'); var c = CAMPAIGNS.find(function(x){ return x.jobId === j.id; }); ok(c.status === 'review', 'starts in review'); ok(new RegExp(c.title).test(main().textContent), 'in the list');
+      tue10(); cpStartSuggested(j.id); await sleep(30); ok(CAMPAIGNS.length >= n && CAMPAIGNS.some(function(c){ return c.jobId === j.id; }), 'created'); var c = CAMPAIGNS.find(function(x){ return x.jobId === j.id; }); ok(c.status === 'review', 'starts in review'); list(); ok(new RegExp(c.title).test(main().textContent), 'in the list');
       cpPauseUI(c.id); ok(c.status === 'paused' && /Paused by/.test(c.pausedReason), 'paused: ' + c.pausedReason); cpOpen(c.id); ok(/Paused\./.test(main().textContent) && /Resume/.test(main().textContent), 'banner and Resume'); cpResumeUI(c.id); ok(c.status !== 'paused', 'resumed');
       var jb = cpJob(c.jobId); jb.status = 'Closed'; c.status = 'running'; cwEngineTick(CW_HOUR, { enrol:0 }); ok(c.status === 'paused' && /job was closed/.test(c.pausedReason), 'closed job pauses: ' + c.pausedReason); jb.status = 'Active';
     });

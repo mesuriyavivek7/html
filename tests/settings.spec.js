@@ -70,17 +70,17 @@
     await t('Oontu Super Admin: platform group with Cowork agents, LinkedIn infrastructure and AI models, never mixed with tenant settings', async function(){
       as('oontu'); has(['account','p-tenants','p-plans','p-agents','p-linkedin','p-ai','p-audit']); hasNot(['people','billing','workspace','cowork']); await everySection('oontu');
       settingsSection = 'p-linkedin'; showView('settings'); ok(/GoLogin/.test(q('#settings-content').textContent) && /••••/.test(q('#settings-content').textContent), 'GoLogin token shown masked');
-      showView('oontu-agents'); await sleep(30); ok(/Talent Discovery/.test(q('#main-content').textContent) && /LinkedIn outreach/.test(q('#main-content').textContent), 'agents catalog page'); showView('oontu-settings'); ok(/AI models/.test(q('#main-content').textContent), 'AI models only in platform settings');
+      showView('oontu-agents'); await sleep(30); ok(/Talent Discovery/.test(q('#main-content').textContent) && /LinkedIn Outreach/.test(q('#main-content').textContent), 'agents catalog page'); showView('oontu-settings'); ok(/AI models/.test(q('#main-content').textContent), 'AI models only in platform settings');
     });
     await t('owner starts a trial; surfaces appear, both audit logs record it; cancelling is recorded', async function(){
-      as('admin'); TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID].engagement = { state:'none', usedThisMonth:0 }; ok(!agentAccess('engagement').on, 'engagement is off');
-      var auditBefore = AUDIT_LOG.length; ok(agentSubscribe('engagement','trial'), 'trial started');
-      ok(agentSub('engagement').state==='trial' && /Trial · 14 days left/.test(agentStateLabel('engagement')[1]), 'label ' + agentStateLabel('engagement')[1]);
-      ok(agentAccess('engagement').on, 'engagement is on'); ok(AUDIT_LOG.slice(0, AUDIT_LOG.length-auditBefore+2).some(function(a){ return a.module==='Billing'; }), 'tenant audit'); ok(AUDIT_LOG.some(function(a){ return a.module==='Platform' && /Tenant agent trial/.test(a.action); }), 'platform audit');
-      ok(PLATFORM_ADDON_LEDGER.some(function(l){ return l.agentId==='engagement' && l.mode==='trial'; }), 'ledger');
-      ok(aiDestAgentOn('engagement'), 'Cowork shows the Engagement tab');
-      agentSubscribe('engagement','subscribe');
-      agentSubscribe('engagement','cancel'); ok(agentSub('engagement').state==='cancelling', 'cancel at period end'); agentSubscribe('engagement','resume');
+      as('admin'); TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID].linkedin = { state:'none', usedThisMonth:0 }; ok(!agentAccess('linkedin').on, 'the LinkedIn add-on is off');
+      var auditBefore = AUDIT_LOG.length; ok(agentSubscribe('linkedin','trial'), 'trial started');
+      ok(agentSub('linkedin').state==='trial' && /Trial · 7 days left/.test(agentStateLabel('linkedin')[1]), 'label ' + agentStateLabel('linkedin')[1]);
+      ok(agentAccess('linkedin').on, 'LinkedIn is on'); ok(AUDIT_LOG.slice(0, AUDIT_LOG.length-auditBefore+2).some(function(a){ return a.module==='Billing'; }), 'tenant audit'); ok(AUDIT_LOG.some(function(a){ return a.module==='Platform' && /Tenant agent trial/.test(a.action); }), 'platform audit');
+      ok(PLATFORM_ADDON_LEDGER.some(function(l){ return l.agentId==='linkedin' && l.mode==='trial'; }), 'ledger');
+      ok(aiDestAgentOn('linkedin-outreach'), 'Cowork shows LinkedIn Outreach');
+      agentSubscribe('linkedin','subscribe');
+      agentSubscribe('linkedin','cancel'); ok(agentSub('linkedin').state==='cancelling', 'cancel at period end'); agentSubscribe('linkedin','resume');
       as('recruiter'); ok(!agentSubscribe('talent-discovery','cancel'), 'a recruiter cannot cancel an agent');
     });
     await t('an agent step switched off in the workspace cannot be raised by a person; "always a person" is never loosened', async function(){

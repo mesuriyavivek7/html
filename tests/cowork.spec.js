@@ -28,21 +28,20 @@
 
   window.addEventListener('load', function(){ setTimeout(async function(){
     var ob = document.getElementById('onboarding'); if(ob) ob.classList.add('hidden');
-    state.role = 'recruiter'; enterApp(); await sleep(100); CP.top = 'agents';   // Cowork opens on Campaigns; these checks are about the agent pages
+    state.role = 'recruiter'; enterApp(); await sleep(100);
 
-    await t('Cowork shows four core agents and LinkedIn outreach; status panel, signals with a Why, workflows, activity; plain words; one nav label', async function(){
+    await t('five agents for the Owner; every agent page opens; signals with a Why; plain words; one nav label', async function(){
       as('admin'); ok(cwVisibleAgents().join() === CW.order.join(), 'owner sees all five: ' + cwVisibleAgents());
       var banned = /\bAI\b|AI recruiter|magic|smart|intelligent|thinking|✨/i;
       for(var id of CW.order){
-        cwTab = id; cwSub = 'overview'; showView('kairo-team'); await sleep(25);
-        var txt = main().textContent; ['State','Next run','Queue','Today','Success'].forEach(function(l){ ok(txt.indexOf(l) > -1, id + ' status panel misses ' + l); });
-        ok(!banned.test(txt), id + ' wording: ' + (txt.match(banned) || [])[0]);
+        showView('kairo-team'); caOpenAgent(id); await sleep(25);
+        var txt = main().textContent; ok(!banned.test(txt), id + ' wording: ' + (txt.match(banned) || [])[0]);
         cwSignals(id).forEach(function(s){ ok(/Why:/.test(s.why), id + ' signal without a Why: ' + s.text); });
-        ['workflows','activity'].forEach(function(s){ cwSub = s; showView('kairo-team'); ok(!/Something went wrong/.test(main().textContent), id + '/' + s); ok(!banned.test(main().textContent), id + '/' + s + ' wording'); });
+        ['settings','activity'].forEach(function(s){ caOpenAgent(id, s); ok(!/Something went wrong/.test(main().textContent), id + '/' + s); ok(!banned.test(main().textContent), id + '/' + s + ' wording'); });
       }
-      cwTab = 'linkedin'; cwSub = 'accounts'; showView('kairo-team'); ok(/LinkedIn accounts/.test(main().textContent), 'Accounts tab for LinkedIn');
-      cwTab = 'talent-discovery'; cwSub = 'overview'; showView('kairo-team'); await sleep(40);
-      ok(q('#cw-tabs > .o-pill.o-pill--under'), 'under pill on agent tabs'); ok(!/AI_DEST_TONE|bg-zinc-100 rounded-2xl/.test(q('#cw-tabs').parentElement.className), 'no coloured tone tabs');
+      caOpenAgent('linkedin', 'settings'); ok(/LinkedIn accounts/.test(main().textContent), 'LinkedIn accounts are on its Settings');
+      showView('kairo-team'); await sleep(40);
+      ok(q('#ca-tabs > .o-pill.o-pill--under'), 'under pill on the tabs'); ok(!/AI_DEST_TONE|bg-zinc-100 rounded-2xl/.test(q('#ca-tabs').parentElement.className), 'no coloured tone tabs');
       ['recruiter','manager','admin'].forEach(function(r){ var labels = []; NAV[r].forEach(function(g){ (g.items || [g]).forEach(function(i){ if(i.id === 'kairo-team') labels.push(i.label); }); }); ok(labels.join() === 'Cowork', r + ' nav label: ' + labels); });
       ok(document.getElementById('app').innerHTML.indexOf('Your AI recruiters') === -1, 'old subtitle gone');
     });
@@ -82,7 +81,7 @@
     await t('guardrails: reject / outcome / offer terms can only be "Ask me to approve"; a disconnected channel cannot be picked; WhatsApp outside 24 h needs an approved template; do-not-contact people are skipped by every agent', async function(){
       as('admin'); cwbNew('talent-discovery'); cwbBlank('talent-discovery'); await sleep(20); cwbAddLocked('reject'); var s = cwbT().steps[cwbT().steps.length - 1];
       ok(s.kind === 'approve' && /Reject/.test(s.locked), 'reject is only an approval step'); ok(agentStepLevel('talent-discovery', 'reject') === 'person', 'level stays person');
-      ['interviews:outcome','offers-joining:terms','linkedin:template'].forEach(function(x){ var p = x.split(':'); ok(agentStepLevel(p[0], p[1]) === 'person', x + ' is always a person'); });
+      ['interviews:outcome','offers-joining:terms','offers-joining:joined','engagement:sendClient'].forEach(function(x){ var p = x.split(':'); ok(agentStepLevel(p[0], p[1]) === 'person', x + ' is always a person'); });
       ok(/Always a person/.test((cwb.addMenu = true, cwbRender(), main().textContent)), 'locked steps shown with a reason'); cwb.addMenu = false;
       var wa = CONNECTORS.find(function(c){ return c.id === 'whatsapp'; }), prev = wa.status; wa.status = 'not_connected';
       ok(cwChannelOpts().find(function(o){ return o[0] === 'whatsapp'; })[2] === true, 'WhatsApp option disabled when not connected'); ok(!cwChannelConnected('whatsapp'), 'channel not connected'); wa.status = prev;
@@ -107,7 +106,7 @@
       var d = new Date(wsAt(wsDay(cwNow()), 22)); cwSetClock(d.getTime()); var c2 = freshPerson([c.id]); var run2 = cwStartRun(wf1, c2); cwEngineTick(0, { enrol:0 });
       ok(sentFor(run2.id).length === 0 && /Quiet hours/.test(run2.log.map(function(l){ return l.why; }).join()), 'quiet hours reschedule'); ok(run2.nextAt > cwNow() && cwInWindow(run2.nextAt), 'rescheduled into the window');
       // frequency cap across agents: one person, two agents, same day
-      tue10(); var c3 = freshPerson([c.id, c2.id]); var wfX = newWf('engagement', [emailStep()], { name:'T-X' }), wfY = newWf('offers-joining', [emailStep()], { name:'T-Y' }); wfX.__t = wfY.__t = 1;
+      tue10(); var c3 = freshPerson([c.id, c2.id]); var wfX = newWf('engagement', [emailStep()], { name:'T-X' }), wfY = newWf('linkedin', [emailStep()], { name:'T-Y' }); wfX.__t = wfY.__t = 1;
       var rX = cwStartRun(wfX, c3); cwEngineTick(0, { enrol:0 }); var rY = cwStartRun(wfY, c3); cwEngineTick(0, { enrol:0 });
       ok(sentFor(rX.id).length === 1 && sentFor(rY.id).length === 0 && /Frequency cap/.test(rY.log.map(function(l){ return l.why; }).join()), 'the cap holds across agents: ' + JSON.stringify(rY.log.map(function(l){ return l.why; })));
       // collision lock: the first workflow is still mid-sequence, a day later the second must wait and name it
@@ -160,7 +159,7 @@
 
     await t('LinkedIn: a checkpoint pauses that account with "Sign in again"; a restriction pauses only it for 7 days then 50%; the others keep going; proxy down pauses, never switches country', async function(){
       as('admin'); tue10(); var s2 = LI_SENDER_PROFILES.find(function(x){ return x.id === 'sp2'; }), s1 = LI_SENDER_PROFILES.find(function(x){ return x.id === 'sp1'; });
-      cwLiEvent('sp2', 'checkpoint'); ok(s2.session === 'checkpoint' && cwLiState(s2)[1] === 'Needs sign-in', 'checkpoint state'); cwTab = 'linkedin'; cwSub = 'accounts'; showView('kairo-team'); ok(/Sign in again/.test(main().textContent), '"Sign in again" shown');
+      cwLiEvent('sp2', 'checkpoint'); ok(s2.session === 'checkpoint' && cwLiState(s2)[1] === 'Needs sign-in', 'checkpoint state'); showView('kairo-team'); caOpenAgent('linkedin', 'settings'); ok(/Sign in again/.test(main().textContent), '"Sign in again" shown');
       var wfK = newWf('linkedin', [cwStep('li', { action:'visit' })], { name:'T-K', owner:'RP-092' }); wfK.__t = 1; wfK.limits.senders = ['sp2']; wfK.limits.sender = 'mine'; wfK.limits.window = '00:00-23:59';
       var rk = cwStartRun(wfK, freshPerson()); cwEngineTick(0, { enrol:0 }); ok(sentFor(rk.id).length === 0 && /needs sign-in/i.test(rk.holdReason + rk.log.map(function(l){ return l.why; }).join()), 'nothing is sent from a checkpointed account: ' + rk.holdReason);
       var wf1 = newWf('linkedin', [cwStep('li', { action:'visit' })], { name:'T-K1' }); wf1.__t = 1; wf1.limits.window = '00:00-23:59'; wf1.limits.senders = ['sp1']; wf1.limits.sender = 'mine'; var r1 = cwStartRun(wf1, freshPerson([rk.recordId])); cwSetClock(cwNow() + 10 * 60000); s1.cursor = 0; s1.activeHours = '00:00-23:59'; s1.activeDays = [1,2,3,4,5,6,7]; cwEngineTick(0, { enrol:0 }); ok(sentFor(r1.id).length === 1, 'the other account keeps going');

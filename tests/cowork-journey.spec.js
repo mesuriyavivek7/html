@@ -97,10 +97,10 @@
       ok(cpHandleReply(q2, '1') === 'screening', 'they can start the Python pre-screen');
     });
     await t('Your day: one list across campaigns, highest impact on joinings first, with minutes; on Cowork and on Home', async function(){
-      cwSetClock(T0); as('admin'); CP.top = 'campaigns'; showView('kairo-team'); await sleep(20); var items = cpMyDay(); ok(items.length >= 4, 'items ' + items.length);
+      cwSetClock(T0); as('admin'); CP.top = 'campaigns'; showView('kairo-team'); main().innerHTML = cpMyDayCard(); await sleep(20); var items = cpMyDay(); ok(items.length >= 4, 'items ' + items.length);
       for(var i = 1; i < items.length; i++) ok(items[i - 1].w >= items[i].w, 'sorted by impact'); ok(/Your day/.test(main().textContent) && /about \d/.test(q('.cp-day').textContent), 'card with minutes');
-      ok(items[0].w >= 8, 'a joining-side decision is first: ' + items[0].t); ok(main().querySelectorAll('.cp-day .cp-need').length <= 5, 'top five'); CP.dayAll = true; cpRefresh(); ok(main().querySelectorAll('.cp-day .cp-need').length === items.length, 'show all'); CP.dayAll = false;
-      as('recruiter'); showView('dashboard'); await sleep(30); ok(/hiring decision|Decide the offer|may not join|Confirm/.test(main().textContent), 'Home shows hiring decisions');
+      ok(items[0].w >= 8, 'a joining-side decision is first: ' + items[0].t); ok(main().querySelectorAll('.cp-day .cp-need').length <= 5, 'top five'); CP.dayAll = true; main().innerHTML = cpMyDayCard(); ok(main().querySelectorAll('.cp-day .cp-need').length === items.length, 'show all'); CP.dayAll = false;
+      as('recruiter'); showView('dashboard'); await sleep(30); ok(!/cpOpen\(/.test(main().innerHTML), 'an agency’s Home has no way into a campaign page');
       as('admin');
     });
     await t('hand over moves the campaign and its sender; run again copies a finished setup with new dates', async function(){
@@ -116,7 +116,7 @@
     await t('screens: Journey tab, Overview strip, Agents tab, quick start; every role; no banned wording, colour or weight', async function(){
       for(var role of ['admin','manager','recruiter']){
         as(role); var vis = CAMPAIGNS.filter(cpVisible); ok(vis.length, role); ['overview','journey','applicants'].forEach(function(tab){ cpOpen(vis[0].id, tab); ok(!BANNED.test(main().textContent), role + '/' + tab + ' wording'); });
-        CP.top = 'agents'; showView('kairo-team'); ok(/How the agents work together/.test(main().textContent), role + ' agents tab'); CP.top = 'campaigns';
+        ok(/How the agents work together/.test(cpAgentsTogether()), role + ' agents card (company workspace)');
       }
       as('admin'); cpOpen(java().id, 'overview'); ok(main().querySelectorAll('.cp-jstrip__c').length === 5, 'journey strip'); cpQuick('j27'); await sleep(10); ok(!BANNED.test(modal()), 'quick start wording');
       var bad = []; ['#main-content','#cp-modal-root'].forEach(function(sel){ document.querySelectorAll(sel + ' *').forEach(function(el){ var cs = getComputedStyle(el); [cs.color, cs.backgroundColor].forEach(function(col){ var m = /rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?/.exec(col); if(!m || (m[4] !== undefined && +m[4] === 0)) return; var R = +m[1], G = +m[2], B = +m[3]; if(G > R + 24 && G > B + 24) bad.push('green ' + el.className); if(R > G + 60 && R > B + 60 && R > 170 && !(R > 200 && G > 120 && B < 80)) bad.push('red ' + el.className); }); if(+cs.fontWeight > 600) bad.push('weight ' + el.className); }); });

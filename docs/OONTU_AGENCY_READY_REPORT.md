@@ -316,3 +316,9 @@ Vistaar misses the switch target. All 4,500 journeys go through the real steps o
 - **Consent on screen (U1):** a journey shows "Ready to send" only once the candidate has agreed or a call is recorded. A recorded call cancels the open link. The server must apply both rules.
 - **Secure links:** a send to a contact whose link has expired issues a new link; an expired link is never reused.
 - **Workspace name (K17):** every message, page and document reads the workspace's current name. A server should print it from the workspace record, never a stored copy.
+
+### Update, 6 November 2026: Cowork phase 1
+
+- **Server rules:** plans decide which agents a workspace has. "Always a person" actions can never be set to Auto. The weekly limit, the interview and joining limits, and STOP across all agents must be enforced on the server.
+- **Activity:** one record per agent action; a recruiter's feed is limited to their own jobs and candidates on the server, not only on screen.
+
