@@ -52520,7 +52520,7 @@ function caExtInstall(uid){ CA_EXT[uid] = { connected:true, plan:'Free', at:cwNo
 /* ---------- Activity: one feed ---------- */
 function caActivityHTML(agentId){
   const f = Object.assign({}, CA.f, agentId ? { agent:agentId } : {}), rows = caRows(f), all = caRows(agentId ? { agent:agentId } : {});
-  const sel = function(key, label, opts){ return '<select class="app-input app-select" aria-label="' + label + '" data-filter="' + key + '" onchange="CA.f.' + key + '=this.value; CA.limit=50; caRefresh()"><option value="">' + label + '</option>' + opts.map(function(o){ return '<option value="' + cwEsc(o[0]) + '"' + (f[key] === o[0] ? ' selected' : '') + '>' + cwEsc(o[1]) + '</option>'; }).join('') + '</select>'; };
+  const sel = function(key, label, opts){ return '<select class="app-input app-select" aria-label="' + label + '" data-filter="' + key + '" onchange="CA.f.' + key + '=this.value; CA.limit=20; caRefresh()"><option value="">' + label + '</option>' + opts.map(function(o){ return '<option value="' + cwEsc(o[0]) + '"' + (f[key] === o[0] ? ' selected' : '') + '>' + cwEsc(o[1]) + '</option>'; }).join('') + '</select>'; };
   const jobs = {}, people = {}, results = {}; all.forEach(function(r){ if(r.job) jobs[r.jobId] = r.job.title + ' · ' + r.job.client; if(r.senderId && rosterById(r.senderId)) people[r.senderId] = rosterById(r.senderId).name; if(r.result) results[r.result] = 1; });
   const toList = function(o){ return Object.keys(o).map(function(k){ return [k, o[k]]; }).sort(function(a, b){ return String(a[1]).localeCompare(String(b[1])); }); };
   const filters = '<div class="ca-filters">' + (agentId ? '' : sel('agent', 'All agents', CW.order.map(function(id){ return [id, agentById(id).name]; }))) + sel('job', 'All jobs', toList(jobs)) + sel('recruiter', 'All recruiters', toList(people)) + sel('result', 'Any result', Object.keys(results).sort().map(function(x){ return [x, x]; })) + sel('date', 'Any date', [['today','Last 24 hours'],['7','Last 7 days'],['30','Last 30 days']]) +
@@ -52770,7 +52770,7 @@ function caRecentHTML(id, rows){
   const list = rows.slice(0, 10);
   return caCard('activity', 'Activity', list.length ? '<ul class="ca-recent">' + list.map(function(r){ return '<li tabindex="0" data-row="' + r.id + '" onclick="caOpenRow(\'' + r.id + '\')" onkeydown="if(event.key===\'Enter\')caOpenRow(\'' + r.id + '\')"><span class="ca-recent__t">' + cwFmtTime(r.at) + '</span><span class="ca-recent__w"><b>' + cwEsc(caText(r.what)) + '</b>' + (r.candidate ? ' · ' + cwEsc(r.candidate.name) : '') + (r.job ? ' · ' + cwEsc(r.job.title) : '') + '<small>' + cwEsc(caText(r.why)) + '</small></span><span class="ca-recent__r">' + cwEsc(r.result) + ' · ' + cwEsc(caWhoDid(r)) + '</span></li>'; }).join('') + '</ul><button type="button" class="o-link" style="margin-top:8px" onclick="caSeeAllActivity(\'' + id + '\')">See all in Activity</button>' : '<p class="o-card__sub">Nothing yet. Every action it takes shows up here.</p>');
 }
-function caSeeAllActivity(id){ CA.agent = null; CA.draft = null; CA.tab = 'activity'; CA.f = { agent:id, job:'', recruiter:'', result:'', date:'' }; CA.limit = 50; caRefresh(); }
+function caSeeAllActivity(id){ CA.agent = null; CA.draft = null; CA.tab = 'activity'; CA.f = { agent:id, job:'', recruiter:'', result:'', date:'' }; CA.limit = 20; caRefresh(); }
 function caSettingsSection(id, st){
   const can = caCanEditSettings() && st.key !== 'plan', note = st.key === 'plan' ? 'Available once it’s added' : can ? (caOwnerish() ? '' : 'These settings apply to your team’s jobs. The agent’s switch, scope and limits are set by the Owner or an Admin.') : 'Your Owner sets these';
   return '<section class="ca-sec ca-sec--set' + (can ? '' : ' is-ro') + '" data-sec="settings" id="ca-sec-settings"><h2 class="o-card__title">Settings you control</h2>' + (note ? '<p class="o-card__sub ca-setnote">' + cwEsc(note) + '</p>' : '') + caSettingsHTML(id, can, st) + '</section>';
@@ -52841,6 +52841,756 @@ function caAfterChange(){ if(typeof renderSidebar === 'function') renderSidebar(
   '.ca-save{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px}.ca-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ca-filters select{width:auto;max-width:190px}.ca-filters__end{margin-left:auto}' +
   '.ca-table tbody tr{cursor:pointer}.ca-table td small{display:block;white-space:normal;max-width:300px}@media (max-width:760px){.ca-table{min-width:0!important}.ca-table thead{display:none}.ca-table,.ca-table tbody,.ca-table tr,.ca-table td{display:block;width:100%}.ca-table tr{padding:10px 16px;border-bottom:1px solid var(--line)}.ca-table td{border:0!important;padding:2px 0!important;height:auto!important;white-space:normal}.ca-table td[data-l]::before{content:attr(data-l) " · ";color:var(--text-3);font-size:12px}.ca-filters select{max-width:100%;flex:1 1 45%}.ca-filters__end{margin-left:0}}' +
   '.ca-side__scrim{position:fixed;inset:0;z-index:88;background:rgba(11,31,59,.3)}.ca-side{position:fixed;top:0;right:0;bottom:0;z-index:89;width:min(440px,100vw);background:var(--bg-card,#fff);border-left:1px solid var(--line);padding:20px;overflow-y:auto}.ca-side__h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.ca-side__l{margin:12px 0 2px;font-size:12px;color:var(--text-3)}.ca-side__v{margin:0;font-size:13px;color:var(--text-1);white-space:pre-wrap;word-break:break-word}';
+  document.head.appendChild(css); })();
+</script>
+<script id="cowork-simple-script">
+/* ============================================================
+   COWORK MADE SIMPLE (Step 2, 22 November 2026)
+   How people set up and use the five agents. The engine, the levels, the limits and the rules underneath
+   (cowork-agents-script, cowork-script) are unchanged: this file only changes the screens and how a choice is saved.
+   - one plain vocabulary (CA_WORDS), used everywhere in Cowork
+   - a setup guide per agent (caGuide*), Owner and Admin only
+   - the agent page in three tabs: Today, Settings, Activity; Settings are cards that save as you go
+   - templates with field chips and a live preview for a real candidate
+   - one function per agent for the week's numbers (caWeekNums), used by the card, Today and Activity
+   - Activity: one row per action (a request sent on WhatsApp and email is one row)
+============================================================ */
+const CA_WORDS = { auto:'Do it for me', suggest:'Ask me first', off:'Don’t do this', person:'You always do this' };
+Object.assign(CA_LEVEL_TAG, CA_WORDS);
+CA_ACTION_WORDS.consent = 'Asked to agree'; CA_ACTION_WORDS.pick = 'Found people for a job';
+const CA_FIELD_MENU = [['first_name','Candidate name'],['job_title','Job title'],['recruiter','Recruiter name'],['job_link','Job link']];
+const CA_VAR_LABEL = { first_name:'Candidate name', name:'Candidate name', job_title:'Job title', recruiter:'Recruiter name', job_link:'Job link', link:'Answer link', client:'Client', company:'Your company', round:'Round', when:'Date and time', days:'Days to go' };
+const CA_DAYS = ['Mon–Fri','Mon–Sat','Every day'];
+Object.assign(CA, { g:null, open:null, play:null, tick:{}, waitAll:false, nextAll:false, sample:0, alim:15 });
+CA.limit = 20;   // the Activity tab, 20 rows at a time (keeps the page under 2,200 px)
+
+/* ---------- settings the guide adds; same store, same audit as the rest ---------- */
+const CA_MORE = {
+  'talent-discovery':{ days:'Mon–Sat' },
+  'engagement':{ days:'Mon–Sat' },
+  'interviews':{ days:'Mon–Sat', remind1On:true, remind2On:true, sameDay:true },
+  'offers-joining':{ days:'Mon–Sat', riskAlert:'High', plan:{ offer:true, weekly:true, d7:true, d3:true, d1:true, joinDay:true, a7:true, a30:true, a60:true } },
+  'linkedin':{ days:'Mon–Sat', searches:{},
+    liNote:'Hi {{first_name}}, I’m {{recruiter}}. I’m hiring for a {{job_title}} role and your background stood out. Happy to connect?',
+    liMsg:'Thanks for connecting, {{first_name}}. Here’s the {{job_title}} role: {{job_link}}. Would you be open to a quick chat this week?' }
+};
+const CA_MORE_LABEL = { days:'Working days', remind1On:'First reminder', remind2On:'Second reminder', sameDay:'Same-day check', riskAlert:'Tell me when risk is', plan:'Check-in plan', searches:'LinkedIn searches', liNote:'Connection note', liMsg:'First LinkedIn message' };
+function caMoreInit(){ CW.order.forEach(function(id){ const cfg = TENANT_AGENT_CONFIG[id]; if(!cfg) return; const s = cfg.settings = cfg.settings || {}; Object.keys(CA_MORE[id]).forEach(function(k){ if(s[k] === undefined) s[k] = JSON.parse(JSON.stringify(CA_MORE[id][k])); }); }); }
+caMoreInit();
+(function(){ const base = caDraftFor; window.caDraftFor = function(id){ caMoreInit(); return base(id); }; })();
+
+/* ---------- small pieces ---------- */
+function caN(n, one, many){ return oPlural(n, one, many); }
+function caPeople(n){ return n === 1 ? '1 person' : n + ' people'; }
+function caQ(s){ return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+function caMe(){ return currentActingUser() || {}; }
+function caFirst(name){ return String(name || '').split(' ')[0]; }
+function caTickHTML(){ return '<span class="ca-tick">' + oIcon('check', 12, 2) + ' Saved</span>'; }
+function caChev(){ return '<svg class="ca-set__chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'; }
+function caLock(){ return oIcon('lock', 12, 1.75); }
+function caSwitchHTML(on, onclick, ed, label, attrs){ return '<button type="button" role="switch" aria-checked="' + !!on + '" aria-label="' + cwEsc(label) + '" class="app-switch' + (on ? ' is-on' : '') + '"' + (attrs || '') + (ed ? ' onclick="' + onclick + '"' : ' disabled style="opacity:.5;cursor:not-allowed"') + '><span class="app-switch__dot"></span></button>'; }
+function caSel(opts, cur, on, ed, label, attrs){ return '<select class="app-input app-select ca-inl" aria-label="' + cwEsc(label) + '"' + (attrs || '') + (ed ? ' onchange="' + on + '"' : ' disabled') + '>' + opts.map(function(o){ const v = Array.isArray(o) ? o[0] : o, l = Array.isArray(o) ? o[1] : o; return '<option value="' + cwEsc(v) + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + cwEsc(l) + '</option>'; }).join('') + '</select>'; }
+function caTimeOpts(cur){ const o = []; for(let h = 0; h < 24; h++) ['00','30'].forEach(function(m){ o.push(String(h).padStart(2, '0') + ':' + m); }); if(cur && o.indexOf(cur) < 0){ o.push(cur); o.sort(); } return o; }
+// Working hours: a 24-hour picker that always shows the full time (19:00, never 07:00 or "09:0").
+function caTimeSel(field, cur, ed, on){ return '<select class="app-input app-select ca-inl ca-time" data-field="' + field + '" aria-label="' + (field === 'from' ? 'From' : 'To') + '"' + (ed ? ' onchange="' + on + '"' : ' disabled') + '>' + caTimeOpts(cur).map(function(t){ return '<option' + (t === cur ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>'; }
+function caChoice(name, opts, cur, on, ed){
+  return '<div class="ca-choice" role="radiogroup" aria-label="' + cwEsc(name) + '">' + opts.map(function(o){ const sel = String(o[0]) === String(cur);
+    return '<button type="button" role="radio" aria-checked="' + sel + '" class="ca-choice__o' + (sel ? ' is-on' : '') + '" data-value="' + cwEsc(o[0]) + '"' + (ed ? ' onclick="' + on.replace('$v', caQ(o[0])) + '"' : ' disabled') + '><span class="ca-choice__dot" aria-hidden="true"></span><span><b>' + cwEsc(o[1]) + '</b>' + (o[2] ? '<small>' + cwEsc(o[2]) + '</small>' : '') + '</span></button>'; }).join('') + '</div>';
+}
+function caChipT(label, on, onclick, ed, attrs){ return '<button type="button" class="ca-chipt' + (on ? ' is-on' : '') + '" aria-pressed="' + !!on + '"' + (attrs || '') + (ed ? ' onclick="' + onclick + '"' : ' disabled') + '>' + (on ? oIcon('check', 12, 2) : '') + cwEsc(label) + '</button>'; }
+function caDemoTag(){ return '<span class="ca-demo">demo</span>'; }
+
+/* ---------- which jobs ("Only my jobs" is new; the rest is the engine's own scope) ---------- */
+function caInScopeWith(s, j){
+  if(!j || !s) return true;
+  if(s.mode === 'clients') return s.clients.indexOf(j.clientId) > -1 || s.clients.indexOf(j.client) > -1;
+  if(s.mode === 'jobs') return s.jobs.indexOf(j.id) > -1;
+  if(s.mode === 'mine'){ const u = rosterById(s.owner); return !!u && (jobPeopleIds(j).indexOf(u.id) > -1 || j.recruiter === u.name); }
+  return true;
+}
+window.caInScope = function(id, j){ return caInScopeWith(TENANT_AGENT_CONFIG[id].scope, j); };
+function caOpenJobs(){ return JOBS.filter(function(j){ return j.status === 'Active'; }); }
+function caScopeJobs(id, scope){ return caOpenJobs().filter(function(j){ return caInScopeWith(scope || TENANT_AGENT_CONFIG[id].scope, j) && !caJobPaused(id, j); }); }
+
+/* ---------- Talent Discovery's picks: anyone newly above the threshold on an open job in scope ---------- */
+let CA_PICKS = {};   // jobId -> { candidateId: when Kairo first found them above the threshold }
+function caPickCap(cap){ return Math.max(1, +(cap != null ? cap : TENANT_AGENT_CONFIG['talent-discovery'].settings.picksPerJob) || 10); }
+function caPicksFor(j, th, cap){ th = th == null ? caThreshold() : th; return caJobPicks(j).filter(function(x){ return x.s.score >= th; }).slice(0, caPickCap(cap)); }
+// What a threshold would find today, job by job (the setup slider and the Settings card use it; the pass below records the same picks).
+function caMatchPreview(th, scope, cap){
+  const rows = caOpenJobs().filter(function(j){ return caInScopeWith(scope, j) && !caJobPaused('talent-discovery', j); }).map(function(j){ return { job:j, n:caPicksFor(j, th, cap).length }; }).filter(function(x){ return x.n; }).sort(function(a, b){ return b.n - a.n; });
+  return { rows:rows, total:rows.reduce(function(s, x){ return s + x.n; }, 0), jobs:rows.length };
+}
+function caMatchLine(p){
+  if(!p.total) return 'Today nobody in your talent pool is above this. Try a lower number, or add people to the pool.';
+  const first = p.rows.slice(0, 3).map(function(x, i){ return (i ? x.n + ' for ' : (x.n === 1 ? '1 person for ' : x.n + ' people for ')) + x.job.title; });
+  return 'Today that’s ' + first.join(', ') + (p.rows.length > 3 ? ' and ' + caN(p.rows.length - 3, 'more job') : '') + '. ' + caPeople(p.total) + ' for ' + caN(p.jobs, 'job') + ' in all.';
+}
+function caPickSweep(){
+  const id = 'talent-discovery', out = { people:0, jobs:[] }; if(jsCorp() || !caWorking(id)) return out;
+  const th = caThreshold(), now = cwNow();
+  caScopeJobs(id).forEach(function(j){
+    const seen = CA_PICKS[j.id] = CA_PICKS[j.id] || {}, fresh = caPicksFor(j, th).filter(function(x){ return !seen[x.c.id]; }); if(!fresh.length) return;
+    fresh.forEach(function(x){ seen[x.c.id] = now; });
+    const e = caRecord({ agentId:id, action:'pick', jobId:j.id, why:caPeople(fresh.length) + ' above ' + th + '% for ' + j.title + ': ' + fresh.slice(0, 3).map(function(x){ return x.c.name + ' ' + x.s.score + '%'; }).join(', ') + (fresh.length > 3 ? ' and ' + (fresh.length - 3) + ' more' : ''), result:'Done' });
+    e.count = fresh.length; out.people += fresh.length; out.jobs.push({ job:j, n:fresh.length });
+  });
+  return out;
+}
+(function(){ const base = caRowOf; window.caRowOf = function(l, runs){ const r = base(l, runs); if(r && l.count) r.count = l.count; return r; }; })();
+// The page's own "on your jobs" rows use the same capped count as the picks.
+(function(){ const base = caPreview; window.caPreview = function(id, work){ const g = base(id, work);
+  if(id === 'talent-discovery' && g[0]){ const th = caThreshold(), jobs = caMyJobs().filter(function(j){ return caInScope(id, j) && !caJobPaused(id, j); }); g[0].rows = jobs.slice(0, 6).map(function(j){ const n = caPicksFor(j, th).length; return j.title + ' · ' + j.client + ': ' + caPeople(n) + ' above ' + th + '%'; }); g[0].more = Math.max(0, jobs.length - 6); }
+  return g; }; })();
+
+/* ---------- Activity: one row per action ---------- */
+// The same action to the same person about the same job within 15 minutes, on a second channel (a consent link on WhatsApp and email, a reminder on both), is one row.
+function caMerge(rows){
+  const out = [], last = {};
+  rows.forEach(function(r){
+    const key = r.agentId + '|' + r.action + '|' + (r.candidateId || '') + '|' + (r.jobId || ''), p = r.candidateId && r.channel ? last[key] : null;
+    if(p && p.at - r.at <= 15 * 60000 && p.channels.indexOf(r.channel) < 0 && p.result === r.result){ p.channels.push(r.channel); p.channel = p.channels.slice().sort(function(a, b){ return a === 'whatsapp' ? -1 : b === 'whatsapp' ? 1 : 0; }).join('+'); p.ids.push(r.id); return; }
+    r.channels = r.channel ? [r.channel] : []; r.ids = [r.id]; if(r.candidateId && r.channel) last[key] = r; out.push(r);
+  });
+  return out;
+}
+(function(){ const base = caRows; window.caRows = function(f){ return caMerge(base(f)); }; })();
+(function(){ const base = caChannelWord; window.caChannelWord = function(ch){ return String(ch || '').indexOf('+') > -1 ? String(ch).split('+').map(function(c, i){ const w = base(c); return i ? w.toLowerCase().replace('whatsapp', 'WhatsApp') : w; }).join(' + ') : base(ch); }; })();
+
+/* ---------- the week's numbers, one function per agent ----------
+   Every number counts this viewer's Activity rows from the last 7 days, one row per action, unless noted.
+   The card, the Today tab and the agent's Activity tab all call caWeekNums, so they can't disagree. */
+function caWeekNums(id){
+  if(id === 'talent-discovery') caPickSweep();
+  const rows = caRows({ agent:id, since:cwNow() - 7 * CW_DAY }), sent = rows.filter(function(r){ return r.result === 'Sent'; });
+  const who = function(list){ const s = {}; list.forEach(function(r){ if(r.candidateId) s[r.candidateId] = 1; }); return Object.keys(s).length; };
+  const replied = rows.filter(function(r){ return r.reply; }).length, has = function(re){ return rows.filter(function(r){ return re.test(r.action || ''); }); };
+  const N = function(n, label, def){ return { n:n, label:label, def:def }; };
+  let nums, line;
+  if(id === 'talent-discovery'){
+    // Picks: candidates newly above the threshold this week (one row per job, with how many). Jobs: the open jobs those picks are for. Added: picks a person added to a job.
+    const picks = rows.filter(function(r){ return r.action === 'pick'; }), jobs = {}; picks.forEach(function(r){ if(r.jobId) jobs[r.jobId] = 1; });
+    const n = picks.reduce(function(s, r){ return s + (r.count || 0); }, 0), nj = Object.keys(jobs).length, added = rows.filter(function(r){ return r.action !== 'pick' && /\badd/i.test(r.action || '') && /Approved|Done|Added/.test(r.result || ''); }).length;
+    nums = [N(n, 'people found', 'Candidates newly above the match threshold this week'), N(nj, nj === 1 ? 'job' : 'jobs', 'Open jobs those people were found for'), N(added, 'added by you', 'Picks a person added to a job this week')];
+    line = 'Found ' + caPeople(n) + ' for ' + caN(nj, 'job') + ' · you added ' + added;
+  } else if(id === 'engagement'){
+    // Messages: distinct actions that went out (one row per action, not per channel). People: who they went to. Replies: rows with a reply.
+    const p = who(sent); nums = [N(sent.length, sent.length === 1 ? 'message' : 'messages', 'Distinct messages sent this week, not channel sends'), N(p, p === 1 ? 'person' : 'people', 'Candidates those messages went to'), N(replied, replied === 1 ? 'reply' : 'replies', 'Messages that got a reply')];
+    line = 'Sent ' + caN(sent.length, 'message') + ' to ' + caPeople(p) + ' · ' + replied + ' replied';
+  } else if(id === 'interviews'){
+    // Booked: interviews Kairo booked this week. Reminders: reminders and chases that went out. Coming up: interviews in the next 7 days on this viewer's jobs (not an Activity row; it explains the other two).
+    const booked = has(/book/i).length, rem = sent.filter(function(r){ return !/book/i.test(r.action || ''); }).length, now = fmNow();
+    const up = hmInterviews.filter(function(iv){ const t = ivTime(iv); return iv.jobId && ['Completed','Cancelled','No Show'].indexOf(iv.status) < 0 && t > now && t <= now + 7 * CW_DAY && caJobMine(jobById(iv.jobId)); }).length;
+    nums = [N(booked, 'booked', 'Interviews Kairo booked this week'), N(rem, rem === 1 ? 'reminder' : 'reminders', 'Reminders and feedback chases sent this week'), N(up, 'coming up', 'Interviews in the next 7 days on your jobs')];
+    line = 'Booked ' + booked + ' · sent ' + caN(rem, 'reminder') + ' · ' + caN(up, 'interview') + ' in the next 7 days';
+  } else if(id === 'offers-joining'){
+    // Watching: live offers on this viewer's jobs. Check-ins: check-ins that went out. Risks: risks flagged this week.
+    const watch = SUBMISSIONS.filter(function(s){ return s.offer && !journeyJoined(s) && ['Rejected','Withdrawn'].indexOf(s.stage) < 0 && caMineSub(s); }).length, risks = has(/risk/i).length;
+    nums = [N(watch, 'watching', 'Live offers on your jobs'), N(sent.length, sent.length === 1 ? 'check-in' : 'check-ins', 'Check-ins sent this week'), N(risks, risks === 1 ? 'risk flagged' : 'risks flagged', 'Dropout risks flagged this week')];
+    line = 'Watching ' + caN(watch, 'offer') + ' · sent ' + caN(sent.length, 'check-in') + ' · ' + risks + ' flagged';
+  } else {
+    // Invites: connection requests sent. Connected: people who accepted. Replies: rows with a reply.
+    const inv = rows.filter(function(r){ return r.action === 'invite' && r.result === 'Sent'; }).length, acc = has(/^accept$/).length;
+    nums = [N(inv, inv === 1 ? 'invite' : 'invites', 'Connection requests sent this week'), N(acc, 'connected', 'People who accepted this week'), N(replied, replied === 1 ? 'reply' : 'replies', 'Messages that got a reply')];
+    line = 'Sent ' + caN(inv, 'invite') + ' · ' + acc + ' connected · ' + replied + ' replied';
+  }
+  return { nums:nums, line:line, key:nums.map(function(x){ return x.n; }).join(',') };
+}
+window.caWeek = function(id){ return caWeekNums(id).nums.map(function(x){ return [x.n, x.label]; }); };
+function caNumsHTML(id, where){
+  const w = caWeekNums(id);
+  return '<section class="o-card ca-sec ca-nums" data-sec="numbers" data-nums="' + w.key + '" data-where="' + where + '" aria-label="This week"><div class="ca-nums__h"><h2 class="o-card__title">This week</h2><small>last 7 days</small></div><div class="ca-nums__g">' +
+    w.nums.map(function(x){ return '<div class="ca-nums__i" title="' + cwEsc(x.def) + '"><b>' + x.n.toLocaleString('en-IN') + '</b><span>' + cwEsc(x.label) + '</span></div>'; }).join('') + '</div></section>';
+}
+
+/* ---------- state in words ---------- */
+(function(){ const base = caStatus; window.caStatus = function(id){ const st = base(id), cfg = TENANT_AGENT_CONFIG[id]; if(cfg && cfg.setupDone === false && !st.oontu && st.key !== 'plan') return { key:'new', label:'Not set up' }; return st; }; })();
+function caNewWorkspaceAgents(){   // a new workspace: every agent waits for its setup guide
+  CW.order.forEach(function(id){ const cfg = TENANT_AGENT_CONFIG[id]; if(!cfg) return; cfg.setupDone = false; cfg.enabled = false; cfg.paused = null; cfg.saved = null; cfg.team = {}; });
+  CA_PICKS = {}; CA_SUGGEST.length = 0; CA.agent = null; CA.g = null; CA.draft = null;
+}
+function caWorkingJobs(id){ return caMyJobs().filter(function(j){ return caAgentOnJob(id, j); }).length; }
+function caStateWords(id, st){
+  if(st.key === 'on') return 'On · working on ' + caN(caWorkingJobs(id), 'job');
+  if(st.key === 'trial') return st.label + ' · ' + caN(caWorkingJobs(id), 'job');
+  if(st.key === 'paused'){ if(st.oontu) return 'Paused by Oontu'; if(st.all) return 'All Cowork paused by ' + caFirst(CW.pauseAll.by); const p = TENANT_AGENT_CONFIG[id].paused; return p ? 'Paused by ' + caFirst(p.by) + ' on ' + caShortDay(wsDay(p.at)) : 'Paused'; }
+  return st.label;
+}
+function caStateWordsHTML(id, st){ return '<span class="ca-state ca-state--' + st.key + '" data-state="' + st.key + '">' + cwEsc(caStateWords(id, st)) + '</span>'; }
+
+/* ---------- Needs you: plain words, never the recipe ---------- */
+(function(){ const base = caNeeds; window.caNeeds = function(agentId){ return base(agentId).map(function(n){
+  if(n.kind === 'msg' && /recipe/i.test(n.why || '')){ const ap = CW_APPROVALS.find(function(a){ return a.id === n.id; }) || {}, wf = wfFindById(ap.wfId) || {}, j = jobById(n.jobId || wf.jobId); n.why = 'A first message to someone new. Kairo asks you first' + (j ? ' · ' + j.title : '') + '.'; }
+  return n; }); }; })();
+
+/* ---------- the card ---------- */
+window.caCardHTML = function(id){
+  const a = agentById(id), st = caStatus(id), wait = caNeeds(id).length, inPlan = st.key !== 'plan', open = "caOpenAgent('" + id + "')";
+  const wk = inPlan && st.key !== 'new' ? caWeekNums(id) : null;
+  const body = wk ? '<p class="ca-card__nums" data-nums="' + wk.key + '">' + cwEsc(caText(wk.line)) + '<small> · this week</small></p>'
+    : st.key === 'new' ? '<p class="ca-card__nums ca-muted">Takes about 2 minutes. Every question has an answer picked already.</p>'
+    : '<p class="ca-card__nums" data-would>' + cwEsc(caPreviewCount(id)) + '</p>';
+  return '<article class="o-card ca-card" data-agent="' + id + '" tabindex="0" onclick="' + open + '" onkeydown="if(event.key===\'Enter\' && event.target===this)' + open + '"><div class="ca-card__h"><h3 class="o-card__title">' + cwEsc(a.name) + '</h3><span class="ca-card__st">' +
+    (wait ? '<button type="button" class="ca-chip" data-waiting onclick="event.stopPropagation(); caOpenAgent(\'' + id + '\',\'waiting\')">' + wait + ' waiting</button>' : '') + caStateWordsHTML(id, st) + '</span></div><p class="o-card__sub">' + cwEsc(a.does) + '</p>' +
+    (st.note ? '<p class="ca-setup">' + cwEsc(st.note) + '</p>' : '') + body + '<div class="ca-card__f"><span style="flex:1"></span>' + caCardButton(id, st) + '</div></article>';
+};
+function caCardButton(id, st){
+  const own = caOwnerish(), b = function(label, on, primary){ return '<button type="button" class="o-btn' + (primary ? ' o-btn--primary' : '') + '" data-card-btn onclick="event.stopPropagation(); ' + on + '">' + label + '</button>'; };
+  if(st.key === 'new') return own ? b('Set up · 2 minutes', "caGuideOpen('" + id + "')", true) : '';
+  if(st.key === 'plan'){ if(!caOwner()) return ''; return id === 'linkedin' ? (agentPlanAllows(id) ? b('Add', "caAddAgent('linkedin')", true) : '') : b('Start free trial', "caStartTrial('" + id + "')", true); }
+  if(st.key === 'paused' && own && !st.oontu) return b('Resume', st.all ? 'cwSetPauseAll(false); cwRefresh()' : "caPause('" + id + "', false)", true);
+  return b('Open', "caOpenAgent('" + id + "')");
+}
+
+/* ---------- header action: plain words and a small demo tag ---------- */
+(function(){ const base = caHeaderAction; window.caHeaderAction = function(id, st){
+  if(st.key === 'new') return caOwnerish() ? sBtn('Set up · 2 minutes', "caGuideOpen('" + id + "')", 'primary') : '<span class="ca-muted ca-act-note" data-act-note>Waiting for setup by ' + cwEsc(caOwnerFirst()) + '</span>';
+  return base(id, st).replace(/ \(demo\)<\/button>/g, ' ' + caDemoTag() + '</button>'); }; })();
+
+/* ---------- the agent page: three tabs ---------- */
+function caSubTab(){ return CA.sub === 'settings' || CA.sub === 'activity' ? CA.sub : 'today'; }
+function caSub(s){ CA.sub = s; CA.open = null; CA.play = null; CA.waitAll = false; CA.nextAll = false; CA.alim = 15; caRefresh(); const m = document.getElementById('main-content'); if(m) m.scrollTop = 0; }
+(function(){ const base = caOpenAgent; window.caOpenAgent = function(id, sub){ CA.open = sub === 'settings' && CA.open ? CA.open : null; CA.play = null; CA.waitAll = false; CA.nextAll = false; CA.alim = 15; return base(id, sub); }; })();
+window.caAgentPage = function(id){
+  caMoreInit();
+  const a = agentById(id), st = caStatus(id), crumb = breadcrumbHTML([{ label:'Cowork', onclick:'caCloseAgent()' }, { label:a.name }], 'caCloseAgent()'), sub = caSubTab();
+  const head = '<header class="o-page-head" data-sec="header"><div><h1 class="o-page-head__title">' + cwEsc(a.name) + '</h1><p class="ca-lede">' + cwEsc(a.does) + '</p></div><div class="o-page-head__actions ca-head-acts">' + caStateWordsHTML(id, st) + caHeaderAction(id, st) + '</div></header>';
+  const tabs = '<div class="o-tabs-host"><div role="tablist" id="ca-agent-tabs" aria-label="' + cwEsc(a.name) + '">' + [['today','Today'],['settings','Settings'],['activity','Activity']].map(function(t){ return '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (sub === t[0]) + '" onclick="caSub(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div></div>';
+  const body = sub === 'settings' ? caSettingsTab(id, st) : sub === 'activity' ? caAgentActivity(id, st) : caTodayTab(id, st);
+  return crumb + head + tabs + '<div class="s-content" id="ca-page" data-tab="' + sub + '">' + body + '</div>';
+};
+
+/* ---------- Today ---------- */
+function caTodayTab(id, st){
+  const work = st.key === 'on' || st.key === 'trial', waiting = caNeeds(id), parts = [];
+  if(st.key === 'new') parts.push(caCard('start', 'Not set up yet', '<p class="o-card__sub">' + cwEsc(agentById(id).name) + ' asks you a few questions, with an answer already picked for each. It takes about 2 minutes.</p><div class="ca-start__a">' + (caOwnerish() ? sBtn('Set up · 2 minutes', "caGuideOpen('" + id + "')", 'primary') : '<span class="ca-muted">Waiting for setup by ' + cwEsc(caOwnerFirst()) + '.</span>') + '</div>'));
+  if(st.key !== 'plan' && st.key !== 'new') parts.push(caNumsHTML(id, 'today'));
+  if(work || waiting.length) parts.push(caWaitingHTML(id, waiting, work));
+  parts.push(caNextHTML(id, work));
+  if(work) parts.push(caOnJobsHTML(id));
+  return parts.join('');
+}
+window.caWaitingHTML = function(id, list){
+  const n = CA.waitAll ? list.length : 5, shown = list.slice(0, n);
+  return caCard('waiting', 'Waiting for you', list.length ? '<ul class="o-list">' + shown.map(caNeedRow).join('') + '</ul>' + (list.length > shown.length ? '<button type="button" class="o-link ca-more" onclick="CA.waitAll=true; caRefresh()">See all ' + list.length + '</button>' : '') : '<p class="o-card__sub">Nothing waiting. Kairo is working inside your limits.</p>');
+};
+// What Kairo will do next: at most 10 rows, then See all.
+function caNextHTML(id, work){
+  const groups = caPreview(id, work); let budget = CA.nextAll ? 1e9 : 10, cut = false;
+  const body = groups.map(function(g){
+    const all = g.rows.length + (g.more || 0), list = g.rows.slice(0, Math.max(0, budget)); budget -= list.length; if(list.length < g.rows.length || g.more) cut = cut || list.length < g.rows.length;
+    const rest = all - list.length;
+    return '<div class="ca-prev" data-group="' + cwEsc(g.label) + '"><h3 class="ca-prev__h">' + cwEsc(g.label) + (all ? ' <small>' + all + '</small>' : '') + '</h3>' + (list.length ? '<ul>' + list.map(function(r){ return '<li>' + cwEsc(caText(r)) + '</li>'; }).join('') + '</ul>' : '') +
+      (rest && list.length ? '<p class="ca-muted ca-prev__more">and ' + rest + ' more</p>' : !list.length ? '<p class="ca-muted ca-prev__more">' + cwEsc(all ? all + ' more' : g.none) + '</p>' : '') + '</div>';
+  }).join('');
+  const health = work ? '<ul class="ca-health" id="ca-health">' + caHealth(id).map(function(h){ return '<li>' + cwEsc(h) + '</li>'; }).join('') + '</ul>' : '';
+  return caCard('next', work ? 'What Kairo will do next' : 'If it were on', body + (cut ? '<button type="button" class="o-link ca-more" data-see-all onclick="CA.nextAll=true; caRefresh()">See all</button>' : '') + health);
+}
+function caOnJobsHTML(id){
+  const jobs = caMyJobs().filter(function(j){ return caInScope(id, j); }); if(!jobs.length) return '';
+  const list = jobs.slice(0, 6), mine = caOwnerish() ? 'Pause it on one job. It keeps working on the others.' : 'Pause it on one of your jobs. It keeps working on the others.';
+  return caCard('jobs', 'On your jobs', '<p class="o-card__sub">' + mine + '</p><ul class="ca-jobsw">' + list.map(function(j){ const s = caJobState(id, j);
+    return '<li data-job="' + j.id + '"><span><b>' + cwEsc(j.title) + '</b><small>' + cwEsc(j.client) + ' · ' + cwEsc(s.text) + '</small></span>' + (s.can ? caSwitchHTML(s.on, "caJobSwitch('" + id + "','" + j.id + "')", caJobMine(j), agentById(id).name + ' on ' + j.title) : '') + '</li>'; }).join('') + '</ul>' + (jobs.length > list.length ? '<p class="ca-muted ca-prev__more">and ' + caN(jobs.length - list.length, 'more job') + ' · each job page has the same switch</p>' : ''));
+}
+function caJobSwitch(id, jobId){ if(caJobToggle(id, jobId)) caRefresh(); }
+
+/* ---------- Activity (this agent) ---------- */
+function caAgentActivity(id, st){
+  const keep = CA.limit; CA.limit = CA.alim || 15; let html; try { html = caActivityHTML(id); } finally { CA.limit = keep; }
+  html = html.replace('CA.limit+=20; caRefresh()', 'CA.alim=(CA.alim||15)+15; caRefresh()').replace('Show 20 more', 'Show 15 more');
+  return (st.key !== 'plan' && st.key !== 'new' ? caNumsHTML(id, 'activity') : '') + html;
+}
+(function(){ const base = caActivityHTML; window.caActivityHTML = function(agentId){ return base(agentId).replace('CA.limit+=50; caRefresh()', 'CA.limit+=20; caRefresh()').replace('Show 50 more', 'Show 20 more'); }; })();
+
+/* ---------- Settings: the guide's questions as cards, each one line until opened; saved as you go ---------- */
+function caSettingsTab(id, st){
+  const can = caCanEditSettings() && st.key !== 'plan', own = can && caOwnerish();
+  const note = st.key === 'plan' ? 'Available once it’s added' : !can ? 'Your Owner sets these' : own ? 'Changes save as you go. Each one is written to the audit log.' : 'These apply to your team’s jobs. Which jobs, working hours and limits are set by the Owner or an Admin.';
+  const cards = caCardsFor(id).filter(function(c){ return !c.ownOnlyShow || own; });
+  return '<section class="ca-sec ca-sec--set' + (can ? '' : ' is-ro') + '" data-sec="settings" id="ca-sec-settings"><p class="o-card__sub ca-setnote">' + cwEsc(note) + '</p>' + cards.map(function(c){ return caSetCardHTML(id, c, can, own); }).join('') + '</section>';
+}
+function caSetCardHTML(id, c, can, own){
+  const d = caDraftFor(id), open = CA.open === c.key, ed = c.own ? own : can, tick = CA.tick[c.key] && cwNow() - CA.tick[c.key] < 60000;
+  return '<section class="o-card ca-set' + (open ? ' is-open' : '') + '" data-card="' + c.key + '"><button type="button" class="ca-set__h" aria-expanded="' + open + '" onclick="caSetToggle(\'' + c.key + '\')"><span class="ca-set__t"><b>' + cwEsc(c.title) + '</b><small class="ca-set__sum" data-sum="' + c.key + '">' + cwEsc(caText(c.sum(d))) + '</small></span><span class="ca-set__tick" data-tick="' + c.key + '">' + (tick ? caTickHTML() : '') + '</span>' + (c.own && !own && can ? '<span class="ca-set__lock" title="Set by the Owner or an Admin">' + caLock() + '</span>' : '') + caChev() + '</button>' +
+    (open ? '<div class="ca-set__b">' + (c.own && !own && can ? '<p class="ca-muted ca-ownnote">' + caLock() + ' Set by the Owner or an Admin.</p>' : '') + c.body(d, ed) + '</div>' : '') + '</section>';
+}
+function caSetToggle(key){ CA.open = CA.open === key ? null : key; CA.play = null; caRefresh(); }
+function caCardSummary(id, key){ const c = caCardsFor(id).find(function(x){ return x.key === key; }); return c ? caText(c.sum(caDraftFor(id))) : ''; }
+// A change: into the draft, then saved at once (or, inside the setup guide, kept until Turn on).
+function caLive(id, key, path, v, num){
+  if(num) v = +v; else if(v === 'true') v = true; else if(v === 'false') v = false;
+  caDraftFor(id); caSet(path, v);
+  if(CA.g) return caGuideDraw();
+  return caAutoSave(id, key, true);
+}
+function caLiveTog(id, key, path){
+  const d = caDraftFor(id), p = path.split('.'); let o = d; for(let i = 0; i < p.length - 1; i++){ o[p[i]] = o[p[i]] || {}; o = o[p[i]]; } o[p[p.length - 1]] = !o[p[p.length - 1]];
+  if(CA.g) return caGuideDraw();
+  return caAutoSave(id, key, true);
+}
+function caAutoSave(id, key, redraw){
+  if(CA.g) return true;
+  if(!caCanEditSettings()) return false;
+  const ok = caSaveSettings(id, true);
+  if(ok){ CA.tick = {}; CA.tick[key] = cwNow(); }
+  if(redraw) caRefresh();
+  else if(ok){ const s = document.querySelector('[data-sum="' + key + '"]'); if(s) s.textContent = caCardSummary(id, key); const t = document.querySelector('[data-tick="' + key + '"]'); if(t) t.innerHTML = caTickHTML(); }
+  return ok;
+}
+// The save: the same checks and audit as before; quiet when it comes from a card.
+window.caSaveSettings = function(id, quiet){
+  if(!caCanEditSettings()){ if(!quiet) toast('Only the Owner, an Admin or a manager can change these.'); return false; }
+  caMoreInit();
+  const a = agentById(id), d = caDraftFor(id), cfg = TENANT_AGENT_CONFIG[id], own = caOwnerish(), me = currentActingUser(), changes = [], who = (me || {}).name || 'A person';
+  const err = function(m){ toast(m); return false; };
+  for(const f of CA_FIELDS[id]){ if(f.type && f.type !== 'num') continue; const v = +d.settings[f.k]; if(isNaN(v)) return err(f.label + ' needs a number.'); if(v > f.max) d.settings[f.k] = f.max; if(v < f.min) d.settings[f.k] = f.min; }
+  if(own && d.from >= d.to) return err('Working hours must start before they end.');
+  if(own && d.dailyCap != null) d.dailyCap = Math.max(0, Math.min(a.dailyCap, +d.dailyCap || 0));
+  if(d.scope.mode === 'clients' && !d.scope.clients.length) return err('Pick at least one client.'); if(d.scope.mode === 'jobs' && !d.scope.jobs.length) return err('Pick at least one job.');
+  if(id === 'linkedin' && String(d.settings.liNote || '').length > 300) return err('The connection note can be at most 300 characters.');
+  if(id === 'offers-joining'){ const p = d.settings.plan || {}; d.settings.checkDays = [7, 3, 1].filter(function(n){ return p['d' + n]; }).join(', ') || 'none'; }
+  (id === 'engagement' ? CA_PLAYS : []).forEach(function(p){ (p.timing || []).forEach(function(t){ const st = d.plays[p.id].timing; st[t.k] = Math.max(t.min, Math.min(t.max, +st[t.k] || t.def)); }); if(!String(d.plays[p.id].tpl || '').trim()) d.plays[p.id].tpl = p.tpl; });
+  const show = function(v){ return typeof v === 'object' ? JSON.stringify(v) : v; }, note = function(label, from, to){ if(JSON.stringify(from) !== JSON.stringify(to)) changes.push(label + ': ' + show(from) + ' → ' + show(to)); };
+  const team = (cfg.team[(me || {}).id] || {}), base = function(k){ return own ? cfg.settings[k] : (team.settings || {})[k] != null ? team.settings[k] : cfg.settings[k]; };
+  const steps = {}; a.steps.forEach(function(s){ if(s.level === 'person') return; const lv = d.steps[s.id]; note(CA_WORDS_STEP(s), own ? cfg.steps[s.id] : (team.steps || {})[s.id] || cfg.steps[s.id], lv); steps[s.id] = lv; });
+  CA_FIELDS[id].forEach(function(f){ if(f.type !== 'fixed') note(f.label, base(f.k), d.settings[f.k]); });
+  Object.keys(CA_MORE[id]).forEach(function(k){ note(CA_MORE_LABEL[k] || k, base(k), d.settings[k]); });
+  if(id === 'engagement') CA_PLAYS.forEach(function(p){ const was = (own ? cfg.plays[p.id] : (team.plays || {})[p.id] || cfg.plays[p.id]), now = d.plays[p.id]; note(p.name + ' on', was.on, now.on); note(p.name + ' timing', was.timing, now.timing);
+    if(was.tpl !== now.tpl){ changes.push(p.name + ' message edited'); const m = WSX.templates.messages.find(function(x){ return x[0] === p.tplName; }); if(m) m[2] = 'Pending approval'; } });
+  if(own){
+    note('On', cfg.enabled, d.enabled); note('Daily cap', cfg.dailyCap, d.dailyCap); note('Working hours', cfg.workingHours, d.from + '-' + d.to); note('Which jobs', cfg.scope, d.scope);
+    Object.assign(cfg.steps, steps); cfg.enabled = d.enabled; cfg.dailyCap = d.dailyCap; cfg.workingHours = d.from + '-' + d.to; cfg.scope = JSON.parse(JSON.stringify(d.scope)); cfg.settings = JSON.parse(JSON.stringify(d.settings)); if(id === 'engagement'){ cfg.plays = JSON.parse(JSON.stringify(d.plays)); CW.caps.perPersonWeek = +d.settings.perWeek; }
+    cfg.saved = { by:who, at:cwNow() };
+  } else { cfg.team[me.id] = { steps:steps, settings:JSON.parse(JSON.stringify(d.settings)), plays:JSON.parse(JSON.stringify(d.plays)), saved:{ by:who, at:cwNow() } }; }
+  if(changes.length || !quiet) logAudit('Cowork', 'Agent settings saved' + (own ? '' : ' for ' + who + '’s team'), a.name + ' · ' + (changes.join(' · ') || 'no changes'));
+  CA.draft = null; if(!quiet){ toast('Saved'); caRefresh(); } if(typeof renderSidebar === 'function') renderSidebar(); return true;
+};
+function CA_WORDS_STEP(s){ return s.label; }
+
+/* ---------- the cards and the guide share these bodies ---------- */
+function caLevelSel(id, key, s, d, ed){ return '<select class="app-input app-select ca-inl" data-level="' + s.id + '" aria-label="' + cwEsc(s.label) + '"' + (ed ? ' oninput="caSet(\'steps.' + s.id + '\', this.value)" onchange="caLive(\'' + id + '\',\'' + key + '\',\'steps.' + s.id + '\', this.value)"' : ' disabled') + '>' + ['auto','suggest','off'].map(function(v){ return '<option value="' + v + '"' + (d.steps[s.id] === v ? ' selected' : '') + '>' + CA_WORDS[v] + '</option>'; }).join('') + '</select>'; }
+function caLevelsBody(id, key, d, ed, skip){
+  return agentById(id).steps.filter(function(s){ return (skip || []).indexOf(s.id) < 0; }).map(function(s){
+    if(s.level === 'person') return sRow(s.label, 'Kairo never does this on its own.', '<span class="o-badge" data-always="' + s.id + '">' + caLock() + ' ' + CA_WORDS.person + '</span>');
+    return sRow(s.label, '', caLevelSel(id, key, s, d, ed)); }).join('');
+}
+function caLevelsSum(id, d, skip){
+  const c = { auto:0, suggest:0, off:0, person:0 }; agentById(id).steps.forEach(function(s){ if((skip || []).indexOf(s.id) > -1) return; c[s.level === 'person' ? 'person' : d.steps[s.id] || s.level]++; });
+  return [c.auto ? c.auto + ' Kairo does' : '', c.suggest ? c.suggest + ' ask you first' : '', c.off ? c.off + ' off' : '', c.person ? c.person + ' you always do' : ''].filter(Boolean).join(' · ');
+}
+function caFieldLive(id, key, f, d, ed){
+  const v = d.settings[f.k], path = 'settings.' + f.k, live = "caLive('" + id + "','" + key + "','" + path + "', this.value)";
+  if(f.type === 'fixed') return sRow(f.label, f.help || '', '<span class="s-val">' + caLock() + ' ' + cwEsc(f.def) + '</span>');
+  if(f.type === 'switch') return sRow(f.label, f.help || '', caSwitchHTML(!!v, "caLiveTog('" + id + "','" + key + "','" + path + "')", ed, f.label, ' data-field="' + f.k + '"'));
+  if(f.type === 'select') return sRow(f.label, f.help || '', caSel(f.opts, v, live, ed, f.label, ' data-field="' + f.k + '"'));
+  if(f.type === 'text') return sRow(f.label, f.help || '', '<input class="app-input s-ctl" data-field="' + f.k + '" aria-label="' + cwEsc(f.label) + '" value="' + cwEsc(v) + '"' + (ed ? ' onchange="' + live + '"' : ' disabled') + '>');
+  const cap = f.max != null && /never|at most|can go down/i.test(f.help || '') ? '<span class="ca-cap" title="A hard cap">' + caLock() + ' max ' + f.max + '</span>' : '';
+  return sRow(f.label, f.help || '', '<span class="ca-num"><input class="app-input s-ctl" type="number" data-field="' + f.k + '" aria-label="' + cwEsc(f.label) + '" value="' + cwEsc(v) + '" min="' + f.min + '" max="' + f.max + '"' + (ed ? ' oninput="caSet(\'' + path + '\', +this.value)" onchange="caAutoSave(\'' + id + '\',\'' + key + '\', false)"' : ' disabled') + '>' + (f.unit ? '<small>' + cwEsc(f.unit) + '</small>' : '') + cap + '</span>');
+}
+function caFieldsBody(id, key, d, ed, skip){ return CA_FIELDS[id].filter(function(f){ return (skip || []).indexOf(f.k) < 0; }).map(function(f){ return caFieldLive(id, key, f, d, ed); }).join(''); }
+function caFieldsSum(id, d, skip){ const changed = CA_FIELDS[id].filter(function(f){ return (skip || []).indexOf(f.k) < 0 && f.type !== 'fixed' && JSON.stringify(d.settings[f.k]) !== JSON.stringify(f.def); }).length; return changed ? caN(changed, 'change') + ' from the recommended settings' : 'All at the recommended settings'; }
+function caHoursBody(id, key, d, ed, extra){
+  return '<p class="ca-sentence"><span>Work between</span>' + caTimeSel('from', d.from, ed, "caLive('" + id + "','" + key + "','from', this.value)") + '<span>and</span>' + caTimeSel('to', d.to, ed, "caLive('" + id + "','" + key + "','to', this.value)") + '<span>on</span>' + caSel(CA_DAYS, d.settings.days, "caLive('" + id + "','" + key + "','settings.days', this.value)", ed, 'Days', ' data-field="days"') + (extra || '') + '</p>' +
+    (id === 'interviews' ? '<p class="ca-muted ca-fine">The 2-hour interview reminder is the only message sent outside these hours.</p>' : '') +
+    (d.dailyCap != null ? sRow('Daily cap', 'Up to ' + agentById(id).dailyCap.toLocaleString('en-IN') + ' a day (set by Oontu).', '<span class="ca-num"><input class="app-input s-ctl" type="number" data-field="dailyCap" aria-label="Daily cap" value="' + cwEsc(d.dailyCap) + '" min="0" max="' + agentById(id).dailyCap + '"' + (ed ? ' oninput="caSet(\'dailyCap\', +this.value)" onchange="caAutoSave(\'' + id + '\',\'' + key + '\', false)"' : ' disabled') + '><span class="ca-cap">' + caLock() + ' max ' + agentById(id).dailyCap.toLocaleString('en-IN') + '</span></span>') : '');
+}
+function caHoursSum(d){ return d.from + '–' + d.to + ', ' + d.settings.days + (d.dailyCap != null ? ' · up to ' + d.dailyCap.toLocaleString('en-IN') + ' a day' : ''); }
+function caSwitchCard(id){
+  return { key:'switch', title:'Turn this agent off', own:true, ownOnlyShow:true, sum:function(){ return TENANT_AGENT_CONFIG[id].enabled ? 'It’s on. To stop it for a while, use Pause at the top.' : 'It’s off.'; },
+    body:function(d, ed){ return '<p class="o-card__sub">Turning it off stops everything it does on every job. What it did stays in Activity.</p><div class="ca-start__a">' + (ed ? sBtn(TENANT_AGENT_CONFIG[id].enabled ? 'Turn off' : 'Turn on', "caToggleAgent('" + id + "')") : '') + '</div>'; } };
+}
+
+/* which jobs */
+function caScopeCount(id, s){ return caOpenJobs().filter(function(j){ return caInScopeWith(s, j); }).length; }
+function caScopeSum(id, s){ return s.mode === 'mine' ? 'Only my jobs (' + caScopeCount(id, s) + ')' : s.mode === 'jobs' ? caN(s.jobs.length, 'picked job') : s.mode === 'clients' ? caN(s.clients.length, 'picked client') : 'All open jobs (' + caOpenJobs().length + ')'; }
+function caScopeBody(id, key, d, ed){
+  const s = d.scope, list = s.mode === 'jobs' ? '<div class="ca-pick">' + caOpenJobs().map(function(j){ const on = s.jobs.indexOf(j.id) > -1; return '<label class="s-chk"><input type="checkbox"' + (on ? ' checked' : '') + (ed ? ' onchange="caScopeJob(\'' + id + '\',\'' + key + '\',\'' + j.id + '\')"' : ' disabled') + '> ' + cwEsc(j.title + ' · ' + j.client) + '</label>'; }).join('') + '</div>' : '';
+  return caChoice('Which jobs', [['all','All open jobs', caN(caOpenJobs().length, 'open job') + ' today, and every new one'],['mine','Only my jobs','Jobs where you are the lead or a recruiter'],['jobs','Pick jobs','Choose them from a list']].concat(s.mode === 'clients' ? [['clients','Picked clients', caN(s.clients.length, 'client')]] : []), s.mode, "caScopeMode('" + id + "','" + key + "','$v')", ed) + list;
+}
+function caScopeMode(id, key, mode){
+  const d = caDraftFor(id); d.scope.mode = mode; if(mode === 'mine') d.scope.owner = caMe().id;
+  if(mode === 'jobs' && !d.scope.jobs.length){ const mine = caOpenJobs().filter(function(j){ return caInScopeWith({ mode:'mine', owner:caMe().id }, j); }); d.scope.jobs = (mine.length ? mine : caOpenJobs().slice(0, 1)).map(function(j){ return j.id; }); }
+  if(CA.g) return caGuideDraw(); caAutoSave(id, key, true);
+}
+function caScopeJob(id, key, jobId){ const s = caDraftFor(id).scope, i = s.jobs.indexOf(jobId); if(i > -1) s.jobs.splice(i, 1); else s.jobs.push(jobId); if(CA.g) return caGuideDraw(); caAutoSave(id, key, true); }
+
+/* Talent Discovery */
+function caMatchBody(id, d, ed){
+  const th = +d.settings.threshold || 70, p = caMatchPreview(th, d.scope, d.settings.picksPerJob);
+  return '<div class="ca-slider"><input type="range" class="ca-range" min="50" max="95" step="5" value="' + th + '" data-field="threshold" aria-label="How good must a match be"' + (ed ? ' oninput="caMatchMove(this)" onchange="caLive(\'' + id + '\',\'match\',\'settings.threshold\', this.value, 1)"' : ' disabled') + '><output class="ca-range__v" data-range-v>' + th + '%</output></div>' +
+    '<div class="ca-range__ends"><span>50% · more people</span><span>95% · only the closest</span></div><p class="ca-live" data-live data-total="' + p.total + '">' + cwEsc(caMatchLine(p)) + '</p>' +
+    '<p class="ca-sentence"><span>Up to</span>' + caSel([5,10,15,20,30,50].map(function(n){ return [n, String(n)]; }), d.settings.picksPerJob, "caLive('" + id + "','match','settings.picksPerJob', this.value, 1)", ed, 'Picks per job', ' data-field="picksPerJob"') + '<span>people per job.</span></p>';
+}
+function caMatchMove(el){
+  const th = +el.value, d = caDraftFor('talent-discovery'), p = caMatchPreview(th, d.scope, d.settings.picksPerJob), box = el.closest('.ca-set__b, .ca-g__b') || document;
+  d.settings.threshold = th; const v = box.querySelector('[data-range-v]'); if(v) v.textContent = th + '%'; const l = box.querySelector('[data-live]'); if(l){ l.textContent = caMatchLine(p); l.setAttribute('data-total', p.total); }
+}
+const CA_FOUND = [['auto','Add them to the job for me','Kairo adds each person to the job and tells the job lead.'],['suggest','Ask me first','Each person waits for you under Today. You add them with one click.'],['off','Just show them on the job','They stay on the job’s Kairo picks tab. Nothing else happens.']];
+function caFoundBody(d, ed){ return caChoice('When Kairo finds good people', CA_FOUND, d.steps.addPipeline, "caLive('talent-discovery','found','steps.addPipeline','$v')", ed); }
+
+/* Engagement */
+function caChannelLine2(){
+  const wa = cwChannelConnected('whatsapp'), em = cwChannelConnected('email'), conn = function(ch, label){ return openAsOk() ? '<button type="button" class="o-btn" onclick="caDemoConnect(\'' + ch + '\')">' + label + ' ' + caDemoTag() + '</button>' : '<a href="#" class="o-link" onclick="settingsSection=\'integrations\'; showView(\'settings\'); return false">' + label + '</a>'; };
+  if(wa) return '<span>WhatsApp is connected' + (em ? ', with email if WhatsApp doesn’t reach someone.' : '.') + '</span>';
+  if(em) return '<span>WhatsApp isn’t connected, so I’ll use email.</span> ' + conn('whatsapp', 'Connect WhatsApp');
+  return '<span>Nothing is connected yet. Kairo needs WhatsApp or a mailbox to send anything.</span> ' + conn('google', 'Connect a mailbox');
+}
+function caChannelSum(){ const wa = cwChannelConnected('whatsapp'), em = cwChannelConnected('email'); return wa ? (em ? 'WhatsApp, then email' : 'WhatsApp') : em ? 'Email (WhatsApp isn’t connected)' : 'Nothing connected yet'; }
+function caDemoConnect(id){
+  const c = CONNECTORS.find(function(x){ return x.id === id; }); if(!c){ toast('That connection isn’t available here.'); return; }
+  if(!openAsOk()){ settingsSection = 'integrations'; showView('settings'); return; }
+  c.status = 'connected'; logAudit('Integrations', 'Connected (demo)', c.name || id); toast((c.name || id) + ' connected.'); if(CA.g) caGuideDraw(); else caRefresh();
+}
+function caPlaysOn(d){ return CA_PLAYS.filter(function(p){ return d.plays[p.id] && d.plays[p.id].on; }).length; }
+function caPlayTog(pid){ caLiveTog('engagement', 'messages', 'plays.' + pid + '.on'); }
+function caPlayOpen(pid){ CA.play = pid; caRefresh(); }
+function caPlaysBody(d, ed){
+  const a = agentById('engagement');
+  return '<div class="ca-plays">' + CA_PLAYS.map(function(p){
+    const st = d.plays[p.id], step = a.steps.find(function(s){ return s.id === p.step; }), open = CA.play === p.id, wa = cwTplStatus(p.tplName) || 'Not submitted';
+    return '<div class="ca-play" data-play="' + p.id + '"><div class="ca-play__h"><div class="ca-play__t"><b>' + cwEsc(p.name) + '</b><p class="o-card__sub">' + cwEsc(p.does) + '</p>' + (open ? '' : '<p class="ca-play__pv" data-fill="' + cwEsc(st.tpl) + '">' + cwEsc(caText(caFill(st.tpl, caSample()))) + '</p>') + '</div>' + caSwitchHTML(st.on, "caPlayTog('" + p.id + "')", ed, p.name) + '</div>' +
+      (open ? caTplHTML('plays.' + p.id + '.tpl', st.tpl, { ed:ed, key:p.id, card:'messages', status:caWaWords(wa) }) +
+        '<div class="ca-play__row">' + (p.timing || []).map(function(t){ return '<label class="ca-num"><span>' + cwEsc(t.label) + '</span><input class="app-input s-ctl" type="number" data-timing="' + p.id + '.' + t.k + '" value="' + cwEsc(st.timing[t.k]) + '" min="' + t.min + '" max="' + t.max + '"' + (ed ? ' oninput="caSet(\'plays.' + p.id + '.timing.' + t.k + '\', +this.value)" onchange="caAutoSave(\'engagement\',\'messages\', false)"' : ' disabled') + '><small>' + cwEsc(t.unit) + '</small></label>'; }).join('') +
+        (p.step !== 'firstTouch' && step && step.level !== 'person' ? '<label class="ca-num"><span>What Kairo does</span>' + caLevelSel('engagement', 'messages', step, d, ed) + '</label>' : '') + '</div><button type="button" class="o-link" onclick="caPlayOpen(null)">Close the message</button>'
+      : '<button type="button" class="o-link ca-play__edit" onclick="caPlayOpen(\'' + p.id + '\')">' + (ed ? 'Edit the message' : 'See the message') + '</button>') + '</div>';
+  }).join('') + '</div><p class="ca-muted ca-fine">' + caLock() + ' Shortlisting or sending a profile to a client: ' + CA_WORDS.person + '.</p>';
+}
+const CA_FIRST = [['suggest','Ask me first','You see each first message under Today and approve it. Replies after that go on their own.'],['auto','Send it for me','Kairo sends it inside your limits and logs it in Activity.']];
+function caFirstBody(d, ed){ return caChoice('First message', CA_FIRST, d.steps.firstTouch === 'off' ? 'suggest' : d.steps.firstTouch, "caLive('engagement','first','steps.firstTouch','$v')", ed); }
+function caLimitsBody(id, key, d, ed){
+  return '<p class="ca-sentence"><span>Send between</span>' + caTimeSel('from', d.from, ed, "caLive('" + id + "','" + key + "','from', this.value)") + '<span>and</span>' + caTimeSel('to', d.to, ed, "caLive('" + id + "','" + key + "','to', this.value)") + '<span>on</span>' + caSel(CA_DAYS, d.settings.days, "caLive('" + id + "','" + key + "','settings.days', this.value)", ed, 'Days', ' data-field="days"') + '</p>' +
+    '<p class="ca-sentence"><span>At most</span>' + caSel([[1,'1'],[2,'2']], d.settings.perWeek, "caLive('" + id + "','" + key + "','settings.perWeek', this.value, 1)", ed, 'Messages a week to the same person', ' data-field="perWeek"') + '<span>messages a week to the same person.</span></p><p class="ca-muted ca-fine">' + caLock() + ' The weekly limit is shared with LinkedIn Outreach and can never go above 2.</p>' +
+    (d.dailyCap != null ? sRow('Daily cap', 'Up to ' + agentById(id).dailyCap.toLocaleString('en-IN') + ' a day (set by Oontu).', '<span class="ca-num"><input class="app-input s-ctl" type="number" data-field="dailyCap" aria-label="Daily cap" value="' + cwEsc(d.dailyCap) + '" min="0" max="' + agentById(id).dailyCap + '"' + (ed ? ' oninput="caSet(\'dailyCap\', +this.value)" onchange="caAutoSave(\'' + id + '\',\'' + key + '\', false)"' : ' disabled') + '></span>') : '');
+}
+function caLimitsSum(d){ return d.from + '–' + d.to + ', ' + d.settings.days + ', at most ' + d.settings.perWeek + ' a week to the same person'; }
+
+/* Interviews */
+const CA_IV_TPL = 'Hi {{first_name}}, a reminder: your {{round}} for {{job_title}} with {{client}} is {{when}}. Reply 1 to confirm, or 2 if you need another time.';
+function caRoundsBody(d, ed){ return caChoice('Which rounds', [['all','All rounds','Every interview on your jobs.'],['client','Client rounds only','Your own screening calls stay with you.']], d.settings.rounds, "caLive('interviews','rounds','settings.rounds','$v')", ed); }
+function caRemindChips(d, ed){
+  const s = d.settings;
+  return '<div class="ca-chips">' + caChipT(s.remindCand1 + ' h before', s.remind1On, "caLiveTog('interviews','reminders','settings.remind1On')", ed, ' data-chip="remind1"') + caChipT(s.remindCand2 + ' h before', s.remind2On, "caLiveTog('interviews','reminders','settings.remind2On')", ed, ' data-chip="remind2"') + caChipT('Same-day check', s.sameDay, "caLiveTog('interviews','reminders','settings.sameDay')", ed, ' data-chip="sameDay"') + '</div>' +
+    '<p class="ca-muted ca-fine">The same-day check asks the candidate on the morning of the interview that they’re still coming.</p>';
+}
+function caRemindSum(d){ const s = d.settings, l = []; if(s.remind1On) l.push(s.remindCand1 + ' h'); if(s.remind2On) l.push(s.remindCand2 + ' h'); return (l.length ? l.join(' and ') + ' before' : 'No reminders') + (s.sameDay ? ' · same-day check' : ''); }
+function caChaseBody(d, ed){
+  const h = function(k, opts){ return caSel(opts.map(function(n){ return [n, n + ' h']; }), d.settings[k], "caLive('interviews','chase','settings." + k + "', this.value, 1)", ed, k === 'chase1' ? 'First chase' : 'Second chase', ' data-field="' + k + '"'); };
+  return '<p class="ca-sentence"><span>Chase the client for feedback after</span>' + h('chase1', [12, 24, 36, 48, 72]) + '<span>and again after</span>' + h('chase2', [24, 48, 72, 96, 120, 168]) + '<span>Then hand it to me.</span></p>';
+}
+function caIvPreview(){ const s = caSample('iv'); return '<p class="o-card__sub">To ' + cwEsc(s.c.name) + (s.real ? '' : ' (a sample)') + ', on WhatsApp:</p><div class="ca-bubble" data-fill="' + cwEsc(CA_IV_TPL) + '" data-ctx="iv">' + cwEsc(caText(caFill(CA_IV_TPL, s))) + '</div>'; }
+
+/* Offer & Joining */
+const CA_PLAN = [['offer','When the offer goes out','A short summary of the offer.'],['weekly','Every week until joining','At most 2 messages a week.'],['d7','7 days before joining',''],['d3','3 days before joining',''],['d1','1 day before joining',''],['joinDay','On joining day','A check with the candidate and you.'],['a7','Day 7 after joining',''],['a30','Day 30',''],['a60','Day 60','The end of most replacement windows.']];
+const CA_OJ_TPL = 'Hi {{first_name}}, {{days}} days to go before you join {{client}} as {{job_title}}. All good on your side? Anything I can help with before day one?';
+function caPlanBody(d, ed){ const p = d.settings.plan || {}; return '<ol class="ca-tl">' + CA_PLAN.map(function(x){ return '<li data-point="' + x[0] + '" class="' + (p[x[0]] ? 'is-on' : '') + '"><span class="ca-tl__dot" aria-hidden="true"></span><span class="ca-tl__t"><b>' + cwEsc(x[1]) + '</b>' + (x[2] ? '<small>' + cwEsc(x[2]) + '</small>' : '') + '</span>' + caSwitchHTML(p[x[0]], "caLiveTog('offers-joining','plan','settings.plan." + x[0] + "')", ed, x[1]) + '</li>'; }).join('') + '</ol>'; }
+function caPlanSum(d){ const p = d.settings.plan || {}, n = CA_PLAN.filter(function(x){ return p[x[0]]; }).length; return n + ' of ' + CA_PLAN.length + ' check-ins on'; }
+function caRiskBody(d, ed){ return caChoice('Tell me when risk is', [['High','High','Only the likely dropouts.'],['Medium','Medium or High','Earlier warnings, a little more often.']], d.settings.riskAlert, "caLive('offers-joining','risk','settings.riskAlert','$v')", ed); }
+function caClientBody(d, ed){ return caChoice('Message the client contact on joining day', [['true','Yes','A short note to the client contact asking them to confirm the candidate arrived.'],['false','No','Only the candidate hears from Kairo.']], String(!!d.settings.messageClient), "caLive('offers-joining','client','settings.messageClient','$v')", ed); }
+function caOjPreview(){ const s = caSample('oj'); return '<p class="o-card__sub">To ' + cwEsc(s.c.name) + (s.real ? '' : ' (a sample)') + ', 7 days before joining:</p><div class="ca-bubble" data-fill="' + cwEsc(CA_OJ_TPL) + '" data-ctx="oj">' + cwEsc(caText(caFill(CA_OJ_TPL, s))) + '</div>'; }
+
+/* LinkedIn Outreach */
+function caLiPeople(){ return RECRUITER_ROSTER.filter(function(u){ return tmStatus(u) === 'Active' && (caOwnerish() || caTeamIds().indexOf(u.id) > -1) && roleHasPermission(u.assignedRoleId, 'candidates', 'Submit to job'); }); }
+function caExtBody(d, ed){
+  const on = caLiConnected(), people = caLiPeople(), list = people.slice(0, 12);
+  return '<ul class="ca-ext">' + list.map(function(u){ const yes = on.indexOf(u.id) > -1, x = CA_EXT[u.id] || {};
+    return '<li data-person="' + u.id + '"><span><b>' + cwEsc(u.name) + '</b><small>' + (yes ? 'Connected · last active ' + (x.at ? cwFmtAgo(x.at) : 'today') : 'Not installed') + '</small></span>' + (yes ? oBadge('success', 'Connected') : openAsOk() && (ed || u.id === caMe().id) ? '<button type="button" class="o-btn" onclick="caExtInstall(\'' + u.id + '\')">Install extension ' + caDemoTag() + '</button>' : oBadge('neutral', 'Not installed')) + '</li>'; }).join('') + '</ul>' + (people.length > list.length ? '<p class="ca-muted ca-fine">and ' + caN(people.length - list.length, 'more recruiter') + '</p>' : '') + '<p class="ca-muted ca-fine">It works in each recruiter’s own Chrome while it’s open, and never asks for a LinkedIn password.</p>';
+}
+function caLiSearch(d, j){ const s = (d.settings.searches || {})[j.id]; return s || { title:j.title, skills:(j.skills || []).filter(function(x){ return x !== 'General'; }).slice(0, 4), city:String(j.loc || '').split(',')[0] }; }
+function caLiJobsBody(d, ed){
+  const all = d.scope.mode !== 'jobs', jobs = caOpenJobs(), list = jobs.slice(0, CA.liAll ? jobs.length : 8);
+  return '<ul class="ca-lijobs">' + list.map(function(j){ const on = all || d.scope.jobs.indexOf(j.id) > -1, s = caLiSearch(d, j), x = function(kind, v, i){ return '<span class="ca-sc" data-kind="' + kind + '">' + cwEsc(v) + (ed ? '<button type="button" aria-label="Remove ' + cwEsc(v) + '" onclick="caLiChip(\'' + j.id + '\',\'' + kind + '\',' + (i == null ? -1 : i) + ')">×</button>' : '') + '</span>'; };
+    return '<li data-job="' + j.id + '"><label class="ca-lijobs__h"><input type="checkbox"' + (on ? ' checked' : '') + (ed ? ' onchange="caLiJob(\'' + j.id + '\')"' : ' disabled') + '> <b>' + cwEsc(j.title) + '</b> <small>' + cwEsc(j.client) + '</small></label>' +
+      (on ? '<div class="ca-lijobs__s"><span class="ca-muted">Search:</span>' + (s.title ? x('title', s.title) : '') + s.skills.map(function(k, i){ return x('skill', k, i); }).join('') + (s.city ? x('city', s.city) : '') + (ed ? '<input class="app-input ca-sc__add" placeholder="+ a skill" aria-label="Add a skill to the search for ' + cwEsc(j.title) + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault(); caLiAdd(\'' + j.id + '\', this.value)}">' : '') + '</div>' : '') + '</li>'; }).join('') + '</ul>' +
+    (jobs.length > list.length ? '<button type="button" class="o-link" onclick="CA.liAll=true; ' + (CA.g ? 'caGuideDraw()' : 'caRefresh()') + '">Show all ' + jobs.length + ' jobs</button>' : '');
+}
+function caLiSave(){ if(CA.g) return caGuideDraw(); caAutoSave('linkedin', 'jobs', true); }
+function caLiJob(jobId){ const d = caDraftFor('linkedin'), s = d.scope; if(s.mode !== 'jobs'){ s.mode = 'jobs'; s.jobs = caOpenJobs().map(function(j){ return j.id; }); } const i = s.jobs.indexOf(jobId); if(i > -1) s.jobs.splice(i, 1); else s.jobs.push(jobId); if(s.jobs.length === caOpenJobs().length) s.mode = 'all'; caLiSave(); }
+function caLiChip(jobId, kind, i){ const d = caDraftFor('linkedin'), j = jobById(jobId), s = d.settings.searches[jobId] = JSON.parse(JSON.stringify(caLiSearch(d, j))); if(kind === 'skill') s.skills.splice(i, 1); else s[kind] = ''; caLiSave(); }
+function caLiAdd(jobId, v){ v = String(v || '').trim(); if(!v) return; const d = caDraftFor('linkedin'), s = d.settings.searches[jobId] = JSON.parse(JSON.stringify(caLiSearch(d, jobById(jobId)))); if(s.skills.indexOf(v) < 0) s.skills.push(v); caLiSave(); }
+// An account that needs the recruiter shows in the card's one line, so nobody has to open it to find out.
+function caLiAccSum(){
+  const need = (typeof LI_SENDER_PROFILES !== 'undefined' ? LI_SENDER_PROFILES : []).filter(function(sp){ return sp.accountType !== 'email' && sp.connected && typeof cwLiState === 'function' && /sign-in|Restricted/i.test(cwLiState(sp)[1]); });
+  const base = caN(caLiConnected().length, 'LinkedIn account') + ' connected';
+  if(!need.length) return base;
+  const signIn = need.filter(function(sp){ return /sign-in/i.test(cwLiState(sp)[1]); }), restr = need.length - signIn.length;
+  return base + ' · ' + (signIn.length ? 'Sign in again: ' + signIn.map(function(sp){ return sp.name; }).join(', ') : '') + (signIn.length && restr ? ' · ' : '') + (restr ? caN(restr, 'account') + ' paused by LinkedIn' : '');
+}
+function caLiJobsSum(d){ return d.scope.mode === 'jobs' ? caN(d.scope.jobs.length, 'job') : 'All open jobs (' + caOpenJobs().length + ')'; }
+function caLiMsgBody(d, ed){ return '<h4 class="ca-sub">Connection note</h4>' + caTplHTML('settings.liNote', d.settings.liNote, { ed:ed, key:'liNote', card:'messages', max:300 }) + '<h4 class="ca-sub">First message after they accept</h4>' + caTplHTML('settings.liMsg', d.settings.liMsg, { ed:ed, key:'liMsg', card:'messages' }); }
+function caLiMsgSum(d){ return 'Note: ' + caFill(d.settings.liNote, caSample()).length + ' of 300 characters · first message after they accept'; }
+function caLiLimitsSum(d){ const s = d.settings; return s.invitesDay + ' invites a day, ' + s.invitesWeek + ' a week · ' + s.messagesDay + ' messages a day'; }
+
+/* ---------- the cards, per agent, in the guide's order ---------- */
+function caCardsFor(id){
+  const L = function(skip){ return { key:'more', title:'What Kairo does on its own', sum:function(d){ return caLevelsSum(id, d, skip); }, body:function(d, ed){ return caLevelsBody(id, 'more', d, ed, skip); } }; };
+  const H = { key:'hours', title:'Working hours', own:true, sum:caHoursSum, body:function(d, ed){ return caHoursBody(id, 'hours', d, ed); } };
+  const R = function(title, skip){ return { key:'rules', title:title, sum:function(d){ return caFieldsSum(id, d, skip); }, body:function(d, ed){ return caFieldsBody(id, 'rules', d, ed, skip); } }; };
+  if(id === 'talent-discovery') return [
+    { key:'jobs', title:'Which jobs', own:true, sum:function(d){ return caScopeSum(id, d.scope); }, body:function(d, ed){ return caScopeBody(id, 'jobs', d, ed); } },
+    { key:'match', title:'How good a match must be', sum:function(d){ return 'At least ' + d.settings.threshold + '% · up to ' + d.settings.picksPerJob + ' people per job'; }, body:function(d, ed){ return caMatchBody(id, d, ed); } },
+    { key:'found', title:'When Kairo finds good people', sum:function(d){ return (CA_FOUND.find(function(x){ return x[0] === d.steps.addPipeline; }) || CA_FOUND[1])[1]; }, body:caFoundBody },
+    R('Who counts as a match', ['threshold','picksPerJob']), L(['addPipeline']), H, caSwitchCard(id) ];
+  if(id === 'engagement') return [
+    { key:'channel', title:'Channel', sum:caChannelSum, body:function(d, ed){ return '<p class="ca-line" id="ca-channel">' + caChannelLine2() + '</p>' + caFieldLive(id, 'channel', CA_FIELDS[id].find(function(f){ return f.k === 'channelOrder'; }), d, ed); } },
+    { key:'messages', title:'Messages Kairo sends', sum:function(d){ return 'Messages: ' + caPlaysOn(d) + ' of ' + CA_PLAYS.length + ' on · first message: ' + CA_WORDS[d.steps.firstTouch === 'off' ? 'suggest' : d.steps.firstTouch].toLowerCase(); }, body:caPlaysBody },
+    { key:'first', title:'Before a first message to someone new', sum:function(d){ return (CA_FIRST.find(function(x){ return x[0] === d.steps.firstTouch; }) || CA_FIRST[0])[1]; }, body:caFirstBody },
+    { key:'limits', title:'Limits', own:true, sum:caLimitsSum, body:function(d, ed){ return caLimitsBody(id, 'limits', d, ed); } },
+    { key:'style', title:'Language and tone', sum:function(d){ return d.settings.language + ' · ' + d.settings.tone; }, body:function(d, ed){ return caFieldsBody(id, 'style', d, ed, ['channelOrder','perWeek','days']); } },
+    L(CA_PLAYS.map(function(p){ return p.step; })), caSwitchCard(id) ];
+  if(id === 'interviews') return [
+    { key:'rounds', title:'Which rounds', sum:function(d){ return d.settings.rounds === 'client' ? 'Client rounds only' : 'All rounds'; }, body:caRoundsBody },
+    { key:'reminders', title:'Reminders', sum:caRemindSum, body:function(d, ed){ return caRemindChips(d, ed) + caIvPreview() + caFieldsBody(id, 'reminders', d, ed, CA_FIELDS[id].map(function(f){ return f.k; }).filter(function(k){ return ['remindCand1','remindCand2','remindPanel'].indexOf(k) < 0; })); } },
+    { key:'chase', title:'Chasing client feedback', sum:function(d){ return 'After ' + d.settings.chase1 + ' h and ' + d.settings.chase2 + ' h, then to you'; }, body:caChaseBody },
+    R('Slots and channels', ['rounds','remindCand1','remindCand2','remindPanel','chase1','chase2']), L([]), H, caSwitchCard(id) ];
+  if(id === 'offers-joining') return [
+    { key:'plan', title:'Check-in plan', sum:caPlanSum, body:function(d, ed){ return caPlanBody(d, ed) + caOjPreview(); } },
+    { key:'risk', title:'Tell me when risk is', sum:function(d){ return d.settings.riskAlert === 'Medium' ? 'Medium or High' : 'High'; }, body:caRiskBody },
+    { key:'client', title:'Message the client contact on joining day', sum:function(d){ return d.settings.messageClient ? 'Yes' : 'No'; }, body:caClientBody },
+    R('Offer summary and risk rules', ['checkDays','postDays','messageClient']), L([]), H, caSwitchCard(id) ];
+  return [
+    { key:'ext', title:'Oontu extension and accounts', sum:caLiAccSum, body:function(d, ed){ const st = caStatus(id), live = ['on','trial','setup','paused'].indexOf(st.key) > -1; return caExtBody(d, ed) + (live && typeof cwLiAccountsHTML === 'function' ? '<div class="ca-gap">' + cwLiAccountsHTML() + '</div>' : ''); } },
+    { key:'jobs', title:'Jobs to run on LinkedIn', own:true, sum:caLiJobsSum, body:caLiJobsBody },
+    { key:'messages', title:'Connection note and first message', sum:caLiMsgSum, body:caLiMsgBody },
+    { key:'limits', title:'Limits', sum:caLiLimitsSum, body:function(d, ed){ return caFieldsBody(id, 'limits', d, ed, []); } },
+    L([]), H, caSwitchCard(id) ];
+}
+
+/* ---------- templates: field chips and a live preview for a real candidate ---------- */
+function caWaWords(s){
+  if(!cwChannelConnected('whatsapp')) return 'Goes by email while WhatsApp isn’t connected.';
+  if(/^Approved/i.test(s)) return 'Approved by WhatsApp';
+  if(/pending|submitted|review/i.test(s)) return 'Waiting for WhatsApp approval, about 1 day';
+  if(/reject/i.test(s)) return 'Turned down by WhatsApp. Edit it and it goes back for approval.';
+  return 'Goes to WhatsApp for approval when you change it, about 1 day';
+}
+function caSample(ctx){
+  const me = caMe(), ws = ibWs(), slug = ibWsSlug(), i = CA.sample || 0, out = { me:caFirst(me.name || 'Your recruiter') + ' from ' + ws.split(' ')[0], ws:ws, real:true, days:7 };
+  if(ctx === 'iv'){ const now = fmNow(), ivs = hmInterviews.filter(function(iv){ const t = ivTime(iv); return iv.jobId && t > now && ['Completed','Cancelled','No Show'].indexOf(iv.status) < 0; }).sort(function(a, b){ return ivTime(a) - ivTime(b); });
+    if(ivs.length){ const iv = ivs[i % ivs.length], t = ivTime(iv), p = wsParts(t); out.c = byId(iv.candidateId) || { name:iv.candidate }; out.j = jobById(iv.jobId) || { title:iv.role, client:'the client', id:'x' }; out.round = iv.round || 'interview'; out.when = 'on ' + caDay(t) + ' at ' + String(p.h).padStart(2, '0') + ':' + String(p.mi).padStart(2, '0'); } }
+  if(ctx === 'oj' && !out.c){ const live = SUBMISSIONS.filter(function(s){ return s.offer && !journeyJoined(s) && byId(s.candidateId); }); if(live.length){ const s = live[i % live.length]; out.c = byId(s.candidateId); out.j = jobById(s.jobId); } }
+  if(!out.c){ const jobs = caMyJobs().length ? caMyJobs() : caOpenJobs(); if(jobs.length){ const j = jobs[i % jobs.length], pick = caJobPicks(j)[0]; out.j = j; out.c = pick ? pick.c : CANDIDATES[i % Math.max(1, CANDIDATES.length)]; } }
+  if(!out.c || !out.j){ out.real = false; out.c = out.c || { name:'Sneha Patel', id:'sample' }; out.j = out.j || { title:'Senior Java Developer', client:'Acme Fintech', id:'sample' }; }
+  out.round = out.round || 'technical round'; out.when = out.when || 'tomorrow at 11:00';
+  out.link = slug + '.oontu.app/jobs/' + (out.j.id || 'x'); out.answer = slug + '.oontu.app/r/' + (out.c.id || 'x');
+  return out;
+}
+function caFill(text, s){
+  s = s || caSample(); const v = { first_name:caFirst(s.c.name), name:s.c.name, job_title:s.j.title, recruiter:s.me, job_link:s.link, link:s.answer, client:s.j.client || 'the client', company:s.ws, round:s.round, when:s.when, days:String(s.days) };
+  return String(text || '').replace(/\{\{\s*(\w+)\s*\}\}/g, function(m, k){ return v[k] != null ? v[k] : ''; }).replace(/\{\{|\}\}/g, '');
+}
+function caTplChips(text){ return cwEsc(text).replace(/\{\{\s*(\w+)\s*\}\}/g, function(m, v){ return '<span class="ca-var" contenteditable="false" data-var="' + v + '">' + cwEsc(CA_VAR_LABEL[v] || v.replace(/_/g, ' ')) + '</span>'; }).replace(/\n/g, '<br>'); }
+function caTplHTML(path, text, o){
+  o = o || {}; const id = 'tpl-' + path.replace(/\W+/g, '-'), pv = caText(caFill(text, caSample(o.ctx)));
+  const bar = o.ed ? '<div class="ca-tpl__bar"><div class="ca-tpl__addw"><button type="button" class="o-btn o-btn--ghost ca-tpl__add" aria-haspopup="menu" aria-expanded="false" onclick="caTplMenu(this)">+ Add field</button><div class="ca-tpl__menu" role="menu" hidden>' +
+    CA_FIELD_MENU.map(function(f){ return '<button type="button" role="menuitem" data-add="' + f[0] + '" onmousedown="event.preventDefault()" onclick="caTplAdd(\'' + id + '\',\'' + f[0] + '\')">' + f[1] + '</button>'; }).join('') + '</div></div>' + (o.max ? '<span class="ca-tpl__count' + (pv.length > o.max ? ' is-over' : '') + '" data-count>' + pv.length + ' of ' + o.max + '</span>' : '') + '</div>' : (o.max ? '<div class="ca-tpl__bar"><span class="ca-tpl__count" data-count>' + pv.length + ' of ' + o.max + '</span></div>' : '');
+  return '<div class="ca-tpl" data-tpl-box="' + cwEsc(o.key || path) + '"><div class="ca-tpl__ed"><div class="ca-tpl__label">Message</div>' + bar +
+    '<div id="' + id + '" class="app-input ca-tpl__text" data-tpl="' + cwEsc(o.key || path) + '" data-path="' + cwEsc(path) + '" data-card="' + cwEsc(o.card || '') + '" data-ctx="' + cwEsc(o.ctx || '') + '" data-max="' + (o.max || '') + '" contenteditable="' + (o.ed ? 'true' : 'false') + '" role="textbox" aria-multiline="true" aria-label="Message"' + (o.ed ? ' oninput="caTplInput(this)" onblur="caTplFlush(this)"' : '') + '>' + caTplChips(text) + '</div>' +
+    (o.status ? '<p class="ca-tpl__st">' + cwEsc(o.status) + '</p>' : '') + '</div><div class="ca-tpl__pv"><div class="ca-tpl__label">Preview</div><div class="ca-bubble" data-preview>' + cwEsc(pv) + '</div><button type="button" class="o-link ca-tpl__another" onclick="caSampleNext()">Show another candidate</button></div></div>';
+}
+function caTplRead(el){
+  let s = '';
+  (function walk(node){ node.childNodes.forEach(function(n){ if(n.nodeType === 3) s += n.nodeValue; else if(n.nodeType === 1){ const v = n.getAttribute('data-var'); if(v) s += '{{' + v + '}}'; else if(n.tagName === 'BR') s += '\n'; else { if(/^(DIV|P)$/.test(n.tagName) && s && !/\n$/.test(s)) s += '\n'; walk(n); } } }); })(el);
+  return s.replace(/ /g, ' ').replace(/\n+$/, '');
+}
+function caTplPaint(el, text){
+  const box = el.closest('.ca-tpl'); if(!box) return; const pv = caText(caFill(text, caSample(el.getAttribute('data-ctx') || ''))), p = box.querySelector('[data-preview]'); if(p) p.textContent = pv;
+  const c = box.querySelector('[data-count]'), max = +el.getAttribute('data-max'); if(c && max){ c.textContent = pv.length + ' of ' + max; c.classList.toggle('is-over', pv.length > max); }
+}
+function caTplInput(el){
+  const text = caTplRead(el); caDraftFor(CA.g ? CA.g.id : CA.agent); caSet(el.getAttribute('data-path'), text); caTplPaint(el, text);
+  if(CA.g) return; clearTimeout(CA.tplT); CA.tplT = setTimeout(function(){ caTplFlush(el); }, 900);
+}
+function caTplFlush(el){
+  clearTimeout(CA.tplT); if(CA.g || !CA.agent || !el.isConnected) return; caAutoSave(CA.agent, el.getAttribute('data-card') || 'messages', false);
+  const p = CA_PLAYS.find(function(x){ return x.id === el.getAttribute('data-tpl'); }), st = el.closest('.ca-tpl') && el.closest('.ca-tpl').querySelector('.ca-tpl__st');   // an edited WhatsApp message goes back for approval
+  if(p && st) st.textContent = caWaWords(cwTplStatus(p.tplName) || 'Not submitted');
+}
+function caTplMenu(btn){ const m = btn.nextElementSibling, open = m.hidden; document.querySelectorAll('.ca-tpl__menu').forEach(function(x){ x.hidden = true; x.previousElementSibling.setAttribute('aria-expanded', 'false'); }); m.hidden = !open; btn.setAttribute('aria-expanded', String(open)); }
+function caTplAdd(id, v){
+  const el = document.getElementById(id); if(!el) return; el.focus();
+  const chip = document.createElement('span'); chip.className = 'ca-var'; chip.contentEditable = 'false'; chip.setAttribute('data-var', v); chip.textContent = CA_VAR_LABEL[v] || v; const sp = document.createTextNode(' ');
+  const sel = window.getSelection(); let r = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+  if(!r || !el.contains(r.commonAncestorContainer)){ r = document.createRange(); r.selectNodeContents(el); r.collapse(false); }
+  r.deleteContents(); r.insertNode(sp); r.insertNode(chip); r.setStartAfter(sp); r.collapse(true); sel.removeAllRanges(); sel.addRange(r);
+  const m = el.closest('.ca-tpl').querySelector('.ca-tpl__menu'); if(m){ m.hidden = true; m.previousElementSibling.setAttribute('aria-expanded', 'false'); }
+  caTplInput(el);
+}
+function caSampleNext(){
+  CA.sample = (CA.sample || 0) + 1;
+  document.querySelectorAll('.ca-tpl__text').forEach(function(el){ caTplPaint(el, caTplRead(el)); });
+  document.querySelectorAll('[data-fill]').forEach(function(el){ el.textContent = caText(caFill(el.getAttribute('data-fill'), caSample(el.getAttribute('data-ctx') || ''))); });
+}
+document.addEventListener('click', function(e){ if(!e.target.closest || e.target.closest('.ca-tpl__addw')) return; document.querySelectorAll('.ca-tpl__menu').forEach(function(m){ if(!m.hidden){ m.hidden = true; m.previousElementSibling.setAttribute('aria-expanded', 'false'); } }); });
+
+/* ---------- the setup guide: a centred dialog, a step counter, Back and Continue; every step has an answer picked ---------- */
+function caGuideOpen(id){
+  if(!caOwnerish()){ toast('Your Owner sets up the agents.'); return false; }
+  const st = caStatus(id); if(st.key === 'plan' || st.oontu) return false;
+  CA.draft = null; const d = caDraftFor(id);
+  if(id === 'engagement' && d.steps.firstTouch === 'off') d.steps.firstTouch = 'suggest';
+  CA.g = { id:id, i:0, done:null, conn:'now', ext:'now', tested:false }; CA.g.connStep = caGuideConnStep(id); CA.liAll = false; caGuideDraw(); return true;
+}
+function caGuideConnStep(id){
+  const need = caSetupStep(id); if(!need || id === 'talent-discovery' || id === 'linkedin') return null;
+  const cal = id === 'interviews', wa = !cal && cwChannelConnected('email');
+  if(wa) return null;   // email is enough to start; WhatsApp is offered on the channel step
+  return { q:cal ? 'Connect a calendar' : 'Connect a mailbox', sub:cal ? 'Kairo books interviews in the recruiter’s calendar.' : 'Kairo needs WhatsApp or a mailbox to send anything.',
+    body:function(){ return caChoice('Connect', [['now', cal ? 'Connect Google Calendar now' : 'Connect a Google mailbox now', openAsOk() ? 'One click in this demo.' : 'Opens Settings › Integrations.'], ['later', 'Later', 'The agent waits until it’s connected.']], CA.g.conn, "CA.g.conn='$v'; caGuideDraw()", true); },
+    next:function(){ if(CA.g.conn === 'now'){ if(openAsOk()){ const c = CONNECTORS.find(function(x){ return x.id === 'google'; }); if(c && c.status !== 'connected'){ c.status = 'connected'; logAudit('Integrations', 'Connected (demo)', c.name || 'Google'); } } } } };
+}
+function caGuideSteps(id){
+  const S = [], conn = CA.g && CA.g.id === id ? CA.g.connStep : caGuideConnStep(id); if(conn) S.push(conn);
+  if(id === 'talent-discovery'){
+    S.push({ q:'Which jobs should Kairo find people for?', body:function(d){ return caScopeBody(id, 'jobs', d, true); } });
+    S.push({ q:'How good must a match be?', sub:'Kairo scores everyone in your talent pool against each job.', body:function(d){ return caMatchBody(id, d, true); } });
+    S.push({ q:'When Kairo finds good people…', body:function(d){ return caFoundBody(d, true); } });
+  } else if(id === 'engagement'){
+    S.push({ q:'How Kairo reaches candidates', body:function(){ return '<p class="ca-line ca-line--big" id="ca-channel">' + caChannelLine2() + '</p>'; } });
+    S.push({ q:'What should Kairo send?', sub:'Each one shows the real message for one of your candidates. Switch off anything you’d rather do yourself.', body:caGuideMessages });
+    S.push({ q:'Before Kairo sends a first message to someone new…', body:function(d){ return caFirstBody(d, true); } });
+    S.push({ q:'Limits', sub:'Kairo never goes past these.', body:function(d){ return caLimitsBody(id, 'limits', d, true); } });
+    S.push({ q:'Send yourself a test, then turn it on', body:caGuideTest });
+  } else if(id === 'interviews'){
+    S.push({ q:'Which rounds should Kairo look after?', body:function(d){ return caRoundsBody(d, true); } });
+    S.push({ q:'When should candidates be reminded?', body:function(d){ return caRemindChips(d, true); } });
+    S.push({ q:'Chasing client feedback', body:function(d){ return caChaseBody(d, true); } });
+    S.push({ q:'Here’s a reminder Kairo would send', body:function(){ return caIvPreview() + '<button type="button" class="o-link ca-tpl__another" onclick="caSampleNext()">Show another candidate</button>'; } });
+  } else if(id === 'offers-joining'){
+    S.push({ q:'Check-in plan', sub:'From the offer to day 60 after joining. Switch off any you’d rather do yourself.', body:function(d){ return caPlanBody(d, true); } });
+    S.push({ q:'Tell me when risk is', body:function(d){ return caRiskBody(d, true); } });
+    S.push({ q:'Message the client contact on joining day?', body:function(d){ return caClientBody(d, true); } });
+    S.push({ q:'Here’s a check-in Kairo would send', body:function(){ return caOjPreview() + '<button type="button" class="o-link ca-tpl__another" onclick="caSampleNext()">Show another candidate</button>'; } });
+  } else {
+    S.push({ q:'Install the Oontu extension', sub:'It works in each recruiter’s own Chrome while it’s open, and never asks for a LinkedIn password.', body:caGuideExt, next:function(){ const me = caMe(); if(CA.g.ext === 'now' && me.id && caLiConnected().indexOf(me.id) < 0) caExtInstall(me.id); } });
+    S.push({ q:'Pick jobs to run on LinkedIn', sub:'This is the search Kairo builds for each job. Remove a word with ×, or add a skill.', body:function(d){ return caLiJobsBody(d, true); } });
+    S.push({ q:'Connection note and first message', body:function(d){ return caLiMsgBody(d, true); } });
+    S.push({ q:'Limits', sub:'Safe defaults. The lock marks a hard cap Kairo can never go above.', body:function(d){ return caFieldsBody(id, 'limits', d, true, ['threshold','withdrawDays']); } });
+  }
+  return S;
+}
+function caGuideMessages(d){
+  return '<div class="ca-msgcards">' + CA_PLAYS.map(function(p){ const st = d.plays[p.id];
+    return '<div class="ca-msgcard' + (st.on ? '' : ' is-off') + '" data-play="' + p.id + '"><div class="ca-msgcard__h"><b>' + cwEsc(p.name) + '</b>' + caSwitchHTML(st.on, "caPlayTog('" + p.id + "')", true, p.name) + '</div><p class="o-card__sub">' + cwEsc(p.does.split('. ')[0].replace(/\.$/, '')) + '.</p><div class="ca-bubble ca-bubble--sm" data-fill="' + cwEsc(st.tpl) + '">' + cwEsc(caText(caFill(st.tpl, caSample()))) + '</div></div>'; }).join('') + '</div><button type="button" class="o-link ca-tpl__another" onclick="caSampleNext()">Show another candidate</button>';
+}
+function caGuideTest(d){
+  const me = caMe(), wa = cwChannelConnected('whatsapp'), first = CA_PLAYS.find(function(p){ return d.plays[p.id].on; }) || CA_PLAYS[0];
+  return '<p class="o-card__sub">This sends the “' + cwEsc(first.name) + '” message to you, ' + cwEsc(caFirst(me.name)) + ', as a candidate would get it. It lands in your Inbox.</p><div class="ca-bubble" data-fill="' + cwEsc(d.plays[first.id].tpl) + '">' + cwEsc(caText(caFill(d.plays[first.id].tpl, caSample()))) + '</div>' +
+    '<div class="ca-start__a"><button type="button" class="o-btn" data-g="test" onclick="caGuideSendTest()">Send a test to me</button>' + (CA.g.tested ? '<span class="ca-tick">' + oIcon('check', 12, 2) + ' Sent to your Inbox (' + (wa ? 'WhatsApp' : 'email') + ')</span>' : '') + '</div><p class="ca-muted ca-fine">Then Turn on. Kairo starts inside your working hours.</p>';
+}
+function caGuideSendTest(){
+  const d = caDraftFor('engagement'), first = CA_PLAYS.find(function(p){ return d.plays[p.id].on; }) || CA_PLAYS[0], text = caText(caFill(d.plays[first.id].tpl, caSample()));
+  if(caInboxToMe(text, cwChannelConnected('whatsapp') ? 'WhatsApp' : 'email')){ CA.g.tested = true; logAudit('Cowork', 'Test message sent to self', 'Engagement · ' + first.name); } caGuideDraw();
+}
+function caInboxToMe(text, channel){
+  if(typeof ibState !== 'function') return false; const me = caMe(); if(!me.id) return false;
+  IB = ibState(); const cid = 't-kairo-test-' + me.id; let c = IB.convs.find(function(x){ return x.id === cid; });
+  if(!c){ c = { id:cid, ch:'team', kind:'group', title:'Kairo · test messages', members:[me.id], pinned:false, unread:{}, at:Date.now(), msgs:[] }; IB.convs.unshift(c); }
+  c.msgs.push(ibMsg('kairo', 'A test ' + channel + ' message, as a candidate would get it:\n\n' + text, Date.now())); c.at = Date.now(); c.unread = c.unread || {}; c.unread[me.id] = (c.unread[me.id] || 0) + 1;
+  try { ibSave(); ibBadges(); } catch(e){} return true;
+}
+function caGuideExt(){
+  const me = caMe(), on = caLiConnected(), mine = on.indexOf(me.id) > -1, names = on.map(function(x){ return (rosterById(x) || {}).name; }).filter(Boolean);
+  return (mine ? '<p class="ca-line ca-line--big">' + oIcon('check', 14, 2) + ' Installed for you.</p>' : caChoice('Install', [['now', 'Install it for me now', openAsOk() ? 'One click in this demo.' : 'Opens the Chrome Web Store.'], ['later', 'Later', 'LinkedIn Outreach waits until someone has it.']], CA.g.ext, "CA.g.ext='$v'; caGuideDraw()", true)) +
+    '<p class="o-card__sub ca-gap">' + (names.length ? 'Connected now: ' + cwEsc(names.slice(0, 6).join(', ')) + (names.length > 6 ? ' and ' + (names.length - 6) + ' more' : '') + '.' : 'Nobody has it yet.') + '</p>';
+}
+function caGuideDraw(){
+  let root = document.getElementById('ca-guide-root'); if(!root){ root = document.createElement('div'); root.id = 'ca-guide-root'; document.body.appendChild(root); }
+  const g = CA.g; if(!g){ root.innerHTML = ''; document.body.classList.remove('ca-g-open'); return; }
+  const prevB = root.querySelector('.ca-g__b'), same = !!prevB && root.getAttribute('data-step') === String(g.i) && !g.done, keepTop = same ? prevB.scrollTop : 0, fk = same ? caFocusKey(document.activeElement, root) : '';
+  const id = g.id, a = agentById(id), steps = caGuideSteps(id), d = caDraftFor(id); let body, foot, counter, pct;
+  if(g.i >= steps.length) g.i = steps.length - 1;
+  if(g.done){ counter = 'Done'; pct = 100; body = caGuideDoneHTML(id, g.done); foot = '<span></span><button type="button" class="o-btn o-btn--primary" data-g="open" onclick="caGuideClose(true)">Open ' + cwEsc(a.name) + '</button>'; }
+  else { const s = steps[g.i], last = g.i === steps.length - 1; counter = 'Step ' + (g.i + 1) + ' of ' + steps.length; pct = Math.round(g.i / steps.length * 100);
+    body = '<h2 class="ca-g__q" id="ca-g-q" tabindex="-1">' + cwEsc(s.q) + '</h2>' + (s.sub ? '<p class="ca-g__sub">' + cwEsc(s.sub) + '</p>' : '') + '<div class="ca-g__body">' + s.body(d) + '</div>';
+    foot = (g.i ? '<button type="button" class="o-btn" data-g="back" onclick="caGuideBack()">Back</button>' : '<span></span>') + '<button type="button" class="o-btn o-btn--primary" data-g="next" onclick="caGuideNext()">' + (last ? 'Turn on' : 'Continue') + '</button>'; }
+  root.setAttribute('data-step', g.done ? 'done' : String(g.i)); root.setAttribute('data-agent', id);
+  root.innerHTML = '<div class="ca-g__scrim" onclick="caGuideClose()"></div><div class="ca-g" role="dialog" aria-modal="true" aria-labelledby="ca-g-q" data-agent="' + id + '"><div class="ca-g__h"><span class="ca-g__who">Set up ' + cwEsc(a.name) + '</span><span class="ca-g__n" data-g="counter">' + counter + '</span><button type="button" class="o-btn o-btn--ghost ca-g__x" aria-label="Close" onclick="caGuideClose()">' + oIcon('x', 16) + '</button></div><div class="ca-g__prog" aria-hidden="true"><i style="width:' + pct + '%"></i></div><div class="ca-g__b">' + body + '</div><div class="ca-g__f">' + foot + '</div></div>';
+  document.body.classList.add('ca-g-open');
+  const b = root.querySelector('.ca-g__b'); if(b && keepTop) b.scrollTop = keepTop;
+  const back = fk && root.querySelector(fk), h = back || (!same && (root.querySelector('#ca-g-q') || root.querySelector('[data-g=open]'))); if(h) try { h.focus({ preventScroll:true }); } catch(e){}
+}
+function caFocusKey(el, root){
+  if(!el || !root.contains(el) || el === root) return '';
+  const t = el.tagName.toLowerCase(), a = ['data-value','data-chip','data-field','data-play','data-g','data-add','data-job'].find(function(k){ return el.hasAttribute(k); });
+  if(a) return t + '[' + a + '="' + String(el.getAttribute(a)).replace(/"/g, '') + '"]';
+  return el.getAttribute('aria-label') ? t + '[aria-label="' + el.getAttribute('aria-label').replace(/"/g, '') + '"]' : '';
+}
+function caGuideNext(){
+  const g = CA.g; if(!g) return; const steps = caGuideSteps(g.id), s = steps[g.i];
+  if(s && s.next) try { s.next(caDraftFor(g.id)); } catch(e){ console.error('guide step', e); }
+  if(g.i >= steps.length - 1) return caGuideFinish();
+  g.i++; caGuideDraw();
+}
+function caGuideBack(){ if(CA.g && CA.g.i > 0){ CA.g.i--; caGuideDraw(); } }
+function caGuideClose(open){
+  const g = CA.g; if(!g) return; const id = g.id; CA.g = null; if(!g.done) CA.draft = null; caGuideDraw();
+  if(open){ caOpenAgent(id, 'today'); } else caRefresh();
+  const b = document.querySelector('.ca-card[data-agent="' + id + '"] [data-card-btn]') || document.querySelector('[data-sec=header] .o-btn'); if(b) try { b.focus({ preventScroll:true }); } catch(e){}
+}
+function caGuideFinish(){
+  const g = CA.g, id = g.id, a = agentById(id), cfg = TENANT_AGENT_CONFIG[id], d = caDraftFor(id); d.enabled = true;
+  if(!caSaveSettings(id, true)) return;
+  cfg.setupDone = true; cfg.enabled = true; cfg.paused = null;
+  logAudit('Cowork', 'Agent set up', a.name + ' · not set up → on · ' + caCardsFor(id).filter(function(c){ return c.key !== 'switch'; }).map(function(c){ return c.title + ': ' + caText(c.sum(caDraftFor(id))); }).join(' · '));
+  // Talent Discovery's done screen shows what the slider promised: everyone above the threshold now, job by job. The pass records the ones that are new.
+  if(id === 'talent-discovery'){ const pv = caMatchPreview(caThreshold(), cfg.scope), rec = caPickSweep(); g.done = { people:pv.total, jobs:pv.rows.map(function(x){ return { job:x.job, n:x.n }; }), recorded:rec.people }; }
+  else g.done = { ok:true };
+  caGuideDraw(); caRefresh(); if(typeof renderSidebar === 'function') renderSidebar();
+}
+function caGuideDoneHTML(id, r){
+  const a = agentById(id), st = caStatus(id);
+  if(id === 'talent-discovery'){
+    const list = r.jobs.slice().sort(function(x, y){ return y.n - x.n; }), shown = list.slice(0, 6);
+    return '<h2 class="ca-g__q" id="ca-g-q" tabindex="-1">Kairo found ' + caPeople(r.people) + ' for ' + caN(r.jobs.length, 'job') + '</h2><p class="ca-g__sub">' + (r.people ? 'They’re on each job’s Kairo picks tab. ' + (TENANT_AGENT_CONFIG[id].steps.addPipeline === 'suggest' ? 'Kairo asks you before adding anyone.' : TENANT_AGENT_CONFIG[id].steps.addPipeline === 'auto' ? 'Kairo adds them to the job and tells the job lead.' : 'Nothing else happens until you act.') : 'Nobody is above the threshold today. Kairo keeps looking as people join the pool.') + '</p>' +
+      (shown.length ? '<ul class="ca-donelist">' + shown.map(function(x){ return '<li data-job="' + x.job.id + '"><span><b>' + cwEsc(x.job.title) + '</b><small>' + cwEsc(x.job.client) + ' · ' + caPeople(x.n) + '</small></span><button type="button" class="o-link" onclick="caGuideSeePicks(\'' + x.job.id + '\')">See Kairo picks</button></li>'; }).join('') + '</ul>' + (list.length > shown.length ? '<p class="ca-muted ca-fine">and ' + caN(list.length - shown.length, 'more job') + '</p>' : '') : '');
+  }
+  return '<h2 class="ca-g__q" id="ca-g-q" tabindex="-1">' + cwEsc(a.name) + ' is ' + (st.key === 'on' || st.key === 'trial' ? 'on' : 'set up') + '</h2><p class="ca-g__sub">' + (st.note ? cwEsc(st.note) + ' first, then it starts.' : 'It starts inside your working hours. Everything it does shows up under Activity.') + '</p><ul class="ca-donelist">' +
+    caCardsFor(id).filter(function(c){ return ['switch','more','rules','hours','style'].indexOf(c.key) < 0; }).map(function(c){ return '<li><span><b>' + cwEsc(c.title) + '</b><small>' + cwEsc(caText(c.sum(caDraftFor(id)))) + '</small></span></li>'; }).join('') + '</ul><p class="ca-muted ca-fine">You can change any of this under Settings.</p>';
+}
+function caGuideSeePicks(jobId){ caGuideClose(); openJob(jobId); setTimeout(function(){ try { refreshJobWorkspace(jobId, 'picks'); const a = document.getElementById('job-candidates-anchor'); if(a) a.scrollIntoView({ block:'start' }); } catch(e){} }, 0); }
+document.addEventListener('keydown', function(e){
+  if(!CA.g) return;
+  if(e.key === 'Escape'){ e.preventDefault(); caGuideClose(); return; }
+  if(e.key === 'Tab'){ const box = document.querySelector('#ca-guide-root .ca-g'); if(!box) return; const f = [].slice.call(box.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),[contenteditable=true],a[href]')).filter(function(x){ return x.offsetParent !== null; });
+    if(!f.length) return; const first = f[0], last = f[f.length - 1]; if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); } else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); } }
+});
+
+/* ---------- the rest of the plain vocabulary ---------- */
+(function(){
+  const ap = (CA_FIELDS.linkedin || []).find(function(f){ return f.k === 'autopause'; }); if(ap) ap.label = 'Pauses itself';
+  const js = caJobState; window.caJobState = function(id, j){ const r = js(id, j); if(r && /scope/i.test(r.text)) r.text = 'Not one of this agent’s jobs'; return r; };
+  window.caWhoDid = function(r){ return r.level === 'approved' ? 'Kairo, approved by ' + (r.approvedBy || 'a person') : r.level === 'person' ? 'A person' : 'Kairo'; };
+  window.caLevelPick = function(a, s, d, ed){ return caLevelSel(a.id, 'more', s, d, ed); };
+  const hb = caHealth; window.caHealth = function(id){ if(id === 'talent-discovery'){ const n = caScopeJobs(id).length; return [oPlural(n, 'open job') + ' · a match is at least ' + caThreshold() + '%']; } return hb(id).map(function(h){ return h.replace('WhatsApp not connected: using email', 'WhatsApp isn’t connected, so I’ll use email'); }); };
+})();
+
+/* ---------- the render: Talent Discovery's pass first, so every number on the page is current ---------- */
+(function(){ const base = caRender; window.caRender = function(){ try { if(!jsCorp()) caPickSweep(); } catch(e){ console.error('picks', e); } return base(); }; })();
+(function(){ const css = document.createElement('style'); css.id = 'cowork-simple-style'; css.textContent =
+  '.ca-demo{display:inline-block;margin-left:6px;padding:0 6px;border-radius:999px;font-size:10px;line-height:16px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;background:var(--bg-subtle);color:var(--text-3);vertical-align:1px}' +
+  '#ca-agent-tabs{display:flex;gap:4px}.o-tabs-host + #ca-page{margin-top:16px}#ca-page{display:flex;flex-direction:column;gap:16px}#ca-page > .ca-sec{margin:0}' +
+  '.ca-nums__h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.ca-nums__h .o-card__title{margin:0}.ca-nums__h small{font-size:12px;color:var(--text-3)}.ca-nums__g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}.ca-nums__i{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:12px;background:var(--bg-subtle)}.ca-nums__i b{font-size:24px;line-height:30px;font-weight:600;color:var(--text-1);font-variant-numeric:tabular-nums}.ca-nums__i span{font-size:13px;color:var(--text-2)}' +
+  '.ca-more{margin-top:8px}.ca-start__a{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}' +
+  '.ca-jobsw{list-style:none;margin:8px 0 0;padding:0}.ca-jobsw li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line)}.ca-jobsw li:first-child{border-top:0}.ca-jobsw b{display:block;font-size:14px;font-weight:600;color:var(--text-1)}.ca-jobsw small{display:block;font-size:12px;color:var(--text-2)}' +
+  '.ca-sec--set{gap:8px}.ca-sec--set.is-ro .s-card{opacity:1}.ca-sec--set.is-ro .ca-set__b{opacity:.75}.ca-setnote{margin:0 0 4px}' +
+  '#ca-sec-settings .o-card.ca-set,:root body #ca-sec-settings .o-card.ca-set{padding:0!important;overflow:visible}#ca-g-q:focus,#ca-g-q:focus-visible{outline:none!important;box-shadow:none!important}#ca-page[data-tab]{padding-top:0}.ca-set__h{display:flex;align-items:center;gap:12px;width:100%;padding:14px 20px;text-align:left;background:none;border:0;cursor:pointer;color:var(--text-1);border-radius:inherit}.ca-set__h:hover{background:var(--bg-subtle)}.ca-set__t{flex:1;min-width:0}.ca-set__t b{display:block;font-size:14px;line-height:20px;font-weight:600}.ca-set__sum{display:block;font-size:13px;line-height:18px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ca-set__chev{flex:none;color:var(--text-3);transition:transform .15s}.ca-set.is-open .ca-set__chev{transform:rotate(180deg)}.ca-set__b{padding:12px 20px 18px;border-top:1px solid var(--line)}.ca-set__lock{color:var(--text-3);display:inline-flex}.ca-ownnote{display:flex;align-items:center;gap:6px;font-size:12px;margin:0 0 10px}' +
+  '.ca-tick{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:#1B7A4B;white-space:nowrap}' +
+  '.ca-choice{display:grid;gap:8px}.ca-choice__o{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg-card,#fff);cursor:pointer;color:var(--text-1)}.ca-choice__o:hover{border-color:var(--line-strong,#C9C8C2)}.ca-choice__o.is-on{border-color:var(--text-1);box-shadow:inset 0 0 0 1px var(--text-1)}.ca-choice__o[disabled]{cursor:default}.ca-choice__dot{flex:none;width:16px;height:16px;margin-top:2px;border-radius:50%;border:1.5px solid var(--line-strong,#C9C8C2);position:relative}.is-on .ca-choice__dot{border-color:var(--text-1)}.is-on .ca-choice__dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--text-1)}.ca-choice__o b{display:block;font-size:14px;line-height:20px;font-weight:600}.ca-choice__o small{display:block;font-size:13px;line-height:18px;color:var(--text-2);margin-top:2px}' +
+  '.ca-pick{max-height:220px;overflow:auto;margin-top:10px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:6px}' +
+  '.ca-sentence{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:6px 0;font-size:14px;line-height:20px;color:var(--text-1)}.ca-inl{display:inline-block;width:auto!important;min-width:0;height:36px;margin:0;vertical-align:middle}.ca-time{min-width:96px;font-variant-numeric:tabular-nums}.ca-fine{display:block;font-size:12px;line-height:18px;margin:6px 0 0}.ca-fine svg{display:inline-block;vertical-align:-2px;margin-right:4px}.ca-cap{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-3)}.ca-num input{width:96px}' +
+  '.ca-slider{display:flex;align-items:center;gap:14px}.ca-range{flex:1;accent-color:var(--text-1);height:24px}.ca-range__v{font-size:20px;font-weight:600;min-width:52px;text-align:right;font-variant-numeric:tabular-nums;color:var(--text-1)}.ca-range__ends{display:flex;justify-content:space-between;font-size:12px;color:var(--text-3);margin-top:2px}.ca-live{margin:12px 0 4px;padding:10px 12px;border-radius:10px;background:var(--bg-subtle);font-size:13px;line-height:20px;color:var(--text-1)}' +
+  '.ca-plays{display:flex;flex-direction:column}.ca-play{padding:12px 0;border-bottom:1px solid var(--line)}.ca-play:last-child{border-bottom:0}.ca-play__h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.ca-play__t{min-width:0}.ca-play__t b{font-size:14px;font-weight:600}.ca-play__pv{margin:6px 0 0;font-size:13px;line-height:18px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:640px}.ca-play__edit{margin-top:6px}.ca-play__row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:8px 0}.ca-play__row .ca-num{font-size:12px;color:var(--text-2)}.ca-play__row .ca-num select{height:36px}' +
+  '.ca-tpl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin:12px 0 4px}.ca-tpl__label{font-size:12px;color:var(--text-3);margin-bottom:6px}.ca-tpl__bar{display:flex;align-items:center;gap:8px;margin-bottom:6px}.ca-tpl__addw{position:relative}.ca-tpl__add{height:30px;padding:0 10px;font-size:13px}.ca-tpl__menu{position:absolute;top:calc(100% + 4px);left:0;z-index:20;min-width:190px;padding:4px;background:var(--bg-card,#fff);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(11,31,59,.14);display:flex;flex-direction:column}.ca-tpl__menu[hidden]{display:none}.ca-tpl__menu button{text-align:left;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text-1);background:none;border:0;cursor:pointer}.ca-tpl__menu button:hover,.ca-tpl__menu button:focus{background:var(--bg-subtle)}.ca-tpl__count{margin-left:auto;font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums}.ca-tpl__count.is-over{color:#B42318;font-weight:600}' +
+  '.ca-tpl__text{display:block;min-height:96px;height:auto!important;padding:10px 12px;font-size:14px;line-height:26px;white-space:pre-wrap;word-break:break-word;cursor:text}.ca-tpl__text[contenteditable=false]{cursor:default;background:var(--bg-subtle)}.ca-var{display:inline-block;padding:0 8px;margin:0 1px;border-radius:999px;background:#E8EEFB;color:#2652B8;font-size:12px;line-height:20px;font-weight:500;white-space:nowrap;vertical-align:1px}.ca-tpl__st{margin:6px 0 0;font-size:12px;color:var(--text-2)}.ca-tpl__another{margin-top:6px;font-size:13px}' +
+  '.ca-bubble{padding:10px 12px;border-radius:14px 14px 14px 4px;background:#E7F6EC;color:#123524;font-size:14px;line-height:20px;white-space:pre-wrap;word-break:break-word}.ca-bubble--sm{font-size:13px;line-height:18px;margin-top:8px}' +
+  '.ca-chips{display:flex;flex-wrap:wrap;gap:8px}.ca-chipt{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg-card,#fff);font-size:13px;font-weight:500;color:var(--text-1);cursor:pointer}.ca-chipt.is-on{background:var(--text-1);border-color:var(--text-1);color:#fff}.ca-chipt[disabled]{cursor:default;opacity:.7}' +
+  '.ca-tl{list-style:none;margin:0;padding:0}.ca-tl li{display:flex;align-items:center;gap:12px;padding:8px 0 8px 22px;position:relative}.ca-tl li::before{content:"";position:absolute;left:6px;top:0;bottom:0;width:2px;background:var(--line)}.ca-tl li:first-child::before{top:50%}.ca-tl li:last-child::before{bottom:50%}.ca-tl__dot{position:absolute;left:1px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:var(--bg-card,#fff);border:2px solid var(--line-strong,#C9C8C2)}.ca-tl li.is-on .ca-tl__dot{border-color:var(--text-1);background:var(--text-1)}.ca-tl__t{flex:1;min-width:0}.ca-tl__t b{display:block;font-size:14px;font-weight:500;color:var(--text-1)}.ca-tl__t small{display:block;font-size:12px;color:var(--text-3)}' +
+  '.ca-ext,.ca-donelist{list-style:none;margin:0;padding:0}.ca-ext li,.ca-donelist li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line)}.ca-ext li:first-child,.ca-donelist li:first-child{border-top:0}.ca-ext b,.ca-donelist b{display:block;font-size:14px;font-weight:600;color:var(--text-1)}.ca-ext small,.ca-donelist small{display:block;font-size:12px;color:var(--text-2)}.ca-gap{margin-top:12px}' +
+  '.ca-lijobs{list-style:none;margin:0;padding:0}.ca-lijobs li{padding:10px 0;border-top:1px solid var(--line)}.ca-lijobs li:first-child{border-top:0}.ca-lijobs__h{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}.ca-lijobs__h b{font-weight:600;color:var(--text-1)}.ca-lijobs__h small{color:var(--text-3)}.ca-lijobs__s{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 0 24px;font-size:12px}.ca-sc{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 4px 0 10px;border-radius:999px;background:var(--bg-subtle);color:var(--text-1);font-size:12px}.ca-sc[data-kind=title]{background:#E8EEFB;color:#2652B8}.ca-sc button{width:20px;height:20px;border-radius:50%;border:0;background:none;color:var(--text-3);cursor:pointer;font-size:14px;line-height:1}.ca-sc button:hover{background:rgba(0,0,0,.06)}.ca-sc__add{width:120px!important;height:26px!important;padding:0 10px!important;font-size:12px!important;border-radius:999px!important}.ca-sub{margin:14px 0 0;font-size:13px;font-weight:600;color:var(--text-1)}.ca-sub:first-child{margin-top:0}' +
+  '.ca-msgcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ca-msgcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px}.ca-msgcard.is-off{opacity:.6}.ca-msgcard__h{display:flex;align-items:center;justify-content:space-between;gap:8px}.ca-msgcard__h b{font-size:14px;font-weight:600}.ca-msgcard .o-card__sub{margin:4px 0 0;font-size:13px}.ca-line--big{font-size:15px;line-height:24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--text-1)}' +
+  'body.ca-g-open{overflow:hidden}.ca-g__scrim{position:fixed;inset:0;z-index:95;background:rgba(11,31,59,.36)}.ca-g{position:fixed;z-index:96;top:50%;left:50%;transform:translate(-50%,-50%);width:min(680px,calc(100vw - 32px));max-height:min(780px,calc(100vh - 48px));display:flex;flex-direction:column;background:var(--bg-card,#fff);border-radius:20px;box-shadow:0 24px 64px rgba(11,31,59,.24)}.ca-g__h{display:flex;align-items:center;gap:12px;padding:16px 16px 10px 24px}.ca-g__who{font-size:13px;font-weight:600;color:var(--text-2)}.ca-g__n{margin-left:auto;font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums}.ca-g__x{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}.ca-g__prog{height:3px;margin:0 24px;border-radius:2px;background:var(--bg-subtle);overflow:hidden}.ca-g__prog i{display:block;height:100%;background:var(--text-1);transition:width .2s}.ca-g__b{flex:1;overflow-y:auto;padding:20px 24px}.ca-g__q{margin:0 0 6px;font-size:22px;line-height:30px;font-weight:600;color:var(--text-1);outline:none}.ca-g__sub{margin:0 0 4px;font-size:14px;line-height:20px;color:var(--text-2)}.ca-g__body{margin-top:16px}.ca-g__f{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px 18px;border-top:1px solid var(--line)}.ca-g__f .o-btn{min-width:112px;justify-content:center}' +
+  '@media (max-width:760px){.ca-nums__g{gap:8px}.ca-nums__i{padding:10px}.ca-nums__i b{font-size:20px}.ca-tpl{grid-template-columns:minmax(0,1fr)}.ca-msgcards{grid-template-columns:minmax(0,1fr)}.ca-set__h{padding:12px 16px}.ca-set__b{padding:12px 16px 16px}.ca-lijobs__s{margin-left:0}}' +
+  '@media (max-width:700px){.ca-g{top:0;left:0;transform:none;width:100vw;height:100%;max-height:none;border-radius:0}.ca-g__h{padding:12px 12px 8px 16px}.ca-g__prog{margin:0 16px}.ca-g__b{padding:16px}.ca-g__f{padding:12px 16px calc(12px + env(safe-area-inset-bottom))}.ca-g__q{font-size:20px;line-height:28px}}';
   document.head.appendChild(css); })();
 </script>
 <script id="demo-script">
@@ -53493,6 +54243,7 @@ function wsStartEmpty(){
   if(typeof DM_THREADS === 'object') Object.keys(DM_THREADS).forEach(function(k){ delete DM_THREADS[k]; });
   if(typeof kairoChatMessages !== 'undefined') kairoChatMessages.length = Math.min(1, kairoChatMessages.length);   // Kairo's hello only
   if(typeof IB !== 'undefined') IB = null;
+  if(typeof caNewWorkspaceAgents === 'function') caNewWorkspaceAgents();   // Cowork: every agent waits for its setup guide
   DEMO.as = null; WS_FRESH.on = true;
 }
 function wsFreshInbox(owner){

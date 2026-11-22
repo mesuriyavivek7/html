@@ -1923,3 +1923,36 @@ Backup: `backups/recruitment-os-prototype.pre-fix-d2.html`. Screenshots: `docs/s
 **Timings (Vistaar, Owner, this machine), before → after:** Home visible 427 → 446 ms; full background build 12.4 → 12.6 s; Reports 20,190 → 145 ms; Talent pool 601 → 443 ms; Jobs 170 → 155 ms; PayTrack 58 → 64 ms; Owner Home 94 → 93 ms.
 
 **Known, not changed here:** demo-data's Vistaar check ("30 assignments, 8 approved weeks each") fails the same way on the pre-fix backup. Vistaar Reports shows "₹0 revenue from 0 candidates who reached Joined" beside 330 placements, and the sign-in toast counts 2,640 approvals while the badge shows 60. Both were there before this round.
+
+## Step 2 · Cowork made simple (22 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-cowork-simple.html`. Screenshots: `docs/screenshots/cowork-simple/` (1440 and 390). New spec: `tests/cowork-simple.spec.js` (15 checks).
+
+The engine, the levels, the limits and the rules from Phase 1 and 1b are unchanged. Only the screens and the way a choice is saved changed. Everything is in one new block, `<script id="cowork-simple-script">`, after `cowork-agents-script`.
+
+- **Words.** Auto, Suggest and Off are now "Do it for me", "Ask me first" and "Don’t do this". "Always a person" is now "You always do this". Plays are "Messages Kairo sends" and scope is "Which jobs". The word "recipe" never shows; a Needs-you item reads "A first message to someone new. Kairo asks you first". Run now has a small "demo" tag, and Activity's By column says Kairo, "Kairo, approved by …" or "A person".
+- **Setup guide** (`caGuide*`, Owner and Admin only). An agent that was never set up shows "Not set up" with **Set up · 2 minutes**. The guide is a centred dialog (a full-screen sheet on a phone) with a step counter, Back, Continue and Esc. Every step has an answer picked already, and the last step is **Turn on**.
+  - Talent Discovery: which jobs, a 50–95% slider with a live count from the real pool, and what to do with good people. The done screen reads "Kairo found N people for M jobs" with links to each job's Kairo picks.
+  - Engagement: channel; six message cards, each with a switch and a filled-in preview; the first-message choice; limits as one sentence; and Send a test to me, which lands in the person's own Inbox.
+  - Interviews: rounds, reminder chips, chasing, and a reminder preview.
+  - Offer & Joining: a check-in timeline with a switch per point, the risk level, the client message, and a preview.
+  - LinkedIn Outreach: the extension (one click in the demo), jobs with editable search chips, the note and first message with a 300-character count, and limits with locks.
+  - A new workspace starts with every agent not set up (`caNewWorkspaceAgents`, called from `wsStartEmpty`).
+- **Agent page in three tabs.**
+  - Today: this week's numbers, Waiting for you (5, then See all), What Kairo will do next (10 rows, then See all), and the viewer's jobs with a pause switch each.
+  - Settings: the guide's questions as cards, one line each until opened. A change saves at once, with a Saved tick and an audit line; there is no Save button. Templates use field chips with "+ Add field" and a live preview for a real candidate ("Show another candidate"). WhatsApp status is in words. Working hours use 24-hour pickers.
+  - Activity: this agent's rows, 15 at a time.
+- **Numbers agree.** `caWeekNums(id)` is the only source for the card sentence, the Today numbers and the Activity numbers. Each number is defined in a comment.
+  - Talent Discovery's picks are now real Activity rows: `caPickSweep` records anyone newly above the threshold on a job in scope.
+  - Activity merges the same action to the same person and job, within 15 minutes on a second channel, into one row (`caMerge`). A consent request on WhatsApp and email is "Asked to agree · WhatsApp + email". Vistaar's 1,450 channel sends this week are 725 rows.
+- **Roles.** A recruiter sees no guide and gets read-only Settings ("Your Owner sets these"). They can pause an agent on their own job from Today and approve their own items. A manager changes settings for their team's jobs; which jobs, hours and limits stay with the Owner. No ₹ shows for anyone without money permission.
+- **Page height.** At 1440 width with cards collapsed, every Cowork page is under 2,200 px. The Activity tab shows 20 rows at a time (it was 50).
+
+**Spec changes** (tests/cowork-agents.spec.js; every rule it checked still holds):
+- It opens the Settings tab or card before reading a field.
+- It reads the state in words ("On · working on N jobs").
+- The Owner turns an agent off from Settings, not with a switch on the card.
+- Waiting shows 5, then "See all".
+- An Owner sees "Start free trial" on an agent that isn't in the plan.
+- Activity loads 20 rows at a time.
+- The approval record is found by its action, since the picks pass may add rows on redraw.
