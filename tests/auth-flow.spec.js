@@ -1133,7 +1133,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       wsOpenItem('first-client'); await idle();
       eq(state.activeNav, 'client-management'); assert(document.getElementById('nc-display'), 'the full-page client form');
       ncForm.displayName = 'Zeta Fintech'; ncForm.companyName = 'Zeta Fintech Pvt Ltd'; ncForm.firstName = 'Rahul'; ncForm.lastName = 'Mehta'; ncForm.email = 'rahul@zetafin.example'; ncForm.treatment = 'business_none'; ncForm.place = 'Maharashtra'; ncSave('add');
-      JOBS.push(Object.assign({}, JOBS[0], { id:'j-test-first', title:'Backend Engineer' }));   // the job form is long; a new job is what ticks the item
+      JOBS.push(Object.assign({}, JOBS[0], { id:'j-test-first', title:'Backend Engineer', status:'Active', client:'Zeta Fintech', organizationId:CURRENT_ORGANIZATION_ID }));   // the job form is long; a new job is what ticks the item (F1: a new workspace has no sample JOBS[0] to copy, so the job states its own status)
       showView('admin-dashboard');
       assert(/Your workspace is ready/.test(cardText()), 'all done');
             wsSessionSeq++; showView('admin-dashboard'); assert(!document.getElementById('ws-card'), 'gone after one session');

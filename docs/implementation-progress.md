@@ -1903,3 +1903,23 @@ From the reference:
 **Tests:** sidebar, design-system, intelligence, light, screens-crawl and m04c-menu-home pass.
 
 **Tooling note:** Node is not on the default PATH in this shell any more; the runner uses `/usr/local/bin/node`.
+
+## Fix round after Design 2.0 (F1–F7, 22 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-fix-d2.html`. Screenshots: `docs/screenshots/fix-d2/`. New spec: `tests/fix-d2.spec.js` (10 checks).
+
+- **F1, a new workspace starts empty.** Every real sign-up (not "Open with demo data") calls `wsStartEmpty()` before the product opens. It clears candidates, jobs, clients, journeys, interviews, approvals, invoices, PayTrack, assignments, campaigns, activity and chats, and keeps roles, templates and settings. `wsFreshInbox()` leaves one Inbox thread: Kairo's welcome. The team is just the Owner.
+- **F2, Kairo chat is a fixed side panel.** It is 400px wide on the right, below the top bar (`--kc-top`), full height, and a full-screen sheet under 700px. Focus uses `preventScroll`, so the page never moves. Esc and × close it (`#kairo-chat-style`, `#kairo-chat-esc`).
+- **F3, team members sign in by email.** In prototype mode, any roster member's email works with code 123456 or password demo1234 (`teamAccount()`). They land on their own Home as themselves. A note under the email field says so. A sign-up code never creates a team account (`intent:'signup'`).
+- **F4, sign out and straight back in.** The resend cooldown only guards a code that is still unused. If one is waiting, the code screen opens with "We already sent you a code a moment ago." and the countdown.
+- **F5, dead targets.** The 5 `setWorkQueueTab` links now go through `oOpenWork()`. Kairo's "show agents" opens Cowork (`kairo-team`) instead of the missing `talent-acquisition`. A scan of every `showView`, `navigateWithSkeleton`, `openSettings` and inline handler now finds none dead; the spec repeats the scan.
+- **F6, Vistaar speed.** Reports renders inside `withJourneyIndex`. `cpeIndex()` replaces per-candidate scans with maps. Output is byte-identical (text hashes compared).
+- **F7, the manager To do.** It now counts the same approvals as the Approvals page and badge (`apNeedsRows`), including submission reviews, and ages jobs with `jobDaysOpen()`. For Sanjay Kulkarni (Vistaar): "18 submissions waiting for your review" and "21 team jobs open 14+ days" (it was empty).
+
+**Tests:** 41 of 42 specs pass (746 of 747 checks); engine 34/34. The one failure is demo-data's Vistaar check, which predates this round (see below).
+
+**Spec change:** auth-flow 06i now gives its own job a status, client and organisation, because a fresh workspace no longer has a sample `JOBS[0]` to copy.
+
+**Timings (Vistaar, Owner, this machine), before → after:** Home visible 427 → 446 ms; full background build 12.4 → 12.6 s; Reports 20,190 → 145 ms; Talent pool 601 → 443 ms; Jobs 170 → 155 ms; PayTrack 58 → 64 ms; Owner Home 94 → 93 ms.
+
+**Known, not changed here:** demo-data's Vistaar check ("30 assignments, 8 approved weeks each") fails the same way on the pre-fix backup. Vistaar Reports shows "₹0 revenue from 0 candidates who reached Joined" beside 330 placements, and the sign-in toast counts 2,640 approvals while the badge shows 60. Both were there before this round.

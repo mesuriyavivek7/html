@@ -4970,6 +4970,7 @@ function renderKairoChat(){
   const root = document.getElementById('kairo-chat-root');
   if(!root) return;
   root.innerHTML = kairoChatOpen ? kairoChatPanelHTML() : '';
+  if(kairoChatOpen){ const tb = document.getElementById('topbar'); document.documentElement.style.setProperty('--kc-top', (tb && tb.offsetParent ? Math.round(tb.getBoundingClientRect().bottom) : 0) + 'px'); }
   scrollKairoChatToBottom();
 }
 function scrollKairoChatToBottom(){
@@ -4980,7 +4981,7 @@ function kairoChatPanelHTML(){
   return '<div id="kairo-chat-panel" class="fixed bottom-24 right-6 z-[56] w-96 max-w-[calc(100vw-3rem)] h-[520px] max-h-[calc(100vh-8rem)] card p-0 overflow-hidden flex flex-col shadow-2xl fade-slide-enter">'+
     '<div class="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-white/70 shrink-0">'+
       '<div class="flex items-center gap-2">'+icon('sparkles','w-4 h-4 text-accent-600')+'<p class="text-sm font-semibold text-zinc-900">Kairo</p></div>'+
-      '<button onclick="closeKairoChat()" title="Close" class="text-zinc-400 hover:text-zinc-700">'+icon('x','w-4 h-4')+'</button>'+
+      '<button type="button" onclick="closeKairoChat()" title="Close" aria-label="Close Kairo chat" class="text-zinc-400 hover:text-zinc-700">'+icon('x','w-4 h-4')+'</button>'+
     '</div>'+
     '<div id="kairo-chat-messages" class="flex-1 overflow-y-auto px-4 py-3 space-y-2.5">'+kairoChatMessagesHTML()+'</div>'+
     '<form onsubmit="sendKairoChatMessage(event)" class="flex items-center gap-2 px-3 py-3 border-t border-zinc-200 shrink-0">'+
@@ -4991,7 +4992,7 @@ function kairoChatPanelHTML(){
 }
 function focusKairoChatInput(){
   const el = document.getElementById('kairo-chat-input');
-  if(el) el.focus();
+  if(el) el.focus({ preventScroll:true });   // F2: focusing never scrolls the page (the body does not scroll)
 }
 function sendKairoChatMessage(e){
   e.preventDefault();
@@ -5093,7 +5094,7 @@ function kairoRespond(rawText){
   if(/\b(show|open|go to|goto|view)\b.*\bjobs?\b/.test(low)){ showView('jobs'); return { text:'Opening Jobs.' }; }
   if(/\b(show|open|go to|goto|view)\b.*\b(dashboard|home)\b/.test(low)){ showView('dashboard'); return { text:'Opening your Dashboard.' }; }
   if(/\b(show|open|go to|goto|view)\b.*\breports?\b/.test(low)){ showView('reports'); return { text:'Opening Reports.' }; }
-  if(/\b(show|open|go to|goto|view)\b.*\bagents?\b/.test(low)){ showView('talent-acquisition'); return { text:'Opening your AI workforce.' }; }
+  if(/\b(show|open|go to|goto|view)\b.*\bagents?\b/.test(low)){ showView('kairo-team'); return { text:'Opening Cowork, where your agents work.' }; }   // F5: was the removed 'talent-acquisition' view
 
   return { text:'I didn\'t quite catch that. Try "find <skill or role>", "call / whatsapp / email <candidate name>", "submit <candidate> to <client>", or "show lineup / prospects / jobs".' };
 }
@@ -5711,6 +5712,15 @@ function dateBox(day, month){
   '</div>';
 }
 let featuredTaskIndex = 0;
+/* F5 (2026-11-22): where Kairo's "Open" takes each kind of work now that the old work queue is gone */
+function oOpenWork(kind){
+  if(kind === 'feedback') return showView('interviews');   // feedback and outcomes due are on the Interviews screen
+  if(kind === 'cold') return showView('talent-pool');      // the candidates themselves
+  if(kind === 'offers') return showView('talent-pool');    // live offers are in the pipeline (Offer)
+  // follow-ups: the "Needs you" list on Home, which has each overdue follow-up with its own action
+  if(state.activeNav !== homeForMe()) showView(homeForMe());
+  setTimeout(function(){ const el = document.querySelector('#main-content .bh-needs, #main-content [aria-labelledby$="needs-h"]'); if(el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }, 60);
+}
 function pendingTasks(){ return ACTIONS.filter(function(a){ return !completedActions.has(a.id); }).concat(followUpTaskProjections()); }
 function actionHandler(a){
   if(a.type==='call') return 'handleCall(\''+a.id+'\','+a.candidateId+')';
@@ -6275,22 +6285,22 @@ function computeTodaysBriefing(){
   const interviewsUnconfirmed = hmInterviews.filter(function(i){ return i.status==='Pending confirmation'; }).length;
   if(interviewsUnconfirmed) critical.push({ icon:'calendar', text:interviewsUnconfirmed+' interview'+(interviewsUnconfirmed===1?'':'s')+' still need'+(interviewsUnconfirmed===1?'s':'')+' confirming.', onclick:"showView('interviews')" });
   const feedbackOpen = PENDING_FEEDBACK.filter(function(p){ return !hmFeedbackDone.includes(p.id); }).length;
-  if(feedbackOpen) critical.push({ icon:'bell', text:feedbackOpen+' interview feedback request'+(feedbackOpen===1?'':'s')+' still open.', onclick:"setWorkQueueTab('approval'); document.getElementById('recruiter-work-queue-anchor').scrollIntoView({behavior:'smooth'})" });
+  if(feedbackOpen) critical.push({ icon:'bell', text:feedbackOpen+' interview feedback request'+(feedbackOpen===1?'':'s')+' still open.', onclick:"oOpenWork('feedback')" });
 
   const jobsLosingMomentum = JOBS.filter(function(j){ return j.status==='Active' && (j.daysOpen>21 || submissionsForJob(j.id).length<2); }).length;
   if(jobsLosingMomentum) attention.push({ icon:'briefcase', text:jobsLosingMomentum+' job'+(jobsLosingMomentum===1?'':'s')+' losing momentum \u2014 stalled or thin pipeline.', onclick:"showView('jobs')" });
   const overdueFollowUps = myPendingFollowUps().filter(function(f){ return followUpDueState(f)==='overdue'; }).length;
-  if(overdueFollowUps) critical.push({ icon:'clock', text:overdueFollowUps+' follow-up'+(overdueFollowUps===1?' is':'s are')+' overdue.', onclick:"setWorkQueueTab('followup'); document.getElementById('recruiter-work-queue-anchor').scrollIntoView({behavior:'smooth'})" });
+  if(overdueFollowUps) critical.push({ icon:'clock', text:overdueFollowUps+' follow-up'+(overdueFollowUps===1?' is':'s are')+' overdue.', onclick:"oOpenWork('followup')" });
   const coveredByFollowUp = new Set(FOLLOW_UPS.filter(function(f){ return f.status==='Pending'; }).map(function(f){ return f.candidateId; }));
   const needReengagement = CANDIDATES.filter(function(c){ return c.respProb<=45 && !coveredByFollowUp.has(c.id); }).length;
-  if(needReengagement) attention.push({ icon:'users', text:needReengagement+' candidate'+(needReengagement===1?'':'s')+' going cold with no follow-up scheduled.', onclick:"setWorkQueueTab('followup'); document.getElementById('recruiter-work-queue-anchor').scrollIntoView({behavior:'smooth'})" });
+  if(needReengagement) attention.push({ icon:'users', text:needReengagement+' candidate'+(needReengagement===1?'':'s')+' going cold with no follow-up scheduled.', onclick:"oOpenWork('cold')" });
   const counterRiskCount = CANDIDATES.filter(function(c){ return c.counterRisk>=55; }).length;
   if(counterRiskCount) attention.push({ icon:'bell', text:counterRiskCount+' candidate'+(counterRiskCount===1?'':'s')+' '+(counterRiskCount===1?'has':'have')+' counter-offer risk.', onclick:"showView('talent-pool')" });
 
   const liveOffers = offersList().filter(function(o){ return o.status==='Offer Extended' || o.status==='Offer Accepted'; }), liveFees = liveOffers.map(offerRevenue);
   const revenueInMotion = liveFees.reduce(function(sum, f){ return sum + f.amount; }, 0), byDefault = liveFees.some(function(f){ return f.basis==='default'; });
   // K2: the offers' fee value is company money: only for people who can see billing; everyone else gets the count.
-  if(revenueInMotion>0) wins.push({ icon:'trending', text:(canI('billing','View') ? '\u20b9'+(revenueInMotion/100000).toFixed(1)+'L in live offers right now'+(byDefault ? ' (some at the workspace default 8.33%)' : '') : liveFees.length+' live offer'+(liveFees.length===1?'':'s')+' right now')+'.', onclick:"setWorkQueueTab('offers'); document.getElementById('recruiter-work-queue-anchor').scrollIntoView({behavior:'smooth'})" });
+  if(revenueInMotion>0) wins.push({ icon:'trending', text:(canI('billing','View') ? '\u20b9'+(revenueInMotion/100000).toFixed(1)+'L in live offers right now'+(byDefault ? ' (some at the workspace default 8.33%)' : '') : liveFees.length+' live offer'+(liveFees.length===1?'':'s')+' right now')+'.', onclick:"oOpenWork('offers')" });
   const relevantProfiles = JOBS.reduce(function(s,j){ return s+(j.recommended||0); },0);
   if(relevantProfiles) wins.push({ icon:'sparkles', text:'Kairo found '+relevantProfiles+' relevant profiles across your active jobs.', onclick:"showView('talent-pool')" });
   const totalPlacements = PAYTRACK_JOINED.length;
@@ -6532,11 +6542,17 @@ function managerAttentionItems(){
   const items = [];
   const unassigned = JOBS.filter(function(j){ return j.organizationId===me.organizationId && (!j.assignedRecruiters || !j.assignedRecruiters.length); });
   if(unassigned.length) items.push({ text: unassigned.length+' job'+(unassigned.length===1?'':'s')+' with no recruiter assigned', action:'View', onclick:"showView('manager-team')" });
-  const pendingReqs = pendingApprovalsForApprover().filter(function(r){ return r.entityType==='JobMappingRequest'; });
-  if(pendingReqs.length) items.push({ text: pendingReqs.length+' recruiter access request'+(pendingReqs.length===1?'':'s')+' awaiting your decision', action:'Review', onclick:"showView('approval-center')" });
-  const offerReqs = pendingApprovalsForApprover().filter(function(r){ return r.entityType==='Offer'; });
-  if(offerReqs.length) items.push({ text: offerReqs.length+' offer'+(offerReqs.length===1?'':'s')+' awaiting your approval', action:'Review', onclick:"showView('approval-center')" });
-  const agingTeamJobs = teamJobs.filter(function(j){ return j.status==='Active' && typeof j.daysOpen==='number' && j.daysOpen>=14; });
+  // F7: the same list the Approvals page and its sidebar badge show (apNeedsRows), split by kind; the raw pending list where that page is absent.
+  const needs = typeof apNeedsRows==='function' ? apNeedsRows().map(function(r){ return r.req ? r.req.entityType : 'Agent'; }) : pendingApprovalsForApprover().map(function(r){ return r.entityType; });
+  const nOf = function(t){ return needs.filter(function(x){ return x===t; }).length; };
+  const pendingReqs = nOf('JobMappingRequest'), offerReqs = nOf('Offer'), reviewReqs = nOf('SubmissionReview'), otherReqs = needs.length - pendingReqs - offerReqs - reviewReqs;
+  if(pendingReqs) items.push({ text: pendingReqs+' recruiter access request'+(pendingReqs===1?'':'s')+' awaiting your decision', action:'Review', onclick:"showView('approval-center')" });
+  if(offerReqs) items.push({ text: offerReqs+' offer'+(offerReqs===1?'':'s')+' awaiting your approval', action:'Review', onclick:"showView('approval-center')" });
+  if(reviewReqs) items.push({ text: reviewReqs+' submission'+(reviewReqs===1?'':'s')+' waiting for your review before they go to the client', action:'Review', onclick:"showView('approval-center')" });
+  if(otherReqs) items.push({ text: otherReqs+' other approval'+(otherReqs===1?'':'s')+' waiting for you', action:'Review', onclick:"showView('approval-center')" });
+  // Job age comes from jobDaysOpen() (the stored daysOpen is the age when the sample was made).
+  const ageOf = function(j){ const d = typeof jobDaysOpen==='function' ? jobDaysOpen(j) : j.daysOpen; return typeof d==='number' ? d : 0; };
+  const agingTeamJobs = teamJobs.filter(function(j){ return j.status==='Active' && ageOf(j)>=14; });
   if(agingTeamJobs.length) items.push({ text: agingTeamJobs.length+' team job'+(agingTeamJobs.length===1?'':'s')+' open 14+ days', action:'View', onclick:"showView('manager-team')" });
   const noSubmissionJobs = teamJobs.filter(function(j){ return j.status==='Active' && submissionsForJob(j.id).length===0; });
   if(noSubmissionJobs.length) items.push({ text: noSubmissionJobs.length+' active team job'+(noSubmissionJobs.length===1?'':'s')+' with no submissions yet', action:'View', onclick:"showView('manager-team')" });
@@ -14481,12 +14497,24 @@ const STAGE_NEXT_ACTION = {
   'Joined':'Monitor lock-in period',
   'Rejected':'No action required', 'Withdrawn':'No action required', 'Shortlisted':'Assign a job',
 };
+/* F6: inside one journey index (a list render) the lookups below are grouped once per render, not scanned per candidate. Same order. */
+function cpeIndex(){
+  if(!JOURNEY_INDEX) return null; if(JOURNEY_INDEX.cpe) return JOURNEY_INDEX.cpe;
+  const push = function(m, k, v){ let a = m.get(k); if(!a){ a = []; m.set(k, a); } a.push(v); };
+  const x = { jobByTC:new Map(), interest:new Map(), decisions:new Map(), ivs:new Map(), offers:new Map(), joined:new Map(), completed:new Map(), atRisk:new Map() };
+  JOBS.forEach(function(j){ const k = j.title + '\u0000' + j.client; if(!x.jobByTC.has(k)) x.jobByTC.set(k, j); (j.interested || []).forEach(function(i){ push(x.interest, i.candidateId, { j:j, i:i }); }); });
+  decisionHistory.forEach(function(d){ push(x.decisions, d.candidate, d); });
+  hmInterviews.forEach(function(i){ push(x.ivs, i.candidate, i); });
+  offersList().forEach(function(o){ push(x.offers, o.candidateId, o); });
+  PAYTRACK_JOINED.forEach(function(r){ push(x.joined, r.name, r); }); PAYTRACK_COMPLETED.forEach(function(r){ push(x.completed, r.name, r); }); PAYTRACK_AT_RISK.forEach(function(r){ push(x.atRisk, r.name, r); });
+  return JOURNEY_INDEX.cpe = x;
+}
 function candidatePipelineEntries(c){
-  const map = {};
+  const map = {}, X = cpeIndex();
   function setEntry(role, company, stage, tone, date, extra){
     if(!role || !company) return;
     const key = company+'::'+role; // composite key — never collides across companies with the same job title
-    const job = JOBS.find(function(j){ return j.title===role && j.client===company; });
+    const job = X ? X.jobByTC.get(role + '\u0000' + company) : JOBS.find(function(j){ return j.title===role && j.client===company; });
     const existing = map[key];
     if(!existing || stageRank(stage) >= stageRank(existing.stage)){
       map[key] = Object.assign({
@@ -14500,28 +14528,29 @@ function candidatePipelineEntries(c){
     const job = jobById(s.jobId);
     if(job) setEntry(job.title, job.client, s.stage, 'purple', null);
   });
-  JOBS.forEach(function(j){
+  if(X){ const seen = new Set(); (X.interest.get(c.id) || []).forEach(function(x){ if(seen.has(x.j)) return; seen.add(x.j); setEntry(x.j.title, x.j.client, 'Applied Directly', 'neutral', x.i.date, {appliedDate:x.i.date}); }); }
+  else JOBS.forEach(function(j){
     const interest = j.interested.find(function(i){ return i.candidateId===c.id; });
     if(interest) setEntry(j.title, j.client, 'Applied Directly', 'neutral', interest.date, {appliedDate:interest.date});
   });
-  decisionHistory.filter(function(d){ return d.candidate===c.name; }).forEach(function(d){
+  (X ? (X.decisions.get(c.name) || []) : decisionHistory.filter(function(d){ return d.candidate===c.name; })).forEach(function(d){
     setEntry(d.role, companyForRole(d.role), d.decision, 'forest', d.date);
   });
-  hmInterviews.filter(function(i){ return i.candidate===c.name; }).forEach(function(i){
+  (X ? (X.ivs.get(c.name) || []) : hmInterviews.filter(function(i){ return i.candidate===c.name; })).forEach(function(i){
     setEntry(i.role, companyForRole(i.role), 'Interview Scheduled', 'navy', i.date, {interviewRound:'Technical Round'});
   });
-  offersList().filter(function(o){ return o.candidateId===c.id; }).forEach(function(o){
+  (X ? (X.offers.get(c.id) || []) : offersList().filter(function(o){ return o.candidateId===c.id; })).forEach(function(o){
     setEntry(o.role, o.client, o.status, 'gold', o.date);
   });
   // PayTrack is the source of truth once a candidate has actually joined —
   // it supersedes any earlier "Offered" stage recorded above for the same job.
-  PAYTRACK_JOINED.filter(function(j){ return j.name===c.name; }).forEach(function(j){
+  (X ? (X.joined.get(c.name) || []) : PAYTRACK_JOINED.filter(function(j){ return j.name===c.name; })).forEach(function(j){
     setEntry(j.role, j.client, 'Joined', 'forest', j.doj);
   });
-  PAYTRACK_COMPLETED.filter(function(p){ return p.name===c.name; }).forEach(function(p){
+  (X ? (X.completed.get(c.name) || []) : PAYTRACK_COMPLETED.filter(function(p){ return p.name===c.name; })).forEach(function(p){
     setEntry(p.role, p.client, 'Joined', 'forest', p.completedDate, { placement:'Lock-in Completed', nextAction:'Placement complete \u2014 billing eligible' });   // PayTrack holds the placement state
   });
-  PAYTRACK_AT_RISK.filter(function(r){ return r.name===c.name; }).forEach(function(r){
+  (X ? (X.atRisk.get(c.name) || []) : PAYTRACK_AT_RISK.filter(function(r){ return r.name===c.name; })).forEach(function(r){
     setEntry(r.role, r.client, 'Joined', 'terracotta', r.dateFlagged, { placement:'Revenue at Risk', nextAction:'Review in PayTrack immediately', status:'Active' });
   });
   const entries = Object.keys(map).map(function(k){ return map[k]; });
@@ -23567,7 +23596,10 @@ function revenueAnalyticsHTML(){
     }).join('')+'</div>'+
   '</div>';
 }
-function renderReports(){
+/* F6 (2026-11-22): Reports reads every candidate's pipeline; inside one journey index the offers and journeys are built once per render,
+   not once per candidate (was about 20 s at Vistaar size: 4,000 candidates × every offer re-dated). Same output. */
+function renderReports(){ return withJourneyIndex(renderReportsCore); }
+function renderReportsCore(){
   const fSubs = SUBMISSIONS.slice(), ff = flowFunnel(fSubs);
   const monthMap = {};
   fSubs.forEach(function(sb){ const t = flowReachedAt(sb,'joined'); if(t===null) return; const d = new Date(t), k = d.getFullYear()*100+d.getMonth(); monthMap[k] = (monthMap[k]||0)+1; });
@@ -28223,6 +28255,18 @@ function createAuthSimulator(){
     if(!EXISTING_WORKSPACES.some(function(w){ return w.workspaceId===ws.id; })) EXISTING_WORKSPACES.push({ domain:ws.domain, company:ws.name, ownerName:ownerName, ownerEmail:email, admins:[], policy:null, status:'active', workspaceId:ws.id });
   }
   function releaseDomain(wsId){ EXISTING_WORKSPACES = EXISTING_WORKSPACES.filter(function(w){ return w.workspaceId!==wsId; }); }
+  /* F3 (PROTOTYPE ONLY): every member of the company now on screen (the sample company or a demo one) can sign in by email:
+     code 123456 or the password demo1234, into this workspace with their own role. The account is made the first time it is used. */
+  const TEAM_PASSWORD = 'demo1234';
+  function teamAccount(email){
+    if(!AUTH_IS_PROTOTYPE || db.accounts[email] || typeof RECRUITER_ROSTER === 'undefined') return null;
+    const u = RECRUITER_ROSTER.find(function(r){ return norm(r.email) === email && r.userStatus !== 'Suspended'; }); if(!u) return null;
+    const wsId = 'ws_team_' + String(CURRENT_ORGANIZATION_ID || 'org').replace(/[^a-z0-9]+/gi, '_');
+    db.workspaces[wsId] = db.workspaces[wsId] || { id:wsId, name:(ORG_STRUCTURE.profile && ORG_STRUCTURE.profile.brandName) || 'Workspace', type:ORG_STRUCTURE.profile.orgType || 'Staffing agency' };
+    const persona = typeof demoPersonaFor === 'function' ? demoPersonaFor(u.assignedRoleId) : 'recruiter';
+    return db.accounts[email] = { name:u.name, pw:TEAM_PASSWORD, emailVerified:true, rosterId:u.id, memberships:[{ workspaceId:wsId, role:persona === 'admin' ? 'admin' : persona }] };
+  }
+  sim._teamPassword = TEAM_PASSWORD;
   function signIn(email, method, remember){
     db.session = { email:email, activeWorkspaceId:null, lastSeen:now(), method:method, remember:!!remember }; // a fresh session on every sign-in (no fixation)
     return { ok:true, status: db.accounts[email] ? 'signed_in' : 'new_user', method:method, user:userOf(email), workspaces:wsList(email) };
@@ -28252,8 +28296,11 @@ function createAuthSimulator(){
     const t = now();
     const sends = (db.sends[email]||[]).filter(function(x){ return t-x < POLICY.sendWindowSec*1000; });
     db.sends[email] = sends;
-    const last = sends[sends.length-1];
-    if(last!==undefined && t-last < POLICY.resendCooldownSec*1000) return reply({ ok:false, error:'resend_cooldown', retryAfterSec: Math.ceil((POLICY.resendCooldownSec*1000-(t-last))/1000) });
+    const last = sends[sends.length-1], open = db.challenges[email];
+    // F4: the cooldown only guards a code that is still waiting to be used; once it signed someone in, a fresh one may go out at once.
+    // When it is still waiting, the reply says so (pending), and the app shows the code screen instead of an error.
+    if(last!==undefined && t-last < POLICY.resendCooldownSec*1000 && open && !open.used && t <= open.expiresAt)
+      return reply({ ok:false, error:'resend_cooldown', pending:true, codeLength:POLICY.codeLength, expiresInSec:Math.max(1, Math.round((open.expiresAt - t)/1000)), retryAfterSec: Math.ceil((POLICY.resendCooldownSec*1000-(t-last))/1000) });
     if(sends.length >= POLICY.maxSendsPerWindow) return reply({ ok:false, error:'rate_limited', retryAfterSec: Math.ceil((POLICY.sendWindowSec*1000-(t-sends[0]))/1000) });
     sends.push(t);
     const code = genCode();
@@ -28275,6 +28322,7 @@ function createAuthSimulator(){
       return reply({ ok:false, error:'invalid_code', attemptsLeft:POLICY.maxAttempts-ch.attempts });
     }
     ch.used = true; // single use
+    if(!(p && p.intent==='signup')) teamAccount(email);   // F3: team members sign in; a sign-up code never makes a team account
     return reply(signIn(email, 'email_code'));
   };
   sim.passwordSignIn = function(p){
@@ -28284,6 +28332,7 @@ function createAuthSimulator(){
     const f = db.failures[email] || (db.failures[email] = []);
     while(f.length && t-f[0] > POLICY.lockoutSec*1000) f.shift();
     if(f.length >= POLICY.maxPasswordFails) return reply({ ok:false, error:'signin_locked', retryAfterSec: Math.ceil((POLICY.lockoutSec*1000-(t-f[0]))/1000) });
+    teamAccount(email);
     const a = db.accounts[email];
     // One answer for "no such account" and "wrong password", so this can't be used to discover accounts.
     if(!a || !a.pw || !sameCode(pw, a.pw)){ f.push(t); return reply({ ok:false, error:'invalid_credentials' }); }
@@ -29758,6 +29807,11 @@ const OA = (function(){
     const res = await authApi.sendCode({ email:email, intent:intent });
     if(res.ok){ codeSent(res, email); return true; }
     if(res.error === 'resend_cooldown' && authFlow.codePending && authFlow.codeEmail === email) return true;
+    if(res.error === 'resend_cooldown' && res.pending){   // F4: a code sent a moment ago is still valid: use it, keep the resend wait
+      codeSent({ codeLength:res.codeLength, expiresInSec:res.expiresInSec, resendInSec:res.retryAfterSec }, email);
+      authFlow.notice = 'We already sent you a code a moment ago.';
+      return true;
+    }
     return res;
   }
   async function resend(btn){
@@ -29847,6 +29901,7 @@ const OA = (function(){
           '<form class="au-form" data-form="si-email" novalidate>' +
             fieldHTML({ id:'si-email', type:'email', mode:'email', ac:'username', label:'Work email', ph:'name@company.com', value:authFlow.email, icon:IC.mail, describedby:'si-email-msg', autofocus:true }) +
             (msg || '<p class="oa-msg" id="si-email-msg" role="status">We’ll email you a 6-digit code.</p>') +
+            (AUTH_IS_PROTOTYPE ? '<p class="au-hintline au-demo-note">Demo: any team member’s email works. Code 123456, password demo1234.</p>' : '') +
             primaryBtn('Continue') + '</form>' +
           '<div class="ow-or"><span>or</span></div>' +
           '<div class="au-alt"><button type="button" class="ow-quiet o-press" data-act="si-password">' + IC.lock + 'Sign in with password</button>' +
@@ -29919,6 +29974,7 @@ const OA = (function(){
         return { ok:false, message:authMessage(r) };
       });
       startResend($('[data-resend]', body));
+      if(authFlow.notice){ const m = $('#si-code-msg', body); if(m) say(m, authFlow.notice); authFlow.notice = ''; }   // F4: "We already sent you a code a moment ago."
     }
     focusFirst(body);
   }
@@ -30262,7 +30318,7 @@ const OA = (function(){
     updateWorkspacePreview();
     if(!SU.done && suSteps()[SU.i] === 'code'){
       wireOtp(body, 'Type or paste it — I’ll take it from there.', async function(code){
-        const r = await authApi.verifyCode({ email:SU.email.trim().toLowerCase(), code:code });
+        const r = await authApi.verifyCode({ email:SU.email.trim().toLowerCase(), code:code, intent:'signup' });
         if(!r.ok) return { ok:false, message:authMessage(r) };
         authFlow.codePending = false;
         if(r.status !== 'new_user'){   // this email already has an Oontu account: that is a sign-in, not a new workspace
@@ -30372,6 +30428,9 @@ const OA = (function(){
     const email = authNormEmail((res.user && res.user.email) || SU.email);
     const type = wsType(), pl = place() || PLACES[0];
     const teamSize = SIZE_TO_SETTINGS[SU.size] || '';
+    // F1 (2026-11-22): a new workspace starts empty. The page loads with the sample company; a real sign-up clears it first,
+    // as the demo's "Start from sign-up" does (demoClearWorkspace), and the person who signed up becomes the Owner record.
+    if(typeof wsStartEmpty === 'function') wsStartEmpty();
     ob.companyName = org();
     suApplySetup({ type:type, team:[], teamSkipped:true });
     ORG_STRUCTURE.profile.teamSize = teamSize;
@@ -53416,12 +53475,35 @@ function demoStartSignup(key){
 (function(){   // sign-up in an empty demo workspace: the person who signs up becomes the Owner record
   const base = authEnter;
   authEnter = function(res, kind){ const r = base.apply(this, arguments);
-    if(DEMO.mode === 'signup' && state.role === 'admin'){ const email = (authAppSession && authAppSession.email) || '', name = (res.user && res.user.name) || ROLE_META.admin.name;
+    const teamEmail = authNormEmail((res.user && res.user.email) || '');
+    const member = !WS_FRESH.on && DEMO.mode !== 'signup' && teamEmail ? RECRUITER_ROSTER.find(function(x){ return authNormEmail(x.email) === teamEmail; }) : null;
+    if(member && typeof AUTH_IS_PROTOTYPE !== 'undefined' && AUTH_IS_PROTOTYPE){ demoAct(member.id); renderSidebar(); try { showView(homeForMe()); } catch(e){} return r; }   // F3: signed in by email as a team member
+    if((DEMO.mode === 'signup' || WS_FRESH.on) && state.role === 'admin'){ const email = (authAppSession && authAppSession.email) || '', name = (res.user && res.user.name) || ROLE_META.admin.name;
       let u = RECRUITER_ROSTER.find(function(x){ return x.email === email; });
       if(!u){ u = { id:'OW-001', name:name, email:email, assignedRoleId:CUSTOM_ROLES[0].id, userStatus:'Active', successRate:0, dept:'Leadership', loc:ORG_STRUCTURE.profile.city || '', note:'Signed up', organizationId:CURRENT_ORGANIZATION_ID, domains:[] }; RECRUITER_ROSTER.push(u); }
-      demoAct(u.id); renderSidebar(); }
+      demoAct(u.id); if(WS_FRESH.on){ WS_FRESH.on = false; wsFreshInbox(u); try { showView(homeForMe()); } catch(e){} } renderSidebar(); }
     return r; };
 })();
+/* F1: everything a new workspace must not inherit from the sample company, cleared the way the demo clears it; the roles,
+   templates and settings stay. The Inbox keeps only Kairo's welcome note. */
+const WS_FRESH = { on:false };
+function wsStartEmpty(){
+  const fi = typeof FM !== 'undefined' ? FM.interactive : null; if(fi !== null) FM.interactive = false;
+  try { demoClearWorkspace(); } finally { if(fi !== null) FM.interactive = fi; }
+  if(typeof DM_THREADS === 'object') Object.keys(DM_THREADS).forEach(function(k){ delete DM_THREADS[k]; });
+  if(typeof kairoChatMessages !== 'undefined') kairoChatMessages.length = Math.min(1, kairoChatMessages.length);   // Kairo's hello only
+  if(typeof IB !== 'undefined') IB = null;
+  DEMO.as = null; WS_FRESH.on = true;
+}
+function wsFreshInbox(owner){
+  if(typeof ibFresh !== 'function') return;
+  const ws = ibWs(); IB = ibFresh(ws); IB.seeded['p-' + owner.id] = true;   // no sample chats for the owner
+  IB.convs.push({ id:'t-kairo-welcome', ch:'team', kind:'group', title:'Kairo', members:[owner.id], pinned:true, unread:{}, at:Date.now(),
+    msgs:[ibMsg('kairo', 'Welcome to ' + ws + '. I’m Kairo. Link your email, WhatsApp or LinkedIn under LinkIt and your conversations with candidates, ' +
+      ibCl('clients', 'hiring managers') + ' and the team will land here.', Date.now())] });
+  IB.convs[0].unread[owner.id] = 1;
+  try { ibSave(); if(typeof ibBadges === 'function') ibBadges(); } catch(e){}
+}
 // Choosing a company reloads the page, so nothing from the previous one survives; the choice is kept for this tab only.
 function demoChoose(key, mode){ try { sessionStorage.setItem(DEMO_STORE, JSON.stringify({ company:key, mode:mode })); } catch(e){} location.hash = ''; location.reload(); }
 function demoLeave(){ try { sessionStorage.removeItem(DEMO_STORE); } catch(e){} location.hash = ''; location.reload(); }
@@ -57739,6 +57821,17 @@ function ibPlatKey(which){ const v = window.prompt('Paste the new key'); if(!v |
   const rs = window.renderSidebar; if(typeof rs === 'function') window.renderSidebar = function(){ const r = rs.apply(this, arguments); try { markNav(); } catch(e){} return r; };
   window.addEventListener('load', function(){ try { markNav(); } catch(e){} });
 })();
+</script>
+
+<style id="kairo-chat-style">
+/* F2 (2026-11-22): the Kairo chat is a fixed side panel on the right, under the top bar, full height; a full-screen sheet on a phone.
+   Its own rules beat the Design 2.0 .card layout, which had put it back into the page flow. */
+:root body #kairo-chat-panel{ position:fixed !important; top:var(--kc-top, 72px); right:0; bottom:0; left:auto; width:400px; max-width:100vw; height:auto; max-height:none; margin:0;
+  z-index:70; border-radius:20px 0 0 0; box-shadow:0 0 0 1px rgba(11,31,59,.06), -24px 0 60px -30px rgba(11,31,59,.35); background:#FFFFFF; }
+@media (max-width:700px){ :root body #kairo-chat-panel{ top:0; width:100vw; border-radius:0; z-index:90; } }
+</style>
+<script id="kairo-chat-esc">
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && typeof kairoChatOpen !== 'undefined' && kairoChatOpen){ e.preventDefault(); closeKairoChat(); const b = document.getElementById('topbar-kairo'); if(b) b.focus({ preventScroll:true }); } });
 </script>
 </body>
 </html>
