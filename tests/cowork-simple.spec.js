@@ -1,4 +1,6 @@
-/* Cowork made simple (Step 2): setup guides, the agent page in three tabs, plain words, numbers that agree, one row per action.
+/* Step 2b (23 November 2026): Settings use segmented controls, templates open in a drawer, Today has the jobs table, and Today is longer than 2,200 px by design
+   (20 jobs a page); the height rule now covers the Agents tab, Settings and Activity. The words and every rule below still hold.
+   Cowork made simple (Step 2): setup guides, the agent page in three tabs, plain words, numbers that agree, one row per action.
    Run: node runall.js cowork-simple */
 (function(){
   var results = [], errs = [];
@@ -31,7 +33,7 @@
         caOpenAgent(id, 'settings'); qa('[data-card]').map(function(c){ return c.getAttribute('data-card'); }).forEach(function(k){ CA.open = k; caRefresh(); check(id + '/card ' + k, q('#ca-sec-settings').textContent); }); });
       ok(CA_WORDS.auto === 'Do it for me' && CA_WORDS.suggest === 'Ask me first' && CA_WORDS.off === 'Don’t do this' && CA_WORDS.person === 'You always do this', 'the four words');
       caOpenAgent('engagement'); var run = qa('[data-sec=header] button').find(function(b){ return /^Run now/.test(b.textContent.trim()); }); ok(run && run.querySelector('.ca-demo') && run.textContent.replace(/\s+/g, ' ').trim() === 'Run now demo', 'Run now with a small demo tag');
-      caOpenAgent('talent-discovery', 'settings'); CA.open = 'more'; caRefresh(); var sel = q('select[data-level=addPipeline]') || q('select[data-level=handoff]'); ok(sel && [].map.call(sel.options, function(o){ return o.textContent; }).join() === 'Do it for me,Ask me first,Don’t do this', 'the picker reads in plain words');
+      caOpenAgent('talent-discovery', 'settings'); CA.open = 'more'; caRefresh(); var sel = q('[data-level=handoff]'); ok(sel && qa('[role=radio]', sel).map(function(o){ return o.textContent; }).join() === 'Do it for me,Ask me first,Off', 'the control reads in plain words');
       ok(q('[data-always="reject"]') && /You always do this/.test(q('[data-always="reject"]').textContent), 'the person-only step');
       var n = CA_SUGGEST.length; CW_APPROVALS.filter(function(a){ return a.status === 'pending'; }).forEach(function(){}); var needs = caNeeds(); needs.forEach(function(x){ check('needs', x.title + ' ' + x.why); });
       caCloseAgent(); ok(!bad.length, bad.slice(0, 6).join(' | '));
@@ -43,7 +45,7 @@
         ok(btns.length <= 1, id + ': one button'); ok(!c.querySelector('[role=switch]'), id + ': no switch on the card');
         if(st.key === 'on') ok(/^On · working on \d+ jobs?$/.test(words), id + ': ' + words);
         if(st.key === 'on' || st.key === 'trial'){ ok(btns[0] && btns[0].textContent === 'Open', id + ' Open'); var w = caWeekNums(id); ok(c.querySelector('.ca-card__nums').getAttribute('data-nums') === w.key && c.querySelector('.ca-card__nums').textContent.indexOf(w.line) === 0, id + ' sentence: ' + c.querySelector('.ca-card__nums').textContent); } });
-      ok(/^Found \d+ (person|people) for \d+ jobs? · you added \d+/.test(q('.ca-card[data-agent="talent-discovery"] .ca-card__nums').textContent), 'Talent Discovery sentence');
+      ok(/^(\d+ new match(es)? waiting|No new matches waiting) · \d+ added this week · \d+ of \d+ jobs? have enough/.test(q('.ca-card[data-agent="talent-discovery"] .ca-card__nums').textContent), 'Talent Discovery sentence: ' + q('.ca-card[data-agent="talent-discovery"] .ca-card__nums').textContent);
       caPause('engagement', true); cowork(); var me = caFirst(currentActingUser().name); ok(new RegExp('^Paused by ' + me + ' on \\d+ \\w+$').test(q('.ca-card[data-agent=engagement] .ca-state').textContent), 'paused in words: ' + q('.ca-card[data-agent=engagement] .ca-state').textContent); ok(q('.ca-card[data-agent=engagement] [data-card-btn]').textContent === 'Resume', 'Resume'); q('.ca-card[data-agent=engagement] [data-card-btn]').click(); ok(caStatus('engagement').key === 'on', 'resumed');
       var cfg = TENANT_AGENT_CONFIG.interviews; cfg.setupDone = false; cowork(); ok(q('.ca-card[data-agent=interviews] .ca-state').textContent === 'Not set up' && q('.ca-card[data-agent=interviews] [data-card-btn]').textContent === 'Set up · 2 minutes', 'Not set up'); cfg.setupDone = true;
       var sub = TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID]['offers-joining'], keep = JSON.stringify(sub); TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID]['offers-joining'] = { state:'none', usedThisMonth:0 }; var plan = typeof PLAN_CATALOG !== 'undefined';
@@ -85,7 +87,7 @@
       var id = 'talent-discovery', cfg = TENANT_AGENT_CONFIG[id]; CA_PICKS = {}; for(var i = SEND_LEDGER.length - 1; i >= 0; i--){ if(SEND_LEDGER[i].agentId === id && SEND_LEDGER[i].action === 'pick') SEND_LEDGER.splice(i, 1); }
       cfg.setupDone = false; cfg.enabled = false; caGuideOpen(id); await sleep(5); q('#ca-guide-root [data-g=next]').click(); await sleep(5);
       var r = q('#ca-guide-root input[type=range][data-field=threshold]'); ok(r, 'a slider'); ok(r.min === '50' && r.max === '95' && r.value === '70', 'from 50 to 95, at 70');
-      r.value = '60'; r.dispatchEvent(new Event('input')); var live = q('#ca-guide-root [data-live]'), n60 = +live.getAttribute('data-total'); ok(/^Today that’s|^Today nobody/.test(live.textContent), 'live line: ' + live.textContent); ok(q('#ca-guide-root [data-range-v]').textContent === '60%', 'shows 60%');
+      r.value = '60'; r.dispatchEvent(new Event('input')); var live = q('#ca-guide-root [data-live]'), n60 = +live.getAttribute('data-total'); ok(/people? across \d+ jobs? at this level$|^\d person across|^No matches at this level/.test(live.textContent), 'live line: ' + live.textContent); ok(q('#ca-guide-root [data-range-v]').textContent === '60%', 'shows 60%');
       r.value = '90'; r.dispatchEvent(new Event('input')); var n90 = +q('#ca-guide-root [data-live]').getAttribute('data-total'); ok(n90 <= n60, 'a higher bar finds fewer: ' + n60 + ' → ' + n90);
       r.value = '55'; r.dispatchEvent(new Event('input')); r.dispatchEvent(new Event('change')); await sleep(5); var n = +q('#ca-guide-root [data-live]').getAttribute('data-total'); ok(n > 0, 'Northstar has someone above 55%: ' + n);
       q('#ca-guide-root [data-g=next]').click(); await sleep(5); q('#ca-guide-root [data-g=next]').click(); await sleep(5);
@@ -109,17 +111,17 @@
       to.value = '20:30'; to.dispatchEvent(new Event('change')); await sleep(5); ok(TENANT_AGENT_CONFIG['talent-discovery'].workingHours === '09:00-20:30', 'saved: ' + TENANT_AGENT_CONFIG['talent-discovery'].workingHours); ok(/09:00–20:30/.test(q('[data-sum=hours]').textContent), 'summary');
       to = q('#ca-sec-settings select[data-field=to]'); to.value = '19:00'; to.dispatchEvent(new Event('change')); await sleep(5); ok(q('#ca-sec-settings select[data-field=to]').selectedOptions[0].textContent === '19:00', 'back to 19:00');
       ok(getComputedStyle(q('#ca-sec-settings select[data-field=to]')).width !== 'auto' && q('#ca-sec-settings select[data-field=to]').getBoundingClientRect().width >= 80, 'wide enough for the full time');
-      caOpenAgent('engagement', 'settings'); CA.open = 'limits'; caRefresh(); ok(/Send between/.test(q('#ca-sec-settings').textContent) && q('#ca-sec-settings select[data-field=to]').selectedOptions[0].textContent === '19:00' && q('#ca-sec-settings select[data-field=perWeek]'), 'Engagement’s sentence');
+      caOpenAgent('engagement', 'settings'); CA.open = 'limits'; caRefresh(); ok(q('#ca-sec-settings select[data-field=to]').selectedOptions[0].textContent === '19:00' && q('#ca-sec-settings [data-field=perWeek]') && q('#ca-sec-settings .ca-tr') && qa('#ca-sec-settings [data-day]').length === 7, 'Engagement’s limits: days, hours, the weekly limit');
     });
 
     await t('templates: fields are chips added from “+ Add field”, with a live preview for a real candidate; a preview never shows {{ or }}', async function(){
-      caOpenAgent('engagement', 'settings'); CA.open = 'messages'; CA.play = 'newMatch'; caRefresh(); var ed = q('[data-play=newMatch] .ca-tpl__text'); ok(ed && ed.getAttribute('contenteditable') === 'true', 'an editor'); ok(qa('.ca-var', ed).map(function(x){ return x.textContent; }).join() === 'Candidate name,Recruiter name,Job title,Job link', 'chips: ' + qa('.ca-var', ed).map(function(x){ return x.textContent; }).join());
-      ok(ed.textContent.indexOf('{{') < 0, 'no braces in the editor'); var pv = q('[data-play=newMatch] [data-preview]'); ok(/^Hi \S+, this is \S+ from \S+\. We have a .+ opening/.test(pv.textContent), 'preview: ' + pv.textContent);
-      q('[data-play=newMatch] .ca-tpl__add').click(); ok(!q('[data-play=newMatch] .ca-tpl__menu').hidden && qa('[data-play=newMatch] .ca-tpl__menu [role=menuitem]').map(function(x){ return x.textContent; }).join() === 'Candidate name,Job title,Recruiter name,Job link', 'the menu');
-      q('[data-play=newMatch] .ca-tpl__menu [data-add=job_title]').click(); ok(/\{\{job_title\}\}/.test(caDraftFor('engagement').plays.newMatch.tpl.split('{{job_title}}').length > 2 ? '{{job_title}}' : ''), 'a chip added: ' + caDraftFor('engagement').plays.newMatch.tpl);
-      var first = pv.textContent; q('.ca-tpl__another').click(); ok(typeof q('[data-play=newMatch] [data-preview]').textContent === 'string', 'another candidate');
-      caTplFlush(q('[data-play=newMatch] .ca-tpl__text')); ok(TENANT_AGENT_CONFIG.engagement.plays.newMatch.tpl === caDraftFor('engagement').plays.newMatch.tpl || /New job match message edited/.test(AUDIT_LOG[0].detail), 'saved as you type'); ok(/Waiting for WhatsApp approval, about 1 day/.test(q('[data-play=newMatch] .ca-tpl__st').textContent), 'WhatsApp status in words: ' + q('[data-play=newMatch] .ca-tpl__st').textContent);
-      TENANT_AGENT_CONFIG.engagement.plays.newMatch.tpl = CA_PLAYS[0].tpl; WSX.templates.messages.find(function(x){ return x[0] === 'New job match'; })[2] = 'Approved'; caOpenAgent('engagement', 'settings'); CA.open = 'messages'; CA.play = 'newMatch'; caRefresh(); ok(/^Approved by WhatsApp$/.test(q('[data-play=newMatch] .ca-tpl__st').textContent), 'approved in words');
+      caOpenAgent('engagement', 'settings'); CA.open = 'messages'; caRefresh(); caPlayDrawer('newMatch'); var D = '#ca-drawer-root '; var ed = q(D + '.ca-tpl__text'); ok(ed && ed.getAttribute('contenteditable') === 'true', 'an editor'); ok(qa('.ca-var', ed).map(function(x){ return x.textContent; }).join() === 'Candidate name,Recruiter name,Job title,Job link', 'chips: ' + qa('.ca-var', ed).map(function(x){ return x.textContent; }).join());
+      ok(ed.textContent.indexOf('{{') < 0, 'no braces in the editor'); var pv = q(D + '[data-preview]'); ok(/^Hi \S+, this is \S+ from \S+\. We have a .+ opening/.test(pv.textContent), 'preview: ' + pv.textContent);
+      q(D + '.ca-tpl__add').click(); ok(!q(D + '.ca-tpl__menu').hidden && qa(D + '.ca-tpl__menu [role=menuitem]').map(function(x){ return x.textContent; }).join() === 'Candidate name,Job title,Recruiter name,Job link', 'the menu');
+      q(D + '.ca-tpl__menu [data-add=job_title]').click(); ok(/\{\{job_title\}\}/.test(caDraftFor('engagement').plays.newMatch.tpl.split('{{job_title}}').length > 2 ? '{{job_title}}' : ''), 'a chip added: ' + caDraftFor('engagement').plays.newMatch.tpl);
+      var first = pv.textContent; q(D + '.ca-tpl__another').click(); ok(typeof q(D + '[data-preview]').textContent === 'string', 'another candidate');
+      caTplFlush(q(D + '.ca-tpl__text')); ok(TENANT_AGENT_CONFIG.engagement.plays.newMatch.tpl === caDraftFor('engagement').plays.newMatch.tpl || /New job match message edited/.test(AUDIT_LOG[0].detail), 'saved as you type'); ok(/Waiting for WhatsApp approval, about 1 day/.test(q(D + '.ca-tpl__st').textContent), 'WhatsApp status in words: ' + q(D + '.ca-tpl__st').textContent); caDrawerClose();
+      TENANT_AGENT_CONFIG.engagement.plays.newMatch.tpl = CA_PLAYS[0].tpl; WSX.templates.messages.find(function(x){ return x[0] === 'New job match'; })[2] = 'Approved'; caOpenAgent('engagement', 'settings'); caPlayDrawer('newMatch'); ok(/^Approved by WhatsApp$/.test(q('#ca-drawer-root .ca-tpl__st').textContent), 'approved in words'); caDrawerClose();
       var texts = CA_PLAYS.map(function(p){ return p.tpl; }).concat([TENANT_AGENT_CONFIG.linkedin.settings.liNote, TENANT_AGENT_CONFIG.linkedin.settings.liMsg, CA_IV_TPL, CA_OJ_TPL, 'Hi {{first_name}}, {{unknown_field}} {{ job_title }} {{ broken', 'x }} y {{']);
       for(var i = 0; i < 6; i++){ CA.sample = i; [undefined, 'iv', 'oj'].forEach(function(ctx){ texts.forEach(function(tx){ var f = caFill(tx, caSample(ctx)); ok(f.indexOf('{{') < 0 && f.indexOf('}}') < 0, 'braces in: ' + f); }); }); }
       CA.sample = 0; CW.order.forEach(function(id){ caOpenAgent(id, 'settings'); qa('[data-card]').map(function(c){ return c.getAttribute('data-card'); }).forEach(function(k){ CA.open = k; caRefresh(); qa('[data-preview],[data-fill],.ca-play__pv').forEach(function(x){ ok(!/\{\{|\}\}/.test(x.textContent), id + '/' + k + ' preview: ' + x.textContent); }); }); });
@@ -143,7 +145,7 @@
           var live = qa('input,select,textarea', box).filter(function(x){ return !x.disabled; }).concat(qa('[role=switch],[role=radio],.ca-chipt', box).filter(function(x){ return !x.disabled; })).concat(qa('[contenteditable=true]', box));
           ok(!live.length, id + '/' + k + ' has something to change: ' + live.map(function(x){ return x.outerHTML.slice(0, 80); }).join(' | ')); }); }
       scan.forEach(function(x, i){ ok(x.indexOf('₹') < 0, 'a ₹ in view ' + i + ': ' + x.slice(Math.max(0, x.indexOf('₹') - 40), x.indexOf('₹') + 20)); });
-      var j = caMyJobs()[0]; caOpenAgent('engagement', 'today'); var sw = q('#ca-sec-jobs [data-job="' + j.id + '"] [role=switch]'); ok(sw && !sw.disabled, 'a switch on their own job'); sw.click(); ok(caJobPaused('engagement', j), 'paused on their job'); q('#ca-sec-jobs [data-job="' + j.id + '"] [role=switch]').click(); ok(!caJobPaused('engagement', j), 'and back');
+      var j = caMyJobs().filter(function(x){ return caInScope('talent-discovery', x); })[0]; caOpenAgent('talent-discovery', 'today'); var sw = q('[data-jrow="' + j.id + '"] [role=switch]'); ok(sw && !sw.disabled, 'a switch on their own job'); sw.click(); ok(caJobPaused('talent-discovery', j), 'paused on their job'); q('[data-jrow="' + j.id + '"] [role=switch]').click(); ok(!caJobPaused('talent-discovery', j), 'and back'); ok(caJobRows('talent-discovery', 'td').every(function(r){ return caJobMine(r.j); }), 'only their jobs in the table');
       var it = caAddSuggest({ agentId:'engagement', ownerId:rec.id, title:'First message to Test Person', why:'Above the threshold', text:'Hi' }); caOpenAgent('engagement'); var row = qa('#ca-sec-waiting .ca-need').find(function(x){ return /Test Person/.test(x.textContent); }); ok(row, 'their own item'); qa('button', row).find(function(b){ return b.textContent === 'Approve'; }).click(); ok(it.status === 'approved', 'approved'); CA_SUGGEST.length = 0;
       ok(caSaveSettings('engagement') === false, 'cannot save'); owner();
     });
@@ -155,15 +157,15 @@
       CA.open = 'found'; caRefresh(); q('[data-card=found] [role=radio][data-value=off]').click(); await sleep(5); var cfg = TENANT_AGENT_CONFIG['talent-discovery']; ok(cfg.team[m.id] && cfg.team[m.id].steps.addPipeline === 'off' && cfg.steps.addPipeline === 'suggest', 'their team only'); delete cfg.team[m.id]; owner();
     });
 
-    await t('no Cowork page is taller than 2,200 px at 1440 with the Settings cards collapsed (Northstar)', async function(){
+    await t('no Cowork Settings, Activity or Agents page is taller than 2,200 px at 1440 with the cards collapsed (Northstar)', async function(){
       ok(innerWidth === 1440, 'at 1440: ' + innerWidth); var tall = []; cowork(); await sleep(5); if(height() > 2200) tall.push('agents ' + height()); CA.tab = 'activity'; caRefresh(); if(height() > 2200) tall.push('activity ' + height()); CA.tab = 'agents';
-      CW.order.forEach(function(id){ ['today','settings','activity'].forEach(function(s){ caOpenAgent(id, s); if(height() > 2200) tall.push(id + '/' + s + ' ' + height()); }); }); ok(!tall.length, tall.join(', '));
+      CW.order.forEach(function(id){ ['settings','activity'].forEach(function(s){ caOpenAgent(id, s); if(height() > 2200) tall.push(id + '/' + s + ' ' + height()); }); }); ok(!tall.length, tall.join(', '));
     });
 
     // numbers agree, and page heights, for each demo company
     for(var co of ['northstar', 'vistaar', 'kesar']){ (function(){})();
       if(co !== 'northstar') demoBuild(co); owner();
-      await t(co + ': card, Today and Activity numbers are equal for each agent; no page taller than 2,200 px', async function(){
+      await t(co + ': card, Today and Activity numbers are equal for each agent; Settings and Activity no taller than 2,200 px', async function(){
         cowork(); await sleep(5); var bad = [];
         CW.order.forEach(function(id){ var st = caStatus(id); if(st.key === 'plan' || st.key === 'new') return; var card = q('.ca-card[data-agent="' + id + '"] .ca-card__nums').getAttribute('data-nums');
           caOpenAgent(id, 'today'); var today = q('[data-sec=numbers][data-where=today]').getAttribute('data-nums'); caOpenAgent(id, 'activity'); var act = q('[data-sec=numbers][data-where=activity]').getAttribute('data-nums'); cowork();
@@ -171,7 +173,7 @@
           var w = caWeekNums(id); if(w.key !== card) bad.push(id + ' recomputed ' + w.key + ' vs ' + card); });
         ok(!bad.length, bad.join(' | '));
         var tall = []; CA.tab = 'activity'; caRefresh(); if(height() > 2200) tall.push('activity ' + height()); CA.tab = 'agents'; caRefresh(); if(height() > 2200) tall.push('agents ' + height());
-        CW.order.forEach(function(id){ ['today','settings','activity'].forEach(function(s){ caOpenAgent(id, s); if(height() > 2200) tall.push(id + '/' + s + ' ' + height()); }); }); caCloseAgent(); ok(!tall.length, tall.join(', '));
+        CW.order.forEach(function(id){ ['settings','activity'].forEach(function(s){ caOpenAgent(id, s); if(height() > 2200) tall.push(id + '/' + s + ' ' + height()); }); }); caCloseAgent(); ok(!tall.length, tall.join(', '));
         if(co === 'vistaar'){ var cons = SEND_LEDGER.filter(function(l){ return l.action === 'consent' && cwNow() - l.at < 7 * CW_DAY; }), pairs = {}; cons.forEach(function(l){ pairs[l.personKey + '|' + l.jobId] = 1; });
           var rows = caRows({ agent:'engagement', since:cwNow() - 7 * CW_DAY }).filter(function(r){ return r.action === 'consent'; }); ok(rows.length === Object.keys(pairs).length, 'one row per consent request: ' + rows.length + ' rows for ' + Object.keys(pairs).length + ' requests (' + cons.length + ' channel sends)'); }
       });

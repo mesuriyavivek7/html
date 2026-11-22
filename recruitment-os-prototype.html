@@ -52857,7 +52857,7 @@ function caAfterChange(){ if(typeof renderSidebar === 'function') renderSidebar(
 ============================================================ */
 const CA_WORDS = { auto:'Do it for me', suggest:'Ask me first', off:'Don’t do this', person:'You always do this' };
 Object.assign(CA_LEVEL_TAG, CA_WORDS);
-CA_ACTION_WORDS.consent = 'Asked to agree'; CA_ACTION_WORDS.pick = 'Found people for a job';
+CA_ACTION_WORDS.consent = 'Asked to agree'; CA_ACTION_WORDS.pick = 'Found people for a job'; Object.assign(CA_ACTION_WORDS, { added:'Added to the job', book:'Booked an interview', reply:'Replied' });
 const CA_FIELD_MENU = [['first_name','Candidate name'],['job_title','Job title'],['recruiter','Recruiter name'],['job_link','Job link']];
 const CA_VAR_LABEL = { first_name:'Candidate name', name:'Candidate name', job_title:'Job title', recruiter:'Recruiter name', job_link:'Job link', link:'Answer link', client:'Client', company:'Your company', round:'Round', when:'Date and time', days:'Days to go' };
 const CA_DAYS = ['Mon–Fri','Mon–Sat','Every day'];
@@ -52937,7 +52937,7 @@ function caPickSweep(){
   });
   return out;
 }
-(function(){ const base = caRowOf; window.caRowOf = function(l, runs){ const r = base(l, runs); if(r && l.count) r.count = l.count; return r; }; })();
+(function(){ const base = caRowOf; window.caRowOf = function(l, runs){ const r = base(l, runs); if(r && l.count) r.count = l.count; if(r && r.agentId === 'linkedin' && r.action === 'added') r.what = 'Added to your talent pool'; return r; }; })();
 // The page's own "on your jobs" rows use the same capped count as the picks.
 (function(){ const base = caPreview; window.caPreview = function(id, work){ const g = base(id, work);
   if(id === 'talent-discovery' && g[0]){ const th = caThreshold(), jobs = caMyJobs().filter(function(j){ return caInScope(id, j) && !caJobPaused(id, j); }); g[0].rows = jobs.slice(0, 6).map(function(j){ const n = caPicksFor(j, th).length; return j.title + ' · ' + j.client + ': ' + caPeople(n) + ' above ' + th + '%'; }); g[0].more = Math.max(0, jobs.length - 6); }
@@ -53050,7 +53050,7 @@ function caCardButton(id, st){
 /* ---------- the agent page: three tabs ---------- */
 function caSubTab(){ return CA.sub === 'settings' || CA.sub === 'activity' ? CA.sub : 'today'; }
 function caSub(s){ CA.sub = s; CA.open = null; CA.play = null; CA.waitAll = false; CA.nextAll = false; CA.alim = 15; caRefresh(); const m = document.getElementById('main-content'); if(m) m.scrollTop = 0; }
-(function(){ const base = caOpenAgent; window.caOpenAgent = function(id, sub){ CA.open = sub === 'settings' && CA.open ? CA.open : null; CA.play = null; CA.waitAll = false; CA.nextAll = false; CA.alim = 15; return base(id, sub); }; })();
+(function(){ const base = caOpenAgent; window.caOpenAgent = function(id, sub){ CA.open = sub === 'settings' && CA.open ? CA.open : null; CA.play = null; CA.waitAll = sub === 'waiting'; CA.nextAll = false; CA.alim = 15; return base(id, sub); }; })();
 window.caAgentPage = function(id){
   caMoreInit();
   const a = agentById(id), st = caStatus(id), crumb = breadcrumbHTML([{ label:'Cowork', onclick:'caCloseAgent()' }, { label:a.name }], 'caCloseAgent()'), sub = caSubTab();
@@ -53235,7 +53235,7 @@ function caChannelLine2(){
   if(em) return '<span>WhatsApp isn’t connected, so I’ll use email.</span> ' + conn('whatsapp', 'Connect WhatsApp');
   return '<span>Nothing is connected yet. Kairo needs WhatsApp or a mailbox to send anything.</span> ' + conn('google', 'Connect a mailbox');
 }
-function caChannelSum(){ const wa = cwChannelConnected('whatsapp'), em = cwChannelConnected('email'); return wa ? (em ? 'WhatsApp, then email' : 'WhatsApp') : em ? 'Email (WhatsApp isn’t connected)' : 'Nothing connected yet'; }
+function caChannelSum(d){ const wa = cwChannelConnected('whatsapp'), em = cwChannelConnected('email'), o = d && d.settings ? (CA_FIELDS.engagement.find(function(f){ return f.k === 'channelOrder'; }).opts.find(function(x){ return x[0] === d.settings.channelOrder; }) || [])[1] : ''; return (o || 'WhatsApp, then email') + (wa ? '' : em ? ' · WhatsApp isn’t connected yet' : ' · nothing connected yet'); }
 function caDemoConnect(id){
   const c = CONNECTORS.find(function(x){ return x.id === id; }); if(!c){ toast('That connection isn’t available here.'); return; }
   if(!openAsOk()){ settingsSection = 'integrations'; showView('settings'); return; }
@@ -53318,7 +53318,7 @@ function caLiAccSum(){
 function caLiJobsSum(d){ return d.scope.mode === 'jobs' ? caN(d.scope.jobs.length, 'job') : 'All open jobs (' + caOpenJobs().length + ')'; }
 function caLiMsgBody(d, ed){ return '<h4 class="ca-sub">Connection note</h4>' + caTplHTML('settings.liNote', d.settings.liNote, { ed:ed, key:'liNote', card:'messages', max:300 }) + '<h4 class="ca-sub">First message after they accept</h4>' + caTplHTML('settings.liMsg', d.settings.liMsg, { ed:ed, key:'liMsg', card:'messages' }); }
 function caLiMsgSum(d){ return 'Note: ' + caFill(d.settings.liNote, caSample()).length + ' of 300 characters · first message after they accept'; }
-function caLiLimitsSum(d){ const s = d.settings; return s.invitesDay + ' invites a day, ' + s.invitesWeek + ' a week · ' + s.messagesDay + ' messages a day'; }
+function caLiLimitsSum(d){ const s = d.settings; return s.invitesDay + ' invites a day, ' + s.invitesWeek + ' a week · ' + s.messagesDay + ' messages a day · ' + (s.visitsDay != null ? s.visitsDay + ' visits · ' : '') + 'withdraw after ' + s.withdrawDays + ' days'; }
 
 /* ---------- the cards, per agent, in the guide's order ---------- */
 function caCardsFor(id){
@@ -53533,7 +53533,7 @@ function caGuideFinish(){
   cfg.setupDone = true; cfg.enabled = true; cfg.paused = null;
   logAudit('Cowork', 'Agent set up', a.name + ' · not set up → on · ' + caCardsFor(id).filter(function(c){ return c.key !== 'switch'; }).map(function(c){ return c.title + ': ' + caText(c.sum(caDraftFor(id))); }).join(' · '));
   // Talent Discovery's done screen shows what the slider promised: everyone above the threshold now, job by job. The pass records the ones that are new.
-  if(id === 'talent-discovery'){ const pv = caMatchPreview(caThreshold(), cfg.scope), rec = caPickSweep(); g.done = { people:pv.total, jobs:pv.rows.map(function(x){ return { job:x.job, n:x.n }; }), recorded:rec.people }; }
+  if(id === 'talent-discovery'){ const pv = caMatchPreview(caThreshold(), cfg.scope), rec = caPickSweep(true); g.done = { people:pv.total, jobs:pv.rows.map(function(x){ return { job:x.job, n:x.n }; }), recorded:rec.people }; }
   else g.done = { ok:true };
   caGuideDraw(); caRefresh(); if(typeof renderSidebar === 'function') renderSidebar();
 }
@@ -53591,6 +53591,803 @@ document.addEventListener('keydown', function(e){
   'body.ca-g-open{overflow:hidden}.ca-g__scrim{position:fixed;inset:0;z-index:95;background:rgba(11,31,59,.36)}.ca-g{position:fixed;z-index:96;top:50%;left:50%;transform:translate(-50%,-50%);width:min(680px,calc(100vw - 32px));max-height:min(780px,calc(100vh - 48px));display:flex;flex-direction:column;background:var(--bg-card,#fff);border-radius:20px;box-shadow:0 24px 64px rgba(11,31,59,.24)}.ca-g__h{display:flex;align-items:center;gap:12px;padding:16px 16px 10px 24px}.ca-g__who{font-size:13px;font-weight:600;color:var(--text-2)}.ca-g__n{margin-left:auto;font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums}.ca-g__x{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}.ca-g__prog{height:3px;margin:0 24px;border-radius:2px;background:var(--bg-subtle);overflow:hidden}.ca-g__prog i{display:block;height:100%;background:var(--text-1);transition:width .2s}.ca-g__b{flex:1;overflow-y:auto;padding:20px 24px}.ca-g__q{margin:0 0 6px;font-size:22px;line-height:30px;font-weight:600;color:var(--text-1);outline:none}.ca-g__sub{margin:0 0 4px;font-size:14px;line-height:20px;color:var(--text-2)}.ca-g__body{margin-top:16px}.ca-g__f{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px 18px;border-top:1px solid var(--line)}.ca-g__f .o-btn{min-width:112px;justify-content:center}' +
   '@media (max-width:760px){.ca-nums__g{gap:8px}.ca-nums__i{padding:10px}.ca-nums__i b{font-size:20px}.ca-tpl{grid-template-columns:minmax(0,1fr)}.ca-msgcards{grid-template-columns:minmax(0,1fr)}.ca-set__h{padding:12px 16px}.ca-set__b{padding:12px 16px 16px}.ca-lijobs__s{margin-left:0}}' +
   '@media (max-width:700px){.ca-g{top:0;left:0;transform:none;width:100vw;height:100%;max-height:none;border-radius:0}.ca-g__h{padding:12px 12px 8px 16px}.ca-g__prog{margin:0 16px}.ca-g__b{padding:16px}.ca-g__f{padding:12px 16px calc(12px + env(safe-area-inset-bottom))}.ca-g__q{font-size:20px;line-height:28px}}';
+  document.head.appendChild(css); })();
+</script>
+<script id="cowork-visual-script">
+/* ============================================================
+   COWORK, VISUAL (Step 2b, 23 November 2026)
+   The agent pages as working screens: a live status control, four numbers with a sparkline each, real cards waiting for a
+   yes, one panel per agent that scales (jobs table, funnel, week strip, risk board, accounts), a live activity feed, and
+   Settings made of real controls. Built on cowork-simple-script; the engine, levels, caps and rules are unchanged.
+   Data: what Kairo has found and what people decided are kept here (CA_PICKS, CA_DEC); demo companies are seeded by
+   caDemoSeed() when a demo build finishes, so every agent that is On has real work waiting.
+============================================================ */
+let CA_DEC = {};            // 'jobId|candidateId' -> { d:'added'|'dismissed', at, by, reason }   (Talent Discovery)
+let CA_DONE = {};           // other agents' waiting items a person has dealt with: key -> { d, at, by }
+const CA_CHECK = {};        // agentId -> when Kairo last checked (fmNow, real time)
+Object.assign(CA, { jt:{ q:'', f:'all', client:'', sel:{}, lim:20 }, fresh:{}, run:null, wf:{ job:'', sort:'best' }, menu:null, feed:8, board:{} });
+const CA_TARGET = 10;       // a job is fully covered with 10 matches
+const CA_ENOUGH = 3;        // ...and has enough with 3
+function caNowR(){ return fmNow(); }
+function caAgo(ms){ const d = Math.max(0, caNowR() - ms), m = Math.round(d / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; }
+function caAgoCw(ms){ const d = Math.max(0, cwNow() - ms), m = Math.round(d / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; }
+function caHM(ms){ const p = wsParts(ms); return String(p.h).padStart(2, '0') + ':' + String(p.mi).padStart(2, '0'); }
+function caPct(a, b){ return b ? Math.round(a / b * 100) : 0; }
+
+/* ---------- Talent Discovery: a match level per job, picks, decisions ---------- */
+function caTd(){ return TENANT_AGENT_CONFIG['talent-discovery']; }
+function caThFor(j){ const o = (caTd().jobTh || {})[j.id]; return o ? +o : caThreshold(); }
+// A match: someone in the pool above the job's level, not in the job, not turned down for it. At most "matches per job".
+window.caPicksFor = function(j, th, cap){
+  const t = th == null ? caThFor(j) : th, n = caPickCap(cap), out = [], all = caJobPicks(j);
+  for(let i = 0; i < all.length && out.length < n; i++){ const x = all[i]; if(x.s.score < t) break; if(CA_DEC[j.id + '|' + x.c.id]) continue;
+    if(typeof fmClientWindowHit === 'function' && fmClientWindowHit(j, x.c)) continue;   // sent to this client lately: the engine would block it
+    out.push(x); }
+  return out;
+};
+function caMatches(j){ return caPicksFor(j); }
+function caPickFirst(j, c){ const m = CA_PICKS[j.id]; return m && m[c.id] ? (typeof m[c.id] === 'object' ? m[c.id].at : m[c.id]) : null; }
+// Kairo's pass. On its own it runs at most every 10 minutes; Run now, a guide and a changed setting force it.
+window.caPickSweep = function(force, jobIds){
+  const id = 'talent-discovery', out = { people:0, jobs:[] }; if(jsCorp() || !caWorking(id)) return out;
+  if(!force && CA_CHECK[id] && caNowR() - CA_CHECK[id] < 10 * 60000) return out;
+  CA_CHECK[id] = caNowR(); const now = cwNow(), lvl = caLevelFor(id, 'addPipeline', null);
+  caScopeJobs(id).filter(function(j){ return !jobIds || jobIds.indexOf(j.id) > -1; }).forEach(function(j){
+    const seen = CA_PICKS[j.id] = CA_PICKS[j.id] || {}, fresh = caPicksFor(j).filter(function(x){ return !seen[x.c.id]; }); if(!fresh.length) return;
+    fresh.forEach(function(x){ seen[x.c.id] = { at:now, s:x.s.score }; CA.fresh['pk:' + j.id + ':' + x.c.id] = 1; });
+    const e = caRecord({ agentId:id, action:'pick', jobId:j.id, at:now, why:caPeople(fresh.length) + ' above ' + caThFor(j) + '% for ' + j.title + ': ' + fresh.slice(0, 3).map(function(x){ return x.c.name + ' ' + x.s.score + '%'; }).join(', ') + (fresh.length > 3 ? ' and ' + (fresh.length - 3) + ' more' : ''), result:'Done' });
+    e.count = fresh.length; out.people += fresh.length; out.jobs.push({ job:j, n:fresh.length });
+    if(lvl === 'auto') fresh.forEach(function(x){ caAddPick(j.id, x.c.id, true); });
+  });
+  return out;
+};
+function caAddPick(jobId, cid, byKairo){
+  const j = jobById(jobId), c = byId(cid); if(!j || !c) return false;
+  if(!byKairo && !caJobMine(j)){ toast('Only people on this job can add to it.'); return false; }
+  const r = submitCandidateToJob(j, c, 'Kairo Match'); if(!r.ok && ['created','review_required','existing'].indexOf(r.category) < 0){ toast(r.reason || 'Could not add ' + c.name + '.'); return false; }
+  const me = caMe().name || 'A person';
+  CA_DEC[jobId + '|' + cid] = { d:'added', at:cwNow(), by:byKairo ? 'Kairo' : me };
+  caRecord({ agentId:'talent-discovery', action:'added', jobId:jobId, candidateId:cid, why:(byKairo ? 'Kairo added them' : me + ' added them') + ' · ' + cwScore(c, j).score + '% match', level:byKairo ? 'auto' : 'approved', approvedBy:byKairo ? null : me, result:'Added' });
+  return true;
+}
+function caDismissPick(jobId, cid, reason){
+  const j = jobById(jobId), c = byId(cid); if(!j || !c) return false; const me = caMe().name || 'A person';
+  CA_DEC[jobId + '|' + cid] = { d:'dismissed', at:cwNow(), by:me, reason:reason || 'Not a fit' };
+  caRecord({ agentId:'talent-discovery', action:'Not a fit', jobId:jobId, candidateId:cid, why:reason || 'Not a fit', level:'person', result:'Skipped' }); return true;
+}
+// Who is waiting for a yes: this week's new matches nobody has decided on (when the level is Ask me first).
+function caTdWaiting(){
+  const id = 'talent-discovery'; if(!caActive(id) || caLevelFor(id, 'addPipeline', null) !== 'suggest') return [];
+  const out = [], since = cwNow() - 7 * CW_DAY;
+  caMyJobs().forEach(function(j){ if(!caInScope(id, j) || caJobPaused(id, j)) return; caMatches(j).forEach(function(x){ const f = caPickFirst(j, x.c); if(f && f >= since) out.push({ kind:'pick', id:'pk:' + j.id + ':' + x.c.id, agentId:id, job:j, jobId:j.id, c:x.c, candidateId:x.c.id, s:x.s, at:f, title:x.c.name + ' for ' + j.title, why:caWhy(x.c, j, x.s).filter(function(r){ return r.ok; }).map(function(r){ return r.t; }).join(', ') }); }); });
+  return out.sort(function(a, b){ return b.s.score - a.s.score; });
+}
+function caCityOf(x){ return String(x || '').split(',')[0].trim(); }
+// The reasons behind a match: what fits (green) and the one gap (amber), from the same rules the score uses.
+function caWhy(c, j, s){
+  const need = (j.skills || []).filter(function(x){ return x !== 'General'; }), have = need.filter(function(k){ return (c.skills || []).indexOf(k) > -1; }), out = [];
+  if(have.length) out.push({ ok:true, t:have.slice(0, 2).join(', ') + (have.length > 2 ? ' +' + (have.length - 2) : '') + ' ✓' });
+  if(s.locOk) out.push({ ok:true, t:caCityOf(c.loc) + ' ✓' }); else if(c.loc) out.push({ ok:false, t:caCityOf(c.loc) + ', job in ' + caCityOf(j.loc) });
+  if(s.noticeOk) out.push({ ok:true, t:(c.notice ? String(c.notice).replace(/\s*Days?/i, ' days') : 'Short') + ' notice ✓' }); else out.push({ ok:false, t:String(c.notice || '').replace(/\s*Days?/i, ' days') + ' notice' });
+  const exp = c.comp && c.comp.expected, max = j.comp && +j.comp.fixedMax, min = j.comp && +j.comp.fixedMin;
+  if(exp && max && exp > max) out.push({ ok:false, t:caHasMoney() ? 'Expects ' + (exp / 100000).toFixed(0) + ' LPA, range ' + (min / 100000).toFixed(0) + '–' + (max / 100000).toFixed(0) : 'Expects above range' });
+  if(have.length < need.length && need.length) out.push({ ok:false, t:'Missing ' + need.filter(function(k){ return have.indexOf(k) < 0; }).slice(0, 2).join(', ') });
+  const good = out.filter(function(r){ return r.ok; }).slice(0, 3), gap = out.filter(function(r){ return !r.ok; }).slice(0, 1);
+  return good.concat(gap);
+}
+
+/* ---------- the other agents' waiting items, from real records ---------- */
+function caDoneKey(k){ return !!CA_DONE[k]; }
+// Waiting items stay while an agent is paused: they are decisions for people, not things Kairo does.
+function caActive(id){ return ['on','trial','paused'].indexOf(caStatus(id).key) > -1; }
+function caIvWaiting(){
+  const id = 'interviews'; if(!caActive(id)) return []; const now = fmNow(), out = [];
+  const up = hmInterviews.filter(function(iv){ const t = ivTime(iv); return iv.jobId && t > now && t <= now + 7 * CW_DAY && ['Completed','Cancelled','No Show'].indexOf(iv.status) < 0 && caJobMine(jobById(iv.jobId)) && !caJobPaused(id, jobById(iv.jobId)); });
+  const byWho = {}; up.forEach(function(iv){ if(!iv.interviewerName) return; (byWho[iv.interviewerName] = byWho[iv.interviewerName] || []).push(iv); });
+  Object.keys(byWho).forEach(function(n){ const l = byWho[n].sort(function(a, b){ return ivTime(a) - ivTime(b); }); for(let i = 1; i < l.length; i++){ const a = l[i - 1], b = l[i]; if(ivTime(b) < ivTime(a) + (+a.duration || 60) * 60000 && !caDoneKey('iv:' + b.id)) out.push({ kind:'iv', type:'clash', id:'iv:' + b.id, agentId:id, iv:b, other:a, at:ivTime(b), jobId:b.jobId, candidateId:b.candidateId, title:b.candidate + ' clashes with ' + a.candidate, why:n + ' has both at ' + caHM(ivTime(b)) }); } });
+  up.filter(function(iv){ return !iv.candidateConfirmed && ivTime(iv) - now <= 36 * 3600000 && !caDoneKey('iv:' + iv.id) && !out.some(function(o){ return o.iv.id === iv.id; }); }).forEach(function(iv){
+    out.push({ kind:'iv', type:'noshow', id:'iv:' + iv.id, agentId:id, iv:iv, at:ivTime(iv), jobId:iv.jobId, candidateId:iv.candidateId, title:iv.candidate + ' hasn’t confirmed', why:'Interview in ' + Math.max(1, Math.round((ivTime(iv) - now) / 3600000)) + ' h · no reply to the 24 h reminder' }); });
+  return out.sort(function(a, b){ return a.at - b.at; });
+}
+function caLiveOffers(){ return SUBMISSIONS.filter(function(s){ return s.offer && !journeyJoined(s) && ['Rejected','Withdrawn'].indexOf(s.stage) < 0 && caMineSub(s) && byId(s.candidateId); }); }
+function caOjWaiting(){
+  const id = 'offers-joining'; if(!caActive(id)) return []; const lvl = TENANT_AGENT_CONFIG[id].settings.riskAlert === 'Medium' ? ['High','Medium'] : ['High'];
+  return caLiveOffers().filter(function(s){ return lvl.indexOf(caOfferRisk(s).level) > -1 && !caDoneKey('oj:' + s.id); }).map(function(s){ const r = caOfferRisk(s), c = byId(s.candidateId), j = jobById(s.jobId) || {};
+    return { kind:'oj', id:'oj:' + s.id, agentId:id, sb:s, c:c, job:j, jobId:s.jobId, candidateId:s.candidateId, risk:r, at:Date.parse(s.offer.at) || 0, title:c.name + ' · ' + r.level + ' risk', why:r.why }; }).sort(function(a, b){ return (b.risk.level === 'High') - (a.risk.level === 'High') || b.at - a.at; });
+}
+(function(){ const base = caNeeds; window.caNeeds = function(agentId){
+  let list = base(agentId).filter(function(n){ return !(n.kind === 'item' && CA_DONE['s:' + n.id]); }).map(function(n){ if(n.kind !== 'item') return n; const s = CA_SUGGEST.find(function(x){ return x.id === n.id; }); return s ? Object.assign({}, s, n, { type:s.type, candidateId:s.candidateId, jobId:s.jobId || n.jobId }) : n; });
+  const add = function(id, f){ if(!agentId || agentId === id){ try { list = list.concat(f()); } catch(e){ console.error('waiting ' + id, e); } } };
+  add('talent-discovery', caTdWaiting); add('interviews', caIvWaiting); add('offers-joining', caOjWaiting);
+  return agentId ? list : list.sort(function(a, b){ return b.at - a.at; }); }; })();
+
+/* ---------- the four numbers per agent (one function; the card, Today and Activity all read it) ---------- */
+// Every count is over this viewer's rows and records. A series is 7 daily values, oldest first; prev is the same number last week.
+function caDays(){ const now = cwNow(), out = []; for(let i = 6; i >= 0; i--) out.push([now - (i + 1) * CW_DAY, now - i * CW_DAY]); return out; }
+function caCountBy(rows, test, a, b){ return rows.filter(function(r){ return r.at >= a && r.at < b && test(r); }).reduce(function(s, r){ return s + (r.count || 1); }, 0); }
+function caSeries(rows, test){ return caDays().map(function(d){ return caCountBy(rows, test, d[0], d[1] + 1); }); }
+window.caWeekNums = function(id){
+  const now = cwNow(), wk = now - 7 * CW_DAY, pw = now - 14 * CW_DAY, all = caRows({ agent:id, since:pw }), rows = all.filter(function(r){ return r.at >= wk; });
+  const T = function(key, n, label, sub, series, prev, o){ return Object.assign({ key:key, n:n, disp:String(n), label:label, sub:sub, series:series || [], prev:prev }, o || {}); };
+  const cnt = function(test){ return [caCountBy(all, test, wk, Infinity), caSeries(all, test), caCountBy(all, test, pw, wk)]; };
+  const sent = function(r){ return r.result === 'Sent'; }, rep = function(r){ return !!r.reply; }, pos = function(r){ return !!r.reply && /\b(yes|interested|keen|sure|okay|ok|sounds good|let'?s talk|call me)\b/i.test(r.reply); };
+  let tiles, line;
+  if(id === 'talent-discovery'){
+    const wait = caTdWaiting(), found = cnt(function(r){ return r.action === 'pick'; }), added = cnt(function(r){ return r.action === 'added'; });
+    const jobs = caMyJobs().filter(function(j){ return caInScope(id, j) && !caJobPaused(id, j); }), cov = jobs.map(function(j){ return caMatches(j); }), enough = cov.filter(function(m){ return m.length >= CA_ENOUGH; }).length;
+    const scores = [].concat.apply([], cov.map(function(m){ return m.map(function(x){ return x.s.score; }); })), avg = scores.length ? Math.round(scores.reduce(function(a, b){ return a + b; }, 0) / scores.length) : 0;
+    const suggest = caLevelFor(id, 'addPipeline', null) === 'suggest';
+    tiles = [ T('new', suggest ? wait.length : found[0], 'New matches', suggest ? caN(found[0], 'found', 'found') + ' this week, waiting for you' : 'found this week', found[1], found[2], { go:'waiting', dn:found[0] }),
+      T('added', added[0], 'Added to jobs', 'by you or Kairo, this week', added[1], added[2], { go:'activity:added' }),
+      T('enough', enough, 'Jobs with enough matches', 'at least ' + CA_ENOUGH + ' matches each', caDays().map(function(){ return enough; }), null, { disp:enough + ' of ' + jobs.length, go:'jobs:healthy', of:jobs.length }),
+      T('avg', avg, 'Average match', 'across ' + caPeople(scores.length) + ' matched now', [], null, { disp:scores.length ? avg + '%' : '—', go:'jobs:best' }) ];
+    line = (suggest ? (wait.length ? caN(wait.length, 'new match', 'new matches') + ' waiting' : 'No new matches waiting') : 'Found ' + caPeople(found[0])) + ' · ' + added[0] + ' added this week · ' + enough + ' of ' + caN(jobs.length, 'job') + ' have enough';
+  } else if(id === 'engagement'){
+    const s = cnt(sent), r = cnt(rep), p = cnt(pos), ready = caNeeds(id).filter(function(n){ return n.type === 'reply'; }).length;
+    tiles = [ T('sent', s[0], 'Messages sent', 'one per message, not per channel', s[1], s[2], { go:'funnel' }), T('replies', r[0], 'Replies', caPct(r[0], s[0]) + '% reply rate', r[1], r[2], { go:'funnel' }),
+      T('interested', p[0], 'Interested', 'replied yes to a role', p[1], p[2], { go:'funnel' }), T('ready', ready, 'Ready for you to shortlist', 'interested and waiting for you', [], null, { go:'waiting' }) ];
+    line = 'Sent ' + caN(s[0], 'message') + ' · ' + r[0] + ' replied · ' + caN(ready, 'person', 'people') + ' ready for you';
+  } else if(id === 'interviews'){
+    const b = cnt(function(r){ return /book/i.test(r.action || ''); }), rem = cnt(function(r){ return sent(r) && !/book/i.test(r.action || ''); });
+    const since = fmNow() - 30 * CW_DAY, past = hmInterviews.filter(function(iv){ const t = ivTime(iv); return t >= since && t <= fmNow() && caJobMine(jobById(iv.jobId)) && (iv.status === 'Completed' || iv.status === 'No Show' || iv.noShow); }), shown = past.filter(function(iv){ return iv.status === 'Completed' && !iv.noShow; }).length, rate = caPct(shown, past.length);
+    const fb = caFeedbackRows(), oldest = fb.length ? fb[0].d : 0;
+    tiles = [ T('booked', b[0], 'Booked by Kairo', 'interviews this week', b[1], b[2], { go:'week' }), T('showup', rate, 'Show-up rate', past.length ? shown + ' of ' + past.length + ' in the last 30 days' : 'no interviews in 30 days', [], null, { disp:past.length ? rate + '%' : '—' }),
+      T('reminders', rem[0], 'Reminders sent', 'to candidates and panels', rem[1], rem[2], { go:'week' }), T('feedback', fb.length, 'Feedback waiting', fb.length ? 'oldest ' + caN(oldest, 'day') : 'nothing overdue', [], null, { go:'feedback' }) ];
+    line = 'Booked ' + b[0] + ' · ' + caN(rem[0], 'reminder') + ' sent · ' + caN(fb.length, 'client', 'clients') + ' owe feedback';
+  } else if(id === 'offers-joining'){
+    const live = caLiveOffers(), high = live.filter(function(s){ return caOfferRisk(s).level === 'High'; }).length, j14 = caJoinings(14).length;
+    const mStart = (function(){ const a = wsDay(fmNow()).split('-'); return wsWallMs(+a[0], +a[1], 1, 0, 0); })(), joined = PAYTRACK_JOINED.filter(function(r){ const d = typeof ptRecDate === 'function' ? ptRecDate(r, 'doj') : null; const sb = subById(r.submissionId); return d && d.getTime() >= mStart && d.getTime() <= fmNow() && (sb ? caMineSub(sb) : caOwnerish()); }).length;
+    tiles = [ T('watched', live.length, 'Offers watched', 'from offer to joining', [], null, { go:'board' }), T('high', high, 'At high risk', 'likely to drop out', [], null, { go:'waiting' }),
+      T('join14', j14, 'Joining in 14 days', 'with check-ins planned', [], null, { go:'timeline' }), T('joined', joined, 'Joined this month', 'placements that started', [], null) ];
+    line = 'Watching ' + caN(live.length, 'offer') + ' · ' + high + ' at high risk · ' + j14 + ' joining in 14 days';
+  } else {
+    const inv = cnt(function(r){ return r.action === 'invite' && sent(r); }), acc = cnt(function(r){ return r.action === 'accept'; }), rp = cnt(function(r){ return r.action === 'reply' || (!!r.reply && r.action === 'message'); }), ad = cnt(function(r){ return r.action === 'added'; });
+    tiles = [ T('invites', inv[0], 'Invites sent', 'connection requests', inv[1], inv[2], { go:'funnel' }), T('accepted', acc[0], 'Accepted', caPct(acc[0], inv[0]) + '% acceptance', acc[1], acc[2], { go:'funnel' }),
+      T('replies', rp[0], 'Replies', 'to Kairo’s messages', rp[1], rp[2], { go:'funnel' }), T('added', ad[0], 'Candidates added', 'to your talent pool', ad[1], ad[2], { go:'funnel' }) ];
+    line = 'Sent ' + caN(inv[0], 'invite') + ' · ' + acc[0] + ' accepted · ' + caN(ad[0], 'candidate') + ' added';
+  }
+  return { tiles:tiles, nums:tiles.slice(0, 3).map(function(t){ return { n:t.n, label:t.label, def:t.sub }; }), line:line, key:tiles.map(function(t){ return t.n; }).join(',') };
+};
+function caFeedbackRows(){
+  const now = fmNow(), out = [];
+  SUBMISSIONS.filter(function(s){ return subPhase(s) === 'client' && !s.hold && subNeedsChase(s) && caMineSub(s); }).forEach(function(s){ const j = jobById(s.jobId) || {}, d = pipeDays((subSentInfo(s) || {}).at) || 0; out.push({ key:'s:' + s.id, client:j.client || 'Client', who:(byId(s.candidateId) || {}).name || '', what:'profile', d:d, jobId:s.jobId }); });
+  hmInterviews.forEach(function(iv){ const t = ivTime(iv); if(!iv.jobId || !t || t > now || iv.outcome || ['Completed','Cancelled','No Show'].indexOf(iv.status) > -1 || !caJobMine(jobById(iv.jobId))) return; out.push({ key:'i:' + iv.id, client:(jobById(iv.jobId) || {}).client || 'Client', who:iv.candidate, what:iv.round || 'interview', d:Math.floor((now - t) / CW_DAY), jobId:iv.jobId, ivId:iv.id }); });
+  return out.sort(function(a, b){ return b.d - a.d; });
+}
+function caJoinings(days){ const now = fmNow(); return caLiveOffers().filter(function(s){ if(!s.offer.doj) return false; const d = wsDaysBetween(wsDay(now), s.offer.doj); return d >= 0 && d <= days; }); }
+
+/* ---------- pause for a while; it resumes on its own (fmNow, so the demo clock moves it) ---------- */
+function caPauseUntil(id, until){
+  if(!caOwnerish()){ toast('Only the Owner or an Admin can pause an agent. You can pause it on your own job.'); return false; }
+  const cfg = TENANT_AGENT_CONFIG[id], who = caMe().name || 'A person'; cfg.paused = { by:who, at:cwNow(), until:until || null };
+  logAudit('Cowork', 'Agent paused', agentById(id).name + ' · on → paused' + (until ? ' until ' + caHM(until) + (wsDay(until) !== wsDay(fmNow()) ? ' ' + caShortDay(wsDay(until)) : '') : ' until resumed'));
+  CA.menu = null; caRefresh(); return true;
+}
+function caTomorrow9(){ const a = wsAddDays(wsDay(fmNow()), 1).split('-'); return wsWallMs(+a[0], +a[1], +a[2], 9, 0); }
+function caPauseSweep(){ CW.order.forEach(function(id){ const p = (TENANT_AGENT_CONFIG[id] || {}).paused; if(p && p.until && fmNow() >= p.until){ TENANT_AGENT_CONFIG[id].paused = null; logAudit('Cowork', 'Agent resumed', agentById(id).name + ' · paused → on (the pause ended at ' + caHM(p.until) + ')'); } }); }
+(function(){ const base = caStatus; window.caStatus = function(id){ caPauseSweep(); return base(id); }; })();
+(function(){ const sw = window.fmSlaSweep; window.fmSlaSweep = function(){ const r = sw.apply(this, arguments); try { caPauseSweep(); } catch(e){ console.error('pause sweep', e); } return r; }; })();
+function caTurnOffAsk(id){
+  const a = agentById(id), stops = { 'talent-discovery':'finding people for your jobs', engagement:'sending messages, follow-ups and consent reminders', interviews:'booking, reminders and chasing feedback', 'offers-joining':'offer check-ins and dropout warnings', linkedin:'visits, invites and messages on LinkedIn' }[id];
+  CA.menu = null; caRefresh();
+  fmModal('<h2 id="fm-h" class="fm-h">Turn off ' + cwEsc(a.name) + '?</h2><p class="text-sm text-zinc-600 mb-2">It stops ' + cwEsc(stops) + ' on every job, until someone turns it on again.</p><p class="text-sm text-zinc-500">What it already did stays in Activity. Nothing is deleted.</p><div class="fm-foot"><button type="button" class="o-btn" onclick="fmModal(\'\')">Keep it on</button><button type="button" class="o-btn o-btn--primary" data-confirm-off onclick="fmModal(\'\'); caToggleAgent(\'' + id + '\')">Turn off</button></div>');
+}
+
+/* ---------- Run now: progress in place, then what it found ---------- */
+function caRunNowUI(id){
+  if(CA.run && CA.run.id === id && CA.run.phase === 'scan') return;
+  const jobs = caScopeJobs(id).length, scan = { 'talent-discovery':'Scanning ' + CANDIDATES.length.toLocaleString('en-IN') + ' candidates against ' + caN(jobs, 'job') + '…', engagement:'Checking conversations and who is due a message…', interviews:'Checking ' + caN(hmInterviews.filter(function(iv){ return ivTime(iv) > fmNow() && ivTime(iv) < fmNow() + 7 * CW_DAY; }).length, 'interview') + ' this week…', 'offers-joining':'Checking ' + caN(caLiveOffers().length, 'offer') + ' for risk…', linkedin:'Checking ' + caN(caLiConnected().length, 'LinkedIn account') + '…' }[id];
+  CA.run = { id:id, phase:'scan', text:scan, t0:Date.now() }; caRefresh();
+  setTimeout(function(){ caRunNowDone(id); }, CA.runMs != null ? CA.runMs : 2000);
+}
+function caRunNowDone(id){
+  if(!CA.run || CA.run.id !== id) return; let text = '', see = false;
+  const before = caNeeds(id).length;
+  try {
+    if(id === 'talent-discovery'){ const r = caPickSweep(true); text = r.people ? 'Found ' + caN(r.people, 'new person', 'new people') + ' for ' + caN(r.jobs.length, 'job') : 'No one new since the last check'; see = r.people > 0 && caLevelFor(id, 'addPipeline', null) === 'suggest'; CA.run.found = r; }
+    else { cwRunEngine(); const after = caNeeds(id).length; text = after > before ? caN(after - before, 'new item') + ' waiting for you' : 'Everything is up to date'; see = after > before; }
+  } catch(e){ console.error('run now', e); text = 'Couldn’t finish the check. Try again.'; }
+  CA_CHECK[id] = caNowR(); CA.run = { id:id, phase:'done', text:text, see:see, found:CA.run.found, at:Date.now() };
+  logAudit('Cowork', 'Run now', agentById(id).name + ' · ' + text); caRefresh();
+  setTimeout(function(){ if(CA.run && CA.run.phase === 'done' && Date.now() - CA.run.at >= 11000){ CA.run = null; if(document.getElementById('ca-root')) caRefresh(); } }, 12000);
+}
+
+/* ---------- demo companies: real work waiting for every agent that is On ---------- */
+const CA_TITLE_SKILLS = { 'Backend Engineer':['Java','Spring Boot','Microservices','SQL'], 'Frontend Developer':['React','TypeScript','CSS','Redux'], 'QA Engineer':['Selenium','Automation','API testing'], 'DevOps Engineer':['Kubernetes','Docker','CI/CD','Terraform'], 'Data Analyst':['SQL','Excel','Power BI','Python'],
+  'Business Development Manager':['B2B sales','Lead generation','Negotiation','CRM'], 'HR Generalist':['Recruitment','Payroll','HR policies','Excel'], 'Customer Success Manager':['Account management','Onboarding','Renewals','CRM'], 'Accounts Manager':['Tally','GST','Accounting','Excel'], 'Inside Sales Executive':['Cold calling','Lead qualification','CRM','Negotiation'] };
+const CA_REPLIES = ['Yes, interested. My notice is 30 days, can we talk tomorrow?', 'Sounds good. What’s the budget for this role?', 'Interested, but I’d need hybrid. Is that possible?', 'Yes, keen to hear more. Evenings work best for a call.'];
+function caSeedRng(seed){ let s = seed >>> 0 || 1; return function(){ s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+// Northstar: titles get their own skills, then the pool is tuned so most open jobs have 3–12 matches, two are thin and one has none.
+function caTuneNorthstar(){
+  const generic = {}; JOBS.forEach(function(j){ const k = (j.skills || []).join('/'); generic[k] = (generic[k] || 0) + 1; });
+  JOBS.forEach(function(j){ if(CA_TITLE_SKILLS[j.title] && generic[(j.skills || []).join('/')] > 1) j.skills = CA_TITLE_SKILLS[j.title].slice(); });
+  const jobs = caOpenJobs(), target = {}, th = 70;
+  jobs.forEach(function(j){ target[j.id] = /Nurse/i.test(j.title) ? 0 : /Warehouse/i.test(j.title) ? 1 : /Area Sales/i.test(j.title) ? 2 : 3 + (cwHash(j.id) % 10); });
+  const inJob = {}; SUBMISSIONS.forEach(function(s){ (inJob[s.jobId] = inJob[s.jobId] || {})[s.candidateId] = 1; });
+  const pool = CANDIDATES.filter(function(c){ return !cwSuppression(personKeyOf(c)); }), owner = {}, score = function(c, j){ return cwScore(c, j).score; }, blocked = function(c, j){ return typeof fmClientWindowHit === 'function' && !!fmClientWindowHit(j, c); };
+  // 1. each job keeps (or gets) its own people
+  jobs.slice().sort(function(a, b){ return target[b.id] - target[a.id]; }).forEach(function(j){
+    if(!target[j.id]) return; const mine = pool.filter(function(c){ return !owner[c.id] && !(inJob[j.id] || {})[c.id] && score(c, j) >= th && !blocked(c, j); }).slice(0, target[j.id]);
+    mine.forEach(function(c){ owner[c.id] = j.id; });
+    for(let i = 0, k = mine.length; k < target[j.id] && i < pool.length; i++){ const c = pool[(cwHash(j.id) + i * 7) % pool.length]; if(owner[c.id] || (inJob[j.id] || {})[c.id] || blocked(c, j)) continue;
+      owner[c.id] = j.id; c.skills = j.skills.slice().concat((c.skills || []).filter(function(s){ return !jobs.some(function(x){ return (x.skills || []).indexOf(s) > -1; }); }).slice(0, 1)); c.loc = j.loc; c.notice = '15 Days'; c.joinProb = Math.max(c.joinProb || 0, 72); c.role = j.title; k++; }
+  });
+  // 2. nobody counts for a job that isn't theirs
+  for(let pass = 0; pass < 4; pass++){ let moved = 0;
+    pool.forEach(function(c){ jobs.forEach(function(j){ if(owner[c.id] === j.id || (inJob[j.id] || {})[c.id] || score(c, j) < th) return; moved++;
+      const keep = owner[c.id] ? (jobById(owner[c.id]).skills || []) : [];
+      if(!owner[c.id]){ c.joinProb = Math.min(c.joinProb || 0, 35); c.notice = '90 Days'; }
+      for(let g = 0; g < 6 && score(c, j) >= th; g++){ const drop = (c.skills || []).find(function(s){ return (j.skills || []).indexOf(s) > -1 && keep.indexOf(s) < 0; }); if(!drop) break; c.skills = c.skills.filter(function(s){ return s !== drop; }); } }); });
+    if(!moved) break; }
+  CA_SCORE_MEMO = { key:'', jobs:{} };
+}
+function caDemoSeed(key){
+  if(jsCorp()) return; const rnd = caSeedRng(cwHash('seed:' + key)), now = cwNow(), H = 3600000, big = CANDIDATES.length > 1000;
+  // start clean: what an earlier company or an early render left behind
+  for(let i = SEND_LEDGER.length - 1; i >= 0; i--){ const l = SEND_LEDGER[i]; if(l.seeded || (l.agentId === 'talent-discovery' && (l.action === 'pick' || l.action === 'added'))) SEND_LEDGER.splice(i, 1); }
+  CA_PICKS = {}; CA_DEC = {}; CA_DONE = {}; for(let i = CA_SUGGEST.length - 1; i >= 0; i--) if(CA_SUGGEST[i].seeded) CA_SUGGEST.splice(i, 1);
+  CW.order.forEach(function(id){ const c = TENANT_AGENT_CONFIG[id]; if(c){ c.setupDone = true; c.paused = null; c.jobTh = {}; (agentById(id).agencySteps || []).forEach(function(st){ if(st.level !== 'person') c.steps[st.id] = st.level; }); } });
+  if(key === 'northstar') caTuneNorthstar();
+  const rec = function(o){ if(o.at > now) o.at = now - 60000; const e = caRecord(o); e.seeded = true; return e; }, pickN = function(list, n){ return list.slice(0, Math.max(0, n)); };
+  const owner = demoOwnerOf(), leadOf = function(j){ return j.jobLeadId || j.recruiterId || (rosterById((j.assignedRecruiters || [])[0]) || {}).id || (owner || {}).id; };
+  const was = DEMO.as; if(owner) demoAct(owner.id);
+  try {
+    // Talent Discovery: matches found over two weeks; a few new this week wait for a yes; a few more turn up on the next check.
+    if(caWorking('talent-discovery')){
+      const nNew = big ? 12 : key === 'kesar' ? 5 : 6, nHold = big ? 6 : key === 'kesar' ? 2 : 4; let holdLeft = nHold, newLeft = nNew;
+      const jobs = caScopeJobs('talent-discovery'), per = jobs.map(function(j){ return { j:j, m:caPicksFor(j) }; }).filter(function(x){ return x.m.length; });
+      per.forEach(function(x, ji){ const seen = CA_PICKS[x.j.id] = {}, byDay = {};
+        x.m.forEach(function(p, i){
+          if(i === x.m.length - 1 && holdLeft > 0 && x.m.length > 1 && ji % 2 === 0){ holdLeft--; return; }                 // found on the next check
+          let at; if(i === 0 && newLeft > 0 && ji % (big ? 6 : 2) === 0){ newLeft--; at = now - (2 + Math.floor(rnd() * 120)) * H; } else at = now - (8 + Math.floor(rnd() * 52)) * CW_DAY;
+          seen[p.c.id] = { at:at, s:p.s.score }; const d = Math.floor((now - at) / CW_DAY); (byDay[d] = byDay[d] || []).push(p); });
+        Object.keys(byDay).forEach(function(d){ const ps = byDay[d], at = Math.min.apply(null, ps.map(function(p){ return seen[p.c.id].at; })); const e = rec({ agentId:'talent-discovery', action:'pick', jobId:x.j.id, at:at, why:caPeople(ps.length) + ' above ' + caThFor(x.j) + '% for ' + x.j.title + ': ' + ps.slice(0, 3).map(function(p){ return p.c.name + ' ' + p.s.score + '%'; }).join(', '), result:'Done' }); e.count = ps.length; });
+      });
+      const recent = SUBMISSIONS.filter(function(s){ return byId(s.candidateId) && jobById(s.jobId) && jobById(s.jobId).status === 'Active'; }).slice(-12);
+      recent.forEach(function(s, i){ const at = i < (big ? 6 : 3) ? now - (6 + i * 19) * H : now - (8 + i) * CW_DAY; rec({ agentId:'talent-discovery', action:'added', jobId:s.jobId, candidateId:s.candidateId, at:at, why:(i % 3 ? (rosterById(s.recruiterId) || {}).name || 'A recruiter' : 'Kairo') + ' added them', level:i % 3 ? 'approved' : 'auto', approvedBy:i % 3 ? (rosterById(s.recruiterId) || {}).name : null, result:'Added' }); });
+      CA_CHECK['talent-discovery'] = caNowR() - 4 * 60000;
+    }
+    // Engagement: first messages to new matches, and replies that need a person.
+    if(caWorking('engagement')){
+      const wa = cwChannelConnected('whatsapp'), tpl = (TENANT_AGENT_CONFIG.engagement.plays.newMatch || {}).tpl || CA_PLAYS[0].tpl, nFirst = big ? 8 : 4, nRep = big ? 3 : 2, pairs = [];
+      caScopeJobs('engagement').forEach(function(j){ caJobPicks(j).filter(function(x){ return x.s.score >= 60 && !CA_DEC[j.id + '|' + x.c.id]; }).slice(0, 2).forEach(function(x){ if(!pairs.some(function(p){ return p.c.id === x.c.id; })) pairs.push({ j:j, c:x.c, s:x.s.score }); }); });
+      pairs.slice(0, nFirst + nRep).forEach(function(p, i){
+        const lead = rosterById(leadOf(p.j)) || owner || {}, s = caSample(); s.c = p.c; s.j = p.j; s.me = caFirst(lead.name) + ' from ' + ibWs().split(' ')[0]; s.link = ibWsSlug() + '.oontu.app/jobs/' + p.j.id; const text = caFill(tpl, s);
+        if(i < nFirst) CA_SUGGEST.push({ id:'cs' + (CA_SUGGEST_NEXT++), seeded:true, status:'pending', agentId:'engagement', type:'first', ownerId:lead.id, candidateId:p.c.id, jobId:p.j.id, channel:wa ? 'whatsapp' : 'email', at:now - (1 + i * 3) * H, title:'First message to ' + p.c.name, why:'New match for ' + p.j.title + ' · ' + p.s + '% · never contacted', text:text, action:'send' });
+        else { const reply = CA_REPLIES[(i - nFirst) % CA_REPLIES.length]; rec({ agentId:'engagement', action:'send', jobId:p.j.id, candidateId:p.c.id, channel:wa ? 'whatsapp' : 'email', at:now - (20 + i) * H, why:'New job match', text:text, reply:reply, sent:true });
+          CA_SUGGEST.push({ id:'cs' + (CA_SUGGEST_NEXT++), seeded:true, status:'pending', agentId:'engagement', type:'reply', ownerId:lead.id, candidateId:p.c.id, jobId:p.j.id, channel:wa ? 'whatsapp' : 'email', at:now - (2 + i) * H, title:p.c.name + ' replied', why:'Interested in ' + p.j.title + ' · needs a person', text:text, reply:reply, action:'reply' }); }
+      });
+      if(big){ const extra = CANDIDATES.slice(40, 70); extra.forEach(function(c, i){ const j = caOpenJobs()[i % caOpenJobs().length]; rec({ agentId:'engagement', action:'send', jobId:j.id, candidateId:c.id, channel:'whatsapp', at:now - (3 + i * 5) * H, why:'New job match', text:'Hi ' + caFirst(c.name) + ', we have a ' + j.title + ' opening.', reply:i % 3 === 0 ? CA_REPLIES[i % 4] : '', sent:true }); }); }
+    }
+    // Interviews: what Kairo booked, the reminders it sent, and no more than a handful unconfirmed for tomorrow.
+    if(caWorking('interviews')){
+      const nowR = fmNow(), up = hmInterviews.filter(function(iv){ const t = ivTime(iv); return iv.jobId && t > nowR && t < nowR + 7 * CW_DAY && ['Completed','Cancelled','No Show'].indexOf(iv.status) < 0; }).sort(function(a, b){ return ivTime(a) - ivTime(b); });
+      pickN(up, big ? 14 : 5).forEach(function(iv, i){ rec({ agentId:'interviews', action:'book', jobId:iv.jobId, candidateId:iv.candidateId, at:now - (5 + i * 11) * H, why:'Both sides agreed on ' + caDay(ivTime(iv)) + ' at ' + caHM(ivTime(iv)), result:'Booked' }); });
+      if(big) pickN(up, 40).forEach(function(iv, i){ rec({ agentId:'interviews', action:'send', jobId:iv.jobId, candidateId:iv.candidateId, channel:'whatsapp', at:now - (2 + i * 4) * H, why:'24 h reminder', text:'Reminder: your ' + (iv.round || 'interview') + ' is on ' + caDay(ivTime(iv)) + ' at ' + caHM(ivTime(iv)) + '.', sent:true }); });
+      const soon = up.filter(function(iv){ return ivTime(iv) - nowR <= 36 * H; }), keep = big ? 12 : 6;
+      soon.forEach(function(iv, i){ iv.candidateConfirmed = i >= keep; }); if(soon.length < 5) up.slice(0, 6).forEach(function(iv){ iv.candidateConfirmed = false; });
+    }
+    // Offer & Joining: a few more offers with warning signs, some accepted with a joining date, and the check-ins it sent.
+    if(caWorking('offers-joining')){
+      const live = SUBMISSIONS.filter(function(s){ return s.offer && !journeyJoined(s) && ['Rejected','Withdrawn'].indexOf(s.stage) < 0 && byId(s.candidateId); });
+      const high = live.filter(function(s){ return caOfferRisk(s).level === 'High'; }).length, need = Math.max(0, (big ? 12 : 6) - high);
+      live.filter(function(s){ return caOfferRisk(s).level === 'Medium'; }).slice(0, need).forEach(function(s, i){ CANDIDATE_TOUCHES.push({ cid:s.candidateId, by:'Kairo', at:Date.now() - (1 + i) * 6 * H, channel:'WhatsApp', outcome:'Concern', note:'Mentioned another offer from a competitor.', jobId:s.jobId, seeded:true }); });
+      live.filter(function(s){ return s.offer.status === 'Made' && caOfferRisk(s).level === 'Low'; }).slice(0, big ? 10 : 5).forEach(function(s, i){ s.offer.status = 'Accepted'; s.offer.acceptedAt = new Date(fmNow() - (2 + i) * CW_DAY).toISOString(); s.offer.doj = wsAddDays(wsDay(fmNow()), 3 + i * 5); });
+      live.slice(0, big ? 30 : 0).forEach(function(s, i){ rec({ agentId:'offers-joining', action:'send', jobId:s.jobId, candidateId:s.candidateId, channel:'whatsapp', at:now - (4 + i * 5) * H, why:'Weekly check-in', text:'Hi ' + caFirst(byId(s.candidateId).name) + ', all good before you join?', sent:true }); });
+    }
+    // LinkedIn Outreach: two weeks of visits, invites, accepts, messages and replies per account; first messages waiting.
+    if(caWorking('linkedin')){
+      const accts = caLiConnected().slice(0, 6), jobs = caOpenJobs(), pool = CANDIDATES; let ci = 0;
+      accts.forEach(function(uid, ai){ for(let d = 13; d >= 0; d--){ const nInv = 6 + Math.floor(rnd() * 8); for(let k = 0; k < nInv; k++){ const c = pool[(ci++ * 13 + ai) % pool.length], j = jobs[(ci + ai) % jobs.length], at = now - d * CW_DAY - (1 + k) * 0.6 * H;
+        rec({ agentId:'linkedin', action:'visit', jobId:j.id, candidateId:c.id, channel:'linkedin', senderId:uid, at:at - 0.2 * H, why:'Matches ' + j.title, sent:true }); rec({ agentId:'linkedin', action:'invite', jobId:j.id, candidateId:c.id, channel:'linkedin', senderId:uid, at:at, why:'Matches ' + j.title, sent:true });
+        const r = rnd(); if(r < 0.34){ rec({ agentId:'linkedin', action:'accept', jobId:j.id, candidateId:c.id, channel:'linkedin', senderId:uid, at:at + 9 * H, why:'Accepted the invite', result:'Done' });
+          if(r < 0.24){ rec({ agentId:'linkedin', action:'message', jobId:j.id, candidateId:c.id, channel:'linkedin', senderId:uid, at:at + 10 * H, why:'First message after they accepted', sent:true }); if(r < 0.1){ rec({ agentId:'linkedin', action:'reply', jobId:j.id, candidateId:c.id, channel:'linkedin', senderId:uid, at:at + 20 * H, why:'They replied', reply:'Happy to chat, send details.', result:'Done' }); if(r < 0.06) rec({ agentId:'linkedin', action:'added', jobId:j.id, candidateId:c.id, channel:'linkedin', senderId:uid, at:at + 21 * H, why:'Added to your talent pool', result:'Added' }); } } } } } });
+      const n = big ? 10 : 5, tpl = TENANT_AGENT_CONFIG.linkedin.settings.liMsg;
+      for(let i = 0; i < n && accts.length; i++){ const uid = accts[i % accts.length], u = rosterById(uid) || {}, c = pool[(i * 29 + 7) % pool.length], j = jobs[i % jobs.length], s = caSample(); s.c = c; s.j = j; s.me = caFirst(u.name) + ' from ' + ibWs().split(' ')[0]; s.link = ibWsSlug() + '.oontu.app/jobs/' + j.id;
+        rec({ agentId:'linkedin', action:'accept', jobId:j.id, candidateId:c.id, channel:'linkedin', senderId:uid, at:now - (1 + i * 2) * H, why:'Accepted the invite', result:'Done' });
+        CA_SUGGEST.push({ id:'cs' + (CA_SUGGEST_NEXT++), seeded:true, status:'pending', agentId:'linkedin', type:'li', ownerId:uid, senderId:uid, candidateId:c.id, jobId:j.id, channel:'linkedin', at:now - (1 + i * 2) * H, title:c.name + ' accepted ' + caFirst(u.name) + '’s invite', why:'First message after they accepted · ' + j.title, text:caFill(tpl, s), action:'send' }); }
+    }
+    CW.order.forEach(function(id){ if(!CA_CHECK[id]) CA_CHECK[id] = caNowR() - (2 + cwHash(id) % 8) * 60000; });
+  } finally { if(was) demoAct(was); else if(owner) demoAct(owner.id); }
+}
+
+/* ---------- small visual pieces (Design 2.0 tokens only) ---------- */
+const CA_TINTS = ['--av-sand','--av-sage','--av-blush','--av-mist'];
+function caAv(name, size){ const h = cwHash(name || '?'); size = size || 32; return '<span class="o-av ca-av" style="width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * 0.36) + 'px;background:var(' + CA_TINTS[h % 4] + ')" aria-hidden="true">' + cwEsc(initials(String(name || '?'))) + '</span>'; }
+function caAvStack(names, more){ return '<span class="o-avs ca-avs">' + names.map(function(n){ return '<span title="' + cwEsc(n) + '">' + caAv(n, 26) + '</span>'; }).join('') + (more ? '<span class="ca-avs__more">+' + more + '</span>' : '') + '</span>'; }
+function caRing(pct, size){ size = size || 44; const r = size / 2 - 4, c = 2 * Math.PI * r, tone = pct >= 80 ? 'good' : pct >= 70 ? 'info' : 'warn';
+  return '<span class="ca-ring ca-ring--' + tone + '" style="width:' + size + 'px;height:' + size + 'px" role="img" aria-label="' + pct + '% match"><svg viewBox="0 0 ' + size + ' ' + size + '" width="' + size + '" height="' + size + '" aria-hidden="true"><circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke-width="4" class="ca-ring__bg"/><circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke-width="4" stroke-linecap="round" class="ca-ring__fg" stroke-dasharray="' + (c * pct / 100).toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')"/></svg><b style="font-size:' + Math.max(10, Math.round(size * 0.27)) + 'px">' + pct + '<small>%</small></b></span>'; }
+function caSpark(series){
+  const v = (series || []).map(function(x){ return +x || 0; }); if(v.length < 2) return '';
+  const w = 84, h = 24, max = Math.max.apply(null, v.concat([1])), pts = v.map(function(x, i){ return [(i / (v.length - 1)) * (w - 4) + 2, h - 3 - (x / max) * (h - 6)]; });
+  return '<svg class="ca-spark" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" role="img" aria-label="Last 7 days: ' + v.join(', ') + '"><polyline fill="none" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" points="' + pts.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + '"/><circle r="2.5" cx="' + pts[pts.length - 1][0].toFixed(1) + '" cy="' + pts[pts.length - 1][1].toFixed(1) + '"/></svg>';
+}
+function caDelta(t){ if(t.prev == null) return ''; const d = (t.dn != null ? t.dn : t.n) - t.prev; return '<span class="ca-delta ca-delta--' + (d > 0 ? 'up' : d < 0 ? 'down' : 'flat') + '">' + (d > 0 ? '▲ ' + d + ' vs last week' : d < 0 ? '▼ ' + (-d) + ' vs last week' : 'Same as last week') + '</span>'; }
+function caSegCtl(name, opts, cur, on, ed, attrs){ return '<div class="seg ca-seg" role="radiogroup" aria-label="' + cwEsc(name) + '"' + (attrs || '') + '>' + opts.map(function(o){ const sel = String(o[0]) === String(cur); return '<button type="button" role="radio" class="seg__btn' + (sel ? ' is-on' : '') + '" aria-checked="' + sel + '" data-value="' + cwEsc(o[0]) + '"' + (ed ? ' onclick="' + on.replace('$v', caQ(o[0])) + '"' : ' disabled') + '>' + cwEsc(o[1]) + '</button>'; }).join('') + '</div>'; }
+function caStepper(id, key, path, v, min, max, step, ed, unit, field){
+  const f = field || path.split('.').pop();
+  return '<span class="ca-stepper" data-stepper="' + f + '"><button type="button" aria-label="Less"' + (ed && v > min ? ' onclick="caStepBy(\'' + id + '\',\'' + key + '\',\'' + path + '\',' + (-step) + ',' + min + ',' + max + ')"' : ' disabled') + '>−</button><input class="ca-stepper__in" type="number" inputmode="numeric" data-field="' + f + '" aria-label="' + cwEsc(f) + '" value="' + cwEsc(v) + '" min="' + min + '" max="' + max + '"' + (ed ? ' oninput="caSet(\'' + path + '\', +this.value)" onchange="caLive(\'' + id + '\',\'' + key + '\',\'' + path + '\', Math.max(' + min + ', Math.min(' + max + ', +this.value)), 1)"' : ' disabled') + '><button type="button" aria-label="More"' + (ed && v < max ? ' onclick="caStepBy(\'' + id + '\',\'' + key + '\',\'' + path + '\',' + step + ',' + min + ',' + max + ')"' : ' disabled') + '>+</button>' + (unit ? '<small>' + cwEsc(unit) + '</small>' : '') + '</span>';
+}
+function caGet(o, path){ return path.split('.').reduce(function(a, k){ return a == null ? a : a[k]; }, o); }
+function caStepBy(id, key, path, delta, min, max){ const d = caDraftFor(id), v = Math.max(min, Math.min(max, (+caGet(d, path) || 0) + delta)); caLive(id, key, path, v, 1); }
+function caEmptyArt(){ return '<svg class="ca-empty__art" width="72" height="56" viewBox="0 0 72 56" aria-hidden="true"><rect x="6" y="10" width="44" height="34" rx="8" class="ca-empty__a"/><rect x="22" y="4" width="44" height="34" rx="8" class="ca-empty__b"/><path d="m36 21 5 5 9-10" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="ca-empty__c"/></svg>'; }
+
+/* ---------- the drawer ---------- */
+function caDrawer(title, sub, body, wide){
+  let root = document.getElementById('ca-drawer-root'); if(!root){ root = document.createElement('div'); root.id = 'ca-drawer-root'; document.body.appendChild(root); }
+  root.innerHTML = '<div class="ca-side__scrim" onclick="caDrawerClose()"></div><aside class="ca-side ca-drawer' + (wide ? ' ca-drawer--wide' : '') + '" role="dialog" aria-modal="true" aria-labelledby="ca-dr-h"><div class="ca-side__h"><div><h2 class="o-card__title" id="ca-dr-h" tabindex="-1">' + cwEsc(title) + '</h2>' + (sub ? '<p class="o-card__sub">' + sub + '</p>' : '') + '</div><button type="button" class="o-btn o-btn--ghost ca-g__x" aria-label="Close" onclick="caDrawerClose()">' + oIcon('x', 16) + '</button></div><div class="ca-drawer__b">' + body + '</div></aside>';
+  try { root.querySelector('#ca-dr-h').focus({ preventScroll:true }); } catch(e){}
+}
+function caDrawerClose(){ const r = document.getElementById('ca-drawer-root'); if(r) r.innerHTML = ''; CA.dr = null; }
+function caDrawerOpen(){ return !!document.querySelector('#ca-drawer-root aside'); }
+
+/* ---------- the header: one status control, and Run now with progress in place ---------- */
+function caPillHTML(id, st){
+  const own = caOwnerish(), p = TENANT_AGENT_CONFIG[id].paused, open = CA.pop === 'status:' + id, menuable = own && !st.oontu && !st.all && ['on','trial','paused','off'].indexOf(st.key) > -1;
+  const tone = st.key === 'on' || st.key === 'trial' ? 'good' : st.key === 'paused' ? 'warn' : 'neutral';
+  const text = st.key === 'on' ? 'On · ' + caN(caWorkingJobs(id), 'job') : st.key === 'trial' ? st.label + ' · ' + caN(caWorkingJobs(id), 'job') : st.key === 'paused' ? (st.oontu ? 'Paused by Oontu' : st.all ? 'All Cowork paused' : p && p.until ? 'Paused · resumes ' + caHM(p.until) : 'Paused') : 'Off';
+  const item = function(label, on, cls, attr){ return '<button type="button" role="menuitem" class="o-menu__item' + (cls ? ' ' + cls : '') + '"' + (attr || '') + ' onclick="event.stopPropagation(); ' + on + '">' + label + '</button>'; };
+  const menu = !open ? '' : '<div class="o-menu ca-menu" role="menu" aria-label="' + cwEsc(agentById(id).name) + '">' + (st.key === 'paused' ? item('Resume now', "CA.pop=null; caPause('" + id + "', false)", '', ' data-act="resume"') + '<div class="o-menu__sep"></div>' + item('Turn off', "caTurnOffAsk('" + id + "')", 'o-menu__item--danger', ' data-act="off"')
+    : st.key === 'off' ? item('Turn on', "CA.pop=null; caToggleAgent('" + id + "')", '', ' data-act="on"')
+    : item('Pause for 1 hour', "caPauseUntil('" + id + "', fmNow() + 3600000)", '', ' data-act="1h"') + item('Pause until tomorrow 9:00', "caPauseUntil('" + id + "', caTomorrow9())", '', ' data-act="tomorrow"') + item('Pause until I resume', "caPauseUntil('" + id + "', null)", '', ' data-act="manual"') + '<div class="o-menu__sep"></div>' + item('Turn off', "caTurnOffAsk('" + id + "')", 'o-menu__item--danger', ' data-act="off"')) + '</div>';
+  return '<div class="ca-stat ca-popw"><button type="button" class="ca-pill ca-pill--' + tone + '" data-pill="' + st.key + '" aria-haspopup="menu" aria-expanded="' + open + '"' + (menuable ? ' onclick="event.stopPropagation(); caPop(\'status:' + id + '\')"' : ' disabled') + '><span class="ca-pill__dot" aria-hidden="true">' + (st.key === 'paused' ? '⏸' : '') + '</span><span class="ca-state" data-state="' + st.key + '">' + cwEsc(text) + '</span>' + (menuable ? caChev() : '') + '</button>' + menu + '</div>';
+}
+function caPop(k){ CA.pop = CA.pop === k ? null : k; caRefresh(); }
+document.addEventListener('click', function(e){ if(!CA.pop || (e.target.closest && e.target.closest('.ca-popw'))) return; CA.pop = null; if(document.getElementById('ca-root')) caRefresh(); });
+document.addEventListener('keydown', function(e){ if(e.key !== 'Escape') return; if(caDrawerOpen()){ caDrawerClose(); return; } if(CA.pop){ CA.pop = null; caRefresh(); } });
+function caRunHTML(id, st){
+  const r = CA.run && CA.run.id === id ? CA.run : null;
+  if(r && r.phase === 'scan') return '<div class="ca-run" data-run="scan" role="status" aria-live="polite"><span class="ca-run__t">' + cwEsc(r.text) + '</span><span class="ca-run__bar"><i style="animation-duration:' + (CA.runMs != null ? CA.runMs : 2000) + 'ms"></i></span></div>';
+  const btn = openAsOk() && (st.key === 'on' || st.key === 'trial') ? '<button type="button" class="o-btn" data-run-btn onclick="caRunNowUI(\'' + id + '\')">' + oIcon('spark', 14, 1.75) + ' Run now ' + caDemoTag() + '</button>' : '';
+  if(r && r.phase === 'done') return '<div class="ca-run ca-run--done" data-run="done" role="status" aria-live="polite"><span class="ca-run__t">' + oIcon('check', 14, 2) + ' ' + cwEsc(r.text) + '</span>' + (r.see ? '<button type="button" class="o-link" onclick="caSeeWaiting()">See them</button>' : '') + '</div>' + btn;
+  return btn;
+}
+function caSeeWaiting(){ CA.sub = 'today'; CA.waitAll = true; caRefresh(); const el = document.getElementById('ca-sec-waiting'); if(el) try { el.scrollIntoView({ block:'start', behavior:'smooth' }); } catch(e){} }
+(function(){ const base = caHeaderAction; window.caHeaderAction = function(id, st){
+  if(jsCorp() || ['on','trial','paused','off'].indexOf(st.key) < 0 || st.oontu) return base(id, st);
+  const trial = st.key === 'trial' ? (caOwner() ? sBtn('Keep it', "caKeep('" + id + "')", 'primary') : '') : '', all = st.all && caOwnerish() ? '<button type="button" class="o-btn" onclick="cwSetPauseAll(false); cwRefresh()">Resume all Cowork</button>' : '';
+  return caPillHTML(id, st) + caRunHTML(id, st) + trial + all + (!caOwnerish() && (st.key === 'on' || st.key === 'paused') ? '<span class="ca-muted ca-act-note" data-act-note>You can pause it on your own jobs below</span>' : ''); }; })();
+function caPauseBar(id, st){
+  if(st.key !== 'paused' || st.oontu) return ''; const p = TENANT_AGENT_CONFIG[id].paused, own = caOwnerish();
+  if(st.all) return '<div class="ca-pausebar" role="status">' + oIcon('alert', 16, 1.75) + '<span><b>All Cowork is paused</b> by ' + cwEsc(CW.pauseAll.by) + '.</span>' + (own ? '<button type="button" class="o-btn" onclick="cwSetPauseAll(false); cwRefresh()">Resume all</button>' : '') + '</div>';
+  return '<div class="ca-pausebar" role="status" data-pausebar>' + '<span class="ca-pausebar__i" aria-hidden="true">⏸</span><span><b>Paused by ' + cwEsc(caFirst(p.by)) + '</b>' + (p.until ? ' · <span data-until="' + p.until + '">' + caLeft(p.until) + '</span>' : ' · until someone resumes it') + '. Nothing goes out meanwhile.</span>' + (own ? '<button type="button" class="o-btn" data-resume onclick="caPause(\'' + id + '\', false)">Resume now</button>' : '') + '</div>';
+}
+function caLeft(until){ const s = Math.max(0, Math.round((until - fmNow()) / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60; return 'resumes at ' + caHM(until) + (wsDay(until) !== wsDay(fmNow()) ? ' tomorrow' : '') + ', in ' + (h ? h + ' h ' + m + ' min' : m + ':' + String(sec).padStart(2, '0')); }
+if(!window.__caCount) window.__caCount = setInterval(function(){
+  const els = document.querySelectorAll('[data-until]'); if(!els.length) return; let due = false;
+  els.forEach(function(el){ const u = +el.getAttribute('data-until'); if(fmNow() >= u) due = true; else el.textContent = caLeft(u); });
+  if(due){ caPauseSweep(); if(document.getElementById('ca-root')) caRefresh(); }
+}, 1000);
+
+/* ---------- the numbers row ---------- */
+function caTilesHTML(id, where){
+  const w = caWeekNums(id);
+  return '<section class="ca-tiles" data-sec="numbers" data-nums="' + w.key + '" data-where="' + where + '" aria-label="This week">' + w.tiles.map(function(t){
+    return '<button type="button" class="o-card ca-tile" data-tile="' + t.key + '" data-n="' + t.n + '"' + (t.go ? ' onclick="caTileGo(\'' + id + '\',\'' + t.go + '\')"' : ' tabindex="-1"') + '><span class="ca-tile__l">' + cwEsc(t.label) + '</span><b class="ca-tile__n">' + cwEsc(t.disp) + '</b><span class="ca-tile__s">' + cwEsc(t.sub) + '</span><span class="ca-tile__f">' + caSpark(t.series) + caDelta(t) + '</span></button>'; }).join('') + '</section>';
+}
+window.caNumsHTML = caTilesHTML;
+function caTileGo(id, go){
+  const scroll = function(sel){ const el = document.querySelector(sel); if(el) try { el.scrollIntoView({ block:'start', behavior:'smooth' }); } catch(e){} };
+  if(go.indexOf('activity:') === 0){ CA.f = { agent:id, job:'', recruiter:'', result:go === 'activity:added' ? 'Added' : '', date:'7' }; caSub('activity'); return; }
+  if(go.indexOf('jobs:') === 0){ const f = go.split(':')[1]; if(f === 'best') CA.jt.sort = 'best'; else CA.jt.f = f; CA.jt.lim = 20; if(CA.sub !== 'today') CA.sub = 'today'; caRefresh(); scroll('#ca-sec-panel'); return; }
+  if(go === 'waiting'){ CA.waitAll = true; caRefresh(); scroll('#ca-sec-waiting'); return; }
+  scroll('#ca-sec-panel');
+}
+
+/* ---------- Waiting for you: real cards ---------- */
+function caWaitItems(id){ return caNeeds(id); }
+function caJs(v){ return typeof v === 'number' ? String(v) : "'" + caQ(v) + "'"; }
+function caWaitHead(id, list){
+  if(id !== 'talent-discovery' || !list.length) return '';
+  const picks = list.filter(function(n){ return n.kind === 'pick'; }); if(!picks.length) return '';
+  const jobs = {}; picks.forEach(function(n){ jobs[n.jobId] = n.job.title + ' · ' + n.job.client; });
+  const can = picks.filter(function(n){ return caJobMine(n.job) && (!CA.wf.job || n.jobId === CA.wf.job); }).length;
+  return '<div class="ca-wbar">' + (can ? '<button type="button" class="o-btn o-btn--primary" data-add-all onclick="caAddAll()">Add all ' + can + '</button>' : '') +
+    '<select class="app-input app-select ca-inl" aria-label="Filter by job" onchange="CA.wf.job=this.value; caRefresh()"><option value="">All jobs</option>' + Object.keys(jobs).map(function(k){ return '<option value="' + k + '"' + (CA.wf.job === k ? ' selected' : '') + '>' + cwEsc(jobs[k]) + '</option>'; }).join('') + '</select>' +
+    caSegCtl('Sort', [['best','Best match'],['new','Newest']], CA.wf.sort, "CA.wf.sort='$v'; caRefresh()", true) + '</div>';
+}
+function caWaitingTodayHTML(id){
+  let list = caWaitItems(id); const total = list.length;
+  if(id === 'talent-discovery'){ if(CA.wf.job) list = list.filter(function(n){ return n.jobId === CA.wf.job; }); const sc = function(n){ return n.s ? n.s.score : 0; }, fr = function(n){ return CA.fresh[n.id] ? 1 : 0; }; list = list.slice().sort(CA.wf.sort === 'new' ? function(a, b){ return b.at - a.at; } : function(a, b){ return fr(b) - fr(a) || (b.kind !== 'pick') - (a.kind !== 'pick') || sc(b) - sc(a); }); }
+  const shown = CA.waitAll ? list : list.slice(0, 6);
+  const body = !total ? '<div class="ca-empty" data-empty>' + caEmptyArt() + '<p><b>All caught up</b> · checked ' + caAgo(CA_CHECK[id] || caNowR()) + '</p></div>'
+    : '<div class="ca-wgrid">' + shown.map(function(n){ return caWaitCard(id, n); }).join('') + '</div>' + (list.length > shown.length ? '<button type="button" class="o-link ca-more" onclick="CA.waitAll=true; caRefresh()">Show all ' + list.length + '</button>' : '');
+  return '<section class="ca-sec ca-wait" data-sec="waiting" id="ca-sec-waiting"><div class="ca-sec__h"><h2 class="o-card__title">Waiting for you' + (total ? ' <span class="ca-count" data-wait-count>' + total + '</span>' : '') + '</h2>' + caWaitHead(id, list) + '</div>' + body + '</section>';
+}
+function caBtn(label, on, kind, attr){ return '<button type="button" class="o-btn' + (kind === 'primary' ? ' o-btn--primary' : kind === 'ghost' ? ' o-btn--ghost' : '') + '"' + (attr || '') + ' onclick="event.stopPropagation(); ' + on + '">' + label + '</button>'; }
+function caChip(t, tone){ return '<span class="o-chip ca-chip2 ca-chip2--' + (tone || 'neutral') + '">' + cwEsc(caText(t)) + '</span>'; }
+function caWaitCard(id, n){
+  const wid = n.id, q = "'" + caQ(wid) + "'", fresh = CA.fresh[wid] ? ' is-fresh' : '';
+  if(n.kind === 'pick'){ const c = n.c, j = n.job, mine = caJobMine(j), why = caWhy(c, j, n.s);
+    const nf = CA.pop === 'nf:' + wid ? '<div class="o-menu ca-menu" role="menu">' + ['Skills don’t fit','Wrong location','Notice too long','Pay too high','Already talking to them','Something else'].map(function(r){ return '<button type="button" role="menuitem" class="o-menu__item" onclick="event.stopPropagation(); caWaitDo(' + q + ',\'nf\',\'' + caQ(r) + '\')">' + r + '</button>'; }).join('') + '</div>' : '';
+    return '<article class="o-card ca-wc' + fresh + '" data-wait="' + cwEsc(wid) + '" data-job="' + j.id + '"><div class="ca-wc__top">' + caAv(c.name, 40) + '<div class="ca-wc__who"><b>' + cwEsc(c.name) + '</b><small>' + cwEsc([c.role, c.currentCompany].filter(Boolean).join(' · ')) + '</small><small>' + cwEsc([c.exp, caCityOf(c.loc), c.notice ? String(c.notice).replace(/\s*Days?/i, ' days') + ' notice' : ''].filter(Boolean).join(' · ')) + '</small></div>' + caRing(n.s.score) + '</div>' +
+      '<div class="ca-wc__chips"><span class="ca-jobchip">' + oIcon('brief', 12, 1.75) + cwEsc(j.title) + '</span>' + why.map(function(r){ return caChip(r.t, r.ok ? 'good' : 'warn'); }).join('') + '</div>' +
+      '<div class="ca-wc__a">' + (mine ? caBtn('Add to job', 'caWaitDo(' + q + ',\'add\')', 'primary', ' data-act="add"') + '<span class="ca-popw">' + caBtn('Not a fit', "caPop('nf:" + caQ(wid) + "')", '', ' data-act="nf" aria-haspopup="menu"') + nf + '</span>' : '') + caBtn('View profile', 'caCandDrawer(' + c.id + ',\'' + j.id + '\')', 'ghost') + '</div></article>'; }
+  if(n.kind === 'iv'){ const iv = n.iv, j = jobById(iv.jobId) || {}, t = ivTime(iv), slots = [1, 2, 3].map(function(k){ return t + k * CW_DAY; });
+    const pick = CA.pop === 'slot:' + wid ? '<div class="o-menu ca-menu" role="menu">' + slots.map(function(s){ return '<button type="button" role="menuitem" class="o-menu__item" onclick="event.stopPropagation(); caWaitDo(' + q + ',\'move\',' + s + ')">' + caDay(s) + ' · ' + caHM(s) + '</button>'; }).join('') + '</div>' : '';
+    return '<article class="o-card ca-wc' + fresh + '" data-wait="' + cwEsc(wid) + '"><div class="ca-wc__top">' + caAv(iv.candidate, 40) + '<div class="ca-wc__who"><b>' + cwEsc(iv.candidate) + '</b><small>' + cwEsc((iv.round || 'Interview') + ' · ' + (j.title || iv.role || '')) + '</small><small>' + cwEsc((j.client || '') + (iv.interviewerName ? ' · with ' + iv.interviewerName : '')) + '</small></div><span class="ca-when"><b>' + caHM(t) + '</b><small>' + cwEsc(caDay(t)) + '</small></span></div>' +
+      '<div class="ca-wc__chips">' + caChip(n.type === 'clash' ? 'Clashes with ' + n.other.candidate : 'Not confirmed', n.type === 'clash' ? 'risk' : 'warn') + caChip('In ' + Math.max(1, Math.round((t - fmNow()) / 3600000)) + ' h', 'neutral') + '</div>' +
+      '<p class="ca-wc__sug">' + oIcon('spark', 12, 1.75) + ' Kairo suggests: ' + (n.type === 'clash' ? 'move it to ' + caDay(slots[0]) + ' at ' + caHM(slots[0]) + '.' : 'call to confirm, or offer the next free slot.') + '</p>' +
+      '<div class="ca-wc__a">' + caBtn('Confirm', 'caWaitDo(' + q + ',\'confirm\')', 'primary', ' data-act="confirm"') + '<span class="ca-popw">' + caBtn('Pick another slot', "caPop('slot:" + caQ(wid) + "')", '', ' data-act="slot" aria-haspopup="menu"') + pick + '</span>' + caBtn('Call', 'caWaitDo(' + q + ',\'call\')', 'ghost') + '</div></article>'; }
+  if(n.kind === 'oj'){ const c = n.c, j = n.job, back = caJobPicks(j).slice(0, 3), o = n.sb.offer;
+    return '<article class="o-card ca-wc' + fresh + '" data-wait="' + cwEsc(wid) + '"><div class="ca-wc__top">' + caAv(c.name, 40) + '<div class="ca-wc__who"><b>' + cwEsc(c.name) + '</b><small>' + cwEsc(j.title + ' · ' + j.client) + '</small><small>' + cwEsc(o.doj ? 'Joins ' + caShortDay(o.doj) : 'Offer sent ' + caAgoCw(Date.parse(o.at) || cwNow())) + '</small></div>' + caChip(n.risk.level + ' risk', n.risk.level === 'High' ? 'risk' : 'warn') + '</div>' +
+      '<div class="ca-wc__chips">' + n.risk.why.split(', ').map(function(r){ return caChip(r.charAt(0).toUpperCase() + r.slice(1), 'warn'); }).join('') + '</div>' +
+      (back.length ? '<div class="ca-wc__back"><span class="ca-muted">Backups ready</span>' + caAvStack(back.map(function(x){ return x.c.name; })) + '<small>' + cwEsc(back.map(function(x){ return caFirst(x.c.name) + ' ' + x.s.score + '%'; }).join(' · ')) + '</small></div>' : '') +
+      '<div class="ca-wc__a">' + caBtn('Call', 'caWaitDo(' + q + ',\'call\')', 'primary') + (back.length ? caBtn('Add backups to job', 'caWaitDo(' + q + ',\'backups\')', '', ' data-act="backups"') : '') + caBtn('Dismiss', 'caWaitDo(' + q + ',\'dismiss\')', 'ghost', ' data-act="dismiss"') + '</div></article>'; }
+  // a plain suggestion (no message to show): the same Approve, Edit and Skip as To do
+  if(n.kind === 'item' && !n.type){ const a = agentById(n.agentId); return '<article class="o-card ca-wc ca-need" data-wait="' + cwEsc(wid) + '"><div class="ca-wc__top"><span class="ca-rule__i">' + oIcon('alert', 16, 1.75) + '</span><div class="ca-wc__who"><b>' + cwEsc(caText(n.title)) + '</b><small class="ca-need__why">' + cwEsc(a.name) + ' · ' + cwEsc(caText(n.why)) + '</small></div></div><div class="ca-wc__a">' + caBtn('Approve', "caNeedApprove('item','" + caQ(n.id) + "')", 'primary') + caBtn('Edit', "caNeedEdit('item','" + caQ(n.id) + "')") + caBtn('Skip', "caNeedSkip('item','" + caQ(n.id) + "')", 'ghost') + '</div></article>'; }
+  // messages: Engagement (first message, a reply, an approval) and LinkedIn
+  const c = byId(n.candidateId) || { name:(n.title || '').split(' ')[0] }, j = jobById(n.jobId) || {}, isLi = n.type === 'li', ap = n.kind === 'msg';
+  const acct = isLi ? rosterById(n.senderId) || {} : null, ch = isLi ? 'LinkedIn' : caChannelWord(n.channel || (ap ? 'email' : 'whatsapp'));
+  const thread = n.type === 'reply' ? '<div class="ca-thread"><div class="ca-bubble ca-bubble--out">' + cwEsc(caText(n.text)) + '</div><div class="ca-bubble ca-bubble--in">' + cwEsc(caText(n.reply)) + '</div></div>'
+    : isLi ? '<div class="ca-li"><div class="ca-li__h">' + caAv(acct.name || 'You', 24) + '<span><b>' + cwEsc(acct.name || '') + '</b><small>via the Oontu extension · LinkedIn</small></span></div><div class="ca-li__m">' + cwEsc(caText(n.text)) + '</div></div>'
+    : n.channel === 'email' ? '<div class="ca-mail"><small>Email · Subject: ' + cwEsc(j.title || 'A role for you') + '</small><p>' + cwEsc(caText(n.text)) + '</p></div>' : '<div class="ca-bubble ca-bubble--out ca-bubble--wa">' + cwEsc(caText(n.text)) + '</div>';
+  const acts = n.type === 'reply' ? caBtn('Reply', 'caWaitDo(' + q + ',\'reply\')', 'primary', ' data-act="reply"') + caBtn('Shortlist', 'caWaitDo(' + q + ',\'shortlist\')', '', ' data-act="shortlist"') + caBtn('Skip', 'caWaitDo(' + q + ',\'skip\')', 'ghost', ' data-act="skip"')
+    : caBtn('Send', 'caWaitDo(' + q + ',\'send\')', 'primary', ' data-act="send"') + caBtn('Edit', 'caWaitDo(' + q + ',\'edit\')', '', ' data-act="edit"') + caBtn('Skip', 'caWaitDo(' + q + ',\'skip\')', 'ghost', ' data-act="skip"');
+  return '<article class="o-card ca-wc ca-need' + fresh + '" data-wait="' + cwEsc(wid) + '"><div class="ca-wc__top">' + caAv(c.name, 40) + '<div class="ca-wc__who"><b>' + cwEsc(ap ? caText(n.title) : c.name) + '</b><small>' + cwEsc(ch + (j.title ? ' · ' + j.title : '')) + '</small><small class="ca-need__why">' + cwEsc(agentById(n.agentId).name + ' · ' + caText(n.why || '')) + '</small></div></div>' + thread + '<div class="ca-wc__a">' + acts + '</div></article>';
+}
+function caWaitFind(wid){ return caNeeds(CA.agent).find(function(n){ return n.id === wid; }) || caNeeds().find(function(n){ return n.id === wid; }); }
+function caWaitDo(wid, act, arg){
+  const n = caWaitFind(wid); if(!n) return; CA.pop = null; const me = caMe().name || 'A person';
+  if(act === 'edit' && n.kind === 'msg'){ caNeedEdit('msg', n.id); return; }
+  if(act === 'edit' || act === 'reply'){ caMsgDrawer(wid, act); return; }
+  if(act === 'call'){ const c = byId(n.candidateId); if(typeof tsLog === 'function' && c) try { tsLog(c.id, 'call', 'Called from Cowork'); } catch(e){} caRecord({ agentId:n.agentId, action:'Called', jobId:n.jobId, candidateId:n.candidateId, why:'Called from Cowork', level:'person', result:'Done' }); toast('Calling ' + ((c || {}).name || 'them') + '… logged on their timeline.'); return; }
+  const el = document.querySelector('[data-wait="' + CSS.escape(wid) + '"]'); if(el) el.classList.add('is-leaving');
+  setTimeout(function(){ caWaitApply(n, act, arg, me); caAfterChange(); }, el ? 220 : 0);
+}
+function caWaitApply(n, act, arg, me){
+  if(n.kind === 'pick'){ if(act === 'add'){ if(caAddPick(n.jobId, n.candidateId)) toast(n.c.name + ' added to ' + n.job.title + '.'); } else caDismissPick(n.jobId, n.candidateId, arg); return; }
+  if(n.kind === 'iv'){ const iv = n.iv;
+    if(act === 'confirm'){ iv.candidateConfirmed = true; CA_DONE[n.id] = { d:'confirmed', at:cwNow(), by:me }; caRecord({ agentId:'interviews', action:'Confirmed', jobId:iv.jobId, candidateId:iv.candidateId, why:'Confirmed by ' + me, level:'person', result:'Done' }); toast(iv.candidate + ' is confirmed.'); }
+    if(act === 'move'){ iv.at = new Date(+arg).toISOString(); CA_DONE[n.id] = { d:'moved', at:cwNow(), by:me }; caRecord({ agentId:'interviews', action:'Moved', jobId:iv.jobId, candidateId:iv.candidateId, why:'Moved to ' + caDay(+arg) + ' ' + caHM(+arg) + ' by ' + me, level:'person', result:'Done' }); toast('Moved to ' + caDay(+arg) + ' at ' + caHM(+arg) + '. Kairo tells both sides.'); }
+    return; }
+  if(n.kind === 'oj'){
+    if(act === 'backups'){ const j = n.job; let k = 0; caJobPicks(j).slice(0, 3).forEach(function(x){ const r = submitCandidateToJob(j, x.c, 'Kairo backup'); if(r.ok) k++; }); caRecord({ agentId:'offers-joining', action:'Backups added', jobId:n.jobId, candidateId:n.candidateId, why:caN(k, 'backup') + ' added to ' + j.title, level:'person', result:'Done' }); toast(caN(k, 'backup') + ' added to ' + j.title + '.'); }
+    CA_DONE[n.id] = { d:act, at:cwNow(), by:me }; if(act === 'dismiss') caRecord({ agentId:'offers-joining', action:'Risk dismissed', jobId:n.jobId, candidateId:n.candidateId, why:'Dismissed by ' + me, level:'person', result:'Skipped' }); return; }
+  if(n.kind === 'msg'){ if(act === 'skip') caNeedSkip('msg', n.id); else caNeedApprove('msg', n.id); return; }
+  const s = CA_SUGGEST.find(function(x){ return x.id === n.id; }); if(!s) return;
+  if(act === 'skip'){ s.status = 'skipped'; CA_DONE['s:' + s.id] = { d:'skip', at:cwNow(), by:me }; caRecord({ agentId:s.agentId, action:s.title, jobId:s.jobId, candidateId:s.candidateId, why:s.why, level:'person', result:'Skipped' }); return; }
+  if(act === 'shortlist'){ const j = jobById(s.jobId), c = byId(s.candidateId); if(j && c){ const r = submitCandidateToJob(j, c, 'Kairo · Engagement'); toast(r.ok ? c.name + ' shortlisted for ' + j.title + '.' : (r.reason || 'Already on the job.')); } s.status = 'approved'; CA_DONE['s:' + s.id] = { d:'shortlist', at:cwNow(), by:me }; caRecord({ agentId:s.agentId, action:'Shortlisted', jobId:s.jobId, candidateId:s.candidateId, why:'Interested · shortlisted by ' + me, level:'person', result:'Done' }); return; }
+  s.status = 'approved'; CA_DONE['s:' + s.id] = { d:'sent', at:cwNow(), by:me };
+  caRecord({ agentId:s.agentId, action:s.type === 'li' ? 'message' : 'send', jobId:s.jobId, candidateId:s.candidateId, channel:s.channel, senderId:s.senderId, text:arg || s.text, why:s.why, level:'approved', approvedBy:me, sent:true });
+  toast('Sent to ' + ((byId(s.candidateId) || {}).name || 'them') + ' on ' + (s.type === 'li' ? 'LinkedIn' : caChannelWord(s.channel)) + '.');
+}
+function caAddAll(){ const list = caTdWaiting().filter(function(n){ return caJobMine(n.job) && (!CA.wf.job || n.jobId === CA.wf.job); }); let k = 0; list.forEach(function(n){ if(caAddPick(n.jobId, n.candidateId)) k++; }); toast(caN(k, 'person', 'people') + ' added.'); caAfterChange(); }
+function caMsgDrawer(wid, act){
+  const n = caWaitFind(wid); if(!n) return; const c = byId(n.candidateId) || {}, reply = act === 'reply', text = reply ? '' : caText(n.text);
+  caDrawer(reply ? 'Reply to ' + c.name : 'Edit before it goes', cwEsc((reply ? 'They wrote: “' + caText(n.reply) + '”' : 'To ' + (c.name || '') + ' · ' + (n.type === 'li' ? 'LinkedIn' : caChannelWord(n.channel || 'whatsapp')))),
+    '<label class="cl-field"><span>' + (reply ? 'Your reply' : 'Message') + '</span><textarea id="ca-msg-ed" class="app-input" rows="6" oninput="document.getElementById(\'ca-msg-pv\').textContent=this.value">' + cwEsc(text) + '</textarea></label><p class="ca-tpl__label" style="margin-top:12px">Preview</p><div class="ca-bubble ca-bubble--out ca-bubble--wa" id="ca-msg-pv">' + cwEsc(text) + '</div>' +
+    '<div class="fm-foot"><button type="button" class="o-btn" onclick="caDrawerClose()">Cancel</button><button type="button" class="o-btn o-btn--primary" data-dr-send onclick="caMsgSend(\'' + caQ(wid) + '\')">' + (reply ? 'Send reply' : 'Send this') + '</button></div>');
+}
+function caMsgSend(wid){ const v = (document.getElementById('ca-msg-ed') || {}).value || ''; if(!v.trim()){ toast('Write the message first.'); return; } const n = caWaitFind(wid); caDrawerClose(); if(!n) return;
+  if(n.kind === 'msg'){ const a = CW_APPROVALS.find(function(x){ return x.id === n.id; }); if(a) a.text = v; caNeedApprove('msg', n.id); } else caWaitApply(n, 'send', v, caMe().name || 'A person'); caAfterChange(); }
+function caCandDrawer(cid, jobId){
+  const c = byId(cid); if(!c) return; const j = jobById(jobId), s = j ? cwScore(c, j) : null;
+  caDrawer(c.name, cwEsc([c.role, c.currentCompany].filter(Boolean).join(' · ')), '<div class="ca-cd">' + caAv(c.name, 56) + (s ? caRing(s.score, 56) : '') + '</div><dl class="ca-dl">' + [['Experience', c.exp], ['City', c.loc], ['Notice', c.notice], ['Skills', (c.skills || []).join(', ')], ['Pay', caText(c.salary || '')], ['Available', c.avail]].filter(function(r){ return r[1]; }).map(function(r){ return '<dt>' + r[0] + '</dt><dd>' + cwEsc(caText(r[1])) + '</dd>'; }).join('') + '</dl>' +
+    (j ? '<div class="ca-wc__chips">' + caWhy(c, j, s).map(function(r){ return caChip(r.t, r.ok ? 'good' : 'warn'); }).join('') + '</div>' : '') + '<div class="fm-foot"><button type="button" class="o-btn" onclick="caDrawerClose(); openCandidate(' + c.id + ')">Open full profile</button></div>');
+}
+
+/* ---------- the panel per agent ---------- */
+function caPanelHTML(id){
+  try { return id === 'talent-discovery' ? caJobsPanel(id, 'td') : id === 'engagement' ? caEngPanel() : id === 'interviews' ? caIvPanel() : id === 'offers-joining' ? caOjPanel() : caLiPanel(); }
+  catch(e){ console.error('panel ' + id, e); return ''; }
+}
+function caSec(title, inner, extra, id){ return '<section class="o-card ca-sec ca-panel" data-sec="panel" id="' + (id || 'ca-sec-panel') + '"><div class="ca-sec__h"><h2 class="o-card__title">' + title + '</h2>' + (extra || '') + '</div>' + inner + '</section>'; }
+// Jobs: a compact table that scales to hundreds of jobs (Talent Discovery; LinkedIn Outreach reuses it).
+function caJobRows(id, mode){
+  const li = mode === 'li', wk = cwNow() - 7 * CW_DAY, liRows = li ? caRows({ agent:'linkedin', since:wk }) : null;
+  return caMyJobs().filter(function(j){ return caInScope(id, j); }).map(function(j){ const p = !!caJobPaused(id, j);
+    if(li){ const r = liRows.filter(function(x){ return x.jobId === j.id; }); return { j:j, paused:p, inv:r.filter(function(x){ return x.action === 'invite'; }).length, acc:r.filter(function(x){ return x.action === 'accept'; }).length, rep:r.filter(function(x){ return x.action === 'reply'; }).length, n:0 }; }
+    const m = p ? [] : caMatches(j); return { j:j, paused:p, m:m, n:m.length, best:m.length ? m[0].s.score : 0 }; });
+}
+function caJobsPanel(id, mode){
+  const li = mode === 'li', st = CA.jt, all = caJobRows(id, mode), paused = all.filter(function(r){ return r.paused; }).length;
+  const cat = function(r){ return r.paused ? 'paused' : li ? 'healthy' : r.n >= CA_ENOUGH ? 'healthy' : 'needs'; };
+  const cnt = { all:all.length, needs:all.filter(function(r){ return cat(r) === 'needs'; }).length, healthy:all.filter(function(r){ return cat(r) === 'healthy'; }).length, paused:paused };
+  const clients = {}; all.forEach(function(r){ clients[r.j.client] = 1; });
+  let rows = all.filter(function(r){ return (st.f === 'all' || cat(r) === st.f) && (!st.client || r.j.client === st.client) && (!st.q || (r.j.title + ' ' + r.j.client).toLowerCase().indexOf(st.q.toLowerCase()) > -1); });
+  if(st.sort === 'best') rows.sort(function(a, b){ return b.best - a.best; }); else if(!li) rows.sort(function(a, b){ return (a.paused - b.paused) || (a.n - b.n); });
+  const shown = rows.slice(0, st.lim), sel = Object.keys(st.sel).filter(function(k){ return st.sel[k]; }), chk = CA_CHECK[id] ? caAgo(CA_CHECK[id]) : '—';
+  const filt = [['all','All'],['needs','Needs matches'],['healthy','Healthy'],['paused','Paused']].filter(function(f){ return !li || f[0] !== 'needs'; }).map(function(f){ return [f[0], f[1] + ' ' + cnt[f[0]]]; });
+  const tools = '<div class="ca-jt__tools"><label class="ca-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" class="app-input" placeholder="Search jobs or clients" aria-label="Search jobs" value="' + cwEsc(st.q) + '" oninput="CA.jt.q=this.value; CA.jt.lim=20; caPanelRefresh(\'' + id + '\', this)"></label>' + caSegCtl('Show', filt, st.f, "CA.jt.f='$v'; CA.jt.lim=20; caRefresh()", true, ' data-jt-filter') +
+    '<select class="app-input app-select ca-inl" aria-label="Client" data-jt-client onchange="CA.jt.client=this.value; CA.jt.lim=20; caRefresh()"><option value="">All clients</option>' + Object.keys(clients).sort().map(function(k){ return '<option' + (st.client === k ? ' selected' : '') + '>' + cwEsc(k) + '</option>'; }).join('') + '</select></div>';
+  const note = paused && st.f !== 'paused' ? '<p class="ca-jt__note" data-paused-note>Kairo is paused on ' + caN(paused, 'job') + ' · <button type="button" class="o-link" onclick="CA.jt.f=\'paused\'; caRefresh()">Show</button></p>' : '';
+  const bulk = sel.length ? '<div class="ca-bulk" role="region" aria-label="Selected jobs"><b>' + sel.length + ' selected</b>' + caBtn('Pause Kairo on these', "caBulk('" + id + "','pause')", '', ' data-bulk="pause"') + caBtn('Resume', "caBulk('" + id + "','resume')", '', ' data-bulk="resume"') + (li ? '' : caBtn('Run now on these', "caBulk('" + id + "','run')", '', ' data-bulk="run"')) + caBtn('Clear', 'CA.jt.sel={}; caRefresh()', 'ghost') + '</div>' : '';
+  const allOn = shown.length && shown.every(function(r){ return st.sel[r.j.id]; });
+  const head = '<div class="ca-jt__row ca-jt__head" role="row"><span role="columnheader"><input type="checkbox" aria-label="Select all shown" ' + (allOn ? 'checked' : '') + ' onchange="caSelAll(this.checked)"></span><span role="columnheader">Job</span>' + (li ? '<span role="columnheader">Invites</span><span role="columnheader">Accepted</span><span role="columnheader">Replies</span>' : '<span role="columnheader">Matches</span><span role="columnheader">Top matches</span><span role="columnheader">Best</span><span role="columnheader">Checked</span>') + '<span role="columnheader">Kairo</span></div>';
+  const body = shown.map(function(r){ const j = r.j, tone = r.n >= CA_ENOUGH ? 'good' : r.n ? 'warn' : 'none', can = caJobMine(j);
+    return '<div class="ca-jt__row' + (r.paused ? ' is-paused' : '') + '" role="row" data-jrow="' + j.id + '" tabindex="0" onclick="caJobDrawer(\'' + id + '\',\'' + j.id + '\')" onkeydown="if(event.key===\'Enter\' && event.target===this) caJobDrawer(\'' + id + '\',\'' + j.id + '\')">' +
+      '<span role="cell" onclick="event.stopPropagation()"><input type="checkbox" aria-label="Select ' + cwEsc(j.title) + '"' + (st.sel[j.id] ? ' checked' : '') + ' onchange="CA.jt.sel[\'' + j.id + '\']=this.checked; caRefresh()"></span>' +
+      '<span role="cell" class="ca-jt__job"><b>' + cwEsc(j.title) + '</b><small>' + cwEsc(j.client) + (r.paused ? ' · paused' : '') + '</small></span>' +
+      (li ? '<span role="cell" data-l="Invites">' + r.inv + '</span><span role="cell" data-l="Accepted">' + r.acc + '</span><span role="cell" data-l="Replies">' + r.rep + '</span>'
+        : '<span role="cell" class="ca-cov" data-l="Matches"><span class="ca-cov__bar ca-cov--' + tone + '" role="img" aria-label="' + r.n + ' of ' + CA_TARGET + ' matches"><i style="width:' + Math.min(100, r.n / CA_TARGET * 100) + '%"></i></span><small>' + (r.paused ? '—' : r.n ? r.n + ' of ' + CA_TARGET : 'No matches yet') + '</small></span>' +
+          '<span role="cell" data-l="Top">' + (r.n ? caAvStack(r.m.slice(0, 3).map(function(x){ return x.c.name; }), Math.max(0, r.n - 3)) : '<small class="ca-muted">—</small>') + '</span><span role="cell" data-l="Best">' + (r.n ? r.best + '%' : '—') + '</span><span role="cell" data-l="Checked"><small>' + chk + '</small></span>') +
+      '<span role="cell" onclick="event.stopPropagation()">' + caSwitchHTML(!r.paused, "caJobSwitch('" + id + "','" + j.id + "')", can, 'Kairo on ' + j.title) + '</span></div>'; }).join('');
+  const more = rows.length > shown.length ? '<button type="button" class="o-link ca-more" onclick="CA.jt.lim+=20; caRefresh()">Show more · ' + (rows.length - shown.length) + ' left</button>' : '';
+  const inner = note + tools + bulk + '<div class="ca-jt' + (li ? ' ca-jt--li' : '') + '" role="table" aria-label="Jobs">' + head + (body || '<p class="ca-muted ca-jt__none">No jobs match this.</p>') + '</div>' + more;
+  return caSec((li ? 'Jobs on LinkedIn' : 'Jobs') + ' <span class="ca-count">' + all.length + '</span>', inner, '', li ? 'ca-sec-jobs-li' : 'ca-sec-panel');
+}
+function caPanelRefresh(id, input){ const pos = input.selectionStart; caRefresh(); const el = document.querySelector('.ca-search input'); if(el){ el.focus(); try { el.setSelectionRange(pos, pos); } catch(e){} } }
+function caSelAll(on){ const all = caJobRows(CA.agent, CA.agent === 'linkedin' ? 'li' : 'td'); all.slice(0, CA.jt.lim).forEach(function(r){ CA.jt.sel[r.j.id] = on; }); caRefresh(); }
+function caBulk(id, act){
+  const ids = Object.keys(CA.jt.sel).filter(function(k){ return CA.jt.sel[k]; }); let k = 0;
+  if(act === 'run'){ const r = caPickSweep(true, ids); toast(r.people ? 'Found ' + caN(r.people, 'new person', 'new people') + ' on ' + caN(r.jobs.length, 'job') + '.' : 'No one new on these jobs.'); }
+  else ids.forEach(function(jid){ const j = jobById(jid); if(!j || !caJobMine(j)) return; const p = !!caJobPaused(id, j); if((act === 'pause' && !p) || (act === 'resume' && p)){ if(caJobToggle(id, jid)) k++; } });
+  if(act !== 'run') toast((act === 'pause' ? 'Paused on ' : 'Resumed on ') + caN(k, 'job') + '.'); CA.jt.sel = {}; caRefresh();
+}
+function caJobDrawer(id, jobId){
+  const j = jobById(jobId); if(!j) return; const p = !!caJobPaused(id, j), can = caJobMine(j), own = caCanEditSettings();
+  if(id === 'linkedin'){ const d = caDraftFor('linkedin'), s = caLiSearch(d, j); caDrawer(j.title, cwEsc(j.client), '<p class="ca-tpl__label">The search Kairo runs on LinkedIn</p><div class="ca-lijobs__s" style="margin:0">' + [s.title].concat(s.skills, [s.city]).filter(Boolean).map(function(x){ return '<span class="ca-sc">' + cwEsc(x) + '</span>'; }).join('') + '</div><div class="ca-dr-row"><span>Kairo on this job</span>' + caSwitchHTML(!p, "caJobSwitch('" + id + "','" + j.id + "'); caJobDrawer('" + id + "','" + j.id + "')", can, 'Kairo on this job') + '</div>'); return; }
+  const m = caMatches(j), th = (caTd().jobTh || {})[j.id];
+  caDrawer(j.title, cwEsc(j.client + ' · ' + caN(m.length, 'match', 'matches') + ' at ' + caThFor(j) + '%'),
+    '<div class="ca-dr-row"><span>Kairo on this job</span>' + caSwitchHTML(!p, "caJobSwitch('" + id + "','" + j.id + "'); caJobDrawer('" + id + "','" + j.id + "')", can, 'Kairo on this job') + '</div>' +
+    '<div class="ca-dr-row"><span>Use a different match level for this job</span>' + caSwitchHTML(!!th, "caJobTh('" + j.id + "', " + (th ? 'null' : caThreshold()) + ")", own, 'A different match level') + '</div>' +
+    (th ? '<div class="ca-dr-row"><span>Match level for this job</span>' + caStepperRaw('jth', th, 50, 95, 5, own, "caJobTh('" + j.id + "', $v)", '%') + '</div>' : '') +
+    '<h3 class="ca-sub">Top matches</h3>' + (m.length ? '<div class="ca-mini">' + m.map(function(x){ const k = j.id + '|' + x.c.id; return '<div class="ca-mini__c" data-mini="' + x.c.id + '">' + caAv(x.c.name, 32) + '<span><b>' + cwEsc(x.c.name) + '</b><small>' + cwEsc([x.c.role, caCityOf(x.c.loc)].filter(Boolean).join(' · ')) + '</small></span>' + caRing(x.s.score, 36) + (can ? '<span class="ca-mini__a">' + caBtn('Add', "caAddPick('" + j.id + "'," + x.c.id + "); caAfterChange(); caJobDrawer('" + id + "','" + j.id + "')", 'primary') + caBtn('Not a fit', "caDismissPick('" + j.id + "'," + x.c.id + ",'Not a fit'); caAfterChange(); caJobDrawer('" + id + "','" + j.id + "')", 'ghost') + '</span>' : '') + '</div>'; }).join('') + '</div>' : '<div class="ca-empty">' + caEmptyArt() + '<p><b>No matches yet</b> · Kairo checks again as people join the pool.</p></div>'), true);
+}
+function caStepperRaw(f, v, min, max, step, ed, on, unit){ return '<span class="ca-stepper" data-stepper="' + f + '"><button type="button" aria-label="Less"' + (ed && v > min ? ' onclick="' + on.replace('$v', v - step) + '"' : ' disabled') + '>−</button><output>' + v + (unit || '') + '</output><button type="button" aria-label="More"' + (ed && v < max ? ' onclick="' + on.replace('$v', v + step) + '"' : ' disabled') + '>+</button></span>'; }
+function caJobTh(jobId, v){ if(!caCanEditSettings()) return; const cfg = caTd(); cfg.jobTh = cfg.jobTh || {}; const was = cfg.jobTh[jobId] || null; if(v == null) delete cfg.jobTh[jobId]; else cfg.jobTh[jobId] = Math.max(50, Math.min(95, +v)); logAudit('Cowork', 'Agent settings saved', 'Talent Discovery · match level for ' + (jobById(jobId) || {}).title + ': ' + (was ? was + '%' : 'the workspace’s') + ' → ' + (v == null ? 'the workspace’s' : cfg.jobTh[jobId] + '%')); caPickSweep(true, [jobId]); caRefresh(); caJobDrawer('talent-discovery', jobId); }
+// Engagement: the conversation funnel and the six message types.
+function caPlayOf(r){ const t = String(r.text || '').toLowerCase(); if(r.action === 'consent') return 'waiting'; if(/thanks for applying|application/.test(t)) return 'thanks'; if(/still open|quick yes/.test(t)) return 'followUp'; if(/still with the client|still with/.test(t)) return 'keepWarm'; if(/been a while/.test(t)) return 'reengage'; if(/still need your answer|consent/.test(t)) return 'waiting'; return 'newMatch'; }
+function caFunnel(stages){ const top = Math.max(1, stages[0][1]);
+  return '<ol class="ca-funnel">' + stages.map(function(s, i){ const prev = i ? stages[i - 1][1] : null, drop = prev ? Math.round((1 - s[1] / Math.max(1, prev)) * 100) : null; return '<li data-stage="' + s[0] + '"><span class="ca-funnel__l">' + cwEsc(s[0]) + '</span><span class="ca-funnel__bar"><i style="width:' + Math.max(4, s[1] / top * 100) + '%"></i></span><b>' + s[1].toLocaleString('en-IN') + '</b>' + (drop != null && prev ? '<small>' + (drop > 0 ? '−' + drop + '%' : '—') + '</small>' : '<small></small>') + '</li>'; }).join('') + '</ol>'; }
+function caEngPanel(){
+  const rows = caRows({ agent:'engagement', since:cwNow() - 7 * CW_DAY }), sent = rows.filter(function(r){ return r.result === 'Sent'; }), failed = rows.filter(function(r){ return /fail/i.test(r.result); }).length, w = caWeekNums('engagement'), T = {}; w.tiles.forEach(function(t){ T[t.key] = t.n; });
+  const funnel = caFunnel([['Sent', sent.length], ['Delivered', Math.max(0, sent.length - failed)], ['Replied', T.replies], ['Interested', T.interested], ['Ready to shortlist', T.ready]]);
+  const d = caDraftFor('engagement'), ed = caCanEditSettings(), by = {}; sent.forEach(function(r){ const p = caPlayOf(r); by[p] = by[p] || { n:0, rep:0 }; by[p].n++; if(r.reply) by[p].rep++; });
+  const grid = '<div class="ca-types">' + CA_PLAYS.map(function(p){ const s = by[p.id] || { n:0, rep:0 }, on = d.plays[p.id].on;
+    return '<div class="ca-type' + (on ? '' : ' is-off') + '" data-type="' + p.id + '" tabindex="0" role="button" aria-label="' + cwEsc(p.name) + ': open the message" onclick="caPlayDrawer(\'' + p.id + '\')" onkeydown="if(event.key===\'Enter\' && event.target===this) caPlayDrawer(\'' + p.id + '\')"><div class="ca-type__h"><b>' + cwEsc(p.name) + '</b><span onclick="event.stopPropagation()">' + caSwitchHTML(on, "caPlayTog('" + p.id + "')", ed, p.name) + '</span></div><span class="ca-type__n"><b>' + s.n + '</b> sent this week</span><span class="ca-type__r">' + (s.n ? caPct(s.rep, s.n) + '% replied' : 'No sends yet') + '</span></div>'; }).join('') + '</div>';
+  return caSec('Conversations this week', funnel + '<h3 class="ca-sub">Message types</h3>' + grid);
+}
+function caPlayDrawer(pid){
+  const p = CA_PLAYS.find(function(x){ return x.id === pid; }); if(!p) return; const d = caDraftFor('engagement'), ed = caCanEditSettings(), st = d.plays[pid], a = agentById('engagement'), step = a.steps.find(function(s){ return s.id === p.step; });
+  caDrawer(p.name, cwEsc(p.does), caTplHTML('plays.' + pid + '.tpl', st.tpl, { ed:ed, key:pid, card:'messages', status:caWaWords(cwTplStatus(p.tplName) || 'Not submitted') }) +
+    '<div class="ca-play__row">' + (p.timing || []).map(function(t){ return '<label class="ca-num"><span>' + cwEsc(t.label) + '</span>' + caStepper('engagement', 'messages', 'plays.' + pid + '.timing.' + t.k, st.timing[t.k], t.min, t.max, 1, ed, t.unit, pid + '.' + t.k) + '</label>'; }).join('') + '</div>' +
+    (step && step.level !== 'person' && p.step !== 'firstTouch' ? '<div class="ca-dr-row"><span>What Kairo does</span>' + caLevelSeg('engagement', 'messages', step, d, ed) + '</div>' : '') + (ed ? '' : '<p class="ca-muted ca-fine">' + caLock() + ' Your Owner sets these.</p>'), true);
+}
+// Interviews: the week strip and the feedback board.
+function caIvPanel(){
+  const now = fmNow(), day0 = (function(){ let d = wsDay(now); while(wsDow(d) !== 1) d = wsAddDays(d, -1); return d; })(), rows = caRows({ agent:'interviews', since:cwNow() - 3 * CW_DAY });
+  const cols = [0, 1, 2, 3, 4, 5, 6].map(function(i){ const d = wsAddDays(day0, i), ivs = hmInterviews.filter(function(iv){ const t = ivTime(iv); return iv.jobId && t && wsDay(t) === d && iv.status !== 'Cancelled' && caJobMine(jobById(iv.jobId)); }).sort(function(a, b){ return ivTime(a) - ivTime(b); });
+    const open = CA.board['d' + i], list = open ? ivs : ivs.slice(0, 4);
+    return '<div class="ca-week__col' + (d === wsDay(now) ? ' is-today' : '') + '" data-day="' + d + '"><div class="ca-week__h"><b>' + caDay(wsWallMs(+d.split('-')[0], +d.split('-')[1], +d.split('-')[2], 12, 0)).split(' ')[0] + '</b><small>' + (+d.split('-')[2]) + '</small></div>' + list.map(function(iv){ const t = ivTime(iv), past = t < now, sent24 = rows.some(function(r){ return r.candidateId === iv.candidateId && r.jobId === iv.jobId && r.result === 'Sent'; }) || (!past && t - now < 24 * 3600000);
+      const due2 = !past && t - now <= 2 * 3600000;
+      return '<button type="button" class="ca-ivchip' + (past ? ' is-past' : '') + '" data-iv="' + iv.id + '" onclick="ivOpen(' + caJs(iv.id) + ')"><b>' + caHM(t) + '</b> ' + cwEsc(caFirst(iv.candidate)) + '<span class="ca-ivchip__i">' + (past ? '' : '<i class="' + (sent24 ? 'is-done' : '') + '" title="24 h reminder ' + (sent24 ? 'sent' : 'not yet') + '">24h</i><i class="' + (due2 ? 'is-due' : '') + '" title="2 h reminder ' + (due2 ? 'due' : 'later') + '">2h</i><i class="' + (iv.candidateConfirmed ? 'is-done' : '') + '" title="' + (iv.candidateConfirmed ? 'Confirmed' : 'Not confirmed') + '">✓</i>') + '</span></button>'; }).join('') +
+      (ivs.length > list.length ? '<button type="button" class="o-link ca-week__more" onclick="CA.board[\'d' + i + '\']=1; caRefresh()">+' + (ivs.length - list.length) + ' more</button>' : '') + (ivs.length ? '' : '<small class="ca-muted">—</small>') + '</div>'; }).join('');
+  const fb = caFeedbackRows(), s = TENANT_AGENT_CONFIG.interviews.settings, open = CA.board.fb, list = open ? fb : fb.slice(0, 8);
+  const board = list.length ? '<ul class="ca-fb">' + list.map(function(r){ const h = r.d * 24, dots = [h >= (+s.chase1 || 24), h >= (+s.chase2 || 48), h >= (+s.chase2 || 48) + 24];
+    return '<li data-fb="' + r.key + '"><span class="ca-fb__c"><b>' + cwEsc(r.client) + '</b><small>' + cwEsc(r.who + ' · ' + r.what) + '</small></span><span class="ca-fb__d">' + caN(r.d, 'day') + '</span><span class="ca-dots" role="img" aria-label="' + ['Chased at ' + s.chase1 + ' h', 'chased at ' + s.chase2 + ' h', 'handed to you'].filter(function(x, i){ return dots[i]; }).join(', ') + '">' + dots.map(function(on, i){ return '<i class="' + (on ? 'is-on' : '') + '" title="' + ['Chased at ' + s.chase1 + ' h', 'Chased at ' + s.chase2 + ' h', 'Handed to you'][i] + '"></i>'; }).join('') + '</span></li>'; }).join('') + '</ul>' + (fb.length > list.length ? '<button type="button" class="o-link ca-more" onclick="CA.board.fb=1; caRefresh()">Show all ' + fb.length + '</button>' : '')
+    : '<div class="ca-empty">' + caEmptyArt() + '<p><b>No feedback overdue</b> · every client has answered.</p></div>';
+  return caSec('This week', '<div class="ca-week" role="list">' + cols + '</div><p class="ca-legend"><i class="is-done">24h</i> reminder sent <i class="is-due">2h</i> reminder due <i class="is-done">✓</i> confirmed</p>') + caSec('Feedback waiting <span class="ca-count" data-fb-count>' + fb.length + '</span>', board, '<span class="ca-muted ca-legend2">' + caN(+s.chase1, 'hour') + ' · ' + caN(+s.chase2, 'hour') + ' · handed to you</span>', 'ca-sec-feedback');
+}
+// Offer & Joining: the risk board and the next 30 days of joinings.
+function caOjPanel(){
+  const live = caLiveOffers(), col = { Low:[], Medium:[], High:[] }; live.forEach(function(s){ col[caOfferRisk(s).level].push(s); });
+  const card = function(s){ const c = byId(s.candidateId), j = jobById(s.jobId) || {}, r = caOfferRisk(s); return '<div class="ca-rc" data-offer="' + s.id + '">' + caAv(c.name, 28) + '<span><b>' + cwEsc(c.name) + '</b><small>' + cwEsc(j.title || '') + '</small><small>' + cwEsc(s.offer.doj ? 'Joins ' + caShortDay(s.offer.doj) : 'Offer ' + caAgoCw(Date.parse(s.offer.at) || cwNow())) + '</small><em>' + cwEsc((function(x){ return x.charAt(0).toUpperCase() + x.slice(1); })(r.why.split(', ')[0])) + '</em></span></div>'; };
+  const board = '<div class="ca-risk">' + ['Low','Medium','High'].map(function(k){ const all = col[k], open = CA.board['r' + k], list = open ? all : all.slice(0, 5);
+    return '<div class="ca-risk__col ca-risk--' + k.toLowerCase() + '" data-risk="' + k + '"><div class="ca-risk__h"><b>' + k + '</b><span class="ca-count">' + all.length + '</span></div>' + list.map(card).join('') + (all.length > list.length ? '<button type="button" class="o-link ca-more" onclick="CA.board[\'r' + k + '\']=1; caRefresh()">Show all ' + all.length + '</button>' : '') + (all.length ? '' : '<small class="ca-muted">None</small>') + '</div>'; }).join('') + '</div>';
+  const plan = (TENANT_AGENT_CONFIG['offers-joining'].settings.plan || {}), j30 = caJoinings(30).sort(function(a, b){ return a.offer.doj < b.offer.doj ? -1 : 1; }), today = wsDay(fmNow());
+  const tl = j30.length ? '<ul class="ca-tl2">' + j30.slice(0, CA.board.tl ? 99 : 8).map(function(s){ const c = byId(s.candidateId), dd = wsDaysBetween(today, s.offer.doj), pts = [[7,'d7','7 days before'],[3,'d3','3 days before'],[1,'d1','1 day before'],[0,'joinDay','Joining day']].filter(function(p){ return plan[p[1]]; });
+    return '<li data-join="' + s.id + '"><span class="ca-tl2__who">' + caAv(c.name, 24) + '<span><b>' + cwEsc(c.name) + '</b><small>Joins ' + caShortDay(s.offer.doj) + ' · ' + (dd ? 'in ' + caN(dd, 'day') : 'today') + '</small></span></span><span class="ca-tl2__track" role="img" aria-label="Check-ins: ' + pts.map(function(p){ return p[2] + (dd > p[0] ? ' due' : ' done'); }).join(', ') + '">' + pts.map(function(p){ const at = Math.max(0, Math.min(30, dd - p[0])); return '<i class="' + (dd > p[0] ? 'is-due' : 'is-done') + (p[0] === 0 ? ' is-join' : '') + '" style="left:' + (at / 30 * 100) + '%" title="' + p[2] + '"></i>'; }).join('') + '</span></li>'; }).join('') + '</ul>' + (j30.length > 8 && !CA.board.tl ? '<button type="button" class="o-link ca-more" onclick="CA.board.tl=1; caRefresh()">Show all ' + j30.length + '</button>' : '')
+    : '<div class="ca-empty">' + caEmptyArt() + '<p><b>Nobody joins in the next 30 days</b></p></div>';
+  return caSec('Risk board', board, '<span class="ca-muted ca-legend2">' + caN(live.length, 'offer') + ' watched</span>') + caSec('Joining in the next 30 days <span class="ca-count" data-join-count>' + j30.length + '</span>', '<div class="ca-tl2__scale"><span>Today</span><span>+10 days</span><span>+20 days</span><span>+30 days</span></div>' + tl, '', 'ca-sec-timeline');
+}
+// LinkedIn Outreach: an account card per recruiter, the sequence funnel, then the jobs table.
+function caLiPanel(){
+  const s = TENANT_AGENT_CONFIG.linkedin.settings, day0 = cwNow() - CW_DAY, rows14 = caRows({ agent:'linkedin', since:cwNow() - 14 * CW_DAY }), ids = caLiConnected().filter(function(uid){ return caOwnerish() || caTeamIds().indexOf(uid) > -1; });
+  const meter = function(label, n, max){ return '<div class="ca-meter"><span>' + label + '</span><span class="ca-meter__bar"><i style="width:' + Math.min(100, n / Math.max(1, max) * 100) + '%"></i></span><b>' + n + ' / ' + max + '</b></div>'; };
+  const cards = ids.length ? '<div class="ca-accts">' + ids.map(function(uid){ const u = rosterById(uid) || { name:uid }, sp = (typeof LI_SENDER_PROFILES !== 'undefined' ? LI_SENDER_PROFILES : []).find(function(x){ return x.recruiterId === uid && x.accountType !== 'email'; }), mine = rows14.filter(function(r){ return r.senderId === uid; });
+    const inv = mine.filter(function(r){ return r.action === 'invite'; }), acc = mine.filter(function(r){ return r.action === 'accept'; }).length, today = mine.filter(function(r){ return r.at >= day0; });
+    const state = sp && typeof cwLiState === 'function' ? cwLiState(sp) : ['good', 'Connected'], paused = sp && /sign-in|Restricted|proxy/i.test(state[1] + ((sp.proxy || {}).status === 'down' ? ' proxy' : ''));
+    const resume = !paused ? '' : sp.session === 'checkpoint' || sp.session === 'needs-signin' ? caBtn('Sign in again', "cwLiSignInAgain('" + sp.id + "')", 'primary') : (sp.proxy || {}).status === 'down' ? caBtn('Resume', "cwLiEvent('" + sp.id + "','proxy-up')", 'primary') : '<small class="ca-muted">Resumes ' + (sp.pausedUntil ? caShortDay(wsDay(sp.pausedUntil)) : 'on its own') + '</small>';
+    return '<div class="o-card ca-acct' + (paused ? ' is-paused' : '') + '" data-acct="' + uid + '"><div class="ca-acct__h">' + caAv(u.name, 36) + '<span><b>' + cwEsc(u.name) + '</b><small>' + (paused ? cwEsc(state[1]) : 'Extension on · ' + (CA_EXT[uid] && CA_EXT[uid].at ? 'active ' + caAgoCw(CA_EXT[uid].at) : 'active today')) + '</small></span>' + caRing(caPct(acc, inv.length), 40) + '</div>' +
+      meter('Invites today', today.filter(function(r){ return r.action === 'invite'; }).length, +s.invitesDay || 20) + meter('Messages today', today.filter(function(r){ return r.action === 'message'; }).length, +s.messagesDay || 50) + '<p class="ca-acct__f"><small>' + caPct(acc, inv.length) + '% accepted in 14 days</small>' + resume + '</p></div>'; }).join('') + '</div>'
+    : '<div class="ca-empty">' + caEmptyArt() + '<p><b>No LinkedIn accounts yet</b> · each recruiter installs the Oontu extension.</p></div>';
+  const wk = rows14.filter(function(r){ return r.at >= cwNow() - 7 * CW_DAY; }), n = function(a){ return wk.filter(function(r){ return r.action === a; }).length; };
+  return caSec('Accounts <span class="ca-count">' + ids.length + '</span>', cards, '', 'ca-sec-accounts') + caSec('This week’s sequence', caFunnel([['Visited', n('visit')], ['Invited', n('invite')], ['Accepted', n('accept')], ['Messaged', n('message')], ['Replied', n('reply')], ['Added', n('added')]]), '', 'ca-sec-panel') + caJobsPanel('linkedin', 'li');
+}
+
+/* ---------- the live activity feed ---------- */
+const CA_FEED_IC = { pick:'users', added:'check', send:'mail', consent:'shield', invite:'users', accept:'check', visit:'spark', message:'mail', reply:'mail', book:'cal' };
+function caFeedHTML(id){
+  const rows = caRows({ agent:id }).slice(0, 8);
+  return '<section class="o-card ca-sec ca-feed" data-sec="feed" aria-label="Latest activity"><h2 class="o-card__title">Latest</h2>' + (rows.length ? '<ul>' + rows.map(function(r){ const ic = CA_FEED_IC[r.action] || (/call/i.test(r.action) ? 'phone' : /risk/i.test(r.action) ? 'alert' : 'spark');
+    const sent = r.action === 'pick' ? r.why.split(':')[0] : caText(r.what) + (r.candidate ? ' · ' + r.candidate.name : '') + (r.job ? ' · ' + r.job.title : '');
+    return '<li data-row="' + r.id + '" tabindex="0" onclick="caOpenRow(\'' + r.id + '\')" onkeydown="if(event.key===\'Enter\')caOpenRow(\'' + r.id + '\')"><span class="ca-feed__i">' + oIcon(ic, 14, 1.75) + '</span><span class="ca-feed__t">' + cwEsc(sent) + '</span><small>' + caAgoCw(r.at) + '</small></li>'; }).join('') + '</ul>' : '<p class="o-card__sub">Nothing yet.</p>') +
+    '<button type="button" class="o-link ca-more" onclick="caSub(\'activity\')">See all activity</button></section>';
+}
+
+/* ---------- Today, put together ---------- */
+window.caTodayTab = function(id, st){
+  if(st.key === 'new' || st.key === 'plan'){ const parts = []; if(st.key === 'new') parts.push(caCard('start', 'Not set up yet', '<p class="o-card__sub">' + cwEsc(agentById(id).name) + ' asks you a few questions, with an answer already picked for each. It takes about 2 minutes.</p><div class="ca-start__a">' + (caOwnerish() ? sBtn('Set up · 2 minutes', "caGuideOpen('" + id + "')", 'primary') : '<span class="ca-muted">Waiting for setup by ' + cwEsc(caOwnerFirst()) + '.</span>') + '</div>')); parts.push(caNextHTML(id, false)); return parts.join(''); }
+  return caTilesHTML(id, 'today') + '<div class="ca-cols"><div class="ca-cols__main">' + caWaitingTodayHTML(id) + caPanelHTML(id) + '</div><aside class="ca-cols__side">' + caFeedHTML(id) + '</aside></div>';
+};
+window.caAgentPage = function(id){
+  caMoreInit();
+  const a = agentById(id), st = caStatus(id), crumb = breadcrumbHTML([{ label:'Cowork', onclick:'caCloseAgent()' }, { label:a.name }], 'caCloseAgent()'), sub = caSubTab();
+  const head = '<header class="o-page-head" data-sec="header"><div><h1 class="o-page-head__title">' + cwEsc(a.name) + '</h1><p class="ca-lede">' + cwEsc(a.does) + '</p></div><div class="o-page-head__actions ca-head-acts">' + (['on','trial','paused','off'].indexOf(st.key) > -1 && !st.oontu ? '' : caStateWordsHTML(id, st)) + caHeaderAction(id, st) + '</div></header>';
+  const tabs = '<div class="o-tabs-host"><div role="tablist" id="ca-agent-tabs" aria-label="' + cwEsc(a.name) + '">' + [['today','Today'],['settings','Settings'],['activity','Activity']].map(function(t){ return '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (sub === t[0]) + '" onclick="caSub(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div></div>';
+  const body = sub === 'settings' ? caSettingsTab(id, st) : sub === 'activity' ? caAgentActivity(id, st) : caTodayTab(id, st);
+  return crumb + head + caPauseBar(id, st) + tabs + '<div class="s-content" id="ca-page" data-tab="' + sub + '">' + body + '</div>';
+};
+
+/* ---------- Settings: real controls inside the same collapsible cards ---------- */
+const CA_WD = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+CW.order.forEach(function(id){ CA_MORE[id].dayList = ['Mon','Tue','Wed','Thu','Fri','Sat']; }); CA_MORE_LABEL.dayList = 'Working days'; caMoreInit();
+function caDaysLabel(l){ const k = CA_WD.filter(function(d){ return l.indexOf(d) > -1; }).join(','); return k === 'Mon,Tue,Wed,Thu,Fri' ? 'Mon–Fri' : k === 'Mon,Tue,Wed,Thu,Fri,Sat' ? 'Mon–Sat' : k === CA_WD.join(',') ? 'Every day' : CA_WD.filter(function(d){ return l.indexOf(d) > -1; }).join(', '); }
+function caDayTog(id, key, day){ const d = caDraftFor(id), l = (d.settings.dayList || []).slice(), i = l.indexOf(day); if(i > -1){ if(l.length === 1){ toast('Keep at least one working day.'); return; } l.splice(i, 1); } else l.push(day); l.sort(function(a, b){ return CA_WD.indexOf(a) - CA_WD.indexOf(b); }); d.settings.days = caDaysLabel(l); caLive(id, key, 'settings.dayList', l); }
+function caDayChips(id, key, d, ed){ const l = d.settings.dayList || []; return '<div class="ca-chips ca-days" role="group" aria-label="Working days">' + CA_WD.map(function(x){ return caChipT(x, l.indexOf(x) > -1, "caDayTog('" + id + "','" + key + "','" + x + "')", ed, ' data-day="' + x + '"'); }).join('') + '</div>'; }
+function caHalf(t){ const a = String(t).split(':'); return Math.min(47, (+a[0]) * 2 + (+a[1] >= 30 ? 1 : 0)); }
+function caHalfT(n){ return String(Math.floor(n / 2)).padStart(2, '0') + ':' + (n % 2 ? '30' : '00'); }
+function caTimeRange(id, key, d, ed){
+  const a = caHalf(d.from), b = caHalf(d.to), dis = ed ? '' : ' disabled';
+  return '<div class="ca-tr" data-tr><div class="ca-tr__track"><i style="left:' + (a / 47 * 100) + '%;width:' + ((b - a) / 47 * 100) + '%"></i></div>' +
+    '<input type="range" class="ca-tr__in" min="0" max="47" step="1" value="' + a + '" aria-label="Start time" aria-valuetext="' + d.from + '" data-tr="from" oninput="caTrMove(this)" onchange="caTrSet(\'' + id + '\',\'' + key + '\', this)"' + dis + '>' +
+    '<input type="range" class="ca-tr__in" min="0" max="47" step="1" value="' + b + '" aria-label="End time" aria-valuetext="' + d.to + '" data-tr="to" oninput="caTrMove(this)" onchange="caTrSet(\'' + id + '\',\'' + key + '\', this)"' + dis + '></div>' +
+    '<div class="ca-tr__ticks" aria-hidden="true"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:30</span></div>' +
+    '<p class="ca-sentence"><span>From</span>' + caTimeSel('from', d.from, ed, "caLive('" + id + "','" + key + "','from', this.value)") + '<span>to</span>' + caTimeSel('to', d.to, ed, "caLive('" + id + "','" + key + "','to', this.value)") + '</p>';
+}
+function caTrMove(el){ const box = el.closest('.ca-tr'), ins = box.querySelectorAll('input'); let a = +ins[0].value, b = +ins[1].value; if(a >= b){ if(el === ins[0]){ a = b - 1; ins[0].value = a; } else { b = a + 1; ins[1].value = b; } } const i = box.querySelector('.ca-tr__track i'); i.style.left = (a / 47 * 100) + '%'; i.style.width = ((b - a) / 47 * 100) + '%'; ins[0].setAttribute('aria-valuetext', caHalfT(a)); ins[1].setAttribute('aria-valuetext', caHalfT(b)); const p = box.nextElementSibling && box.nextElementSibling.nextElementSibling; if(p){ const s = p.querySelectorAll('select'); if(s[0]) s[0].value = caHalfT(a); if(s[1]) s[1].value = caHalfT(b); } }
+function caTrSet(id, key, el){ const ins = el.closest('.ca-tr').querySelectorAll('input'); caDraftFor(id); caSet('from', caHalfT(+ins[0].value)); caSet('to', caHalfT(+ins[1].value)); if(CA.g) return caGuideDraw(); caAutoSave(id, key, true); }
+function caTzNote(){ let tz = 'the workspace time zone'; try { tz = wsTz() + ' (' + wsZoneAbbr(fmNow()) + ')'; } catch(e){} return '<p class="ca-muted ca-fine">Times are in ' + cwEsc(tz) + '.</p>'; }
+function caCapRow(id, key, d, ed){ if(d.dailyCap == null) return ''; const max = agentById(id).dailyCap; return caRuleRow('dailyCap', 'Daily cap', 'Most actions in a day. Up to ' + max.toLocaleString('en-IN') + ' on your plan.', caStepper(id, key, 'dailyCap', +d.dailyCap, 0, max, max >= 500 ? 50 : 10, ed, 'a day', 'dailyCap') + '<span class="ca-cap">' + caLock() + ' max ' + max.toLocaleString('en-IN') + '</span>', 'shield'); }
+function caHoursBody2(id, key, d, ed){ return '<h4 class="ca-sub">Days</h4>' + caDayChips(id, key, d, ed) + '<h4 class="ca-sub">Hours</h4>' + caTimeRange(id, key, d, ed) + caCapRow(id, key, d, ed) + (id === 'interviews' ? '<p class="ca-muted ca-fine">The 2-hour interview reminder is the only message sent outside these hours.</p>' : '') + caTzNote(); }
+function caHoursSum2(d){ return d.from + '–' + d.to + ', ' + caDaysLabel(d.settings.dayList || []) + (d.dailyCap != null ? ' · up to ' + (+d.dailyCap).toLocaleString('en-IN') + ' a day' : ''); }
+function caRuleRow(k, label, help, ctl, icon){ return '<div class="ca-rule" data-rule="' + k + '">' + (icon ? '<span class="ca-rule__i" aria-hidden="true">' + oIcon(icon, 16, 1.75) + '</span>' : '') + '<span class="ca-rule__t"><b>' + cwEsc(label) + '</b>' + (help ? '<small>' + cwEsc(help) + '</small>' : '') + '</span><span class="ca-rule__c">' + ctl + '</span></div>'; }
+function caLevelSeg(id, key, s, d, ed){ return caSegCtl(s.label, [['auto','Do it for me'],['suggest','Ask me first'],['off','Off']], d.steps[s.id], "caLive('" + id + "','" + key + "','steps." + s.id + "','$v')", ed, ' data-level="' + s.id + '"'); }
+window.caLevelsBody = function(id, key, d, ed, skip){
+  return agentById(id).steps.filter(function(s){ return (skip || []).indexOf(s.id) < 0; }).map(function(s){
+    return s.level === 'person' ? caRuleRow(s.id, s.label, 'Kairo never does this on its own.', '<span class="o-badge ca-lockb" data-always="' + s.id + '">' + caLock() + ' ' + CA_WORDS.person + '</span>') : caRuleRow(s.id, s.label, '', caLevelSeg(id, key, s, d, ed)); }).join('');
+};
+const CA_FIELD_IC = { mustHave:'check', expPad:'brief', location:'building', noticeFlag:'clock', ctcPad:'money', rankApplicants:'users', flagMissing:'alert', channelOrder:'mail', language:'doc', tone:'mail', perWeek:'shield', rounds:'cal', buffer:'clock', minNotice:'clock', remindCand1:'clock', remindCand2:'clock', remindPanel:'users', chase1:'mail', chase2:'mail', channels:'mail', showCtc:'money', riskNoReply:'alert', riskNotice:'clock', riskJoin:'cal', messageClient:'building', invitesDay:'users', invitesWeek:'users', messagesDay:'mail', visitsDay:'spark', withdrawDays:'clock', threshold:'check', autopause:'shield' };
+const CA_SEG_LABEL = { same:'Same city', relocate:'Willing to relocate', remote:'Remote OK' };
+function caCtl(id, key, f, d, ed){
+  const v = d.settings[f.k], path = 'settings.' + f.k, live = "caLive('" + id + "','" + key + "','" + path + "','$v')";
+  if(f.type === 'fixed') return '<span class="s-val">' + caLock() + ' ' + cwEsc(f.def) + '</span>';
+  if(f.type === 'switch') return caSwitchHTML(!!v, "caLiveTog('" + id + "','" + key + "','" + path + "')", ed, f.label, ' data-field="' + f.k + '"');
+  if(f.type === 'select'){ const opts = f.opts.map(function(o){ const val = Array.isArray(o) ? o[0] : o; return [val, CA_SEG_LABEL[val] || (Array.isArray(o) ? o[1] : o)]; }); return opts.length <= 3 ? caSegCtl(f.label, opts, v, live, ed, ' data-field="' + f.k + '"') : caSel(opts, v, live.replace("'$v'", 'this.value'), ed, f.label, ' data-field="' + f.k + '"'); }
+  if(f.type === 'text') return '<input class="app-input s-ctl" data-field="' + f.k + '" aria-label="' + cwEsc(f.label) + '" value="' + cwEsc(v) + '"' + (ed ? ' onchange="caLive(\'' + id + '\',\'' + key + '\',\'' + path + '\', this.value)"' : ' disabled') + '>';
+  const hard = f.max != null && /never|at most|can go down/i.test(f.help || ''), step = f.unit === '%' ? 5 : f.max >= 300 ? 10 : f.max >= 60 ? 5 : 1;
+  return caStepper(id, key, path, +v, f.min, f.max, step, ed, f.unit || '', f.k) + (hard ? '<span class="ca-cap" title="A hard cap">' + caLock() + ' max ' + f.max + '</span>' : '');
+}
+window.caFieldsBody = function(id, key, d, ed, skip){ return CA_FIELDS[id].filter(function(f){ return (skip || []).indexOf(f.k) < 0 && f.type !== 'hidden'; }).map(function(f){ return caRuleRow(f.k, f.label, f.help || '', caCtl(id, key, f, d, ed), CA_FIELD_IC[f.k]); }).join(''); };
+function caChoiceIc(name, opts, cur, on, ed){
+  return '<div class="ca-choice" role="radiogroup" aria-label="' + cwEsc(name) + '">' + opts.map(function(o){ const sel = String(o[0]) === String(cur);
+    return '<button type="button" role="radio" aria-checked="' + sel + '" class="ca-choice__o' + (sel ? ' is-on' : '') + '" data-value="' + cwEsc(o[0]) + '"' + (ed ? ' onclick="' + on.replace('$v', caQ(o[0])) + '"' : ' disabled') + '><span class="ca-choice__ic" aria-hidden="true">' + oIcon(o[3] || 'check', 18, 1.75) + '</span><span><b>' + cwEsc(o[1]) + '</b>' + (o[2] ? '<small>' + cwEsc(o[2]) + '</small>' : '') + '</span><span class="ca-choice__dot" aria-hidden="true"></span></button>'; }).join('') + '</div>';
+}
+window.caFoundBody = function(d, ed){ return caChoiceIc('When Kairo finds good people', CA_FOUND.map(function(o, i){ return o.concat([['plus','users','doc'][i]]); }), d.steps.addPipeline, "caLive('talent-discovery','found','steps.addPipeline','$v')", ed); };
+window.caFirstBody = function(d, ed){ return caChoiceIc('First message', CA_FIRST.map(function(o, i){ return o.concat([['users','mail'][i]]); }), d.steps.firstTouch === 'off' ? 'suggest' : d.steps.firstTouch, "caLive('engagement','first','steps.firstTouch','$v')", ed); };
+window.caRiskBody = function(d, ed){ return caChoiceIc('Tell me when risk is', [['High','High','Only the likely dropouts.','alert'],['Medium','Medium or High','Earlier warnings, a little more often.','clock']], d.settings.riskAlert, "caLive('offers-joining','risk','settings.riskAlert','$v')", ed); };
+window.caClientBody = function(d, ed){ return caChoiceIc('Message the client contact on joining day', [['true','Yes','A short note asking them to confirm the candidate arrived.','building'],['false','No','Only the candidate hears from Kairo.','users']], String(!!d.settings.messageClient), "caLive('offers-joining','client','settings.messageClient','$v')", ed); };
+window.caRoundsBody = function(d, ed){ return caSegCtl('Which rounds', [['all','All rounds'],['client','Client rounds only']], d.settings.rounds, "caLive('interviews','rounds','settings.rounds','$v')", ed, ' data-field="rounds"'); };
+// which jobs
+function caInScopeTeam(s, j){ const u = rosterById(s.owner); if(!u) return false; const ids = typeof scopeTreeIds === 'function' ? scopeTreeIds(u) : [u.id]; if(ids.indexOf(u.id) < 0) ids.push(u.id); return jobPeopleIds(j).some(function(x){ return ids.indexOf(x) > -1; }) || ids.some(function(x){ const r = rosterById(x); return r && r.name === j.recruiter; }); }
+(function(){ const base = caInScopeWith; window.caInScopeWith = function(s, j){ return s && s.mode === 'mine' && j ? caInScopeTeam(s, j) : base(s, j); }; })();
+window.caScopeSum = function(id, s){ return s.mode === 'mine' ? 'My team’s jobs (' + caScopeCount(id, s) + ')' : s.mode === 'jobs' ? caN(s.jobs.length, 'picked job') : s.mode === 'clients' ? caN(s.clients.length, 'picked client') : 'All open jobs (' + caOpenJobs().length + ')'; };
+function caPickItems(id, key, d, ed){ const q = String(CA.pq || '').toLowerCase(), s = d.scope, list = caOpenJobs().filter(function(j){ return s.jobs.indexOf(j.id) < 0 && (!q || (j.title + ' ' + j.client).toLowerCase().indexOf(q) > -1); });
+  return list.slice(0, 30).map(function(j){ return '<button type="button" class="ca-pick__o" data-pick="' + j.id + '"' + (ed ? ' onclick="caScopeJob(\'' + id + '\',\'' + key + '\',\'' + j.id + '\')"' : ' disabled') + '>' + oIcon('plus', 14, 1.75) + '<span>' + cwEsc(j.title) + ' <small>' + cwEsc(j.client) + '</small></span></button>'; }).join('') + (list.length > 30 ? '<p class="ca-muted ca-fine">' + (list.length - 30) + ' more · search to narrow</p>' : '') + (list.length ? '' : '<p class="ca-muted ca-fine">No other jobs match.</p>'); }
+function caPickFilter(input, id, key){ CA.pq = input.value; const box = document.querySelector('[data-pick-list]'); if(box) box.innerHTML = caPickItems(id, key, caDraftFor(id), true); }
+window.caScopeBody = function(id, key, d, ed){
+  const s = d.scope, seg = caSegCtl('Which jobs', [['all','All open jobs'],['mine','My team’s jobs'],['jobs','Pick jobs']], s.mode === 'clients' ? 'jobs' : s.mode, "caScopeMode('" + id + "','" + key + "','$v')", ed, ' data-field="scope"');
+  const pick = s.mode !== 'jobs' ? '' : '<div class="ca-multi"><div class="ca-multi__sel">' + s.jobs.map(function(jid){ const j = jobById(jid); return j ? '<span class="ca-sc" data-sel="' + jid + '">' + cwEsc(j.title) + (ed ? '<button type="button" aria-label="Remove ' + cwEsc(j.title) + '" onclick="caScopeJob(\'' + id + '\',\'' + key + '\',\'' + jid + '\')">×</button>' : '') + '</span>' : ''; }).join('') + '</div>' +
+    (ed ? '<input type="search" class="app-input ca-multi__q" placeholder="Search jobs to add" aria-label="Search jobs to add" value="' + cwEsc(CA.pq || '') + '" oninput="caPickFilter(this,\'' + id + '\',\'' + key + '\')"><div class="ca-pick" data-pick-list>' + caPickItems(id, key, d, ed) + '</div>' : '') + '</div>';
+  const paused = caOpenJobs().filter(function(j){ return caJobPaused(id, j); }).length;
+  return seg + '<p class="ca-muted ca-fine ca-scopehelp">' + (s.mode === 'mine' ? 'Jobs where you or your team are the lead or a recruiter.' : s.mode === 'jobs' ? 'Only the jobs you pick.' : caN(caOpenJobs().length, 'open job') + ' today, and every new one.') + '</p>' + pick + (paused ? '<p class="ca-fine">Paused on ' + caN(paused, 'job') + ' · <button type="button" class="o-link" onclick="CA.jt.f=\'paused\'; caSub(\'today\')">Manage</button></p>' : '');
+};
+// how good a match must be: the slider over the pool's scores
+let CA_HIST = { key:'', bins:null };
+function caHistBins(scope){ const key = CA_SCORE_MEMO.key + JSON.stringify(scope) + Object.keys(CA_DEC).length; if(CA_HIST.key === key) return CA_HIST.bins; const bins = [0,0,0,0,0,0,0,0,0];
+  caOpenJobs().filter(function(j){ return caInScopeWith(scope, j); }).forEach(function(j){ caJobPicks(j).forEach(function(x){ if(x.s.score < 50 || CA_DEC[j.id + '|' + x.c.id]) return; bins[Math.min(8, Math.floor((x.s.score - 50) / 5))]++; }); });
+  CA_HIST = { key:key, bins:bins }; return bins; }
+function caHistSVG(th, bins){ const max = Math.max.apply(null, bins.concat([1])), w = 100 / bins.length;
+  return '<svg class="ca-hist" viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="How many people score in each band, from 50% to 95%">' + bins.map(function(n, i){ const h = Math.max(n ? 2 : 0.5, n / max * 38); return '<rect data-b="' + (50 + i * 5) + '" class="' + (50 + i * 5 >= th ? 'is-in' : '') + '" x="' + (i * w + 0.8).toFixed(2) + '" y="' + (40 - h).toFixed(2) + '" width="' + (w - 1.6).toFixed(2) + '" height="' + h.toFixed(2) + '"/>'; }).join('') + '<line class="ca-hist__cut" x1="' + ((th - 50) / 45 * 100).toFixed(2) + '" x2="' + ((th - 50) / 45 * 100).toFixed(2) + '" y1="0" y2="40"/></svg>'; }
+function caMatchLive(p){ return p.total ? caPeople(p.total) + ' across ' + caN(p.jobs, 'job') + ' at this level' : 'No matches at this level yet'; }
+window.caMatchBody = function(id, d, ed){
+  const th = +d.settings.threshold || 70, p = caMatchPreview(th, d.scope, d.settings.picksPerJob);
+  return '<div class="ca-histw">' + caHistSVG(th, caHistBins(d.scope)) + '<input type="range" class="ca-range" min="50" max="95" step="5" value="' + th + '" data-field="threshold" aria-label="How good must a match be" aria-valuetext="' + th + '%"' + (ed ? ' oninput="caMatchMove(this)" onchange="caLive(\'' + id + '\',\'match\',\'settings.threshold\', this.value, 1)"' : ' disabled') + '></div>' +
+    '<div class="ca-range__ends"><span>50% · more people</span><output class="ca-range__v" data-range-v>' + th + '%</output><span>95% · only the closest</span></div><p class="ca-live" data-live data-total="' + p.total + '">' + cwEsc(caMatchLive(p)) + '</p>' +
+    caRuleRow('picksPerJob', 'Matches per job', 'Kairo keeps the best ones.', caStepper(id, 'match', 'settings.picksPerJob', +d.settings.picksPerJob, 1, 50, 1, ed, 'per job', 'picksPerJob'), 'users');
+};
+window.caMatchMove = function(el){
+  const th = +el.value, d = caDraftFor(CA.g ? CA.g.id : 'talent-discovery'), p = caMatchPreview(th, d.scope, d.settings.picksPerJob), box = el.closest('.ca-set__b, .ca-g__b') || document;
+  d.settings.threshold = th; el.setAttribute('aria-valuetext', th + '%'); const v = box.querySelector('[data-range-v]'); if(v) v.textContent = th + '%'; const l = box.querySelector('[data-live]'); if(l){ l.textContent = caMatchLive(p); l.setAttribute('data-total', p.total); }
+  box.querySelectorAll('.ca-hist rect').forEach(function(r){ r.classList.toggle('is-in', +r.getAttribute('data-b') >= th); }); const cut = box.querySelector('.ca-hist__cut'); if(cut){ const x = ((th - 50) / 45 * 100).toFixed(2); cut.setAttribute('x1', x); cut.setAttribute('x2', x); }
+};
+// who counts as a match
+function caRulesBody(id, d, ed){
+  const s = d.settings, K = 'rules', f = function(k){ return CA_FIELDS[id].find(function(x){ return x.k === k; }); };
+  const ex = [['placedDays', 'Placed in the last ' + (s.placedDays || 90) + ' days', 90], ['contactedDays', 'Contacted in the last ' + (s.contactedDays || 14) + ' days', 14]];
+  return caRuleRow('mustHave', 'Must-have skills', 'They have every must-have skill on the job.', caCtl(id, K, f('mustHave'), d, ed), 'check') +
+    caRuleRow('expPad', 'Experience', 'The job’s range, give or take.', caStepper(id, K, 'settings.expPad', +s.expPad, 0, 10, 1, ed, '± years', 'expPad'), 'brief') +
+    caRuleRow('location', 'Location', '', caCtl(id, K, f('location'), d, ed), 'building') +
+    caRuleRow('noticeFlag', 'Notice period', 'Up to the job’s notice. Longer is flagged, not dropped, up to this much more.', caStepper(id, K, 'settings.noticeFlag', +s.noticeFlag, 0, 90, 5, ed, 'days', 'noticeFlag'), 'clock') +
+    caRuleRow('ctcPad', 'Pay', 'Uses the candidate’s own expected pay.', '<span class="ca-inrow">' + caSwitchHTML(+s.ctcPad > 0, "caLive('" + id + "','" + K + "','settings.ctcPad', " + (+s.ctcPad > 0 ? 0 : 10) + ", 1)", ed, 'Within the job’s range', ' data-field="ctcPad"') + '<span>Within the job’s range' + (+s.ctcPad > 0 ? ' +' + s.ctcPad + '%' : '') + '</span></span>', 'money') +
+    caRuleRow('rankApplicants', 'Also rank the job’s own applicants', '', caCtl(id, K, f('rankApplicants'), d, ed), 'users') + caRuleRow('flagMissing', 'Flag missing details', 'Pay, notice or city not filled in.', caCtl(id, K, f('flagMissing'), d, ed), 'alert') +
+    '<h4 class="ca-sub">Leave out</h4><div class="ca-chips ca-excl"><span class="ca-sc ca-sc--lock">' + caLock() + ' Already in this job</span>' + ex.map(function(x){ return +s[x[0]] > 0 ? '<span class="ca-sc" data-excl="' + x[0] + '">' + cwEsc(x[1]) + (ed ? '<button type="button" aria-label="Stop leaving out: ' + cwEsc(x[1]) + '" onclick="caLive(\'' + id + '\',\'' + K + '\',\'settings.' + x[0] + '\', 0, 1)">×</button>' : '') + '</span>' : (ed ? '<button type="button" class="ca-sc ca-sc--add" data-excl-add="' + x[0] + '" onclick="caLive(\'' + id + '\',\'' + K + '\',\'settings.' + x[0] + '\', ' + x[2] + ', 1)">+ ' + cwEsc(x[1].replace(/\d+/, x[2])) + '</button>' : ''); }).join('') + '</div>';
+}
+function caRulesSum(d){ const s = d.settings, l = []; if(s.mustHave) l.push('must-haves'); l.push('±' + s.expPad + ' yrs'); l.push(CA_SEG_LABEL[s.location] || s.location); if(+s.ctcPad > 0) l.push('pay +' + s.ctcPad + '%'); const ex = (+s.placedDays > 0) + (+s.contactedDays > 0); return l.join(' · ') + (ex ? ' · ' + caN(ex, 'exclusion') : ''); }
+function caMsgListBody(d, ed){ return '<div class="ca-plays">' + CA_PLAYS.map(function(p){ const st = d.plays[p.id]; return '<div class="ca-play" data-play="' + p.id + '"><div class="ca-play__h"><div class="ca-play__t"><b>' + cwEsc(p.name) + '</b><p class="ca-play__pv" data-fill="' + cwEsc(st.tpl) + '">' + cwEsc(caText(caFill(st.tpl, caSample()))) + '</p></div>' + caSwitchHTML(st.on, "caPlayTog('" + p.id + "')", ed, p.name) + '</div><button type="button" class="o-link ca-play__edit" onclick="caPlayDrawer(\'' + p.id + '\')">' + (ed ? 'Edit the message' : 'See the message') + '</button></div>'; }).join('') + '</div><p class="ca-muted ca-fine">' + caLock() + ' Shortlisting or sending a profile to a client: ' + CA_WORDS.person + '.</p>'; }
+function caEngLimits(d, ed){ const id = 'engagement', K = 'limits'; return '<h4 class="ca-sub">Days</h4>' + caDayChips(id, K, d, ed) + '<h4 class="ca-sub">Hours</h4>' + caTimeRange(id, K, d, ed) + caRuleRow('perWeek', 'Messages a week to the same person', 'Shared with LinkedIn Outreach. Never above 2.', caStepper(id, K, 'settings.perWeek', +d.settings.perWeek, 1, 2, 1, ed, 'a week', 'perWeek') + '<span class="ca-cap">' + caLock() + ' max 2</span>', 'shield') + caCapRow(id, K, d, ed) + caTzNote(); }
+window.caCardsFor = function(id){
+  const L = function(skip){ return { key:'more', title:'What Kairo does on its own', sum:function(d){ return caLevelsSum(id, d, skip); }, body:function(d, ed){ return caLevelsBody(id, 'more', d, ed, skip); } }; };
+  const H = { key:'hours', title:'Working hours', own:true, sum:caHoursSum2, body:function(d, ed){ return caHoursBody2(id, 'hours', d, ed); } };
+  const R = function(title, skip){ return { key:'rules', title:title, sum:function(d){ return caFieldsSum(id, d, skip); }, body:function(d, ed){ return caFieldsBody(id, 'rules', d, ed, skip); } }; };
+  if(id === 'talent-discovery') return [
+    { key:'jobs', title:'Which jobs', own:true, sum:function(d){ return caScopeSum(id, d.scope); }, body:function(d, ed){ return caScopeBody(id, 'jobs', d, ed); } },
+    { key:'match', title:'How good a match must be', sum:function(d){ return 'At least ' + d.settings.threshold + '% · up to ' + d.settings.picksPerJob + ' per job'; }, body:function(d, ed){ return caMatchBody(id, d, ed); } },
+    { key:'found', title:'When Kairo finds good people', sum:function(d){ return (CA_FOUND.find(function(x){ return x[0] === d.steps.addPipeline; }) || CA_FOUND[1])[1]; }, body:caFoundBody },
+    { key:'rules', title:'Who counts as a match', sum:caRulesSum, body:function(d, ed){ return caRulesBody(id, d, ed); } }, L(['addPipeline']), H ];
+  if(id === 'engagement') return [
+    { key:'channel', title:'Channel', sum:caChannelSum, body:function(d, ed){ return '<p class="ca-line" id="ca-channel">' + caChannelLine2() + '</p><ul class="ca-health" id="ca-health">' + caHealth(id).map(function(h){ return '<li>' + cwEsc(h) + '</li>'; }).join('') + '</ul>' + caFieldsBody(id, 'channel', d, ed, ['language','tone','perWeek']); } },
+    { key:'messages', title:'Messages Kairo sends', sum:function(d){ return 'Messages: ' + caPlaysOn(d) + ' of ' + CA_PLAYS.length + ' on · first message: ' + CA_WORDS[d.steps.firstTouch === 'off' ? 'suggest' : d.steps.firstTouch].toLowerCase(); }, body:caMsgListBody },
+    { key:'first', title:'Before a first message to someone new', sum:function(d){ return (CA_FIRST.find(function(x){ return x[0] === d.steps.firstTouch; }) || CA_FIRST[0])[1]; }, body:caFirstBody },
+    { key:'limits', title:'Limits', own:true, sum:function(d){ return d.from + '–' + d.to + ', ' + caDaysLabel(d.settings.dayList || []) + ', at most ' + d.settings.perWeek + ' a week to the same person'; }, body:caEngLimits },
+    { key:'style', title:'Language and tone', sum:function(d){ return d.settings.language + ' · ' + d.settings.tone; }, body:function(d, ed){ return caFieldsBody(id, 'style', d, ed, ['channelOrder','perWeek']); } },
+    L(CA_PLAYS.map(function(p){ return p.step; })) ];
+  if(id === 'interviews') return [
+    { key:'rounds', title:'Which rounds', sum:function(d){ return d.settings.rounds === 'client' ? 'Client rounds only' : 'All rounds'; }, body:caRoundsBody },
+    { key:'reminders', title:'Reminders', sum:caRemindSum, body:function(d, ed){ return caRemindChips(d, ed) + caIvPreview() + caFieldsBody(id, 'reminders', d, ed, CA_FIELDS[id].map(function(f){ return f.k; }).filter(function(k){ return ['remindCand1','remindCand2','remindPanel'].indexOf(k) < 0; })); } },
+    { key:'chase', title:'Chasing client feedback', sum:function(d){ return 'After ' + d.settings.chase1 + ' h and ' + d.settings.chase2 + ' h, then to you'; }, body:function(d, ed){ return caFieldsBody(id, 'chase', d, ed, CA_FIELDS[id].map(function(f){ return f.k; }).filter(function(k){ return ['chase1','chase2'].indexOf(k) < 0; })) + '<p class="ca-muted ca-fine">After the second chase, the client is handed to the recruiter as a task.</p>'; } },
+    R('Slots and channels', ['rounds','remindCand1','remindCand2','remindPanel','chase1','chase2']), L([]), H ];
+  if(id === 'offers-joining') return [
+    { key:'plan', title:'Check-in plan', sum:caPlanSum, body:function(d, ed){ return caPlanBody(d, ed) + caOjPreview(); } },
+    { key:'risk', title:'Tell me when risk is', sum:function(d){ return d.settings.riskAlert === 'Medium' ? 'Medium or High' : 'High'; }, body:caRiskBody },
+    { key:'client', title:'Message the client contact on joining day', sum:function(d){ return d.settings.messageClient ? 'Yes' : 'No'; }, body:caClientBody },
+    R('Offer summary and risk rules', ['checkDays','postDays','messageClient']), L([]), H ];
+  return [
+    { key:'ext', title:'Oontu extension and accounts', sum:caLiAccSum, body:function(d, ed){ const st = caStatus(id), live = ['on','trial','setup','paused'].indexOf(st.key) > -1; return caExtBody(d, ed) + (live && typeof cwLiAccountsHTML === 'function' ? '<div class="ca-gap">' + cwLiAccountsHTML() + '</div>' : ''); } },
+    { key:'jobs', title:'Jobs to run on LinkedIn', own:true, sum:caLiJobsSum, body:caLiJobsBody },
+    { key:'messages', title:'Connection note and first message', sum:caLiMsgSum, body:caLiMsgBody },
+    { key:'limits', title:'Limits', sum:caLiLimitsSum, body:function(d, ed){ return caFieldsBody(id, 'limits', d, ed, []); } }, L([]), H ];
+};
+// a changed match setting shows its effect at once
+(function(){ const base = caAutoSave; window.caAutoSave = function(id, key, redraw){ const ok = base(id, key, false); if(ok && id === 'talent-discovery' && ['match','rules','jobs'].indexOf(key) > -1) caPickSweep(true); if(redraw) caRefresh(); return ok; }; })();
+(function(){ const base = caOpenAgent; window.caOpenAgent = function(id, sub){ if(id !== CA.agent){ CA.fresh = {}; CA.jt = { q:'', f:'all', client:'', sel:{}, lim:20 }; CA.wf = { job:'', sort:'best' }; CA.board = {}; CA.pq = ''; } CA.pop = null; return base(id, sub); }; })();
+(function(){ const base = caNewWorkspaceAgents; window.caNewWorkspaceAgents = function(){ base(); CA_DEC = {}; CA_DONE = {}; Object.keys(CA_CHECK).forEach(function(k){ delete CA_CHECK[k]; }); }; })();
+
+(function(){ const css = document.createElement('style'); css.id = 'cowork-visual-style'; css.textContent =
+  '.ca-stat{position:relative}.ca-pill{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 10px;border:0;border-radius:var(--r-pill,999px);font:500 13px var(--font);cursor:pointer;white-space:nowrap;box-shadow:var(--elev-control)}.ca-pill[disabled]{cursor:default}.ca-pill .ca-state{color:inherit}.ca-pill .ca-state::before{display:none!important;content:none!important}.ca-ring b{white-space:nowrap}.ca-pill__dot{width:8px;height:8px;border-radius:50%;flex:none;display:inline-grid;place-items:center;font-size:10px}' +
+  '.ca-pill--good{background:var(--st-good-bg);color:var(--st-good-fg)}.ca-pill--good .ca-pill__dot{background:var(--st-good-dot);box-shadow:0 0 0 3px var(--st-good-bg);animation:caPulse 2.4s ease-in-out infinite}.ca-pill--warn{background:var(--st-warn-bg);color:var(--st-warn-fg)}.ca-pill--warn .ca-pill__dot{width:auto;height:auto;background:none}.ca-pill--neutral{background:var(--st-neutral-bg);color:var(--st-neutral-fg)}.ca-pill--neutral .ca-pill__dot{background:var(--st-neutral-dot)}.ca-pill .ca-set__chev{color:currentColor;opacity:.7}' +
+  '@keyframes caPulse{0%,100%{box-shadow:0 0 0 3px var(--st-good-bg)}50%{box-shadow:0 0 0 6px transparent}}@media (prefers-reduced-motion:reduce){.ca-pill--good .ca-pill__dot,.ca-run__bar i{animation:none!important}}' +
+  '.ca-menu{right:0;top:calc(100% + 6px);left:auto}@media (max-width:760px){.ca-stat .ca-menu{left:0;right:auto;max-width:calc(100vw - 32px)}}.ca-popw{position:relative;display:inline-flex}.ca-wc .ca-menu{left:0;right:auto;bottom:calc(100% + 6px);top:auto}' +
+  '.ca-run{display:inline-flex;align-items:center;gap:10px;min-height:36px;padding:6px 12px;border-radius:12px;background:var(--st-info-bg);color:var(--st-info-fg);font-size:13px;max-width:100%}.ca-run__bar{position:relative;width:120px;height:4px;border-radius:2px;background:rgba(47,100,214,.15);overflow:hidden;flex:none}.ca-run__bar i{position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--st-info-dot);transform-origin:left;animation:caRun linear forwards}@keyframes caRun{from{transform:scaleX(0)}to{transform:scaleX(1)}}.ca-run--done{background:var(--st-good-bg);color:var(--st-good-fg)}.ca-run--done .o-link{font-size:13px}.ca-run__t{display:inline-flex;align-items:center;gap:6px}' +
+  '.ca-pausebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:14px;background:var(--st-warn-bg);color:var(--st-warn-fg);font-size:13px}.ca-pausebar > span:nth-child(2){flex:1;min-width:200px}.ca-pausebar b{font-weight:600}' +
+  '.ca-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.ca-tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:14px 16px;text-align:left;border:0;cursor:pointer;min-width:0;font:inherit;color:inherit}.ca-tile:hover{box-shadow:var(--elev-card),0 0 0 1px var(--line-strong,#D9D8D2)}.ca-tile[tabindex="-1"]{cursor:default}.ca-tile__l{font-size:13px;font-weight:500;color:var(--text-1)}.ca-tile__n{font-size:28px;line-height:36px;font-weight:600;color:var(--text-1);font-variant-numeric:tabular-nums}.ca-tile__s{font-size:12px;line-height:16px;color:var(--text-3)}.ca-tile__f{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-top:8px;min-height:24px}' +
+  '.ca-spark polyline{stroke:var(--st-info-dot)}.ca-spark circle{fill:var(--st-info-dot)}.ca-delta{font-size:12px;white-space:nowrap}.ca-delta--up{color:var(--st-good-fg)}.ca-delta--down{color:var(--st-risk-fg)}.ca-delta--flat{color:var(--text-3)}' +
+  '.ca-cols{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}.ca-cols__main{display:flex;flex-direction:column;gap:16px;min-width:0}.ca-cols__side{position:sticky;top:12px}@media (max-width:1100px){.ca-cols{grid-template-columns:minmax(0,1fr)}.ca-cols__side{position:static}}' +
+  '.ca-sec__h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}.ca-sec__h .o-card__title{margin:0;display:flex;align-items:center;gap:8px}.ca-count{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--st-neutral-bg);color:var(--st-neutral-fg);font-size:12px;font-weight:600}.ca-wait{margin:0}.ca-wbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}' +
+  '.ca-wgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ca-wc{display:flex;flex-direction:column;gap:10px;padding:16px;min-width:0;transition:opacity .2s,transform .2s}.ca-wc.is-leaving{opacity:0;transform:translateX(16px) scale(.98)}.ca-wc.is-fresh{box-shadow:var(--elev-card),0 0 0 2px var(--st-info-dot)}.ca-wc__top{display:flex;align-items:flex-start;gap:12px}.ca-wc__who{flex:1;min-width:0;display:flex;flex-direction:column}.ca-wc__who b{font-size:15px;font-weight:600;color:var(--text-1)}.ca-wc__who small{font-size:12px;line-height:17px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+  '.ca-wc__chips{display:flex;flex-wrap:wrap;gap:6px}.ca-jobchip{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:999px;background:var(--st-info-bg);color:var(--st-info-fg);font-size:12px;font-weight:500;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ca-chip2{height:26px;padding:0 10px;font-size:12px;gap:4px;cursor:default}:root body .o-chip.ca-chip2--good{background:var(--st-good-bg)!important;color:var(--st-good-fg)!important;box-shadow:none!important}:root body .o-chip.ca-chip2--warn{background:var(--st-warn-bg)!important;color:var(--st-warn-fg)!important;box-shadow:none!important}:root body .o-chip.ca-chip2--risk{background:var(--st-risk-bg)!important;color:var(--st-risk-fg)!important;box-shadow:none!important}:root body .o-chip.ca-chip2--neutral{background:var(--st-neutral-bg)!important;color:var(--st-neutral-fg)!important;box-shadow:none!important}:root body .o-chip.ca-chip2{height:26px;padding:0 10px;font-size:12px}' +
+  '.ca-wc__a{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}.ca-wc__a .o-btn{height:34px}.ca-wc__sug{margin:0;font-size:13px;color:var(--text-2);display:flex;gap:6px;align-items:flex-start}.ca-wc__back{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px}.ca-wc__back small{color:var(--text-2)}.ca-when{display:flex;flex-direction:column;align-items:flex-end;flex:none}.ca-when b{font-size:16px;font-variant-numeric:tabular-nums}.ca-when small{font-size:12px;color:var(--text-3)}' +
+  '.ca-av{flex:none}.ca-avs{display:inline-flex;align-items:center}.ca-avs > span + span{margin-left:-5px}.ca-avs__more{margin-left:4px;font-size:12px;color:var(--text-2)}' +
+  '.ca-ring{position:relative;display:inline-grid;place-items:center;flex:none}.ca-ring svg{position:absolute;inset:0}.ca-ring__bg{stroke:var(--st-neutral-bg)}.ca-ring--good .ca-ring__fg{stroke:var(--st-good-dot)}.ca-ring--info .ca-ring__fg{stroke:var(--st-info-dot)}.ca-ring--warn .ca-ring__fg{stroke:var(--st-warn-dot)}.ca-ring b{position:relative;font-size:12px;font-weight:600;color:var(--text-1)}.ca-ring b small{font-size:9px;font-weight:500}' +
+  '.ca-thread{display:flex;flex-direction:column;gap:6px}.ca-bubble--out{align-self:flex-end;border-radius:14px 14px 4px 14px;max-width:92%}.ca-bubble--in{align-self:flex-start;background:var(--st-neutral-bg);color:var(--text-1);border-radius:14px 14px 14px 4px;max-width:92%}.ca-bubble--wa{font-size:13px;line-height:19px}.ca-mail{padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:13px}.ca-mail small{color:var(--text-3)}.ca-mail p{margin:4px 0 0;color:var(--text-1)}' +
+  '.ca-li{border:1px solid var(--line);border-radius:12px;overflow:hidden}.ca-li__h{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--st-info-bg)}.ca-li__h b{display:block;font-size:12px;color:var(--text-1)}.ca-li__h small{display:block;font-size:11px;color:var(--text-2)}.ca-li__m{padding:10px 12px;font-size:13px;line-height:19px;color:var(--text-1);white-space:pre-wrap}' +
+  '.ca-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 12px;text-align:center;font-size:13px;color:var(--text-2)}.ca-empty p{margin:0}.ca-empty b{color:var(--text-1)}.ca-empty__a{fill:var(--st-neutral-bg)}.ca-empty__b{fill:var(--bg-card,#fff);stroke:var(--line)}.ca-empty__c{stroke:var(--st-good-dot)}' +
+  '.ca-panel{margin:0}.ca-jt__tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}.ca-search{position:relative;flex:1 1 220px;display:flex}.ca-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3)}.ca-search input{width:100%;padding-left:32px;height:36px}.ca-jt__note{margin:0 0 8px;font-size:13px;color:var(--st-warn-fg)}.ca-jt__tools .ca-seg,.ca-wbar .ca-seg{max-width:100%;overflow-x:auto;scrollbar-width:none}' +
+  '.ca-bulk{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:8px 12px;border-radius:12px;background:var(--st-info-bg);font-size:13px}.ca-bulk .o-btn{height:32px}' +
+  '.ca-jt{display:flex;flex-direction:column}.ca-jt__row{display:grid;grid-template-columns:28px minmax(0,1.6fr) minmax(0,1.2fr) minmax(0,1fr) 52px 84px 48px;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid var(--line);font-size:13px;cursor:pointer}.ca-jt--li .ca-jt__row{grid-template-columns:28px minmax(0,2fr) 1fr 1fr 1fr 48px}.ca-jt__row:hover{background:var(--bg-subtle)}.ca-jt__head{cursor:default;border-top:0;font-size:12px;color:var(--text-3);font-weight:500}.ca-jt__head:hover{background:none}.ca-jt__row.is-paused{opacity:.6}.ca-jt__job b{display:block;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ca-jt__job small{display:block;color:var(--text-3)}.ca-jt__none{padding:16px 4px;margin:0}' +
+  '.ca-cov{display:flex;flex-direction:column;gap:4px}.ca-cov__bar{display:block;height:6px;border-radius:3px;background:var(--st-neutral-bg);overflow:hidden}.ca-cov__bar i{display:block;height:100%;border-radius:3px}.ca-cov--good i{background:var(--st-good-dot)}.ca-cov--warn i{background:var(--st-warn-dot)}.ca-cov--none i{background:transparent}.ca-cov small{font-size:11px;color:var(--text-2)}' +
+  '@media (max-width:760px){.ca-jt__head{display:none}.ca-jt__row,.ca-jt--li .ca-jt__row{grid-template-columns:24px minmax(0,1fr) auto;grid-auto-rows:auto;row-gap:6px}.ca-jt__row > [role=cell]:nth-child(n+3):not(:last-child){grid-column:2 / 4}.ca-jt__row > [role=cell]:last-child{grid-row:1;grid-column:3}.ca-jt__row > [data-l]{display:flex;align-items:center;gap:8px}.ca-jt__row > [data-l]::before{content:attr(data-l);font-size:11px;color:var(--text-3);min-width:56px}.ca-cov{flex-direction:row!important;align-items:center}.ca-cov__bar{flex:1}}' +
+  '.ca-funnel{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.ca-funnel li{display:grid;grid-template-columns:140px minmax(0,1fr) 64px 48px;align-items:center;gap:10px;font-size:13px}.ca-funnel__l{color:var(--text-2)}.ca-funnel__bar{height:14px;border-radius:7px;background:var(--st-neutral-bg);overflow:hidden}.ca-funnel__bar i{display:block;height:100%;border-radius:7px;background:var(--st-info-dot);opacity:.85}.ca-funnel b{text-align:right;font-variant-numeric:tabular-nums}.ca-funnel small{color:var(--text-3);font-size:12px}@media (max-width:760px){.ca-funnel li{grid-template-columns:96px minmax(0,1fr) 44px 40px;gap:6px}}' +
+  '.ca-types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.ca-type{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;cursor:pointer;min-width:0}.ca-type:hover{border-color:var(--line-strong,#D9D8D2)}.ca-type.is-off{opacity:.6}.ca-type__h{display:flex;align-items:center;justify-content:space-between;gap:8px}.ca-type__h b{font-size:14px;font-weight:600}.ca-type__n{font-size:13px;color:var(--text-2)}.ca-type__n b{color:var(--text-1);font-size:16px}.ca-type__r{font-size:12px;color:var(--text-3)}@media (max-width:760px){.ca-types{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
+  '.ca-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.ca-week__col{display:flex;flex-direction:column;gap:6px;min-width:0;padding:8px 6px;border-radius:12px;background:var(--bg-subtle)}.ca-week__col.is-today{box-shadow:inset 0 0 0 1.5px var(--st-info-dot)}.ca-week__h{display:flex;align-items:baseline;justify-content:space-between;font-size:12px}.ca-week__h small{color:var(--text-3)}.ca-ivchip{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:6px 8px;border:0;border-radius:9px;background:var(--bg-card,#fff);box-shadow:var(--elev-control);font:500 12px var(--font);color:var(--text-1);text-align:left;cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis}.ca-ivchip.is-past{opacity:.55}.ca-ivchip__i,.ca-legend{display:inline-flex;gap:3px;flex-wrap:wrap;align-items:center}.ca-ivchip__i i,.ca-legend i{font-style:normal;font-size:9px;line-height:14px;padding:0 4px;border-radius:4px;background:var(--st-neutral-bg);color:var(--st-neutral-fg)}.ca-ivchip__i i.is-done,.ca-legend i.is-done{background:var(--st-good-bg);color:var(--st-good-fg)}.ca-ivchip__i i.is-due,.ca-legend i.is-due{background:var(--st-warn-bg);color:var(--st-warn-fg)}.ca-legend{margin:10px 0 0;font-size:12px;color:var(--text-3);gap:6px}.ca-legend i{margin-left:6px}.ca-week__more{font-size:12px}' +
+  '@media (max-width:760px){.ca-week{grid-template-columns:minmax(0,1fr)}.ca-week__col{flex-direction:row;flex-wrap:wrap;align-items:center}.ca-week__h{width:52px;flex-direction:column;align-items:flex-start}}' +
+  '.ca-fb{list-style:none;margin:0;padding:0}.ca-fb li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:13px}.ca-fb li:first-child{border-top:0}.ca-fb__c b{display:block;font-weight:600}.ca-fb__c small{display:block;color:var(--text-2)}.ca-fb__d{font-variant-numeric:tabular-nums;color:var(--text-1)}.ca-dots{display:inline-flex;gap:5px}.ca-dots i{width:10px;height:10px;border-radius:50%;background:var(--st-neutral-bg);box-shadow:inset 0 0 0 1px var(--line)}.ca-dots i.is-on{background:var(--st-warn-dot);box-shadow:none}.ca-dots i:last-child.is-on{background:var(--st-risk-dot)}.ca-legend2{font-size:12px}' +
+  '.ca-risk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.ca-risk__col{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:14px;background:var(--bg-subtle);min-width:0}.ca-risk__h{display:flex;align-items:center;justify-content:space-between;font-size:13px}.ca-risk--high .ca-risk__h b{color:var(--st-risk-fg)}.ca-risk--medium .ca-risk__h b{color:var(--st-warn-fg)}.ca-risk--low .ca-risk__h b{color:var(--st-good-fg)}.ca-rc{display:flex;gap:8px;padding:10px;border-radius:10px;background:var(--bg-card,#fff);box-shadow:var(--elev-control);min-width:0}.ca-rc > span:last-child{min-width:0;display:flex;flex-direction:column}.ca-rc b{font-size:13px}.ca-rc small{font-size:11px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ca-rc em{font-style:normal;font-size:11px;color:var(--text-3)}@media (max-width:760px){.ca-risk{grid-template-columns:minmax(0,1fr)}}' +
+  '.ca-tl2{list-style:none;margin:0;padding:0}.ca-tl2 li{display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.ca-tl2__who{display:flex;gap:8px;align-items:center;min-width:0}.ca-tl2__who b{display:block;font-size:13px}.ca-tl2__who small{display:block;font-size:11px;color:var(--text-2)}.ca-tl2__track{position:relative;height:14px;border-radius:7px;background:linear-gradient(var(--line),var(--line)) center/100% 2px no-repeat}.ca-tl2__track i{position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--bg-card,#fff);box-shadow:inset 0 0 0 2px var(--st-info-dot)}.ca-tl2__track i.is-done{background:var(--st-good-dot);box-shadow:none}.ca-tl2__track i.is-join{width:14px;height:14px;margin:-7px 0 0 -7px;background:var(--st-info-dot);box-shadow:none}.ca-tl2__scale{display:grid;grid-template-columns:200px repeat(3,1fr) auto;gap:0;font-size:11px;color:var(--text-3);margin-bottom:4px}.ca-tl2__scale span:first-child{grid-column:2}@media (max-width:760px){.ca-tl2 li{grid-template-columns:minmax(0,1fr)}.ca-tl2__scale{display:none}}' +
+  '.ca-accts{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}.ca-acct{display:flex;flex-direction:column;gap:8px;padding:14px}.ca-acct.is-paused{box-shadow:var(--elev-card),0 0 0 1.5px var(--st-warn-dot)}.ca-acct__h{display:flex;align-items:center;gap:10px}.ca-acct__h > span:nth-child(2){flex:1;min-width:0}.ca-acct__h b{display:block;font-size:14px}.ca-acct__h small{display:block;font-size:12px;color:var(--text-2)}.ca-meter{display:grid;grid-template-columns:110px minmax(0,1fr) 64px;gap:8px;align-items:center;font-size:12px;color:var(--text-2)}.ca-meter__bar{height:6px;border-radius:3px;background:var(--st-neutral-bg);overflow:hidden}.ca-meter__bar i{display:block;height:100%;background:var(--st-info-dot)}.ca-meter b{text-align:right;font-weight:500;color:var(--text-1);font-variant-numeric:tabular-nums}.ca-acct__f{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;font-size:12px;color:var(--text-3)}' +
+  '.ca-feed ul{list-style:none;margin:4px 0 0;padding:0}.ca-feed li{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:10px;padding:8px 0;border-top:1px solid var(--line);cursor:pointer;font-size:13px}.ca-feed li:first-child{border-top:0}.ca-feed__i{grid-row:span 2;width:28px;height:28px;border-radius:9px;background:var(--bg-subtle);display:grid;place-items:center;color:var(--text-2)}.ca-feed__t{color:var(--text-1);line-height:18px}.ca-feed li small{font-size:11px;color:var(--text-3)}' +
+  '.ca-drawer{width:min(520px,100vw)}.ca-drawer--wide{width:min(720px,100vw)}.ca-drawer__b{display:flex;flex-direction:column;gap:12px}.ca-drawer .ca-tpl{grid-template-columns:minmax(0,1fr)}.ca-dr-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}.ca-mini{display:flex;flex-direction:column}.ca-mini__c{display:grid;grid-template-columns:32px minmax(0,1fr) 36px;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.ca-mini__c b{display:block;font-size:13px}.ca-mini__c small{display:block;font-size:12px;color:var(--text-2)}.ca-mini__a{grid-column:2 / 4;display:flex;gap:6px}.ca-mini__a .o-btn{height:30px}.ca-cd{display:flex;gap:12px;align-items:center}.ca-dl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:6px 12px;margin:0;font-size:13px}.ca-dl dt{color:var(--text-3)}.ca-dl dd{margin:0;color:var(--text-1)}' +
+  '.ca-stepper{display:inline-flex;align-items:center;gap:0;border-radius:10px;box-shadow:var(--elev-control);background:var(--bg-card,#fff);height:34px}.ca-stepper button{width:32px;height:34px;border:0;background:none;font-size:16px;color:var(--text-1);cursor:pointer;border-radius:10px}.ca-stepper button[disabled]{color:var(--text-3);cursor:default}.ca-stepper input,.ca-stepper output{width:52px;height:34px;border:0!important;box-shadow:none!important;text-align:center;font-variant-numeric:tabular-nums;font-size:14px;background:transparent;padding:0;display:inline-grid;place-items:center}.ca-stepper input::-webkit-inner-spin-button{display:none}.ca-stepper small{padding:0 10px 0 2px;font-size:12px;color:var(--text-3);white-space:nowrap}' +
+  '.ca-rule{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.ca-rule:first-child{border-top:0}.ca-rule__i{width:32px;height:32px;border-radius:10px;background:var(--bg-subtle);display:grid;place-items:center;color:var(--text-2)}.ca-rule__t b{display:block;font-size:14px;font-weight:500;color:var(--text-1)}.ca-rule__t small{display:block;font-size:12px;color:var(--text-3);line-height:16px}.ca-rule__c{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}.ca-inrow{display:inline-flex;align-items:center;gap:8px;font-size:13px}.ca-lockb{display:inline-flex;align-items:center;gap:4px}@media (max-width:760px){.ca-rule{grid-template-columns:32px minmax(0,1fr)}.ca-rule__c{grid-column:1 / 3;justify-content:flex-start}}' +
+  '.ca-choice__ic{flex:none;width:32px;height:32px;border-radius:10px;background:var(--bg-subtle);display:grid;place-items:center;color:var(--text-2)}.ca-choice__o .ca-choice__dot{margin-left:auto}.ca-choice__o > span:nth-child(2){flex:1}' +
+  '.ca-sc--lock{color:var(--text-2);gap:4px;padding-right:10px}.ca-sc--add{border:1px dashed var(--line-strong,#D9D8D2);background:transparent;cursor:pointer;color:var(--text-2);padding:0 10px}.ca-excl{margin-top:4px}.ca-multi{margin-top:10px;display:flex;flex-direction:column;gap:8px}.ca-multi__sel{display:flex;flex-wrap:wrap;gap:6px}.ca-pick__o{display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:8px;background:none;text-align:left;font-size:13px;cursor:pointer;color:var(--text-1)}.ca-pick__o:hover{background:var(--bg-subtle)}.ca-pick__o small{color:var(--text-3)}.ca-scopehelp{margin-top:8px}' +
+  '.ca-histw{position:relative;padding-top:4px}.ca-hist{display:block;width:100%;height:56px}.ca-hist rect{fill:var(--st-neutral-bg)}.ca-hist rect.is-in{fill:var(--st-info-dot);opacity:.75}.ca-hist__cut{stroke:var(--text-1);stroke-width:.6;vector-effect:non-scaling-stroke;stroke-dasharray:3 2}.ca-histw .ca-range{width:100%;margin:0}.ca-range__ends{display:flex;justify-content:space-between;align-items:center}.ca-range__ends .ca-range__v{min-width:0;text-align:center}' +
+  '.ca-days{gap:6px}.ca-days .ca-chipt{min-width:48px;justify-content:center;height:32px;padding:0 10px}' +
+  '.ca-tr{position:relative;height:36px;margin:4px 0 0}.ca-tr__track{position:absolute;left:8px;right:8px;top:16px;height:4px;border-radius:2px;background:var(--st-neutral-bg)}.ca-tr__track i{position:absolute;top:0;bottom:0;border-radius:2px;background:var(--st-info-dot)}.ca-tr__in{position:absolute;left:0;right:0;top:6px;width:100%;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none;height:24px}.ca-tr__in::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:18px;height:18px;border-radius:50%;background:var(--bg-card,#fff);box-shadow:0 0 0 2px var(--st-info-dot),0 1px 3px rgba(11,31,59,.2);cursor:pointer}.ca-tr__in::-moz-range-thumb{pointer-events:auto;width:18px;height:18px;border-radius:50%;background:var(--bg-card,#fff);border:2px solid var(--st-info-dot);cursor:pointer}.ca-tr__in::-webkit-slider-runnable-track{background:none}.ca-tr__ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);padding:0 2px}' +
+  '.ca-wc{overflow:hidden}.ca-wc .ca-bubble,.ca-wc .ca-li__m,.ca-wc .ca-mail p,.ca-play__pv{overflow-wrap:anywhere}.ca-set__b .ca-gap{overflow-x:auto;max-width:100%}.ca-seg .seg__btn{min-width:0!important}@media (max-width:760px){.ca-wc__who small{white-space:normal}.ca-wbar{width:100%}.ca-wbar select{flex:1 1 auto;min-width:0}}' +
+  '@media (max-width:1100px){.ca-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:760px){.ca-wgrid{grid-template-columns:minmax(0,1fr)}.ca-tile{padding:12px}.ca-tile__n{font-size:24px;line-height:30px}.ca-head-acts{gap:8px}.ca-run{width:100%}.ca-run__bar{flex:1}.ca-meter{grid-template-columns:96px minmax(0,1fr) 56px}}';
   document.head.appendChild(css); })();
 </script>
 <script id="demo-script">
@@ -54159,7 +54956,7 @@ function demoCompanyDef(key){ return DEMO_COMPANIES.find(function(c){ return c[0
 function demoBuild(key){
   const d = demoCompanyDef(key); if(!d) return null; const t0 = performance.now();
   DEMO.rng = demoRng(d[2]); DEMO.company = key; DEMO.mode = 'data'; const fi = FM.interactive; FM.interactive = false; demoCandSeq = 0;
-  try { if(key !== 'northstar') demoClearWorkspace(); const out = demoRunCompany(d[3]); DEMO.times[key].total = Math.round(performance.now() - t0); DEMO.built = out; return out; }
+  try { if(key !== 'northstar') demoClearWorkspace(); const out = demoRunCompany(d[3]); DEMO.times[key].total = Math.round(performance.now() - t0); DEMO.built = out; if(typeof caDemoSeed === 'function') try { caDemoSeed(key); } catch(e){ console.error('cowork seed', e); } return out; }
   finally { FM.interactive = fi; demoAct(demoOwnerOf().id); }
 }
 /* K9: open a company without a blocking screen. The build runs in slices of a few milliseconds; Home shows after the first
@@ -54191,7 +54988,7 @@ function demoBuildInBackground(key, hooks){
     const sc = document.scrollingElement, top = sc ? sc.scrollTop : 0; try { renderSidebar(); if(state.activeNav === homeForMe()) showView(state.activeNav); } catch(e){} if(sc) sc.scrollTop = top; demoLoadingDraw(); };
   const first = function(){ demoAct(demoOwnerOf().id); times.homeMs = Math.round(performance.now()); lastPaint = performance.now(); demoLoadingDraw(); if(hooks.first) hooks.first(times); };
   const finish = function(r){
-    DEMO.loading = null; DEMO.built = r.value; const T = DEMO.times[key] = Object.assign(DEMO.times[key] || {}, times, { total:Math.round(performance.now() - t0), doneMs:Math.round(performance.now()) });
+    DEMO.loading = null; DEMO.built = r.value; if(typeof caDemoSeed === 'function') try { caDemoSeed(key); } catch(e){ console.error('cowork seed', e); } const T = DEMO.times[key] = Object.assign(DEMO.times[key] || {}, times, { total:Math.round(performance.now() - t0), doneMs:Math.round(performance.now()) });
     try { if(window.APS && APS.tick) APS.tick(); } catch(e){}
     demoLoadingDraw(); paint(); if(hooks.done) hooks.done(r.value, T);
   };

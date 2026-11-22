@@ -1956,3 +1956,48 @@ The engine, the levels, the limits and the rules from Phase 1 and 1b are unchang
 - An Owner sees "Start free trial" on an agent that isn't in the plan.
 - Activity loads 20 rows at a time.
 - The approval record is found by its action, since the picks pass may add rows on redraw.
+
+## Step 2b · Agent pages made visual and interactive (23 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-cowork-visual.html`. Screenshots: `docs/screenshots/cowork-visual/` (each agent, 1440 and 390). New spec: `tests/cowork-visual.spec.js` (15 checks).
+
+Everything is in one new block, `<script id="cowork-visual-script">`, after `cowork-simple-script`. The engine, levels, caps and rules are unchanged. Only Design 2.0 tokens are used (`--st-good/warn/risk/info/neutral`, `--av-*`, `.seg`, `.o-menu`, `.o-chip`, `.o-av`). The charts are inline SVG.
+
+- **Header.** One status pill: "● On · 25 jobs". Its menu offers Pause for 1 hour, Pause until tomorrow 9:00, Pause until I resume, and Turn off; Turn off asks first and says what stops.
+  - Paused, the pill reads "⏸ Paused · resumes 10:42", and an amber bar counts down with **Resume now**. The pause ends on its own (`caPauseSweep`, on `fmNow`, so the demo clock moves it).
+  - **Run now** shows progress in place ("Scanning 600 candidates against 25 jobs…"), then the result with **See them**. New people sort to the top of the cards.
+- **Numbers.** Four tiles per agent, each with a label, a grey line saying what it counts, a 7-day sparkline and the change against last week. Clicking a tile filters or scrolls the page. `caWeekNums` stays the only source for the Agents card, Today and Activity, and the spec checks each tile against the list on the same page.
+- **Waiting for you.** Real cards, never an empty box; when nothing waits: "All caught up · checked 4 min ago".
+  - Talent Discovery: match cards with an avatar, a match ring, the job chip, green reasons and one amber gap ("Expects above range" without money permission). **Add to job**, **Not a fit** (asks why) and **View profile** (a drawer). Above them: Add all N, a job filter and a sort. Adding animates the card out and moves every number.
+  - Engagement: WhatsApp-style bubbles or email cards, with Send, Edit and Skip. Replies show as a two-bubble thread with Reply and Shortlist.
+  - Interviews: unconfirmed and clashing slots, with Confirm, Pick another slot and Call.
+  - Offer & Joining: high-risk offers with their reasons and three backups, with Call, Add backups to job and Dismiss.
+  - LinkedIn: first messages in a LinkedIn-style preview, with the recruiter's account.
+- **Panels.**
+  - Talent Discovery: a jobs table with search, All / Needs matches / Healthy / Paused, a client filter, coverage bars, avatar stacks, the best match, last checked and a switch per job. Rows can be selected for bulk Pause / Resume / Run now. A row opens a drawer with its matches and a per-job match level. 20 rows a page; paused jobs are counted at the top.
+  - Engagement: the conversation funnel and six message-type cards; each opens its template in a drawer.
+  - Interviews: a Mon–Sun week strip with reminder badges, and a feedback board with chase dots.
+  - Offer & Joining: a Low / Medium / High risk board and a 30-day joining timeline.
+  - LinkedIn: account cards with usage meters and an acceptance ring; Resume or Sign in again on a paused account. Then the sequence funnel and a jobs table.
+  - A feed of the last 8 actions sits on the right at 1440 and below on a phone.
+- **Settings.** The same collapsible cards, now with real controls:
+  - Which jobs: segments, with a searchable pick list.
+  - Match level: a slider over a histogram of the pool's scores, with a live count.
+  - Numbers are steppers.
+  - "What Kairo does" uses Do it for me / Ask me first / Off segments.
+  - Who counts: rule rows with icons, and exclusion chips you can remove.
+  - Working hours: weekday chips and a two-handle 24-hour bar, with the time zone shown.
+  - Templates open in a drawer. The "Turn this agent off" card is gone; Turn off is in the status menu.
+- **Matching.** Matches leave out anyone the engine would block: already in the job, turned down, or sent to the same client inside its duplicate window.
+- **Demo data** (`caDemoSeed`, run when a demo build finishes; the default data is untouched).
+  - Northstar's generated jobs get skills that fit their titles, and the pool is tuned. Most open jobs have 3–12 matches at 70%+; Warehouse Supervisor has 1, Area Sales Manager 2, and Staff Nurse (ICU) none.
+  - Match history is spread over two weeks, and a few people are held back for the next check.
+  - It also seeds first messages and replies, Kairo bookings and reminders, high-risk offers with joining dates, and two weeks of LinkedIn activity with first messages waiting.
+  - Every agent that is On has 5–8 waiting items in Northstar and 10 or more in Vistaar.
+
+**Spec changes** (tests/cowork-agents.spec.js, tests/cowork-simple.spec.js; every rule they checked still holds):
+- They pause and turn off through the status menu, and read the pill.
+- They use the segmented controls, the steppers and the template drawer.
+- They count waiting items relative to the matches already there.
+- They find Today's new sections.
+- The 2,200 px height rule now covers the Agents tab, Settings and Activity. Today is longer by design, because the jobs table shows 20 rows a page.
