@@ -51,7 +51,7 @@
     await t('week strip: picking a day changes the agenda, the lean pill glides, month mode shows counts', async function(){
       as('admin', 'Agency'); await sleep(80); ok(q('#iv-wdays .o-pill'), 'week pill'); var days7 = qa('.iv-wd'); ok(days7.length === 7, 'seven days');
       var other = days7.find(function(b){ return !b.classList.contains('is-on') && /\d\s*$|\d/.test(b.textContent) && b.querySelector('.iv-wd__c').textContent.trim(); }); ok(other, 'another day with interviews'); var was = q('.iv-agenda h2').textContent; other.click(); await sleep(60); ok(q('.iv-agenda h2').textContent !== was, 'agenda changed'); ok(q('.iv-wd.is-on') !== null, 'one selected');
-      ok(getComputedStyle(q('#iv-wdays .o-pill')).transitionDuration.indexOf('0.6s') > -1, 'pill glides 600ms: ' + getComputedStyle(q('#iv-wdays .o-pill')).transitionDuration);
+      ok(getComputedStyle(q('#iv-wdays .o-pill')).transitionDuration.indexOf('0.2s') > -1, 'pill glides 200ms (Design 2.0 motion; was 600ms): ' + getComputedStyle(q('#iv-wdays .o-pill')).transitionDuration);
       byText('#iv-mode button', /^Month$/).click(); await sleep(60); ok(q('.iv-month') && qa('.iv-md').length >= 35, 'month grid'); ok(qa('.iv-md b').length > 0, 'counts'); byText('#iv-mode button', /^Day$/).click(); await sleep(40); ok(q('.iv-week'), 'back to day');
     });
 

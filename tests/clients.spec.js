@@ -15,7 +15,7 @@
   function list(){ as(arguments[0] || 'admin'); showView('client-management'); }
   function acct(id, tab){ openClientDetail(id, tab || 'overview'); clSetTab(tab || 'overview'); }
   function byText(sel, re){ return qa(sel).find(function(e){ return re.test(e.textContent.trim()); }); }
-  function lum(rgb){ var m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(rgb); if(!m) return 1; if(m[4] !== undefined && +m[4] === 0) return null; return (0.2126 * m[1] + 0.7152 * m[2] + 0.0722 * m[3]) / 255; }
+  function lum(rgb){ var m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(rgb); if(!m) return 1; if(m[4] !== undefined && +m[4] < 0.3) return null; return (0.2126 * m[1] + 0.7152 * m[2] + 0.0722 * m[3]) / 255; }
   function rgbOf(s){ var m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(s); return m && !(m[4] !== undefined && +m[4] === 0) ? [+m[1], +m[2], +m[3]] : null; }
   var D = function(s){ return new Date(s + 'T10:00:00').getTime(); };
   var gj = { country:'India', state:'Gujarat', lut:{ arn:'AD240326012345X', validTill:'2027-03-31' } };
@@ -47,7 +47,7 @@
       ok(!/You receive|Tax and invoicing|One hire at/.test(q('.cl-tabbody').textContent), 'no calculator and no tax section on Terms');
       var i = q('.cl-calc .cl-i'); ok(i && i.getAttribute('tabindex') === '0' && /What this shows/.test(i.textContent) && /revenue target/.test(i.textContent) && /Before GST\. Updates with every placement/.test(i.textContent), '(i) card: ' + (i && i.textContent.slice(0, 80)));
       ok(/Target with this client · FY 2026–27/.test(card.textContent) && /of ₹8L/.test(card.textContent) && /to go · about \d+ more hires? at your/.test(card.textContent) && /Best return now:/.test(card.textContent), 'target block: ' + card.textContent.slice(-300));
-      var fill = q('.cl-track i'); ok(fill && getComputedStyle(fill).backgroundColor === 'rgb(140, 144, 160)', 'neutral fill: ' + (fill && getComputedStyle(fill).backgroundColor));
+      var fill = q('.cl-track i'); ok(fill && getComputedStyle(fill).backgroundColor === 'rgb(94, 106, 130)', 'neutral fill (Design 2.0 muted #5E6A82, was #8C90A0): ' + (fill && getComputedStyle(fill).backgroundColor));
     });
 
     await t('manual tax lines: a reason is needed, an owner saves directly, a manager sends for approval, Back to rule restores, and rule updates never touch them', async function(){
@@ -124,8 +124,9 @@
     await t('visual rules: no dark fill, no red, no green, no weight above 600, no tiles or pills, anywhere on these screens', async function(){
       var bad = [];
       var scan = function(label){ qa('#main-content *').forEach(function(e){ if(e.closest('svg') || e.closest('[data-nc-picker]') || e.tagName === 'IMG' || e.matches('.cl-track i')) return; var cs = getComputedStyle(e); var bg = lum(cs.backgroundColor); if(bg !== null && bg < 0.85 && !/^(INPUT|SELECT|OPTION)$/.test(e.tagName)) bad.push(label + ' dark bg ' + e.className + ' ' + cs.backgroundColor);
-        [cs.color, cs.backgroundColor, cs.borderTopColor].forEach(function(c, i){ var x = rgbOf(c); if(!x) return; if(i === 2 && cs.borderTopWidth === '0px') return; if(x[0] > 170 && x[1] < 110 && x[2] < 110) bad.push(label + ' red ' + e.className + ' ' + c); if(x[1] > x[0] + 25 && x[1] > x[2] + 25) bad.push(label + ' green ' + e.className + ' ' + c); });
-        var w = +cs.fontWeight; if(w > 600) bad.push(label + ' weight ' + w + ' ' + e.tagName + '.' + e.className); if(w === 600 && !/^(H1|BUTTON)$/.test(e.tagName) && !e.classList.contains('btn--go')) bad.push(label + ' weight 600 on ' + e.tagName + '.' + e.className); }); };
+        [cs.color, cs.backgroundColor, cs.borderTopColor].forEach(function(c, i){ var x = rgbOf(c); if(!x) return; if(i === 2 && cs.borderTopWidth === '0px') return; var tok = function(set){ return set.some(function(t){ return Math.abs(t[0]-x[0]) <= 3 && Math.abs(t[1]-x[1]) <= 3 && Math.abs(t[2]-x[2]) <= 3; }); };   /* Design 2.0: red and green only from the status tokens (was: none at all) */
+        if(x[0] > 170 && x[1] < 110 && x[2] < 110 && !tok([[180,48,63],[192,48,61],[217,54,74],[224,86,106],[180,35,47]])) bad.push(label + ' red ' + e.className + ' ' + c); if(x[1] > x[0] + 25 && x[1] > x[2] + 25 && !tok([[16,185,129],[15,122,88],[14,122,87],[43,192,143],[22,170,152]])) bad.push(label + ' green ' + e.className + ' ' + c); });
+        var w = +cs.fontWeight; if(w > 600) bad.push(label + ' weight ' + w + ' ' + e.tagName + '.' + e.className); if(w === 600 && !/^(H1|H2|BUTTON)$/.test(e.tagName) && !e.classList.contains('btn--go')) bad.push(label + ' weight 600 on ' + e.tagName + '.' + e.className); }); };
       list(); await sleep(50); scan('list'); acct('c1'); await sleep(40); scan('account'); clSetTab('terms'); scan('terms'); clSetTab('billing'); scan('billing'); clSetTab('contacts'); scan('contacts');
       openNewClientPage(); await sleep(40); scan('add'); CLN.tab = 'contacts'; ncRender(); scan('add-contacts'); CLN.tab = 'terms'; ncRender(); scan('add-terms'); CLN.tab = 'locations'; ncRender(); scan('add-locations'); ncForm = null; as('admin');
       ok(!bad.length, bad.slice(0, 6).join(' ;; '));

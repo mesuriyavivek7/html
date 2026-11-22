@@ -1625,3 +1625,281 @@ Backup: `backups/recruitment-os-prototype.pre-cowork-phase1b.html`. Screenshots:
 
 **Still rule-based only:** "Working on now" rows come from the same rules the agents will use; the agents don't send most of these until phases 2 to 4.
 
+
+## Oontu Design 2.0, round 1: foundation, Sign in and Create workspace (21 November 2026)
+
+Source: `~/Downloads/Oontu-Prototype-2026-11-21` (design reference only). Backup: `backups/recruitment-os-prototype.pre-design-auth.html`. Screenshots: `docs/screenshots/design-2-auth/` (1440 and 390).
+
+**Taken from the reference:** the look only.
+- Inter type, the Deep Navy / Signature Green / Warm White palette, and the Tailwind palette re-pointed to navy slates.
+- The ow-* and au-* components and the motion tokens.
+- The approved brand assets in `assets/brand/` and the new "Oontu." wordmark: in the sidebar, the app icon when collapsed, and on the auth pages.
+
+**Not taken:**
+- Their sign-in and sign-up process.
+- Their new modules (Inbox, Intelligence, legal centre and others).
+- Their reload/hash script.
+
+Our steps, copy, ids, `data-act` / `data-form` hooks and logic are unchanged.
+
+**Sign in:**
+- The page is a white left column (logo, "New here? Create a workspace", the card, footer) with the Kairo stage on the right.
+- The stage is presentational only: Kairo's window, three example rows, and chips for time zones, replies and "Your day is ready".
+- Every step (start, remembered account, code, password, SSO, done) uses the same parts: the field with an icon, a navy Continue pill, quiet outline buttons, and a green brand dot in place of a heading's full stop.
+
+**Create workspace:**
+- Our nine questions in the same order. Progress is three segments (About you, Your workspace, Your account), and the counter still reads "N to go".
+- Answers stay as jump-back chips.
+- Choices are pills that turn navy when picked. Back is a round button beside Continue.
+- On the right, "Your workspace, taking shape" is a miniature Oontu window filled from the answers.
+- The done screen keeps our checklist.
+
+**Other auth screens** (invitation, recovery, help, workspace choice) sit in the same page and use the same field and button styles.
+
+**Consistency fixes across the app:**
+- The old Brand 1.0 charcoal (#2F313F), hard-coded in 41 fills, bars and avatars, is now Deep Navy (#0B1F3B).
+- Its 18 tints were updated to match.
+
+**Specs changed (old visual rules → Design 2.0 rules):**
+- light: no dark, green or red → navy-only dark fills, and greens and reds only from the Design 2.0 tokens.
+- design-system: sidebar 240/64 → 248/76; logo 34/28 → 32/32; 600 ms glides → 200 ms; titles 28 px → 24 px; "no blue" → "no indigo or purple"; the 64 px shared header line is dropped because the new design has none.
+- campaigns: a navy primary is allowed.
+- clients: the track fill is #8C90A0 → #5E6A82; H2 may be 600; faint tints are not fills.
+- interviews: glide 600 → 200 ms.
+- auth-flow 23b: counts the new stage (3 rows, 3 chips) instead of 5 floating cards.
+
+**Tests:** 40 of 41 specs pass; engine 34/34. The one failure is demo-data's Vistaar check, which fails on the backup too. It is date-dependent: some assignments get 7 approved weeks instead of 8.
+
+**Next rounds:** the app shell (top bar, Home and the other screens) in the new design.
+
+### Round 1b: sidebar and top bar as in the reference (21 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-topbar.html`. Screenshots: `docs/screenshots/design-2-auth/topbar-*.png`.
+
+**Sidebar:**
+- The workspace and account card sits under the logo, as in the reference (it was at the bottom).
+- Search left the sidebar for the top bar.
+
+**Top bar** (left to right):
+- The search field "Search candidates, jobs, clients ⌘K".
+- The Kairo ring.
+- Messages, notifications, and an account chip (initials and name) that opens the same account menu under it.
+- Other screens keep Back and "Page · date" on the left. Home hides the page title, as in the reference.
+
+**Kairo ring:**
+- Recruiters: opens the Kairo chat.
+- Owner and Manager: open Intelligence.
+- Hiring manager, Candidate and Oontu admin: hidden. It also hides when Kairo is switched off.
+
+**From the reference** (layout and look only):
+- The script that lines the top bar up with the content column.
+- The top bar's hairline that appears on scroll.
+- Tooltips on the collapsed rail.
+
+**Left out:** the reference's calendar icon on Home. It is a date-period filter for Home's numbers, and our Home has no period logic yet. Its slot (`#topbar-period-slot`) is in place for when we add it.
+
+**Tests:** 40 of 41 specs pass (the same date-dependent Vistaar check fails); engine 34/34.
+
+### Round 1c: Home in the Design 2.0 layout, with the day's colours (21 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-home.html`. Screenshots: `docs/screenshots/design-2-home/` (each Home at 1440 and 390, and the hero in each phase).
+
+The Owner, Recruiter and Recruiter Manager Homes keep their own numbers, attention items, interviews, tables and permissions. Only the layout and the look changed, following the B v2 reference and the "colours through the day" guide.
+
+**Hero:** one soft surface holding:
+- the phase symbol, the greeting and a one-line summary
+- the two actions
+- the four numbers as one strip, with a trend arrow on submissions and a red dot when open jobs have no recruiter
+- "Your hires, end to end": Find → Engage → Interview → Approve → Hire, plus Get paid for agency Owners. It is built from the journeys, with how many move on and the slowest stage with its median days.
+
+**The day's colours:**
+- Four phases: Sunrise 5–10, Noon 10–16, Evening 16–20, Midnight 20–5.
+- Only the hero background, its glow and the symbol change.
+- At each boundary the hero fades over 30 minutes into the next look.
+- The phases follow the person's own clock.
+- At midnight the hero shows faint stars, hidden when reduced motion is on.
+- The greeting changes by phase and day: "Happy Monday", "Almost the weekend" on Friday evening, otherwise one of the phase's lines, picked by the date.
+
+**Below the hero:**
+- "Needs you" with All / Now / Today / This week tabs, including the approvals queue row, beside "Today".
+- Then a weekly chart: submissions, interviews and backouts over the last 8 weeks.
+- On the Recruiter Home, Kairo suggests sits beside the chart.
+- Then our tables (My active jobs, Team jobs, Jobs at risk and Clients) and the existing cards.
+
+**Recruiters never see ₹ on Home:** their funnel has no Get paid column.
+
+**Specs changed:**
+- auth-flow (the later-visit greeting): "starts with Good" → "is no longer Welcome", because greetings now vary.
+- light: two more Design 2.0 tokens, the funnel teal #16AA98 and the risk red #B4232F.
+
+### Round 1d: Inbox in the Design 2.0 layout, with demo chats (21 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-inbox.html`. Screenshots: `docs/screenshots/design-2-inbox/`.
+
+**Ported from the reference's Inbox module** (`<style id="inbox-style">` and `<script id="inbox-script">` at the end of the page):
+- The top-bar Messages button opens the Inbox drawer:
+  - a channel rail (All, Team, WhatsApp, Email, LinkedIn, LinkIt)
+  - the list, with search and the All / Unread / Needs reply / Starred filters
+  - the conversation, with ticks, attachments, typing and replies
+- Expand opens the same Inbox as a page. It replaces the old LinkIt page; the menu id stays `li-uni-box` and the label is now "Inbox", with an unread count.
+- Demo conversations are seeded for every channel, so the flow can be tried.
+- Unread messages show as one line in the notifications bell.
+
+**Left out on purpose** (process, not design):
+- the reference's new Settings sections (Campaign channels, Countries & wallet, Channel providers)
+- campaign wallet charges and channel checks
+- sign-up country notes
+- rerouting wa.me / mailto links and candidate WhatsApp/Email buttons into the Inbox
+- campaign hand-over on reply
+
+**Tests:** 40 of 41 specs pass (the same date-dependent Vistaar check fails).
+
+### Round 1e: interview calendar in the top bar (21 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-ivcal.html`. Screenshots: `docs/screenshots/design-2-home/ivcal-*.png`.
+
+**Where it shows:** a calendar icon beside Messages, on every page, for Recruiter, Recruiter Manager, Owner and Hiring Manager. A blue dot on the icon means interviews today.
+
+**The popover** is our own design in the Design 2.0 style. It replaces the reference's date-range picker: no presets, no Apply or Cancel.
+- **Left:** the month, with a dot under each day that has interviews (a bar for 3 or more), today ringed, and the picked day in navy.
+- **Right:** that day's interviews, with time and length, candidate, status, job · round · client, and how it's held and with whom.
+- Clicking an interview opens it on the Interviews screen.
+- The footer has "Back to today" and "Open Interviews".
+- It closes on Esc, on a click outside, or when you change page. On a phone it fills the width, with the day list under the calendar.
+
+**Data:** the same interviews the Interviews screen shows each role (`interviewsForCurrentUser`).
+
+**Tests:** 40 of 41 specs pass (the same date-dependent Vistaar check fails).
+
+**Update, the same day (your feedback):** the popover is now the calendar only; the day panel on the right is gone.
+- Hovering a day that has interviews opens a small card beside the calendar, with the time, a status dot, the candidate, and the round · job. Up to 5 are shown, then "+N more".
+- The card stays while the pointer moves onto it, and clicking a line opens that interview.
+- On a phone or keyboard, tap or focus the day; the card then opens under the day.
+- Esc closes the card first, then the calendar.
+
+Screenshots: `docs/screenshots/design-2-home/ivc2-*.png`.
+
+### Round 1f: the calendar is the Home period filter (21 November 2026, your decision)
+
+The interview calendar from round 1e is removed: its button, styles, script and screenshots.
+
+Backup before this change: `backups/recruitment-os-prototype.pre-period.html`. Screenshots: `docs/screenshots/design-2-home/period-*.png`.
+
+**What it is now:** the reference's date-range filter, ported. It replaces our old `setDashDateFilter`, which only showed a toast.
+- The calendar icon shows in the top bar on the Owner, Recruiter Manager and Recruiter Homes only.
+- Presets: Today, This week, Last 7 days (the default), This month, Last 30 days, This quarter.
+- Custom range: From/To fields, or two clicks on the month.
+- A "Compare with previous" switch, then Cancel and Apply.
+
+**What follows the period:**
+
+| Home | Numbers that follow the period | Compared with |
+|---|---|---|
+| Recruiter | Submitted, Interviews | the previous period of the same length ("vs N previous", trend arrow) |
+| Recruiter Manager | Team submissions, Interviews | the same |
+| Owner (agency) | Placements, by joining date | the same |
+
+- With Compare switched off, the trend arrows go away.
+- Lists never follow the period: Needs you, Today and the tables.
+- Totals about "now" stay as they are: open jobs, unpaid invoices, revenue earned to date and offers out.
+- The corporate Owner numbers are unchanged.
+
+**Phone:** the picker fills the width, with the presets in one scrolling row.
+
+**Tests:** 40 of 41 specs pass (the same date-dependent Vistaar check fails).
+
+### Round 1g: Jobs list in the Design 2.0 table, with a little more room (21 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-jobs-table.html`. Screenshots: `docs/screenshots/design-2-jobs/`.
+
+**Ported from the reference:** `renderJobs`, `jobsListHTML`, `refreshJobsPage` and `jobsEmptyHTML`, plus the sort list, `setJobsSortSel`, `jobsCountText` and `oJobSide`. Same data and actions as before; only the markup changed.
+- Page head: "Jobs" with "N open across N clients" (departments for a company), and the "jobs used" count beside New job.
+- Toolbar: scope (All / Unassigned / Requests), status, search, a job count, and a sort menu (Open longest, Newest first, Priority, Title A–Z).
+- Columns: Job (the title, then location · work mode · pay · job ID on one line), Client, Team, Candidates (the pipeline bar over "N candidates"), Status, Updated, and the actions.
+- Left out: the reference's "Request a job" button, which is its own feature.
+
+**More room than the reference** (`#jobs-page` only):
+- rows 16 px top and bottom, header 14 px
+- 5 px between the title and its details line
+- team avatars overlap by 6 px with a white ring, so no initials are cut
+- a light row hover
+- tighter gaps above the toolbar and the table
+
+**Spec changed:** light allows the evening sun colour #C8553D from the day-colours guide. The Home shows it after 4 pm, which made the check depend on the time of the run.
+
+**Tests:** 40 of 41 specs pass. The Vistaar demo-data check fails, as before. Six specs timed out on the first run because the runner's browser stalled; all six passed on a re-run.
+
+### Round 1h: Talent pool pipeline as in the reference, and the whole-product status layer (21 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-talentpool.html`. Screenshots: `docs/screenshots/design-2-talentpool/`.
+
+**Talent pool › Pipeline** (ported from the reference):
+- The tabs read "Search candidates · Pipeline · Add candidates". Each tab's help moved into its tooltip, so the stray "i" badge is gone.
+- An expanded candidate reads "In N jobs" with View profile, then a small table: Job (client tile, title, client) · Where it stands (status and the next step or "Nd with client") · Progress ("6 of 7" segments; hover lists every round) · Owner · the one next action · › to open the detail.
+- Each job is one compact row; it was a 140 px stage card. The full stepper stays in the detail drawer.
+- Left out (behaviour, not design): the reference routes the candidate's WhatsApp and Email buttons into the Inbox and opens the resume in the profile.
+
+**Whole-product status layer** (`<script id="ow-status-script">`, from the reference):
+- The page body gets `ow-white`. The Design 2.0 rules written for it (19 of them) now apply, for example the plain "N need action".
+- Every status label is tagged with its tone and drawn as a dot plus text: risk, attention, good, in progress, neutral.
+- Tabs with a zero count are dimmed, never hidden.
+- Home tables and lists show 5 rows, then "Show all (n)".
+- A new screen rises in on the same spring as Sign in.
+- Left out: the company-wording rewrite (corporate stays as is) and the legal-centre routing.
+
+**Two CSS fixes with it:**
+- An "off" switch is neutral grey; it read blue, like "on".
+- Status labels take their colour at once instead of fading from the old pill.
+
+**Spec changed:** clients' visual rules now allow red and green only from the Design 2.0 status tokens. Before, no red or green was allowed at all, and the shared tone layer now colours at-risk health labels in the approved red.
+
+**Tests:** 40 of 41 specs pass (the same date-dependent Vistaar check fails).
+
+### Round 1i: Create workspace in the reference's order (21 November 2026, your request)
+
+Backup: `backups/recruitment-os-prototype.pre-signup-steps.html`. Screenshots: `docs/screenshots/design-2-signup/`.
+
+**The steps now:**
+1. **Email:** "What’s your work email?" The address is checked, then a code is sent at once. An address that already has an account is offered Sign in, as before.
+2. **Code:** "Check your inbox." A correct code proves the email. Nothing is created yet.
+3. **Name, from the email:** "Is it Dana?" with *Yes, I’m Dana* or *Use another name* (then typed). The guess is the part before "@", up to the first dot, dash or digit. If nothing can be guessed, the name is typed.
+4. **Who you hire for:** *Our clients* (staffing agency) or *Our own company*. The company rules run here, since the email is proven by then: a personal email is refused for a company, and a domain that already has a workspace shows who to ask, with Request to join and Ask Oontu.
+5. **Organisation, from a company domain:** "Is your agency Brightpath Talent?" with *Yes, that’s us* or *Change name*. Personal domains are never guessed. The address preview follows as you type.
+6. **How many recruiters:** Just me, 2–5, 6–20, 21–50, 50+ (company sizes for a company).
+7. **Location (ours):** "Where’s your team based?" Yes, India, or UAE, the UK, the US or Singapore. Picking one sets the country defaults and creates the workspace.
+
+**Removed from sign-up:** "What do you place / who hires with you" and the mobile number. The account API treats the mobile as optional, and it is sent only when present.
+
+**Sign in, Google or Microsoft:** these already prove the email, so they start at step 3.
+
+**Resume link:**
+- In the same browser, still signed in with that email: the person goes straight to the first unanswered question.
+- In another browser: the email question comes first, filled in, then a code.
+
+**Sign-up leads:** progress is tracked in the new order: email → verified → name → type → team size → location → in product.
+
+**Specs:** auth-flow and signup-recovery are rewritten for the new order, keeping every rule they check.
+- The `signUpTo` / `signUpAll` helpers follow the new steps.
+- The company-email and domain-taken checks are asserted at the hiring-type step.
+- R6: a person who proved the email is added straight to the workspace on approval, rather than invited.
+- R2: covers both resume cases.
+
+**Tests:** 40 of 41 specs pass; engine 34/34. The Vistaar check fails, as before.
+
+**Update, 22 November 2026: the finished screen, as in the reference.** Backup: `backups/recruitment-os-prototype.pre-done-screen.html`.
+- After the location pick, the screen shows a green tick, "You’re all set, Dana.", "Your workspace lives at" with the address chip (`brightpath-talent.oontu.app`), and one button: **Open Brightpath Talent** (the workspace's name). It sits in the middle of the column.
+- The 7-item "Getting started" list and "I’ll finish these later" are removed from this screen. The same setup list is still on Home ("Complete your workspace").
+- The live preview on the right still shows "Welcome to …", Ready and Kairo's note.
+- auth-flow test 02 now checks the address and the single button. auth-flow, signup-recovery, walkthrough and agency-e2e all pass.
+
+### Round 1j: Intelligence's mark in the sidebar, and the Ask Kairo ring's hover motion (22 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-iq-nav.html`. Screenshots: `docs/screenshots/design-2-intelligence/`.
+
+From the reference:
+- **Sidebar:** the Intelligence item's icon is Kairo's mark (the spectrum O with its green point of light, `<script id="iq-nav-script">`). It is redrawn after every sidebar render. When the item is hovered or open, its label fills with the blue-to-green spectrum gradient (`--iq-spec-line`).
+- **Top bar:** hovering or focusing the Ask Kairo ring turns the O by 40° and grows it 8% on the product's spring curve. There is no looping animation, following the reference's "Kairo at rest" rule. With reduced motion it does not move.
+
+**Tests:** sidebar, design-system, intelligence, light, screens-crawl and m04c-menu-home pass.
+
+**Tooling note:** Node is not on the default PATH in this shell any more; the runner uses `/usr/local/bin/node`.

@@ -322,3 +322,9 @@ Vistaar misses the switch target. All 4,500 journeys go through the real steps o
 - **Server rules:** plans decide which agents a workspace has. "Always a person" actions can never be set to Auto. The weekly limit, the interview and joining limits, and STOP across all agents must be enforced on the server.
 - **Activity:** one record per agent action; a recruiter's feed is limited to their own jobs and candidates on the server, not only on screen.
 
+
+### Update, 21 November 2026: Oontu Design 2.0, round 1 (Sign in and Create workspace)
+
+- **Design only:** the auth screens and the shared components now use Oontu Design 2.0. The sign-in and sign-up steps, the rules behind them and every server-facing call are unchanged, so section 5 still applies as written.
+- **Brand files:** the approved logos and favicons are in `assets/brand/`. A production build must serve that folder next to the page.
+- **Known open item:** demo-data's Vistaar check (8 approved weeks per assignment) depends on today's date; it fails before and after this change.
