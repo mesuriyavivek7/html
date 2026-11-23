@@ -35,7 +35,7 @@
       var o = ORG_STRUCTURE.profile.orgType; ORG_STRUCTURE.profile.orgType = 'Corporate'; try { as('admin'); ok(shown().indexOf('client-management') === -1 && shown().indexOf('admin-paytrack') === -1, 'hidden'); ok(heads()[0] === 'Hiring', 'order'); } finally { ORG_STRUCTURE.profile.orgType = o; }
     });
     await t('hiring manager, candidate and Oontu: grouped and in daily order', async function(){
-      as('hm'); ok(shown().join() === 'hm-dashboard,hm-interviews,hm-feedback,hm-decisions,hm-jobs,settings', shown().join()); ok(heads().join() === 'Your reviews,Requisitions', heads().join());
+      as('hm'); ok(shown().join() === 'hm-dashboard,hm-interviews,hm-feedback,hm-decisions,hm-jobs,intelligence,settings', shown().join()); ok(heads().join() === 'Your reviews,Requisitions,Insights', heads().join());
       as('candidate'); ok(shown().join() === 'candidate-home,candidate-opportunities,candidate-interviews,candidate-profile-self,settings', shown().join());
       as('oontu'); ok(shown()[0] === 'oontu-dashboard' && shown()[shown().length - 1] === 'oontu-settings', shown().join()); ok(heads().join() === 'Customers,Product,Operations', heads().join());
     });

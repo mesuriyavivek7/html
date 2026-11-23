@@ -77,7 +77,7 @@
       CUSTOM_ROLES.push({ id:'role_sh_am', name:'Account manager', __v2:true, permissions:perms, scope:Object.assign({}, base.scope, { clients:'own', jobs:'own', journeys:'assigned' }), approves:{} });
       var am = person('Shape Account Manager', 'role_sh_am', OWNER), cl = CLIENTS.find(function(c){ return c.name === 'HealthAI'; }), was = cl.ownerId; cl.ownerId = am.id;
       try {
-        actAs(am.id); var m = menuOf(am.id); ok(m.join() === 'dashboard,approval-center,my-todo,jobs,interviews,client-management,settings', m.join());
+        actAs(am.id); var m = menuOf(am.id); ok(m.join() === 'dashboard,approval-center,my-todo,jobs,interviews,client-management,intelligence,settings', m.join());
         ok(CLIENTS.filter(clientVisibleTo).every(function(c){ return c === cl; }) && JOBS.filter(jobInScope).every(function(j){ return clientForJob(j) === cl; }), 'only their client and its jobs');
         ok(!clCanSeeMoney() && homeForMe() === 'dashboard', 'no money, My day');
       } finally { cl.ownerId = was; }
