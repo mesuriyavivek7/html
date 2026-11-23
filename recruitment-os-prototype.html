@@ -62097,5 +62097,444 @@ function prHandHTML(all){
     '<button type="button" class="o-btn o-btn--primary" data-pr-open onclick="prGo({})">Review in Prospects →</button></div>';
 }
 </script>
+<style id="profile-style">
+/* ============================================================
+   CANDIDATE PROFILE (2026-11-23, approved by the user): one screen, three zones, nothing buried.
+   Header (sticky, shrinks on scroll) · work column (Now, Ready to submit, Jobs, Best fit, tabs) · insight rail.
+   Quiet monochrome; green only for good, amber for "your move", red for risk. Motion from the oontu-motion tokens.
+============================================================ */
+.pf{ max-width:1280px; }
+.pf-enter{ animation:o-view-enter var(--motion-slow) var(--ease-enter) both; }
+.pf-head{ position:sticky; top:0; z-index:20; margin:0 -4px 20px; padding:14px 4px 16px; background:var(--bg-page, #F6F7F9); transition:padding var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard); }
+.pf-head.is-compact{ padding:8px 4px 10px; box-shadow:0 1px 0 var(--line), 0 10px 24px -22px rgba(11,31,59,.5); }
+.pf-head__row{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.pf-av{ flex:none; width:64px; height:64px; border-radius:50%; overflow:hidden; display:inline-flex; transition:width var(--motion-base) var(--ease-standard), height var(--motion-base) var(--ease-standard); }
+.pf-av > *{ width:100% !important; height:100% !important; }
+.pf-head.is-compact .pf-av{ width:40px; height:40px; }
+.pf-id{ flex:1 1 320px; min-width:0; }
+.pf-name{ display:flex; align-items:center; gap:10px; margin:0; font-size:26px; line-height:32px; font-weight:600; letter-spacing:-.02em; color:var(--text-1); transition:font-size var(--motion-base) var(--ease-standard); }
+.pf-head.is-compact .pf-name{ font-size:18px; line-height:24px; }
+.pf-facts{ margin:4px 0 0; font-size:14px; line-height:20px; color:var(--text-2); }
+.pf-status{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; margin-top:8px; font-size:13px; line-height:18px; color:var(--text-2); transition:opacity var(--motion-fast) var(--ease-standard); }
+.pf-head.is-compact .pf-facts, .pf-head.is-compact .pf-status{ display:none; }
+.pf-status > span{ display:inline-flex; align-items:center; gap:6px; }
+.pf-dot{ width:7px; height:7px; border-radius:50%; flex:none; background:var(--text-3); }
+.pf-dot--good{ background:var(--st-good-dot, #10B981); } .pf-dot--warn{ background:var(--warn-dot, #E8A317); } .pf-dot--risk{ background:var(--danger-dot, #D92D20); }
+.pf-acts{ flex:none; display:flex; align-items:center; gap:8px; }
+.pf-ic{ width:40px; height:40px; border-radius:12px; border:1px solid var(--line); background:#fff; display:inline-flex; align-items:center; justify-content:center; color:var(--text-2); cursor:pointer; transition:border-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+.pf-ic:hover{ border-color:var(--line-strong); color:var(--text-1); }
+.pf-ic:active{ transform:translateY(1px); }
+.pf-acts .o-btn{ height:40px; }
+.pf-acts .pmenu .o-menu{ right:0; left:auto; min-width:220px; }
+.pf-grid{ display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:24px; align-items:start; }
+.pf-main{ display:flex; flex-direction:column; gap:16px; min-width:0; }
+.pf-rail{ position:sticky; top:132px; display:flex; flex-direction:column; gap:16px; min-width:0; }
+.pf-card{ padding:18px 20px; }
+.pf-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 12px; }
+.pf-h h2{ margin:0; font-size:14px; line-height:20px; font-weight:600; color:var(--text-1); display:inline-flex; align-items:center; gap:8px; }
+.pf-h small{ font-size:12px; color:var(--text-3); }
+.pf-n{ font-size:12px; font-weight:600; color:var(--text-3); font-variant-numeric:tabular-nums; }
+.pf-muted{ color:var(--text-3); }
+/* Now */
+.pf-now{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; }
+.pf-now li{ display:flex; align-items:center; gap:14px; padding:12px 0; }
+.pf-now li + li{ border-top:1px solid var(--line); }
+.pf-now__t{ flex:1 1 auto; min-width:0; }
+.pf-now__t b{ display:block; font-size:14px; line-height:20px; font-weight:600; color:var(--text-1); }
+.pf-now__t span{ display:block; font-size:13px; line-height:18px; color:var(--text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pf-now__a{ flex:none; display:flex; gap:8px; align-items:center; }
+.pf-now__a .o-btn{ height:34px; font-size:13px; }
+.pf-calm{ display:flex; align-items:center; gap:10px; font-size:14px; color:var(--text-2); }
+/* Ready to submit */
+.pf-ready{ display:flex; flex-wrap:wrap; gap:8px; }
+.pf-chk{ display:inline-flex; align-items:center; gap:7px; min-height:32px; padding:5px 12px 5px 9px; border-radius:999px; background:var(--bg-subtle); font-size:13px; line-height:18px; color:var(--text-2); }
+.pf-chk i{ width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none; font-style:normal; font-size:11px; font-weight:700; }
+.pf-chk.is-ok i{ background:rgba(16,185,129,.14); color:#0F7A58; }
+.pf-chk.is-todo{ background:#FFF8EB; color:var(--text-1); }
+.pf-chk.is-todo i{ background:var(--warn-dot, #E8A317); color:#fff; }
+.pf-chk.is-block{ background:#FEF1F0; color:var(--text-1); } .pf-chk.is-block i{ background:var(--danger-dot, #D92D20); color:#fff; }
+.pf-chk button{ border:0; background:none; padding:0 0 0 4px; font:600 13px var(--font); color:var(--text-1); text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.pf-verdict{ font-size:13px; font-weight:600; }
+.pf-verdict.is-ok{ color:#0F7A58; } .pf-verdict.is-todo{ color:var(--warn-fg, #4A4F5A); }
+/* Jobs */
+.pf-jobs .tp-row{ border-radius:12px; grid-template-columns:minmax(0,1.3fr) minmax(0,1.1fr) 118px auto 16px; column-gap:14px; }
+.pf-jobs .tp-row__who, .pf-jobs .tp-row__of, .pf-hm .tp-row__act{ display:none; }
+.pf-jobs .tp-row__act .o-btn{ height:32px; font-size:13px; }
+@media (max-width:760px){ .pf-jobs .tp-row{ grid-template-columns:minmax(0,1fr) auto; row-gap:6px; } .pf-jobs .tp-row__prog{ display:none; } }
+.pf-jobs .tp-row + .tp-row{ border-top:1px solid var(--line); }
+.pf-closed{ margin-top:6px; }
+.pf-closed summary{ list-style:none; cursor:pointer; font-size:13px; font-weight:600; color:var(--text-3); padding:6px 0; }
+.pf-closed summary::-webkit-details-marker{ display:none; }
+/* Best fit */
+.pf-fit{ list-style:none; margin:0; padding:0; }
+.pf-fit li{ display:grid; grid-template-columns:minmax(0,1fr) 52px auto; align-items:center; gap:14px; padding:11px 0; }
+.pf-fit li + li{ border-top:1px solid var(--line); }
+.pf-fit__t b{ display:block; font-size:14px; line-height:20px; font-weight:600; color:var(--text-1); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pf-fit__t span{ display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:3px; font-size:12px; line-height:16px; color:var(--text-3); }
+.pf-fit__t em{ font-style:normal; } .pf-fit__t em.ok{ color:#0F7A58; } .pf-fit__t em.no{ color:var(--warn-fg, #4A4F5A); font-weight:600; }
+.pf-fit__s{ text-align:right; font-size:16px; line-height:22px; font-weight:600; color:var(--text-1); font-variant-numeric:tabular-nums; }
+.pf-fit__s.is-strong{ color:#0F7A58; }
+.pf-fit .o-btn{ height:32px; font-size:13px; }
+.pf-tag{ display:inline-flex; align-items:center; height:20px; padding:0 8px; border-radius:999px; background:var(--bg-subtle); font-size:11px; font-weight:600; color:var(--text-2); }
+/* tabs */
+.pf-tabs{ margin-top:4px; }
+.pf-tabbody{ animation:o-fade var(--motion-base) var(--ease-standard) both; }
+.pf-compose{ border:1px solid var(--line); border-radius:14px; background:#fff; transition:border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard); }
+.pf-compose:focus-within{ border-color:var(--line-strong); box-shadow:0 0 0 3px rgba(11,31,59,.06); }
+.pf-compose textarea{ width:100%; border:0; outline:0; resize:vertical; min-height:64px; padding:12px 14px 4px; border-radius:14px; font:14px/20px var(--font); color:var(--text-1); background:transparent; }
+.pf-compose__f{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 8px 8px 12px; }
+.pf-outs{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; }
+.pf-outs button{ height:28px; padding:0 10px; border-radius:999px; border:1px solid var(--line); background:#fff; font:500 12px var(--font); color:var(--text-2); cursor:pointer; }
+.pf-outs button[aria-pressed="true"]{ background:var(--text-1); border-color:var(--text-1); color:#fff; }
+.pf-just{ padding:12px 14px; border-radius:14px; background:var(--bg-subtle); margin-bottom:10px; font-size:13px; color:var(--text-1); }
+.pf-filters{ display:flex; flex-wrap:wrap; gap:6px; margin:14px 0 4px; }
+.pf-filters button{ height:30px; padding:0 12px; border-radius:999px; border:0; background:transparent; font:500 13px var(--font); color:var(--text-3); cursor:pointer; }
+.pf-filters button[aria-pressed="true"]{ background:var(--bg-subtle); color:var(--text-1); font-weight:600; }
+.pf-tl{ list-style:none; margin:6px 0 0; padding:0; }
+.pf-tl li{ position:relative; display:flex; gap:12px; padding:10px 0 10px; }
+.pf-tl li + li{ border-top:1px solid var(--line); }
+.pf-tl__i{ flex:none; width:30px; height:30px; border-radius:50%; background:var(--bg-subtle); color:var(--text-2); display:inline-flex; align-items:center; justify-content:center; }
+.pf-tl__b{ flex:1 1 auto; min-width:0; }
+.pf-tl__b p{ margin:0; font-size:13px; line-height:19px; color:var(--text-2); }
+.pf-tl__b p b{ color:var(--text-1); font-weight:600; }
+.pf-tl__b q{ display:block; margin-top:3px; color:var(--text-1); quotes:"“" "”"; }
+.pf-tl__w{ flex:none; font-size:12px; color:var(--text-3); white-space:nowrap; }
+.pf-cons{ list-style:none; margin:0; padding:0; }
+.pf-cons li{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:12px 0; }
+.pf-cons li + li{ border-top:1px solid var(--line); }
+.pf-dl{ display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:12px 20px; margin:0; }
+.pf-dl dt{ font-size:12px; line-height:16px; color:var(--text-3); }
+.pf-dl dd{ margin:3px 0 0; font-size:14px; line-height:20px; color:var(--text-1); }
+.pf-dl dd small{ display:block; font-size:12px; color:var(--text-3); }
+.pf-dl dd small.is-stale{ color:var(--warn-fg, #4A4F5A); font-weight:600; }
+.pf-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.pf-chips span{ display:inline-flex; align-items:center; height:26px; padding:0 10px; border-radius:999px; background:var(--bg-subtle); font-size:12px; font-weight:500; color:var(--text-1); }
+/* rail */
+.pf-brief p{ margin:0; font-size:14px; line-height:21px; color:var(--text-1); }
+.pf-brief p + p{ margin-top:8px; }
+.pf-brief__src{ margin-top:12px !important; font-size:12px !important; color:var(--text-3) !important; }
+.pf-last{ margin-top:14px; padding-top:12px; border-top:1px solid var(--line); font-size:13px; line-height:19px; color:var(--text-2); }
+.pf-last b{ color:var(--text-1); }
+.pf-told{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+.pf-told li{ padding-left:12px; border-left:2px solid var(--line-strong, #D5DAE1); }
+.pf-told q{ display:block; font-size:14px; line-height:20px; color:var(--text-1); quotes:"“" "”"; }
+.pf-told small{ display:block; margin-top:3px; font-size:12px; color:var(--text-3); }
+.pf-pulse{ display:flex; align-items:flex-end; gap:2px; height:34px; margin:4px 0 10px; }
+.pf-pulse i{ flex:1 1 0; min-width:2px; border-radius:2px 2px 0 0; background:var(--line-strong, #D5DAE1); }
+.pf-pulse i.on{ background:var(--text-1); }
+.pf-kv{ display:flex; justify-content:space-between; gap:12px; padding:6px 0; font-size:13px; line-height:18px; color:var(--text-2); }
+.pf-kv b{ color:var(--text-1); font-weight:600; text-align:right; }
+.pf-kv + .pf-kv{ border-top:1px solid var(--line); }
+.pf-band{ position:relative; height:8px; margin:12px 0 6px; border-radius:999px; background:var(--bg-subtle); }
+.pf-band__r{ position:absolute; top:0; bottom:0; border-radius:999px; background:rgba(16,185,129,.22); }
+.pf-band__m{ position:absolute; top:-4px; width:3px; height:16px; border-radius:2px; background:var(--text-1); transform:translateX(-1px); }
+.pf-band__m.is-cur{ background:var(--text-3); }
+.pf-band__l{ display:flex; justify-content:space-between; font-size:11px; color:var(--text-3); font-variant-numeric:tabular-nums; }
+.pf-mom{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; font-size:13px; line-height:19px; color:var(--text-2); }
+.pf-mom li{ display:flex; gap:8px; align-items:flex-start; }
+.pf-mom li .pf-dot{ margin-top:6px; }
+.pf-link{ border:0; background:none; padding:0; font:600 13px var(--font); color:var(--text-1); cursor:pointer; }
+.pf-link:hover{ text-decoration:underline; text-underline-offset:3px; }
+@media (max-width:1100px){ .pf-grid{ grid-template-columns:minmax(0,1fr); } .pf-rail{ position:static; } }
+@media (max-width:760px){
+  .pf-head{ position:static; }
+  .pf-name{ font-size:22px; line-height:28px; }
+  .pf-acts{ width:100%; } .pf-acts .o-btn--primary{ flex:1 1 auto; }
+  .pf-fit li{ grid-template-columns:minmax(0,1fr) auto; } .pf-fit li .o-btn{ grid-column:1 / -1; justify-self:start; }
+  .pf-now li{ flex-wrap:wrap; } .pf-now li > .pf-dot{ display:none; } .pf-now__a{ width:100%; }
+}
+</style>
+<script id="profile-script">
+/* ============================================================
+   CANDIDATE PROFILE (2026-11-23). renderCandidateProfile is replaced; every action is an existing one
+   (pipeNext for each job's next step, tsLog for contact and notes, follow-ups, submit, send to client, split credit,
+   consent, Prospects for Kairo's picks). Nothing here is a made-up score: each insight says where it comes from.
+============================================================ */
+const PF = { cid:null, tab:'overview', filter:'all', just:null };
+const PF_STALE_DAYS = 30;
+function pfE(s){ return escapeHtml(String(s == null ? '' : s)); }
+function pfFirst(c){ return String(c.name || '').split(' ')[0]; }
+function pfDays(ms){ return ms ? Math.max(0, Math.floor((Date.now() - ms) / 86400000)) : null; }
+function pfAgo(ms){ const d = pfDays(ms); return d == null ? '' : d === 0 ? 'today' : d === 1 ? 'yesterday' : d < 60 ? d + ' d ago' : d < 365 ? Math.round(d / 30) + ' mo ago' : Math.round(d / 365) + ' y ago'; }
+function pfMs(x){ if(!x) return null; const t = typeof x === 'number' ? x : Date.parse(x); return isNaN(t) ? null : t; }
+function pfHM(){ return state.role === 'hm'; }
+function pfMoney(){ try { return canI('candidates', 'View Salary'); } catch(e){ return false; } }
+function pfLakh(r){ if(r == null || r === '') return ''; const l = r > 1000 ? r / 100000 : r; return '₹' + (Math.round(l * 10) / 10).toString().replace(/\.0$/, '') + 'L'; }
+/* a hiring manager sees only their own company's jobs (as their Jobs screen does); everyone else sees what their role may see */
+function pfSubs(c){ const mine = pfHM() && typeof hiringManagerClientName === 'function' ? hiringManagerClientName() : null;
+  return (typeof submissionsForCandidate === 'function' ? submissionsForCandidate(c.id) : SUBMISSIONS.filter(function(s){ return s.candidateId === c.id; })).filter(function(sb){ if(mine){ const j = jobById(sb.jobId); return !!j && j.client === mine; } try { return journeyInScope(sb); } catch(e){ return true; } }); }
+function pfActive(sb){ const ph = subPhase(sb); return ph !== 'closed' && !journeyJoined(sb); }
+function pfTouches(c){ return tsTouches(c.id); }
+/* when a fact was last heard: the latest note that talks about it, else the profile's own date */
+function pfHeard(c, re){ const t = pfTouches(c).find(function(x){ return re.test(tsText(x) + ' ' + (x.outcome || '')); }); return t ? t.at : (pfMs(c.updatedAt) || pfMs(c.createdAt)); }
+/* a fact with no recorded date is not called stale (we don't know); it says so quietly. Only a real, old date asks to reconfirm. */
+function pfFresh(ms){ const d = pfDays(ms); return d == null ? { label:'no date recorded', stale:false, unknown:true } : { label:(d === 0 ? 'confirmed today' : 'confirmed ' + pfAgo(ms)), stale:d > PF_STALE_DAYS, days:d }; }
+const PF_RE = { pay:/(lpa|ctc|hike|salary|₹|\bpay\b|\d+\s?l\b)/i, notice:/(notice|join|immediate|available|availability|appraisal)/i };
+
+/* ---------- the readiness checklist: can this person go to a client today? ---------- */
+function pfReady(c){
+  const out = [], comp = c.comp || {}, payAt = pfHeard(c, PF_RE.pay), nAt = pfHeard(c, PF_RE.notice), pc = prospectContact(c) || {};
+  if(cwSuppression && typeof personKeyOf === 'function' && cwSuppression(personKeyOf(c))) out.push({ k:'dnc', block:true, t:'Asked not to be contacted' });
+  out.push(c.resumeFileName ? { k:'resume', ok:true, t:'Resume on file' } : { k:'resume', t:'No resume on file', fix:['Add resume', "pfTab('resume')"] });
+  const payKnown = comp.current != null || comp.expected != null || !!c.salary, pf = pfFresh(payAt);
+  out.push(!payKnown ? { k:'pay', t:'Pay not known', fix:['Note it', "pfCompose('Pay: ')"] } : pf.stale ? { k:'pay', t:'Pay ' + pf.label, fix:['Reconfirm', "pfCompose('Pay reconfirmed: ')"] } : { k:'pay', ok:true, info:pf.unknown, t:'Pay known' + (pf.unknown ? '' : ' · ' + pf.label.replace('confirmed ', '')) });
+  const nd = tsNotice(c), nf = pfFresh(nAt);
+  out.push(nd == null ? { k:'notice', t:'Notice not known', fix:['Note it', "pfCompose('Notice: ')"] } : nf.stale ? { k:'notice', t:'Notice ' + nf.label, fix:['Reconfirm', "pfCompose('Notice reconfirmed: ')"] } : { k:'notice', ok:true, info:nf.unknown, t:(nd === 0 ? 'Immediate joiner' : nd + 'd notice') + (nf.unknown ? '' : ' · ' + nf.label.replace('confirmed ', '')) });
+  out.push(pc.phone || pc.email ? { k:'contact', ok:true, t:'Contact details' } : { k:'contact', t:'No phone or email' });
+  pfSubs(c).filter(function(sb){ return subPhase(sb) === 'ready'; }).forEach(function(sb){ const j = jobById(sb.jobId) || {}, st = consentState(sb);
+    if(st === 'given') out.push({ k:'consent', ok:true, t:'Consent for ' + j.title });
+    else { const cn = typeof consentNext === 'function' ? consentNext(sb) : null, a = cn && cn.actions && cn.actions[0]; out.push({ k:'consent', t:(st === 'pending' ? 'Waiting for consent · ' : st === 'expired' ? 'No answer on consent · ' : 'No consent yet · ') + j.title, fix:a ? [a.label, a.on] : null }); } });
+  return out;
+}
+function pfReadyHTML(c){
+  const list = pfReady(c), todo = list.filter(function(x){ return !x.ok; }), block = list.some(function(x){ return x.block; });
+  return '<section class="o-card pf-card" data-pf="ready"><div class="pf-h"><h2>Ready to submit</h2><span class="pf-verdict ' + (todo.length ? 'is-todo' : 'is-ok') + '" data-pf-verdict>' + (block ? 'Do not contact' : todo.length ? todo.length + ' thing' + (todo.length === 1 ? '' : 's') + ' first' : 'Ready') + '</span></div>' +
+    '<div class="pf-ready">' + list.map(function(x){ return '<span class="pf-chk ' + (x.ok ? 'is-ok' : x.block ? 'is-block' : 'is-todo') + '" data-chk="' + x.k + '"><i>' + (x.ok ? '✓' : '!') + '</i>' + pfE(x.t) + (x.fix && !pfHM() ? '<button type="button" onclick="' + pfE(x.fix[1]) + '">' + pfE(x.fix[0]) + '</button>' : '') + '</span>'; }).join('') + '</div></section>';
+}
+
+/* ---------- Now: what needs a person, across every job ---------- */
+function pfNowHTML(c){
+  const items = pfSubs(c).filter(pipeNeedsAction).map(function(sb){ return { sb:sb, j:jobById(sb.jobId), nx:pipeNext(sb) }; }).filter(function(x){ return x.j && x.nx; });
+  const fu = tsNextFollowUp(c.id);
+  const body = items.length ? '<ul class="pf-now">' + items.slice(0, 3).map(function(x){
+      return '<li data-now="' + x.sb.id + '"><span class="pf-dot pf-dot--warn"></span><span class="pf-now__t"><b>' + pfE(x.nx.title) + '</b><span>' + pfE(x.j.title + ' · ' + x.j.client + (x.nx.detail ? ' — ' + x.nx.detail : '')) + '</span></span><span class="pf-now__a">' + pipeButtonsHTML(x.nx, 'sm') + '</span></li>'; }).join('') + '</ul>' +
+      (items.length > 3 ? '<p class="pf-muted" style="margin:6px 0 0;font-size:13px">' + (items.length - 3) + ' more in Jobs below</p>' : '')
+    : '<p class="pf-calm"><span class="pf-dot pf-dot--good"></span>Nothing is waiting on you' + (fu ? ' · next follow-up ' + pfE(fuWhen(fu.dueAt)) : '') + '.</p>';
+  return '<section class="o-card pf-card" data-pf="now"><div class="pf-h"><h2>Now</h2>' + (items.length ? '<span class="pf-n">' + items.length + '</span>' : '') + '</div>' + body + '</section>';
+}
+
+/* ---------- Jobs: the Pipeline tab's own rows ---------- */
+function pfJobsHTML(c){
+  const subs = pfSubs(c), act = subs.filter(pfActive), done = subs.filter(function(sb){ return !pfActive(sb); });
+  const row = function(sb){ const j = jobById(sb.jobId); return j ? tpPipeTrackHTML({ sub:sb, job:j }) : ''; };
+  const add = pfHM() ? '' : '<button type="button" class="o-btn" onclick="openSubmitModal(' + c.id + ')">+ Add to a job</button>';
+  return '<section class="o-card pf-card pf-jobs" data-pf="jobs"><div class="pf-h"><h2>Jobs <span class="pf-n">' + act.length + '</span></h2>' + add + '</div>' +
+    (act.length ? '<div class="tp-rows">' + act.map(row).join('') + '</div>' : '<p class="pf-muted" style="margin:0;font-size:14px">Not in any open job right now.</p>') +
+    (done.length ? '<details class="pf-closed"><summary>' + done.length + ' closed or placed</summary><div class="tp-rows">' + done.map(row).join('') + '</div></details>' : '') + '</section>';
+}
+
+/* ---------- Best fit: open jobs they are not in yet, scored with Kairo's own rule ---------- */
+function pfFit(c){
+  const inJob = {}; pfSubs(c).forEach(function(sb){ inJob[sb.jobId] = 1; });
+  return JOBS.filter(function(j){ return j.status === 'Active' && !inJob[j.id] && (typeof jobCanWorkOn !== 'function' || jobCanWorkOn(j)); }).map(function(j){
+    const s = cwScore(c, j), exp = c.comp && (c.comp.expected || c.comp.current), max = j.comp && +j.comp.fixedMax;
+    return { j:j, s:s, score:s.score, payOk:!(exp && max && (exp > 1000 ? exp : exp * 100000) > max), pick:(typeof CA_PICKS !== 'undefined' && CA_PICKS[j.id] && CA_PICKS[j.id][c.id]) };
+  }).filter(function(x){ return x.score >= 60; }).sort(function(a, b){ return b.score - a.score; }).slice(0, 4);
+}
+function pfFitHTML(c){
+  if(pfHM()) return '';
+  const list = pfFit(c); if(!list.length) return '';
+  return '<section class="o-card pf-card" data-pf="fit"><div class="pf-h"><h2>Best fit for open jobs</h2><small>Kairo’s match rule</small></div><ul class="pf-fit">' + list.map(function(x){
+      const m = x.s.m || {}, sk = m.need ? m.have + ' of ' + m.need + ' skills' : 'Skills';
+      return '<li data-fit="' + x.j.id + '"><div class="pf-fit__t"><b>' + pfE(x.j.title) + ' <span class="pf-muted" style="font-weight:400">· ' + pfE(x.j.client) + '</span>' + (x.pick ? ' <span class="pf-tag">Kairo pick</span>' : '') + '</b><span>' +
+        '<em class="' + (m.need && m.have < m.need ? 'no' : 'ok') + '">' + sk + '</em><em class="' + (x.s.locOk ? 'ok' : 'no') + '">' + (x.s.locOk ? 'Same city' : 'Other city') + '</em><em class="' + (x.s.noticeOk ? 'ok' : 'no') + '">' + (x.s.noticeOk ? 'Notice fits' : 'Notice too long') + '</em>' +
+        (pfMoney() ? '<em class="' + (x.payOk ? 'ok' : 'no') + '">' + (x.payOk ? 'Pay within band' : 'Pay above band') + '</em>' : '') + '</span></div>' +
+        '<span class="pf-fit__s' + (x.score >= 90 ? ' is-strong' : '') + '">' + x.score + '%</span>' +
+        '<button type="button" class="o-btn" onclick="pfAddTo(\'' + x.j.id + '\')">Add to job</button></li>'; }).join('') + '</ul></section>';
+}
+function pfAddTo(jobId){ const c = byId(PF.cid); if(!c) return; if(typeof caAddPick === 'function' && typeof CA_PICKS !== 'undefined' && CA_PICKS[jobId] && CA_PICKS[jobId][c.id]){ if(caAddPick(jobId, c.id)){ toast(c.name + ' added to ' + (jobById(jobId) || {}).title + '.'); pfRefresh(); } return; } openSubmitModal(c.id, jobId); }
+
+/* ---------- tabs ---------- */
+const PF_TABS = [['overview', 'Overview'], ['activity', 'Activity'], ['resume', 'Resume'], ['consent', 'Consent']];
+function pfTabsHTML(c){
+  const n = { activity:tsTimeline(c.id).length, consent:pfSubs(c).filter(function(sb){ return sb.consent; }).length };
+  return '<div class="pf-tabs"><div class="o-tabs-host"><div role="tablist" id="pf-tabs" aria-label="' + pfE(c.name) + '">' + PF_TABS.filter(function(t){ return !(pfHM() && (t[0] === 'activity' || t[0] === 'consent')); }).map(function(t){
+      return '<button type="button" role="tab" data-pf-tab="' + t[0] + '" aria-selected="' + (PF.tab === t[0]) + '" onclick="pfTab(\'' + t[0] + '\')">' + t[1] + (n[t[0]] ? '<span class="tp-n" style="margin-left:6px">' + n[t[0]] + '</span>' : '') + '</button>'; }).join('') + '</div></div>' +
+    '<div id="pf-tabbody" class="pf-tabbody" style="margin-top:14px">' + pfTabBody(c) + '</div></div>';
+}
+function pfTabBody(c){
+  try {
+    if(PF.tab === 'activity') return pfActivityHTML(c);
+    if(PF.tab === 'resume') return candidateTabBody(c, 'resume');
+    if(PF.tab === 'consent') return pfConsentHTML(c);
+    return pfOverviewHTML(c);
+  } catch(e){ console.error('profile tab', e); return '<p class="pf-muted">This part could not be shown.</p>'; }
+}
+function pfOverviewHTML(c){
+  const comp = c.comp || {}, payAt = pfHeard(c, PF_RE.pay), nAt = pfHeard(c, PF_RE.notice), pf = pfFresh(payAt), nf = pfFresh(nAt), nd = tsNotice(c);
+  const dd = function(v, fr){ return v ? pfE(v) + (fr && !fr.unknown ? '<small class="' + (fr.stale ? 'is-stale' : '') + '">' + pfE(fr.label) + (fr.stale ? ' · reconfirm on the next call' : '') + '</small>' : '') : '<span class="pf-muted">Not known</span>'; };
+  const rows = [['Current company', dd(c.currentCompany)], ['Experience', dd(c.exp)], ['City', dd(c.loc)], ['Notice', dd(nd == null ? '' : nd === 0 ? 'Immediate' : c.notice, nf)], ['Availability', dd(c.avail, nf)],
+    pfMoney() ? ['Pay now → expects', dd([comp.current ? pfLakh(comp.current) : '', comp.expected ? pfLakh(comp.expected) : (c.salary || '')].filter(Boolean).join(' → '), pf)] : null,
+    ['Open to', dd((c.preferredRoles || []).join(', '))], ['Works', dd([c.employmentType, c.domain].filter(Boolean).join(' · '))]].filter(Boolean);
+  return '<section class="o-card pf-card"><dl class="pf-dl">' + rows.map(function(r){ return '<div><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>'; }).join('') + '</dl>' +
+    ((c.skills || []).length ? '<div style="margin-top:16px"><p class="pf-muted" style="margin:0 0 8px;font-size:12px">Skills</p><div class="pf-chips">' + c.skills.map(function(s){ return '<span>' + pfE(s) + '</span>'; }).join('') + '</div></div>' : '') + '</section>' +
+    (c.goals || c.comms ? '<section class="o-card pf-card" style="margin-top:16px"><dl class="pf-dl">' + (c.goals ? '<div><dt>What they want next</dt><dd>' + pfE(c.goals) + '</dd></div>' : '') + (c.comms && !pfHM() ? '<div><dt>How to reach them</dt><dd>' + pfE(c.comms) + '</dd></div>' : '') + '</dl></section>' : '') +
+    (typeof candidateCustomFieldsHTML === 'function' ? '<div style="margin-top:16px">' + candidateCustomFieldsHTML(c) + '</div>' : '') +
+    (!pfHM() && typeof candidateSplitPanelHTML === 'function' ? candidateSplitPanelHTML(c.id) : '');
+}
+const PF_FILTERS = [['all', 'All'], ['talk', 'Calls & messages'], ['note', 'Notes'], ['job', 'Job steps'], ['kairo', 'Kairo']];
+function pfEvents(c){
+  const ev = tsTimeline(c.id).map(function(e){ return Object.assign({ grp:/^Kairo/.test(e.kind) ? 'kairo' : e.kind === 'Note' ? 'note' : e.kind === 'Follow-up' ? 'note' : 'talk' }, e); });
+  pfSubs(c).forEach(function(sb){ const j = jobById(sb.jobId) || {}; (sb.stageHistory || []).forEach(function(h){ const at = pfMs(h.at); if(at) ev.push({ at:at, by:h.by || '', kind:'Stage', text:h.stage + (h.reason ? ' — ' + h.reason : ''), jobId:sb.jobId, grp:'job', job:j }); }); });
+  return ev.sort(function(a, b){ return b.at - a.at; });
+}
+function pfActivityHTML(c){
+  const ev = pfEvents(c), shown = ev.filter(function(e){ return PF.filter === 'all' || e.grp === PF.filter; }), just = PF.just && PF.just.cid === c.id ? PF.just : null;
+  const icon2 = function(e){ return e.kind === 'Stage' ? 'briefcase' : tsKindIcon(e.kind); };
+  return '<section class="o-card pf-card">' +
+    (just ? '<div class="pf-just"><b>You ' + pfE(tsVerb(tsKind(just))) + ' ' + pfE(pfFirst(c)) + '.</b> How did it go?<div class="pf-outs" style="margin:8px 0 0">' + TS_OUTCOMES.map(function(o){ return '<button type="button" aria-pressed="' + (just.outcome === o) + '" onclick="pfOutcome(\'' + pfE(o).replace(/'/g, "\\'") + '\')">' + pfE(o) + '</button>'; }).join('') + '</div></div>' : '') +
+    '<div class="pf-compose"><textarea id="pf-note" rows="2" placeholder="' + (just ? 'What did they say? e.g. expects 25L, open to Pune, call after 6 PM' : 'Add a note for your team…') + '"></textarea><div class="pf-compose__f"><button type="button" class="o-btn o-btn--ghost" onclick="openFollowUpModal({candidateId:' + c.id + '})">' + icon('clock', 'w-3.5 h-3.5') + ' Follow-up</button><button type="button" class="o-btn o-btn--primary" data-pf-save onclick="pfSaveNote()">Save note</button></div></div>' +
+    '<div class="pf-filters" role="group" aria-label="Show">' + PF_FILTERS.map(function(f){ const n = f[0] === 'all' ? ev.length : ev.filter(function(e){ return e.grp === f[0]; }).length; return n || f[0] === 'all' ? '<button type="button" aria-pressed="' + (PF.filter === f[0]) + '" onclick="PF.filter=\'' + f[0] + '\'; pfRefreshTab()">' + f[1] + ' <span class="pf-n">' + n + '</span></button>' : ''; }).join('') + '</div>' +
+    (shown.length ? '<ul class="pf-tl">' + shown.slice(0, 60).map(function(e){ const j = e.job || (e.jobId ? jobById(e.jobId) : null);
+      return '<li data-ev="' + e.grp + '"><span class="pf-tl__i">' + icon(icon2(e), 'w-3.5 h-3.5') + '</span><div class="pf-tl__b"><p><b>' + pfE(e.by || 'Someone') + '</b> · ' + pfE(e.kind === 'Stage' ? 'moved the job on' : e.kind) + (e.outcome ? ' · ' + pfE(e.outcome) : '') + (j && j.title ? ' · <span class="pf-tag">' + pfE(j.title) + '</span>' : '') + '</p>' + (e.text ? '<q>' + pfE(caText ? caText(e.text) : e.text) + '</q>' : '') + '</div><span class="pf-tl__w">' + pfE(pfAgo(e.at)) + '</span></li>'; }).join('') + '</ul>'
+      : '<p class="pf-muted" style="margin:14px 0 0;font-size:14px">Nothing here yet.</p>') + '</section>';
+}
+function pfConsentHTML(c){
+  const subs = pfSubs(c).filter(pfActive), word = { given:'Given', pending:'Asked · waiting', expired:'No answer', none:'Not asked yet' };
+  return '<section class="o-card pf-card"><p class="pf-muted" style="margin:0 0 6px;font-size:13px">Consent is per job: ' + pfE(pfFirst(c)) + ' agrees before their profile goes to that client. It is recorded with the date and the channel.</p>' +
+    (subs.length ? '<ul class="pf-cons">' + subs.map(function(sb){ const j = jobById(sb.jobId) || {}, st = consentState(sb), k = sb.consent || {}, cn = st !== 'given' && typeof consentNext === 'function' ? consentNext(sb) : null;
+      return '<li data-cons="' + sb.id + '"><span class="pf-dot ' + (st === 'given' ? 'pf-dot--good' : st === 'expired' ? 'pf-dot--risk' : 'pf-dot--warn') + '"></span><span style="flex:1 1 220px;min-width:0"><b style="font-size:14px;color:var(--text-1)">' + pfE(j.title) + '</b> <span class="pf-muted">· ' + pfE(j.client) + '</span><br><span style="font-size:13px;color:var(--text-2)">' + pfE(word[st] || st) + (k.at ? ' · ' + pfE(pfAgo(pfMs(k.at))) : '') + (k.channel ? ' · ' + pfE(k.channel) : '') + '</span></span>' +
+        (cn && cn.actions && cn.actions.length && !pfHM() ? '<span class="pf-now__a">' + pipeButtonsHTML(cn, 'sm') + '</span>' : '') + '</li>'; }).join('') + '</ul>' : '<p class="pf-muted" style="margin:8px 0 0;font-size:14px">Not in any open job, so no consent is needed yet.</p>') + '</section>';
+}
+
+/* ---------- the insight rail ---------- */
+function pfBriefHTML(c){
+  const lines = [], t = pfTouches(c), talk = t.find(function(x){ return x.kind !== 'Note' && tsKind(x) !== 'Note'; });
+  if(c.market) lines.push(c.market); else if(c.intent) lines.push(c.intent + ' interest in a move.');
+  if(c.comms && !pfHM()) lines.push(c.comms);
+  if(c.goals) lines.push(/^(wants|looking|keen|open)/i.test(String(c.goals)) ? String(c.goals) : 'Wants: ' + String(c.goals).replace(/^./, function(x){ return x.toLowerCase(); }));
+  const act = pfSubs(c).filter(pfActive).length;
+  if(act > 1) lines.push('In ' + act + ' of your jobs at once.');
+  return '<section class="o-card pf-card pf-brief" data-pf="brief"><div class="pf-h"><h2>' + (typeof iqMark === 'function' ? iqMark(16) : icon('sparkles', 'w-4 h-4')) + ' Kairo brief</h2></div>' +
+    (lines.length ? lines.slice(0, 3).map(function(l){ return '<p>' + pfE(caText ? caText(l) : l) + '</p>'; }).join('') : '<p class="pf-muted">Not enough noted yet for a brief. Notes from calls fill this in.</p>') +
+    (talk && !pfHM() ? '<div class="pf-last" data-pf-last>Last talked <b>' + pfE(pfAgo(talk.at)) + '</b> · ' + pfE(tsKind(talk)) + (talk.outcome ? ' · ' + pfE(talk.outcome) : '') + ' · ' + pfE(talk.by || '') + '</div>' : !pfHM() ? '<div class="pf-last" data-pf-last>No call or message logged yet.</div>' : '') +
+    '<p class="pf-brief__src">From the profile' + (t.length ? ' and ' + (t.length === 1 ? 'the last note' : 'the last ' + Math.min(t.length, 20) + ' notes') : '') + '. No scores.</p></section>';
+}
+function pfToldHTML(c){
+  if(pfHM()) return '';
+  const said = pfTouches(c).filter(function(t){ return tsText(t).trim().length > 3; }).slice(0, 4);
+  return '<section class="o-card pf-card" data-pf="told"><div class="pf-h"><h2>What they told us</h2></div>' + (said.length ? '<ul class="pf-told">' + said.map(function(t){ return '<li><q>' + pfE(caText ? caText(tsText(t)) : tsText(t)) + '</q><small>' + pfE([t.by, tsKind(t), pfAgo(t.at)].filter(Boolean).join(' · ')) + '</small></li>'; }).join('') + '</ul>'
+    : '<p class="pf-muted" style="margin:0;font-size:13px">Nothing noted yet. After a call, note what ' + pfE(pfFirst(c)) + ' said: pay, notice, places, timing.</p>') + '</section>';
+}
+function pfPulseHTML(c){
+  if(pfHM()) return '';
+  const t = pfTouches(c).filter(function(x){ return tsKind(x) !== 'Note'; }), since = Date.now() - 30 * 86400000, recent = t.filter(function(x){ return x.at >= since; });
+  const days = []; for(let i = 29; i >= 0; i--){ const a = Date.now() - (i + 1) * 86400000, b = a + 86400000; days.push(recent.filter(function(x){ return x.at >= a && x.at < b; }).length); }
+  const mx = Math.max(1, Math.max.apply(null, days)), withOut = t.filter(function(x){ return x.outcome; }), replied = withOut.filter(function(x){ return ['No response', 'Wrong number'].indexOf(x.outcome) < 0; }).length;
+  const by = {}; recent.forEach(function(x){ const k = tsKind(x); by[k] = (by[k] || 0) + 1; });
+  return '<section class="o-card pf-card" data-pf="pulse"><div class="pf-h"><h2>Engagement</h2><small>last 30 days</small></div>' +
+    '<div class="pf-pulse" aria-label="' + recent.length + ' contacts in 30 days">' + days.map(function(n){ return '<i class="' + (n ? 'on' : '') + '" style="height:' + (n ? Math.max(18, Math.round(n / mx * 100)) : 8) + '%"></i>'; }).join('') + '</div>' +
+    '<div class="pf-kv"><span>Contacts</span><b>' + recent.length + (Object.keys(by).length ? ' · ' + Object.keys(by).map(function(k){ return by[k] + ' ' + k.toLowerCase(); }).join(', ') : '') + '</b></div>' +
+    '<div class="pf-kv"><span>Answered</span><b>' + (withOut.length ? replied + ' of ' + withOut.length : '—') + '</b></div>' +
+    (c.bestTime ? '<div class="pf-kv"><span>Best time to call</span><b>' + pfE(c.bestTime) + '</b></div>' : '') + '</section>';
+}
+function pfMomentumHTML(c){
+  const act = pfSubs(c).filter(pfActive), items = [];
+  const live = act.filter(function(sb){ const ph = subPhase(sb); return ph === 'process' || ph === 'client'; });
+  if(live.length > 1) items.push(['warn', 'With ' + live.length + ' clients at once (' + live.map(function(sb){ return (jobById(sb.jobId) || {}).client; }).filter(Boolean).join(', ') + '). Plan the offers together.']);
+  act.forEach(function(sb){ const d = pipeStuckDays(sb), j = jobById(sb.jobId) || {}; if(d >= 5) items.push([d >= 7 ? 'risk' : 'warn', j.title + ': no movement for ' + d + ' days.']); });
+  const hint = pfTouches(c).find(function(t){ return /(counter|retain|appraisal|competing|other offer)/i.test(tsText(t)); });
+  if(hint) items.push(['warn', 'Mentioned “' + String(tsText(hint)).slice(0, 70) + (tsText(hint).length > 70 ? '…' : '') + '” ' + pfAgo(hint.at) + '. Watch for a counter-offer.']);
+  if(!items.length) return '';
+  return '<section class="o-card pf-card" data-pf="momentum"><div class="pf-h"><h2>Momentum</h2></div><ul class="pf-mom">' + items.map(function(x){ return '<li><span class="pf-dot pf-dot--' + x[0] + '"></span><span>' + pfE(x[1]) + '</span></li>'; }).join('') + '</ul></section>';
+}
+function pfMoneyHTML(c){
+  if(!pfMoney() || pfHM()) return '';
+  const comp = c.comp || {}, cur = comp.current, exp = comp.expected; if(cur == null && exp == null) return '';
+  const r = function(v){ return v > 1000 ? v : v * 100000; };
+  const job = pfSubs(c).filter(pfActive).map(function(sb){ return jobById(sb.jobId); }).find(function(j){ return j && j.comp && +j.comp.fixedMax; });
+  let band = '';
+  if(job){ const lo = +job.comp.fixedMin || 0, hi = +job.comp.fixedMax, vals = [lo, hi, cur ? r(cur) : null, exp ? r(exp) : null].filter(function(v){ return v != null; }), min = Math.min.apply(null, vals) * 0.9, max = Math.max.apply(null, vals) * 1.05, pos = function(v){ return ((v - min) / (max - min) * 100).toFixed(1) + '%'; };
+    band = '<div class="pf-band" title="' + pfE(job.title) + ' band"><span class="pf-band__r" style="left:' + pos(lo) + ';right:calc(100% - ' + pos(hi) + ')"></span>' + (cur ? '<span class="pf-band__m is-cur" style="left:' + pos(r(cur)) + '" title="Now"></span>' : '') + (exp ? '<span class="pf-band__m" style="left:' + pos(r(exp)) + '" title="Expects"></span>' : '') + '</div>' +
+      '<div class="pf-band__l"><span>' + pfLakh(lo) + '</span><span>' + pfE(job.title) + ' band</span><span>' + pfLakh(hi) + '</span></div>'; }
+  let fee = '';
+  try { if(job && canI('billing', 'View') && typeof revenueFeeFor === 'function'){ const f = revenueFeeFor(job, (exp ? r(exp) : r(cur)) / 100000); if(f && f.amount) fee = '<div class="pf-kv"><span>Fee if placed</span><b>₹' + Math.round(f.amount).toLocaleString('en-IN') + '</b></div>'; } } catch(e){}
+  return '<section class="o-card pf-card" data-pf="money"><div class="pf-h"><h2>Money</h2><small>' + pfE(pfFresh(pfHeard(c, PF_RE.pay)).label) + '</small></div>' +
+    '<div class="pf-kv"><span>Now</span><b>' + (cur ? pfLakh(cur) : '—') + '</b></div><div class="pf-kv"><span>Expects</span><b>' + (exp ? pfLakh(exp) : pfE(c.salary || '—')) + '</b></div>' + band + fee + '</section>';
+}
+function pfOwnerHTML(c){
+  if(pfHM()) return '';
+  const owner = pfOwner(c), fu = tsNextFollowUp(c.id), pend = followUpsForCandidate(c.id).filter(function(f){ return f.status === 'Pending'; }).length;
+  return '<section class="o-card pf-card" data-pf="owner"><div class="pf-h"><h2>Ownership</h2></div>' +
+    '<div class="pf-kv"><span>Owner</span><b>' + pfE(owner ? owner.name : 'Not set') + '</b></div>' +
+    (c.source ? '<div class="pf-kv"><span>Source</span><b>' + pfE(c.source) + '</b></div>' : '') +
+    (pfMs(c.createdAt) ? '<div class="pf-kv"><span>In your pool</span><b>since ' + pfE(new Date(pfMs(c.createdAt)).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })) + '</b></div>' : '') +
+    '<div class="pf-kv"><span>Follow-up</span><b>' + (fu ? pfE(fuWhen(fu.dueAt)) + (pend > 1 ? ' · +' + (pend - 1) : '') : '<button type="button" class="pf-link" onclick="openFollowUpModal({candidateId:' + c.id + '})">+ Schedule</button>') + '</b></div>' +
+    '<div class="pf-kv"><span>Credit</span><b><button type="button" class="pf-link" onclick="openSplitProposalModal(' + c.id + ')">Propose a split</button></b></div></section>';
+}
+
+/* ---------- header ---------- */
+function pfPrimary(c){
+  const need = pfSubs(c).filter(pipeNeedsAction).map(function(sb){ return { sb:sb, nx:pipeNext(sb) }; }).find(function(x){ return x.nx && x.nx.actions && x.nx.actions[0]; });
+  if(need){ const j = jobById(need.sb.jobId) || {}, nx = need.nx, a = nx.actions[0], m = /^How did the (.+) go\?$/.exec(nx.title || '');
+    /* a single obvious step keeps its own words; an outcome choice (Cleared / No-show / Reject) becomes "Record <round> outcome" */
+    if(m && typeof pipeOpenOutcome === 'function') return { label:'Record ' + m[1] + ' outcome', on:"pipeOpenOutcome('" + need.sb.id + "')", title:j.title + ' · ' + j.client };
+    return { label:a.label, on:a.on, title:j.title + ' · ' + j.client }; }
+  return { label:pfSubs(c).some(pfActive) ? 'Submit to another job' : 'Add to a job', on:'openSubmitModal(' + c.id + ')' };
+}
+/* the owner of the record; for older records without one, the recruiter working them (as the old summary did) */
+function pfOwner(c){ const r = typeof rosterById === 'function' ? rosterById : function(){ return null; }; const o = r(c.ownerId); if(o) return o;
+  const sb = pfSubs(c).find(function(s){ return s.recruiterId && r(s.recruiterId); }); return sb ? r(sb.recruiterId) : null; }
+function pfHeadHTML(c){
+  const subs = pfSubs(c), act = subs.filter(pfActive), owner = pfOwner(c);
+  const cons = act.filter(function(sb){ return subPhase(sb) !== 'applied'; }), given = cons.filter(function(sb){ return consentState(sb) === 'given'; }).length;
+  const nd = tsNotice(c), facts = [c.role, c.exp && c.exp !== '—' ? c.exp : '', String(c.loc || '').split(',')[0], nd == null ? '' : nd === 0 ? 'Immediate joiner' : nd + 'd notice'].filter(Boolean);
+  const availGood = /available|open|active/i.test(c.avail || ''), p = pfPrimary(c), hm = pfHM();
+  const menu = hm ? '' : '<details class="pmenu"><summary class="pf-ic" aria-label="More" title="More">⋯</summary><div class="o-menu tp-menu" role="menu">' +
+    [['Schedule a follow-up', 'openFollowUpModal({candidateId:' + c.id + '})'], ['Share profile with a client', 'pfShare()'], ['Submit to a job', 'openSubmitModal(' + c.id + ')'], ['Propose a credit split', 'openSplitProposalModal(' + c.id + ')'], ['Open in Pipeline', "switchTalentPoolTab('lineup')"]]
+      .map(function(m){ return '<button type="button" role="menuitem" class="o-menu__item" onclick="this.closest(\'details\').open=false; ' + pfE(m[1]) + '">' + m[0] + '</button>'; }).join('') + '</div></details>';
+  return '<header class="pf-head" id="pf-head"><div class="pf-head__row"><span class="pf-av">' + candidateAvatarHTML(c, 'w-16 h-16', {}) + '</span>' +
+    '<div class="pf-id"><h1 class="pf-name">' + pfE(c.name) + (typeof idChip === 'function' ? idChip(ocId(c.id)) : '') + '</h1><p class="pf-facts">' + pfE(facts.join(' · ')) + '</p>' +
+      '<div class="pf-status"><span><i class="pf-dot ' + (availGood ? 'pf-dot--good' : 'pf-dot--warn') + '"></i>' + pfE(c.avail || 'Availability not known') + '</span>' +
+        (hm ? '' : '<span><i class="pf-dot"></i>Owner ' + pfE(owner ? owner.name : 'not set') + '</span>') +
+        (cons.length ? '<span><i class="pf-dot ' + (given === cons.length ? 'pf-dot--good' : 'pf-dot--warn') + '"></i>Consent ' + given + ' of ' + cons.length + ' job' + (cons.length === 1 ? '' : 's') + '</span>' : '') +
+        (act.length ? '<span><i class="pf-dot"></i>In ' + act.length + ' job' + (act.length === 1 ? '' : 's') + '</span>' : '') + '</div></div>' +
+    (hm ? '' : '<div class="pf-acts"><button type="button" class="pf-ic" data-pf-contact="Call" onclick="pfContact(\'Call\')" aria-label="Call ' + pfE(c.name) + '" title="Call' + (c.bestTime ? ' · best around ' + pfE(c.bestTime) : '') + '">' + icon('phone', 'w-4 h-4') + '</button>' +
+      '<button type="button" class="pf-ic" data-pf-contact="WhatsApp" onclick="pfContact(\'WhatsApp\')" aria-label="WhatsApp ' + pfE(c.name) + '" title="WhatsApp">' + icon('whatsapp', 'w-4 h-4') + '</button>' +
+      '<button type="button" class="pf-ic" data-pf-contact="Email" onclick="pfContact(\'Email\')" aria-label="Email ' + pfE(c.name) + '" title="Email">' + icon('mail', 'w-4 h-4') + '</button>' +
+      '<button type="button" class="o-btn o-btn--primary" data-pf-primary onclick="' + pfE(p.on) + '"' + (p.title ? ' title="' + pfE(p.title) + '"' : '') + '>' + pfE(p.label) + '</button>' + menu + '</div>') + '</div></header>';
+}
+
+/* ---------- the page ---------- */
+function pfPageHTML(id){
+  const c = byId(id); if(!c) return '<p class="pf-muted">This candidate no longer exists.</p>';
+  PF.cid = c.id;
+  const tabLabel = (TALENT_POOL_TABS.find(function(t){ return t.id === talentPoolTab; }) || {}).label || 'Talent pool';
+  const crumbs = pfHM() ? [{ label:'Home', onclick:"showView('hm-dashboard')" }, { label:c.name }] : [{ label:'Talent pool', onclick:"showView('talent-pool')" }, { label:tabLabel, onclick:"showView('talent-pool')" }, { label:c.name }];
+  return '<div class="pf pf-enter" id="pf-root" data-cid="' + c.id + '">' + breadcrumbHTML(crumbs, pfHM() ? "showView('hm-dashboard')" : "showView('talent-pool')") + pfHeadHTML(c) +
+    '<div class="pf-grid' + (pfHM() ? ' pf-hm' : '') + '"><div class="pf-main">' + (pfHM() ? '' : pfNowHTML(c) + pfReadyHTML(c)) + pfJobsHTML(c) + pfFitHTML(c) + pfTabsHTML(c) + '</div>' +
+    '<aside class="pf-rail" aria-label="Insights">' + pfBriefHTML(c) + (pfHM() ? '' : pfMomentumHTML(c)) + pfToldHTML(c) + pfPulseHTML(c) + pfMoneyHTML(c) + pfOwnerHTML(c) + '</aside></div></div>';
+}
+
+/* ---------- actions ---------- */
+function pfTab(t){ PF.tab = t; const c = byId(PF.cid); if(!c) return; document.querySelectorAll('#pf-tabs [data-pf-tab]').forEach(function(b){ b.setAttribute('aria-selected', String(b.getAttribute('data-pf-tab') === t)); });
+  const body = document.getElementById('pf-tabbody'); if(body){ body.classList.remove('pf-tabbody'); void body.offsetWidth; body.classList.add('pf-tabbody'); body.innerHTML = pfTabBody(c); if(t === 'activity'){ const n = document.getElementById('pf-note'); if(n && PF.just) n.focus(); } try { body.scrollIntoView({ block:'nearest', behavior:'smooth' }); } catch(e){} } }
+function pfRefreshTab(){ const c = byId(PF.cid), body = document.getElementById('pf-tabbody'); if(c && body) body.innerHTML = pfTabBody(c); }
+function pfCompose(prefix){ pfTab('activity'); const n = document.getElementById('pf-note'); if(n){ n.value = prefix || ''; n.focus(); try { n.setSelectionRange(n.value.length, n.value.length); } catch(e){} } }
+/* call, WhatsApp, email: do it, log it, and ask how it went right where the notes are */
+function pfContact(ch){
+  const c = byId(PF.cid); if(!c) return; const pc = prospectContact(c) || {};
+  if(ch === 'Call') toast('Calling ' + c.name + (pc.phone ? ' · ' + pc.phone : '') + '…');
+  else if(ch === 'WhatsApp'){ try { const num = String(pc.phone || '').replace(/\D/g, ''); window.open('https://web.whatsapp.com/send?phone=' + num, '_blank', 'noopener'); } catch(e){} toast('Opening WhatsApp with ' + c.name + '…'); }
+  else { try { const a = document.createElement('a'); a.href = 'mailto:' + (pc.email || '') + '?subject=' + encodeURIComponent('About the ' + c.role + ' role'); a.target = '_blank'; a.rel = 'noopener'; a.click(); } catch(e){} toast('Opening email to ' + c.name + '…'); }
+  PF.just = tsLog(c.id, ch, ''); PF.tab = 'activity'; pfRefresh(); setTimeout(function(){ const n = document.getElementById('pf-note'); if(n) n.focus(); }, 30);
+}
+function pfOutcome(o){ if(!PF.just) return; PF.just.outcome = PF.just.outcome === o ? '' : o; pfRefreshTab(); }
+function pfSaveNote(){
+  const c = byId(PF.cid), el = document.getElementById('pf-note'), v = el ? el.value.trim() : ''; if(!c) return;
+  if(!v){ if(el) el.focus(); return; }
+  if(PF.just && PF.just.cid === c.id && !tsText(PF.just)) PF.just.text = v; else tsLog(c.id, 'Note', v);
+  PF.just = null; toast('Saved to ' + pfFirst(c) + '’s activity'); pfRefresh();
+}
+function pfShare(){ const c = byId(PF.cid); if(!c) return; const sb = pfSubs(c).find(function(s){ return subPhase(s) === 'ready' && consentState(s) === 'given'; });
+  if(sb && typeof openSendToClient === 'function') openSendToClient([sb.id]); else openSubmitModal(c.id); }
+/* redraw in place: the tab, the scroll position and what was typed stay */
+function pfRefresh(){
+  const root = document.getElementById('pf-root'); if(!root) return; const main = document.getElementById('main-content'), top = main ? main.scrollTop : 0, n = document.getElementById('pf-note'), draft = n ? n.value : '';
+  const tmp = document.createElement('div'); tmp.innerHTML = pfPageHTML(+root.getAttribute('data-cid')); const fresh = tmp.firstChild; fresh.classList.remove('pf-enter'); root.replaceWith(fresh);
+  if(main) main.scrollTop = top; const n2 = document.getElementById('pf-note'); if(n2 && draft) n2.value = draft; pfCompact();
+}
+function pfCompact(){ const h = document.getElementById('pf-head'), main = document.getElementById('main-content'); if(h && main) h.classList.toggle('is-compact', main.scrollTop > 90); }
+
+/* ---------- wiring ---------- */
+(function(){
+  window.renderCandidateProfileLegacy = renderCandidateProfile;
+  window.renderCandidateProfile = renderCandidateProfile = function(id){ PF.tab = currentCandidateTab === 'activity' ? 'activity' : currentCandidateTab === 'resume' ? 'resume' : 'overview'; PF.filter = 'all'; if(PF.cid !== id) PF.just = null; return pfPageHTML(id); };
+  const sw = window.switchCandidateTab; window.switchCandidateTab = switchCandidateTab = function(id, tab){ if(document.getElementById('pf-root')){ pfTab(tab === 'intelligence' ? 'overview' : tab); return; } return sw.apply(this, arguments); };
+  const pr = window.pipeRefreshAll; if(typeof pr === 'function') window.pipeRefreshAll = pipeRefreshAll = function(){ const r = pr.apply(this, arguments); try { if(document.getElementById('pf-root')) pfRefresh(); } catch(e){ console.error('profile refresh', e); } return r; };
+  const oc = window.openCandidate; window.openCandidate = openCandidate = function(){ const r = oc.apply(this, arguments); try { const t = document.getElementById('topbar-title'); if(t) t.textContent = 'Candidate'; pfCompact(); } catch(e){} return r; };
+  document.addEventListener('scroll', function(e){ if(e.target && e.target.id === 'main-content' && document.getElementById('pf-head')) pfCompact(); }, true);
+})();
+</script>
 </body>
 </html>
