@@ -61820,5 +61820,282 @@ function ibPlatKey(which){ const v = window.prompt('Paste the new key'); if(!v |
 <script id="kairo-chat-esc">
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && typeof kairoChatOpen !== 'undefined' && kairoChatOpen){ e.preventDefault(); closeKairoChat(); const b = document.getElementById('topbar-kairo'); if(b) b.focus({ preventScroll:true }); } });
 </script>
+<style id="prospects-style">
+/* ============================================================
+   PROSPECTS (2026-11-23): Kairo's shortlist lives with the candidates, not in Cowork.
+   Talent pool › Prospects uses the Pipeline tab's own parts (summary bar, stage tabs, search row, expandable rows),
+   so it reads as part of the same screen. Only what is new is drawn here.
+============================================================ */
+.pr-head{ cursor:pointer; }
+.pr-head:focus-visible{ outline:none; box-shadow:inset 0 0 0 2px var(--text-1); }
+.pr-check{ flex:none; width:18px; height:18px; margin:0 2px 0 0; accent-color:var(--action, #0B1F3B); cursor:pointer; }
+.pr-job{ max-width:100%; }
+.pr-also{ font-size:12px; font-weight:600; color:var(--text-3); white-space:nowrap; }
+.pr-score{ width:64px; flex:none; display:flex; flex-direction:column; align-items:flex-end; text-align:right; font-size:12px; line-height:16px; color:var(--text-3); }
+.pr-score b{ font-size:16px; line-height:22px; font-weight:600; color:var(--text-1); font-variant-numeric:tabular-nums; }
+.pr-score.is-strong b{ color:#0F7A58; }
+.pr-acts{ flex:none; display:flex; align-items:center; gap:8px; }
+.pr-acts .o-btn{ height:34px; padding:0 14px; font-size:13px; }
+.pr-pop{ position:relative; display:inline-flex; }
+.pr-pop .o-menu{ position:absolute; right:0; top:calc(100% + 6px); z-index:30; min-width:210px; }
+.pr-fit{ display:flex; flex-wrap:wrap; gap:6px; }
+.pr-dl{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:10px 20px; margin:0; }
+.pr-dl div{ min-width:0; }
+.pr-dl dt{ font-size:12px; line-height:16px; color:var(--text-3); }
+.pr-dl dd{ margin:2px 0 0; font-size:13px; line-height:18px; color:var(--text-1); overflow:hidden; text-overflow:ellipsis; }
+.pr-other{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:13px; color:var(--text-2); }
+.pr-other button{ border:0; background:var(--bg-subtle); border-radius:999px; height:28px; padding:0 10px; font:600 12px var(--font); color:var(--text-1); cursor:pointer; }
+.pr-other button:hover{ background:var(--fill-hover, #EEF1F5); }
+.pr-bodyacts{ display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; padding-top:4px; }
+.pr-bulk{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:10px 12px 10px 16px; border-radius:14px; background:var(--action, #0B1F3B); color:#fff; font-size:13px; font-weight:600; }
+.pr-bulk .o-btn{ height:32px; font-size:13px; }
+.pr-bulk .o-btn:not(.o-btn--primary){ background:rgba(255,255,255,.12); color:#fff; border-color:transparent; }
+.pr-bulk .o-btn--primary{ background:#fff; color:var(--action, #0B1F3B); }
+.pr-bulk__n{ flex:1 1 auto; }
+.pr-note{ display:flex; align-items:flex-start; gap:12px; padding:16px 18px; }
+.pr-note p{ margin:0; font-size:14px; line-height:20px; color:var(--text-2); }
+.pr-note b{ color:var(--text-1); }
+.pr-more{ align-self:center; }
+.tp-cand.is-leaving{ opacity:0; transform:translateX(12px); transition:opacity var(--motion-base) var(--ease-exit), transform var(--motion-base) var(--ease-exit); }
+.pr-ret{ display:flex; align-items:center; gap:12px; padding:12px 20px; }
+.pr-ret + .pr-ret{ border-top:1px solid var(--line); }
+.pr-ret__t{ flex:1 1 auto; min-width:0; font-size:13px; line-height:18px; color:var(--text-2); }
+.pr-ret__t b{ color:var(--text-1); font-weight:600; }
+/* Cowork › Talent Discovery: the waiting picks are a hand-off to Prospects, not a second place to work */
+.pr-hand{ display:flex; flex-wrap:wrap; align-items:center; gap:16px 24px; padding:20px 24px; }
+.pr-link{ border:0; background:none; padding:0; font:600 14px var(--font); color:var(--text-1); cursor:pointer; }
+.pr-link:hover{ text-decoration:underline; text-underline-offset:3px; }
+.pr-link--good{ color:#0F7A58; }
+.pr-sels{ display:flex; flex-wrap:wrap; gap:8px; }
+:root body .pr-sel{ height:40px; width:auto; }
+:root body .pr-sel--job{ width:280px; max-width:100%; }
+:root body .pr-sel--sort{ width:180px; }
+.pr-hand__t{ flex:1 1 280px; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.pr-hand__t p{ margin:0; font-size:14px; line-height:20px; color:var(--text-2); }
+.pr-hand__t p b{ color:var(--text-1); }
+.pr-hand__jobs{ display:flex; flex-wrap:wrap; gap:6px; }
+.pr-hand__jobs button{ border:1px solid var(--line); background:#fff; border-radius:999px; height:30px; padding:0 12px; font:500 13px var(--font); color:var(--text-2); cursor:pointer; transition:border-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+.pr-hand__jobs button:hover{ border-color:var(--line-strong); color:var(--text-1); }
+.pr-hand__jobs button b{ margin-left:6px; font-weight:600; color:var(--text-1); font-variant-numeric:tabular-nums; }
+@media (max-width:760px){
+  .pr-head{ flex-wrap:wrap; }
+  .pr-head .tp-cand__chips{ max-width:100%; justify-content:flex-start; order:3; flex-basis:100%; }
+  .pr-acts{ order:4; flex-basis:100%; justify-content:flex-end; }
+  .pr-score{ width:auto; }
+}
+</style>
+<script id="prospects-script">
+/* ============================================================
+   PROSPECTS (the user's direction, 2026-11-23)
+   - One place to work a candidate: Talent pool › Prospects shows everyone Kairo shortlisted for the recruiter's jobs.
+     Quick filters point at where to look first; Add to job moves the person into that job's pipeline (consent, review,
+     submission as usual), Not a fit takes them off this list for that job only: they stay in the talent pool and can match others.
+   - Cowork › Talent Discovery keeps the numbers. Every number and job count is a link into Prospects, already filtered.
+   - The data is Talent Discovery's own (caTdWaiting, caAddPick, caDismissPick, CA_DEC), so both screens always agree.
+============================================================ */
+const PR = { f:'all', q:'', job:'', sort:'best', sel:{}, open:null, pop:null, lim:25, ret:false };
+const PR_REASONS = ['Skills don’t fit', 'Wrong location', 'Notice too long', 'Pay too high', 'Already talking to them', 'Something else'];
+const PR_FILTERS = [['all', 'All picks'], ['strong', 'Strong match'], ['soon', 'Joins in 15 days'], ['gap', 'Has a gap'], ['new', 'New today']];
+
+function prOn(){ try { return !jsCorp() && agentAccess('talent-discovery').on; } catch(e){ return false; } }
+function prSuggestMode(){ try { return caLevelFor('talent-discovery', 'addPipeline', null) === 'suggest'; } catch(e){ return true; } }
+function prSweep(){ try { if(typeof caPickSweep === 'function') caPickSweep(); } catch(e){ console.error('prospects sweep', e); } }
+/* one row per person and job, with everything the screen needs worked out once */
+function prAll(){
+  let list = []; try { list = caTdWaiting(); } catch(e){ console.error('prospects', e); }
+  const now = cwNow(), perCand = {};
+  list.forEach(function(n){ perCand[n.candidateId] = (perCand[n.candidateId] || 0) + 1; });
+  return list.map(function(n){
+    const why = caWhy(n.c, n.job, n.s), nd = cwNoticeDays(n.c.notice);
+    return { key:n.id, n:n, c:n.c, j:n.job, s:n.s, score:n.s.score, at:n.at || 0, why:why, gaps:why.filter(function(r){ return !r.ok; }).length,
+      notice:nd, isNew:(n.at || 0) >= now - CW_DAY, mine:caJobMine(n.job), others:perCand[n.candidateId] - 1 };
+  });
+}
+function prTest(r, f){ return f === 'strong' ? r.score >= 90 : f === 'soon' ? r.notice <= 15 : f === 'gap' ? r.gaps > 0 : f === 'new' ? r.isNew : true; }
+function prVisible(all){
+  const q = PR.q.trim().toLowerCase();
+  let rows = all.filter(function(r){ return (!PR.job || r.j.id === PR.job) && prTest(r, PR.f); });
+  if(q) rows = rows.filter(function(r){ return [r.c.name, r.c.role, r.c.loc, r.c.currentCompany, r.j.title, r.j.client, (r.c.skills || []).join(' ')].join(' ').toLowerCase().indexOf(q) > -1; });
+  return rows.sort(PR.sort === 'new' ? function(a, b){ return b.at - a.at || b.score - a.score; } : PR.sort === 'job' ? function(a, b){ return a.j.title.localeCompare(b.j.title) || b.score - a.score; } : function(a, b){ return b.score - a.score || b.at - a.at; });
+}
+function prAgo(ms){ const d = Math.max(0, cwNow() - ms), h = Math.round(d / 3600000); return !ms ? '' : h < 1 ? 'just now' : h < 24 ? h + ' h ago' : Math.round(h / 24) + ' d ago'; }
+function prQ(s){ return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+/* who Not a fit sent back to the pool in the last 7 days, on this viewer's jobs */
+function prReturned(){
+  const since = cwNow() - 7 * CW_DAY, out = [];
+  Object.keys(CA_DEC).forEach(function(k){ const d = CA_DEC[k]; if(!d || d.d !== 'dismissed' || d.at < since) return; const p = k.split('|'), j = jobById(p[0]), c = byId(+p[1]) || byId(p[1]);
+    if(j && c && caJobMine(j)) out.push({ key:k, j:j, c:c, d:d }); });
+  return out.sort(function(a, b){ return b.d.at - a.d.at; });
+}
+
+/* ---------- the tab ---------- */
+function prospectsTabHTML(){
+  if(!prOn()) return '<div class="o-card pr-note">' + oIcon('spark', 18, 1.75) + '<p><b>Prospects come from Talent Discovery.</b> When it runs for your jobs, everyone Kairo shortlists shows here, ready for you to add or skip.</p></div>';
+  prSweep();
+  if(!prSuggestMode()) return '<div class="tp-wrap"><div class="o-card pr-note">' + oIcon('spark', 18, 1.75) + '<div><p><b>Kairo adds strong matches to jobs on its own.</b> Talent Discovery is set to add without asking, so its picks go straight into each job’s pipeline.</p>' +
+    '<p style="margin-top:10px"><button type="button" class="o-btn" onclick="switchTalentPoolTab(\'lineup\')">Open Pipeline →</button> <button type="button" class="o-btn o-btn--ghost" onclick="prOpenSettings()">Change in Talent Discovery</button></p></div></div></div>';
+  const all = prAll();
+  return '<div class="tp-wrap" id="pr-wrap">' + prBarHTML(all) + (PR.ret ? '' : prTabsHTML(all) + prToolsHTML(all)) + '<div id="pr-list">' + prListHTML(all) + '</div></div>';   // the returned list has nothing to filter
+}
+function prBarHTML(all){
+  const jobs = {}; all.forEach(function(r){ jobs[r.j.id] = 1; }); const nj = Object.keys(jobs).length, strong = all.filter(function(r){ return r.score >= 90; }).length, fresh = all.filter(function(r){ return r.isNew; }).length, ret = prReturned().length;
+  let th = 70, cap = 10; try { th = caThreshold(); cap = caPickCap(); } catch(e){}
+  return '<div class="tp-bar" id="pr-bar"><p class="tp-bar__sum">' + (all.length ? '<b>' + all.length + '</b> Kairo pick' + (all.length === 1 ? '' : 's') + ' across <b>' + nj + '</b> job' + (nj === 1 ? '' : 's') +
+      (strong ? ' · <button type="button" class="pr-link pr-link--good" onclick="prSet(\'f\',\'strong\')">' + strong + ' strong</button>' : '') + (fresh ? ' · ' + fresh + ' new today' : '') : 'No Kairo picks are waiting for you') +
+      ' <span style="color:var(--text-3)">· above ' + th + '%, up to ' + cap + ' per job</span></p>' +
+    (ret ? '<button type="button" class="o-btn" onclick="PR.ret=!PR.ret; prRefresh()" aria-pressed="' + PR.ret + '">' + (PR.ret ? 'Back to picks' : ret + ' returned to the pool') + '</button>' : '') +
+    '<button type="button" class="o-btn" onclick="prOpenSettings()">How Kairo picks →</button></div>';
+}
+function prTabsHTML(all){
+  const base = all.filter(function(r){ return !PR.job || r.j.id === PR.job; });
+  return '<div class="o-tabs-host" id="pr-filters"><div role="tablist" id="pr-tabs" aria-label="Quick filters">' + PR_FILTERS.map(function(t){ const on = PR.f === t[0], n = base.filter(function(r){ return prTest(r, t[0]); }).length;
+    return '<button type="button" role="tab" data-pr-f="' + t[0] + '" aria-selected="' + on + '" onclick="prSet(\'f\',\'' + t[0] + '\')">' + t[1] + '<span class="tp-n">' + n + '</span></button>'; }).join('') + '</div></div>';
+}
+function prToolsHTML(all){
+  const jobs = {}; all.forEach(function(r){ (jobs[r.j.id] = jobs[r.j.id] || { j:r.j, n:0 }).n++; });
+  const opts = Object.keys(jobs).map(function(k){ return jobs[k]; }).sort(function(a, b){ return b.n - a.n; });
+  return '<div class="tp-tools" id="pr-tools"><div class="s-search" style="flex:1;max-width:380px"><span class="s-search__ic">' + oIcon('search', 16, 1.75) + '</span><input id="pr-q" oninput="PR.q=this.value; PR.lim=25; prRefreshList()" value="' + escapeHtml(PR.q) + '" placeholder="Search name, skill, city or job" aria-label="Search prospects" class="app-input" type="search" /></div>' +
+    '<div class="pr-sels"><select class="app-input app-select pr-sel pr-sel--job" aria-label="Job" onchange="prSet(\'job\', this.value)"><option value="">All jobs</option>' +
+      opts.map(function(o){ return '<option value="' + o.j.id + '"' + (PR.job === o.j.id ? ' selected' : '') + '>' + escapeHtml(o.j.title + ' · ' + o.j.client) + ' (' + o.n + ')</option>'; }).join('') + '</select>' +
+    '<select class="app-input app-select pr-sel pr-sel--sort" aria-label="Sort" onchange="prSet(\'sort\', this.value)">' + [['best', 'Best match first'], ['new', 'Newest first'], ['job', 'By job']].map(function(o){ return '<option value="' + o[0] + '"' + (PR.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div></div>';
+}
+function prListHTML(all){
+  if(PR.ret) return prReturnedHTML();
+  const rows = prVisible(all || prAll()), shown = rows.slice(0, PR.lim);
+  Object.keys(PR.sel).forEach(function(k){ if(!rows.some(function(r){ return r.key === k; })) delete PR.sel[k]; });
+  if(!rows.length) return '<div class="o-card pr-note">' + oIcon('check', 18, 1.75) + '<p>' + ((all || []).length ? '<b>Nobody matches these filters.</b> <button type="button" class="pr-link" onclick="prClear()">Show all picks</button>' : '<b>You’re all caught up.</b> Kairo checks your talent pool against every open job and adds new picks here.') + '</p></div>';
+  const nsel = Object.keys(PR.sel).length, allOn = shown.length && shown.every(function(r){ return PR.sel[r.key]; });
+  return (nsel ? prBulkHTML(nsel) : '<label class="tp-only" style="padding:0 4px"><input type="checkbox" class="pr-check" aria-label="Select all shown" onchange="prSelAll(this.checked)"' + (allOn ? ' checked' : '') + ' /> Select ' + (shown.length === rows.length ? 'all' : 'the ' + shown.length + ' shown') + '</label>') +
+    '<ul class="tp-list" style="margin-top:12px">' + shown.map(prRowHTML).join('') + '</ul>' +
+    (rows.length > shown.length ? '<button type="button" class="o-btn pr-more" style="margin-top:12px" onclick="PR.lim+=25; prRefreshList()">Show ' + Math.min(25, rows.length - shown.length) + ' more of ' + (rows.length - shown.length) + '</button>' : '');
+}
+function prRowHTML(r){
+  const c = r.c, j = r.j, open = PR.open === r.key, k = prQ(r.key), city = String(c.loc || '').split(',')[0];
+  const facts = [c.role, c.exp && c.exp !== '—' ? c.exp : '', city, r.notice === 0 ? 'Immediate joiner' : r.notice ? r.notice + 'd notice' : ''].filter(Boolean);
+  const nf = PR.pop === r.key ? '<div class="o-menu" role="menu">' + PR_REASONS.map(function(x){ return '<button type="button" role="menuitem" class="o-menu__item" onclick="event.stopPropagation(); prDo([\'' + k + '\'], \'nf\', \'' + prQ(x) + '\')">' + escapeHtml(x) + '</button>'; }).join('') + '</div>' : '';
+  return '<li data-pr="' + escapeHtml(r.key) + '" data-job="' + j.id + '" class="o-card tp-cand' + (open ? ' tp-open tp-settled' : '') + '">' +
+    '<div class="tp-cand__head pr-head" role="button" tabindex="0" aria-expanded="' + open + '" onclick="prToggle(\'' + k + '\')" onkeydown="if(event.target===this && (event.key===\'Enter\'||event.key===\' \')){ event.preventDefault(); prToggle(\'' + k + '\'); }">' +
+      '<input type="checkbox" class="pr-check" aria-label="Select ' + escapeHtml(c.name) + '"' + (PR.sel[r.key] ? ' checked' : '') + (r.mine ? '' : ' disabled title="Only people on this job can add to it"') + ' onclick="event.stopPropagation()" onchange="prSel(\'' + k + '\', this.checked)" />' +
+      candidateAvatarHTML(c, 'w-11 h-11', {}) +
+      '<span class="tp-cand__id"><span class="tp-cand__name">' + escapeHtml(c.name) + (r.isNew ? '<span class="tp-n" style="color:#0F7A58">New</span>' : '') + '</span><span class="tp-cand__facts">' + escapeHtml(facts.join(' · ')) + '</span></span>' +
+      '<span class="tp-cand__chips"><span class="tp-chip pr-job" title="' + escapeHtml(j.title + ' · ' + j.client) + '">' + tpClientLogo(j.client) + '<span class="tp-chip__t">' + escapeHtml(j.title) + '</span><i class="tp-sdot tp-sdot--' + (r.gaps ? 'warn' : 'ok') + '" title="' + (r.gaps ? r.gaps + ' thing' + (r.gaps === 1 ? '' : 's') + ' to check' : 'Fits every must-have') + '"></i></span>' + (r.others > 0 ? '<span class="pr-also">+' + r.others + ' job' + (r.others === 1 ? '' : 's') + '</span>' : '') + '</span>' +
+      '<span class="pr-score' + (r.score >= 90 ? ' is-strong' : '') + '"><b>' + r.score + '%</b><span>match</span></span>' +
+      '<span class="pr-acts" onclick="event.stopPropagation()">' + (r.mine ? '<button type="button" class="o-btn o-btn--primary" data-pr-act="add" onclick="prDo([\'' + k + '\'], \'add\')">Add to job</button>' +
+        '<span class="pr-pop"><button type="button" class="o-btn" data-pr-act="nf" aria-haspopup="menu" aria-expanded="' + (PR.pop === r.key) + '" onclick="prPop(\'' + k + '\')">Not a fit</button>' + nf + '</span>' : '<span class="tp-n">View only</span>') + '</span>' +
+      '<span class="tp-chev">' + icon('chevronRight', 'w-4 h-4') + '</span>' +
+    '</div>' +
+    '<div class="tp-exp"><div>' + (open ? prBodyHTML(r) : '') + '</div></div></li>';
+}
+function prBodyHTML(r){
+  const c = r.c, j = r.j, money = caHasMoney(), exp = c.comp && c.comp.expected;
+  const others = prAll().filter(function(x){ return x.c.id === c.id && x.j.id !== j.id; });
+  const dl = [['Found by Kairo', prAgo(r.at) + ' for ' + j.title], ['Experience', c.exp], ['Notice', r.notice === 0 ? 'Immediate' : c.notice], ['City', c.loc], ['Now at', c.currentCompany],
+    ['Expects', exp ? (money ? '₹' + (exp / 100000).toFixed(1).replace(/\.0$/, '') + ' LPA' : 'Hidden') : ''], ['Skills', (c.skills || []).slice(0, 6).join(', ')]].filter(function(x){ return x[1]; });
+  return '<div class="tp-body"><div class="tp-body__head"><p>Why Kairo picked ' + escapeHtml(String(c.name).split(' ')[0]) + ' for ' + escapeHtml(j.title) + ' · ' + escapeHtml(j.client) + '</p></div>' +
+    '<div class="pr-fit">' + r.why.map(function(w){ return caChip(w.t, w.ok ? 'good' : 'warn'); }).join('') + '</div>' +
+    '<dl class="pr-dl">' + dl.map(function(x){ return '<div><dt>' + x[0] + '</dt><dd title="' + escapeHtml(x[1]) + '">' + escapeHtml(x[1]) + '</dd></div>'; }).join('') + '</dl>' +
+    (others.length ? '<div class="pr-other"><span>Also a match for</span>' + others.map(function(o){ return '<button type="button" onclick="prSet(\'job\', \'' + o.j.id + '\')" title="Show picks for ' + escapeHtml(o.j.title) + '">' + escapeHtml(o.j.title) + ' · ' + o.score + '%</button>'; }).join('') + '</div>' : '') +
+    '<div class="pr-bodyacts"><button type="button" class="o-btn o-btn--ghost" onclick="openCandidate(' + c.id + ')">Open full profile</button><button type="button" class="o-btn" onclick="openJob(\'' + j.id + '\')">Open job</button></div></div>';
+}
+function prBulkHTML(n){
+  const nf = PR.pop === '__bulk' ? '<div class="o-menu" role="menu">' + PR_REASONS.map(function(x){ return '<button type="button" role="menuitem" class="o-menu__item" onclick="prDo(Object.keys(PR.sel), \'nf\', \'' + prQ(x) + '\')">' + escapeHtml(x) + '</button>'; }).join('') + '</div>' : '';
+  return '<div class="pr-bulk" role="region" aria-label="Selected prospects"><span class="pr-bulk__n">' + n + ' selected</span>' +
+    '<button type="button" class="o-btn o-btn--primary" data-pr-bulk="add" onclick="prDo(Object.keys(PR.sel), \'add\')">Add ' + n + ' to their jobs</button>' +
+    '<span class="pr-pop"><button type="button" class="o-btn" data-pr-bulk="nf" aria-haspopup="menu" onclick="prPop(\'__bulk\')">Not a fit</button>' + nf + '</span>' +
+    '<button type="button" class="o-btn" onclick="PR.sel={}; prRefreshList()">Clear</button></div>';
+}
+function prReturnedHTML(){
+  const list = prReturned();
+  if(!list.length) return '<div class="o-card pr-note">' + oIcon('check', 18, 1.75) + '<p>Nobody was returned to the pool this week.</p></div>';
+  return '<p class="tp-bar__sum" style="margin:0 4px 10px">Not a fit for that job only. They stay in your talent pool and can still match other jobs. Restore puts them back in Prospects.</p>' +
+    '<div class="o-card" style="padding:4px 0">' + list.map(function(x){ return '<div class="pr-ret" data-pr-ret="' + escapeHtml(x.key) + '">' + candidateAvatarHTML(x.c, 'w-9 h-9', {}) + '<span class="pr-ret__t"><b>' + escapeHtml(x.c.name) + '</b> · ' + escapeHtml(x.j.title) + '<br>' + escapeHtml((x.d.reason || 'Not a fit') + ' · ' + (x.d.by || '') + ' · ' + prAgo(x.d.at)) + '</span>' +
+      '<button type="button" class="o-btn" onclick="prRestore(\'' + prQ(x.key) + '\')">Restore</button></div>'; }).join('') + '</div>';
+}
+
+/* ---------- actions ---------- */
+function prSet(k, v){ PR[k] = v; PR.lim = 25; PR.open = null; PR.pop = null; PR.ret = false; prRefresh(); }
+function prClear(){ PR.f = 'all'; PR.q = ''; PR.job = ''; PR.lim = 25; prRefresh(); }
+function prToggle(k){ PR.open = PR.open === k ? null : k; PR.pop = null; prRefreshList(); }
+function prPop(k){ PR.pop = PR.pop === k ? null : k; prRefreshList(); }
+function prSel(k, on){ if(on) PR.sel[k] = 1; else delete PR.sel[k]; prRefreshList(); }
+function prSelAll(on){ const rows = prVisible(prAll()).slice(0, PR.lim); rows.forEach(function(r){ if(on && r.mine) PR.sel[r.key] = 1; else delete PR.sel[r.key]; }); prRefreshList(); }
+/* Add to job / Not a fit, for one or many: the rows leave, the counts follow everywhere (Cowork reads the same records) */
+function prDo(keys, act, reason){
+  const all = prAll(), rows = keys.map(function(k){ return all.find(function(r){ return r.key === k; }); }).filter(function(r){ return r && r.mine; });
+  if(!rows.length){ PR.pop = null; prRefreshList(); return; }
+  rows.forEach(function(r){ const el = document.querySelector('[data-pr="' + CSS.escape(r.key) + '"]'); if(el) el.classList.add('is-leaving'); });
+  const run = function(){
+    let ok = 0; const undo = [];
+    rows.forEach(function(r){
+      if(act === 'add'){ if(caAddPick(r.j.id, r.c.id)) ok++; }
+      else if(caDismissPick(r.j.id, r.c.id, reason)){ ok++; undo.push(r.j.id + '|' + r.c.id); }
+      delete PR.sel[r.key];
+    });
+    PR.pop = null; if(rows.some(function(r){ return r.key === PR.open; })) PR.open = null;
+    const one = rows.length === 1 ? rows[0] : null;
+    if(act === 'add') toast(one ? one.c.name + ' added to ' + one.j.title + '. Next: their consent, then you can submit.' : ok + ' people added to their jobs. Each one is in that job’s pipeline.');
+    else toast(one ? one.c.name + ' returned to the talent pool for ' + one.j.title + '.' : ok + ' people returned to the talent pool.', { undo:function(){ undo.forEach(function(k){ delete CA_DEC[k]; }); try { caRecord({ agentId:'talent-discovery', action:'Restored', why:'Not a fit undone', level:'person', result:'Restored' }); } catch(e){} prRefresh(); } });
+    prRefresh(); try { renderSidebar(); } catch(e){}
+  };
+  if(document.querySelector('.tp-cand.is-leaving')) setTimeout(run, 200); else run();
+}
+function prRestore(key){ delete CA_DEC[key]; try { caRecord({ agentId:'talent-discovery', action:'Restored', why:'Restored from Prospects', level:'person', result:'Restored' }); } catch(e){} toast('Back in Prospects.'); if(!prReturned().length) PR.ret = false; prRefresh(); }
+function prOpenSettings(){ try { caOpenAgent('talent-discovery', 'settings'); } catch(e){ showView('kairo-team'); } }
+/* go to Prospects, already filtered (Cowork's numbers and job counts call this) */
+function prGo(o){ o = o || {}; PR.f = o.f || 'all'; PR.job = o.job || ''; PR.q = ''; PR.lim = 25; PR.open = null; PR.pop = null; PR.ret = false; PR.sel = {}; talentPoolTab = 'prospects';
+  if(state.activeNav === 'talent-pool') showView('talent-pool'); else if(typeof navigateWithSkeleton === 'function') navigateWithSkeleton('talent-pool'); else showView('talent-pool'); }
+function prRefresh(){ const b = document.getElementById('talent-pool-body'); if(state.activeNav === 'talent-pool' && talentPoolTab === 'prospects' && b){ b.innerHTML = prospectsTabHTML(); prTabCount(); const q = document.getElementById('pr-q'); } }
+function prRefreshList(){ const l = document.getElementById('pr-list'); if(!l){ prRefresh(); return; } const all = prAll(); l.innerHTML = prListHTML(all); const t = document.getElementById('pr-filters'); if(t) t.outerHTML = prTabsHTML(all); }
+/* the tab label carries the live count */
+function prTabCount(){ const b = document.querySelector('#tp-head [data-tp-tab="prospects"]') || [].find.call(document.querySelectorAll('#tp-head .seg__btn'), function(x){ return /Prospects/.test(x.textContent); }); if(!b) return;
+  const n = prOn() && prSuggestMode() ? prAll().length : 0; let s = b.querySelector('.tp-n'); if(!s){ s = document.createElement('span'); s.className = 'tp-n'; s.style.marginLeft = '2px'; b.appendChild(s); } s.textContent = n ? String(n) : ''; s.hidden = !n; }
+
+/* ---------- wiring ---------- */
+(function(){
+  /* Talent pool: Prospects sits after Search, where the old Prospects used to be; it shows only while Talent Discovery is available */
+  const tab = { id:'prospects', label:'Prospects', icon:'sparkles', tip:'Everyone Kairo shortlisted for your jobs. Add the right ones to the job; Not a fit sends them back to the pool.' };
+  const baseTabs = TALENT_POOL_TABS.slice();
+  const syncTabs = function(){ const want = prOn(); const has = TALENT_POOL_TABS.some(function(t){ return t.id === 'prospects'; });
+    if(want && !has){ TALENT_POOL_TABS.length = 0; baseTabs.forEach(function(t, i){ TALENT_POOL_TABS.push(t); if(i === 0) TALENT_POOL_TABS.push(tab); }); }
+    if(!want && has){ const i = TALENT_POOL_TABS.findIndex(function(t){ return t.id === 'prospects'; }); TALENT_POOL_TABS.splice(i, 1); if(talentPoolTab === 'prospects') talentPoolTab = 'lineup'; } };
+  const body = window.talentPoolTabBody;
+  window.talentPoolTabBody = talentPoolTabBody = function(t){ if(t === 'prospects'){ if(prOn()) return prospectsTabHTML(); t = talentPoolTab = 'lineup'; } return body.apply(this, arguments); };
+  const core = window.renderTalentPoolCore;
+  window.renderTalentPoolCore = renderTalentPoolCore = function(){ syncTabs(); return core.apply(this, arguments); };
+  const sv = window.showView; window.showView = function(){ const r = sv.apply(this, arguments); try { if(state.activeNav === 'talent-pool') prTabCount(); } catch(e){} return r; };
+  document.addEventListener('click', function(e){ if(PR.pop && !e.target.closest('.pr-pop')){ PR.pop = null; if(document.getElementById('pr-list')) prRefreshList(); } });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && PR.pop){ PR.pop = null; prRefreshList(); } });
+
+  /* Cowork › Talent Discovery: the picks become one hand-off card; other agents' waiting cards are untouched */
+  const wait = window.caWaitingTodayHTML;
+  if(typeof wait === 'function') window.caWaitingTodayHTML = caWaitingTodayHTML = function(id){
+    if(id !== 'talent-discovery') return wait.apply(this, arguments);
+    const all = prAll(), rest = (caWaitItems(id) || []).filter(function(n){ return n.kind !== 'pick'; });
+    if(!all.length && !rest.length) return wait.apply(this, arguments);   // the usual "All caught up · checked …"
+    const card = all.length ? prHandHTML(all) : '';
+    if(!rest.length) return '<section class="ca-sec ca-wait" data-sec="waiting" id="ca-sec-waiting"><div class="ca-sec__h"><h2 class="o-card__title">Waiting for you <span class="ca-count" data-wait-count>' + all.length + '</span></h2></div>' + card + '</section>';
+    /* other suggestions keep their cards, in the same section, under the hand-off; the count is everything waiting */
+    const keep = caWaitItems; let html = ''; window.caWaitItems = caWaitItems = function(){ return rest; }; try { html = wait.apply(this, arguments); } finally { window.caWaitItems = caWaitItems = keep; }
+    html = html.replace(/(<span class="ca-count" data-wait-count>)\d+(<\/span>)/, '$1' + (rest.length + all.length) + '$2');
+    const at = html.indexOf('</div>', html.indexOf('class="ca-sec__h"'));
+    return at > -1 ? html.slice(0, at + 6) + card + html.slice(at + 6) : card + html;
+  };
+  const go = window.caTileGo;
+  if(typeof go === 'function') window.caTileGo = caTileGo = function(id, g){ if(id === 'talent-discovery' && g === 'waiting'){ prGo({}); return; } return go.apply(this, arguments); };
+  /* a pick in the activity feed opens that job's picks in Prospects */
+  const row = window.caOpenRow;
+  if(typeof row === 'function') window.caOpenRow = caOpenRow = function(rid){ let r = null; try { r = caRows({}).find(function(x){ return x.id === rid; }); } catch(e){}
+    if(r && r.action === 'pick' && r.agentId === 'talent-discovery' && prOn() && prSuggestMode()){ prGo({ job:r.jobId || (r.job && r.job.id) || '' }); return; } return row.apply(this, arguments); };
+})();
+/* the hand-off card: how many picks, where to look first, and one way in */
+function prHandHTML(all){
+  const jobs = {}; all.forEach(function(r){ (jobs[r.j.id] = jobs[r.j.id] || { j:r.j, n:0 }).n++; });
+  const list = Object.keys(jobs).map(function(k){ return jobs[k]; }).sort(function(a, b){ return b.n - a.n; }), strong = all.filter(function(r){ return r.score >= 90; }).length, soon = all.filter(function(r){ return r.notice <= 15; }).length;
+  return '<div class="o-card pr-hand" data-pr-hand="' + all.length + '"><div class="pr-hand__t">' +
+      '<p><b>' + caN(all.length, 'Kairo pick is', 'Kairo picks are') + ' waiting in Talent pool › Prospects</b> · ' + list.length + ' job' + (list.length === 1 ? '' : 's') + (strong ? ' · <button type="button" class="pr-link pr-link--good" onclick="prGo({ f:\'strong\' })">' + strong + ' strong</button>' : '') + (soon ? ' · <button type="button" class="pr-link" onclick="prGo({ f:\'soon\' })">' + soon + ' can join in 15 days</button>' : '') + '</p>' +
+      '<div class="pr-hand__jobs">' + list.slice(0, 6).map(function(x){ const twin = list.filter(function(y){ return y.j.title === x.j.title; }).length > 1; return '<button type="button" onclick="prGo({ job:\'' + x.j.id + '\' })" title="' + escapeHtml(x.j.title + ' · ' + x.j.client) + '">' + escapeHtml(x.j.title + (twin ? ' · ' + x.j.client : '')) + '<b>' + x.n + '</b></button>'; }).join('') + (list.length > 6 ? '<button type="button" onclick="prGo({})">+' + (list.length - 6) + ' more</button>' : '') + '</div></div>' +
+    '<button type="button" class="o-btn o-btn--primary" data-pr-open onclick="prGo({})">Review in Prospects →</button></div>';
+}
+</script>
 </body>
 </html>
