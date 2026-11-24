@@ -57637,7 +57637,7 @@ function demoSimOpen(jobId){
 // The one write: an application event for this job (also used by the spec).
 function demoSimulateApplication(jobId, o){
   const j = jobById(jobId); if(!j) return { ok:false, reason:'No such job.' }; const name = String(o.name || '').trim(); if(!name) return { ok:false, reason:'Add a name.' };
-  const src = o.source || 'Careers Page', n = Date.now() % 100000, payload = { name:name, email:demoSlug(name) + '.' + n + '@example.com', phone:'+91 9' + String(100000000 + (n * 7919) % 899999999).slice(0, 9), role:j.title, skills:(j.skills || []).slice(0, 3), source:src === 'link' ? 'Shareable link · LinkedIn' : src };
+  const src = o.source || 'Careers Page', n = (Date.now() + (demoSimulateApplication.seq = (demoSimulateApplication.seq || 0) + 1) * 7) % 100000,   /* a per-call step: two simulations in the same millisecond are still two different people */ payload = { name:name, email:demoSlug(name) + '.' + n + '@example.com', phone:'+91 9' + String(100000000 + (n * 7919) % 899999999).slice(0, 9), role:j.title, skills:(j.skills || []).slice(0, 3), source:src === 'link' ? 'Shareable link · LinkedIn' : src };
   if(o.cv) payload.artifact = { name:o.cv, mime:/\.pdf$/i.test(o.cv) ? 'application/pdf' : 'application/msword', size:o.cvSize || null };
   if(src === 'link' && o.recruiterId) payload.utm_content = String(o.recruiterId).toLowerCase();
   const r = ingestApplicationEvent(j.id, payload, { platform:payload.source }); if(!r.ok) return { ok:false, reason:r.error || 'Not accepted' };

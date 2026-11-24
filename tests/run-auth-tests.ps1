@@ -34,7 +34,7 @@ try {
   $url = ([Uri]$page).AbsoluteUri   # percent-encodes spaces in the temp path
   $dom = Join-Path $tmp 'dom.html'
   # Windows PowerShell does not quote ArgumentList items, so quote the profile path ourselves.
-  Start-Process -FilePath $Browser -ArgumentList @('--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check',
+  Start-Process -FilePath $Browser -ArgumentList @('--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--allow-file-access-from-files',
     ('"--user-data-dir=' + (Join-Path $tmp 'profile') + '"'),('--window-size=' + $Width + ',' + $Height),('--virtual-time-budget=' + $Budget),'--dump-dom',$url) `
     -RedirectStandardOutput $dom -RedirectStandardError (Join-Path $tmp 'stderr.txt') -Wait -NoNewWindow
 
