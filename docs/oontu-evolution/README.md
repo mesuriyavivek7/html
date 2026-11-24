@@ -40,3 +40,16 @@ Related earlier documents: `docs/AUTH.md`, `docs/OONTU_AGENCY_READY_REPORT.md`, 
 | 22 | [Corporate journey implementation plan](22-corporate-journey-implementation-plan.md) |
 | 23 | [Engineering milestones and acceptance criteria](23-engineering-milestones-and-acceptance-criteria.md) |
 | 24 | [Risk register and migration strategy](24-risk-register-and-migration-strategy.md) — ends with the first-slice recommendation |
+
+## Phase 3: implementation
+
+| # | Document |
+|---|---|
+| 25 | [Phase completion and reconciliation](25-phase-completion-and-reconciliation.md) |
+| 26 | [Implementation baseline](26-implementation-baseline.md) |
+| 27 | [Implementation progress](27-implementation-progress.md) — where to resume |
+| 28 | [Completed features and code evidence](28-completed-features-and-code-evidence.md) |
+| 29 | [Test and security results](29-test-and-security-results.md) |
+| 30 | [Known gaps and blockers](30-known-gaps-and-blockers.md) |
+| 31 | [Production readiness assessment](31-production-readiness-assessment.md) |
+| 32 | [Next release backlog](32-next-release-backlog.md) |

@@ -30769,6 +30769,17 @@ const OA = (function(){
     }
     const done = await authApi.completeSetup();
     if(!done.ok) return createFailed(done);
+    /* Register the new workspace on the platform side through the shared provisioning engine (ADR-05), so a
+       self-service customer appears in Super Admin › Tenants like an assisted one. Keyed by the workspace id, so a
+       repeat of this step can never create a second tenant. A failure here does not block the owner: the request
+       stays failed and retryable for the Oontu team. */
+    try {
+      if(typeof provisionTenant === 'function' && done.workspace && done.workspace.id){
+        const pv = provisionTenant({ channel:'self_service', idempotencyKey:'self:' + done.workspace.id, workspaceId:done.workspace.id,
+          company:done.workspace.name || org(), ownerName:SU.name.trim(), ownerEmail:SU.email.trim().toLowerCase(), type:done.workspace.type || wsType(), country:pl.id });
+        if(!pv.ok) console.warn('provisioning', pv.reason);
+      }
+    } catch(e){ console.error('provisioning', e); }
     SU.result = done; SU.created = null;
     authFlow.codePending = false;
     const go = function(){ SU.i = 0; goSu({ done:true }); };
@@ -35439,48 +35450,12 @@ function generateTenantId(nameHint){
   if(!tenantById(candidate)) return candidate;
   return 'org-'+slug+'-'+(tenantIdSeqPlatform++);
 }
+/* Legacy entry point with no callers left. It delegates to the shared provisioning engine so there is no second
+   way to create a tenant (ADR-05). Kept only so any old caller still gets the engine's validation and idempotency. */
 function createTenant(input){
   input = input || {};
-  const auth = canPerformPlatformAction('create', 'platform-tenant');
-  if(!auth.allowed) return { ok:false, reason:auth.reason };
-  const name = String(input.name||'').trim();
-  if(!name) return { ok:false, reason:'Tenant name is required.' };
-  const adminName = String(input.adminName||'').trim();
-  if(!adminName) return { ok:false, reason:'A primary tenant administrator name is required.' };
-  const adminEmail = String(input.adminEmail||'').trim().toLowerCase();
-  if(!adminEmail || adminEmail.indexOf('@')===-1) return { ok:false, reason:'A valid email is required for the primary tenant administrator.' };
-  let tenantId = String(input.tenantId||'').trim() || generateTenantId(name);
-  if(tenantById(tenantId)) return { ok:false, reason:'Tenant ID "'+tenantId+'" already exists \u2014 choose a unique ID.' };
-  let planId = input.planId || null;
-  let planName;
-  if(planId && typeof planById==='function' && planById(planId)){
-    planName = planById(planId).name;
-  } else {
-    planId = null;
-    planName = String(input.plan||'').trim() || 'Not set';
-  }
-  const subscriptionStatus = TENANT_LIFECYCLE_STATES.indexOf(input.subscriptionStatus)>-1 ? input.subscriptionStatus : 'trial';
-  const now = nowTimestamp();
-  // Real admin invite record - a genuine, trackable identity with an email and a
-  // real Invited/Active status, living in its own platform-scoped array
-  // (PLATFORM_TENANT_ADMINS) rather than RECRUITER_ROSTER. The prior architectural
-  // note here was correct and remains true: RECRUITER_ROSTER is read unfiltered by
-  // organizationId in ~31 places across tenant-side screens, so pushing a new
-  // tenant's admin there would genuinely leak into another tenant's own User
-  // Management table. This closes the actual gap (tenant.primaryAdminUserId was
-  // always null, with nothing real behind the name) without touching that
-  // unresolved, larger retrofit.
-  const adminId = 'TA-'+(tenantAdminIdSeq++);
-  PLATFORM_TENANT_ADMINS.push({ id:adminId, tenantId:tenantId, name:adminName, email:adminEmail, status:'Invited', invitedAt:now, acceptedAt:null });
-  const tenant = { id:tenantId, name:name, status: subscriptionStatus==='trial' ? 'trial' : 'active',
-    createdAt: now, primaryAdminUserId: adminId, primaryAdminName: adminName,
-    plan: planName, planId: planId, subscriptionStatus: subscriptionStatus, subscriptionStart: wsDay(now), subscriptionRenewal: null };
-  PLATFORM_TENANTS.push(tenant);
-  if(planId && typeof createSubscriptionRecord==='function'){
-    createSubscriptionRecord(tenantId, planId, { status: subscriptionStatus });
-  }
-  logPlatformAudit('Tenant created', name+' ('+tenantId+') \u2014 admin: '+adminName+' <'+adminEmail+'> \u2014 plan: '+planName, { entityId:tenantId, newState:tenant.status });
-  return { ok:true, tenant:tenant };
+  return provisionTenant({ channel:'assisted', idempotencyKey:input.idempotencyKey || ('legacy:'+Date.now()+':'+Math.random().toString(36).slice(2,8)),
+    company:input.name, ownerName:input.adminName, ownerEmail:input.adminEmail, type:input.type, planId:input.planId, note:input.note });
 }
 
 let PLATFORM_TENANT_ADMINS = [];
@@ -36174,7 +36149,8 @@ let ctSheet = null;
 function openCreateTenantModal(){   // the Tenants page button
   if(!canPlatform('platform-tenant','create')){ toast('You do not have permission to create a tenant.'); return; }
   const plan = PLATFORM_PLANS.find(function(p){ return p.status==='active'; });
-  ctSheet = { company:'', name:'', email:'', mobileCode:'+91', mobile:'', type:'Staffing agency', planId: plan ? plan.id : '', note:'', errors:{} };
+  ctSheet = { company:'', name:'', email:'', mobileCode:'+91', mobile:'', type:'Staffing agency', planId: plan ? plan.id : '', note:'', errors:{},
+    idemKey:'assisted:' + Date.now() + ':' + Math.random().toString(36).slice(2, 10) };   // one key per opened sheet: a double submit can't create two tenants
   ctRender();
   const f = document.getElementById('ct-company'); if(f) f.focus();
 }
@@ -36186,7 +36162,9 @@ function ctEmailProblem(){
   if(ctSheet.type==='Corporate'){
     if(isFreeEmailDomain(emailDomainOf(e))) return AUTH_MESSAGES.personal_email;
     const taken = EXISTING_WORKSPACES.find(function(w){ return w.domain===emailDomainOf(e); });
-    if(taken) return taken.company+' already has an Oontu workspace on this domain.';
+    // A paused setup from this same sheet claimed the domain for the tenant it is creating: that is not a conflict.
+    const mine = typeof provisioningRequestFor === 'function' ? provisioningRequestFor(ctSheet.idemKey) : null;
+    if(taken && !(mine && mine.out && mine.out.workspaceId && taken.workspaceId === mine.out.workspaceId)) return taken.company+' already has an Oontu workspace on this domain.';
   }
   return '';
 }
@@ -36217,8 +36195,19 @@ function ctSubmit(){
   let first = '';
   ['company','name','email','mobile'].forEach(function(k){ const m = ctProblem(k); ctSetError(k, m); if(m && !first) first = k; });
   if(first){ document.getElementById('ct-'+first).focus(); return; }
-  const res = createInvitedTenant({ company:s.company, ownerName:s.name, ownerEmail:s.email, mobileCode:s.mobileCode, mobile:s.mobile, type:s.type, planId:s.planId, note:s.note });
-  if(!res.ok){ ctSetError(res.field || 'email', res.reason); document.getElementById('ct-'+(res.field || 'email')).focus(); return; }
+  const res = createInvitedTenant({ idempotencyKey:s.idemKey, company:s.company, ownerName:s.name, ownerEmail:s.email, mobileCode:s.mobileCode, mobile:s.mobile, type:s.type, planId:s.planId, note:s.note });
+  if(!res.ok && res.retryable){
+    /* A provisioning step failed after the tenant was started. The sheet keeps its idempotency key, so pressing
+       Create again resumes from the failed step and never makes a second tenant, owner or invitation. */
+    toast('Setup paused at the ' + res.step + ' step. Press Create tenant again to finish it; nothing will be duplicated.');
+    return;
+  }
+  if(!res.ok){
+    // The engine refuses a changed owner email for a setup this sheet already started: say so on the email field.
+    const field = res.field === 'idempotencyKey' ? 'email' : (res.field || 'email');
+    const reason = res.field === 'idempotencyKey' ? 'This setup was started for another owner email. Close this sheet and start again to use a different one.' : res.reason;
+    ctSetError(field, reason); const el = document.getElementById('ct-'+field); if(el) el.focus(); return;
+  }
   ctSheet = null; ctRender();
   const bar = document.getElementById('oontu-tenant-filter-bar'); if(bar) bar.outerHTML = oontuTenantFilterBarHTML();
   refreshOontuTenantList();
@@ -36273,31 +36262,129 @@ function ctSheetHTML(){
     '</form>'+
   '</div>';
 }
+/* Super Admin "Create tenant": a thin caller of the shared provisioning engine (ADR-05). */
 function createInvitedTenant(input){
-  const auth = canPerformPlatformAction('create', 'platform-tenant');
-  if(!auth.allowed) return { ok:false, reason:auth.reason };
-  const company = String(input.company||'').trim(), ownerName = String(input.ownerName||'').trim(), email = String(input.ownerEmail||'').trim().toLowerCase();
-  const type = WORKSPACE_TYPES.indexOf(input.type)>-1 ? input.type : 'Staffing agency';
-  const mobile = authMobileFormat(input.mobileCode, input.mobile);
-  const tenantId = generateTenantId(company);
-  // PROTOTYPE: the simulator stands in for the platform API that creates the workspace and the owner's invite link.
-  const invite = authApi && authApi._createOwnerInvite ? authApi._createOwnerInvite({ email:email, name:ownerName, mobile:mobile, type:type, company:company, tenantId:tenantId }) : { ok:true, token:null };
-  if(!invite.ok){
-    return { ok:false, field:'email', reason: invite.error==='account_exists' ? 'An Oontu account already uses this email.'
-      : invite.error==='domain_taken' ? invite.company+' already has an Oontu workspace on this domain.' : authMessage(invite) };
+  input = input || {};
+  return provisionTenant({ channel:'assisted', idempotencyKey:input.idempotencyKey || ('assisted:'+Date.now()+':'+Math.random().toString(36).slice(2,8)),
+    company:input.company, ownerName:input.ownerName, ownerEmail:input.ownerEmail, mobileCode:input.mobileCode, mobile:input.mobile,
+    type:input.type, planId:input.planId, note:input.note });
+}
+
+/* ============================================================
+   SHARED PROVISIONING ENGINE (ADR-05, docs/oontu-evolution/21 and 23 J2)
+   One function creates every customer tenant, whichever door it comes through:
+     channel 'assisted'      Super Admin / Sales: needs platform-tenant.create; the owner gets an invitation link.
+     channel 'self_service'  Create workspace: the auth layer has already created the workspace for a proven
+                             session (sim.createWorkspace + completeSetup); this registers it on the platform side.
+   Idempotent: the same idempotencyKey always returns the same tenant, and a retry after a failed step resumes
+   from that step, so no duplicate tenant, owner, invitation or subscription can be made.
+   PROTOTYPE: state lives in this page (PROVISIONING). A server keeps provisioning_requests in the platform schema.
+============================================================ */
+const PROVISION_CTX = Object.freeze({ provisioning:true });
+const PROVISION_STEPS = ['workspace', 'tenant', 'owner', 'subscription', 'audit'];
+const PROVISIONING = { requests:{}, seq:1 };
+function provisioningRequestFor(key){ return PROVISIONING.requests[String(key || '')] || null; }
+function provisionValidate(req){
+  const channel = req.channel === 'self_service' ? 'self_service' : req.channel === 'assisted' ? 'assisted' : '';
+  if(!channel) return { ok:false, field:'channel', reason:'Unknown provisioning channel.' };
+  if(!String(req.idempotencyKey || '').trim()) return { ok:false, field:'idempotencyKey', reason:'A provisioning request needs an idempotency key.' };
+  if(channel === 'assisted'){ const auth = canPerformPlatformAction('create', 'platform-tenant'); if(!auth.allowed) return { ok:false, reason:auth.reason }; }
+  const company = String(req.company || '').trim(), ownerName = String(req.ownerName || '').trim(), email = String(req.ownerEmail || '').trim().toLowerCase();
+  if(company.length < 2) return { ok:false, field:'company', reason:'The organisation name is required.' };
+  if(!ownerName) return { ok:false, field:'name', reason:'The owner’s name is required.' };
+  if(!AUTH_EMAIL_RE.test(email)) return { ok:false, field:'email', reason:'A valid owner email is required.' };
+  if(channel === 'self_service' && !req.workspaceId) return { ok:false, field:'workspaceId', reason:'Self-service provisioning needs the workspace the signed-in owner created.' };
+  return { ok:true, channel:channel, company:company, ownerName:ownerName, email:email };
+}
+function provisionStepFails(r, step){
+  /* Test hook: window.OONTU_PROVISION_FAIL_AT = '<step>' makes that step fail once, to prove a retry resumes safely. */
+  if(typeof window !== 'undefined' && window.OONTU_PROVISION_FAIL_AT === step){ window.OONTU_PROVISION_FAIL_AT = null; return 'Simulated failure in step "' + step + '".'; }
+  return '';
+}
+function provisionTenant(req){
+  req = req || {};
+  const key = String(req.idempotencyKey || '').trim();
+  let r = provisioningRequestFor(key);
+  if(r){
+    // Authorise before revealing anything about an existing request, then make sure the key is not being reused
+    // for a different request, whether that request is still running or already completed.
+    if(r.input.channel === 'assisted'){ const auth = canPerformPlatformAction('create', 'platform-tenant'); if(!auth.allowed) return { ok:false, reason:auth.reason }; }
+    const ch = req.channel === 'self_service' ? 'self_service' : req.channel === 'assisted' ? 'assisted' : '';
+    if(r.input.email !== String(req.ownerEmail || '').trim().toLowerCase() || r.input.channel !== ch) return { ok:false, field:'idempotencyKey', reason:'This idempotency key was used for a different request.' };
+    if(r.status === 'completed') return { ok:true, tenant:tenantById(r.tenantId), request:r, replayed:true };
   }
-  const now = nowTimestamp(), actor = currentPlatformUser(), plan = planById(input.planId);
-  const adminId = 'TA-'+(tenantAdminIdSeq++);
-  PLATFORM_TENANT_ADMINS.push({ id:adminId, tenantId:tenantId, name:ownerName, email:email, status:'Invited', invitedAt:now, acceptedAt:null });
-  const tenant = { id:tenantId, name:company, status:'invited', createdAt:now, primaryAdminUserId:adminId, primaryAdminName:ownerName,
-    ownerEmail:email, ownerMobile:mobile, orgType:type, internalNote:String(input.note||'').trim(), createdBy: actor ? actor.name : 'Oontu team',
-    plan: plan ? plan.name : 'Not set', planId: plan ? plan.id : null, subscriptionStatus:'trial', subscriptionStart:wsDay(now), subscriptionRenewal:null,
-    inviteToken:invite.token, inviteSentAt:now, workspaceId:invite.workspaceId || null };
-  PLATFORM_TENANTS.push(tenant);
-  if(plan && typeof createSubscriptionRecord==='function') createSubscriptionRecord(tenantId, plan.id, { status:'trial' });
-  logPlatformAudit('Tenant created', 'Tenant created by '+tenant.createdBy+' for '+company,
-    { entityId:tenantId, newState:'invited', ownerEmail:email, workspaceType:type, plan:tenant.plan, notes:tenant.internalNote || null });
-  return { ok:true, tenant:tenant };
+  const v = provisionValidate(req);
+  if(!v.ok) return v;
+  const now = nowTimestamp();
+  if(!r){
+    const type = WORKSPACE_TYPES.indexOf(req.type) > -1 ? req.type : 'Staffing agency';
+    r = PROVISIONING.requests[key] = { id:'prov-' + (PROVISIONING.seq++), key:key, status:'received', createdAt:now, updatedAt:now, attempts:0,
+      tenantId:generateTenantId(v.company), steps:PROVISION_STEPS.map(function(s){ return { name:s, status:'pending', attempts:0, error:null, completedAt:null }; }),
+      input:{ channel:v.channel, company:v.company, ownerName:v.ownerName, email:v.email, type:type, mobile:authMobileFormat(req.mobileCode, req.mobile),
+        planId:req.planId || null, note:String(req.note || '').trim(), workspaceId:req.workspaceId || null, country:req.country || null },
+      out:{} };
+  }
+  r.attempts++; r.status = 'provisioning'; r.updatedAt = now;
+  const inp = r.input, actor = typeof currentPlatformUser === 'function' ? currentPlatformUser() : null;
+  const run = {
+    workspace:function(){
+      if(inp.channel === 'self_service'){ r.out.workspaceId = inp.workspaceId; return; }
+      // PROTOTYPE: the auth simulator stands in for the identity service that creates the workspace and the owner's invitation.
+      const invite = authApi && authApi._createOwnerInvite ? authApi._createOwnerInvite({ email:inp.email, name:inp.ownerName, mobile:inp.mobile, type:inp.type, company:inp.company, tenantId:r.tenantId }) : { ok:true, token:null };
+      if(!invite.ok) throw { field:'email', reason: invite.error === 'account_exists' ? 'An Oontu account already uses this email.'
+        : invite.error === 'domain_taken' ? invite.company + ' already has an Oontu workspace on this domain.' : authMessage(invite), terminal:true };
+      r.out.workspaceId = invite.workspaceId || null; r.out.inviteToken = invite.token; r.out.inviteSentAt = nowTimestamp();
+    },
+    tenant:function(){
+      if(tenantById(r.tenantId)) return;   // already registered by an earlier attempt
+      const plan = inp.planId ? planById(inp.planId) : null, at = nowTimestamp();
+      PLATFORM_TENANTS.push({ id:r.tenantId, name:inp.company, status: inp.channel === 'assisted' ? 'invited' : 'trial', createdAt:at,
+        primaryAdminUserId:null, primaryAdminName:inp.ownerName, ownerEmail:inp.email, ownerMobile:inp.mobile, orgType:inp.type,
+        internalNote:inp.note, createdBy: inp.channel === 'assisted' ? (actor ? actor.name : 'Oontu team') : inp.ownerName + ' (self-service)',
+        channel:inp.channel, provisioningRequestId:r.id, country:inp.country,
+        plan: plan ? plan.name : 'Not set', planId: plan ? plan.id : null, subscriptionStatus:'trial', subscriptionStart:wsDay(at), subscriptionRenewal:null,
+        inviteToken:r.out.inviteToken || null, inviteSentAt:r.out.inviteSentAt || null, workspaceId:r.out.workspaceId || null });
+    },
+    owner:function(){
+      const t = tenantById(r.tenantId);
+      if(t.primaryAdminUserId && tenantAdminById(t.primaryAdminUserId)) return;
+      const id = 'TA-' + (tenantAdminIdSeq++), at = nowTimestamp();
+      PLATFORM_TENANT_ADMINS.push({ id:id, tenantId:r.tenantId, name:inp.ownerName, email:inp.email,
+        status: inp.channel === 'assisted' ? 'Invited' : 'Active', invitedAt: inp.channel === 'assisted' ? at : null, acceptedAt: inp.channel === 'assisted' ? null : at });
+      t.primaryAdminUserId = id;
+    },
+    subscription:function(){
+      const t = tenantById(r.tenantId);
+      if(!inp.planId || t.subscriptionId) return;
+      const res = createSubscriptionRecord(r.tenantId, inp.planId, { status:'trial' }, PROVISION_CTX);
+      if(!res.ok) throw { reason:res.reason };
+    },
+    audit:function(){
+      const t = tenantById(r.tenantId);
+      const meta = { entityId:r.tenantId, newState:t.status, ownerEmail:inp.email, workspaceType:inp.type, plan:t.plan, channel:inp.channel, provisioningRequestId:r.id, notes:inp.note || null };
+      if(inp.channel === 'assisted') logPlatformAudit('Tenant created', 'Tenant created by ' + t.createdBy + ' for ' + inp.company, meta);   // the platform user is the actor
+      else logAudit('Platform', 'Tenant created', 'Workspace created through self-service by ' + inp.ownerName + ' for ' + inp.company, Object.assign({ entityType:'Platform' }, meta));
+    }
+  };
+  for(let i = 0; i < r.steps.length; i++){
+    const s = r.steps[i];
+    if(s.status === 'done') continue;
+    s.attempts++;
+    try {
+      const injected = provisionStepFails(r, s.name); if(injected) throw { reason:injected };
+      run[s.name]();
+      s.status = 'done'; s.error = null; s.completedAt = nowTimestamp();
+    } catch(e){
+      const reason = (e && e.reason) || String(e && e.message || e);
+      s.status = 'failed'; s.error = reason;
+      if(e && e.terminal && i === 0){ delete PROVISIONING.requests[key]; return { ok:false, field:e.field, reason:reason }; }   // nothing was created: the request can be corrected
+      r.status = 'failed'; r.updatedAt = nowTimestamp();
+      try { logAudit('Platform', 'Provisioning step failed', inp.company + ' · step ' + s.name + ': ' + reason, { entityType:'Platform', entityId:r.tenantId, provisioningRequestId:r.id }); } catch(_){}
+      return { ok:false, retryable:true, reason:reason, step:s.name, request:r };
+    }
+  }
+  r.status = 'completed'; r.updatedAt = nowTimestamp();
+  return { ok:true, tenant:tenantById(r.tenantId), request:r };
 }
 /* The owner finished setup: the tenant goes Active. A system event, so no platform permission is needed. */
 function activateInvitedTenant(tenantId, companyName){
@@ -36925,9 +37012,11 @@ function subscriptionHistoryForTenant(tenantId){
   });
 })();
 
-function createSubscriptionRecord(tenantId, planId, input){
+function createSubscriptionRecord(tenantId, planId, input, ctx){
   input = input || {};
-  const auth = canPerformPlatformAction('update', 'platform-subscription');
+  /* ctx === PROVISION_CTX: the shared provisioning engine has already authorised the whole request (a platform
+     permission for assisted creation, a proven session for self-service), so this step is internal. */
+  const auth = ctx === PROVISION_CTX ? { allowed:true } : canPerformPlatformAction('update', 'platform-subscription');
   if(!auth.allowed) return { ok:false, reason:auth.reason };
   const t = tenantById(tenantId);
   if(!t) return { ok:false, reason:'Tenant not found.' };
@@ -57611,6 +57700,39 @@ body.iq-live #ib-modal-root .ib-modal-wrap{ z-index:9002 !important; }
 
 /* inside Intelligence the page itself is Ask Kairo: the floating launcher steps aside */
 body:has(#main-content.iq-host) #ai-fab-container{ display:none; }
+/* Sections in the conversation list (2026-11-24): drag a conversation onto a section; one-time tip */
+.iq-orgtip{ display:block; margin:8px 2px 4px; padding:12px; border-radius:12px; background:#FFFFFF; box-shadow:0 0 0 1px var(--iq-line), 0 8px 20px -14px rgba(11,31,59,.35); }
+.iq-orgtip__h{ margin:0; font-size:13px; font-weight:600; color:var(--iq-ink); }
+.iq-orgtip__b{ margin:4px 0 0; font-size:12.5px; line-height:18px; color:var(--iq-ink-2); }
+.iq-orgtip__a{ display:flex; justify-content:flex-end; gap:6px; margin-top:10px; }
+.iq-orgtip__later, .iq-orgtip__go{ height:28px; padding:0 10px; border-radius:8px; font-size:12.5px; font-weight:500; transition:background var(--motion-fast) var(--ease-standard); }
+.iq-orgtip__later{ color:var(--iq-ink-2); } .iq-orgtip__later:hover{ background:var(--iq-soft); }
+.iq-orgtip__go{ background:var(--iq-ink); color:#FFFFFF; } .iq-orgtip__go:hover{ background:#14305A; }
+.iq-secs{ margin-top:12px; }
+.iq-secs__h{ display:flex; align-items:center; justify-content:space-between; padding-right:4px; }
+.iq-secs__h h4{ padding:0 8px 4px; margin:0; font-size:11px; font-weight:600; letter-spacing:.04em; color:#8A94A6; }
+.iq-secs__add{ width:22px; height:22px; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#8A94A6; transition:background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+.iq-secs__add:hover, .iq-secs__add:focus-visible{ background:#EEF1F5; color:var(--iq-ink); }
+.iq-sec{ border-radius:10px; padding:1px 0; transition:background var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard); }
+.iq-sec__h{ position:relative; display:flex; align-items:center; min-height:32px; }
+.iq-sec__t{ flex:1; min-width:0; display:flex; align-items:center; gap:6px; height:32px; padding:0 8px; border-radius:9px; text-align:left; font-size:13px; font-weight:500; color:var(--iq-ink); }
+.iq-sec__t:hover{ background:#EEF1F5; }
+.iq-sec__chev{ display:flex; color:#8A94A6; transition:transform var(--motion-base) var(--ease-standard); } .iq-sec__chev.is-open{ transform:rotate(90deg); }
+.iq-sec__name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.iq-sec__n{ font-size:11.5px; font-weight:500; color:#8A94A6; font-variant-numeric:tabular-nums; margin-right:22px; }
+.iq-sec__m{ position:absolute; right:4px; top:4px; }
+.iq-sec__h:hover .iq-sec__m{ opacity:1; }
+.iq-sec__in{ flex:1; min-width:0; height:28px; margin:2px 4px; border:0; border-radius:6px; padding:0 8px; box-shadow:0 0 0 1.5px var(--iq-ink); font-size:13px; }
+.iq-sec .iq-conv{ padding-left:28px; }
+.iq-sec__empty, .iq-loose__empty{ margin:2px 8px 6px 28px; font-size:12px; color:var(--iq-mute); }
+.iq-loose__empty{ margin-left:8px; padding:10px 0; }
+.iq-loose{ border-radius:10px; min-height:8px; transition:background var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard); }
+.iq-conv[draggable="true"]{ cursor:pointer; }
+.iq-conv.is-dragging{ opacity:.45; }
+#iq-list.is-dragging .iq-sec, #iq-list.is-dragging .iq-loose{ box-shadow:inset 0 0 0 1px transparent; }
+.iq-sec.is-drop, .iq-loose.is-drop{ background:#EEF3FB; box-shadow:inset 0 0 0 1.5px #9DB4D8; }
+.iq-menu__sep{ height:1px; margin:4px 6px; background:var(--iq-line); }
+@media (prefers-reduced-motion:reduce){ .iq-sec__chev{ transition:none; } }
 </style>
 <script id="intelligence-script">
 /* ==INTELLIGENCE== (2026-11-20) The conversational workspace inside the existing Intelligence tab.
@@ -58045,15 +58167,16 @@ function iqPlanLookup(raw, ctx){
 /* ==========================================================================================
    WORKSPACE: state, storage (this browser only), rendering, streaming, composer, voice
 ========================================================================================== */
-const IQ = { convs:null, active:null, sb:false,   /* both side panels start closed; the conversation is the page */ sbm:false, panel:null, ptab:'signals', q:'', filter:'all', menu:null, renaming:null, editing:null, running:null, files:[], draft:'', seq:1, voice:{ state:'idle', text:'', interim:'', t0:0 }, srcMsg:null, stick:true };
+const IQ = { convs:null, active:null, sb:false,   /* both side panels start closed; the conversation is the page */ sbm:false, panel:null, ptab:'signals', q:'', filter:'all', menu:null, renaming:null, editing:null, running:null, files:[], draft:'', seq:1, voice:{ state:'idle', text:'', interim:'', t0:0 }, srcMsg:null, stick:true,
+  sections:[], secRenaming:null, secMenu:null, dragId:null };   /* sections: [{ id, name, collapsed }], a conversation's c.sectionId */
 function iqKey(){ return 'oontu.intelligence.'+CURRENT_ORGANIZATION_ID+'.'+state.role+'.'+((typeof coCorp==='function' && coCorp()) ? 'co' : 'ag'); }
 function iqLoad(){
   if(IQ.convs && IQ.loadedFor===iqKey()) return;
-  IQ.loadedFor = iqKey(); IQ.convs = null; IQ.active = null;
-  try { const raw = localStorage.getItem(iqKey()); if(raw){ const d = JSON.parse(raw); IQ.convs = d.convs || []; IQ.seq = d.seq || 1; } } catch(e){}
+  IQ.loadedFor = iqKey(); IQ.convs = null; IQ.active = null; IQ.sections = []; IQ.secRenaming = null; IQ.secMenu = null;
+  try { const raw = localStorage.getItem(iqKey()); if(raw){ const d = JSON.parse(raw); IQ.convs = d.convs || []; IQ.seq = d.seq || 1; IQ.sections = Array.isArray(d.sections) ? d.sections : []; } } catch(e){}
   if(!IQ.convs){ IQ.convs = []; iqSeed(); }
 }
-function iqPersist(){ try { localStorage.setItem(iqKey(), JSON.stringify({ convs:IQ.convs.map(function(c){ return Object.assign({}, c, { messages:c.messages.map(function(m){ return m.status==='streaming' ? Object.assign({}, m, { status:'stopped' }) : m; }) }); }), seq:IQ.seq })); } catch(e){} }
+function iqPersist(){ try { localStorage.setItem(iqKey(), JSON.stringify({ convs:IQ.convs.map(function(c){ return Object.assign({}, c, { messages:c.messages.map(function(m){ return m.status==='streaming' ? Object.assign({}, m, { status:'stopped' }) : m; }) }); }), seq:IQ.seq, sections:IQ.sections || [] })); } catch(e){} }
 function iqId(p){ return p+(IQ.seq++)+Date.now().toString(36).slice(-3); }
 /* two earlier conversations so the history shows how it groups (built from the same data, instantly) */
 function iqSeed(){
@@ -58217,12 +58340,95 @@ function iqSideListHTML(){
       : '<p class="iq-empty-list">No saved reports yet. Use “Save report” under any report.</p>';
   }
   if(q) list = list.filter(function(c){ return c.title.toLowerCase().indexOf(q)>-1 || c.messages.some(function(m){ return String(m.text||'').toLowerCase().indexOf(q)>-1 || (m.blocks||[]).some(function(b){ return String(b.md||b.title||'').toLowerCase().indexOf(q)>-1; }); }); });
-  if(!list.length) return '<p class="iq-empty-list">'+(q ? 'No conversation matches “'+iqE(IQ.q)+'”.' : IQ.filter==='all' ? 'No conversations yet.' : 'Nothing here yet.')+'</p>';
-  return iqGroups(list).map(function(g){ return '<div class="iq-group"><h4>'+g[0]+'</h4>'+g[1].map(function(c){
-      if(IQ.renaming===c.id) return '<div class="iq-conv is-on"><input id="iq-rename" value="'+iqE(c.title)+'" aria-label="Conversation name" onkeydown="if(event.key===\'Enter\') iqRenameSave(\''+c.id+'\', this.value); if(event.key===\'Escape\'){ IQ.renaming=null; iqRenderSide(); }" onblur="iqRenameSave(\''+c.id+'\', this.value)" /></div>';
-      return '<div class="iq-conv'+(c.id===IQ.active ? ' is-on' : '')+'" role="button" tabindex="0" onclick="iqOpen(\''+c.id+'\')" onkeydown="if(event.key===\'Enter\') iqOpen(\''+c.id+'\')">'+(c.pinned ? '<span class="iq-pin">'+icon('pin','w-3 h-3')+'</span>' : '')+'<span class="iq-conv__t">'+iqE(c.title)+'</span>'+
-        '<button type="button" class="iq-conv__m" aria-label="Options for '+iqE(c.title)+'" onclick="event.stopPropagation(); iqMenu(\''+c.id+'\')">'+icon('dots','w-4 h-4')+'</button>'+
-        (IQ.menu===c.id ? '<div class="iq-menu" role="menu" onclick="event.stopPropagation()"><button type="button" role="menuitem" onclick="iqRename(\''+c.id+'\')">'+icon('edit','w-3.5 h-3.5')+'Rename</button><button type="button" role="menuitem" onclick="iqPin(\''+c.id+'\')">'+icon('pin','w-3.5 h-3.5')+(c.pinned ? 'Unpin' : 'Pin')+'</button><button type="button" role="menuitem" onclick="iqSaveConv(\''+c.id+'\')">'+icon('bookmark','w-3.5 h-3.5')+(c.saved ? 'Remove from saved' : 'Save')+'</button><button type="button" role="menuitem" class="is-danger" onclick="iqDeleteAsk(\''+c.id+'\')">'+icon('trash','w-3.5 h-3.5')+'Delete</button></div>' : '')+'</div>'; }).join('')+'</div>'; }).join('');
+  const sectioned = IQ.filter==='all' && !q;   // sections organise the full list; a search or a filter shows a flat result
+  if(!list.length && !(sectioned && (IQ.sections||[]).length)) return (sectioned ? iqTipHTML() : '')+'<p class="iq-empty-list">'+(q ? 'No conversation matches “'+iqE(IQ.q)+'”.' : IQ.filter==='all' ? 'No conversations yet.' : 'Nothing here yet.')+'</p>';
+  if(!sectioned) return iqGroups(list).map(function(g){ return '<div class="iq-group"><h4>'+g[0]+'</h4>'+g[1].map(iqConvRowHTML).join('')+'</div>'; }).join('');
+  /* All, no search: Pinned first, then each section (newest activity first inside it), then the date groups for the rest.
+     A conversation shows once. The date area is also the drop target that takes a conversation out of its section. */
+  const secs = IQ.sections || [], known = {}; secs.forEach(function(s){ known[s.id] = true; });
+  const pinned = list.filter(function(c){ return c.pinned; });
+  const inSec = function(s){ return list.filter(function(c){ return !c.pinned && c.sectionId===s.id; }); };
+  const loose = list.filter(function(c){ return !c.pinned && !(c.sectionId && known[c.sectionId]); });
+  return iqTipHTML()+
+    (pinned.length ? '<div class="iq-group"><h4>Pinned</h4>'+pinned.map(iqConvRowHTML).join('')+'</div>' : '')+
+    (secs.length ? '<div class="iq-secs"><div class="iq-secs__h"><h4>Sections</h4><button type="button" class="iq-secs__add" aria-label="New section" title="New section" onclick="iqSectionNew()">'+icon('plus','w-3.5 h-3.5')+'</button></div>'+secs.map(function(s){ return iqSectionHTML(s, inSec(s)); }).join('')+'</div>' : '')+
+    '<div class="iq-loose" data-iq-drop="" ondragover="iqDragOver(event)" ondragleave="iqDragLeave(event)" ondrop="iqDrop(event, \'\')">'+
+      (loose.length ? iqGroups(loose).map(function(g){ return '<div class="iq-group"><h4>'+g[0]+'</h4>'+g[1].map(iqConvRowHTML).join('')+'</div>'; }).join('')
+        : secs.length ? '<p class="iq-loose__empty">Drop a conversation here to take it out of its section.</p>' : '')+
+    '</div>';
+}
+/* One conversation row: draggable onto a section; the menu offers the same moves for keyboard and touch. */
+function iqConvRowHTML(c){
+  if(IQ.renaming===c.id) return '<div class="iq-conv is-on"><input id="iq-rename" value="'+iqE(c.title)+'" aria-label="Conversation name" onkeydown="if(event.key===\'Enter\') iqRenameSave(\''+c.id+'\', this.value); if(event.key===\'Escape\'){ IQ.renaming=null; iqRenderSide(); }" onblur="iqRenameSave(\''+c.id+'\', this.value)" /></div>';
+  const secs = IQ.sections || [];
+  const moves = secs.filter(function(s){ return s.id!==c.sectionId; }).map(function(s){ return '<button type="button" role="menuitem" onclick="iqMoveTo(\''+c.id+'\', \''+s.id+'\')">'+icon('chevronRight','w-3.5 h-3.5')+'Move to '+iqE(s.name)+'</button>'; }).join('')+
+    (c.sectionId && secs.some(function(s){ return s.id===c.sectionId; }) ? '<button type="button" role="menuitem" onclick="iqMoveTo(\''+c.id+'\', \'\')">'+icon('arrowLeft','w-3.5 h-3.5')+'Remove from section</button>' : '')+
+    '<button type="button" role="menuitem" onclick="iqSectionNew(\''+c.id+'\')">'+icon('plus','w-3.5 h-3.5')+'New section with this</button>';
+  return '<div class="iq-conv'+(c.id===IQ.active ? ' is-on' : '')+'" role="button" tabindex="0" draggable="true" data-conv="'+c.id+'" ondragstart="iqDragStart(event, \''+c.id+'\')" ondragend="iqDragEnd()" onclick="iqOpen(\''+c.id+'\')" onkeydown="if(event.key===\'Enter\') iqOpen(\''+c.id+'\')">'+(c.pinned ? '<span class="iq-pin">'+icon('pin','w-3 h-3')+'</span>' : '')+'<span class="iq-conv__t">'+iqE(c.title)+'</span>'+
+    '<button type="button" class="iq-conv__m" aria-label="Options for '+iqE(c.title)+'" onclick="event.stopPropagation(); iqMenu(\''+c.id+'\')">'+icon('dots','w-4 h-4')+'</button>'+
+    (IQ.menu===c.id ? '<div class="iq-menu" role="menu" onclick="event.stopPropagation()"><button type="button" role="menuitem" onclick="iqRename(\''+c.id+'\')">'+icon('edit','w-3.5 h-3.5')+'Rename</button><button type="button" role="menuitem" onclick="iqPin(\''+c.id+'\')">'+icon('pin','w-3.5 h-3.5')+(c.pinned ? 'Unpin' : 'Pin')+'</button><button type="button" role="menuitem" onclick="iqSaveConv(\''+c.id+'\')">'+icon('bookmark','w-3.5 h-3.5')+(c.saved ? 'Remove from saved' : 'Save')+'</button>'+
+      '<div class="iq-menu__sep" role="separator"></div>'+moves+'<div class="iq-menu__sep" role="separator"></div>'+
+      '<button type="button" role="menuitem" class="is-danger" onclick="iqDeleteAsk(\''+c.id+'\')">'+icon('trash','w-3.5 h-3.5')+'Delete</button></div>' : '')+'</div>';
+}
+function iqSectionHTML(s, convs){
+  const head = IQ.secRenaming===s.id
+    ? '<input id="iq-sec-rename" class="iq-sec__in" value="'+iqE(s.name)+'" aria-label="Section name" maxlength="40" onkeydown="if(event.key===\'Enter\') iqSectionRenameSave(\''+s.id+'\', this.value); if(event.key===\'Escape\') iqSectionRenameSave(\''+s.id+'\', null)" onblur="iqSectionRenameSave(\''+s.id+'\', this.value)" />'
+    : '<button type="button" class="iq-sec__t" aria-expanded="'+(!s.collapsed)+'" onclick="iqSectionToggle(\''+s.id+'\')"><span class="iq-sec__chev'+(s.collapsed ? '' : ' is-open')+'">'+icon('chevronRight','w-3 h-3')+'</span><span class="iq-sec__name">'+iqE(s.name)+'</span><span class="iq-sec__n">'+convs.length+'</span></button>'+
+      '<button type="button" class="iq-conv__m iq-sec__m" aria-label="Options for section '+iqE(s.name)+'" onclick="event.stopPropagation(); iqSectionMenu(\''+s.id+'\')">'+icon('dots','w-4 h-4')+'</button>'+
+      (IQ.secMenu===s.id ? '<div class="iq-menu" role="menu" onclick="event.stopPropagation()"><button type="button" role="menuitem" onclick="iqSectionRename(\''+s.id+'\')">'+icon('edit','w-3.5 h-3.5')+'Rename section</button><button type="button" role="menuitem" class="is-danger" onclick="iqSectionDelete(\''+s.id+'\')">'+icon('trash','w-3.5 h-3.5')+'Delete section</button></div>' : '');
+  return '<div class="iq-sec" data-iq-drop="'+s.id+'" ondragover="iqDragOver(event)" ondragleave="iqDragLeave(event)" ondrop="iqDrop(event, \''+s.id+'\')">'+
+    '<div class="iq-sec__h">'+head+'</div>'+
+    (s.collapsed ? '' : convs.length ? convs.map(iqConvRowHTML).join('') : '<p class="iq-sec__empty">Drag conversations here.</p>')+'</div>';
+}
+/* The one-time tip, as in the screenshot the user shared: shown in All until they create a section or choose Later. */
+const IQ_TIP_KEY = 'oontu.intelligence.tip.sections';
+function iqTipSeen(){ try { return localStorage.getItem(IQ_TIP_KEY)==='1'; } catch(e){ return false; } }
+function iqTipHTML(){
+  if((IQ.sections||[]).length || iqTipSeen()) return '';
+  return '<div class="iq-orgtip" role="note" aria-labelledby="iq-orgtip-h"><p class="iq-orgtip__h" id="iq-orgtip-h">Organise your conversations</p>'+
+    '<p class="iq-orgtip__b">Drag conversations into sections, such as a client, a hiring drive or a monthly review.</p>'+
+    '<div class="iq-orgtip__a"><button type="button" class="iq-orgtip__later" onclick="iqTipDismiss()">Later</button><button type="button" class="iq-orgtip__go" onclick="iqTipDismiss(); iqSectionNew()">New section</button></div></div>';
+}
+function iqTipDismiss(){ try { localStorage.setItem(IQ_TIP_KEY, '1'); } catch(e){} iqRenderList(); }
+/* ---------- sections: create, rename, collapse, delete, move ---------- */
+function iqSection(id){ return (IQ.sections||[]).find(function(s){ return s.id===id; }) || null; }
+function iqSectionNew(convId){
+  const s = { id:iqId('s'), name:'New section', collapsed:false };
+  IQ.sections.push(s); IQ.menu = null; IQ.secMenu = null; IQ.secRenaming = s.id;
+  if(convId){ const c = iqConv(convId); if(c){ c.sectionId = s.id; c.pinned = false; } }
+  if(IQ.filter!=='all' || IQ.q){ IQ.filter = 'all'; IQ.q = ''; iqRenderSide(); } else iqRenderList();
+  iqPersist();
+  setTimeout(function(){ const i = document.getElementById('iq-sec-rename'); if(i){ i.focus(); i.select(); } }, 0);
+  return s;
+}
+function iqSectionRename(id){ IQ.secMenu = null; IQ.secRenaming = id; iqRenderList(); setTimeout(function(){ const i = document.getElementById('iq-sec-rename'); if(i){ i.focus(); i.select(); } }, 0); }
+function iqSectionRenameSave(id, v){
+  if(IQ.secRenaming!==id) return; const s = iqSection(id); IQ.secRenaming = null;
+  if(s && v!=null){ v = String(v).replace(/\s+/g, ' ').trim(); if(v) s.name = v.slice(0, 40); }
+  iqPersist(); iqRenderList();
+}
+function iqSectionToggle(id){ const s = iqSection(id); if(!s) return; s.collapsed = !s.collapsed; iqPersist(); iqRenderList(); }
+function iqSectionMenu(id){ IQ.menu = null; IQ.secMenu = IQ.secMenu===id ? null : id; iqRenderList(); }
+function iqSectionDelete(id){
+  const s = iqSection(id); if(!s) return; let n = 0;
+  (IQ.convs||[]).forEach(function(c){ if(c.sectionId===id){ delete c.sectionId; n++; } });   // a section never takes its conversations with it
+  IQ.sections = IQ.sections.filter(function(x){ return x.id!==id; }); IQ.secMenu = null; iqPersist(); iqRenderList();
+  toast(n ? 'Section deleted. Its '+(n===1 ? 'conversation is' : n+' conversations are')+' back under the dates.' : 'Section deleted.');
+}
+function iqMoveTo(convId, secId){
+  const c = iqConv(convId); if(!c) return; IQ.menu = null;
+  if(secId){ if(!iqSection(secId)) return; c.sectionId = secId; c.pinned = false; const s = iqSection(secId); if(s.collapsed) s.collapsed = false; }
+  else delete c.sectionId;
+  iqPersist(); iqRenderList();
+}
+function iqDragStart(e, id){ IQ.dragId = id; IQ.menu = null; try { e.dataTransfer.setData('text/plain', id); e.dataTransfer.effectAllowed = 'move'; } catch(_){} const el = e.currentTarget; if(el) el.classList.add('is-dragging'); document.getElementById('iq-list') && document.getElementById('iq-list').classList.add('is-dragging'); }
+function iqDragEnd(){ IQ.dragId = null; const l = document.getElementById('iq-list'); if(l){ l.classList.remove('is-dragging'); Array.prototype.forEach.call(l.querySelectorAll('.is-drop, .is-dragging'), function(x){ x.classList.remove('is-drop', 'is-dragging'); }); } }
+function iqDragOver(e){ if(!IQ.dragId) return; e.preventDefault(); try { e.dataTransfer.dropEffect = 'move'; } catch(_){} e.currentTarget.classList.add('is-drop'); }
+function iqDragLeave(e){ if(!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('is-drop'); }
+function iqDrop(e, secId){
+  e.preventDefault(); e.stopPropagation();
+  let id = IQ.dragId; try { id = e.dataTransfer.getData('text/plain') || id; } catch(_){}
+  iqDragEnd(); if(id) iqMoveTo(id, secId);
 }
 function iqSideHTML(){
   const f = function(k, l){ return '<button type="button" class="iq-filter'+(IQ.filter===k ? ' is-on' : '')+'" aria-pressed="'+(IQ.filter===k)+'" onclick="IQ.filter=\''+k+'\'; iqRenderSide()">'+l+'</button>'; };
@@ -58368,7 +58574,7 @@ function iqFocus(){ setTimeout(function(){ const t = document.getElementById('iq
 /* ---------- conversations ---------- */
 function iqNew(){ if(IQ.running) iqStop(); IQ.active = null; IQ.draft = ''; IQ.files = []; IQ.sbm = false; IQ.srcMsg = null; iqRender(); iqFocus(); }
 function iqOpen(id, msgId){ if(IQ.running) iqStop(); IQ.active = id; IQ.menu = null; IQ.sbm = false; IQ.editing = null; iqRender(); if(msgId){ const el = document.getElementById('iq-m-'+msgId); if(el) el.scrollIntoView({ block:'start' }); } }
-function iqMenu(id){ IQ.menu = IQ.menu===id ? null : id; iqRenderList(); }
+function iqMenu(id){ IQ.secMenu = null; IQ.menu = IQ.menu===id ? null : id; iqRenderList(); }
 function iqRename(id){ IQ.menu = null; IQ.renaming = id; iqRenderSide(); }
 function iqRenameSave(id, v){ if(IQ.renaming!==id) return; const c = iqConv(id); v = String(v||'').trim(); if(c && v) c.title = v.slice(0, 80); IQ.renaming = null; iqPersist(); iqRender(); }
 function iqPin(id){ const c = iqConv(id); if(!c) return; c.pinned = !c.pinned; IQ.menu = null; iqPersist(); iqRenderSide(); }
@@ -58662,7 +58868,7 @@ function iqVoiceSimulate(st, text){ if(st==='recording') iqVoiceSet('recording',
     if(state.activeNav==='intelligence'){ iqAfter(); }
     return r;
   };
-  document.addEventListener('click', function(e){ if(IQ.menu && !e.target.closest('.iq-menu') && !e.target.closest('.iq-conv__m')){ IQ.menu = null; iqRenderList(); } });
+  document.addEventListener('click', function(e){ if((IQ.menu || IQ.secMenu) && !e.target.closest('.iq-menu') && !e.target.closest('.iq-conv__m')){ IQ.menu = null; IQ.secMenu = null; iqRenderList(); } });
   document.addEventListener('keydown', function(e){
     if(e.key==='Escape' && typeof IQ_LIVE!=='undefined' && IQ_LIVE.on){ iqLiveStop(); return; }
     if(state.activeNav!=='intelligence') return;

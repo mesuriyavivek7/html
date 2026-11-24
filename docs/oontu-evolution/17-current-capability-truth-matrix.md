@@ -27,7 +27,7 @@ Every row names its evidence. Spec names refer to `tests/*.spec.js` at commit `f
 | **Tenancy and platform** | | | |
 | Tenant registry | VERIFIED | MISSING | `PLATFORM_TENANTS` |
 | Tenant isolation | MISSING | MISSING | no tenant keys on recruitment data |
-| One provisioning engine | MISSING (2 live paths + demo helpers; `createTenant` is dead code, see 20 C1) | MISSING | 10 §1 |
+| One provisioning engine | VERIFIED (`provisionTenant`, both doors; `provisioning.spec` 10/10; see 28) | MISSING (server) | 10 §1, 28 |
 | Tenant lifecycle | VERIFIED | MISSING | `TENANT_STATUS_TRANSITIONS` |
 | Subscription lifecycle | VERIFIED | MISSING | `SUBSCRIPTION_TRANSITIONS` |
 | Plans, boosts, entitlements, feature controls | VERIFIED | MISSING | `PLATFORM_PLANS`, `BOOSTS`, `ENTITLEMENT_CATALOG`, `TENANT_FEATURE_FLAGS` |
