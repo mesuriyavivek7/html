@@ -5,6 +5,9 @@
   var q = function(s){ return document.querySelector(s); };
   async function t(name, fn){ try { await fn(); results.push({ name:name, pass:true }); } catch(e){ results.push({ name:name, pass:false, error:e.message }); } }
   function ok(c, m){ if(!c) throw new Error(m || 'assertion failed'); }
+  /* Headless virtual time can leave entrance animations (the rail's brand-in scale, the labels' slide) on their first frame.
+     These checks are about the settled layout, so finish finite animations before measuring (infinite ones are left alone). */
+  function settle(){ (document.getAnimations ? document.getAnimations() : []).forEach(function(a){ try { var tm = a.effect && a.effect.getComputedTiming(); if(tm && isFinite(tm.endTime) && a.playState !== 'finished') a.finish(); } catch(e){} }); }
   window.addEventListener('load', function(){ setTimeout(async function(){
     var ob = document.getElementById('onboarding'); if(ob) ob.classList.add('hidden');
     state.role = 'recruiter'; enterApp(); await sleep(100);
@@ -12,15 +15,15 @@
     await t('sidebar: 248 px expanded, 76 px collapsed, state remembered in state.sidebarOpen', async function(){   // Design 2.0 (was 240 / 64)
       var sb = q('#sidebar'); sb.style.transition = 'none';   // widths are measured, not animated, in this check
       ok(Math.round(sb.getBoundingClientRect().width)===248, 'expanded width ' + sb.getBoundingClientRect().width);
-      toggleSidebar(); await sleep(900);
+      toggleSidebar(); await sleep(900); settle();
       ok(state.sidebarOpen===false && Math.round(sb.getBoundingClientRect().width)===76, 'collapsed width ' + sb.getBoundingClientRect().width);
       ok(Math.round(q('.sb-logo-mark').getBoundingClientRect().height)===32, 'the app icon is 32 px when collapsed: ' + q('.sb-logo-mark').getBoundingClientRect().height);
-      toggleSidebar(); await sleep(900);
+      toggleSidebar(); await sleep(900); settle();
       ok(state.sidebarOpen===true && Math.round(sb.getBoundingClientRect().width)>=244, 'expanded again ' + sb.getBoundingClientRect().width);
       ok(Math.round(q('.sb-logo-full').getBoundingClientRect().height)===32, 'the wordmark is 32 px tall: ' + q('.sb-logo-full').getBoundingClientRect().height);
     });
     await t('sidebar header: logo over the nav icons; toggle quiet until hover; Ctrl+\ and memory', async function(){   // Design 2.0 has no header rule line, so the 64 px shared-line check is gone
-      var lx = q('.sb-logo-full').getBoundingClientRect().left, ix = q('.nav-item .nav-icon').getBoundingClientRect().left;
+      settle(); var lx = q('.sb-logo-full').getBoundingClientRect().left, ix = q('.nav-item .nav-icon').getBoundingClientRect().left;
       ok(Math.abs(lx-ix)<=2, 'logo x ' + lx + ' vs icon x ' + ix);
       ok(+getComputedStyle(q('.sb-toggle')).opacity < 1, 'toggle is quiet until hover: ' + getComputedStyle(q('.sb-toggle')).opacity);   // Design 2.0: 0.6 at rest (was hidden, 0)
 ok(Array.prototype.some.call(document.styleSheets, function(ss){ try { return Array.prototype.some.call(ss.cssRules, function(r){ return r.selectorText && r.selectorText.indexOf('#sidebar:focus-within .sb-toggle')>-1 && r.style.opacity==='1'; }); } catch(e){ return false; } }), 'toggle shows on hover and keyboard focus (rule present)');
@@ -31,7 +34,7 @@ ok(Array.prototype.some.call(document.styleSheets, function(ss){ try { return Ar
       ok(state.sidebarOpen===true && localStorage.getItem('oontu.sidebar')==='open', 'Ctrl+\ expanded again');
     });
     await t('sidebar: the lean pill glides (200 ms, the Design 2.0 motion), white, with the leaning dash, no green', async function(){
-      var sel = q('#sidebar-nav > .o-pill'); ok(sel, 'pill present'); ok(sel.classList.contains('o-pill--lean'), 'lean variant'); var before = sel.style.transform;
+      settle(); var sel = q('#sidebar-nav > .o-pill'); ok(sel, 'pill present'); ok(sel.classList.contains('o-pill--lean'), 'lean variant'); var before = sel.style.transform;
       ok(getComputedStyle(sel).transitionDuration.indexOf('0.2s')>-1, 'duration ' + getComputedStyle(sel).transitionDuration); ok(getComputedStyle(sel).backgroundColor==='rgb(255, 255, 255)', 'white pill'); ok(!/(?:rgb(d+, 1[6-9]d, d+))/.test(getComputedStyle(q('.nav-item.active')).color), 'selected label is not green');
       showView('jobs'); await sleep(50);
       ok(sel.style.transform!==before, 'moved: ' + before + ' -> ' + sel.style.transform);
