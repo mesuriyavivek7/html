@@ -249,7 +249,7 @@
       ok(firstAt !== null && firstAt < 1600, 'Home after ' + Math.round(firstAt) + ' ms');
       ok(atFirst.j < 4500 && atFirst.home === 'admin-dashboard' && /Loading history/.test(atFirst.note), 'Home shows while history loads: ' + JSON.stringify(atFirst));
       ok(!q('.demo-building'), 'no blocking cover');
-      await sleep(400); fmModal('<div class="p-4">Viewer’s dialog</div>'); await sleep(50); var held = SUBMISSIONS.length; await sleep(600);
+      await sleep(20); fmModal('<div class="p-4">Viewer’s dialog</div>'); /* right after Home, while the build is certainly still running (virtual time compresses the timeline) */ await sleep(50); var held = SUBMISSIONS.length; await sleep(600);
       ok(SUBMISSIONS.length === held && DEMO.loading, 'the build waits while a dialog is open (' + held + ' → ' + SUBMISSIONS.length + ')');
       ok(/Viewer’s dialog/.test(q('#fm-modal-root').textContent), 'the viewer’s dialog stays open');
       fmModal(''); var rec = RECRUITER_ROSTER.find(function(u){ return roleOf(u) === 'Recruiter'; }); demoSignIn(rec.id);

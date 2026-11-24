@@ -57493,12 +57493,14 @@ function demoBuildInBackground(key, hooks){
   const who = function(){ return { as:DEMO.as, role:state.role, meta:Object.assign({}, ROLE_META), vfm:viewingAsFromManager, mva:managerViewAsRecruiterId, prev:previewAsRoleId }; };
   const back = function(w){ DEMO.as = w.as; state.role = w.role; Object.keys(w.meta).forEach(function(k){ ROLE_META[k] = w.meta[k]; }); viewingAsFromManager = w.vfm; managerViewAsRecruiterId = w.mva; previewAsRoleId = w.prev; };
   // one slice: the build's sign-in and quiet UI in, then the viewer's back
-  const slice = function(ms){
+  /* A slice stops at its time box or its step budget, whichever comes first: a time box alone never closes when the clock
+     stands still during synchronous work (headless virtual time), and then the whole build ran before Home. */
+  const slice = function(ms, maxSteps){
     const saved = {}, noop = function(){}, fi = FM.interactive, tick = window.APS && APS.tick, form = typeof asForm === 'undefined' ? null : asForm, me = who();
     DEMO_QUIET.forEach(function(n){ if(typeof window[n] === 'function'){ saved[n] = window[n]; window[n] = noop; } }); if(tick) APS.tick = noop; FM.interactive = false;
     if(buildAs) demoAct(buildAs);
-    let r = { done:false }; const end = performance.now() + ms;
-    try { do { r = g.next(); } while(!r.done && performance.now() < end); }
+    let r = { done:false }, steps = 0; const end = performance.now() + ms, cap = maxSteps || Infinity;
+    try { do { r = g.next(); steps++; } while(!r.done && performance.now() < end && steps < cap); }
     finally { buildAs = DEMO.as; Object.keys(saved).forEach(function(n){ window[n] = saved[n]; }); if(tick) APS.tick = tick; FM.interactive = fi;
       try { if(typeof asForm !== 'undefined' && asForm !== form) asForm = form; } catch(e){}   // a contract hire's form the build opened (K1)
       if(me.as) back(me); }
@@ -57513,10 +57515,10 @@ function demoBuildInBackground(key, hooks){
     demoLoadingDraw(); paint(); if(hooks.done) hooks.done(r.value, T);
   };
   // the first second runs straight through (team, clients, jobs, the first journeys), then Home
-  const r = slice(DEMO_FIRST_MS); first(); if(r.done){ finish(r); return null; }
+  const r = slice(DEMO_FIRST_MS, 300); first(); if(r.done){ finish(r); return null; }
   const next = function(){
     if(demoUiBusy()){ setTimeout(next, 120); return; }
-    const r = slice(DEMO_SLICE_MS); if(r.done){ finish(r); return; }
+    const r = slice(DEMO_SLICE_MS, 60); if(r.done){ finish(r); return; }
     if(performance.now() - lastPaint > DEMO_REFRESH_MS){ lastPaint = performance.now(); paint(); }
     setTimeout(next, 0);
   };
@@ -66058,6 +66060,17 @@ function cfScopeHTML(){
 .app-toast__icon{ animation:om-complete var(--motion-base) var(--ease-enter) both; }
 /* Progress thread: the Home pipeline bars draw from the left, all together. */
 .bh-stage__bar{ transform-origin:0 50%; animation:om-thread var(--motion-slow) var(--ease-standard) both; }
+/* Responsive fixes (2026-11-24):
+   - the Talent pool header bleeds exactly as far as the column's padding at each width (it pulled 32 px everywhere,
+     so it overflowed by 8 px at tablet and 16 px below 768);
+   - a hidden tooltip takes no space (it only had opacity 0, so near the right edge it widened the page); it still fades in;
+   - a hover-only button (To do › Delete) is visible while it has keyboard focus. */
+@media (min-width:768px) and (max-width:1023px){ :root body .tp-head{ margin-left:-24px; margin-right:-24px; padding-left:24px; padding-right:24px; } }
+@media (min-width:641px) and (max-width:767px){ :root body .tp-head{ margin-left:-16px; margin-right:-16px; padding-left:16px; padding-right:16px; } }
+.tip{ display:none; }
+:is(.tw:hover, .tw:focus-within, .tw:focus) > .tip{ display:block; opacity:1; transition:opacity var(--motion-fast) var(--ease-standard); }
+@starting-style{ :is(.tw:hover, .tw:focus-within, .tw:focus) > .tip{ opacity:0; } }
+#main-content button[aria-label^="Delete: "]:focus-visible{ opacity:1; }
 @media (prefers-reduced-motion:reduce){
   .app-toast__icon, .bh-stage__bar{ animation:none; }
   :where(#app, #kairo-chat-root) :where(button[aria-busy="true"])::after{ animation:none; border-right-color:currentColor; opacity:.6; }
@@ -66209,5 +66222,27 @@ function cfScopeHTML(){
   window.oontuReloadReturn = { pending:function(){ return pending; }, _setPending:function(p){ pending = p; } };   // test hook
 })();
 </script>
+<style id="identity-style">
+/* ============================================================
+   IDENTITY MARKS (2026-11-24, user's decision; supersedes the gradient initials tile in design-style.md §65/§336/§346)
+   The blue→green gradient belongs to Kairo and Intelligence. A tenant's workspace and a person are shown quietly,
+   as in mature enterprise products:
+   - Workspace = a monogram on a rounded square (organisations are squares): soft navy tint, navy initials, hairline edge.
+   - Person = the same tones on a circle (people are circles).
+   Nothing here competes with the Oontu wordmark or Kairo; the name next to the mark carries the meaning.
+============================================================ */
+:root{
+  --id-bg:#EEF1F6;                          /* navy at about 6 % on white */
+  --id-fg:#0B1F3B;                          /* brand ink */
+  --id-ring:inset 0 0 0 1px rgba(11,31,59,.08);
+}
+/* Sidebar workspace card */
+:root body .o-sb-acct__co{ background:var(--id-bg); color:var(--id-fg); box-shadow:var(--id-ring); border-radius:9px; font:600 12px/1 var(--font); letter-spacing:.02em; }
+:root body #sidebar.rail .o-sb-acct__co{ border-radius:11px; font-size:13px; }
+/* Sign in: "Continue as …" is a person */
+:root body .ow-page.au .ow-acct__ic{ background:var(--id-bg); color:var(--id-fg); box-shadow:var(--id-ring); border-radius:50%; font-weight:600; letter-spacing:.01em; }
+/* Create workspace preview: the workspace taking shape */
+.au-mws__tile:not(:empty){ background:var(--id-bg); color:var(--id-fg); box-shadow:var(--id-ring); }
+</style>
 </body>
 </html>
