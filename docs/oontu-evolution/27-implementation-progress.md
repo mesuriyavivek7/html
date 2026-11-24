@@ -32,3 +32,11 @@ NOT STARTED as server work (B-1). The prototype's existing corporate, vendor, ag
 2. **If B-1 stays open:** continue in the reference with N-1 (route `sim._ensureLeadAccount` through the engine), then N-2 (one approval-policy source: `coReqChain` → preset over `APPROVAL_CHAINS`), then N-3 (explicit currency and pay period instead of LPA). Next file: `recruitment-os-prototype.html`, `join-script` (`jnAssistDo` → `_ensureLeadAccount`).
 
 The overall program is **not complete**.
+
+## Update, 24 Nov 2026 (later): server work unblocked, J0 done
+
+- **B-1 resolved (no-admin route, your choice):** Node.js 26.13.1 (official zip, SHA-256 verified against nodejs.org) and PostgreSQL 18.4 (official EDB portable zip; its executables are not code-signed, so integrity rests on the HTTPS download from EDB) installed in `%LOCALAPPDATA%\oontu-dev`. No system PATH change, no Windows service.
+- **D-1 accepted:** TypeScript on Node.js, PostgreSQL. Runtime dependency: `pg` only; dev: `typescript`, `@types/node`, `@types/pg`; npm audit: 0 vulnerabilities.
+- **J0 Foundations: IMPLEMENTED AND VERIFIED** in `server/` (see `server/README.md`): config from environment, pooled transactions with transaction-local tenant context (`withTx`), checksummed forward-only migrations (`0001_foundation.sql`), append-only audit, transactional outbox with an at-least-once relay that retries, row-level security with a non-owner API role, `GET /health`. `server/test/foundation.test.ts`: **11 of 11 passing** against real PostgreSQL, including cross-tenant read/write denial and context-leak tests. Type check clean. Migration applied to the dev database (`oontu`).
+- **Database migrations status:** `0001_foundation.sql` applied to the local `oontu` and `oontu_test` databases only. No other environment exists.
+- **Next file:** `server/migrations/0002_identity_tenancy.sql` and `server/src/identity/` for J1 (users, email-code sign-in, sessions, organizations, tenants, memberships, platform users), following `docs/AUTH.md` §5–§7.
