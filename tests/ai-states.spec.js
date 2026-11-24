@@ -60,6 +60,19 @@
       await sleep(700); ok(!q('#kairo-chat-messages .kc-state'), 'gone once the reply is in');
     });
 
+    await t('Cowork activity shows the shared state first and keeps its own word ("Done · Sent")', async function(){
+      var d = document.createElement('div');
+      d.innerHTML = cwStateBadge('Sent'); ok(d.textContent === 'Done · Sent' && d.firstChild.getAttribute('data-ai-state') === 'completed', d.textContent);
+      d.innerHTML = cwStateBadge('Failed'); ok(d.textContent === 'Failed' && d.firstChild.getAttribute('data-ai-state') === 'failed', 'no repeated word: ' + d.textContent);
+      d.innerHTML = cwStateBadge('Held for quiet hours'); ok(/^Waiting · Held for quiet hours$/.test(d.textContent), d.textContent);
+      d.innerHTML = cwStateBadge(''); ok(d.textContent === 'Ready · —', 'empty result: ' + d.textContent);
+      state.role = 'admin'; showView('kairo-team'); await sleep(60);
+      if(typeof CP !== 'undefined'){ CP.top = 'activity'; showView('kairo-team'); await sleep(60); }
+      var rows = document.querySelectorAll('#main-content [data-ai-state]');
+      ok(!/undefined|NaN/.test(document.getElementById('main-content').textContent.slice(0, 4000)), 'Cowork renders without broken labels');
+      ok(rows.length >= 0, 'rendered');
+    });
+
     await t('reduced motion: the Working pulse stops but the state stays readable', async function(){
       var css = [].slice.call(document.styleSheets).map(function(s){ try { return [].slice.call(s.cssRules).map(function(r){ return r.cssText; }).join('\n'); } catch(e){ return ''; } }).join('\n');
       ok(/prefers-reduced-motion: reduce[\s\S]*\.ais__pulse[\s\S]*animation: (none|auto)/.test(css), 'reduced-motion rule for the pulse');

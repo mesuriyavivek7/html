@@ -69,6 +69,19 @@
       showView('jobs'); await sleep(20); await back(); ok(state.activeNav === 'settings', 'Back returns to Settings, got ' + state.activeNav);
     });
 
+    await t('after a reload and sign-in, Oontu returns to the same record once, only for the same person and role', async function(){
+      var job = JOBS.find(function(j){ return jobInScope(j); }); showView('jobs'); await sleep(20); openJob(job.id); await sleep(20);
+      var saved = JSON.parse(sessionStorage.getItem('oontu.lastPlace') || 'null');
+      ok(saved && saved.entry.fn === 'openJob' && saved.entry.args[0] === job.id && saved.who.role === state.role, 'this tab remembers the place: ' + JSON.stringify(saved && saved.entry));
+      showView(homeForMe()); await sleep(20);
+      oontuReloadReturn._setPending(saved); enterApp(); await sleep(40);
+      ok(/Job Detail/i.test(document.getElementById('topbar-title').textContent) && document.getElementById('main-content').textContent.indexOf(job.title) > -1, 'returned to the job');
+      ok(/Back where you were/.test(document.getElementById('toast-container').textContent), 'and says so');
+      enterApp(); await sleep(30); ok(state.activeNav === homeForMe(), 'only once: the next sign-in opens Home');
+      var other = JSON.parse(JSON.stringify(saved)); other.who.role = 'manager';
+      oontuReloadReturn._setPending(other); enterApp(); await sleep(30); ok(state.activeNav === homeForMe(), 'a different role starts on Home');
+    });
+
     await t('Back on the first product entry stays in the product', async function(){
       for(var guard = 0; NAVH.idx > 0 && guard < 40; guard++){ await back(); }
       ok(NAVH.idx === 0, 'reached the first product entry');

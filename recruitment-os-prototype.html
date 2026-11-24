@@ -6519,14 +6519,14 @@ function toDoListHTML(){
   const done = PERSONAL_TASKS.filter(function(t){ return t.completed; });
   function rowHTML(t){
     return '<div class="flex items-center gap-3 px-4 py-3 group">'+
-      '<button onclick="togglePersonalTaskComplete(\''+t.id+'\')" class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition '+(t.completed?'bg-forest-500 border-forest-500':'border-zinc-300 hover:border-accent-500')+'">'+
+      '<button type="button" aria-pressed="'+(t.completed?'true':'false')+'" aria-label="'+(t.completed?'Mark as not done: ':'Mark as done: ')+escapeHtml(String(t.text).replace(/<[^>]*>/g,''))+'" onclick="togglePersonalTaskComplete(\''+t.id+'\')" class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition '+(t.completed?'bg-forest-500 border-forest-500':'border-zinc-300 hover:border-accent-500')+'">'+
         (t.completed?icon('check','w-3 h-3 text-white'):'')+
       '</button>'+
       '<div class="min-w-0 flex-1">'+
         '<p class="text-sm '+(t.completed?'text-zinc-400 line-through':'text-zinc-700')+' truncate">'+t.text+'</p>'+
         (t.type==='reminder' ? '<p class="text-xs text-gold-600 flex items-center gap-1 mt-0.5">'+icon('bell','w-3 h-3')+(t.reminderTime||'Reminder')+'</p>' : '')+
       '</div>'+
-      '<button onclick="deletePersonalTask(\''+t.id+'\')" class="opacity-0 group-hover:opacity-100 transition text-zinc-300 hover:text-terracotta-500 shrink-0">'+icon('x','w-4 h-4')+'</button>'+
+      '<button type="button" aria-label="Delete: '+escapeHtml(String(t.text).replace(/<[^>]*>/g,''))+'" onclick="deletePersonalTask(\''+t.id+'\')" class="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition text-zinc-300 hover:text-terracotta-500 shrink-0">'+icon('x','w-4 h-4')+'</button>'+
     '</div>';
   }
   return '<div id="todo-list-wrap">'+
@@ -6588,11 +6588,11 @@ function renderToDo(){
   return '<div class="content-shell max-w-2xl">'+
     sectionTitle('To Do', pendingCount+' thing'+(pendingCount===1?'':'s')+' on your list \u2014 just for you, nobody else sees this')+
     '<div class="flex items-center gap-2 mb-5">'+
-      '<input id="todo-new-input" onkeydown="if(event.key===\'Enter\') submitNewPersonalTask();" placeholder="Add a task or reminder\u2026" class="flex-1 text-sm border border-zinc-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-accent-500" />'+
-      '<select id="todo-new-type" class="text-sm border border-zinc-200 rounded-xl px-2.5 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500">'+
+      '<input id="todo-new-input" aria-label="New task or reminder" onkeydown="if(event.key===\'Enter\') submitNewPersonalTask();" placeholder="Add a task or reminder\u2026" class="flex-1 text-sm border border-zinc-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-accent-500" />'+
+      '<select id="todo-new-type" aria-label="Kind" class="text-sm border border-zinc-200 rounded-xl px-2.5 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500">'+
         '<option value="task">Task</option><option value="reminder">Reminder</option>'+
       '</select>'+
-      '<input id="todo-new-time" type="time" class="text-sm border border-zinc-200 rounded-xl px-2.5 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500" />'+
+      '<input id="todo-new-time" type="time" aria-label="Time" class="text-sm border border-zinc-200 rounded-xl px-2.5 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500" />'+
       '<button onclick="submitNewPersonalTask()" class="px-4 py-2.5 rounded-xl bg-ink text-white text-sm font-medium hover:opacity-90 transition shrink-0">Add</button>'+
     '</div>'+
     '<div class="border border-zinc-200 rounded-2xl bg-white overflow-hidden">'+toDoListHTML()+'</div>'+
@@ -8882,140 +8882,551 @@ function jobCreateOnClientChange(name){
   refreshJobCreate();
 }
 let jdUploadProgress = null; // null | {pct, label}
-/* ---- JD upload: a parsing dialog that shows Kairo reading the document.
-   The page on the left is scanned; each matched section lights up while the same value pops into
-   "Found in this JD" on the right, so the recruiter sees where every field came from. The values
-   shown are exactly what gets applied to the draft. Cancel / Esc stop it without changing anything. */
-function jdExtractedPayload(){
-  const cl = CLIENTS[1] || CLIENTS[0];
-  return {
-      title:'Backend Engineer, Platform', client: cl.name, pocId:jobDefaultPocId(cl), employmentType:'Full-time', workMode:'Hybrid',
-      hiringType:'Permanent', experience:'4+ Years', expMin:'4', expMax:'', openings:1, locations:['Bengaluru, KA \u2013 IN'], salary:'\u20b920\u201328 LPA', priority:'High',
-      comp:{ currency:'INR', fixedPeriod:'Annually', fixedMin:'2000000', fixedMax:'2800000', bonuses:[] },
-      noticePeriod:'< 30 Days',
-      roleSummary:'Own backend services for the platform team, focused on reliability, scalability and API design. This role reports to the Engineering Director and directly impacts platform uptime for all customer-facing products. Success looks like a measurable reduction in incident rate within two quarters.',
-      responsibilities:'Design and own backend services for the platform team\nImprove API reliability and observability\nCollaborate with product on technical scoping\nMentor two engineers on system design practices',
-      requiredSkills:['Node.js','PostgreSQL','Redis'], preferredSkills:['Docker','AWS'], education:'B.Tech / B.E. in Computer Science',
-      extracted:true
-    };
+/* ---- JD upload and paste (2026-11-20): one reader, one parser, one Kairo reading dialog.
+   jdReadFile pulls the real text out of the file: PDF through pdf.js, DOCX unzipped in the browser,
+   older DOC best effort, TXT directly. jdParseText turns that text into job fields. Only what is
+   written in the JD is filled; nothing is invented, and what is not found is listed as "not found".
+   The dialog shows the JD's own values being read, one by one, and the text stays on Step 1 to read,
+   correct and extract again. Used by New job (agency and corporate) and the hiring manager's Post a job.
+   Cancel / Esc stop it without changing anything. ---- */
+const JD_ACCEPT = '.pdf,.docx,.doc,.txt';
+function jdReadFile(file){
+  const name = String(file && file.name || ''), ext = name.split('.').pop().toLowerCase();
+  if(!file) return Promise.reject(new Error('No file was chosen.'));
+  if(file.size > 10*1024*1024) return Promise.reject(new Error('This file is over 10 MB. Upload a smaller JD or paste the text.'));
+  const read = function(asText){ return new Promise(function(res, rej){ const r = new FileReader(); r.onload = function(e){ res(e.target.result); }; r.onerror = function(){ rej(new Error('This file could not be opened.')); }; if(asText) r.readAsText(file); else r.readAsArrayBuffer(file); }); };
+  if(ext==='txt' || ext==='md' || String(file.type||'').indexOf('text/')===0) return read(true).then(String);
+  if(ext==='pdf') return read(false).then(jdPdfText);
+  if(ext==='docx') return read(false).then(jdDocxText);
+  if(ext==='doc') return read(false).then(jdDocText);
+  return Promise.reject(new Error('Upload a PDF, DOCX, DOC or TXT file.'));
 }
+function jdPdfText(ab){
+  if(!window.pdfjsLib) return Promise.reject(new Error('The PDF reader didn’t load (you may be offline). Paste the JD text instead.'));
+  return window.pdfjsLib.getDocument({ data:new Uint8Array(ab) }).promise.then(function(pdf){
+    const ps = [];
+    for(let i = 1; i <= Math.min(pdf.numPages, 12); i++) ps.push(pdf.getPage(i).then(function(p){ return p.getTextContent().then(function(c){
+      let out = '', lastY = null;
+      c.items.forEach(function(it){
+        const y = it.transform ? Math.round(it.transform[5]) : null;
+        if(lastY!==null && y!==null && Math.abs(y-lastY)>2 && !/\n$/.test(out)) out += '\n';
+        out += it.str;
+        if(it.hasEOL) out += '\n'; else if(it.str && !/\s$/.test(it.str)) out += ' ';
+        if(y!==null) lastY = y;
+      });
+      return out;
+    }); }));
+    return Promise.all(ps).then(function(pages){ return pages.join('\n\n'); });
+  }, function(){ throw new Error('This PDF could not be read. If it is password protected, remove the password or paste the text.'); });
+}
+/* DOCX is a zip: find word/document.xml through the central directory and inflate it with the browser's own DecompressionStream. */
+function jdUnzipEntry(ab, wanted){
+  const dv = new DataView(ab), u8 = new Uint8Array(ab), dec = new TextDecoder('utf-8');
+  let eocd = -1;
+  for(let i = u8.length-22; i >= Math.max(0, u8.length-65557); i--){ if(dv.getUint32(i, true)===0x06054b50){ eocd = i; break; } }
+  if(eocd<0) return Promise.reject(new Error('zip'));
+  const count = dv.getUint16(eocd+10, true); let p = dv.getUint32(eocd+16, true);
+  for(let n = 0; n < count; n++){
+    if(dv.getUint32(p, true)!==0x02014b50) break;
+    const method = dv.getUint16(p+10, true), csize = dv.getUint32(p+20, true), nlen = dv.getUint16(p+28, true), xlen = dv.getUint16(p+30, true), clen = dv.getUint16(p+32, true), off = dv.getUint32(p+42, true);
+    if(dec.decode(u8.subarray(p+46, p+46+nlen))===wanted){
+      const start = off+30+dv.getUint16(off+26, true)+dv.getUint16(off+28, true), data = u8.subarray(start, start+csize);
+      if(method===0) return Promise.resolve(dec.decode(data));
+      if(method===8 && typeof DecompressionStream!=='undefined') return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+      return Promise.reject(new Error('method'));
+    }
+    p += 46+nlen+xlen+clen;
+  }
+  return Promise.reject(new Error('missing'));
+}
+function jdXmlText(s){ return s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#x([0-9a-f]+);/gi, function(m, h){ return String.fromCharCode(parseInt(h, 16)); }).replace(/&#(\d+);/g, function(m, n){ return String.fromCharCode(+n); }).replace(/&amp;/g,'&'); }
+function jdDocxText(ab){
+  return jdUnzipEntry(ab, 'word/document.xml').then(function(xml){
+    return xml.split(/<\/w:p>/).map(function(para){
+      const parts = [];
+      para.replace(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|<w:tab\/>|<w:br[^>]*\/>/g, function(m, t){ parts.push(t!=null ? t : (m.indexOf('tab')>-1 ? ' ' : '\n')); return m; });
+      const line = jdXmlText(parts.join(''));
+      return (/<w:numPr>/.test(para) && line.trim() ? '- ' : '')+line;
+    }).join('\n');
+  }, function(){ throw new Error('This Word file could not be read. Save it as PDF or DOCX again, or paste the text.'); });
+}
+/* Older .doc files are binary; take the readable runs of text (UTF-16 or Windows-1252, whichever reads better). */
+function jdDocText(ab){
+  const u8 = new Uint8Array(ab);
+  const runs = function(str){ return (str.match(/[\x20-\x7E -ɏ₹–—‘-”•\r\n\t]{4,}/g) || []).filter(function(s){ return /[a-z]{3}/i.test(s); }); };
+  const score = function(s){ return (s.match(/\b[a-z]{3,}\b/gi) || []).length; };
+  let a = '', b = '';
+  try { a = runs(new TextDecoder('utf-16le').decode(u8)).join('\n'); } catch(e){}
+  try { b = runs(new TextDecoder('windows-1252').decode(u8)).join('\n'); } catch(e){}
+  return Promise.resolve((score(a) >= score(b) ? a : b).replace(/\r/g, '\n'));
+}
+/* Tidy text: one bullet style, no runs of spaces, no lines of symbols or binary noise. */
+function jdCleanText(t){
+  return String(t||'').replace(/\r\n?/g,'\n').replace(/ /g,' ').replace(/^[ \t]*[•▪●◦‣⁃■➢✓✔∙·*]+[ \t]*/gm, '- ')
+    .split('\n').map(function(l){ return l.replace(/[ \t]+/g,' ').trim(); })
+    .filter(function(l){ if(!l) return true; const ok = (l.match(/[A-Za-z0-9₹$€£%]/g) || []).length; return ok >= Math.min(2, l.length) && ok/l.length > .45; })
+    .join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+
+/* ---- the parser ---- */
+const JD_EXTRA_SKILLS = ['JavaScript','HTML','CSS','Angular','Vue.js','C#','.NET','ASP.NET','C++','Go','Rust','PHP','Laravel','Django','Flask','FastAPI','Express.js','Spring Framework','Hibernate','MySQL','Oracle','SQL Server','NoSQL','DynamoDB','Elasticsearch','RabbitMQ','Jenkins','Git','GitHub Actions','Linux','Bash','Power BI','Tableau','Looker','Machine Learning','Deep Learning','NLP','Computer Vision','TensorFlow','PyTorch','scikit-learn','Pandas','NumPy','Spark','Hadoop','Airflow','Snowflake','Databricks','dbt','ETL','Data Analysis','Data Modeling','Statistics','LLMs','Android','iOS','Swift','Kotlin','Flutter','React Native','Redux','Tailwind CSS','Jest','Cypress','Playwright','Appium','JMeter','Postman','Manual Testing','Automation Testing','Jira','Confluence','SAP','SAP FICO','SAP MM','Tally','GST','TDS','MIS Reporting','Financial Modelling','Budgeting','Forecasting','Bookkeeping','Accounts Payable','Accounts Receivable','Nursing','Patient Care','BLS','ACLS','ICU','Phlebotomy','Medical Coding','Pharmacovigilance','Clinical Research','AutoCAD','SolidWorks','CATIA','Revit','PLC','SCADA','Six Sigma','Lean','Inventory Management','Logistics','Warehouse Management','Vendor Management','Lead Generation','Cold Calling','Inside Sales','B2B Sales','CRM','Google Ads','Meta Ads','Social Media Marketing','Email Marketing','Copywriting','Adobe Photoshop','Illustrator','UI Design','UX Research','Wireframing','Prototyping','Sourcing','Screening','Onboarding','Excel','Problem Solving','Communication','Team Leadership','Mentoring','OOP','Data Structures','Algorithms','Unit Testing','TDD','Serverless','Lambda','EC2','S3','Ansible','Helm','Prometheus','Grafana','Networking','Cyber Security','SIEM','Penetration Testing','ITIL','Active Directory','VMware'];
+const JD_SKILL_ALIAS = { 'nodejs':'Node.js','node js':'Node.js','node':'Node.js','reactjs':'React','react.js':'React','vuejs':'Vue.js','vue':'Vue.js','golang':'Go','postgres':'PostgreSQL','k8s':'Kubernetes','ms excel':'Excel','advanced excel':'Excel','microsoft excel':'Excel','expressjs':'Express.js','express':'Express.js','nextjs':'Next.js','springboot':'Spring Boot','rest api':'REST APIs','restful apis':'REST APIs','restful':'REST APIs','rest':'REST APIs','amazon web services':'AWS','google cloud':'GCP','ci cd':'CI/CD','ml':'Machine Learning','powerbi':'Power BI','js':'JavaScript','ts':'TypeScript','py':'Python','sklearn':'scikit-learn' };
+/* Words that are also ordinary English ("excel in", "spring", "swift") only count with their capital letter. */
+const JD_CASED_SKILLS = ['Excel','Swift','Rust','Lambda','Flutter','Lean'];
+/* Aliases safe to look for in running text ("rest", "node", "express" are not). */
+const JD_ALIAS_SCAN = ['nodejs','node js','reactjs','react.js','vuejs','golang','postgres','k8s','ms excel','advanced excel','microsoft excel','expressjs','nextjs','springboot','rest api','restful apis','restful','amazon web services','google cloud','ci cd','powerbi','sklearn'];
+let jdSkillCache = null;
+function jdSkillDict(){
+  if(jdSkillCache) return jdSkillCache;
+  const seen = {}, out = [], soft = {};
+  (typeof TS_NONTECH_SKILLS!=='undefined' ? TS_NONTECH_SKILLS : []).concat(['Communication','Problem Solving','Leadership','Team Leadership','Mentoring','Stakeholder Management','Agile','Scrum']).forEach(function(s){ soft[s.toLowerCase()] = 1; });
+  const rx = function(s, cased){ return new RegExp('(^|[^A-Za-z0-9+#.])'+s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')+'(?![A-Za-z0-9+#])', cased ? '' : 'i'); };
+  [].concat(KAIRO_SKILL_POOL, JD_EXTRA_SKILLS, typeof TS_NONTECH_SKILLS!=='undefined' ? TS_NONTECH_SKILLS : []).forEach(function(s){
+    const k = s.toLowerCase(); if(seen[k] || s==='Go') return; seen[k] = 1;   // "Go" alone is too common a word; Golang finds it
+    out.push({ name:s, soft:!!soft[k], re:rx(s, JD_CASED_SKILLS.indexOf(s)>-1) });
+  });
+  JD_ALIAS_SCAN.forEach(function(a){ out.push({ name:JD_SKILL_ALIAS[a], soft:false, re:rx(a) }); });
+  return (jdSkillCache = out);
+}
+/* Skills named in a text, in the order they first appear. Soft skills (sales, communication…) only with withSoft. */
+function jdSkillsIn(text, withSoft){
+  const hits = [];
+  jdSkillDict().forEach(function(s){ if(s.soft && !withSoft) return; const m = s.re.exec(text); if(m && !hits.some(function(h){ return h.name.toLowerCase()===s.name.toLowerCase(); })) hits.push({ name:s.name, at:m.index }); });
+  return hits.sort(function(a, b){ return a.at-b.at; }).map(function(h){ return h.name; });
+}
+function jdCanonSkill(raw){
+  const t = String(raw||'').replace(/^[-\s]+|[\s.]+$/g, '').trim(); if(!t) return '';
+  const k = t.toLowerCase(); if(JD_SKILL_ALIAS[k]) return JD_SKILL_ALIAS[k];
+  const d = jdSkillDict().find(function(s){ return s.name.toLowerCase()===k; });
+  return d ? d.name : t.charAt(0).toUpperCase()+t.slice(1);
+}
+/* Checked in this order: the specific headings first, the generic "About <company>" last. */
+const JD_HEADS = [
+  ['summary', /^(about (the )?(role|job|position|opportunity)|(role|job|position) (summary|overview|purpose|description|brief)|overview|summary|the role|the opportunity|job description|purpose( of the role)?|jd)$/i],
+  ['resp', /^(responsibilities|key responsibilities|job responsibilities|roles? (and|&) responsibilities|what you('|’)ll do|what you will do|what you('|’)ll be doing|your (role|responsibilities|day|impact)|duties|duties (and|&) responsibilities|key (duties|result areas|accountabilities|tasks)|day[- ]to[- ]day|in this role,? you will|the work|job duties|kras?)$/i],
+  ['pref', /^(nice[- ]to[- ]haves?|good[- ]to[- ]haves?|preferred( qualifications| skills| experience)?|desirable( skills)?|bonus( points)?|added advantage|plus points|it('|’)s a plus( if you have)?)$/i],
+  ['req', /^(requirements?|job requirements|minimum requirements|qualifications?|basic qualifications|required qualifications|what we('|’)re looking for|what you('|’)ll (need|bring)|what you bring|what you need|must[- ]haves?|skills|key skills|required skills|technical skills|skills required|mandatory skills|who you are|eligibility( criteria)?|desired (candidate )?profile|candidate profile|skills (and|&) (experience|qualifications)|experience (and|&) qualifications|experience|you (have|bring)|about you|competencies)$/i],
+  ['benefits', /^(benefits|perks|perks (and|&) benefits|what we offer|what('|’)s in it for you|why (join|work)( with)? us|compensation (and|&) benefits)$/i],
+  ['company', /^(about (us|the company|our company|the organi[sz]ation|[A-Z][\w&.\- ]{1,40})|who we are|company (overview|profile|description))$/i]
+];
+function jdHeadOf(line){
+  const raw = line.replace(/^#+\s*|^\d+[.)]\s*/, '').trim();
+  const m = raw.match(/^([^:]{2,60}):\s*(.*)$/), name = (m ? m[1] : raw).replace(/[:\-–\s]+$/, '').trim(), rest = m ? m[2].trim() : '';
+  if(!name || name.split(/\s+/).length>8 || (!m && (raw.length>60 || /[.;]$/.test(raw)))) return null;
+  const hit = JD_HEADS.find(function(h){ return h[1].test(name); });
+  return hit ? { key:hit[0], rest:rest } : null;
+}
+const JD_LABELS = [
+  ['title', /^(job title|job role|position( title)?|role( title)?|designation|title|opening|profile)\s*[:–\-|]\s*(.+)$/i],
+  ['loc', /^((job |work |office )?location|based (in|at)|city|place of work|work place)\s*[:–\-|]\s*(.+)$/i],
+  ['exp', /^(experience( required| level)?|exp|work experience|years of experience|total experience)\s*[:–\-|]\s*(.+)$/i],
+  ['pay', /^(salary( range)?|ctc|compensation|package|pay( range)?|budget|remuneration|stipend)\s*[:–\-|]\s*(.+)$/i],
+  ['notice', /^(notice( period)?|joining( time)?|availability)\s*[:–\-|]\s*(.+)$/i],
+  ['openings', /^(openings?|no\.? of (positions|openings|vacancies)|number of (positions|openings|vacancies)|vacanc(y|ies)|positions|headcount)\s*[:–\-|]\s*(.+)$/i],
+  ['type', /^(employment type|job type|type of (employment|job|hire)|employment|engagement)\s*[:–\-|]\s*(.+)$/i],
+  ['mode', /^(work mode|work model|workplace( type)?|mode of work|work arrangement)\s*[:–\-|]\s*(.+)$/i],
+  ['edu', /^(education( required)?|qualifications?|educational qualifications?|degree)\s*[:–\-|]\s*(.+)$/i],
+  ['skills', /^(skills|key skills|required skills|mandatory skills|primary skills|must[- ]have skills|tech stack|technical skills|skill set|skillset)\s*[:–\-|]\s*(.+)$/i],
+  ['pskills', /^(secondary skills|good[- ]to[- ]have( skills)?|nice[- ]to[- ]have( skills)?|preferred skills)\s*[:–\-|]\s*(.+)$/i],
+  ['cert', /^(certifications?|licen[cs]es?)\s*[:–\-|]\s*(.+)$/i]
+];
+const JD_ROLE_WORDS = /\b(engineer|developer|manager|analyst|designer|executive|nurse|lead|architect|consultant|specialist|officer|associate|intern|head|director|administrator|admin|accountant|coordinator|scientist|tester|qa|sde|recruiter|technician|teacher|doctor|pharmacist|supervisor|representative|agent|advisor|strategist|writer|editor|operator|programmer|controller|auditor|counsel|partner|trainer|assistant|clerk|chef|driver|electrician|physician|therapist|marketer|owner|vp|president|cto|cfo|ceo|coo)s?\b/i;
+const JD_NOT_PLACES = ['remote','anywhere','america','britain','united kingdom','canada','australia','emirates','uae','aus','wfh','work from home','sf','ny','nyc','uk','mum','blr','hyd','bay area'];
+function jdClip(s, max){
+  s = String(s||'').trim(); if(s.length<=max) return s;
+  const cut = s.slice(0, max), end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('.\n'));
+  return (end>max*0.5 ? cut.slice(0, end+1) : cut.replace(/\s+\S*$/, '')+'…').trim();
+}
+function jdNum(v){ return Number(String(v).replace(/,/g, '')); }
+function jdHalf(n){ return Math.min(JC_MAX_EXP, Math.round(n*2)/2); }
+function jdParseText(rawText, ctx){
+  ctx = ctx || {};
+  const text = jdCleanText(rawText), lines = text.split('\n');
+  const sec = { top:[], summary:[], resp:[], req:[], pref:[], benefits:[], company:[] }, lab = {};
+  let cur = 'top';
+  lines.forEach(function(line){
+    if(!line){ sec[cur].push(''); return; }
+    const bare = line.replace(/^-\s*/, '');
+    // "Skills: Java, Python" is a labelled value; "Skills:" alone (or "Responsibilities: …") starts a section
+    const L = JD_LABELS.find(function(l){ return l[1].test(bare); });
+    if(L && !lab[L[0]] && bare.length<=200){ const m = bare.match(L[1]); lab[L[0]] = m[m.length-1].trim(); if(L[0]==='skills' || L[0]==='pskills' || L[0]==='edu' || L[0]==='cert' || L[0]==='exp'){ sec[L[0]==='pskills' ? 'pref' : cur==='top' && L[0]!=='exp' ? 'req' : cur].push(line); } return; }
+    const head = jdHeadOf(bare);
+    if(head && !/^-/.test(line)){ cur = head.key; if(head.rest) sec[cur].push(head.rest); return; }
+    sec[cur].push(line);
+  });
+  const join = function(arr){ return arr.join('\n'); };
+  const anyHeads = ['summary','resp','req','pref'].some(function(k){ return sec[k].some(Boolean); });
+  const x = {}, found = [];
+  const add = function(k, label, value, extra){ found.push(Object.assign({ k:k, label:label, value:value }, extra||{})); };
+
+  /* title */
+  const cleanTitle = function(t){
+    const where = /remote|hybrid|on-?site|work from|india|\b[A-Z][a-z]+, [A-Z]{2}\b|bengaluru|bangalore|mumbai|pune|delhi|noida|gurgaon|gurugram|hyderabad|chennai|kolkata|ahmedabad|london|new york|dubai|singapore|full[- ]time|part[- ]time|contract|permanent|internship|\d/i;
+    t = String(t||'').replace(/^(job description|jd|job title|position|role|opening|hiring)\s*[:\-–|]\s*/i, '').replace(/\s*\((m\/f|f\/m|m\/f\/d|all genders)\)\s*/i, ' ').trim();
+    t = t.replace(/\s*[(\[]([^)\]]*)[)\]]/g, function(m, inside){ return where.test(inside) ? '' : m; }).trim();   // "(Remote)", "(Bengaluru)"
+    // drop trailing " | Bengaluru", " – Hybrid", " @ Pune" segments, one at a time, keeping "Engineer – Payments"
+    const segs = t.split(/(\s+[|–—]\s+|\s+-\s+|\s+@\s+)/);
+    while(segs.length>=3 && where.test(segs[segs.length-1])) segs.splice(segs.length-2, 2);
+    t = segs.join('');
+    return t.replace(/[.:;,\-–|\s]+$/, '').trim();
+  };
+  let title = lab.title && lab.title.length<=90 && lab.title.split(/\s+/).length<=12 ? cleanTitle(lab.title) : '';
+  if(!title){
+    const firsts = sec.top.filter(Boolean).slice(0, 6).concat(sec.summary.filter(Boolean).slice(0, 1));
+    const cand = firsts.find(function(l){ const b = l.replace(/^-\s*/, ''); return b.length>=3 && b.length<=80 && b.split(/\s+/).length<=10 && !/[@]|https?:|www\./i.test(b) && !/[.!?]$/.test(b) && JD_ROLE_WORDS.test(b) && !jdHeadOf(b); });
+    if(cand) title = cleanTitle(cand.replace(/^-\s*/, ''));
+  }
+  if(!title){
+    const m = text.match(/(?:we are hiring|we('|’)re hiring|hiring|looking for|seeking|recruiting)\s+(?:an?\s+|a\s+talented\s+|an\s+experienced\s+|experienced\s+)?((?:[A-Z][\w/&+.#-]*\s?){1,6})/);
+    if(m && JD_ROLE_WORDS.test(m[2])) title = cleanTitle(m[2]);
+  }
+  if(title){ x.title = title.slice(0, 90); add('title', 'Job title', x.title); }
+
+  /* client (agency only): a client of this workspace named in the JD */
+  if(!ctx.corporate && typeof CLIENTS!=='undefined'){
+    const cl = CLIENTS.find(function(c){ return c.name && c.name.length>=3 && new RegExp('(^|[^A-Za-z0-9])'+c.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')+'(?![A-Za-z0-9])', 'i').test(text); });
+    if(cl){ x.client = cl.name; x.pocId = jobDefaultPocId(cl); add('client', 'Client', cl.name); }
+  }
+
+  /* work mode and locations */
+  const modeSrc = (lab.mode||'')+' '+(lab.loc||'')+' '+(lab.type||'');
+  const modeOf = function(s){ return /\bhybrid\b/i.test(s) ? 'Hybrid' : /\b(fully remote|100% remote|remote|work from home|wfh)\b/i.test(s) && !/\b(not remote|no remote)\b/i.test(s) ? 'Remote' : /\b(on[- ]?site|onsite|work from office|wfo|in[- ]office|office[- ]based|in office)\b/i.test(s) ? 'On-site' : ''; };
+  let mode = modeOf(modeSrc);
+  if(!mode){ const h = /\bhybrid\b/i.test(text), r = /\b(fully remote|100% remote|remote[- ]first|remote (role|position|job|opportunity|work)|work from home|wfh)\b/i.test(text), o = /\b(on[- ]?site|onsite|work from office|wfo|in[- ]office|office[- ]based)\b/i.test(text); mode = h ? 'Hybrid' : r && !o ? 'Remote' : o ? 'On-site' : ''; }
+  const locs = [], seenLoc = {};
+  const addLoc = function(name, id){ if(locs.length<3 && !seenLoc[id||name]){ seenLoc[id||name] = 1; locs.push(name); } };
+  const cityFor = function(s, allowShort){
+    const k = s.toLowerCase().trim();
+    return CITY_DATA.find(function(c){ return c.id!=='REMOTE' && (c.name.toLowerCase().indexOf(k)===0 || c.aliases.some(function(a){ return (allowShort || JD_NOT_PLACES.indexOf(a)<0) && (a===k || (a.length>=4 && new RegExp('\\b'+a+'\\b').test(k))); })); });
+  };
+  if(lab.loc){
+    lab.loc.split(/[\/|;]|,(?!\s*[A-Z]{2}\b)|\bor\b|\band\b|\(|\)/).map(function(s){ return s.trim(); }).filter(Boolean).forEach(function(part){
+      if(modeOf(part) && part.split(/\s+/).length<=3) return;
+      const c = cityFor(part, true);
+      if(c) addLoc(c.name, c.id); else if(/^[A-Z][A-Za-z .'-]{2,30}$/.test(part) && !/india|remote|hybrid|office/i.test(part)) addLoc(part, part.toLowerCase());
+    });
+  }
+  if(!locs.length){
+    // the company's other offices ("About us", "Benefits") are not this job's location
+    const lower = [join(sec.top), join(sec.summary), join(sec.resp), join(sec.req), join(sec.pref)].join('\n').toLowerCase(), hits = [];
+    CITY_DATA.forEach(function(c){ if(c.id==='REMOTE') return; c.aliases.filter(function(a){ return a.length>=4 && JD_NOT_PLACES.indexOf(a)<0; }).forEach(function(a){ const m = new RegExp('\\b'+a+'\\b').exec(lower); if(m) hits.push({ c:c, at:m.index }); }); });
+    hits.sort(function(a, b){ return a.at-b.at; }).forEach(function(h){ addLoc(h.c.name, h.c.id); });
+  }
+  if(mode) x.workMode = mode;
+  if(locs.length) x.locations = locs;
+  if(locs.length || mode) add('loc', 'Location', (locs.length ? locs.map(function(l){ return l.replace(/\s*–\s*[A-Z]{2}$/, ''); }).join(', ') : 'No city named')+(mode ? ' · '+mode : ''));
+
+  /* experience */
+  const reqText = join(sec.req)+'\n'+join(sec.top);
+  const expFrom = function(s){
+    if(!s) return null; let m;
+    if((m = s.match(/(\d{1,2}(?:\.\d)?)\s*\+?\s*(?:years?|yrs?)?\s*(?:-|–|—|to)\s*(\d{1,2}(?:\.\d)?)\s*\+?\s*(?:years?|yrs?)/i))) return [jdNum(m[1]), jdNum(m[2])];
+    if((m = s.match(/(\d{1,2}(?:\.\d)?)\s*(?:\+|plus)\s*(?:years?|yrs?)/i))) return [jdNum(m[1]), null];
+    if((m = s.match(/(?:minimum|min\.?|at least|atleast|over|more than)\s*(?:of\s*)?(\d{1,2}(?:\.\d)?)\s*(?:years?|yrs?)/i))) return [jdNum(m[1]), null];
+    if((m = s.match(/(\d{1,2}(?:\.\d)?)\s*(?:years?|yrs?)(?:'|’)?\s*(?:of\s*)?(?:relevant\s*|professional\s*|hands[- ]on\s*|work\s*|industry\s*|proven\s*)?(?:experience|exp\b)/i))) return [jdNum(m[1]), null];
+    if(/\bfreshers?\b|\bno experience (required|needed)\b|\bentry[- ]level\b/i.test(s)) return [0, null];
+    return null;
+  };
+  const exp = expFrom(lab.exp) || expFrom(join(sec.req)) || expFrom(text);
+  if(exp && exp[0]<=JC_MAX_EXP){
+    let a = jdHalf(exp[0]), b = exp[1]==null ? null : jdHalf(exp[1]); if(b!=null && b<a){ const t = a; a = b; b = t; }
+    x.expMin = String(a); x.expMax = b==null ? '' : String(b); x.experience = jcExpText({ expMin:x.expMin, expMax:x.expMax });
+    add('exp', 'Experience', x.experience);
+  }
+
+  /* pay */
+  const payFrom = function(s){
+    if(!s) return null; let m;
+    const L = '(?:lpa|lakhs?|lacs?|l\\b|lakh per annum)', R = '(?:₹|rs\\.?|inr)?\\s*', N = '(\\d{1,3}(?:\\.\\d{1,2})?)';
+    if((m = s.match(new RegExp(R+N+'\\s*'+L+'?\\s*(?:-|–|—|to)\\s*'+R+N+'\\s*'+L, 'i')))) return { cur:'INR', per:'Annually', a:jdNum(m[1])*1e5, b:jdNum(m[2])*1e5 };
+    if((m = s.match(new RegExp('(?:up ?to|max(?:imum)?|till|not more than)\\s*'+R+N+'\\s*'+L, 'i')))) return { cur:'INR', per:'Annually', a:null, b:jdNum(m[1])*1e5 };
+    if((m = s.match(new RegExp(R+N+'\\s*'+L+'(?![a-z])', 'i'))) && /lpa|lakh|lac/i.test(m[0])) return { cur:'INR', per:'Annually', a:jdNum(m[1])*1e5, b:null };
+    if((m = s.match(/(?:₹|rs\.?|inr)\s*([\d,]{4,9})\s*(?:\/-)?\s*(?:-|–|—|to)\s*(?:₹|rs\.?|inr)?\s*([\d,]{4,9})\s*(?:\/-)?\s*(?:per month|\/\s*month|p\.?\s?m\.?\b|monthly|a month|per mon)/i))) return { cur:'INR', per:'Monthly', a:jdNum(m[1]), b:jdNum(m[2]) };
+    if((m = s.match(/(?:₹|rs\.?|inr)\s*([\d,]{4,9})\s*(?:\/-)?\s*(?:per month|\/\s*month|p\.?\s?m\.?\b|monthly|a month)/i))) return { cur:'INR', per:'Monthly', a:jdNum(m[1]), b:null };
+    if((m = s.match(/(?:₹|rs\.?|inr)\s*([\d,]{6,11})\s*(?:-|–|—|to)\s*(?:₹|rs\.?|inr)?\s*([\d,]{6,11})/i))) return { cur:'INR', per:'Annually', a:jdNum(m[1]), b:jdNum(m[2]) };
+    const sym = { '$':'USD', '£':'GBP', '€':'EUR' };
+    if((m = s.match(/([$£€])\s*(\d{1,3}(?:,\d{3})+|\d{2,3}(?:\.\d)?\s*k)\s*(?:-|–|—|to)\s*[$£€]?\s*(\d{1,3}(?:,\d{3})+|\d{2,3}(?:\.\d)?\s*k)(\s*(?:per hour|\/\s*h(?:ou)?r|an hour))?/i))){
+      const v = function(t){ return /k/i.test(t) ? jdNum(t.replace(/k/i, ''))*1000 : jdNum(t); };
+      return { cur:sym[m[1]], per:m[4] ? 'Hourly' : 'Annually', a:v(m[2]), b:v(m[3]) };
+    }
+    if((m = s.match(/(?:aed|usd|gbp|eur|sgd)\s*([\d,]{4,9})\s*(?:-|–|—|to)\s*(?:aed|usd|gbp|eur|sgd)?\s*([\d,]{4,9})\s*(per month|\/\s*month|monthly)?/i))) return { cur:m[0].slice(0, 3).toUpperCase(), per:m[3] ? 'Monthly' : 'Annually', a:jdNum(m[1]), b:jdNum(m[2]) };
+    return null;
+  };
+  const pay = payFrom(lab.pay) || payFrom(text);
+  if(pay && (pay.a || pay.b)){
+    x.comp = { currency:pay.cur, fixedPeriod:pay.per, fixedMin:pay.a==null ? '' : String(Math.round(pay.a)), fixedMax:pay.b==null ? '' : String(Math.round(pay.b)), bonuses:[] };
+    x.salary = jcRangeText(x.comp.currency, x.comp.fixedMin, x.comp.fixedMax, x.comp.fixedPeriod);
+    x.salaryNotDisclosed = false;
+    add('pay', 'Compensation', x.salary);
+  } else if(/\b(not disclosed|best in (the )?industry|as per (industry|company) (standards|norms)|competitive salary)\b/i.test(lab.pay || '')){
+    add('pay', 'Compensation', 'Not disclosed in the JD', { soft:true });
+  }
+
+  /* notice */
+  const nSrc = (lab.notice||'')+'\n'+text; let notice = '';
+  if(/\bimmediate(ly)?\s*(joiners?|joining|start|availability)\b|\bjoin immediately\b|\bimmediate$/im.test(lab.notice || '') || /\bimmediate joiners?\b|\bjoin immediately\b/i.test(text)) notice = 'Immediate';
+  else { const m = nSrc.match(/notice(?: period)?[^.\n\d]{0,40}?(\d{1,3})\s*days/i) || nSrc.match(/(\d{1,3})\s*days?(?:'|’)?\s*notice/i) || (lab.notice||'').match(/(\d{1,3})\s*days/i);
+    if(m){ const n = +m[1]; notice = n<=15 ? '< 15 Days' : n<30 ? '< 30 Days' : n===30 ? '30 Days' : n<=60 ? '60 Days' : '90 Days'; } }
+  if(notice){ x.noticePeriod = notice; add('notice', 'Notice period', notice); }
+
+  /* employment and hiring type */
+  const tSrc = (lab.type||'')+' '+join(sec.top)+' '+(lab.title||'');
+  if(/\bintern(ship)?\b/i.test(tSrc) || /\binternship\b/i.test(text)){ x.hiringType = 'Internship'; }
+  else if(/\bcontract[- ]to[- ]hire\b|\bc2h\b/i.test(text)){ x.hiringType = 'Contract'; x.employmentType = 'Contract'; }
+  else if(/\b(contract|contractual|fixed[- ]term)\b/i.test(lab.type || '') || /\b(contract (role|position|basis|job|assignment)|on a contract|(\d{1,2})[- ]months? contract)\b/i.test(text)){ x.hiringType = 'Contract'; x.employmentType = 'Contract'; }
+  else if(/\b(full[- ]time|permanent)\b/i.test(tSrc+' '+text)){ x.hiringType = 'Permanent'; x.employmentType = 'Full-time'; }
+  if(/\bpart[- ]time\b/i.test(lab.type || '') || (!lab.type && /\bpart[- ]time (role|position|job)\b/i.test(text))) x.employmentType = 'Part-time';
+  const cm = text.match(/(\d{1,2})\s*[- ]?months?\s*(?:contract|duration|engagement|assignment)|contract[^.\n]{0,25}?(\d{1,2})\s*months?/i);
+  if(x.hiringType==='Contract' && cm) x.contractMonths = String(cm[1] || cm[2]);
+  if(x.hiringType || x.employmentType) add('type', 'Job type', [x.employmentType, x.hiringType==='Contract' && x.contractMonths ? x.contractMonths+'-month contract' : x.hiringType].filter(function(v, i, a){ return v && a.indexOf(v)===i; }).join(' · '));
+
+  /* openings */
+  const om = (lab.openings||'').match(/\d{1,3}/) || text.match(/\b(\d{1,3})\s*(?:openings|positions|vacancies|seats|roles open)\b/i);
+  if(om){ const n = +(om[1] || om[0]); if(n>=1 && n<=500){ x.openings = n; add('openings', 'Openings', String(n)); } }
+
+  /* skills */
+  const listSkills = function(s){ return String(s||'').split(/[,;|•\/]|\s+and\s+|\s+&\s+/).map(function(t){ return t.replace(/\(.*?\)/g, '').replace(/^(strong|good|solid|excellent|hands[- ]on|working|proven)\s+(knowledge|experience|understanding|skills?)\s+(of|in|with)\s+/i, '').trim(); }).filter(function(t){ return t.length>=2 && t.length<=32 && t.split(/\s+/).length<=4 && /[A-Za-z]/.test(t) && !/^(etc|others?|the|a|an|and|or)$/i.test(t); }).map(jdCanonSkill); };
+  const reqSrc = anyHeads ? [x.title||'', join(sec.top), join(sec.summary), join(sec.resp), join(sec.req)].join('\n') : text;
+  const uniq = function(arr){ const s = {}; return arr.filter(function(v){ const k = v.toLowerCase(); if(!v || s[k]) return false; s[k] = 1; return true; }); };
+  const reqBlock = join(sec.req)+'\n'+(lab.skills||'');
+  let must = uniq(listSkills(lab.skills).concat(jdSkillsIn(reqSrc), anyHeads ? jdSkillsIn(join(sec.req), true) : []));
+  let nice = uniq(listSkills(lab.pskills).concat(jdSkillsIn(join(sec.pref), true)));
+  const prefOnly = jdSkillsIn(join(sec.pref), true).map(function(s){ return s.toLowerCase(); });
+  const reqOnly = jdSkillsIn(reqBlock, true).map(function(s){ return s.toLowerCase(); });
+  must = must.filter(function(s){ return prefOnly.indexOf(s.toLowerCase())<0 || reqOnly.indexOf(s.toLowerCase())>-1; }).slice(0, 12);
+  nice = nice.filter(function(s){ return must.map(function(m){ return m.toLowerCase(); }).indexOf(s.toLowerCase())<0; }).slice(0, 8);
+  if(must.length){ x.requiredSkills = must; }
+  if(nice.length){ x.preferredSkills = nice; }
+  if(must.length || nice.length) add('skills', 'Skills', '', { skills:must.concat(nice), must:must.length });
+
+  /* role summary */
+  const paras = function(arr){ const out = []; let curP = []; arr.forEach(function(l){ if(!l){ if(curP.length){ out.push(curP); curP = []; } } else curP.push(l); }); if(curP.length) out.push(curP); return out; };
+  const prose = function(p){ return p.filter(function(l){ return !/^-\s/.test(l); }).join(' ').replace(/\s+/g, ' ').trim(); };
+  let summary = prose(sec.summary);
+  if(summary.length<60){
+    const p = paras(sec.top).map(prose).find(function(s){ return s.length>=100 && !(x.title && s===x.title); });
+    if(p) summary = p;
+  }
+  if(summary.length<60 && !anyHeads){ const p = paras(lines).map(prose).find(function(s){ return s.length>=100; }); if(p) summary = p; }
+  if(summary.length>=40){ x.roleSummary = jdClip(summary, 750); add('summary', 'Role summary', jdClip(x.roleSummary, 140)); }
+
+  /* responsibilities */
+  let resp = sec.resp.filter(Boolean).map(function(l){ return l.replace(/^-\s*/, '').replace(/^\d+[.)]\s*/, '').trim(); });
+  if(resp.length===1 && resp[0].length>160) resp = resp[0].split(/(?<=\.)\s+(?=[A-Z])/);
+  if(!resp.length && !anyHeads){ resp = lines.filter(function(l){ return /^-\s/.test(l); }).map(function(l){ return l.replace(/^-\s*/, ''); }).filter(function(l){ return l.length>20 && !/\b(years?|degree|bachelor|experience (in|with)|knowledge of|proficien)/i.test(l); }).slice(0, 8); }
+  if(resp.length){
+    const kept = []; let len = 0;
+    resp.forEach(function(r){ r = r.replace(/[;,]$/, ''); if(r && len+r.length+1<=750){ kept.push(r); len += r.length+1; } });
+    if(kept.length){ x.responsibilities = kept.join('\n'); add('resp', 'Responsibilities', kept.length+' item'+(kept.length===1 ? '' : 's')+' · '+jdClip(kept[0], 70)); }
+  }
+
+  /* education and certifications */
+  const EDU = /\b(b\.?\s?tech|b\.?\s?e\b\.?|bachelor('|’)?s?|master('|’)?s?|m\.?\s?tech|mba|pgdm|b\.?\s?sc|m\.?\s?sc|bca|mca|b\.?\s?com|m\.?\s?com|chartered accountant|cpa|ph\.?\s?d|diploma|degree|graduat(e|ion)|gnm|anm|b\.?\s?pharm|m\.?\s?pharm|mbbs|md\b|12th|hsc|ssc)\b/i;
+  let edu = lab.edu || '';
+  if(!edu){ const l = [].concat(sec.req, sec.pref, sec.top, sec.summary).find(function(l){ return l && EDU.test(l) && l.length<=220; }); if(l) edu = l.replace(/^-\s*/, ''); }
+  if(edu){ x.education = jdClip(edu.replace(/[.;]$/, ''), 140); add('edu', 'Education', x.education); }
+  const certL = lab.cert || ([].concat(sec.req, sec.pref).find(function(l){ return l && /\b(certif(ied|ication)|licen[cs]e[ds]?)\b/i.test(l) && l.length<=200; }) || '').replace(/^-\s*/, '');
+  if(certL){ x.certifications = jdClip(certL.replace(/[.;]$/, ''), 140); }
+
+  const core = [['title','Job title'],['loc','Location'],['exp','Experience'],['pay','Compensation'],['skills','Skills'],['summary','Role summary'],['resp','Responsibilities']];
+  const missing = core.filter(function(c){ return !found.some(function(f){ return f.k===c[0] && !f.soft; }); }).map(function(c){ return c[1]; });
+  if(found.length) x.extracted = true;
+  return { text:text, payload:x, found:found, missing:missing, words:(text.match(/\S+/g) || []).length };
+}
+/* The draft keys the parser may fill. On a new extraction, values the last extraction filled are cleared first,
+   so a second JD never inherits the first one's details; anything the user typed stays. */
+const JD_SCOPE_KEYS = ['title','client','pocId','workMode','locations','expMin','expMax','experience','comp','salary','salaryNotDisclosed','noticePeriod','hiringType','employmentType','contractMonths','openings','requiredSkills','preferredSkills','roleSummary','responsibilities','education','certifications'];
+
+/* ---- the reading dialog ---- */
 let jdParseRun = 0;
-function jdParseFields(x){
-  return [
-    { k:'title', label:'Job title', value:x.title },
-    { k:'client', label:'Client', value:x.client },
-    { k:'loc', label:'Location', value:x.locations.join(', ')+' · '+x.workMode },
-    { k:'exp', label:'Experience', value:x.experience },
-    { k:'pay', label:'Compensation', value:jcRangeText(x.comp.currency, x.comp.fixedMin, x.comp.fixedMax, x.comp.fixedPeriod) },
-    { k:'skills', label:'Skills', skills:x.requiredSkills.concat(x.preferredSkills), must:x.requiredSkills.length },
-    { k:'summary', label:'Role summary', value:x.roleSummary.length+' characters' },
-    { k:'resp', label:'Responsibilities', value:x.responsibilities.split('\n').filter(Boolean).length+' items' },
-    { k:'edu', label:'Education', value:x.education }
-  ];
-}
-function jdParseModalHTML(fileName, fields){
-  // The JD page: one block of skeleton lines per field, in reading order, so the scan line only
-  // ever moves down. Line widths leave room on the right for the "found" tag.
-  const widths = { title:[58], client:[34], loc:[42], exp:[28], pay:[32], skills:[48,36], summary:[66,62,64,48], resp:[60,56,62,44], edu:[40] };
-  const blocks = fields.map(function(f){
-    return '<div id="jdp-doc-'+f.k+'" class="relative space-y-1.5 rounded-md px-1.5 py-1.5">'+widths[f.k].map(function(w, i){
-      return '<div class="jdp-line" style="width:'+w+'%;'+(f.k==='title'&&i===0?'height:9px;':'')+'"></div>'; }).join('')+'</div>';
-  }).join('');
+function jdIsHm(){ return !!(jobDraft && jobDraft.isHmPost); }
+function jdParseModalHTML(fileName){
   return '<div id="jdp-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm">'+
-    '<div role="dialog" aria-modal="true" aria-labelledby="jdp-title" class="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">'+
+    '<div role="dialog" aria-modal="true" aria-labelledby="jdp-title" class="jdp-card w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">'+
       '<div class="flex items-center gap-3 px-5 pt-4 pb-3">'+
         '<span class="w-8 h-8 rounded-xl bg-accent-50 text-accent-600 flex items-center justify-center shrink-0">'+icon('sparkles','w-4 h-4')+'</span>'+
         '<div class="min-w-0 flex-1"><p id="jdp-title" class="text-sm font-semibold text-ink">Kairo is reading your JD</p>'+
-          '<p class="text-[11px] text-zinc-500 truncate flex items-center gap-1">'+icon('doc','w-3 h-3 shrink-0')+escapeHtml(fileName)+'</p></div>'+
+          '<p class="text-[11px] text-zinc-500 truncate flex items-center gap-1">'+icon('doc','w-3 h-3 shrink-0')+'<span id="jdp-file">'+escapeHtml(fileName)+'</span></p></div>'+
         '<span id="jdp-pct" class="text-xs font-semibold text-accent-700 tabular-nums">0%</span>'+
       '</div>'+
       '<div class="px-5">'+
-        '<div id="jdp-page" class="relative bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden px-3 py-3">'+
+        '<div id="jdp-page" class="jdp-page relative bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">'+
           '<div id="jdp-parsed" class="jdp-parsed" style="height:0" aria-hidden="true"></div>'+
           '<div id="jdp-scanline" class="jdp-scanline" style="top:0" aria-hidden="true"></div>'+
-          '<div class="relative space-y-1.5">'+blocks+'</div>'+
+          '<div id="jdp-inner" class="jdp-inner relative">'+[58,34,42,28,66,62,48,60,56,40].map(function(w){ return '<div class="jdp-line" style="width:'+w+'%"></div>'; }).join('')+'</div>'+
           '<div id="jdp-stamp" class="hidden absolute inset-0 z-[3] flex items-center justify-center bg-white/30">'+
             '<span class="jdp-stamp w-12 h-12 rounded-full bg-forest-500 text-white flex items-center justify-center shadow-lg">'+icon('check','w-6 h-6')+'</span></div>'+
         '</div>'+
+        '<div id="jdp-missing" class="hidden"></div>'+
       '</div>'+
-      '<div class="flex items-center gap-3 px-5 py-4">'+
-        '<p id="jdp-stage" role="status" aria-live="polite" class="flex-1 min-w-0 text-xs text-zinc-500 flex items-center gap-2"><span class="w-3.5 h-3.5 shrink-0 rounded-full border-2 border-accent-200 border-t-accent-600 animate-spin"></span>Uploading…</p>'+
+      '<div class="flex items-center gap-2 px-5 py-4">'+
+        '<p id="jdp-stage" role="status" aria-live="polite" class="flex-1 min-w-0 text-xs text-zinc-500 flex items-center gap-2"><span class="o-loader o-loader--16" aria-hidden="true"><i></i><i></i></span>Opening the file…</p>'+
         '<button id="jdp-cancel" type="button" onclick="jdParseCancel()" class="h-9 px-3 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-100">Cancel</button>'+
+        '<button id="jdp-text" type="button" onclick="jdParseShowText()" class="hidden h-9 px-3 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-100">See the text</button>'+
         '<button id="jdp-go" type="button" onclick="jdParseFinish()" class="hidden h-9 px-4 rounded-xl btn-primary text-sm font-medium">Review details</button>'+
       '</div>'+
     '</div></div>';
 }
-// Move the scan line to the bottom of a block (or of the page) and shade everything above it.
+function jdParseBlocksHTML(fields){
+  return fields.map(function(f){
+    const val = f.skills ? '<span class="jdp-skills">'+f.skills.slice(0, 10).map(function(s, i){ return '<span class="jdp-skill'+(i<f.must ? ' is-must' : '')+'">'+escapeHtml(s)+'</span>'; }).join('')+(f.skills.length>10 ? '<span class="jdp-skill">+'+(f.skills.length-10)+'</span>' : '')+'</span>'
+      : '<span class="jdp-val">'+escapeHtml(f.value)+'</span>';
+    return '<div id="jdp-doc-'+f.k+'" class="jdp-blk"><span class="jdp-lab">'+escapeHtml(f.label)+'</span>'+val+'</div>';
+  }).join('');
+}
 function jdParseMoveLine(px){
   const line = document.getElementById('jdp-scanline'), shade = document.getElementById('jdp-parsed');
   if(line) line.style.top = px+'px';
   if(shade) shade.style.height = px+'px';
 }
+/* Light a block, tag it, and keep it in view: the page scrolls its content up under the scan line. */
 function jdParseReveal(f){
-  const doc = document.getElementById('jdp-doc-'+f.k), page = document.getElementById('jdp-page');
-  if(!doc || !page) return;
+  const doc = document.getElementById('jdp-doc-'+f.k), page = document.getElementById('jdp-page'), inner = document.getElementById('jdp-inner');
+  if(!doc || !page || !inner) return;
   doc.classList.add('jdp-hit');
-  doc.insertAdjacentHTML('beforeend', '<span class="jdp-tag inline-flex items-center gap-1 text-[10px] font-medium text-accent-700 bg-white border border-accent-100 rounded-full pl-1 pr-1.5 py-0.5 shadow-sm">'+
-    '<span class="w-3 h-3 rounded-full bg-forest-500 text-white flex items-center justify-center">'+icon('check','w-2 h-2')+'</span>'+escapeHtml(f.label)+'</span>');
-  const pr = page.getBoundingClientRect(), dr = doc.getBoundingClientRect();
-  jdParseMoveLine(Math.round(dr.bottom - pr.top));
+  doc.insertAdjacentHTML('beforeend', '<span class="jdp-tag" aria-hidden="true">'+icon('check','w-2.5 h-2.5')+'</span>');
+  const bottom = doc.offsetTop+doc.offsetHeight, room = page.clientHeight-14, shift = Math.max(0, bottom-room);
+  inner.style.transform = shift ? 'translateY(-'+shift+'px)' : '';
+  jdParseMoveLine(Math.round(bottom-shift+4));
 }
 function jdParseProgress(pct, stage){
-  const bar = document.getElementById('jdp-bar'), p = document.getElementById('jdp-pct'), st = document.getElementById('jdp-stage');
-  if(bar) bar.style.width = pct+'%';
+  const p = document.getElementById('jdp-pct'), st = document.getElementById('jdp-stage');
   if(p) p.textContent = pct+'%';
-  if(st && stage) st.innerHTML = '<span class="w-3.5 h-3.5 rounded-full border-2 border-accent-200 border-t-accent-600 animate-spin"></span>'+stage;
+  if(st && stage) st.innerHTML = '<span class="o-loader o-loader--16" aria-hidden="true"><i></i><i></i></span>'+stage;
 }
-function simulateJdUpload(input){
-  const file = input.files && input.files[0];
+function jdParseFail(msg){
+  const m = document.getElementById('jdp-modal'); if(!m) return;
+  m.classList.add('jdp-done');
+  const inner = document.getElementById('jdp-inner');
+  if(inner) inner.innerHTML = '<div class="jdp-fail"><span class="jdp-fail__i">'+icon('alert','w-5 h-5')+'</span><p class="text-sm font-semibold text-ink">No text could be read</p><p class="text-xs text-zinc-500 mt-1">'+escapeHtml(msg)+'</p></div>';
+  const t = document.getElementById('jdp-title'); if(t) t.textContent = 'Kairo couldn’t read this file';
+  const p = document.getElementById('jdp-pct'); if(p) p.textContent = '';
+  const st = document.getElementById('jdp-stage'); if(st) st.textContent = 'Nothing was changed.';
+  const c = document.getElementById('jdp-cancel'); if(c){ c.textContent = 'Close'; }
+  const go = document.getElementById('jdp-go'); if(go){ go.textContent = 'Paste the text'; go.setAttribute('onclick', 'jdParseCancel(true); jdFocusPaste()'); go.classList.remove('hidden'); go.focus(); }
+}
+function jdFocusPaste(){ setTimeout(function(){ const el = document.getElementById('jc-paste'); if(el){ el.focus(); el.scrollIntoView({ block:'center' }); } }, 30); }
+/* Upload: read the file, then parse. Paste: parse straight away. Both end in the same dialog. */
+function simulateJdUpload(input){ jdStartUpload(input); }
+function hmSimulateJdUpload(input){ jdStartUpload(input); }
+function jdStartUpload(input){
+  const file = input && input.files && input.files[0];
   if(!file) return;
   try { input.value = ''; } catch(e){}
-  const run = ++jdParseRun, x = jdExtractedPayload(), fields = jdParseFields(x);
-  window.jdParsePending = x;
+  const run = jdOpenDialog(file.name);
+  jdReadFile(file).then(function(raw){
+    if(run!==jdParseRun) return;
+    const t = jdCleanText(raw);
+    if(t.replace(/\s/g, '').length<40) return jdParseFail(/\.pdf$/i.test(file.name) ? 'This PDF looks like a scanned image, so it has no text to read. Paste the JD text instead.' : 'The file has almost no readable text. Paste the JD text instead.');
+    jdRunParse(run, file.name, t);
+  }).catch(function(e){ if(run===jdParseRun) jdParseFail(e && e.message || 'This file could not be read. Paste the JD text instead.'); });
+}
+function jdOpenDialog(name){
+  const run = ++jdParseRun;
   const old = document.getElementById('jdp-modal'); if(old) old.remove();
-  document.body.insertAdjacentHTML('beforeend', jdParseModalHTML(file.name, fields));
+  document.body.insertAdjacentHTML('beforeend', jdParseModalHTML(name));
+  setTimeout(function(){ if(run===jdParseRun) jdParseProgress(12, 'Reading '+escapeHtml(name)+'…'); }, 120);
+  return run;
+}
+function jdRunParse(run, name, text){
+  const res = jdParseText(text, { corporate:typeof oIsCorporate==='function' && oIsCorporate() || jdIsHm() });
+  res.name = name;
+  window.jdParsePending = res;
   const at = function(ms, fn){ setTimeout(function(){ if(run===jdParseRun) fn(); }, ms); };
-  at(150, function(){ jdParseProgress(12, 'Uploading '+escapeHtml(file.name)+'…'); });
-  at(650, function(){ jdParseProgress(24, 'Reading the document…'); });
-  // Fields land one by one; the stage line says what Kairo is working on.
-  fields.forEach(function(f, i){
-    at(1100 + i*420, function(){ jdParseReveal(f); jdParseProgress(Math.round(28 + (i+1)/fields.length*68), 'Found '+f.label.toLowerCase()+'…'); });
+  const fields = res.found;
+  at(260, function(){
+    const inner = document.getElementById('jdp-inner'); if(inner) inner.innerHTML = jdParseBlocksHTML(fields);
+    const fl = document.getElementById('jdp-file'); if(fl) fl.textContent = name+' · '+res.words.toLocaleString()+' words';
+    jdParseProgress(24, fields.length ? 'Looking for the job details…' : 'Looking for the job details…');
   });
-  at(1100 + fields.length*420 + 250, function(){
+  fields.forEach(function(f, i){
+    at(560 + i*380, function(){ jdParseReveal(f); jdParseProgress(Math.round(28 + (i+1)/fields.length*68), 'Found '+f.label.toLowerCase()+'…'); });
+  });
+  at(560 + fields.length*380 + 220, function(){
     jdParseProgress(100);
     const m = document.getElementById('jdp-modal'); if(m) m.classList.add('jdp-done');
-    const pg = document.getElementById('jdp-page'); if(pg) jdParseMoveLine(pg.clientHeight);
-    const stamp = document.getElementById('jdp-stamp'); if(stamp) stamp.classList.remove('hidden');
-    const t = document.getElementById('jdp-title'); if(t) t.textContent = fields.length+' details extracted';
-    const st = document.getElementById('jdp-stage');
-    if(st) st.innerHTML = '<span class="w-3.5 h-3.5 rounded-full bg-forest-500 text-white flex items-center justify-center">'+icon('check','w-2.5 h-2.5')+'</span>Ready — review everything before publishing.';
+    const t = document.getElementById('jdp-title'), st = document.getElementById('jdp-stage');
     const c = document.getElementById('jdp-cancel'); if(c) c.classList.add('hidden');
-    const go = document.getElementById('jdp-go'); if(go){ go.classList.remove('hidden'); go.focus(); }
+    const tx = document.getElementById('jdp-text'); if(tx) tx.classList.remove('hidden');
+    const go = document.getElementById('jdp-go');
+    if(!fields.length){
+      if(t) t.textContent = 'No job details found';
+      if(st) st.textContent = 'The text is kept on Step 1. Fill the form yourself or correct the text.';
+      if(go){ go.textContent = 'Fill it in myself'; go.classList.remove('hidden'); go.focus(); }
+      return;
+    }
+    // done: the scan line goes, and the whole list can be scrolled from the top to check every value
+    const pg = document.getElementById('jdp-page'), inner = document.getElementById('jdp-inner');
+    if(pg){ pg.classList.add('is-read'); jdParseMoveLine(0); }
+    if(inner){ inner.style.transform = ''; }
+    if(t) t.textContent = fields.length+' detail'+(fields.length===1 ? '' : 's')+' found in this JD';
+    const mi = document.getElementById('jdp-missing');
+    if(mi && res.missing.length){ mi.className = 'jdp-missing'; mi.innerHTML = '<span>Not in the JD:</span> '+res.missing.map(escapeHtml).join(', ')+'. Add them in the next steps.'; }
+    if(st) st.innerHTML = '<span class="w-3.5 h-3.5 rounded-full bg-forest-500 text-white flex items-center justify-center shrink-0">'+icon('check','w-2.5 h-2.5')+'</span>Check before posting.';
+    if(go){ go.classList.remove('hidden'); go.focus(); }
   });
-  // Moves on by itself shortly after, unless the recruiter already did.
-  at(1100 + fields.length*420 + 2200, jdParseFinish);
 }
-function jdParseFinish(){
-  const x = window.jdParsePending; if(!x) return;
+/* Apply what was found. stay = true keeps Step 1 open on the text ("See the text"). */
+function jdApplyPending(stay){
+  const r = window.jdParsePending; if(!r || !jobDraft) return null;
   window.jdParsePending = null; jdParseRun++;
   const m = document.getElementById('jdp-modal'); if(m) m.remove();
-  Object.assign(jobDraft, x, { maxStep: Math.max(jobDraft.maxStep, 2), step:2, startMode:'jd' });
-  jobDraft.kairoFilled = {};
-  JC_KAIRO_KEYS.forEach(function(k){ const v = x[k==='salary' ? 'salary' : k]; if(v!=null && v!=='' && !(Array.isArray(v) && !v.length)) jobDraft.kairoFilled[k] = true; });
-  if(x.expMin!=null) jobDraft.kairoFilled.experience = true;
+  const d = jobDraft, x = r.payload, prev = d.kairoFilled || {}, fresh = d.isHmPost ? hmJobCreateDefaults() : jobCreateDefaults();
+  JD_SCOPE_KEYS.forEach(function(k){
+    if(d.isHmPost && (k==='client' || k==='pocId')) return;
+    if(x[k]!==undefined) d[k] = Array.isArray(x[k]) ? x[k].slice() : (x[k] && typeof x[k]==='object' ? Object.assign({}, x[k]) : x[k]);
+    else if(prev[k] || (k==='expMin' || k==='expMax') && prev.experience) d[k] = fresh[k];
+  });
+  if(x.client && !d.isHmPost && !d.workflowIsCustom){ d.interviewWorkflow = (clientHiringProcess(x.client) || DEFAULT_JOB_WORKFLOW).slice(); d.hiringProcess = jcClientStages(x.client) || jcStagesFromNames(d.interviewWorkflow); }
+  d.kairoFilled = {};
+  JC_KAIRO_KEYS.forEach(function(k){ const v = x[k]; if(v!=null && v!=='' && !(Array.isArray(v) && !v.length)) d.kairoFilled[k] = true; });
+  if(x.expMin!=null) d.kairoFilled.experience = true;
+  if(x.comp) d.kairoFilled.salary = true;
+  d.extracted = !!r.found.length; d.startMode = 'jd';
+  d.jd = { name:r.name, text:r.text, words:r.words, found:r.found.map(function(f){ return f.label; }), missing:r.missing.slice(), at:Date.now() };
+  window.jcPasteText = r.text;
+  if(!stay){ d.maxStep = Math.max(d.maxStep, 2); d.step = 2; }
   jdUploadProgress = null;
-  toast('Job details extracted — review before continuing.');
-  refreshJobCreate();
+  return r;
 }
-function jdParseCancel(){
+function jdParseFinish(){
+  const r = jdApplyPending(false); if(!r) return;
+  toast(r.found.length ? r.found.length+' details filled from the JD. Check them before you continue.' : 'Nothing was filled. Add the details yourself.');
+  refreshJobCreate();
+  const mc = document.getElementById('main-content'); if(mc) mc.scrollTop = 0;
+}
+function jdParseShowText(){
+  const r = jdApplyPending(true); if(!r) return;
+  refreshJobCreate();
+  setTimeout(function(){ const el = document.getElementById('jc-paste'); if(el) el.scrollIntoView({ block:'center' }); }, 30);
+}
+function jdParseCancel(quiet){
   jdParseRun++; window.jdParsePending = null;
   const m = document.getElementById('jdp-modal'); if(m) m.remove();
-  toast('JD upload cancelled — nothing was changed.');
+  if(!quiet) toast('JD reading stopped. Nothing was changed.');
 }
 document.addEventListener('keydown', function(e){
   if(e.key!=='Escape' || !document.getElementById('jdp-modal')) return;
-  if(document.querySelector('#jdp-modal.jdp-done')) jdParseFinish(); else jdParseCancel();
+  if(document.querySelector('#jdp-modal.jdp-done') && window.jdParsePending) jdParseFinish(); else jdParseCancel(true);
 });
+/* Pasted text: the same reading as an upload, without the file step. */
+function jcExtractPasted(){
+  const el = document.getElementById('jc-paste'), t = String(el ? el.value : (window.jcPasteText||'')).trim();
+  window.jcPasteText = t;
+  if(t.length<60){ toast('Paste the full job description (at least a few lines).'); if(el) el.focus(); return; }
+  const run = jdOpenDialog(jobDraft && jobDraft.jd && jobDraft.jd.name && jobDraft.jd.name!=='Pasted text' ? jobDraft.jd.name+' (edited)' : 'Pasted text');
+  setTimeout(function(){ if(run===jdParseRun) jdRunParse(run, 'Pasted text', jdCleanText(t)); }, 200);
+}
+/* Drag a file onto the drop area. */
+function jdDragOver(e, on){ e.preventDefault(); const z = e.currentTarget; if(z) z.classList.toggle('is-over', !!on); }
+function jdDrop(e){
+  e.preventDefault(); const z = e.currentTarget; if(z) z.classList.remove('is-over');
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) jdStartUpload({ files:[f] });
+}
+/* Step 1's JD card, shared by New job and the hiring manager's Post a job:
+   a drop area, the paste box (which holds the text Kairo read, editable), and what was found. */
+/* Kept from agency-prototype-v2: the step-1 upload progress card (same {pct, label} state as the reader above). */
 function jdUploadProgressHTML(){
   if(!jdUploadProgress) return '<div id="jd-upload-progress"></div>';
   return '<div id="jd-upload-progress" class="card rounded-2xl p-8 text-center mb-6">'+
@@ -9027,7 +9438,6 @@ function jdUploadProgressHTML(){
   '</div>';
 }
 
-/* ---- Kairo quiet insights (not a chat — inline, contextual) ---- */
 const KAIRO_SKILL_POOL = ['React','Node.js','Java','Python','AWS','Docker','Kubernetes','SQL','PostgreSQL','MongoDB','TypeScript',
   'GraphQL','CI/CD','Microservices','Redis','Kafka','Spring Boot','Next.js','Terraform','Azure','GCP','Selenium','TestNG',
   'Agile','Scrum','Figma','SEO','Salesforce','HubSpot','REST APIs','System Design','Leadership','Stakeholder Management'];
@@ -9356,14 +9766,43 @@ function kairoSkillSuggestionsHTML(){
 
 /* ---- Step indicator: small numbered dots on one line. Done steps open again; upcoming ones are locked. ---- */
 function jobCreateStepperHTML(){
-  const steps = jobCreateSteps(), d = jobDraft;
-  return '<nav class="jc-steps" aria-label="Job creation steps"><ol>'+steps.map(function(st, i){
-    const n = st[0], cur = n===d.step, done = !cur && n<=d.maxStep && !(d.createdJobId && n<JOB_STEP_PUBLISH);
-    const state_ = cur ? 'current' : done ? 'done' : 'locked';
+  const d = jobDraft;
+  return jcStepsHTML(jobCreateSteps(), d.step, d.maxStep, 'jobCreateGoStep', 'Job creation steps', function(n){ return !(d.createdJobId && n<JOB_STEP_PUBLISH); });
+}
+function jdIntakeCardHTML(){
+  const d = jobDraft, jd = d.jd, text = window.jcPasteText!=null && window.jcPasteText!=='' ? window.jcPasteText : (jd ? jd.text : '');
+  const drop = '<label class="jd-drop" ondragover="jdDragOver(event, true)" ondragleave="jdDragOver(event, false)" ondrop="jdDrop(event)">'+
+      '<input type="file" accept="'+JD_ACCEPT+'" class="sr-only" onchange="jdStartUpload(this)" />'+
+      '<span class="jd-drop__icon" aria-hidden="true">'+icon('upload','w-5 h-5')+'</span>'+
+      '<span class="jd-drop__title">'+(jd ? 'Upload a different JD' : 'Drop the JD here, or <u>choose a file</u>')+'</span>'+
+      '<span class="jd-drop__sub">PDF, DOCX, DOC or TXT, up to 10 MB. Kairo reads the text and fills only what the JD says.</span>'+
+    '</label>';
+  const read = jd ? '<div class="jd-read" role="status">'+
+      '<span class="jd-read__icon" aria-hidden="true">'+icon('doc','w-4 h-4')+'</span>'+
+      '<span class="min-w-0 flex-1"><span class="block text-sm font-semibold text-ink truncate">'+escapeHtml(jd.name)+'</span>'+
+        '<span class="block text-xs text-zinc-500">'+jd.words.toLocaleString()+' words read · '+jd.found.length+' detail'+(jd.found.length===1 ? '' : 's')+' found'+(jd.missing.length ? ' · not in the JD: '+escapeHtml(jd.missing.join(', ')) : '')+'</span></span>'+
+    '</div>' : '';
+  return '<div class="card p-6 mb-4">'+
+      '<p class="text-sm font-semibold text-ink">Upload a JD</p><p class="text-xs text-zinc-500 mt-0.5 mb-3">You check every detail before the job is posted.</p>'+
+      drop+read+
+      '<div class="jc-or" aria-hidden="true"><span>'+(jd ? 'the text Kairo read' : 'or paste it')+'</span></div>'+
+      '<label for="jc-paste" class="text-sm font-semibold text-ink">'+(jd ? 'JD text' : 'Paste the JD text')+'</label>'+
+      (jd ? '<p class="text-xs text-zinc-500 mt-0.5">Correct anything that was read wrongly, then extract again.</p>' : '')+
+      '<textarea id="jc-paste" rows="'+(jd ? 12 : 6)+'" oninput="window.jcPasteText=this.value" placeholder="Paste the job description here" class="jd-text mt-2 w-full border border-zinc-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">'+escapeHtml(text)+'</textarea>'+
+      '<div class="flex items-center gap-2 mt-3 flex-wrap"><button type="button" onclick="jcExtractPasted()" class="btn-secondary app-btn">'+icon('sparkles','w-4 h-4')+(jd ? 'Extract again' : 'Extract with Kairo')+'</button>'+
+        (jd && d.extracted ? '<span class="text-xs text-zinc-500">Extracting again replaces what Kairo filled before. Your own edits stay.</span>' : '')+'</div>'+
+    '</div>';
+}
+function jcStepsHTML(steps, cur, maxStep, goFn, aria, canOpen){
+  const total = steps.length, pos = Math.max(0, steps.findIndex(function(st){ return st[0]===cur; }));
+  return '<nav class="jc-steps" aria-label="'+escapeHtml(aria)+'"><p class="jc-steps__count">Step '+(pos+1)+' of '+total+'</p><ol>'+steps.map(function(st, i){
+    const n = st[0], isCur = n===cur, done = !isCur && n<=maxStep && (!canOpen || canOpen(n));
+    const state_ = isCur ? 'current' : done ? 'done' : 'locked';
     return '<li class="jc-step jc-step--'+state_+'">'+
-      '<button type="button" onclick="jobCreateGoStep('+n+')"'+(state_==='done' ? '' : ' disabled')+(cur ? ' aria-current="step"' : '')+'>'+
-        '<span class="jc-step__dot" aria-hidden="true">'+(i+1)+'</span><span class="jc-step__label">'+st[1]+'</span>'+
-        '<span class="sr-only">'+(cur ? ', current step' : done ? ', done' : ', not started')+'</span></button></li>';
+      '<button type="button" onclick="'+goFn+'('+n+')"'+(state_==='done' ? '' : ' disabled')+(isCur ? ' aria-current="step"' : '')+'>'+
+        '<span class="jc-step__dot" aria-hidden="true">'+(done ? '<svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.2l2.3 2.3 4.7-4.9"/></svg>' : (i+1))+'</span>'+
+        '<span class="jc-step__label">'+escapeHtml(st[1])+'</span>'+
+        '<span class="sr-only">'+(isCur ? ', current step' : done ? ', done' : ', not started')+'</span></button></li>';
   }).join('')+'</ol></nav>';
 }
 /* The sticky footer: Save draft on the left, Back and Continue on the right. */
@@ -9405,14 +9844,7 @@ function jobCreateStep1HTML(){
     card('blank','edit','Start blank','Fill in each step yourself.')+'</fieldset>';
   let body = '';
   if(mode==='jd'){
-    body = '<div class="card p-6 mb-4">'+
-        '<p class="text-sm font-semibold text-ink">Upload a JD</p><p class="text-xs text-zinc-500 mt-0.5 mb-3">PDF, DOC or DOCX. You review everything before the job opens.</p>'+
-        '<label class="btn-secondary app-btn cursor-pointer">'+icon('upload','w-4 h-4')+'Choose file<input type="file" accept=".pdf,.doc,.docx" class="hidden" onchange="simulateJdUpload(this)" /></label>'+
-        '<div class="jc-or" aria-hidden="true"><span>or</span></div>'+
-        '<label for="jc-paste" class="text-sm font-semibold text-ink">Paste the JD text</label>'+
-        '<textarea id="jc-paste" rows="6" oninput="window.jcPasteText=this.value" placeholder="Paste the job description here" class="mt-2 w-full border border-zinc-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">'+escapeHtml(window.jcPasteText||'')+'</textarea>'+
-        '<button type="button" onclick="jcExtractPasted()" class="btn-secondary app-btn mt-3">'+icon('sparkles','w-4 h-4')+'Extract with Kairo</button>'+
-      '</div>';
+    body = jdIntakeCardHTML();
   } else if(mode==='copy'){
     body = '<div class="card p-0 overflow-hidden mb-4">'+
         '<div class="p-4 border-b border-zinc-100"><label for="jc-copy-q" class="sr-only">Search past jobs</label>'+
@@ -9466,11 +9898,6 @@ function jcJobDate(j){
   const dd = new Date(Date.now() - (j.daysOpen||0)*864e5); return dd.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
 }
 /* Pasted JD: the same Kairo extraction as an upload. */
-function jcExtractPasted(){
-  const t = String(window.jcPasteText||'').trim();
-  if(t.length<60){ toast('Paste the full job description (at least a few lines).'); const el = document.getElementById('jc-paste'); if(el) el.focus(); return; }
-  simulateJdUpload({ files:[{ name:'Pasted text' }], value:'' });
-}
 /* "Filled by Kairo": a small grey tag beside a field Kairo filled, gone once the field is edited. */
 const JC_KAIRO_KEYS = ['title','client','pocId','employmentType','workMode','hiringType','experience','openings','locations','salary','priority','noticePeriod',
   'roleSummary','responsibilities','requiredSkills','preferredSkills','education'];
@@ -10528,7 +10955,7 @@ function recruiterChipHTML(r){
   return '<span class="chip-pop inline-flex items-center gap-2 max-w-[240px] shrink-0 text-xs font-medium bg-accent-50 text-accent-700 pl-1 pr-1.5 py-1 rounded-full">'+
     '<span class="w-5 h-5 rounded-full bg-accent-600 text-white flex items-center justify-center text-[9px] font-semibold shrink-0">'+initials(r.name)+'</span>'+
     '<span class="truncate">'+r.name+'</span><span class="text-accent-400 shrink-0">'+r.id+'</span>'+
-    '<button type="button" onclick="toggleRecruiterAssign(\''+r.id+'\')" class="hover:text-accent-900 shrink-0">'+icon('x','w-3 h-3')+'</button>'+
+    '<button type="button" aria-label="Remove '+escapeHtml(r.name)+'" onclick="toggleRecruiterAssign(\''+r.id+'\')" class="hover:text-accent-900 shrink-0">'+icon('x','w-3 h-3')+'</button>'+
   '</span>';
 }
 function recruiterRowHTML(r, recommended){
@@ -11305,11 +11732,30 @@ function jcStep1PanelHTML(){
   const fields = [['Job title', !!d.title.trim()], ['Location & work mode', jobDraftLocations(d).length>0], ['Experience range', !!d.experience],
     ['Skills', d.requiredSkills.length>0], ['Summary & responsibilities', !!(d.roleSummary.trim() && d.responsibilities.trim())]];
   const head = '<p class="text-[10px] font-semibold text-accent-600 tracking-widest mb-3 flex items-center gap-1">'+icon('sparkles','w-3 h-3')+'KAIRO JD ASSIST</p>';
-  if(d.extracted){
+  if(d.extracted || d.jd){
+    /* Everything here comes from the draft (what the JD said) and the real candidate pool. Nothing is estimated. */
+    const vals = [['Job title', d.title.trim()], ['Location', jobDraftLocations(d).map(function(l){ return l.replace(/\s*–\s*[A-Z]{2}$/, ''); }).join(', ')+(d.workMode && (jobDraftLocations(d).length || (d.kairoFilled||{}).workMode) ? ' · '+d.workMode : '')],
+      ['Experience', d.experience || jcExpText(d)], ['Compensation', d.salary || ''], ['Notice period', d.noticePeriod || '']];
+    const skills = (d.requiredSkills||[]).concat(d.preferredSkills||[]);
+    let pool = '';
+    if((d.requiredSkills||[]).length && typeof computeJobMatchPct==='function'){
+      const scored = CANDIDATES.map(function(c){ return { c:c, pct:computeJobMatchPct(c, { skills:d.requiredSkills }) }; });
+      const strong = scored.filter(function(x){ return x.pct>=60; }), avail = strong.filter(function(x){ return x.c.avail==='Available'; });
+      pool = '<div class="pt-4 mt-4 border-t border-zinc-100"><p class="text-[10px] font-semibold text-zinc-400 tracking-widest mb-2">IN YOUR TALENT POOL</p>'+
+        '<p class="text-2xl font-semibold text-zinc-900 leading-none tabular-nums">'+strong.length.toLocaleString()+'</p>'+
+        '<p class="text-xs text-zinc-500 mt-1">strong matches on the must-have skills, out of '+CANDIDATES.length.toLocaleString()+' people'+(strong.length ? ' · '+avail.length+' available now' : '')+'</p></div>';
+    }
+    const insight = kairoJobInsights(d);
+    const similar = insight.similar.length ? '<div class="pt-4 mt-4 border-t border-zinc-100"><p class="text-[10px] font-semibold text-zinc-400 tracking-widest mb-2">ALREADY OPEN</p>'+
+      insight.similar.map(function(j){ return '<p class="text-xs text-zinc-700 truncate">'+escapeHtml(j.title)+' <span class="text-zinc-400">· '+escapeHtml(oJobSide(j))+'</span></p>'; }).join('')+
+      '<p class="text-[11px] text-zinc-500 mt-1">Similar skills. Check those candidates first.</p></div>' : '';
+    const missing = d.jd && d.jd.missing.length ? '<p class="text-xs text-zinc-500 mt-3"><span class="font-medium text-zinc-700">Not in the JD:</span> '+escapeHtml(d.jd.missing.join(', '))+'. You can add them in the next steps.</p>' : '';
     return '<div id="job-create-sidebar" class="card p-5 sticky top-0">'+head+
-      '<p class="text-sm font-semibold text-ink mb-1">JD extracted</p><p class="text-xs text-zinc-500 mb-4">Kairo pre-filled these fields — review them in the next steps.</p>'+
-      '<ul class="space-y-2">'+fields.map(function(f){ return '<li class="flex items-center gap-2 text-xs '+(f[1]?'text-zinc-700':'text-zinc-400')+'">'+
-        '<span class="w-4 h-4 rounded-full flex items-center justify-center '+(f[1]?'bg-forest-500 text-white':'border border-zinc-300')+'">'+(f[1]?icon('check','w-2.5 h-2.5'):'')+'</span>'+f[0]+(f[1]?'':' — not found')+'</li>'; }).join('')+'</ul></div>';
+      '<p class="text-sm font-semibold text-ink mb-0.5">'+(d.extracted ? 'Read from the JD' : 'Nothing found yet')+'</p>'+
+      '<p class="text-xs text-zinc-500 mb-3 truncate">'+escapeHtml(d.jd ? d.jd.name+' · '+d.jd.words.toLocaleString()+' words' : 'Filled from the JD')+'</p>'+
+      '<dl class="space-y-2">'+vals.map(function(v){ return '<div class="flex items-start gap-2 text-xs"><dt class="w-24 shrink-0 text-zinc-400">'+v[0]+'</dt><dd class="min-w-0 '+(v[1] ? 'text-zinc-800 font-medium' : 'text-zinc-400')+'">'+(v[1] ? escapeHtml(v[1]) : 'Not found')+'</dd></div>'; }).join('')+
+        '<div class="flex items-start gap-2 text-xs"><dt class="w-24 shrink-0 text-zinc-400">Skills</dt><dd class="min-w-0 '+(skills.length ? 'text-zinc-800 font-medium' : 'text-zinc-400')+'">'+(skills.length ? (d.requiredSkills||[]).length+' must-have'+((d.preferredSkills||[]).length ? ', '+d.preferredSkills.length+' nice to have' : '') : 'Not found')+'</dd></div>'+
+      '</dl>'+missing+pool+similar+'</div>';
   }
   return '<div id="job-create-sidebar" class="card p-5 sticky top-0">'+head+
     '<div class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/60 px-4 py-5 text-center mb-4">'+
@@ -11398,8 +11844,10 @@ function jobIntelligence(d){
     : completeness>=85 ? 'green' : completeness>=60 ? 'yellow' : 'red';
 
   const insights = [];
+  // Only for software roles: a nurse or sales job is not asked to add cloud skills.
   const hasCloudSkill = d.requiredSkills.some(function(s){ return CLOUD_SKILL_HINTS.indexOf(s.toLowerCase())>-1; });
-  if(!hasCloudSkill && d.requiredSkills.length>0) insights.push('Adding cloud technologies may improve search accuracy.');
+  const softwareRole = /\b(engineer|developer|devops|sre|architect|programmer|sde|backend|frontend|full[- ]?stack|platform)\b/i.test(d.title) && d.requiredSkills.some(function(s){ return KAIRO_SKILL_POOL.slice(0, 22).indexOf(s)>-1; });
+  if(softwareRole && !hasCloudSkill) insights.push('Most backend and platform roles name a cloud (AWS, Azure or GCP). Add one if the team uses it.');
   if(d.responsibilities.trim().length>0 && d.responsibilities.trim().length<300) insights.push('Current responsibilities are fairly generic \u2014 add specifics for better matches.');
   if(d.roleSummary.trim().length>=400) insights.push('Role Summary is well structured.');
   if(completeness>=90) insights.push('Strong job quality detected.');
@@ -11410,7 +11858,8 @@ function jobIntelligence(d){
   if(d.title.trim() && d.requiredSkills.length>=2){
     suggestions.push({ label:'Alternative Titles', value: altTitlesFor(d.title).join(', ') });
     suggestions.push({ label:'Boolean Keywords', value: '('+d.requiredSkills.slice(0,4).join(' OR ')+')' });
-    if(pool<150 && d.requiredSkills.length>=3) suggestions.push({ label:'Competition', value: 'High \u2014 narrow candidate pool, expect faster offers from competitors', warn:true });
+    const strongN = (funnel.find(function(f){ return f.label==='Strong Matches'; }) || {}).count;
+    if(strongN!=null && strongN<3 && d.requiredSkills.length>=3) suggestions.push({ label:'Your pool', value:(strongN===0 ? 'No' : 'Only '+strongN)+' strong match'+(strongN===1 ? '' : 'es')+' on these skills. Plan to source outside your database.', warn:true });
   }
 
   return { completeness:completeness, searchReadiness:searchReadiness, funnel:funnel, pool:pool, missing:missing, readiness:readiness, insights:insights.slice(0,2), suggestions:suggestions };
@@ -24221,7 +24670,7 @@ function payTrackBillingHTML(){
   return '<div class="mb-3 flex items-center justify-between flex-wrap gap-3">'+
       '<p class="text-xs text-zinc-500">'+items.length+' billing-eligible placement'+(items.length===1?'':'s')+' \u00b7 \u20b9'+totalFee.toFixed(1)+'L total fee value \u2014 ready for invoice preparation</p>'+
       '<div class="flex items-center gap-2 flex-wrap">'+
-        '<select onchange="setPayTrackClientFilter(this.value)" class="text-xs border border-zinc-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="All">All Clients</option>'+clients.map(function(c){ return '<option value="'+c+'"'+(payTrackClientFilter===c?' selected':'')+'>'+c+'</option>'; }).join('')+'</select>'+
+        '<select aria-label="Filter by client" onchange="setPayTrackClientFilter(this.value)" class="text-xs border border-zinc-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="All">All Clients</option>'+clients.map(function(c){ return '<option value="'+c+'"'+(payTrackClientFilter===c?' selected':'')+'>'+c+'</option>'; }).join('')+'</select>'+
         '<select onchange="setPayTrackRecruiterFilter(this.value)" class="text-xs border border-zinc-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="All">All Recruiters</option>'+recruiters.map(function(r){ return '<option value="'+r+'"'+(payTrackRecruiterFilter===r?' selected':'')+'>'+r+'</option>'; }).join('')+'</select>'+
         '<select onchange="setPayTrackMonthFilter(this.value)" class="text-xs border border-zinc-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="All">All Months</option>'+months.map(function(m){ return '<option value="'+m+'"'+(payTrackMonthFilter===m?' selected':'')+'>'+m+'</option>'; }).join('')+'</select>'+
       '</div>'+
@@ -24251,8 +24700,8 @@ function payTrackListHTML(){
   return '<div class="flex items-center justify-between mb-4 flex-wrap gap-3">'+
       payTrackTabsHTML()+
       '<div class="flex items-center gap-2 flex-wrap">'+
-        '<select onchange="setPayTrackClientFilter(this.value)" class="text-sm border border-zinc-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500">'+clientOptions+'</select>'+
-        '<input oninput="setPayTrackSearch(this.value)" value="'+payTrackSearch+'" placeholder="Search candidate, client, recruiter\u2026" class="text-sm border border-zinc-200 rounded-lg px-3 py-2 w-64 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500 placeholder:text-zinc-400" />'+
+        '<select aria-label="Filter by client" onchange="setPayTrackClientFilter(this.value)" class="text-sm border border-zinc-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500">'+clientOptions+'</select>'+
+        '<input aria-label="Search PayTrack" oninput="setPayTrackSearch(this.value)" value="'+payTrackSearch+'" placeholder="Search candidate, client, recruiter\u2026" class="text-sm border border-zinc-200 rounded-lg px-3 py-2 w-64 bg-white focus:outline-none focus:ring-2 focus:ring-accent-500 placeholder:text-zinc-400" />'+
       '</div>'+
     '</div>'+
     (items.length ? '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">'+items.map(cardFn).join('')+'</div>'
@@ -27015,37 +27464,22 @@ function renderHmJobCreate(){
     : hmJobCreateStep4HTML();
   return '<div class="max-w-3xl">'+
     '<div class="flex items-center justify-between mb-6">'+
-      '<div><h1 class="font-serif text-2xl font-semibold tracking-tight text-zinc-900">Post a new job</h1><p class="text-sm text-zinc-500 mt-0.5">For '+d.client+' \u2014 your recruiter picks this up the moment it\u2019s posted.</p></div>'+
-      '<button onclick="hmCancelJobCreate()" class="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-400 hover:bg-zinc-100">'+icon('x','w-4 h-4')+'</button>'+
+      '<div><h1 class="font-serif text-2xl font-semibold tracking-tight text-zinc-900">Post a new job</h1><p class="text-sm text-zinc-500 mt-0.5">For '+escapeHtml(d.client)+' — your recruiter picks this up the moment it’s posted.</p></div>'+
+      '<button aria-label="Close" onclick="hmCancelJobCreate()" class="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-400 hover:bg-zinc-100">'+icon('x','w-4 h-4')+'</button>'+
     '</div>'+
-    '<div class="flex items-center gap-1 mb-8 overflow-x-auto pb-1">'+HM_JOB_CREATE_STEPS.map(function(label, i){
-      const n = i+1;
-      const state_ = n===d.step ? 'current' : n<=d.maxStep ? 'done' : 'locked';
-      const dot = state_==='done' ? '<span class="w-5 h-5 rounded-full bg-accent-600 text-white flex items-center justify-center text-[10px]">\u2713</span>'
-        : '<span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold '+(state_==='current'?'bg-accent-600 text-white':'bg-zinc-100 text-zinc-400')+'">'+n+'</span>';
-      return '<button onclick="hmJobCreateGoStep('+n+')" '+(state_==='locked'?'disabled':'')+' class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full shrink-0 transition '+(state_==='locked'?'opacity-40 cursor-not-allowed':'hover:bg-white/60')+'">'+
-        dot+'<span class="text-xs font-medium '+(state_==='current'?'text-zinc-900':'text-zinc-500')+' whitespace-nowrap">'+label+'</span>'+
-        (n<5?'<span class="text-zinc-300 mx-0.5">\u2014</span>':'')+
-      '</button>';
-    }).join('')+'</div>'+
+    jcStepsHTML(HM_JOB_CREATE_STEPS.map(function(label, i){ return [i+1, label]; }), d.step, d.maxStep, 'hmJobCreateGoStep', 'Steps to post a job')+
     stepBody+
     '<div class="flex items-center justify-between mt-6">'+
       (d.step>1 ? '<button onclick="hmJobCreateBack()" class="px-4 py-2.5 rounded-xl btn-secondary text-sm font-medium">Back</button>' : '<span></span>')+
-      (d.step<5 && d.step>1 ? '<button onclick="hmJobCreateNext()" class="px-5 py-2.5 rounded-xl btn-primary text-sm font-medium">Continue</button>'
-        : d.step===5 ? '<button onclick="hmPublishJob()" class="px-5 py-2.5 rounded-xl btn-primary text-sm font-medium">Post Job</button>' : '<span></span>')+
+      (d.step<5 && (d.step>1 || d.extracted) ? '<button onclick="hmJobCreateNext()" class="px-5 py-2.5 rounded-xl btn-primary text-sm font-medium">Continue</button>'
+        : d.step===5 ? '<button onclick="hmPublishJob()" class="px-5 py-2.5 rounded-xl btn-primary text-sm font-medium">Post job</button>' : '<span></span>')+
     '</div>'+
   '</div>';
 }
 function hmJobCreateStep0HTML(){
   if(jdUploadProgress) return jdUploadProgressHTML();
-  return '<div class="card rounded-2xl border-2 border-dashed border-zinc-200 p-10 text-center mb-6">'+
-      icon('sparkles','w-8 h-8 text-accent-400 mx-auto mb-3')+
-      '<p class="text-sm font-medium text-zinc-700 mb-1">Upload Job Description <span class="text-zinc-400 font-normal">(optional)</span></p>'+
-      '<p class="text-xs text-zinc-400 mb-4">PDF, DOC or DOCX \u2014 Kairo pre-fills the form and takes you straight to it. You review and edit everything before posting.</p>'+
-      '<label class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 px-4 py-2.5 rounded-xl cursor-pointer transition">'+icon('upload','w-4 h-4')+'Choose File'+
-        '<input type="file" accept=".pdf,.doc,.docx" class="hidden" onchange="hmSimulateJdUpload(this)" /></label>'+
-    '</div>'+
-    '<div class="text-center mb-6"><button onclick="hmJobCreateNext()" class="text-sm font-medium text-accent-700 hover:text-accent-900">Skip \u2014 I\u2019ll fill it manually</button></div>';
+  return jdIntakeCardHTML()+
+    (jobDraft.extracted ? '' : '<div class="text-center mb-6"><button onclick="hmJobCreateNext()" class="text-sm font-medium text-accent-700 hover:text-accent-900">Skip — I’ll fill it manually</button></div>');
 }
 function hmJobCreateStep1HTML(){
   const d = jobDraft;
@@ -43391,7 +43825,7 @@ function cwOverview(id){
   const signals = '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">Signals</h2><span class="o-card__sub" style="font-size:13px">' + (sig.length ? oPlural(sig.length, 'signal') : '') + '</span></div>' +
     (sig.length ? '<ul class="o-list">' + sig.slice(0, 6).map(function(s){ return '<li class="o-att" style="align-items:flex-start"><span class="o-att__icon">' + oIcon('alert', 16) + '</span><span class="o-att__text"><span class="o-att__title" style="white-space:normal">' + cwEsc(s.text) + '</span><span class="o-att__meta" style="white-space:normal">' + cwEsc(s.why) + '</span></span><button type="button" class="o-btn" style="flex:none" onclick="' + s.onclick + '">' + cwEsc(s.cta) + '</button></li>'; }).join('') + '</ul>' : oEmpty('check', 'No signals right now. The agent is inside every rule.')) + '</section>';
   const runs = cwAgentRuns(id).slice().sort(function(a, b){ return (b.log.length ? b.log[b.log.length - 1].at : b.startedAt) - (a.log.length ? a.log[a.log.length - 1].at : a.startedAt); }).slice(0, 10);
-  const runRows = runs.map(function(r){ const l = r.log[r.log.length - 1] || {}, wf = wfFindById(r.workflowId) || { name:'' }; return '<tr style="cursor:pointer" onclick="cwOpenRun(\'' + r.id + '\')"><td>' + cwFmtAgo(l.at || r.startedAt) + '</td><td><b>' + cwEsc(r.name) + '</b></td><td>' + cwEsc(wf.name) + '</td><td>' + cwEsc(l.step === 0 ? '' : l.step) + '</td><td>' + oBadge(CW_RESULT_TONE[String(l.result).split(' ')[0]] || 'neutral', l.result || '—') + '<small>' + cwEsc(l.why || '') + '</small></td></tr>'; }).join('') || oTableEmptyRow(5, 'No runs yet.');
+  const runRows = runs.map(function(r){ const l = r.log[r.log.length - 1] || {}, wf = wfFindById(r.workflowId) || { name:'' }; return '<tr style="cursor:pointer" onclick="cwOpenRun(\'' + r.id + '\')"><td>' + cwFmtAgo(l.at || r.startedAt) + '</td><td><b>' + cwEsc(r.name) + '</b></td><td>' + cwEsc(wf.name) + '</td><td>' + cwEsc(l.step === 0 ? '' : l.step) + '</td><td>' + cwStateBadge(l.result) + '<small>' + cwEsc(l.why || '') + '</small></td></tr>'; }).join('') || oTableEmptyRow(5, 'No runs yet.');
   const last = '<section class="o-card o-card--flush"><div class="o-card__head" style="padding:0 20px"><h2 class="o-card__title">Last 10 runs</h2></div><div class="o-table-wrap"><table class="o-table" style="min-width:640px"><thead><tr><th>When</th><th>Person</th><th>Workflow</th><th>Step</th><th>Result</th></tr></thead><tbody>' + runRows + '</tbody></table></div></section>';
   return approvals + signals + last + cwMyPrefs(id);
 }
@@ -43478,7 +43912,7 @@ function cwActivity(id){
     '<select class="app-input app-select" style="width:150px" aria-label="Status" onchange="cwAct.status = this.value; cwRefresh()"><option value="">Any status</option>' + ['sent','skipped','held','failed','stopped','waiting','finished'].map(function(s){ return '<option value="' + s + '"' + (cwAct.status === s ? ' selected' : '') + '>' + s.charAt(0).toUpperCase() + s.slice(1) + '</option>'; }).join('') + '</select>' +
     '<input class="app-input" style="width:180px" type="search" placeholder="Person" aria-label="Person" value="' + cwEsc(cwAct.person) + '" onchange="cwAct.person = this.value; cwRefresh()" />' +
     '<span style="margin-left:auto;display:flex;gap:8px">' + sBtn('Export CSV', 'cwExportCsv(\'' + id + '\')') + (sCan('kairo','Configure') || sCan('kairo','Use agents') ? sBtn('Run engine', 'cwRunEngine()', 'primary') : '') + '</span></div>';
-  const body = rows.slice(0, 80).map(function(x){ return '<tr style="cursor:pointer" onclick="cwOpenRun(\'' + x.run.id + '\')"><td>' + cwFmtTime(x.at) + '</td><td><b>' + cwEsc(x.run.name) + '</b></td><td>' + cwEsc(x.wf.name) + '</td><td>' + cwEsc(x.step) + '</td><td>' + oBadge(CW_RESULT_TONE[String(x.result).split(' ')[0]] || 'neutral', x.result) + '</td><td style="white-space:normal;max-width:380px">' + cwEsc(x.why) + '</td></tr>'; }).join('') || oTableEmptyRow(6, 'Nothing matches. Run the engine or clear the filters.');
+  const body = rows.slice(0, 80).map(function(x){ return '<tr style="cursor:pointer" onclick="cwOpenRun(\'' + x.run.id + '\')"><td>' + cwFmtTime(x.at) + '</td><td><b>' + cwEsc(x.run.name) + '</b></td><td>' + cwEsc(x.wf.name) + '</td><td>' + cwEsc(x.step) + '</td><td>' + cwStateBadge(x.result) + '</td><td style="white-space:normal;max-width:380px">' + cwEsc(x.why) + '</td></tr>'; }).join('') || oTableEmptyRow(6, 'Nothing matches. Run the engine or clear the filters.');
   return '<section class="o-card o-card--flush"><div class="o-card__head" style="padding:0 20px"><div><h2 class="o-card__title">Activity</h2><p class="o-card__sub">' + rows.length + ' log lines · every send and skip, with its reason. Engine time ' + cwFmtTime(cwNow()) + '.</p></div></div><div style="padding:0 20px 12px">' + filters + '</div>' +
     '<div class="o-table-wrap"><table class="o-table" style="min-width:820px"><thead><tr><th>When</th><th>Person</th><th>Workflow</th><th>Step</th><th>Result</th><th>Why</th></tr></thead><tbody>' + body + '</tbody></table></div></section>';
 }
@@ -65203,6 +65637,7 @@ function cfScopeHTML(){
   function hashFor(e){ return '#/app/' + encodeURIComponent(e.view) + (e.args && e.args.length ? '/' + encodeURIComponent(String(e.args[0])) : ''); }
   function sameEntry(a, b){ return !!a && !!b && a.view === b.view && a.fn === b.fn && JSON.stringify(a.args || []) === JSON.stringify(b.args || []); }
   function syncBack(){
+    if(NAVH.onRecord && NAVH.cur) try { NAVH.onRecord(NAVH.cur); } catch(e){}   // reload-return remembers the place (reload-return-script)
     const b = document.getElementById('topbar-back-btn'); if(!b) return;
     const show = NAVH.idx > 0 || (typeof navHistory !== 'undefined' && navHistory.length > 0);
     b.classList.toggle('hidden', !show); b.classList.toggle('flex', show);
@@ -65436,6 +65871,8 @@ function cfScopeHTML(){
 @media (prefers-reduced-motion:reduce){ .ais__pulse{ animation:none; opacity:1; } }
 .iq-work__h .ais{ margin-left:8px; }
 .kc-state{ display:flex; justify-content:flex-start; }
+/* Responsive (package 8): the closed Signals panel waits just off-screen; clip it so it never widens the page on narrower screens. */
+#iq{ overflow-x:clip; }
 </style>
 <script id="ai-state-script">
 /* ============================================================
@@ -65480,6 +65917,13 @@ function cfScopeHTML(){
     return '<span class="ais ais--' + d.tone + '" data-ai-state="' + state + '"' + tip + '>' + ic + '<span>' + d.label + '</span>' + (detail ? '<span class="kx-sr">: ' + escapeHtml(String(detail)) + '</span>' : '') + '</span>';
   };
 
+  /** Cowork activity: the shared state first, then Cowork's own word when it adds something ("Done · Sent"). */
+  window.cwStateBadge = function(result){
+    const raw = String(result == null || result === '' ? '' : result), st = oAiStateOf('cowork', raw.split(' ')[0]), d = AI_STATES[st];
+    const extra = raw && raw.toLowerCase() !== d.label.toLowerCase() ? ' · ' + raw : (raw ? '' : ' · —');
+    const ic = d.icon === 'pulse' ? '<span class="ais__pulse" aria-hidden="true"></span>' : d.icon ? icon(d.icon, 'w-3 h-3') : '';
+    return '<span class="ais ais--' + d.tone + '" data-ai-state="' + st + '">' + ic + '<span>' + d.label + escapeHtml(extra) + '</span></span>';
+  };
   // Intelligence: the working card carries the state next to its own summary ("Kairo worked through 3 steps").
   if(typeof iqStatusHTML === 'function'){
     const ish = iqStatusHTML;
@@ -65587,6 +66031,182 @@ function cfScopeHTML(){
     p.classList.remove('fade-slide-enter');
     if(kcJustOpened) oMotion(p, 'om-focus');
   }
+})();
+</script>
+<style id="ofi-controls-style">
+/* ============================================================
+   OFI CONTROL STATES (package 5, 2026-11-24). Shared fallbacks for focus, disabled and busy, written with :where()
+   (zero specificity) so every component's own approved styling still wins; they only fill gaps.
+   Also applies the three remaining motion families: Gentle correction (fields settle their colour, no shake),
+   Confident completion (the toast's tick lands), Progress thread (Home pipeline bars draw in, together, no stagger).
+============================================================ */
+:where(#app, #kairo-chat-root, #toast-container) :where(button, a[href], input, select, textarea, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible{
+  outline:2px solid var(--focus-ring, #2F64D6); outline-offset:2px;
+}
+:where(#app, #kairo-chat-root) :where(button:disabled, [aria-disabled="true"]){ cursor:not-allowed; opacity:.55; }
+/* Busy: the control says it is working, cannot be pressed twice, and keeps its size (no layout jump). */
+:where(#app, #kairo-chat-root) :where(button[aria-busy="true"]){ position:relative; pointer-events:none; cursor:progress; }
+:where(#app, #kairo-chat-root) :where(button[aria-busy="true"]) > *{ visibility:hidden; }
+:where(#app, #kairo-chat-root) :where(button[aria-busy="true"])::after{
+  content:""; position:absolute; inset:0; margin:auto; width:14px; height:14px; border-radius:50%;
+  border:2px solid currentColor; border-right-color:transparent; animation:ofi-spin .8s linear infinite;
+}
+@keyframes ofi-spin{ to{ transform:rotate(360deg); } }
+/* Gentle correction: fields move into and out of an error state by colour only. */
+:where(#app) :where(input, select, textarea){ transition:border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard); }
+/* Confident completion: the toast's tick lands. */
+.app-toast__icon{ animation:om-complete var(--motion-base) var(--ease-enter) both; }
+/* Progress thread: the Home pipeline bars draw from the left, all together. */
+.bh-stage__bar{ transform-origin:0 50%; animation:om-thread var(--motion-slow) var(--ease-standard) both; }
+@media (prefers-reduced-motion:reduce){
+  .app-toast__icon, .bh-stage__bar{ animation:none; }
+  :where(#app, #kairo-chat-root) :where(button[aria-busy="true"])::after{ animation:none; border-right-color:currentColor; opacity:.6; }
+}
+</style>
+<script id="ofi-controls-script">
+/* oBusy(button, on): a button that started work shows it and cannot be pressed twice; its label stays for screen readers. */
+(function(){
+  window.oBusy = function(btn, on){
+    if(!btn) return;
+    if(on){ btn.setAttribute('aria-busy', 'true'); btn.setAttribute('aria-disabled', 'true'); }
+    else { btn.removeAttribute('aria-busy'); btn.removeAttribute('aria-disabled'); }
+  };
+  // Kairo chat: while Kairo answers, Send is busy, so the same request is never sent twice.
+  const rk = window.renderKairoChat;
+  renderKairoChat = window.renderKairoChat = function(){
+    const out = rk.apply(this, arguments);
+    const b = document.querySelector('#kairo-chat-panel form button[type="submit"]');
+    if(b) oBusy(b, !!(typeof kairoChatTyping !== 'undefined' && kairoChatTyping));
+    return out;
+  };
+  // A guard for the same case from the keyboard (Enter on the input while busy).
+  const sk = window.sendKairoChatMessage;
+  sendKairoChatMessage = window.sendKairoChatMessage = function(e){ if(typeof kairoChatTyping !== 'undefined' && kairoChatTyping){ if(e) e.preventDefault(); return; } return sk.apply(this, arguments); };
+})();
+</script>
+<style id="pipeline-move-style">
+/* Pipeline: a keyboard way to move a candidate, and undo (package 6, 2026-11-24) */
+.lu-card{ position:relative; outline:none; }
+.lu-card:focus-visible{ box-shadow:0 0 0 2px var(--focus-ring, #2F64D6); }
+.lu-move{ position:absolute; right:6px; top:6px; height:22px; padding:0 7px; border-radius:6px; font-size:11px; font-weight:500; color:var(--text-2, #3A475C); background:#FFFFFF; box-shadow:inset 0 0 0 1px var(--line, #E8EBF0); opacity:0; transition:opacity var(--motion-fast) var(--ease-standard); }
+.lu-card:hover .lu-move, .lu-card:focus-within .lu-move, .lu-move:focus-visible{ opacity:1; }
+@media (hover:none){ .lu-move{ opacity:1; } }
+.lu-menu{ position:fixed; z-index:140; min-width:180px; padding:4px; border-radius:12px; background:#FFFFFF; box-shadow:0 0 0 1px var(--line, #E8EBF0), 0 12px 32px -12px rgba(11,31,59,.28); animation:om-arrival var(--motion-base) var(--ease-enter) both; }
+.lu-menu p{ margin:4px 8px 6px; font-size:11px; font-weight:600; color:var(--text-3, #6B778C); }
+.lu-menu button{ display:block; width:100%; height:32px; padding:0 10px; border-radius:8px; font-size:13px; text-align:left; color:var(--text-1, #0B1F3B); }
+.lu-menu button:hover, .lu-menu button:focus-visible{ background:var(--bg-subtle, #F6F7F9); outline:none; }
+@media (prefers-reduced-motion:reduce){ .lu-menu{ animation:none; } }
+</style>
+<script id="pipeline-move-script">
+/* ============================================================
+   PIPELINE MOVES (package 6). One move path for drag, the Move menu and the keyboard, with the same guards as
+   drag-and-drop (only the drag stages; later stages are reached through their real action) and an Undo on every move.
+   Keyboard: focus a card (Tab), Alt+→ / Alt+← moves it one drag stage, Enter opens the candidate, the Move button opens
+   a menu of allowed stages (arrow keys, Enter, Escape).
+============================================================ */
+(function(){
+  const esc = function(s){ return escapeHtml(String(s == null ? '' : s)); };
+  const label = function(s){ return (LINEUP_STAGE_LABELS && LINEUP_STAGE_LABELS[s]) || s; };
+  function subById(id){ return SUBMISSIONS.find(function(s){ return String(s.id) === String(id); }) || null; }
+  function focusCard(id){ setTimeout(function(){ const el = document.querySelector('[data-lu-card="' + id + '"]'); if(el) el.focus({ preventScroll:false }); }, 0); }
+
+  /** The one move: guards, the real stage change, a toast with Undo. Returns { ok, reason }. */
+  window.luMove = function(subId, target, via){
+    const sub = subById(subId); if(!sub) return { ok:false, reason:'That candidate is no longer on this job.' };
+    if(LINEUP_DRAGGABLE_STAGES.indexOf(target) === -1){ toast('This stage is reached through its real action, not a quick move.'); return { ok:false, reason:'guarded stage' }; }
+    if(LINEUP_DRAGGABLE_STAGES.indexOf(sub.stage) === -1){ toast('This candidate is past the stage where quick moves apply.'); return { ok:false, reason:'past drag stages' }; }
+    if(sub.stage === target) return { ok:false, reason:'same stage' };
+    const prev = sub.stage;
+    moveSubmissionStage(sub.id, target, via || 'Moved on the board');
+    refreshLineupTable(); focusCard(sub.id);
+    toast('Moved to ' + label(target), { undo:function(){
+      const s = subById(subId); if(!s || s.stage !== target) return;
+      moveSubmissionStage(s.id, prev, 'Undo: moved back to ' + label(prev));
+      refreshLineupTable(); focusCard(s.id); toast('Moved back to ' + label(prev));
+    } });
+    return { ok:true };
+  };
+  // Drag-and-drop now goes through the same path (and so gets Undo).
+  handleLineupDrop = window.handleLineupDrop = function(evt, targetStage){
+    evt.preventDefault();
+    if(!lineupDragCandidateId || !lineupDragJobId) return;
+    const sub = findSubmission(lineupDragJobId, lineupDragCandidateId);
+    lineupDragCandidateId = null; lineupDragJobId = null;
+    if(sub) luMove(sub.id, targetStage, 'Moved via board drag-and-drop');
+  };
+  window.luKey = function(e, subId){
+    const sub = subById(subId); if(!sub) return;
+    if(e.key === 'Enter' && e.target === e.currentTarget){ e.preventDefault(); openCandidate(sub.candidateId); return; }
+    if(!e.altKey || (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft')) return;
+    e.preventDefault();
+    const i = LINEUP_DRAGGABLE_STAGES.indexOf(sub.stage), j = i + (e.key === 'ArrowRight' ? 1 : -1);
+    if(i === -1 || j < 0 || j >= LINEUP_DRAGGABLE_STAGES.length){ toast(i === -1 ? 'This candidate is past the stage where quick moves apply.' : 'No further quick move this way.'); return; }
+    luMove(subId, LINEUP_DRAGGABLE_STAGES[j], 'Moved with the keyboard');
+  };
+  function closeMenu(){ const m = document.getElementById('lu-menu'); if(m) m.remove(); document.removeEventListener('mousedown', outside, true); }
+  function outside(e){ if(!e.target.closest('#lu-menu')) closeMenu(); }
+  window.luMenu = function(subId, btn){
+    closeMenu(); const sub = subById(subId); if(!sub) return;
+    const opts = LINEUP_DRAGGABLE_STAGES.filter(function(s){ return s !== sub.stage; });
+    const r = btn.getBoundingClientRect(), m = document.createElement('div');
+    m.id = 'lu-menu'; m.className = 'lu-menu'; m.setAttribute('role', 'menu'); m.setAttribute('aria-label', 'Move to stage');
+    m.innerHTML = '<p>Move to</p>' + opts.map(function(s){ return '<button type="button" role="menuitem" data-lu-to="' + esc(s) + '">' + esc(label(s)) + '</button>'; }).join('');
+    m.style.top = Math.round(Math.min(r.bottom + 4, innerHeight - 40 * (opts.length + 1))) + 'px'; m.style.left = Math.round(Math.max(8, Math.min(r.right - 180, innerWidth - 188))) + 'px';
+    document.body.appendChild(m);
+    m.addEventListener('click', function(e){ const b = e.target.closest('[data-lu-to]'); if(!b) return; closeMenu(); luMove(subId, b.getAttribute('data-lu-to'), 'Moved with the Move menu'); });
+    m.addEventListener('keydown', function(e){
+      const items = [].slice.call(m.querySelectorAll('[role=menuitem]')), k = items.indexOf(document.activeElement);
+      if(e.key === 'ArrowDown'){ e.preventDefault(); items[(k + 1) % items.length].focus(); }
+      else if(e.key === 'ArrowUp'){ e.preventDefault(); items[(k - 1 + items.length) % items.length].focus(); }
+      else if(e.key === 'Escape'){ e.preventDefault(); closeMenu(); btn.focus(); }
+    });
+    setTimeout(function(){ document.addEventListener('mousedown', outside, true); const f = m.querySelector('[role=menuitem]'); if(f) f.focus(); }, 0);
+  };
+  // Cards on drag stages become focusable, describe themselves, and carry a Move button.
+  const card = lineupBoardCardHTMLCorp;
+  lineupBoardCardHTMLCorp = window.lineupBoardCardHTMLCorp = function(c, e, draggable){
+    let h = card.apply(this, arguments);
+    if(!draggable) return h;
+    const sub = findSubmission(e.jobId, c.id); if(!sub) return h;
+    h = h.replace('<div class="bg-white rounded-xl', '<div data-lu-card="' + esc(sub.id) + '" tabindex="0" aria-label="' + esc(c.name + ', ' + label(sub.stage) + '. Enter opens the profile; Alt and an arrow key move between stages.') + '" onkeydown="luKey(event, \'' + esc(sub.id) + '\')" class="lu-card bg-white rounded-xl');
+    return h.replace(/<\/div>$/, '<button type="button" class="lu-move" aria-haspopup="menu" aria-label="Move ' + esc(c.name) + ' to another stage" onclick="event.stopPropagation(); luMenu(\'' + esc(sub.id) + '\', this)" onkeydown="event.stopPropagation()">Move</button></div>');
+  };
+})();
+</script>
+<script id="reload-return-script">
+/* ============================================================
+   RELOAD RETURN (OFI · Flow, 2026-11-24). A reload still opens Sign in (the user's 20 Nov rule). After signing in
+   again, Oontu returns to the screen or record you were on, once, if it is the same person, workspace and role.
+   The place is kept in this tab's sessionStorage only (never across tabs or after closing the tab); a fresh visit
+   or a different person starts on Home as usual.
+============================================================ */
+(function(){
+  const KEY = 'oontu.lastPlace';
+  let pending = null;
+  function isReload(){
+    try { const n = performance.getEntriesByType && performance.getEntriesByType('navigation')[0]; if(n) return n.type === 'reload'; } catch(e){}
+    try { return performance.navigation && performance.navigation.type === 1; } catch(e){ return false; }
+  }
+  try { if(isReload()) pending = JSON.parse(sessionStorage.getItem(KEY) || 'null'); sessionStorage.removeItem(KEY); } catch(e){ pending = null; }
+  function who(){ const s = typeof authAppSession !== 'undefined' && authAppSession ? authAppSession : {}; return { email:String(s.email || ''), ws:String(s.workspaceId || ''), role:String(state.role || '') }; }
+  function same(a, b){ return !!a && !!b && a.email === b.email && a.ws === b.ws && a.role === b.role; }
+  if(window.NAVH) NAVH.onRecord = function(cur){
+    try { sessionStorage.setItem(KEY, JSON.stringify({ entry:{ kind:cur.kind, view:cur.view, nav:cur.nav || null, fn:cur.fn || null, args:cur.args || [] }, who:who(), at:Date.now() })); } catch(e){}
+  };
+  const ea = window.enterApp;
+  enterApp = window.enterApp = function(){
+    const out = ea.apply(this, arguments);
+    const p = pending; pending = null;
+    if(p && p.entry && same(p.who, who())){
+      try {
+        const e = p.entry;
+        if(e.kind === 'record' && /^(openJob|openCandidate|openClientDetail)$/.test(e.fn) && typeof window[e.fn] === 'function'){ window[e.fn].apply(window, e.args || []); toast('Back where you were.'); }
+        else if(e.kind === 'view' && typeof RENDERERS !== 'undefined' && RENDERERS[e.view] && e.view !== homeForMe()){ showView(e.view, e.nav || undefined); toast('Back where you were.'); }
+      } catch(err){ console.error('reload return', err); }
+    }
+    return out;
+  };
+  window.oontuReloadReturn = { pending:function(){ return pending; }, _setPending:function(p){ pending = p; } };   // test hook
 })();
 </script>
 </body>

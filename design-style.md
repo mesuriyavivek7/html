@@ -1022,3 +1022,9 @@ Copied from `redesign/balanced-2-0` as the reference spec for this branch. The b
 - **Navigation history:** Back and Forward move between screens and records (`<script id="nav-history-script">`, `tests/nav-history.spec.js`).
 - **Kairo context:** the chat shows what Kairo is working on and keeps one conversation per context (`kairo-context-script`, `tests/kairo-context.spec.js`).
 - **AI states:** one vocabulary for every AI surface: Ready, Working, Waiting, Done, Failed, Needs your confirmation, Partly done (`ai-state-script`, `tests/ai-states.spec.js`).
+- **Control states** (package 5): shared `:where()` fallbacks for focus ring (`--focus-ring`), disabled and busy (`oBusy(button, on)`), in `ofi-controls-style/script`. Gentle correction, Confident completion (toast tick) and Progress thread (Home stage bars) are applied there.
+- **Pipeline moves** (package 6): the corporate board's drag-and-drop has a keyboard equivalent (Alt+←/→ on a focused card, a Move menu) through one move path with Undo (`pipeline-move-script`, `tests/pipeline-move.spec.js`).
+- **JD reader** (package 7): the real reader from `jaydeep-changes` (PDF, DOCX, DOC, TXT; only what the JD says; "Not in the JD"), the intake card and the numbered step bar (`tests/jd-reader.spec.js`).
+- **Accessibility and responsive** (package 8): named controls and labelled fields on the main screens, no sideways page scroll at 1440/1024/768, the closed Intelligence Signals panel clipped (`tests/a11y-responsive.spec.js`).
+- **Reload return:** a reload still opens Sign in; after signing in again Oontu returns to the last screen or record once, for the same person, workspace and role (`reload-return-script`).
+- **Cowork labels:** activity results show the shared AI state first, then Cowork's own word ("Done · Sent").
