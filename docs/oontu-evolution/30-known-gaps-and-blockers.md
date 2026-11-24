@@ -4,7 +4,7 @@
 
 | ID | Blocker | Effect | What unblocks it |
 |---|---|---|---|
-| **B-1** · RESOLVED 24 Nov (no-admin Node 26 + PostgreSQL 18 in %LOCALAPPDATA%oontu-dev; D-1 = TypeScript/Node/PostgreSQL) | Was: no server toolchain on this machine and stack decision D-1 open | Every server milestone (J0–J10): persistence, tenant isolation, server-side authorisation, migrations, real identity, background jobs | Your decision on D-1 plus permission to install a runtime and PostgreSQL locally, **or** a provided dev container / remote development environment |
+| **B-1** · RESOLVED 24 Nov (no-admin Node 26 + PostgreSQL 18 in `%LOCALAPPDATA%\oontu-dev`; D-1 = TypeScript/Node/PostgreSQL) | Was: no server toolchain on this machine and stack decision D-1 open | Every server milestone (J0–J10): persistence, tenant isolation, server-side authorisation, migrations, real identity, background jobs | Your decision on D-1 plus permission to install a runtime and PostgreSQL locally, **or** a provided dev container / remote development environment |
 | B-2 | No email provider account | Codes, owner and team invitations cannot be delivered for real | A transactional email provider account (sandbox is enough for staging) |
 | B-3 | No object storage | Real resume/document handling | A storage bucket (or local equivalent in the dev environment) |
 | B-4 | No model provider credentials and no processor agreement | Kairo/Intelligence/AI Workforce stay deterministic (honestly labelled) | Provider choice, keys in a secret store, a DPA |
