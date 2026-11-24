@@ -228,7 +228,7 @@
     await t('K11: Settings › Security & audit › Audit log ends with the fairness report', async function(){
       demoAct(demoOwnerOf().id); showView('settings'); sGo('audit'); await sleep(30);
       var mc = document.getElementById('main-content'), fr = mc.querySelector('#fairness-report'), log = [].find.call(mc.querySelectorAll('table'), function(tb){ return /Module/.test(tb.textContent) && /Action/.test(tb.textContent); });
-      ok(fr && /FAIRNESS AND AI USE/.test(fr.textContent) && /BY CANDIDATE CITY/.test(fr.textContent), 'the fairness report is on the Audit log tab');
+      ok(fr && /FAIRNESS AND HOW KAIRO DECIDES/.test(fr.textContent) && /BY CANDIDATE CITY/.test(fr.textContent), 'the fairness report is on the Audit log tab');
       ok(log && (log.compareDocumentPosition(fr) & Node.DOCUMENT_POSITION_FOLLOWING), 'it sits under the audit log');
       var rec = RECRUITER_ROSTER.find(function(u){ return roleOf(u) === 'Recruiter' && !roleHasPermission(u.assignedRoleId, 'security', 'View Audit Log'); });
       if(rec){ demoAct(rec.id); showView('settings'); sGo('audit'); await sleep(30); ok(!document.querySelector('#main-content #fairness-report'), 'not for someone without View Audit Log'); }

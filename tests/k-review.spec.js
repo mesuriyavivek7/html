@@ -78,9 +78,10 @@
       ['Response Probability (%) · indicative, typed in', 'Counter-Offer Risk (%) · indicative, typed in'].forEach(function(l){ ok(WF_CONDITION_FIELDS.some(function(f){ return f.label === l; }), 'workflow field: ' + l); });
     });
 
-    await t('K5 the corporate demo menu loads without a page error and offers the corporate demo workspace', async function(){
+    await t('K5 the corporate demo menu loads without a page error and offers the corporate switch', async function(){
       ok(!(window.__bootErrors || []).some(function(e){ return /insertBefore/.test(e); }), 'no insertBefore error at load: ' + (window.__bootErrors || []).join(' | '));
-      var m = document.getElementById('co-menu-demo'); ok(m && /Try other journeys/.test(m.textContent) && /Corporate demo workspace/.test(m.textContent), 'the menu has “Try other journeys” › Corporate demo workspace');
+      // the old "Try other journeys › Corporate demo workspace" entry became Developer tools › Account type (Staffing | Corporate)
+      var m = document.getElementById('co-menu-demo'); ok(m && /Developer tools/.test(m.textContent) && m.querySelector('[data-acct="corporate"]') && m.parentNode && document.getElementById('role-menu').contains(m), 'the menu has Developer tools › Account type › Corporate');
     });
 
     await t('K6 one source: sign-up answers write the Settings switches; the old profile fields are gone', async function(){

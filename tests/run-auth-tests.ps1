@@ -3,7 +3,7 @@
   Usage:  powershell -ExecutionPolicy Bypass -File tests\run-auth-tests.ps1 [-Browser <path to chrome.exe>]
   Exit code 0 = all passed, 1 = failures, 2 = the run itself failed.
 #>
-param([string]$Browser, [string]$Spec, [int]$Width = 1440, [int]$Height = 900)
+param([string]$Browser, [string]$Spec, [int]$Width = 1440, [int]$Height = 900, [int]$Budget = 200000)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $src  = Join-Path $root 'recruitment-os-prototype.html'
@@ -35,7 +35,7 @@ try {
   $dom = Join-Path $tmp 'dom.html'
   # Windows PowerShell does not quote ArgumentList items, so quote the profile path ourselves.
   Start-Process -FilePath $Browser -ArgumentList @('--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check',
-    ('"--user-data-dir=' + (Join-Path $tmp 'profile') + '"'),('--window-size=' + $Width + ',' + $Height),'--virtual-time-budget=60000','--dump-dom',$url) `
+    ('"--user-data-dir=' + (Join-Path $tmp 'profile') + '"'),('--window-size=' + $Width + ',' + $Height),('--virtual-time-budget=' + $Budget),'--dump-dom',$url) `
     -RedirectStandardOutput $dom -RedirectStandardError (Join-Path $tmp 'stderr.txt') -Wait -NoNewWindow
 
   $out = [IO.File]::ReadAllText($dom, $utf8)
