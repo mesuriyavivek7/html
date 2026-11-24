@@ -51403,7 +51403,7 @@ window.ptRaiseInvoice = function(id){
   const wasHeld = !!r.invoice.hold, hold = ptCheckHold(r); if(!hold && wasHeld) ptFreeze(r);   // fixed: freeze again, the held draft was never valid
   if(hold){ ptAudit('Invoice held', r, hold); toast(hold + '. The invoice stays on hold.'); ptRefresh(); return false; }
   const c = ptClientOf(r), loc = ptLocOf(r), t = ptToday(), days = ptTerms(r).paymentDays != null ? ptTerms(r).paymentDays : 30, to = c ? clientRoute(c, 'Invoices', loc && loc.id) : [];
-  Object.assign(r.invoice, { no:ptNextNo('INV'), state:'Raised', raisedAt:ptIso(t), raisedBy:ptMe(), dueAt:ptDueIso(t, days), sentTo:to.map(function(p){ return p.name; }) });
+  Object.assign(r.invoice, { no:ptNextNo('INV', r), state:'Raised', raisedAt:ptIso(t), raisedBy:ptMe(), dueAt:ptDueIso(t, days), sentTo:to.map(function(p){ return p.name; }) });
   r.invoiceNo = r.invoice.no; r.invoiceStatus = 'Raised'; r.invoiceHold = '';
   if(c) clientActivity(c, 'Invoice ' + r.invoice.no + ' for ' + r.name + ' sent to ' + (r.invoice.sentTo.join(', ') || 'the main contact'));
   ptAudit('Invoice raised', r, r.invoice.no + ' · ' + ptRupees(ptInvoiceTotal(r)) + ' · sent to ' + (r.invoice.sentTo.join(', ') || 'the main contact') + ' · due ' + ptDay(r.invoice.dueAt) + ' · by ' + ptMe());
@@ -51484,7 +51484,7 @@ function ptOnCreditDecided(req, decision, reason){
   if(decision !== 'Approved'){ r.credit.state = 'Rejected'; r.credit.decisionReason = reason || ''; ptAudit('Credit note refused', r, reason || 'no reason given'); return; }
   r.credit.state = 'Approved';
   if(r.invoice && r.invoice.no){
-    const no = ptNextNo('CN'); r.invoice.credits.push({ no:no, amount:r.credit.amount, at:ptIso(ptToday()), against:r.invoice.no, by:ptMe() }); r.credit.noteNo = no;
+    const no = ptNextNo('CN', r); r.invoice.credits.push({ no:no, amount:r.credit.amount, at:ptIso(ptToday()), against:r.invoice.no, by:ptMe() }); r.credit.noteNo = no;
     if(ptAmountDue(r) <= 0){ r.paymentStatus = 'Received'; r.invoiceStatus = 'Paid'; }
     const c = ptClientOf(r); if(c) clientActivity(c, 'Credit note ' + no + ' issued against ' + r.invoice.no);
     ptAudit('Credit note issued', r, no + ' · ' + ptRupees(r.credit.amount) + ' against ' + r.invoice.no);
@@ -51625,7 +51625,7 @@ function ptSweep(){
     teamManager:ptTeamManagerFor('Priya Sharma'), department:'Recruitment Delivery', doj:ptFmtDate(doj), dojIso:ptLocalDay(doj), joiningSalary:22, replacementDays:90, notes:[], invoiceStatus:'Not Raised', paymentStatus:'Pending', demoThisMonth:true };
   try { clientEnsure(c); const loc = clBillingLocations(c)[0], f = clientFee(c, loc.id, 2200000, doj.getTime()); Object.assign(r, { locationId:loc.id, termsVersion:f.version, feeAmount:f.fee, feeCurrency:f.currency, placementFee:+(f.fee / 100000).toFixed(2), feeLine:f.line }); } catch(e){ return; }
   r.m8 = true; PAYTRACK_JOINED.push(r); ptCheckLockinCompletions();
-  r.invoice = { no:ptNextNo('INV'), state:'Paid', draftAt:ptIso(doj), hold:'', payments:[], credits:[], reminders:[], raisedAt:ptIso(doj), raisedBy:'Priya Sharma', dueAt:ptIso(new Date(doj.getTime() + 30 * PT_DAY)), sentTo:[] };
+  r.invoice = { no:ptNextNo('INV', r), state:'Paid', draftAt:ptIso(doj), hold:'', payments:[], credits:[], reminders:[], raisedAt:ptIso(doj), raisedBy:'Priya Sharma', dueAt:ptIso(new Date(doj.getTime() + 30 * PT_DAY)), sentTo:[] };
   ptFreeze(r); r.invoice.payments.push({ at:ptIso(t), amount:ptInvoiceTotal(r), by:'Priya Sharma', ref:'Demo' }); r.invoiceNo = r.invoice.no; r.invoiceStatus = 'Paid'; r.paymentStatus = 'Received';
   ptMakeCommission(r); if(PAYTRACK_COMPLETED.indexOf(r) > -1){ r.completedDate = ptFmtDate(t); r.completedDateIso = ptLocalDay(t); }
 })();
@@ -52207,7 +52207,7 @@ function asContractsViewHTML(){
     ASSIGNMENTS.push(a); sb.assignmentId = a.id;
     [w1, w2].forEach(function(w){ const r = asSubmitWeek(a, w, [1,1,1,1,1,0,0], { by:a.workerName }); if(r.ok) ctDecide(r.sheet, true, '', a.approver.name, w + 9 * AS_D); });
     const built = asBuildInvoiceCore(a, month); if(!built.ok) return; const h = built.invoice, raised = new Date(asMonthBounds(month).t + 2 * AS_D);
-    Object.assign(h.invoice, { no:ptNextNo('INV'), state:'Raised', raisedAt:ptIso(raised), raisedBy:owner.name, dueAt:ptDueIso(raised, t.paymentDays || 30), sentTo:[a.approver.name] });
+    Object.assign(h.invoice, { no:ptNextNo('INV', h), state:'Raised', raisedAt:ptIso(raised), raisedBy:owner.name, dueAt:ptDueIso(raised, t.paymentDays || 30), sentTo:[a.approver.name] });
     h.invoiceNo = h.invoice.no; h.invoiceStatus = 'Raised'; const part = Math.round(ptInvoiceTotal(h) / 2); h.invoice.payments.push({ at:ptIso(new Date(raised.getTime() + 5 * AS_D)), amount:part, by:owner.name, ref:'Demo' }); h.invoice.state = 'Part paid'; h.paymentStatus = 'Part paid';
   } catch(e){ console.error('assignment seed', e); }
 })();
@@ -62536,5 +62536,433 @@ function pfCompact(){ const h = document.getElementById('pf-head'), main = docum
   document.addEventListener('scroll', function(e){ if(e.target && e.target.id === 'main-content' && document.getElementById('pf-head')) pfCompact(); }, true);
 })();
 </script>
+<style id="company-style">
+/* ============================================================
+   COMPANIES, TAX REGISTRATIONS AND UNITS (2026-11-23, approved).
+   One quiet card for most tenants; more only when the business really has it. Drawers 16 px from the right.
+============================================================ */
+.cf-card{ padding:20px 22px; }
+.cf-h{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 12px; }
+.cf-h h2{ margin:0; font-size:15px; line-height:22px; font-weight:600; color:var(--text-1); display:flex; align-items:center; gap:8px; }
+.cf-h small{ font-size:12px; color:var(--text-3); }
+.cf-name{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:16px; line-height:22px; font-weight:600; color:var(--text-1); }
+.cf-ok{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:500; color:#0F7A58; }
+.cf-ok::before{ content:""; width:6px; height:6px; border-radius:50%; background:#10B981; }
+.cf-tag{ display:inline-flex; align-items:center; height:20px; padding:0 8px; border-radius:999px; background:var(--bg-subtle); font-size:11px; font-weight:600; color:var(--text-2); letter-spacing:.02em; }
+.cf-line{ margin:4px 0 0; font-size:13.5px; line-height:20px; color:var(--text-2); }
+.cf-line b{ color:var(--text-1); font-weight:500; }
+.cf-sep{ height:1px; background:var(--line); margin:14px 0; }
+.cf-foot{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+.cf-link{ border:0; background:none; padding:0; font:600 13px var(--font); color:var(--text-1); cursor:pointer; }
+.cf-link:hover{ text-decoration:underline; text-underline-offset:3px; }
+.cf-quiet{ color:var(--text-3); font-weight:500; }
+.cf-ent{ display:flex; align-items:center; gap:14px; width:100%; padding:14px 16px; border:1px solid var(--line); border-radius:14px; background:#fff; text-align:left; cursor:pointer; transition:border-color var(--motion-fast) var(--ease-standard); }
+.cf-ent + .cf-ent{ margin-top:10px; }
+.cf-ent:hover{ border-color:var(--line-strong); }
+.cf-ent__t{ flex:1 1 auto; min-width:0; }
+.cf-ent__t b{ display:flex; align-items:center; gap:8px; font-size:14.5px; line-height:20px; font-weight:600; color:var(--text-1); }
+.cf-ent__t span{ display:block; margin-top:2px; font-size:13px; line-height:18px; color:var(--text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cf-flag{ flex:none; width:34px; height:34px; border-radius:10px; background:var(--bg-subtle); display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--text-2); letter-spacing:.04em; }
+.cf-regs{ list-style:none; margin:10px 0 0; padding:0; }
+.cf-regs li{ display:flex; align-items:center; gap:10px; padding:8px 0; font-size:13px; line-height:18px; color:var(--text-2); }
+.cf-regs li + li{ border-top:1px solid var(--line); }
+.cf-regs li b{ color:var(--text-1); font-weight:500; font-variant-numeric:tabular-nums; }
+.cf-regs li .cf-link{ margin-left:auto; }
+.cf-ask{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:16px 18px; }
+.cf-ask p{ margin:0; flex:1 1 220px; font-size:14px; font-weight:600; color:var(--text-1); }
+.cf-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.cf-chip{ height:34px; padding:0 14px; border-radius:999px; border:1px solid var(--line); background:#fff; font:500 13px var(--font); color:var(--text-2); cursor:pointer; transition:border-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+.cf-chip:hover{ border-color:var(--line-strong); color:var(--text-1); }
+.cf-chip[aria-pressed="true"]{ background:var(--text-1); border-color:var(--text-1); color:#fff; }
+.cf-units{ list-style:none; margin:0; padding:0; }
+.cf-units li{ display:flex; align-items:center; gap:12px; padding:10px 0; }
+.cf-units li + li{ border-top:1px solid var(--line); }
+.cf-units__t{ flex:1 1 auto; min-width:0; font-size:14px; line-height:20px; color:var(--text-1); }
+.cf-units__t small{ display:block; font-size:12px; line-height:16px; color:var(--text-3); }
+.cf-x{ flex:none; width:28px; height:28px; border-radius:8px; border:0; background:none; color:var(--text-3); cursor:pointer; }
+.cf-x:hover{ background:var(--bg-subtle); color:var(--text-1); }
+.cf-nudge{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; margin-top:6px; padding:8px 12px; border-radius:10px; background:#FFF8EB; font-size:12.5px; line-height:18px; color:var(--text-1); }
+.cf-nudge::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--warn-dot, #E8A317); flex:none; }
+.cf-add{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.cf-add .app-input{ height:38px; }
+/* drawer */
+.cf-scrim{ position:fixed; inset:0; z-index:80; background:rgba(11,31,59,.18); animation:o-fade var(--motion-base) var(--ease-standard) both; }
+.cf-dr{ position:fixed; top:0; right:0; bottom:0; z-index:81; width:min(560px, 100vw); display:flex; flex-direction:column; background:#fff; box-shadow:-24px 0 60px -30px rgba(11,31,59,.35); animation:o-drawer-enter var(--motion-slow) var(--ease-enter) both; }
+.cf-dr__h{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:22px 24px 14px; border-bottom:1px solid var(--line); }
+.cf-dr__h h2{ margin:0; font-size:18px; line-height:24px; font-weight:600; color:var(--text-1); }
+.cf-dr__h p{ margin:4px 0 0; font-size:13px; line-height:19px; color:var(--text-3); }
+.cf-dr__b{ flex:1 1 auto; overflow-y:auto; padding:18px 24px 24px; display:flex; flex-direction:column; gap:14px; }
+.cf-dr__f{ display:flex; justify-content:flex-end; gap:8px; padding:14px 24px; border-top:1px solid var(--line); }
+.cf-f{ display:flex; flex-direction:column; gap:6px; }
+.cf-f > span{ font-size:12.5px; font-weight:500; color:var(--text-2); }
+.cf-f .app-input{ height:40px; }
+.cf-row{ display:flex; gap:8px; align-items:flex-end; }
+.cf-row > *{ flex:1 1 0; min-width:0; }
+.cf-row > .o-btn{ flex:none; height:40px; }
+.cf-err{ font-size:12.5px; color:var(--danger-fg, #B42318); }
+.cf-found{ padding:12px 14px; border-radius:12px; background:var(--bg-subtle); font-size:13px; line-height:19px; color:var(--text-1); }
+.cf-review{ padding:14px 16px; border-radius:14px; border:1px solid var(--line); font-size:13px; line-height:20px; color:var(--text-2); }
+.cf-review b{ color:var(--text-1); font-weight:500; }
+.cf-opt{ display:flex; flex-direction:column; gap:10px; }
+.cf-opt button{ display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:14px 16px; border:1px solid var(--line); border-radius:14px; background:#fff; text-align:left; cursor:pointer; transition:border-color var(--motion-fast) var(--ease-standard); }
+.cf-opt button:hover{ border-color:var(--line-strong); }
+.cf-opt b{ font-size:14.5px; font-weight:600; color:var(--text-1); }
+.cf-opt span{ font-size:13px; line-height:18px; color:var(--text-3); }
+details.cf-more summary{ list-style:none; cursor:pointer; font-size:13px; font-weight:600; color:var(--text-2); }
+details.cf-more summary::-webkit-details-marker{ display:none; }
+details.cf-more[open] summary{ margin-bottom:10px; }
+.cf-scope{ display:inline-flex; align-items:center; gap:8px; margin:0 0 12px; }
+.cf-scope select{ height:34px; }
+.cn-billfrom{ margin:6px 0 0; font-size:12.5px; color:var(--text-3); }
+.cl-billfrom{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; padding:12px 16px; margin-bottom:12px; border:1px solid var(--line); border-radius:14px; background:#fff; font-size:13px; color:var(--text-2); }
+.cl-billfrom b{ color:var(--text-1); font-weight:600; }
+.cl-billfrom select{ height:34px; width:auto; flex:0 1 440px; max-width:100%; }
+@media (max-width:760px){ .cf-dr{ width:100vw; } .cf-row{ flex-wrap:wrap; } }
+</style>
+<script id="company-script">
+/* ============================================================
+   COMPANIES, TAX REGISTRATIONS AND UNITS (2026-11-23, approved by the user)
+   Four layers: account → workspace (data) → company / legal entity (legal and tax) → unit (branch, team, department).
+   - A tax registration (an Indian GSTIN per state, …) belongs to a company; it is not a new company.
+   - The tenant's profile is worked out, not asked: Simple, Multi-location or Multi-company. One question appears only
+     when the signals can't tell; the profile also grows by itself when real work needs it.
+   - Single-company tenants never see "entity", "registration", "Bill from" or company filters.
+   - Billing: each client bills from a company + registration (picked automatically by the client's country and state,
+     changeable), the existing tax engine reads it, and each company numbers its own invoices.
+============================================================ */
+const CF = { dr:null, scope:'' };
+const CF_FY = { 'India':'Apr–Mar', 'United Kingdom':'Apr–Mar', 'New Zealand':'Apr–Mar', 'Japan':'Apr–Mar', 'Australia':'Jul–Jun', 'Pakistan':'Jul–Jun', 'Egypt':'Jul–Jun', 'Bangladesh':'Jul–Jun', 'Kenya':'Jul–Jun' };
+const CF_PER_STATE = { 'India':true };
+const CF_CITY_STATE = { ahmedabad:'Gujarat', surat:'Gujarat', vadodara:'Gujarat', rajkot:'Gujarat', mumbai:'Maharashtra', pune:'Maharashtra', thane:'Maharashtra', nagpur:'Maharashtra', bengaluru:'Karnataka', bangalore:'Karnataka', mysuru:'Karnataka',
+  delhi:'Delhi', 'new delhi':'Delhi', gurugram:'Haryana', gurgaon:'Haryana', noida:'Uttar Pradesh', lucknow:'Uttar Pradesh', hyderabad:'Telangana', chennai:'Tamil Nadu', coimbatore:'Tamil Nadu', kolkata:'West Bengal', kochi:'Kerala',
+  thiruvananthapuram:'Kerala', jaipur:'Rajasthan', indore:'Madhya Pradesh', bhopal:'Madhya Pradesh', chandigarh:'Chandigarh', bhubaneswar:'Odisha', guwahati:'Assam', patna:'Bihar', goa:'Goa', visakhapatnam:'Andhra Pradesh' };
+function cfE(s){ return escapeHtml(String(s == null ? '' : s)); }
+function cfIso(country){ return (ncCountryInfo(country) || {}).iso || String(country || '').slice(0, 2).toUpperCase(); }
+function cfCur(country){ return clCountryCur(country) || 'USD'; }
+function cfFy(country){ return CF_FY[country] || 'Jan–Dec'; }
+function cfRegion(country){ const iso = cfIso(country);
+  if(country === 'India') return 'India'; if(country === 'United Kingdom') return 'United Kingdom'; if(iso === 'US' || iso === 'CA') return 'United States';
+  if(typeof NC_EU_VAT !== 'undefined' && iso in NC_EU_VAT) return 'European Union'; if(['AE','SA','QA','KW','BH','OM'].indexOf(iso) > -1) return 'Middle East';
+  if(['AU','NZ'].indexOf(iso) > -1) return 'Australia'; if(['SG','MY','ID','TH','VN','PH'].indexOf(iso) > -1) return 'Singapore'; return 'Nearest region'; }
+function cfRegime(country){ try { return ncTaxRegime(country) || {}; } catch(e){ return {}; } }
+function cfIdLabel(country){ const r = cfRegime(country); return r.idShort || r.idLabel || 'Tax ID'; }
+function cfCityState(name){ const k = String(name || '').toLowerCase().replace(/\s*(hq|head office|branch|office)\s*$/,'').trim(); return CF_CITY_STATE[k] || CF_CITY_STATE[k.split(/[\s,–-]+/)[0]] || ''; }
+function cfBranchState(b){ return b.state || cfCityState(b.city || b.name); }
+function cfGstState(gstin){ const code = String(gstin || '').slice(0, 2), s = (typeof GST_STATES !== 'undefined' ? GST_STATES : []).find(function(x){ return x[0] === code; }); return s ? s[1] : ''; }
+function cfInitials(name){ return String(name || '').replace(/\b(pvt|private|ltd|limited|llp|llc|inc|fz|fze|gmbh|plc|co)\b\.?/gi, '').split(/[\s\-–,.&]+/).filter(function(w){ return /^[A-Za-z0-9]/.test(w); }).slice(0, 3).map(function(w){ return w[0]; }).join('').toUpperCase() || 'INV'; }
+
+/* ---------- the data, kept on ORG_STRUCTURE.legalEntities; older records are filled in the first time they are read ---------- */
+/* the year tag in invoice numbers follows the company's own financial year: 26-27 for Apr–Mar and Jul–Jun, 2026 for Jan–Dec */
+function cfFyTag(fy, d){ d = d || ptToday(); const y = d.getFullYear(), m = d.getMonth() + 1; if(fy === 'Apr–Mar') return ptFy(d); if(fy === 'Jul–Jun'){ const s = m >= 7 ? y : y - 1; return String(s % 100).padStart(2, '0') + '-' + String((s + 1) % 100).padStart(2, '0'); } return String(y); }
+function cfSeriesSync(){ const i = document.getElementById('cf-series'); if(i && CF.dr && CF.dr.form) i.placeholder = cfAutoSeries(CF.dr.form); }
+function cfAutoSeries(f){ return cfInitials(f.name || ORG_STRUCTURE.profile.brandName) + '-' + cfIso(f.country); }
+function cfInit(){
+  const list = ORG_STRUCTURE.legalEntities = ORG_STRUCTURE.legalEntities || [];
+  if(!list.length) list.push({ id:'le1', name:ORG_STRUCTURE.profile.legalName || ORG_STRUCTURE.profile.brandName || 'Your company', country:ORG_STRUCTURE.profile.country || 'India', primary:true });
+  if(!list.some(function(e){ return e.primary && e.status !== 'archived'; })){ const f = list.find(function(e){ return e.status !== 'archived'; }); if(f) f.primary = true; }
+  list.forEach(function(e){
+    if(e.cfReady) return; e.cfReady = true;
+    e.country = e.country || 'India'; e.currency = e.currency || cfCur(e.country); e.fy = e.fy || cfFy(e.country); e.region = e.region || cfRegion(e.country);
+    e.status = e.status || 'active'; e.regs = e.regs || [];
+    if(!e.regs.length){ const n = e.gstin || (e.taxId && e.taxId !== 'Not set' ? e.taxId : '');
+      if(n) e.regs.push({ id:'r1', number:n, state:e.state || (e.country === 'India' ? cfGstState(n) : ''), lut:e.lut || null, primary:true }); }
+    if(e.country === 'India' && !e.pan){ const g = (e.regs[0] || {}).number || ''; if(g.length === 15) e.pan = g.slice(2, 12); }
+    if(e.primary){ e.series = e.series || (typeof ptPrefix === 'function' ? ptPrefix() : 'INV'); e.address = e.address || (WSX.company && WSX.company.address) || ''; e.verified = e.verified !== false; }
+    else e.series = e.series || cfInitials(e.name) + '-' + cfIso(e.country);
+    e.seq = e.seq || {}; e.cseq = e.cseq || {};
+  });
+  /* branches that already carry a GSTIN (the demo companies set one per state) are registrations of the primary company */
+  const p = list.find(function(e){ return e.primary; });
+  if(p && p.country === 'India') (ORG_STRUCTURE.branches || []).forEach(function(b){ if(b.gstin && !p.regs.some(function(r){ return r.number === b.gstin; })) p.regs.push({ id:'r' + (p.regs.length + 1) + 'b', number:b.gstin, state:b.state || cfGstState(b.gstin), lut:(p.regs[0] || {}).lut || null }); });
+  return list;
+}
+function cfEnts(){ return cfInit().filter(function(e){ return e.status !== 'archived'; }); }
+function cfPrimary(){ const l = cfEnts(); return l.find(function(e){ return e.primary; }) || l[0]; }
+function cfEnt(id){ return cfInit().find(function(e){ return e.id === id; }) || null; }
+function cfRegCount(){ return cfEnts().reduce(function(n, e){ return n + e.regs.length; }, 0); }
+function cfBranchStates(){ const s = {}; (ORG_STRUCTURE.branches || []).forEach(function(b){ const st = cfBranchState(b); if(st) s[st] = 1; }); return Object.keys(s); }
+/* the tenant's profile: worked out from what is already known; the one question only fills a gap */
+function cfProfile(){
+  const e = cfEnts(), shape = WSX.setupShape;
+  if(e.length > 1 || shape === 'companies') return 'multiCompany';
+  if(cfRegCount() > 1 || cfBranchStates().length > 1 || shape === 'offices') return 'multiLocation';
+  return 'simple';
+}
+function cfNeedsAsk(){ if(WSX.setupShape || cfProfile() !== 'simple') return false; const big = /51|101|201|500|1000|\+/.test(String(ORG_STRUCTURE.profile.teamSize || '')); return (ORG_STRUCTURE.branches || []).length > 1 || big; }
+function cfCorp(){ try { return sIsCorporate(); } catch(e){ return false; } }
+function cfUnitWord(){ return cfCorp() ? 'Departments & cost centres' : 'Branches & teams'; }
+
+/* ---------- billing: which company and registration a client is billed from ---------- */
+function cfSupplierOf(e, reg){
+  e = e || cfPrimary(); reg = reg || e.regs.find(function(r){ return r.primary; }) || e.regs[0] || {};
+  const lut = reg.lut || e.lut || (e.country === 'India' ? { arn:'AD240326012345X', fy:'2026-27', validTill:'2027-03-31' } : null);
+  return { id:e.id, regId:reg.id || null, name:e.name, country:e.country, state:reg.state || '', gstin:reg.number || '', lut:lut, series:e.series };
+}
+function cfAuto(country, state){
+  const ents = cfEnts(), same = ents.filter(function(e){ return e.country === country; }), e = same.find(function(x){ return x.primary; }) || same[0] || cfPrimary();
+  const reg = (state && e.regs.find(function(r){ return r.state === state; })) || e.regs.find(function(r){ return r.primary; }) || e.regs[0] || null;
+  return { ent:e, reg:reg, auto:true };
+}
+function cfBillFrom(c, l){
+  const bf = c && c.billFrom;
+  if(bf){ const e = cfEnt(bf.entityId); if(e && e.status !== 'archived') return { ent:e, reg:e.regs.find(function(r){ return r.id === bf.regId; }) || null, auto:false }; }
+  return cfAuto(l ? l.country : (c && c.country) || 'India', l ? l.state : '');
+}
+function cfBillLabel(b){ const reg = b.reg; return b.ent.name + (reg && reg.number ? ' · ' + cfIdLabel(b.ent.country) + ' ' + (reg.state ? reg.state : reg.number) : ''); }
+function cfShowsBillFrom(){ return cfEnts().length > 1 || cfRegCount() > 1; }
+
+/* ---------- the drawer ---------- */
+function cfClose(){ CF.dr = null; const r = document.getElementById('cf-root'); if(r) r.innerHTML = ''; }
+function cfDrawerRender(){
+  let root = document.getElementById('cf-root'); if(!root){ root = document.createElement('div'); root.id = 'cf-root'; document.body.appendChild(root); }
+  const d = CF.dr; if(!d){ root.innerHTML = ''; return; }
+  const head = function(t, s){ return '<div class="cf-dr__h"><div><h2>' + cfE(t) + '</h2>' + (s ? '<p>' + cfE(s) + '</p>' : '') + '</div><button type="button" class="o-icon-btn" aria-label="Close" onclick="cfClose()">' + icon('x', 'w-4 h-4') + '</button></div>'; };
+  let html = '';
+  if(d.mode === 'choose'){
+    const one = cfPrimary(), perState = !!CF_PER_STATE[one.country];
+    html = head('What are you adding?', 'Pick one; only what it needs is asked next.') + '<div class="cf-dr__b"><div class="cf-opt">' +
+      (perState ? '<button type="button" data-cf-opt="reg" onclick="cfOpenReg()"><b>A tax registration for ' + cfE(one.name) + '</b><span>For example a GSTIN in another state. Same company, same invoices, the right tax for that state.</span></button>' : '') +
+      '<button type="button" data-cf-opt="company" onclick="cfOpenCompany()"><b>Another company, same team</b><span>A separate legal company, in this or another country. Your people, candidates and clients stay shared; invoices and contracts carry its name.</span></button>' +
+      '<button type="button" data-cf-opt="workspace" onclick="cfOpenSeparate()"><b>A separate business</b><span>Its own team, candidates and clients. It gets its own workspace under your sign-in.</span></button></div></div>';
+  } else if(d.mode === 'separate'){
+    html = head('A separate business', 'It gets its own workspace, so its candidates and clients never mix with this one.') + '<div class="cf-dr__b">' +
+      '<p class="cf-line">You create it from Create workspace with the same email. Both then appear under your name when you sign in, and you switch between them from the account menu.</p>' +
+      '<p class="cf-line cf-quiet">In this prototype each workspace lives in its own browser tab.</p></div>' +
+      '<div class="cf-dr__f"><button type="button" class="o-btn" onclick="cfClose()">Cancel</button><button type="button" class="o-btn o-btn--primary" data-cf-separate onclick="cfStartSeparate()">Open Create workspace</button></div>';
+  } else if(d.mode === 'reg'){
+    const e = cfEnt(d.entityId) || cfPrimary(), R = cfRegime(e.country), places = (R.places || []).map(function(p){ return Array.isArray(p) ? p[0] : p; }), f = d.form;
+    html = head('Add a tax registration', e.name + ' · ' + e.country) + '<div class="cf-dr__b">' +
+      (cfEnts().length > 1 ? '<label class="cf-f"><span>Company</span><select class="app-input app-select" onchange="CF.dr.entityId=this.value; cfDrawerRender()">' + cfEnts().map(function(x){ return '<option value="' + x.id + '"' + (x.id === e.id ? ' selected' : '') + '>' + cfE(x.name) + '</option>'; }).join('') + '</select></label>' : '') +
+      '<label class="cf-f"><span>' + cfE(R.idLabel || 'Tax registration') + '</span><input id="cf-reg-no" class="app-input" value="' + cfE(f.number) + '" placeholder="' + cfE(R.idPlaceholder || '') + '" oninput="CF.dr.form.number=this.value.toUpperCase().replace(/\\s+/g,\'\'); cfRegGuess()" autocomplete="off" /></label>' +
+      (places.length ? '<label class="cf-f"><span>' + cfE(R.placeLabel || 'State') + '</span><select id="cf-reg-state" class="app-input app-select" onchange="CF.dr.form.state=this.value"><option value="">Choose…</option>' + places.map(function(p){ return '<option' + (p === f.state ? ' selected' : '') + '>' + cfE(p) + '</option>'; }).join('') + '</select></label>' : '') +
+      (e.country === 'India' ? '<details class="cf-more"' + (f.arn ? ' open' : '') + '><summary>+ LUT for export invoices (optional)</summary><div class="cf-row"><label class="cf-f"><span>LUT ARN</span><input class="app-input" value="' + cfE(f.arn) + '" oninput="CF.dr.form.arn=this.value" /></label><label class="cf-f"><span>Valid until</span><input type="date" class="app-input" value="' + cfE(f.till) + '" oninput="CF.dr.form.till=this.value" /></label></div></details>' : '') +
+      (d.err ? '<p class="cf-err" role="alert">' + cfE(d.err) + '</p>' : '') + '</div>' +
+      '<div class="cf-dr__f"><button type="button" class="o-btn" onclick="cfClose()">Cancel</button><button type="button" class="o-btn o-btn--primary" data-cf-save onclick="cfSaveReg()">Add registration</button></div>';
+  } else {
+    const f = d.form, R = cfRegime(f.country), isNew = !d.entityId, places = (R.places || []).map(function(p){ return Array.isArray(p) ? p[0] : p; });
+    const countries = (typeof NC_COUNTRIES !== 'undefined' ? NC_COUNTRIES : ['India']);
+    html = head(isNew ? 'Add a company' : f.name || 'Company', isNew ? 'Country and tax ID first; Oontu fills in the rest.' : 'Changes apply to new invoices; issued ones keep their details.') + '<div class="cf-dr__b">' +
+      '<div class="cf-row"><label class="cf-f"><span>Country</span><select class="app-input app-select" onchange="cfSetCountry(this.value)">' + countries.map(function(c){ return '<option' + (c === f.country ? ' selected' : '') + '>' + cfE(c) + '</option>'; }).join('') + '</select></label></div>' +
+      '<div class="cf-row"><label class="cf-f"><span>' + cfE(R.idLabel || 'Tax ID') + (R.idHint ? ' <span class="cf-quiet">· ' + cfE(R.idHint) + '</span>' : '') + '</span><input id="cf-taxid" class="app-input" value="' + cfE(f.taxId) + '" placeholder="' + cfE(R.idPlaceholder || '') + '" oninput="CF.dr.form.taxId=this.value.toUpperCase().replace(/\\s+/g,\'\')" autocomplete="off" /></label><button type="button" class="o-btn" data-cf-lookup onclick="cfLookup()">Look up</button></div>' +
+      (d.found ? '<div class="cf-found" role="status">' + d.found + '</div>' : '') +
+      '<label class="cf-f"><span>Legal name</span><input id="cf-name" class="app-input" value="' + cfE(f.name) + '" oninput="CF.dr.form.name=this.value; cfSeriesSync()" placeholder="As registered" /></label>' +
+      (places.length && CF_PER_STATE[f.country] ? '<label class="cf-f"><span>' + cfE(R.placeLabel || 'State') + ' of this registration</span><select class="app-input app-select" onchange="CF.dr.form.state=this.value"><option value="">Choose…</option>' + places.map(function(p){ return '<option' + (p === f.state ? ' selected' : '') + '>' + cfE(p) + '</option>'; }).join('') + '</select></label>' : '') +
+      '<label class="cf-f"><span>Registered address</span><input class="app-input" value="' + cfE(f.address) + '" oninput="CF.dr.form.address=this.value" /></label>' +
+      '<div class="cf-review" data-cf-review><b>' + cfE(cfCur(f.country)) + '</b> · financial year <b>' + cfE(cfFy(f.country)) + '</b> · data in <b>' + cfE(cfRegion(f.country)) + '</b><br>Invoices numbered <label style="display:inline"><input class="app-input" style="display:inline-block;width:120px;height:30px;padding:0 8px" id="cf-series" value="' + cfE(f.series) + '" placeholder="' + cfE(cfAutoSeries(f)) + '" oninput="CF.dr.form.series=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,\'\')" aria-label="Invoice series" /></label><span class="cf-quiet">-' + cfE(cfFyTag(cfFy(f.country))) + '/0001</span>' +
+        (cfRegime(f.country).taxName && !['India','United Arab Emirates','United Kingdom'].includes(f.country) ? '<br><span class="cf-quiet">Tax rules for ' + cfE(f.country) + ' are not built into Oontu yet: invoices from this company carry the tax you set on them.</span>' : '') + '</div>' +
+      '<details class="cf-more"><summary>+ Bank account, signatory and letterhead (optional)</summary><div class="cf-dr__b" style="padding:0;gap:10px">' +
+        '<label class="cf-f"><span>Bank account shown on invoices</span><input class="app-input" value="' + cfE(f.bank) + '" oninput="CF.dr.form.bank=this.value" placeholder="Bank · account number · IFSC / SWIFT" /></label>' +
+        '<label class="cf-f"><span>Authorised signatory</span><input class="app-input" value="' + cfE(f.signatory) + '" oninput="CF.dr.form.signatory=this.value" /></label></div></details>' +
+      (d.err ? '<p class="cf-err" role="alert">' + cfE(d.err) + '</p>' : '') + '</div>' +
+      '<div class="cf-dr__f">' + (!isNew && !(cfEnt(d.entityId) || {}).primary ? '<button type="button" class="o-btn o-btn--ghost" style="margin-right:auto" onclick="cfArchive(\'' + d.entityId + '\')">Archive</button>' : '') +
+      '<button type="button" class="o-btn" onclick="cfClose()">Cancel</button><button type="button" class="o-btn o-btn--primary" data-cf-save onclick="cfSaveCompany()">' + (isNew ? 'Add company' : 'Save') + '</button></div>';
+  }
+  root.innerHTML = '<div class="cf-scrim" onclick="cfClose()"></div><aside class="cf-dr" role="dialog" aria-modal="true" aria-label="Company">' + html + '</aside>';
+}
+function cfOpenAdd(){ CF.dr = { mode:'choose' }; cfDrawerRender(); }
+function cfOpenSeparate(){ CF.dr = { mode:'separate' }; cfDrawerRender(); }
+function cfStartSeparate(){ cfClose(); try { window.open(location.pathname + '#/sign-up', '_blank', 'noopener'); } catch(e){} toast('Create workspace opened in a new tab. Use the same email.'); }
+function cfOpenReg(entityId, prefill){ const e = cfEnt(entityId) || cfPrimary(); CF.dr = { mode:'reg', entityId:e.id, form:Object.assign({ number:'', state:'', arn:'', till:'' }, prefill || {}) }; cfDrawerRender(); }
+function cfOpenCompany(entityId, preset){
+  const e = entityId ? cfEnt(entityId) : null, reg = e ? (e.regs.find(function(r){ return r.primary; }) || e.regs[0] || {}) : {};
+  const country = e ? e.country : (preset && preset.country) || 'India';
+  CF.dr = { mode:'company', entityId:e ? e.id : null, found:'', form:{ country:country, taxId:reg.number || '', name:e ? e.name : '', state:reg.state || '', address:e ? e.address || '' : '', series:e ? e.series : '', bank:e ? e.bank || '' : '', signatory:e ? e.signatory || '' : '' } };
+  cfDrawerRender();
+}
+function cfSetCountry(c){ const f = CF.dr.form; f.country = c; f.state = ''; f.taxId = ''; CF.dr.found = ''; CF.dr.err = ''; cfDrawerRender(); }
+/* look up the tax ID: checked against the country's format; an Indian GSTIN also gives the state and the PAN, and a PAN that
+   is already one of your companies means this is a new state registration, not a new company (simulated register in the prototype) */
+function cfLookup(){
+  const d = CF.dr, f = d.form, R = cfRegime(f.country), id = String(f.taxId || '').toUpperCase().replace(/[\s.\-\/]/g, '');
+  d.err = ''; d.found = '';
+  if(!id){ d.err = 'Enter the ' + (R.idLabel || 'tax ID') + ' first.'; cfDrawerRender(); return; }
+  const bad = R.validateId ? R.validateId(id) : ''; if(bad){ d.err = bad; cfDrawerRender(); return; }
+  f.taxId = id;
+  if(f.country === 'India'){
+    f.state = cfGstState(id) || f.state; const pan = id.slice(2, 12), mine = cfEnts().find(function(e){ return e.pan === pan && e.id !== d.entityId; });
+    if(mine){ d.found = 'PAN <b>' + cfE(pan) + '</b> is <b>' + cfE(mine.name) + '</b>, so this is a new <b>' + cfE(f.state) + '</b> registration of that company, not a new company. <button type="button" class="cf-link" data-cf-asreg onclick="cfOpenReg(\'' + mine.id + '\', { number:\'' + id + '\', state:\'' + cfE(f.state) + '\' })">Add it as a registration</button>'; cfDrawerRender(); return; }
+    d.found = cfE(f.state) + ' · PAN ' + cfE(pan) + ' · format and check digit verified. <span class="cf-quiet">The legal name comes from the GST register in the live product; type it here.</span>';
+  } else d.found = cfE(R.idLabel || 'Tax ID') + ' format verified for ' + cfE(f.country) + '.';
+  cfDrawerRender(); const n = document.getElementById('cf-name'); if(n && !n.value) n.focus();
+}
+function cfSaveCompany(){
+  const d = CF.dr, f = d.form, R = cfRegime(f.country), id = String(f.taxId || '').toUpperCase().replace(/[\s.\-\/]/g, '');
+  d.err = '';
+  if(!String(f.name || '').trim()){ d.err = 'Add the legal name.'; cfDrawerRender(); return; }
+  if(id && R.validateId){ const bad = R.validateId(id); if(bad){ d.err = bad; cfDrawerRender(); return; } }
+  if(CF_PER_STATE[f.country] && id && !f.state) f.state = cfGstState(id);
+  const series = f.series || cfAutoSeries(f);
+  if(cfEnts().some(function(e){ return e.id !== d.entityId && e.series === series; })){ d.err = 'Another company already numbers invoices ' + series + '. Pick a different series.'; cfDrawerRender(); return; }
+  let e = d.entityId ? cfEnt(d.entityId) : null, isNew = !e;
+  if(isNew){ e = { id:'le' + (Date.now() % 1e7), primary:false, status:'active', regs:[], seq:{}, cseq:{}, cfReady:true }; ORG_STRUCTURE.legalEntities.push(e); }
+  Object.assign(e, { name:f.name.trim(), country:f.country, currency:cfCur(f.country), fy:cfFy(f.country), region:cfRegion(f.country), address:f.address || '', series:series, bank:f.bank || '', signatory:f.signatory || '' });
+  if(f.country === 'India' && id.length === 15) e.pan = id.slice(2, 12);
+  if(id){ const r = e.regs.find(function(x){ return x.primary; }) || e.regs[0]; if(r){ r.number = id; r.state = f.state || r.state; } else e.regs.push({ id:'r1', number:id, state:f.state || '', primary:true }); }
+  if(e.primary && typeof WSX !== 'undefined'){ WSX.terms.invoicePrefix = series; if(WSX.company){ WSX.company.address = e.address; if(id) WSX.company.gst = id; } }
+  logAudit('Settings', isNew ? 'Company added' : 'Company updated', e.name + ' · ' + e.country, { entityType:'LegalEntity', entityId:e.id });
+  cfClose(); toast(isNew ? e.name + ' added. New ' + e.country + ' clients bill from it.' : 'Saved. New invoices use these details.'); cfRefresh();
+}
+function cfRegGuess(){ const f = CF.dr.form, e = cfEnt(CF.dr.entityId); if(e && e.country === 'India' && f.number.length >= 2){ const s = cfGstState(f.number); if(s && s !== f.state){ f.state = s; const sel = document.getElementById('cf-reg-state'); if(sel) sel.value = s; } } }
+function cfSaveReg(){
+  const d = CF.dr, f = d.form, e = cfEnt(d.entityId) || cfPrimary(), R = cfRegime(e.country), id = String(f.number || '').toUpperCase().replace(/[\s.\-\/]/g, '');
+  d.err = '';
+  const bad = !id ? 'Enter the ' + (R.idLabel || 'registration number') + '.' : R.validateId ? R.validateId(id) : '';
+  if(bad){ d.err = bad; cfDrawerRender(); return; }
+  if(e.country === 'India'){
+    if(e.pan && id.slice(2, 12) !== e.pan){ d.err = 'This GSTIN belongs to PAN ' + id.slice(2, 12) + ', not ' + e.pan + '. A different PAN is a different company: add it as a company instead.'; cfDrawerRender(); return; }
+    const st = cfGstState(id); if(f.state && st && st !== f.state){ d.err = 'The GSTIN starts with ' + id.slice(0, 2) + ', which is ' + st + ', not ' + f.state + '.'; cfDrawerRender(); return; }
+    f.state = st || f.state;
+  }
+  if(!f.state && (R.places || []).length && CF_PER_STATE[e.country]){ d.err = 'Choose the ' + (R.placeLabel || 'state') + '.'; cfDrawerRender(); return; }
+  if(cfEnts().some(function(x){ return x.regs.some(function(r){ return r.number === id; }); })){ d.err = 'This registration is already added.'; cfDrawerRender(); return; }
+  e.regs.push({ id:'r' + (e.regs.length + 1) + '-' + (Date.now() % 1e5), number:id, state:f.state || '', lut:f.arn ? { arn:f.arn, validTill:f.till || '' } : (e.regs[0] || {}).lut || null, primary:!e.regs.length });
+  (ORG_STRUCTURE.branches || []).forEach(function(b){ if(cfBranchState(b) === f.state) b.nudgeLater = false; });
+  logAudit('Settings', 'Tax registration added', e.name + ' · ' + (f.state || '') + ' ' + id, { entityType:'LegalEntity', entityId:e.id });
+  cfClose(); toast((f.state ? f.state + ' ' : '') + cfIdLabel(e.country) + ' added. Clients billed in ' + (f.state || 'that region') + ' get the local tax.'); cfRefresh();
+}
+function cfArchive(id){ const e = cfEnt(id); if(!e || e.primary) return; const used = CLIENTS.some(function(c){ return c.billFrom && c.billFrom.entityId === id; });
+  e.status = 'archived'; if(used) CLIENTS.forEach(function(c){ if(c.billFrom && c.billFrom.entityId === id) c.billFrom = null; });
+  logAudit('Settings', 'Company archived', e.name, { entityType:'LegalEntity', entityId:id });
+  cfClose(); toast(e.name + ' archived. Issued invoices keep it; ' + (used ? 'its clients now bill from ' + cfPrimary().name + '.' : 'nothing else changes.'), { undo:function(){ e.status = 'active'; cfRefresh(); } }); cfRefresh(); }
+function cfRefresh(){ try { if(state.activeNav === 'settings' && typeof settingsRefresh === 'function') settingsRefresh(); } catch(e){} }
+
+/* ---------- Settings › Workspace › Profile ---------- */
+function cfAskHTML(){
+  if(!cfNeedsAsk()) return '';
+  return '<section class="o-card cf-ask" data-cf-ask><p>How is your business set up?</p><div class="cf-chips" role="group" aria-label="Business set-up">' +
+    [['one', 'One company'], ['offices', 'Several offices or states'], ['companies', 'Several companies or brands']].map(function(x){ return '<button type="button" class="cf-chip" data-cf-shape="' + x[0] + '" onclick="cfSetShape(\'' + x[0] + '\')">' + x[1] + '</button>'; }).join('') + '</div></section>';
+}
+function cfSetShape(v){ WSX.setupShape = v; logAudit('Settings', 'Business set-up answered', v); if(v === 'companies') toast('Add your other companies here; each one bills and signs in its own name.'); cfRefresh(); }
+function cfRegsHTML(e){
+  if(e.regs.length < 2 && !CF_PER_STATE[e.country]) return '';
+  return '<ul class="cf-regs" aria-label="Tax registrations">' + e.regs.map(function(r){ const lut = r.lut && r.lut.validTill; return '<li data-cf-reg="' + cfE(r.number) + '"><b>' + cfE(cfIdLabel(e.country) + ' ' + r.number) + '</b>' + (r.state ? ' · ' + cfE(r.state) : '') + (r.primary ? ' <span class="cf-tag">Main</span>' : '') + (lut ? ' <span class="cf-quiet">· LUT to ' + cfE(lut) + '</span>' : '') + '</li>'; }).join('') + '</ul>';
+}
+function cfEntSummary(e){
+  const reg = e.regs.find(function(r){ return r.primary; }) || e.regs[0], fy = cfFyTag(e.fy);
+  const tax = reg ? cfIdLabel(e.country) + ' ' + reg.number + (reg.state ? ' (' + reg.state + ')' : '') : 'No ' + cfIdLabel(e.country) + ' yet';
+  return { place:e.country + ' · ' + e.currency + ' · ' + e.fy + ' · data in ' + e.region, tax:tax + (e.pan ? ' · PAN ' + e.pan : '') + (reg && reg.lut && reg.lut.validTill ? ' · LUT valid to ' + reg.lut.validTill : ''),
+    paper:cfCorp() ? (e.bank ? 'Pays from ' + e.bank : 'Pays vendors in ' + e.currency) : 'Invoices ' + e.series + '-' + fy + '/0001' + (e.bank ? ' · ' + e.bank : '') + (e.signatory ? ' · signed by ' + e.signatory : '') };
+}
+function cfCompaniesHTML(ed){
+  const ents = cfEnts(), prof = cfProfile();
+  if(prof !== 'multiCompany'){
+    const e = ents[0], s = cfEntSummary(e);
+    return '<section class="o-card cf-card" data-cf-profile="' + prof + '"><div class="cf-h"><h2>Company</h2>' + (ed ? '<button type="button" class="o-btn" data-cf-edit onclick="cfOpenCompany(\'' + e.id + '\')">Edit</button>' : '') + '</div>' +
+      '<div class="cf-name">' + cfE(e.name) + (e.verified ? '<span class="cf-ok">Verified</span>' : '') + '</div>' +
+      '<p class="cf-line">' + cfE(s.place) + '</p>' + (prof === 'multiLocation' && cfRegsHTML(e) ? (e.pan ? '<p class="cf-line">PAN ' + cfE(e.pan) + '</p>' : '') : '<p class="cf-line">' + cfE(s.tax) + '</p>') + '<p class="cf-line">' + cfE(s.paper) + '</p>' +
+      (prof === 'multiLocation' ? cfRegsHTML(e) : '') +
+      (ed ? '<div class="cf-sep"></div><div class="cf-foot"><span class="cf-quiet" style="font-size:13px">' + (prof === 'multiLocation' ? e.regs.length + ' tax registration' + (e.regs.length === 1 ? '' : 's') : 'One company') + '</span><button type="button" class="cf-link" data-cf-add onclick="cfOpenAdd()">+ ' + (CF_PER_STATE[e.country] ? 'Tax registration or another company' : 'Another company') + '</button></div>' : '') + '</section>';
+  }
+  return '<section class="o-card cf-card" data-cf-profile="multiCompany"><div class="cf-h"><h2>Companies <span class="cf-quiet">' + ents.length + '</span></h2>' + (ed ? '<button type="button" class="o-btn" data-cf-add onclick="cfOpenAdd()">+ Add</button>' : '') + '</div>' +
+    ents.map(function(e){ const s = cfEntSummary(e), units = cfUnits().filter(function(u){ return u.entityId === e.id && (cfCorp() || u.kind === 'Branch'); }).length;
+      return '<button type="button" class="cf-ent" data-cf-ent="' + e.id + '"' + (ed ? ' onclick="cfOpenCompany(\'' + e.id + '\')"' : ' disabled') + '><span class="cf-flag">' + cfE(cfIso(e.country)) + '</span><span class="cf-ent__t"><b>' + cfE(e.name) + (e.primary ? ' <span class="cf-tag">Primary</span>' : '') + '</b>' +
+        '<span>' + cfE([e.regs.length ? e.regs.length + ' ' + cfIdLabel(e.country) + (e.regs.length === 1 ? '' : 's') : 'No ' + cfIdLabel(e.country) + ' yet', e.currency, cfCorp() ? '' : 'invoices ' + e.series, units ? units + ' ' + (cfCorp() ? 'unit' : 'branch') + (units === 1 ? '' : (cfCorp() ? 's' : 'es')) : ''].filter(Boolean).join(' · ')) + '</span></span>' + icon('chevronRight', 'w-4 h-4') + '</button>'; }).join('') + '</section>';
+}
+/* units: branches (with the state their tax follows) and the cost centres people add */
+function cfUnits(){
+  const p = cfPrimary(), out = [];
+  (ORG_STRUCTURE.branches || []).forEach(function(b){ out.push({ id:'b:' + b.id, ref:b, kind:'Branch', name:b.name, state:cfBranchState(b), entityId:b.entityId || p.id, code:b.code || '' }); });
+  (ORG_STRUCTURE.costCenters || []).forEach(function(c){ if(c.type === 'Branch') return; out.push({ id:'c:' + c.id, ref:c, kind:c.type || 'Team', name:c.name, entityId:c.entityId || p.id, code:c.code || '' }); });
+  return out;
+}
+function cfUnitNudge(u){
+  if(u.kind !== 'Branch' || !u.state) return '';
+  const e = cfEnt(u.entityId) || cfPrimary(); if(!CF_PER_STATE[e.country] || u.ref.nudgeLater) return '';
+  if(e.regs.some(function(r){ return r.state === u.state; })) return '';
+  const home = (e.regs.find(function(r){ return r.primary; }) || e.regs[0] || {}).state || 'your main state';
+  return '<div class="cf-nudge" data-cf-nudge="' + cfE(u.state) + '">' + cfE(u.state) + ' has no ' + cfIdLabel(e.country) + ' yet, so its local clients get IGST from ' + cfE(home) + '. <button type="button" class="cf-link" onclick="cfOpenReg(\'' + e.id + '\', { state:\'' + cfE(u.state) + '\' })">Add it now</button><button type="button" class="cf-link cf-quiet" onclick="cfNudgeLater(\'' + u.ref.id + '\')">Later</button></div>';
+}
+function cfNudgeLater(branchId){ const b = (ORG_STRUCTURE.branches || []).find(function(x){ return x.id === branchId; }); if(b) b.nudgeLater = true; cfRefresh(); }
+function cfUnitsHTML(ed){
+  const multi = cfEnts().length > 1, units = cfUnits(), corp = cfCorp(), kinds = corp ? ['Department', 'Cost centre', 'Branch'] : ['Branch', 'Team', 'Client account'];
+  const e0 = cfPrimary(), R = cfRegime(e0.country), places = CF_PER_STATE[e0.country] ? (R.places || []).map(function(p){ return Array.isArray(p) ? p[0] : p; }) : [];
+  const row = function(u){ const e = cfEnt(u.entityId) || e0;
+    return '<li data-cf-unit="' + cfE(u.id) + '"><span class="cf-units__t">' + cfE(u.name) + '<small>' + cfE([u.kind, u.state, multi ? e.name : '', u.code].filter(Boolean).join(' · ')) + '</small>' + cfUnitNudge(u) + '</span>' +
+      (ed ? '<button type="button" class="cf-x" aria-label="Remove ' + cfE(u.name) + '" onclick="cfRemoveUnit(\'' + cfE(u.id) + '\')">' + icon('x', 'w-3.5 h-3.5') + '</button>' : '') + '</li>'; };
+  return '<section class="o-card cf-card" data-cf-units><div class="cf-h"><h2>' + cfE(cfUnitWord()) + ' <span class="cf-quiet">' + units.length + '</span></h2><small>' + (corp ? 'Hiring spend and vendor fees are counted here' : 'Jobs, placements and invoices are counted here') + '</small></div>' +
+    (units.length ? '<ul class="cf-units">' + units.map(row).join('') + '</ul>' : '<p class="cf-line cf-quiet">None yet.</p>') +
+    (ed ? '<div class="cf-add"><input id="cf-unit-name" class="app-input" style="flex:1 1 200px" placeholder="Name, e.g. Pune or IT hiring" onkeydown="if(event.key===\'Enter\'){ event.preventDefault(); cfAddUnit(); }" />' +
+      '<select id="cf-unit-kind" class="app-input app-select" style="width:160px" aria-label="Kind">' + kinds.map(function(k){ return '<option>' + k + '</option>'; }).join('') + '</select>' +
+      (places.length ? '<select id="cf-unit-state" class="app-input app-select" style="width:170px" aria-label="State"><option value="">State (branches)</option>' + places.map(function(p){ return '<option>' + cfE(p) + '</option>'; }).join('') + '</select>' : '') +
+      (multi ? '<select id="cf-unit-ent" class="app-input app-select" style="width:200px" aria-label="Company">' + cfEnts().map(function(x){ return '<option value="' + x.id + '">' + cfE(x.name) + '</option>'; }).join('') + '</select>' : '') +
+      '<button type="button" class="o-btn" data-cf-unit-add onclick="cfAddUnit()">Add</button></div>' : '') + '</section>';
+}
+function cfAddUnit(){
+  const n = document.getElementById('cf-unit-name'), name = n ? n.value.trim() : ''; if(!name){ if(n) n.focus(); return; }
+  const kind = (document.getElementById('cf-unit-kind') || {}).value || 'Team', st = (document.getElementById('cf-unit-state') || {}).value || '', ent = (document.getElementById('cf-unit-ent') || {}).value || cfPrimary().id;
+  if(kind === 'Branch'){ ORG_STRUCTURE.branches = ORG_STRUCTURE.branches || []; ORG_STRUCTURE.branches.push({ id:'b' + (Date.now() % 1e6), name:name, region:(cfEnt(ent) || cfPrimary()).country, state:st || cfCityState(name), entityId:ent, status:'Active' }); }
+  else { ORG_STRUCTURE.costCenters = ORG_STRUCTURE.costCenters || []; ORG_STRUCTURE.costCenters.push({ id:'cc' + (Date.now() % 1e6), name:name, type:kind, linkedTo:null, entityId:ent }); }
+  logAudit('Settings', kind + ' added', name); cfRefresh();
+  setTimeout(function(){ const x = document.getElementById('cf-unit-name'); if(x) x.focus(); }, 30);
+}
+function cfRemoveUnit(uid){
+  const k = uid.split(':'), id = k.slice(1).join(':'); let name = '';
+  if(k[0] === 'b'){ const b = (ORG_STRUCTURE.branches || []).find(function(x){ return x.id === id; }); if(!b) return; name = b.name; ORG_STRUCTURE.branches = ORG_STRUCTURE.branches.filter(function(x){ return x !== b; }); toast(name + ' removed.', { undo:function(){ ORG_STRUCTURE.branches.push(b); cfRefresh(); } }); }
+  else { const c = (ORG_STRUCTURE.costCenters || []).find(function(x){ return x.id === id; }); if(!c) return; name = c.name; ORG_STRUCTURE.costCenters = ORG_STRUCTURE.costCenters.filter(function(x){ return x !== c; }); toast(name + ' removed.', { undo:function(){ ORG_STRUCTURE.costCenters.push(c); cfRefresh(); } }); }
+  logAudit('Settings', 'Unit removed', name); cfRefresh();
+}
+/* departments and teams, and the org chart, are kept from the old page; the duplicate company, plan, region and cost-centre blocks are not */
+function cfDeptsHTML(){
+  if(typeof orgDeptCardHTML !== 'function') return '';
+  return '<section class="o-card cf-card"><div class="cf-h"><h2>Departments & teams <span class="cf-quiet">' + ORG_STRUCTURE.departments.length + '</span></h2><div class="cf-chips"><input id="new-dept-input" type="text" class="app-input" style="height:34px;width:200px" placeholder="New department…" onkeydown="if(event.key===\'Enter\'){ event.preventDefault(); addDepartment(); }" /><button type="button" class="o-btn" onclick="addDepartment()">Add</button></div></div>' +
+    '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' + ORG_STRUCTURE.departments.map(orgDeptCardHTML).join('') + '</div></section>' +
+    (typeof orgChartHTML === 'function' ? '<section class="o-card cf-card"><div class="cf-h"><h2>Organisation chart</h2></div>' + orgChartHTML() + '</section>' : '');
+}
+
+/* ---------- client: Bill from ---------- */
+function cfBillFromBarHTML(c){
+  if(!c) return ''; clientEnsure(c); const l = clBillingLocations(c)[0], b = cfBillFrom(c, l), abroad = l && !cfEnts().some(function(e){ return e.country === l.country; });
+  if(!cfShowsBillFrom() && !abroad) return '';
+  const opts = ['<option value="">Automatic · ' + cfE(cfBillLabel(cfAuto(l ? l.country : 'India', l ? l.state : ''))) + '</option>'].concat([].concat.apply([], cfEnts().map(function(e){ return (e.regs.length ? e.regs : [{ id:'', state:'' }]).map(function(r){ const v = e.id + '|' + (r.id || ''), on = !b.auto && b.ent.id === e.id && (!r.id || (b.reg && b.reg.id === r.id)); return '<option value="' + v + '"' + (on ? ' selected' : '') + '>' + cfE(e.name + (r.state ? ' · ' + r.state : '')) + '</option>'; }); })));
+  const t = l ? clTaxFor(c, l, ptToday().getTime()) : null;
+  return '<div class="cl-billfrom" data-cf-billfrom><span>Bill from</span>' + (cfShowsBillFrom() && clCanSeeAccountMoney() ? '<select class="app-input app-select" aria-label="Bill from" onchange="cfSetBillFrom(\'' + c.id + '\', this.value)">' + opts.join('') + '</select>' : '<b>' + cfE(cfBillLabel(b)) + '</b>') +
+    (t ? '<span>' + cfE(clTaxText(t)) + '</span>' : '') + (abroad && clCanSeeAccountMoney() ? '<button type="button" class="cf-link" onclick="cfOpenCompany(null, { country:\'' + cfE(l.country) + '\' })">Bill from a ' + cfE(l.country) + ' company?</button>' : '') + '</div>';
+}
+function cfSetBillFrom(cid, v){ const c = clientById(cid); if(!c) return; const p = String(v || '').split('|');
+  c.billFrom = v ? { entityId:p[0], regId:p[1] || null } : null;
+  logAudit('Clients', 'Bill from changed', c.name + ' → ' + (v ? cfBillLabel(cfBillFrom(c, clBillingLocations(c)[0])) : 'automatic'), { entityType:'Client', entityId:c.id });
+  toast('New invoices for ' + c.name + ' bill from ' + cfBillLabel(cfBillFrom(c, clBillingLocations(c)[0])) + '. Issued ones keep theirs.');
+  try { clSetTab(CL.tab); } catch(e){}
+}
+/* PayTrack and Revenue: one scope chip, only when there is more than one company */
+function cfEntityOfRecord(r){ try { const c = ptClientOf(r); if(!c) return cfPrimary(); return cfBillFrom(c, ptLocOf(r)).ent; } catch(e){ return cfPrimary(); } }
+function cfScopeHTML(){
+  if(cfEnts().length < 2) return '';
+  return '<div class="cf-scope" data-cf-scope><select class="app-input app-select" aria-label="Company" onchange="CF.scope=this.value; showView(state.activeNav)"><option value="">All companies</option>' + cfEnts().map(function(e){ return '<option value="' + e.id + '"' + (CF.scope === e.id ? ' selected' : '') + '>' + cfE(e.name) + '</option>'; }).join('') + '</select></div>';
+}
+
+/* ---------- wiring ---------- */
+(function(){
+  cfInit();
+  window.clOurEntity = clOurEntity = function(){ return cfSupplierOf(cfPrimary()); };
+  window.clientSupplier = clientSupplier = function(c, l){ const b = cfBillFrom(c, l); return cfSupplierOf(b.ent, b.reg); };
+  /* invoice numbers: the primary company keeps the workspace series; every other company numbers its own */
+  const nextBase = ptNextNo;
+  window.ptNextNo = ptNextNo = function(kind, rec){
+    const e = rec ? cfEntityOfRecord(rec) : null;
+    if(!e || e.primary) return nextBase(kind);
+    const fy = cfFyTag(e.fy), seq = kind === 'CN' ? (e.cseq = e.cseq || {}) : (e.seq = e.seq || {}); seq[fy] = (seq[fy] || 0) + 1;
+    return (kind === 'CN' ? 'CN-' : '') + e.series + '-' + fy + '/' + String(seq[fy]).padStart(4, '0');
+  };
+  /* Settings › Workspace › Profile: the company, its units and departments; one question only when it's unclear */
+  window.sec_company = sec_company = function(ed){ cfInit(); return cfAskHTML() + cfCompaniesHTML(ed) + cfUnitsHTML(ed) + cfDeptsHTML(); };
+  /* New client form: the tax line says which company bills, and offers another country's company when the client is abroad */
+  if(typeof clnTaxLine === 'function'){ const tl = clnTaxLine; window.clnTaxLine = clnTaxLine = function(key){
+    let html = '', b = null; try { const L0 = clnLoc(key); if(L0) b = cfAuto(clnLocCountry(L0), L0.state); } catch(e){}
+    const keep = clOurEntity; if(b) clOurEntity = function(){ return cfSupplierOf(b.ent, b.reg); };
+    try { html = tl.apply(this, arguments); } finally { clOurEntity = keep; }
+    try { const L = clnLoc(key), country = clnLocCountry(L); if(!L || !html || !b) return html;
+      const abroad = !cfEnts().some(function(e){ return e.country === country; });
+      if(cfShowsBillFrom() || abroad) html = html.replace('</p>', '</p><p class="cn-billfrom" data-cf-cn-billfrom>Billed from ' + cfE(cfBillLabel(b)) + (abroad ? ' · <button type="button" class="cf-link" onclick="cfOpenCompany(null, { country:\'' + cfE(country) + '\' })">Bill from a ' + cfE(country) + ' company?</button>' : '') + '</p>');
+    } catch(e){} return html; }; }
+  /* the client's Billing tab opens with the Bill from line */
+  if(typeof clBillingTab === 'function'){ const bt = clBillingTab; window.clBillingTab = clBillingTab = function(c){ return cfBillFromBarHTML(c) + bt.apply(this, arguments); }; }
+  /* PayTrack and Revenue: the scope chip filters the money records */
+  if(typeof ptMoneyRecords === 'function'){ const mr = ptMoneyRecords; window.ptMoneyRecords = ptMoneyRecords = function(){ const l = mr.apply(this, arguments); return CF.scope && cfEnts().length > 1 ? l.filter(function(r){ return cfEntityOfRecord(r).id === CF.scope; }) : l; }; }
+  ['admin-paytrack', 'admin-revenue'].forEach(function(v){ const base = RENDERERS[v]; if(typeof base === 'function') RENDERERS[v] = function(){ const html = base.apply(this, arguments); const chip = cfScopeHTML(); return chip ? chip + html : html; }; });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && CF.dr){ cfClose(); } });
+})();
+</script>
+
 </body>
 </html>
