@@ -1,0 +1,101 @@
+/* Step 3 · Kairo, an assistant in the side panel: skills, paraphrases, clarifying, follow-ups, cards, scope and money, actions.
+   Run: node runall.js kairo-assistant */
+(function(){
+  var results = [], errs = [];
+  var sleep = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+  window.addEventListener('error', function(e){ errs.push('ERR ' + e.message); });
+  async function t(name, fn){ var before = errs.length; try { await fn(); if(errs.length > before) throw new Error(errs.slice(before).join(' | ')); results.push({ name:name, pass:true }); } catch(e){ results.push({ name:name, pass:false, error:String(e && e.stack || e).slice(0, 700) }); } }
+  function ok(c, m){ if(!c) throw new Error(m || 'assertion failed'); }
+  var q = function(s, r){ return (r || document).querySelector(s); }, qa = function(s, r){ return [].slice.call((r || document).querySelectorAll(s)); };
+  function as(name){ var u = RECRUITER_ROSTER.find(function(x){ return x.name === name; }); demoAct(u.id); renderSidebar(); kaReset(); return u; }
+  var BAD = /undefined|NaN|\{\{|\}\}|didn.t (quite )?catch/;
+  function text(a){ return (a.text + ' ' + (a.cards || []).join(' ') + ' ' + JSON.stringify(a.chips || [])).replace(/<[^>]+>/g, ' '); }
+  var Q = {
+    day:['What should I do first?', "what's pending", 'my day', 'aaj kya karna hai'],
+    counts:['how many subs this week', 'submissions this week?', 'kitne submissions is week', 'my submission count'],
+    find:['java devs in pune', 'find react developers in bengaluru', 'candidates with python skills', 'looking for devops engineers in hyderabad'],
+    job:['how is the fintech java job doing', 'status of senior java developer', 'jobs with no recruiter', 'which jobs have no recruiter?'],
+    candidate:['tell me about aditya kulkarni', 'summarise aditya kulkarni', 'who is aditya kulkarni', 'aditya kulkarni profile'],
+    follow:["who's gone quiet?", 'consents not answered', 'which candidates need follow-up today?', 'follow ups pending'],
+    draft:['draft a whatsapp to aditya kulkarni about the interview', 'write an email to aditya kulkarni', 'draft a follow-up to aditya kulkarni', 'wa message to aditya kulkarni'],
+    iv:['my interviews tomorrow', 'interviews tmrw', 'feedback pending from clients', 'upcoming interviews this week'],
+    money:['revenue this month', 'overdue invoices', 'commission for rohit', 'how much did we bill this month'],
+    team:['who on my team has the most overdue items', 'team workload', 'how is my team doing', 'which recruiter has the most overdue'],
+    how:['how do I add a client', 'how does consent work', 'how to invite a teammate', 'where do I add a job'],
+    action:['assign rohit to the fintech java job', 'move aditya kulkarni to interview', 'remind me tomorrow at 10 to call sana', 'add rohit to senior java developer']
+  };
+
+  window.addEventListener('load', function(){ setTimeout(async function(){
+    document.getElementById('onboarding').classList.add('hidden'); state.role = 'admin'; enterApp(); await sleep(100); KA.delay = 0;
+
+    for(var who of [['Owner','Priya Sharma'], ['Recruiter Manager','Arjun Kapoor'], ['Recruiter','Divya Menon']]){ (function(){})();
+      await t(who[0] + ': every skill answers 4 different phrasings, with nothing made up (no undefined, NaN or {{)', async function(){
+        as(who[1]); var miss = [];
+        Object.keys(Q).forEach(function(sk){ Q[sk].forEach(function(x){ KA.ctx = null; var a = kaAnswer(x), want = sk === 'action' ? ['action'] : [sk];
+          if(want.indexOf(a.skill) < 0) miss.push(sk + ' "' + x + '" → ' + a.skill + ': ' + a.text.slice(0, 80)); if(BAD.test(text(a))) miss.push(sk + ' "' + x + '" has ' + text(a).match(BAD)[0]); }); });
+        ok(!miss.length, miss.join(' | '));
+      });
+    }
+
+    await t('a recruiter asking about money gets the refusal line, and sees no ₹ in any answer', async function(){
+      as('Divya Menon'); ['revenue this month', 'overdue invoices', 'commission for rohit', 'what did we earn last month'].forEach(function(x){ var a = kaAnswer(x); ok(a.skill === 'money' && a.text === 'I can’t share billing figures with your role.', x + ': ' + a.text); });
+      var all = []; Object.keys(Q).forEach(function(sk){ Q[sk].forEach(function(x){ KA.ctx = null; all.push(text(kaAnswer(x))); }); }); all.forEach(function(x){ ok(x.indexOf('₹') < 0, 'a ₹: ' + x.slice(Math.max(0, x.indexOf('₹') - 40), x.indexOf('₹') + 20)); });
+      as('Priya Sharma'); ok(/^Revenue earned this month is ₹[\d.]+L/.test(kaAnswer('revenue this month').text), 'the Owner sees the figure');
+    });
+
+    await t('“Assign Rohit to the Fintech job” shows a confirm card; Confirm puts him on the job, logged as Kairo for the person', async function(){
+      as('Priya Sharma'); var rohit = RECRUITER_ROSTER.find(function(u){ return u.name === 'Rohit Bansal'; }); kairoChatOpen = true; renderKairoChat(); kaSend('Assign Rohit to the Fintech job'); await sleep(60);
+      var card = q('#kairo-chat-messages .ka-confirm'); ok(card && /^Assign Rohit Bansal to .+ · Fintech Corp\?$/.test(q('p', card).textContent) && qa('button', card).map(function(b){ return b.textContent; }).join() === 'Confirm,Cancel', 'the card: ' + (card && card.textContent));
+      var pend = KA.pend[card.getAttribute('data-pend')], job = jobById(pend.jobId); ok(jobPeopleIds(job).indexOf(rohit.id) < 0, 'not on it yet');
+      var a0 = AUDIT_LOG.length; qa('button', card)[0].click(); await sleep(60); ok(jobPeopleIds(job).indexOf(rohit.id) > -1, 'Rohit is on ' + job.title); ok(AUDIT_LOG.some(function(x, i){ return i < AUDIT_LOG.length - a0 + 1 && x.action === 'Kairo for Priya Sharma' && /Assigned Rohit Bansal/.test(x.detail); }), 'audited as Kairo for Priya Sharma');
+      ok(/^Done\. Rohit Bansal is on /.test(q('#kairo-chat-messages .ka-m--k:last-child .ka-bub').textContent), 'says so');
+      kaSend('remind me tomorrow at 10 to call Sana'); await sleep(60); var c2 = qa('#kairo-chat-messages .ka-confirm').pop(), n0 = PERSONAL_TASKS.length; qa('button', c2)[1].click(); await sleep(60); ok(PERSONAL_TASKS.length === n0 && /Cancelled/.test(q('#kairo-chat-messages .ka-m--k:last-child').textContent), 'Cancel changes nothing');
+      kaSend('remind me tomorrow at 10 to call Sana'); await sleep(60); qa('button', qa('#kairo-chat-messages .ka-confirm').pop())[0].click(); await sleep(60); ok(PERSONAL_TASKS[0].text === 'Call Sana (tomorrow)' && PERSONAL_TASKS[0].reminderTime === '10:00 AM', 'reminder: ' + JSON.stringify(PERSONAL_TASKS[0]));
+      as('Divya Menon'); ok(/^You can’t assign recruiters/.test(kaAnswer('assign rohit to the fintech java job').text), 'a recruiter can’t, just as on the page');
+      kairoChatOpen = false; renderKairoChat();
+    });
+
+    await t('an ambiguous name asks one question with chips; a chip answers it', async function(){
+      as('Priya Sharma'); var a = kaAnswer('Tell me about Aditya'); ok(a.skill === 'clarify' && a.text === 'Which Aditya?' && a.chips.length === 2, a.text + ' ' + JSON.stringify(a.chips)); ok(a.chips.every(function(c){ return /^Aditya (Nair|Kulkarni)/.test(c.label); }), 'chips name both');
+      kairoChatOpen = true; renderKairoChat(); kaSend('Tell me about Aditya'); await sleep(60); var chip = qa('#kairo-chat-messages .ka-sug').find(function(b){ return /Kulkarni/.test(b.textContent); }); chip.click(); await sleep(60);
+      ok(q('#kairo-chat-messages .ka-m--k:last-child').getAttribute('data-skill') === 'candidate' && /^Aditya Kulkarni/.test(q('#kairo-chat-messages .ka-m--k:last-child .ka-bub').textContent), 'answered'); kairoChatOpen = false; renderKairoChat();
+    });
+
+    await t('follow-up context: “only Pune” narrows the last search; “and last week?” changes the last count', async function(){
+      as('Priya Sharma'); KA.ctx = null; var a = kaAnswer('Java developers'), n = +a.text.match(/^(\d+)/)[1]; var b = kaAnswer('only Pune'); ok(b.skill === 'find' && /in Pune/.test(b.text), b.text); var m = +b.text.match(/^(\d+)/)[1]; ok(m <= n && m > 0, n + ' → ' + m);
+      ok((b.cards || []).every(function(c){ return /Pune/.test(c.replace(/<[^>]+>/g, ' ')); }), 'every one is in Pune');
+      KA.ctx = null; var c = kaAnswer('how many submissions this week'), d = kaAnswer('and last week?'); ok(d.skill === 'counts' && /last week/.test(d.text) && !/this week/.test(d.text.split(',')[0]), d.text);
+      KA.ctx = null; kaAnswer('my interviews tomorrow'); ok(/today/.test(kaAnswer('what about today?').text), 'interviews follow-up');
+    });
+
+    await t('when nothing matches: never “I didn’t catch that”; it says what it can do, with 3 suggestions tied to the words it knew', async function(){
+      as('Priya Sharma'); ['blah blah', 'the weather in Goa', 'Aditya Kulkarni banana split recipe ideas'].forEach(function(x){ var a = kaAnswer(x); ok(!/catch that/i.test(a.text) && a.chips.length === 3, x + ': ' + a.text + ' ' + a.chips.length); });
+      ok(/Aditya Kulkarni/.test(JSON.stringify(kaAnswer('Aditya Kulkarni banana split recipe ideas').chips)), 'suggestions about the name it knew');
+    });
+
+    await t('the panel: the ring and ⌘J open it for every role, with starters for the page; typing, then the words; history and New chat; it never moves the page', async function(){
+      for(var n of ['Priya Sharma', 'Arjun Kapoor', 'Divya Menon']){ as(n); kairoChatOpen = false; renderKairoChat(); showView(homeForMe()); await sleep(20); q('#topbar-kairo').click(); await sleep(30); ok(kairoChatOpen && q('#kairo-chat-panel.ka-panel'), n + ': the ring opens the chat'); closeKairoChat(); }
+      as('Priya Sharma'); showView('jobs'); await sleep(20); var m = document.getElementById('main-content'); m.scrollTo({ top:200, behavior:'instant' }); await sleep(300); var y0 = m.scrollTop;
+      document.dispatchEvent(new KeyboardEvent('keydown', { key:'j', metaKey:true, bubbles:true })); await sleep(30); ok(kairoChatOpen, '⌘J opens'); var r = q('#kairo-chat-panel').getBoundingClientRect(); ok(Math.round(r.width) === 400 && r.right <= innerWidth + 1 && r.top >= q('#topbar').getBoundingClientRect().bottom - 1, 'the side panel: ' + [r.left, r.top, r.width].map(Math.round)); ok(m.scrollTop === y0, 'the page did not move');
+      ok(qa('.ka-sugs--start .ka-sug').map(function(b){ return b.textContent; }).join('|') === 'Which jobs have no recruiter?|How many interviews this week?|How many submissions this week?', 'Jobs starters: ' + qa('.ka-sugs--start .ka-sug').map(function(b){ return b.textContent; }).join('|'));
+      KA.delay = 120; qa('.ka-sugs--start .ka-sug')[0].click(); await sleep(20); ok(q('#kairo-chat-messages [data-typing]'), 'typing first'); await sleep(250); ok(!q('[data-typing]') && q('.ka-m--k.is-new .ka-w'), 'then the words'); KA.delay = 0; ok(q('.ka-src') && /^From: Jobs/.test(q('.ka-src').textContent), 'a source line: ' + (q('.ka-src') || {}).textContent);
+      q('.ka-head [aria-label="New chat"]').click(); ok(!qa('#kairo-chat-messages .ka-m').length && q('.ka-hello'), 'New chat'); q('.ka-head [aria-label="Chat history"]').click(); ok(qa('.ka-hist li').length === 1 && /Which jobs have no recruiter/.test(q('.ka-hist').textContent), 'history lists the earlier chat'); q('.ka-hist li button').click(); ok(qa('#kairo-chat-messages .ka-m').length === 2, 'and opens it');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key:'j', ctrlKey:true, bubbles:true })); await sleep(20); ok(!kairoChatOpen, 'Ctrl+J closes'); ok(m.scrollTop === y0, 'still unmoved');
+      kaNewChat(); closeKairoChat(); openJob('j1'); await sleep(20); ok(q('#main-content [data-ask-kairo]'), 'Ask Kairo on the job page'); q('#main-content [data-ask-kairo]').click(); ok(kairoChatOpen && /best 5 for this job/.test(q('.ka-sugs--start').textContent), 'job starters'); kaSend('Who are the best 5 for this job?'); await sleep(40); ok(/for Senior Java Developer/.test(q('#kairo-chat-messages .ka-m--k:last-child').textContent), '“this job” is the open job'); closeKairoChat();
+    });
+
+    await t('a draft is filled from real data, with Edit, Send and Copy, and follows the AI disclosure setting', async function(){
+      as('Priya Sharma'); kairoChatOpen = true; renderKairoChat(); kaSend('Draft a WhatsApp to Aditya Kulkarni'); await sleep(40); var d = q('.ka-draft'); ok(d && qa('button', d).map(function(b){ return b.textContent; }).join() === 'Send,Edit,Copy', 'the card'); var ta = q('textarea', d);
+      ok(/^Hi Aditya, Priya from Northstar here\. Following up on the Senior Java Developer role at Fintech Corp/.test(ta.value), ta.value); ok(!cwDisclosureLine('approved') || ta.value.indexOf(cwDisclosureLine('approved').trim()) > -1, 'disclosure line'); ok(ta.readOnly, 'read-only until Edit'); qa('button', d)[1].click(); ok(!ta.readOnly, 'Edit unlocks it');
+      var win = window.open; window.open = function(){ return null; }; var n0 = tsTouches(byId(KA.pend[d.getAttribute('data-pend')].cid).id).length; ta.value = 'Hi Aditya, quick check-in.'; qa('button', d)[0].click(); window.open = win; await sleep(40);
+      var c = CANDIDATES.find(function(x){ return x.name === 'Aditya Kulkarni'; }); ok(tsTouches(c.id).length === n0 + 1 && tsTouches(c.id)[0].text === 'Hi Aditya, quick check-in.', 'logged on the timeline'); ok(AUDIT_LOG[0].action === 'Kairo for Priya Sharma', 'audited'); closeKairoChat();
+    });
+
+    await t('answers look like a chatbot: stat, chart, list, candidate, draft, confirm and job cards render, in the Design 2.0 style', async function(){
+      as('Priya Sharma'); var seen = {}; ['how many submissions this week', 'what should I do first', 'java developers in pune', 'draft a whatsapp to aditya kulkarni', 'remind me tomorrow at 9 to call sana', 'how is the fintech java job doing', 'revenue this month'].forEach(function(x){ KA.ctx = null; (kaAnswer(x).cards || []).forEach(function(c){ var m = c.match(/data-card="(\w+)"/g) || []; m.forEach(function(k){ seen[k.split('"')[1]] = 1; }); }); });
+      ['stat','chart','list','candidate','draft','confirm','job'].forEach(function(k){ ok(seen[k], 'a ' + k + ' card'); });
+    });
+
+    var pre = document.createElement('pre'); pre.id = 'auth-test-results'; pre.textContent = JSON.stringify(results); document.body.appendChild(pre);
+  }, 800); });
+})();

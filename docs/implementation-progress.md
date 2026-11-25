@@ -2001,3 +2001,28 @@ Everything is in one new block, `<script id="cowork-visual-script">`, after `cow
 - They count waiting items relative to the matches already there.
 - They find Today's new sections.
 - The 2,200 px height rule now covers the Agents tab, Settings and Activity. Today is longer by design, because the jobs table shows 20 rows a page.
+
+## Step 3 · Kairo, an assistant in the side panel (23 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-kairo-assistant.html`. Screenshots: `docs/screenshots/kairo-assistant/` (1440 and 390). New spec: `tests/kairo-assistant.spec.js` (11 checks).
+
+There is no live model. Kairo is an intent engine over the app's own records, in one new block, `<script id="kairo-assistant-script">`, loaded last. It replaces the old keyword chat (`kairoRespond`), and keeps the Step 1 panel, its ids and Esc.
+
+- **For every role with Kairo** (Owner, Admin, Recruiter Manager, Recruiter and the custom roles that have it). It opens from the top-bar ring, ⌘J / Ctrl+J, or **Ask Kairo** on the Jobs, Candidates, Interviews, PayTrack, Reports, job and candidate pages.
+  - It is the 400px side panel; the page beside it stays usable and never moves.
+  - New chat, plus Chat history for this session. "See all insights" opens Intelligence.
+  - Three starter questions for the page you're on.
+- **Understanding.**
+  - Normalising: lower case, short forms (tmrw, subs, wa, np, ctc, jd) and Hinglish (kitne, aaj, kal, is week, mera).
+  - Trigger phrases choose one of 14 skills. Fuzzy matching finds candidates, jobs, people, cities, skills and stages in the data this viewer may see.
+  - Time words use the workspace time zone.
+  - A name that fits two people gets one question with chips.
+  - "and last week?", "only Pune" and "what about today?" change the last question.
+  - When nothing fits, Kairo says what it can do, with three suggestions tied to the words it knew.
+- **Skills:** my day · counts and trends · find candidates · job status · candidate summary · follow-ups · draft a message · interviews · money · team · how do I… · actions (assign, move, remind, add to a job). Each reads the same data and scope as its page.
+- **Answers.** A typing indicator, then the words appear (about 400 ms). Stat, chart, list, candidate, job, draft and confirm cards follow. Every answer has a "From: …" line that opens the page behind it.
+- **Safety.**
+  - Recruiters see only their jobs and candidates.
+  - Roles without the money permission get "I can’t share billing figures with your role." and no ₹ anywhere.
+  - Actions show a confirm card and call the app's own functions, so the page's permissions apply. Each is audit-logged as "Kairo for <person>".
+  - Drafts carry the AI disclosure line when that setting is on.
