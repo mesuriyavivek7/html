@@ -53,3 +53,15 @@ Related earlier documents: `docs/AUTH.md`, `docs/OONTU_AGENCY_READY_REPORT.md`, 
 | 30 | [Known gaps and blockers](30-known-gaps-and-blockers.md) |
 | 31 | [Production readiness assessment](31-production-readiness-assessment.md) |
 | 32 | [Next release backlog](32-next-release-backlog.md) |
+
+## Phase 4: Business Operating System (Oontu's own SaaS operations, 25 Nov 2026)
+
+Brief: *Oontu Unified Business Operating System, Master Assignment*. The Super Admin console becomes the internal operating system: Revenue, Service, Customer Operations, Business & Finance, Platform Administration, plus My work, Integrity and Insights. Front-end prototype only.
+
+| # | Document |
+|---|---|
+| 33 | [Baseline, operating model, identity and access](33-business-os-baseline-and-operating-model.md) |
+| 34 | [Workflows by workspace](34-business-os-workflows.md) |
+| 35 | [Research and decisions](35-business-os-research-and-decisions.md) — payment provider recommendation with sources |
+| 36 | [Security, privacy and production gaps](36-business-os-security-and-production-gaps.md) |
+| 37 | [Acceptance scenarios, tests and status](37-business-os-acceptance-and-status.md) |

@@ -23,6 +23,8 @@ Permission model: `PLATFORM_PERMISSION_MODULES` = tenant, plan, subscription, fe
 
 A clean foundation: separate identity, explicit permissions, audited actions, lifecycle state machines with reasons. Assisted setup already follows the right principle (customer permission, time-bound, logged).
 
+> **Update, 25 Nov 2026 (Phase 4):** most of the gaps in §3 are now built in the prototype, as the Business OS. Internal role bundles, CRM, demos, sales-assisted onboarding through the one provisioning engine, Customer 360, onboarding plans, tickets and incidents, customer success, and integrity queues are all in. See 33–37; 37 §3 has the current status. The table below is kept as the original audit.
+
 ## 3. Limitations (against brief §11)
 
 | Brief capability | Status |
