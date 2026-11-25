@@ -24,12 +24,13 @@
         var m = document.getElementById('main-content');
         [].slice.call(m.querySelectorAll('button, [role=button]')).filter(function(b){ return vis(b) && !named(b); }).forEach(function(b){ problems.names.push(role + '/' + v + ': ' + b.outerHTML.slice(0, 80)); });
         [].slice.call(m.querySelectorAll('input, select, textarea')).filter(function(x){ return !labelled(x); }).forEach(function(x){ problems.labels.push(role + '/' + v + ': ' + x.outerHTML.slice(0, 80)); });
-        if(document.documentElement.scrollWidth > innerWidth + 1) problems.page.push(role + '/' + v + ' +' + (document.documentElement.scrollWidth - innerWidth));
+        if(document.documentElement.scrollWidth > innerWidth + 1) problems.page.push(role + '/' + v + ' page +' + (document.documentElement.scrollWidth - innerWidth));
+        if(m.scrollWidth > m.clientWidth + 1) problems.page.push(role + '/' + v + ' column +' + (m.scrollWidth - m.clientWidth));
       }
     }
     await t('every visible button on the main screens has an accessible name', async function(){ ok(!problems.names.length, problems.names.length + ': ' + problems.names.slice(0, 3).join(' || ')); });
     await t('every visible form field on the main screens has a label', async function(){ ok(!problems.labels.length, problems.labels.length + ': ' + problems.labels.slice(0, 3).join(' || ')); });
-    await t('no main screen scrolls the whole page sideways', async function(){ ok(!problems.page.length, problems.page.join(', ')); });
+    await t('no main screen scrolls sideways: not the page, not the main column', async function(){ ok(!problems.page.length, problems.page.join(', ')); });
     await t('the closed Intelligence Signals panel never widens the page (clipped)', async function(){
       state.role = 'admin'; enterApp(); await sleep(60); showView('intelligence'); await sleep(60);
       var iq = document.getElementById('iq'); ok(iq && getComputedStyle(iq).overflowX === 'clip', 'clip: ' + (iq && getComputedStyle(iq).overflowX));
