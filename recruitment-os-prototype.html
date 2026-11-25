@@ -29589,7 +29589,7 @@ function authRememberedEmail(){
   try { const v = localStorage.getItem(AUTH_REMEMBER_KEY) || ''; return AUTH_EMAIL_RE.test(v) ? v : ''; } catch(e){ return ''; }
 }
 function authRememberEmail(email, on){
-  try { if(on) localStorage.setItem(AUTH_REMEMBER_KEY, email); else localStorage.removeItem(AUTH_REMEMBER_KEY); } catch(e){}
+  try { if(on) localStorage.setItem(AUTH_REMEMBER_KEY, email); else { localStorage.removeItem(AUTH_REMEMBER_KEY); localStorage.removeItem('oontu.lastWorkspace'); } } catch(e){}   // forgetting the email forgets the last workspace too
 }
 function authFreshFlow(){
   authFlow = authInitialState();
@@ -30073,7 +30073,8 @@ function authWorkspacesStepHTML(){
     '<div class="au-body">'+authAlertHTML()+
     '<ul class="au-ws-list" aria-label="Your workspaces">'+authFlow.workspaces.map(function(w){
       return '<li><button type="button" class="au-ws" data-ws="'+authEsc(w.id)+'" onclick="authSelectWorkspace(this.getAttribute(\'data-ws\'))"'+authDis()+'>'+
-        '<span class="au-ws__mark" aria-hidden="true">'+authEsc(initials(w.name||'?'))+'</span>'+
+        (function(){ const t = typeof oWorkspaceTint === 'function' && authFlow.workspaces.length > 1 ? oWorkspaceTint(w.id) : null;   // several workspaces: one quiet tint each
+          return '<span class="au-ws__mark" aria-hidden="true"'+(t ? ' style="background:'+t[0]+';color:'+t[1]+'"' : '')+'>'+authEsc(typeof oOrgInitials === 'function' ? oOrgInitials(w.name||'?') : initials(w.name||'?'))+'</span>'; })()+
         '<span class="au-ws__text"><span class="au-ws__name">'+authEsc(w.name)+'</span><span class="au-ws__role">'+authEsc(w.roleLabel||'')+'</span></span>'+
         icon('chevronRight','w-4 h-4')+'</button></li>';
     }).join('')+'</ul></div>'+
@@ -30278,7 +30279,9 @@ const OA = (function(){
     const email = authRememberedEmail() || trusted;
     if(!email) return null;
     const name = suNameFromEmail(email);
-    return { name:name, first:name.split(' ')[0], email:email, last:'', note: trusted === email ? 'This browser is trusted, so no code is needed.' : '' };
+    const ws = typeof oLastWorkspaceFor === 'function' ? oLastWorkspaceFor(email) : null;   // what this browser saw at the last sign-in
+    return { name:name, first:name.split(' ')[0], email:email, last:'', note: trusted === email ? 'This browser is trusted, so no code is needed.' : '',
+      ws: ws && ws.name ? (ws.count > 1 ? ws.name + ' · ' + ws.count + ' workspaces' : ws.name) : '' };
   }
 
   // ---------- links ----------
@@ -30522,7 +30525,7 @@ const OA = (function(){
           '<p class="ow-sub oa-sub">' + esc(acct.note || 'Good to see you again.') + '</p>' +
           '<button type="button" class="ow-acct au-acct oa-account o-press" data-act="si-continue">' +
             '<span class="ow-acct__ic" aria-hidden="true">' + esc(acct.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0, 2).toUpperCase()) + '</span>' +
-            '<span class="ow-acct__t"><span>Continue as ' + esc(acct.first) + '</span><small>' + esc(acct.email) + '</small></span><span class="ow-primary__arrow au-acct__go" aria-hidden="true">' + IC.arrow + '</span></button>' +
+            '<span class="ow-acct__t"><span>Continue as ' + esc(acct.first) + '</span><small>' + esc(acct.email) + '</small>' + (acct.ws ? '<small class="ow-acct__ws">' + esc(acct.ws) + '</small>' : '') + '</span><span class="ow-primary__arrow au-acct__go" aria-hidden="true">' + IC.arrow + '</span></button>' +
           (msg || '<p class="oa-msg" id="si-email-msg" role="status">We’ll email you a code to confirm it’s you.</p>') +
           '<div class="au-links"><button type="button" class="ow-link ow-link--plain" data-act="si-other">Not ' + esc(acct.first) + '?</button><button type="button" class="ow-link ow-link--plain" data-act="si-remembered-pw">Use password</button></div>' +
           (acct.last ? '<p class="au-hintline">' + AU_IC(AU_P.clock, 15) + '<span>Last here ' + esc(acct.last) + '. <a href="#">Wasn’t you?</a></span></p>' : '') + '</div>';
@@ -31058,7 +31061,7 @@ const OA = (function(){
       : 'I’ve prepared an approval flow' + (SU.partners.length ? ' for ' + SU.partners[0].toLowerCase() : '') + ' and your first job template. Ready when you are.';
     return {
       title:[done ? 'done|' + O : 'shape', done ? '<span data-title>Welcome to ' + esc(O || 'Oontu') + '</span>' + BDOT : '<span data-title>Your workspace, taking shape</span>' + BDOT],
-      tile:[O, O ? esc(O.split(/\s+/).slice(0, 2).map(function(w){ return w[0]; }).join('').toUpperCase()) : ''],
+      tile:[O, O ? esc(typeof oOrgInitials === 'function' ? oOrgInitials(O) : O.split(/\s+/).slice(0, 2).map(function(w){ return w[0]; }).join('').toUpperCase()) : ''],
       org:[O, O ? esc(O) : ''],
       address:[O ? slugify(O) : '', esc(slugify(O)) + '.oontu.app'],
       owner:[N || proven ? N + '|' + verify : '', N ? '<span class="au-mh__h">' + greeting() + ', ' + esc(N) + '. A fresh start.</span><span class="au-mh__s">Owner · full access · ' + verify + '</span>'
@@ -42419,7 +42422,7 @@ function sec_overview(ed){
   const p = ORG_STRUCTURE.profile, sub = ORG_STRUCTURE.subscription, plan = planById(currentTenantPlanId()) || {}, seats = RECRUITER_ROSTER.length;
   const unver = p.verification==='unverified';
   return sCard('Your workspace', '', sRow('Workspace name', 'Shown in the sidebar and on emails.', '<input class="app-input s-ctl" value="'+sEsc(p.brandName||'')+'" aria-label="Workspace name"'+(ed ? ' onchange="sOrg(\'brandName\', this)"' : ' disabled')+' />')+
-      sRow('Logo', '', '<span class="s-avatar" style="border-radius:9px;background:var(--charcoal);color:#F9FAFB">'+sEsc((p.brandName||'W').split(' ').map(function(w){ return w[0]; }).slice(0,2).join(''))+'</span>'+sBtn('Upload logo', "toast('Logo upload is simulated in this prototype.')"))+
+      sRow('Logo', '', typeof sLogoRowHTML === 'function' ? sLogoRowHTML(ed) : '')+
       sRow('Type', 'Decides which settings, roles and rules apply.', oBadge('neutral', sIsCorporate() ? 'Corporate' : 'Staffing agency'))+
       sRow('Plan', 'Renews '+sEsc(sub.renewalDate||'')+'.', oBadge('neutral', (plan.name||sub.plan)+' · '+sub.billingCycle)+(sCan('billing','View') ? sBtn('Plan & billing', "sGo('billing')") : ''))+
       sRow('Verification', unver ? 'Until Oontu verifies your company there is no listing on the Oontu jobs website and no marketplace reveals.' : 'Your company is verified.', oBadge(unver ? 'warn' : 'success', unver ? 'Unverified' : 'Verified'))+
@@ -66244,5 +66247,90 @@ function cfScopeHTML(){
 /* Create workspace preview: the workspace taking shape */
 .au-mws__tile:not(:empty){ background:var(--id-bg); color:var(--id-fg); box-shadow:var(--id-ring); }
 </style>
+<style id="identity-plus-style">
+/* Identity, part 2 (2026-11-25): a workspace logo in the tile, and one muted tint per workspace for people in several. */
+:root body .o-sb-acct__co.has-logo{ background:#FFFFFF; padding:3px; overflow:hidden; }
+:root body .o-sb-acct__co.has-logo img, .s-logo img, .au-ws__mark img{ width:100%; height:100%; object-fit:contain; border-radius:inherit; display:block; }
+.s-logo{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; background:var(--id-bg); color:var(--id-fg); box-shadow:var(--id-ring); font:600 13px/1 var(--font); overflow:hidden; vertical-align:middle; }
+.s-logo.has-logo{ background:#FFFFFF; padding:3px; }
+.s-logo-actions{ display:inline-flex; gap:6px; margin-left:10px; vertical-align:middle; }
+.s-logo-hint{ display:block; margin-top:6px; font-size:12px; color:var(--text-3); }
+/* Sign-in workspace picker: the same quiet monogram, tinted per workspace so several are easy to tell apart. */
+:root body .au-ws__mark{ background:var(--id-bg); color:var(--id-fg); box-shadow:var(--id-ring); border:0; border-radius:9px; font-weight:600; }
+.ow-acct__ws{ display:block; margin-top:2px; font-size:12px; color:var(--text-3, #6B778C); }
+</style>
+<script id="identity-script">
+/* ============================================================
+   IDENTITY, PART 2 (2026-11-25, the user's "yes" to four suggestions)
+   1. A workspace logo, once uploaded, replaces the monogram in the same box (sidebar, Settings). Kept in this browser
+      (prototype); a server stores it as a file.
+   2. Initials from the first two meaningful words, skipping legal and generic suffixes ("Pvt. Ltd.", "Services"…):
+      "Northstar Talent Partners Pvt. Ltd." → NT, "Vistaar HR Services" → VH, a one-word name → its first letter.
+   3. One muted tint per workspace (six quiet tints, chosen from the workspace id) when a person has several
+      workspaces, in the sidebar and in the sign-in picker. One workspace keeps the plain navy tint.
+   4. "Continue as …" names the workspace the person last used, and how many they have, once this browser has seen it.
+============================================================ */
+(function(){
+  const SUFFIX = /^(pvt|private|ltd|limited|llp|llc|inc|corp|corporation|co|company|gmbh|plc|sa|ag|bv|pte|the|and|of|services|solutions|technologies|technology|group|holdings|enterprises|international|global)$/i;
+  window.oOrgInitials = function(name){
+    const words = String(name || '').replace(/[^\p{L}\p{N}\s&-]/gu, ' ').split(/[\s&-]+/).filter(Boolean);
+    const core = words.filter(function(w){ return !SUFFIX.test(w.replace(/\./g, '')); }), use = core.length ? core : words;
+    if(!use.length) return '?';
+    return (use.length >= 2 ? use[0].charAt(0) + use[1].charAt(0) : use[0].charAt(0)).toUpperCase();
+  };
+  const TINTS = [['#EEF1F6', '#0B1F3B'], ['#E6F2F1', '#0E5E59'], ['#F1EDF6', '#4E3A73'], ['#F5F0E6', '#6B4E16'], ['#E8F0FA', '#1F4A7A'], ['#EDF3EC', '#355E32']];
+  window.oWorkspaceTint = function(id){ let h = 0; String(id || '').split('').forEach(function(ch){ h = (h * 31 + ch.charCodeAt(0)) >>> 0; }); return TINTS[h % TINTS.length]; };
+  const LAST = 'oontu.lastWorkspace';
+  function readLast(){ try { return JSON.parse(localStorage.getItem(LAST) || 'null'); } catch(e){ return null; } }
+  window.oLastWorkspaceFor = function(email){ const l = readLast(); return l && l.email && email && l.email === String(email).toLowerCase() ? l : null; };
+  function workspaceCount(){
+    try { if(typeof authFlow !== 'undefined' && authFlow.workspaces && authFlow.workspaces.length) return authFlow.workspaces.length; } catch(e){}
+    try { const l = readLast(); if(l && l.email === String((authAppSession || {}).email || '').toLowerCase()) return l.count || 1; } catch(e){}
+    return 1;
+  }
+  function wsId(){ try { return (typeof authAppSession !== 'undefined' && authAppSession.workspaceId) || CURRENT_ORGANIZATION_ID; } catch(e){ return CURRENT_ORGANIZATION_ID; } }
+  /** The sidebar tile: the logo if there is one, else the initials; tinted only for people with several workspaces. */
+  window.oSyncWorkspaceMark = function(){
+    const el = document.getElementById('ws-initials'); if(!el) return;
+    const p = ORG_STRUCTURE.profile || {}, name = p.brandName || (ROLE_META[state.role] || {}).title || '';
+    el.classList.toggle('has-logo', !!p.logo);
+    if(p.logo){ el.innerHTML = '<img src="' + escapeHtml(p.logo) + '" alt="">'; el.style.background = ''; el.style.color = ''; el.setAttribute('aria-label', name + ' logo'); return; }
+    el.removeAttribute('aria-label'); el.textContent = oOrgInitials(name);
+    if(workspaceCount() > 1){ const t = oWorkspaceTint(wsId()); el.style.background = t[0]; el.style.color = t[1]; } else { el.style.background = ''; el.style.color = ''; }
+  };
+  const rs = window.renderSidebar;
+  renderSidebar = window.renderSidebar = function(){ const out = rs.apply(this, arguments); try { oSyncWorkspaceMark(); } catch(e){} return out; };
+  // Remember, for this browser's "Continue as …", the workspace the person last used and how many they have.
+  const ea = window.enterApp;
+  enterApp = window.enterApp = function(){
+    const out = ea.apply(this, arguments);
+    try {
+      const email = String((typeof authAppSession !== 'undefined' && authAppSession.email) || '').toLowerCase();
+      if(email) localStorage.setItem(LAST, JSON.stringify({ email:email, name:(ORG_STRUCTURE.profile || {}).brandName || '', id:wsId(), count:workspaceCount() }));
+      oSyncWorkspaceMark();
+    } catch(e){}
+    return out;
+  };
+  // Settings › Workspace › Logo: a real upload (PNG, JPG, SVG or WebP, up to 512 KB), with Remove.
+  window.sLogoPick = function(input){
+    const f = input && input.files && input.files[0]; if(!f) return;
+    if(!/^image\/(png|jpe?g|svg\+xml|webp)$/.test(f.type)){ toast('Use a PNG, JPG, SVG or WebP image.'); input.value = ''; return; }
+    if(f.size > 512 * 1024){ toast('That file is over 512 KB. Use a smaller logo.'); input.value = ''; return; }
+    const r = new FileReader();
+    r.onload = function(){ ORG_STRUCTURE.profile.logo = String(r.result); logAudit('Settings', 'Workspace logo changed', f.name, { entityType:'Workspace' }); oSyncWorkspaceMark(); try { settingsRefresh(); } catch(e){} toast('Logo updated.'); };
+    r.onerror = function(){ toast('That file could not be read. Try another one.'); };
+    r.readAsDataURL(f);
+  };
+  window.sLogoRemove = function(){ ORG_STRUCTURE.profile.logo = ''; logAudit('Settings', 'Workspace logo removed', '', { entityType:'Workspace' }); oSyncWorkspaceMark(); try { settingsRefresh(); } catch(e){} toast('Logo removed. The initials are shown instead.'); };
+  window.sLogoRowHTML = function(editable){
+    const p = ORG_STRUCTURE.profile || {}, mark = p.logo ? '<span class="s-logo has-logo"><img src="' + escapeHtml(p.logo) + '" alt="Workspace logo"></span>' : '<span class="s-logo" aria-hidden="true">' + escapeHtml(oOrgInitials(p.brandName || 'W')) + '</span>';
+    if(!editable) return mark;
+    return mark + '<span class="s-logo-actions"><input type="file" id="s-logo-file" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden onchange="sLogoPick(this)">' +
+      '<label for="s-logo-file" class="o-btn" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){ event.preventDefault(); document.getElementById(\'s-logo-file\').click(); }">' + (p.logo ? 'Replace' : 'Upload logo') + '</label>' +
+      (p.logo ? '<button type="button" class="o-btn" onclick="sLogoRemove()">Remove</button>' : '') + '</span>' +
+      '<small class="s-logo-hint">Shown in the sidebar instead of the initials. PNG, JPG, SVG or WebP, up to 512 KB.</small>';
+  };
+})();
+</script>
 </body>
 </html>
