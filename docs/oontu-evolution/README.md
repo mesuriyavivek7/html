@@ -65,3 +65,4 @@ Brief: *Oontu Unified Business Operating System, Master Assignment*. The Super A
 | 35 | [Research and decisions](35-business-os-research-and-decisions.md) — payment provider recommendation with sources |
 | 36 | [Security, privacy and production gaps](36-business-os-security-and-production-gaps.md) |
 | 37 | [Acceptance scenarios, tests and status](37-business-os-acceptance-and-status.md) |
+| 38 | [Billing engine, My team and customer Help & support](38-billing-team-and-customer-support.md) |

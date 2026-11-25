@@ -7,6 +7,7 @@
 | Baseline before the change (62 specs) | 954 passed, 1 failed. The failure was `motion.spec`, "collapse… pill on the active item": a **timing flake** that passes 8/8 when re-run alone on the same code. |
 | After the change (64 specs) | **1018 passed, 0 failed.** |
 | After the platform logins (65 specs, including `bos-login.spec.js` 7/7) | **1025 passed, 0 failed.** |
+| After the billing engine, My team, customer Help & support and automatic invoicing (70 specs; new `bos-billing` 10/10, `bos-team-support` 12/12, `bos-autoinvoice` 9/9) | **1070 passed, 0 failed.** APS 34/34. See doc 38. |
 | After tax reports, strict screens and the boot guard (66 specs; new `bos-tax.spec.js` 11/11, `bos-login.spec.js` 8/8) | 1022 passed, 0 failed. `intelligence-workspace.spec.js` timed out once in the full run (page stuck) and passed **15/15** when re-run alone: a harness flake, like `motion.spec` in the baseline. Total **1037/1037**. |
 | New: `tests/bos-identity-revenue.spec.js` | 22 / 22 |
 | New: `tests/bos-operations.spec.js` | 25 / 25 |

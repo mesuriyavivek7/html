@@ -54,13 +54,13 @@
       var want = {
         'meera@oontu.internal':'*',
         'arjun@oontu.internal':'oontu-mywork,oontu-revenue,oontu-accounts,oontu-signups',
-        'kavya@oontu.internal':'oontu-mywork,oontu-revenue,oontu-accounts,oontu-signups,oontu-insights',
+        'kavya@oontu.internal':'oontu-team,oontu-mywork,oontu-revenue,oontu-accounts,oontu-signups,oontu-insights',
         'leela@oontu.internal':'oontu-mywork,oontu-revenue,oontu-accounts,oontu-signups,oontu-finance,oontu-integrity,oontu-insights',
         'rohan@oontu.internal':'oontu-mywork,oontu-accounts,oontu-service',
-        'nisha@oontu.internal':'oontu-mywork,oontu-accounts,oontu-service,oontu-integrity,oontu-insights',
+        'nisha@oontu.internal':'oontu-team,oontu-mywork,oontu-accounts,oontu-service,oontu-integrity,oontu-insights',
         'aditi@oontu.internal':'oontu-mywork,oontu-accounts,oontu-service,oontu-custops,oontu-tenants',
-        'sana@oontu.internal':'oontu-mywork,oontu-revenue,oontu-accounts,oontu-signups,oontu-custops,oontu-tenants,oontu-integrity,oontu-insights',
-        'vikram@oontu.internal':'oontu-mywork,oontu-accounts,oontu-service,oontu-finance,oontu-subscriptions,oontu-plans,oontu-integrity,oontu-insights',
+        'sana@oontu.internal':'oontu-team,oontu-mywork,oontu-revenue,oontu-accounts,oontu-signups,oontu-custops,oontu-tenants,oontu-integrity,oontu-insights',
+        'vikram@oontu.internal':'oontu-team,oontu-mywork,oontu-accounts,oontu-service,oontu-finance,oontu-subscriptions,oontu-plans,oontu-integrity,oontu-insights',
         'dev@oontu.internal':'oontu-mywork,oontu-platform-users,oontu-integrity,oontu-insights,oontu-audit'
       };
       var keys = Object.keys(want);

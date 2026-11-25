@@ -24,7 +24,10 @@ Password for every employee: **demo1234**. The email code also works: **123456**
 | Aditi Menon | aditi@oontu.internal | Implementation Specialist + Trainer | My work | My work, Onboarding and success, Tickets, Accounts, Tenants |
 | Sana Qureshi | sana@oontu.internal | Customer Success Manager | My work | My work, Onboarding and success, Pipeline (renewals), Accounts, Incomplete sign-ups, Tenants, Integrity, Insights |
 | Vikram Shah | vikram@oontu.internal | Finance Manager | My work | My work, Billing and payments (incl. Tax and CA reports), Subscriptions, Plans, Tickets (Billing queue), Accounts, Integrity, Insights |
+| Ishaan Verma | ishaan@oontu.internal | Commercial Operator | My work | My work, Billing and payments (raises invoices, shares links), Subscriptions, Accounts |
 | Dev Patel | dev@oontu.internal | Security Administrator | My work | My work, Employees and access, Audit log, Integrity, Insights |
+
+Kavya, Nisha, Sana, Vikram and Meera also have **My team**, because people report to them.
 
 The rule: a screen is in someone's menu only if they do that work. That means holding the screen's own working permission, not an incidental read-only one. Opening any other screen sends them back to their home. Each action still checks again. `tests/bos-login.spec.js` pins these exact lists.
 Notes:
@@ -36,6 +39,9 @@ Notes:
 - Employees and access › "View as (prototype)" switches between these people without signing out.
 
 ## Customer workspaces (the recruitment product)
+
+In any customer workspace: **Settings › Help & support** has the knowledge centre, tickets and the support plan. **Settings › Plan & billing** has the checkout (simulated Razorpay) and invoices.
+
 
 | Email | Password | Opens as |
 |---|---|---|

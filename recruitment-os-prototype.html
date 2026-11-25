@@ -28806,7 +28806,7 @@ function createAuthSimulator(){
     if(typeof PLATFORM_USER_ROSTER !== 'undefined'){
       const pu = PLATFORM_USER_ROSTER.find(function(u){ return norm(u.email) === email; });
       if(pu){
-        if(pu.status !== 'Active') return null;
+        if(pu.status !== 'Active' || pu.system) return null;   // system identities never sign in
         db.workspaces.ws_oontu_platform = db.workspaces.ws_oontu_platform || { id:'ws_oontu_platform', name:'Oontu Platform' };
         return db.accounts[email] = { name:pu.name, pw:TEAM_PASSWORD, emailVerified:true, platformUserId:pu.id, memberships:[{ workspaceId:'ws_oontu_platform', role:'oontu' }] };
       }
@@ -42011,7 +42011,7 @@ function wsTrialCardHTML(){
     '<h3 id="trial-card-h" class="ws-card__title">'+(ro ? 'Your trial has ended' : 'Your 14 days so far')+'</h3>'+
     '<p class="ws-card__sub">'+escapeHtml(p.name)+(st.boosts.length ? ' + '+st.boosts.map(function(b){ return b.name; }).join(', ') : '')+' · '+(ro ? 'read-only' : st.daysLeft+(st.daysLeft===1 ? ' day' : ' days')+' left')+'</p></div>'+
     '<div class="flex items-center gap-2 shrink-0"><button type="button" class="btn-quiet text-sm" onclick="wsPlanCompareOpen()">Compare plans</button>'+
-    '<button type="button" class="btn-primary app-btn" onclick="wsPlanChoose()">Choose '+escapeHtml(p.name)+'</button></div></div>'+
+    '<button type="button" class="btn-primary app-btn" onclick="(window.bosCheckoutOpen||wsPlanChoose)()">Choose '+escapeHtml(p.name)+'</button></div></div>'+
     '<div class="trial-nums"><div><b>'+n.jobs+'</b><span>Jobs opened</span></div><div><b>'+n.subs+'</b><span>Candidates submitted</span></div><div><b>'+n.ivs+'</b><span>Interviews booked</span></div><div><b>'+n.hours+' h</b><span>Kairo saved you</span></div></div>'+
     '<p class="ws-card__sub" style="margin-top:12px">'+escapeHtml(line)+'</p></section>';
 }
@@ -42041,7 +42041,7 @@ function wsPlanCompareRender(){
         return '<div class="mt-4 p-4 rounded-2xl border '+(on ? 'border-zinc-900' : 'border-zinc-200')+'"><div class="flex items-baseline justify-between gap-3"><p class="font-semibold text-ink">'+escapeHtml(p.name)+' <span class="text-sm font-normal text-zinc-500">'+escapeHtml(p.fit)+'</span></p>'+
           '<p class="text-sm font-semibold">'+(p.talkToUs ? 'Talk to us' : planMoney(p.prices[cur], cur))+'</p></div>'+
           '<p class="text-sm text-zinc-600 mt-1">'+escapeHtml(p.description)+'</p>'+
-          (on ? '<p class="text-xs text-zinc-500 mt-2">Your plan now</p>' : p.talkToUs ? '' : '<button type="button" class="btn-secondary app-btn mt-3" onclick="wsPlanChoose(\''+p.id+'\')">Choose '+escapeHtml(p.name)+'</button>')+'</div>';
+          (on ? '<p class="text-xs text-zinc-500 mt-2">Your plan now</p>' : p.talkToUs ? '' : '<button type="button" class="btn-secondary app-btn mt-3" onclick="wsPlanCompareClose(); (window.bosCheckoutOpen||wsPlanChoose)(\''+p.id+'\')">Choose '+escapeHtml(p.name)+'</button>')+'</div>';
       }).join('')+
       '<p class="text-sm font-semibold text-ink mt-6">Boosts</p><p class="text-xs text-zinc-500">One thing on top of any plan, billed only for whoever or whatever uses it.</p>'+
       BOOSTS.map(function(b){ return '<div class="flex justify-between gap-3 py-2 border-b border-zinc-100 text-sm"><span><b class="font-medium text-ink">'+escapeHtml(b.name)+'</b><span class="block text-xs text-zinc-500">'+escapeHtml(b.what)+'</span></span><span class="text-right whitespace-nowrap">'+planMoney(b.prices[cur], cur)+'<span class="block text-xs text-zinc-500">'+escapeHtml(b.unit)+'</span></span></div>'; }).join('')+
@@ -66578,7 +66578,7 @@ function cfScopeHTML(){
   window.bosActor = function(){ return ACTOR || { type:'employee', id:ACTIVE_PLATFORM_USER_ID }; };
   window.bosAsAgent = function(fn){ const prev = ACTOR; ACTOR = { type:'agent', id:'agent', onBehalfOf:ACTIVE_PLATFORM_USER_ID }; try { return fn(); } finally { ACTOR = prev; } };
   /* system: an inbound integration (the email intake). It may only run the commands listed here. */
-  const SYSTEM_COMMANDS = ['ticket.create','ticket.reopen'];
+  const SYSTEM_COMMANDS = window.BOS_SYSTEM_COMMANDS = ['ticket.create','ticket.reopen'];
   window.bosAsSystem = function(id, fn){ const prev = ACTOR; ACTOR = { type:'system', id:id }; try { return fn(); } finally { ACTOR = prev; } };
 
   /* bosRun: every BOS change goes through here. fn returns { ok, ... } and may set .audit = [action, detail, meta]. */
@@ -68022,7 +68022,7 @@ function cfScopeHTML(){
   const V = function(id){ const el = document.getElementById(id); if(!el) return ''; if(el.type === 'checkbox') return el.checked; if(el.multiple) return Array.prototype.filter.call(el.options, function(o){ return o.selected; }).map(function(o){ return o.value; }); return el.value; };
   const dlgDone = function(res, okMsg){ if(!res || !res.ok){ const e = document.getElementById('bos-dlg-err'); if(e) e.textContent = (res && res.reason) || 'That didn’t work.'; return false; } bosDialogClose(); if(okMsg) toast(okMsg); bosRedraw(); return true; };
   window.bosDlgDone = dlgDone; window.bosV = V; window.bosField = field;
-  const people = function(filter){ return PLATFORM_USER_ROSTER.filter(function(u){ return u.status === 'Active' && (!filter || filter(u)); }).map(function(u){ return [u.id, u.name]; }); };
+  const people = function(filter){ return PLATFORM_USER_ROSTER.filter(function(u){ return u.status === 'Active' && !u.system && (!filter || filter(u)); }).map(function(u){ return [u.id, u.name]; }); };
 
   /* ---------- open any record ---------- */
   window.bosOpen = function(type, id){
@@ -68269,7 +68269,7 @@ function cfScopeHTML(){
   function renderFinance(){
     if(!(canPlatform('platform-finance', 'view') || canPlatform('platform-commercial', 'approve_discount'))) return deny();
     const an = bosAnalytics().finance, i = UI.tab['oontu-finance'] || 0; let body = '';
-    if(i === 0) body = table('bos-apr', 'Approvals', 'Maker-checker: the requester can never approve their own request', ['Request', 'Type', 'Asked by', 'Status', 'Decided by', ''], BOS.approvals.slice().reverse().map(function(a){ const can = bosCanDecide(a); return '<tr><td style="white-space:normal"><b>' + E(a.summary) + '</b><small>' + E(a.id + ' · ' + fmtDT(a.requestedAt)) + '</small></td><td>' + E(BOS_APPROVAL_TYPES[a.type].label) + '</td><td>' + E(bosName(a.requestedBy)) + '</td><td>' + badge(a.status) + '</td><td>' + E(a.decidedBy ? bosName(a.decidedBy) : '—') + '</td><td>' + (a.status === 'pending' ? btn(can.ok ? 'Decide' : 'View', "bosApprovalDialog('" + a.id + "')") : '') + '</td></tr>'; }), 'No approvals.');
+    if(i === 0) body = table('bos-apr', 'Approvals', 'Maker-checker: the requester can never approve their own request', ['Request', 'Type', 'Asked by', 'Status', 'Decided by', ''], (typeof bosApprovalsVisible === 'function' ? bosApprovalsVisible() : BOS.approvals).slice().reverse().map(function(a){ const can = bosCanDecide(a); return '<tr><td style="white-space:normal"><b>' + E(a.summary) + '</b><small>' + E(a.id + ' · ' + fmtDT(a.requestedAt)) + '</small></td><td>' + E(BOS_APPROVAL_TYPES[a.type].label) + '</td><td>' + E(bosName(a.requestedBy)) + '</td><td>' + badge(a.status) + '</td><td>' + E(a.decidedBy ? bosName(a.decidedBy) : '—') + '</td><td>' + (a.status === 'pending' ? btn(can.ok ? 'Decide' : 'View', "bosApprovalDialog('" + a.id + "')") : '') + '</td></tr>'; }), 'No approvals.');
     if(i === 1) body = table('bos-pl', 'Payment links', 'Status changes only from a verified provider event', ['Link', 'For', { label:'Amount', right:true }, 'Status', 'Expires', ''], BOS.payLinks.slice().reverse().map(function(l){ return '<tr><td><b>' + E(l.id) + '</b><small>' + E(l.url) + '</small></td><td>' + E(l.proposalId || l.invoiceId) + '</td><td class="num">' + E(money(l.currency, l.amount)) + '</td><td>' + badge(l.status) + '</td><td>' + E(fmtD(l.expiresAt)) + '</td><td>' + (l.status === 'open' ? btn('Simulate payment', "bosResult(BOS_PAY.simulate('payment.captured', { id:'" + l.id + "', amount:" + l.amount + ", currency:'" + l.currency + "', version:1 }), 'Provider event received and verified (simulated).')") : '') + '</td></tr>'; }), 'No payment links. Create one from a proposal.') + '<div style="height:16px"></div>' +
       table('bos-pe', 'Provider events', 'Verified, de-duplicated by event id, applied only if newer than what we hold', ['Event', 'Type', 'Object', 'Result', 'Note', 'When'], BOS.payEvents.slice().reverse().map(function(e){ return '<tr><td>' + E(e.id) + '</td><td>' + E(e.type || '—') + '</td><td>' + E(e.objectId || '—') + '</td><td>' + badge(e.status) + '</td><td style="white-space:normal">' + E(e.note || e.reason || '') + '</td><td>' + E(fmtDT(e.at)) + '</td></tr>'; }), 'No provider events yet.');
     if(i === 2) body = table('bos-inv', 'Invoices', 'Manual verification needs Finance permission and a reference', ['Invoice', 'Workspace', { label:'Amount', right:true }, 'Status', 'Verified by', ''], (typeof PLATFORM_INVOICES !== 'undefined' ? PLATFORM_INVOICES : []).slice().reverse().map(function(inv){ const t = tenantById(inv.tenantId); return '<tr><td><b>' + E(inv.id) + '</b><small>' + E(inv.periodStart + ' → ' + inv.periodEnd) + '</small></td><td>' + E(t ? t.name : inv.tenantId) + '</td><td class="num">' + E(money(inv.currency, inv.amount)) + '</td><td>' + badge(invoiceDisplayStatus(inv)) + '</td><td>' + E(inv.verifiedBy ? inv.verifiedBy.replace(/^manual:/, 'By hand: ').replace(/^provider:/, 'Provider ') + (inv.paymentReference ? ' · ' + inv.paymentReference : '') : inv.status === 'paid' ? 'Not verified' : '—') + '</td><td>' + (inv.status === 'issued' ? (canPlatform('platform-finance', 'verify_payment') ? btn('Verify payment', "bosOpenVerifyPayment('" + inv.id + "')") : '') + btn('Payment link', "bosResult(bosCreatePayLink(null,'" + inv.id + "'), 'Payment link created (simulated).')") : '') + '</td></tr>'; }), 'No invoices yet. Invoices are generated from Subscriptions.') + '<div style="height:16px"></div>' +
@@ -68278,9 +68278,10 @@ function cfScopeHTML(){
     if(i === 4) body = '<div class="bos-grid">' + card('Payment provider: Razorpay', '<p style="margin:0 0 8px">Decided 25 Nov 2026: Razorpay for Indian and international customers (one gateway). Indian customers pay by UPI, cards, netbanking or recurring mandates; international customers by card or bank transfer, with eFIRC export documents. Before going live: activate international payments, file the annual GST LUT, confirm the subscription fee. Paddle is the planned add-on only if self-serve sales abroad grow to roughly 20–30% of revenue.</p><p class="bos-muted">This prototype uses a simulated Razorpay-shaped adapter: no live keys, nothing is charged. Details and sources: docs/oontu-evolution/35.</p>') +
       card('Rules this prototype enforces', '<ul class="bos-list"><li>Paid status comes only from a verified provider event, or a Finance verification with a reference.</li><li>Events are applied once (event id), in object-version order, and signature-checked.</li><li>Refunds need a second person; the provider’s event completes them.</li><li>Recurring card mandates in India: above ₹15,000 per charge the customer must authenticate (RBI e-mandate framework).</li></ul>') + '</div>';
     if(i === 5) body = typeof bosTaxTabHTML === 'function' ? bosTaxTabHTML() : '';
+    if(i === 6) body = typeof bosBillingTabHTML === 'function' ? bosBillingTabHTML() : '';
     return shell({ ctx:ctx('Business & finance'), title:'Business & finance', lede:'Approvals, payment links, provider events, invoices, refunds and reconciliation. Finance handles exceptions; Sales runs routine approved deals.' }, [
       oNumbers([{ label:'Approvals pending', value:String(BOS.approvals.filter(function(a){ return a.status === 'pending'; }).length), note:'all types' }, { label:'Open payment links', value:String(an.openLinks), note:an.events + ' provider events' }, { label:'Refunds waiting', value:String(an.pendingRefunds), note:'need a Finance manager' }, { label:'Reconciliation', value:String(an.reconciliation), note:an.rejectedEvents + ' rejected events' }]),
-      tabs('oontu-finance', ['Approvals', 'Payments', 'Invoices and refunds', 'Reconciliation', 'Provider and rules', 'Tax and CA reports']), body ]);
+      tabs('oontu-finance', ['Approvals', 'Payments', 'Invoices and refunds', 'Reconciliation', 'Provider and rules', 'Tax and CA reports', 'Billing desk']), body ]);
   }
   window.bosOpenVerifyPayment = function(invId){ const inv = invoiceById(invId); if(!inv) return; bosDialog('Verify payment by hand', '<p class="bos-note">Use this only when the money is confirmed outside the provider (for example a bank transfer). The reference and your name are kept in the audit log.</p>' + kv([['Invoice', inv.id], ['Amount', money(inv.currency, inv.amount)]]) + '<div style="height:10px"></div>' + field('bos-vp-ref', 'Bank or provider reference') + field('bos-vp-note', 'Note'), 'Verify', "bosVerifySubmit('" + invId + "')"); };
   window.bosVerifySubmit = function(invId){ const r = markInvoicePaid(invId, { reference:V('bos-vp-ref'), note:V('bos-vp-note') }); if(dlgDone(r, 'Payment verified.')){ if(typeof refreshOontuInvoicesSection === 'function') try { refreshOontuInvoicesSection(); } catch(e){} } };
@@ -68317,7 +68318,7 @@ function cfScopeHTML(){
     if(!canPlatform('platform-user', 'view')) return deny();
     bosExpireGrants();
     const i = UI.tab['oontu-platform-users'] || 0, can = canPlatform('platform-user', 'update'); let body = '';
-    if(i === 0) body = table('bos-emp', 'Employees', 'One identity and one sign-in per person, however many roles they hold', ['Employee', 'Roles', 'Department · team', 'Status', 'Last access review', ''], PLATFORM_USER_ROSTER.map(function(u){ const roles = bosRolesOf(u).map(function(r){ return (platformRoleById(r) || {}).name || r; }); const temp = BOS.grants.filter(function(g){ return g.kind === 'role' && g.userId === u.id && g.status === 'active'; }); return '<tr><td><b>' + E(u.name) + (u.id === ACTIVE_PLATFORM_USER_ID ? ' (you)' : '') + '</b><small>' + E(u.email + ' · ' + u.id) + '</small></td><td style="white-space:normal">' + E(roles.join(', ') || (u.offboardedRoles ? 'None (offboarded)' : '—')) + (temp.length ? '<small>' + E(temp.length + ' temporary grant(s)') + '</small>' : '') + '</td><td>' + E((u.department || '—') + (u.teamId ? ' · ' + u.teamId : '')) + '</td><td>' + badge(u.status) + '</td><td>' + E(u.lastReviewedAt ? fmtD(u.lastReviewedAt) + ' · ' + bosName(u.lastReviewedBy) : 'Never') + '</td><td>' + btn('Manage', "bosEmployeeDialog('" + u.id + "')") + '</td></tr>'; }));
+    if(i === 0) body = table('bos-emp', 'Employees', 'One identity and one sign-in per person, however many roles they hold', ['Employee', 'Roles', 'Department · team', 'Status', 'Last access review', ''], PLATFORM_USER_ROSTER.filter(function(u){ return !u.system; }).map(function(u){ const roles = bosRolesOf(u).map(function(r){ return (platformRoleById(r) || {}).name || r; }); const temp = BOS.grants.filter(function(g){ return g.kind === 'role' && g.userId === u.id && g.status === 'active'; }); return '<tr><td><b>' + E(u.name) + (u.id === ACTIVE_PLATFORM_USER_ID ? ' (you)' : '') + '</b><small>' + E(u.email + ' · ' + u.id) + '</small></td><td style="white-space:normal">' + E(roles.join(', ') || (u.offboardedRoles ? 'None (offboarded)' : '—')) + (temp.length ? '<small>' + E(temp.length + ' temporary grant(s)') + '</small>' : '') + '</td><td>' + E((u.department || '—') + (u.teamId ? ' · ' + u.teamId : '')) + '</td><td>' + badge(u.status) + '</td><td>' + E(u.lastReviewedAt ? fmtD(u.lastReviewedAt) + ' · ' + bosName(u.lastReviewedBy) : 'Never') + '</td><td>' + btn('Manage', "bosEmployeeDialog('" + u.id + "')") + '</td></tr>'; }));
     if(i === 1){ const ws = ['revenue', 'service', 'custops', 'finance', 'platform']; body = ws.map(function(w){ const roles = PLATFORM_ROLES.filter(function(r){ return (r.workspace || 'platform') === w; }); return table('bos-tpl-' + w, bosRoleWorkspaceLabel(w), oPlural(roles.length, 'role template'), ['Role', 'Grants', 'Widest scope'], roles.map(function(r){ const mods = Object.keys(r.permissions).filter(function(k){ return (r.permissions[k] || []).length; }); const widest = mods.map(function(k){ return (r.scope || {})[k] || 'organization'; }).sort(function(a, b){ return BOS_SCOPES.indexOf(b) - BOS_SCOPES.indexOf(a); })[0] || '—'; return '<tr><td><b>' + E(r.name) + '</b>' + (r.protected ? '<small>Protected</small>' : '') + '</td><td style="white-space:normal;min-width:320px"><small>' + E(mods.map(function(k){ const m = PLATFORM_PERMISSION_MODULES.find(function(x){ return x.id === k; }); return (m ? m.label : k) + ': ' + r.permissions[k].join(', ').replace(/_/g, ' ') + ' (' + ((r.scope || {})[k] || 'organization') + ')'; }).join(' · ')) + '</small></td><td>' + E(widest) + '</td></tr>'; })); }).join('<div style="height:16px"></div>'); }
     if(i === 2) body = table('bos-perm', 'Permission catalog', 'Every module with its sensitivity and actions', ['Module', 'Workspace', 'Sensitivity', 'Actions', 'What it covers'], PLATFORM_PERMISSION_MODULES.map(function(m){ return '<tr><td><b>' + E(m.label) + '</b><small>' + E(m.id) + '</small></td><td>' + E(bosRoleWorkspaceLabel(m.ws)) + '</td><td>' + badge(m.sens || 'medium') + '</td><td style="white-space:normal">' + E(m.actions.join(', ').replace(/_/g, ' ')) + '</td><td style="white-space:normal">' + E(m.desc || '') + '</td></tr>'; }));
     if(i === 3) body = table('bos-grants', 'Temporary and sensitive access', 'Purpose-bound, time-boxed, approved by someone else, ends by itself', ['Grant', 'Who', 'What', 'Purpose', 'Status', 'Ends', ''], BOS.grants.slice().reverse().map(function(g){ const t = g.tenantId && tenantById(g.tenantId); return '<tr><td>' + E(g.id) + '</td><td>' + E(bosName(g.userId)) + '</td><td>' + E(g.kind === 'role' ? 'Role: ' + ((platformRoleById(g.roleId) || {}).name || g.roleId) : (t ? t.name : g.tenantId) + ' · ' + g.scope) + '</td><td style="white-space:normal">' + E(g.purpose + (g.ticketId ? ' · ' + g.ticketId : '')) + '</td><td>' + badge(g.status) + '</td><td>' + E(g.expiresAt ? fmtDT(g.expiresAt) : '—') + '</td><td>' + (g.status === 'active' ? btn('Revoke', "bosResult(bosRevokeGrant('" + g.id + "','Revoked by ' + bosName(ACTIVE_PLATFORM_USER_ID)), 'Revoked.')") : '') + '</td></tr>'; }), 'No grants.');
@@ -68345,10 +68346,10 @@ function cfScopeHTML(){
   /* ============ INSIGHTS (analytics + product intelligence) ============ */
   function renderInsights(){
     const a = bosAnalytics(), themes = bosProductThemes(), parts = [];
-    if(canPlatform('platform-lead', 'view')) parts.push(card('Revenue', kv([['Open pipeline', String(a.revenue.open)], ['Win rate', a.revenue.winRate == null ? '—' : a.revenue.winRate + '%'], ['Demo attendance', a.revenue.demoAttendance == null ? '—' : a.revenue.demoAttendance + '%'], ['Follow-ups on time', a.revenue.followUpCompliance == null ? '—' : a.revenue.followUpCompliance + '%']])));
-    if(canPlatform('platform-ticket', 'view')) parts.push(card('Service', kv([['Open tickets', String(a.service.open)], ['Resolved within SLA', a.service.slaMet == null ? '—' : a.service.slaMet + '%'], ['Median first response', a.service.medianFirstResponseH == null ? '—' : a.service.medianFirstResponseH + ' h'], ['Reopen rate', a.service.reopenRate == null ? '—' : a.service.reopenRate + '%']])));
-    if(canPlatform('platform-onboarding', 'view') || canPlatform('platform-success', 'view')) parts.push(card('Customer operations', kv([['Onboarding', String(a.custops.onboarding)], ['Activation rate', a.custops.activationRate == null ? '—' : a.custops.activationRate + '%'], ['Healthy / watch / at risk', a.custops.health.Healthy + ' / ' + a.custops.health.Watch + ' / ' + a.custops.health['At risk']], ['Renewals in 90 days', String(a.custops.renewals90)]])));
-    if(canPlatform('platform-finance', 'view')) parts.push(card('Finance', kv([['Refunds waiting', String(a.finance.pendingRefunds)], ['Open payment links', String(a.finance.openLinks)], ['Reconciliation exceptions', String(a.finance.reconciliation)], ['Rejected provider events', String(a.finance.rejectedEvents)]])));
+    if(bosSeesDept('revenue')) parts.push(card('Revenue', kv([['Open pipeline', String(a.revenue.open)], ['Win rate', a.revenue.winRate == null ? '—' : a.revenue.winRate + '%'], ['Demo attendance', a.revenue.demoAttendance == null ? '—' : a.revenue.demoAttendance + '%'], ['Follow-ups on time', a.revenue.followUpCompliance == null ? '—' : a.revenue.followUpCompliance + '%']])));
+    if(bosSeesDept('service')) parts.push(card('Service', kv([['Open tickets', String(a.service.open)], ['Resolved within SLA', a.service.slaMet == null ? '—' : a.service.slaMet + '%'], ['Median first response', a.service.medianFirstResponseH == null ? '—' : a.service.medianFirstResponseH + ' h'], ['Reopen rate', a.service.reopenRate == null ? '—' : a.service.reopenRate + '%']])));
+    if(bosSeesDept('custops')) parts.push(card('Customer operations', kv([['Onboarding', String(a.custops.onboarding)], ['Activation rate', a.custops.activationRate == null ? '—' : a.custops.activationRate + '%'], ['Healthy / watch / at risk', a.custops.health.Healthy + ' / ' + a.custops.health.Watch + ' / ' + a.custops.health['At risk']], ['Renewals in 90 days', String(a.custops.renewals90)]])));
+    if(bosSeesDept('finance')) parts.push(card('Finance', kv([['Refunds waiting', String(a.finance.pendingRefunds)], ['Open payment links', String(a.finance.openLinks)], ['Reconciliation exceptions', String(a.finance.reconciliation)], ['Rejected provider events', String(a.finance.rejectedEvents)]])));
     return shell({ ctx:ctx('Platform administration · Insights'), title:'Insights', lede:'Numbers from the same records the teams work in. Self-service product feedback is linked to its evidence.' }, [
       parts.length ? '<div class="bos-grid">' + parts.join('') + '</div>' : '',
       table('bos-themes', 'Product feedback themes', 'One mention is a signal, not proof. Themes link to the existing product backlog process; no second backlog.', ['Theme', 'Strength', 'Evidence', { label:'Mentions', right:true }], themes.map(function(t){ return '<tr><td><b>' + E(t.theme) + '</b></td><td>' + badge(t.strength === 'Pattern' ? 'review' : 'info') + ' ' + E(t.strength) + '</td><td style="white-space:normal;min-width:280px"><small>' + E(t.evidence.map(function(e){ return e.src + ' ' + e.ref + ': ' + e.text; }).join(' · ')) + '</small></td><td class="num">' + t.count + '</td></tr>'; }), 'No feedback yet.')
@@ -68580,16 +68581,17 @@ function cfScopeHTML(){
 
   /* ---------- the tax-invoice ledger: one series per financial year ---------- */
   BOS.taxInvoices = BOS.taxInvoices || [];
-  const nextNo = function(kind, iso){ const fy = fyOf(iso), pre = kind === 'credit_note' ? 'OON-CN/' : 'OON/'; const n = BOS.taxInvoices.filter(function(t){ return t.kind === kind && t.fy === fy; }).length + 1; return pre + fy + '/' + String(n).padStart(4, '0'); };
+  const nextNo = function(kind, iso){ const fy = fyOf(iso), pre = kind === 'credit_note' ? 'OON-CN/' : kind === 'debit_note' ? 'OON-DN/' : 'OON/'; const n = BOS.taxInvoices.filter(function(t){ return t.kind === kind && t.fy === fy; }).length + 1; return pre + fy + '/' + String(n).padStart(4, '0'); };
   function issue(o){
     const at = o.date || ISO(), c = bosTaxCompute(o.account, o.amount, o.currency, at);
     const t = { no:nextNo(o.kind || 'invoice', at), kind:o.kind || 'invoice', date:at, fy:fyOf(at), accountId:o.account ? o.account.id : null, tenantId:o.tenantId || null, customer:o.account ? o.account.name : (o.customer || 'Unknown customer'),
       party:c.party, segment:c.segment, sac:TAX.profile.sac, description:o.description || 'Oontu subscription', currency:o.currency, amount:c.taxable, fxRate:c.fxRate, taxableINR:c.taxableINR, cgstINR:c.cgstINR, sgstINR:c.sgstINR, igstINR:c.igstINR, taxINR:c.taxINR,
-      taxForeign:c.taxForeign, total:c.total, totalINR:c.totalINR, status:o.status || 'issued', paidAt:null, gateway:'Razorpay', paymentId:'', paymentRef:'', efirc:'', realisedAt:null, sourceRef:o.sourceRef || '', originalNo:o.originalNo || '', sample:!!o.sample };
+      taxForeign:c.taxForeign, total:c.total, totalINR:c.totalINR, status:o.status || 'issued', paidAt:null, gateway:'Razorpay', paymentId:'', paymentRef:'', efirc:'', realisedAt:null, sourceRef:o.sourceRef || '', originalNo:o.originalNo || '', sample:!!o.sample, createdBy:ACTIVE_PLATFORM_USER_ID, lines:o.lines || null, dueDate:o.dueDate || null, revisedFrom:o.revisedFrom || '' };
     if(t.kind === 'credit_note'){ ['amount','taxableINR','cgstINR','sgstINR','igstINR','taxINR','taxForeign','total','totalINR'].forEach(function(k){ if(t[k] != null) t[k] = -Math.abs(t[k]); }); }
     BOS.taxInvoices.push(t);
     return t;
   }
+  window.bosTaxIssue = function(o){ return issue(o); }; window.bosTaxMarkPaid = function(t, id, ref){ markPaid(t, id, ref); };
   window.bosTaxInvoice = function(no){ return BOS.taxInvoices.find(function(t){ return t.no === no; }) || null; };
   const accountOfTenant = function(tid){ return BOS.accounts.find(function(a){ return !a.mergedInto && a.tenantIds.indexOf(tid) > -1; }) || null; };
   function markPaid(t, paymentId, ref){
@@ -68684,11 +68686,11 @@ function cfScopeHTML(){
     const s = { invoices:0, creditNotes:0, taxableINR:0, cgstINR:0, sgstINR:0, igstINR:0, exportINR:0, review:0, sections:{} };
     rows.forEach(function(t){
       if(t.status === 'cancelled') return;
-      if(t.kind === 'credit_note') s.creditNotes++; else s.invoices++;
+      if(t.kind !== 'invoice') s.creditNotes++; else s.invoices++;
       s.taxableINR += t.taxableINR || 0; s.cgstINR += t.cgstINR || 0; s.sgstINR += t.sgstINR || 0; s.igstINR += t.igstINR || 0;
       if(t.segment.supply === 'Export') s.exportINR += t.taxableINR || 0;
       if(!t.segment.ok) s.review++;
-      const k = t.kind === 'credit_note' ? (t.party && t.party.gstin ? 'CDNR' : 'CDNUR') : t.segment.section;
+      const k = t.kind !== 'invoice' ? (t.party && t.party.gstin ? 'CDNR' : 'CDNUR') : t.segment.section;
       const x = s.sections[k] = s.sections[k] || { count:0, taxableINR:0, cgstINR:0, sgstINR:0, igstINR:0 };
       x.count++; x.taxableINR += t.taxableINR || 0; x.cgstINR += t.cgstINR || 0; x.sgstINR += t.sgstINR || 0; x.igstINR += t.igstINR || 0;
     });
@@ -68700,7 +68702,7 @@ function cfScopeHTML(){
       const p = TAX.profile;
       return [['Supplier', p.legalName, 'GSTIN', p.gstin, 'State', p.state + ' (' + p.stateCode + ')', 'LUT ARN', p.lut.arn + ' valid ' + p.lut.from + ' to ' + p.lut.to], [],
         ['Document No','Document type','Date','Financial year','Customer','Customer GSTIN','Customer country','Place of supply (state)','POS code','Supply type','GSTR-1 section','Tax treatment','SAC','Description','Currency','Value (currency)','Exchange rate','Taxable value (INR)','CGST %','CGST (INR)','SGST %','SGST (INR)','IGST %','IGST (INR)','Total tax (INR)','Invoice total (INR)','Invoice total (currency)','Reverse charge','LUT ARN','Status','Payment date','Gateway','Gateway payment ID','eFIRC / BRC','Export proceeds realised','Original invoice (credit notes)','Reason the tax was chosen','Sample row']]
-      .concat(rows.map(function(t){ const s = t.segment, pa = t.party || {}; return [t.no, t.kind === 'credit_note' ? 'Credit note' : 'Tax invoice', dmy(t.date), 'FY 20' + t.fy, t.customer, pa.gstin || '', pa.country || '', pa.state || (pa.country && pa.country !== 'India' ? 'Outside India (96)' : ''), pa.country === 'India' ? pa.stateCode : '96', s.supply || '', t.kind === 'credit_note' ? (pa.gstin ? 'CDNR' : 'CDNUR') : s.section, s.label, t.sac, t.description, t.currency, n2(t.amount), n2(t.fxRate), n2(t.taxableINR), s.cgst, n2(t.cgstINR), s.sgst, n2(t.sgstINR), s.igst, n2(t.igstINR), n2(t.taxINR), n2(t.totalINR), n2(t.total), 'N', s.lut || '', t.status, dmy(t.paidAt), t.gateway, t.paymentId, t.efirc, dmy(t.realisedAt), t.originalNo, s.why, t.sample ? 'Yes' : '']; })); } },
+      .concat(rows.map(function(t){ const s = t.segment, pa = t.party || {}; return [t.no, t.kind === 'credit_note' ? 'Credit note' : t.kind === 'debit_note' ? 'Debit note' : 'Tax invoice', dmy(t.date), 'FY 20' + t.fy, t.customer, pa.gstin || '', pa.country || '', pa.state || (pa.country && pa.country !== 'India' ? 'Outside India (96)' : ''), pa.country === 'India' ? pa.stateCode : '96', s.supply || '', t.kind !== 'invoice' ? (pa.gstin ? 'CDNR' : 'CDNUR') : s.section, s.label, t.sac, t.description, t.currency, n2(t.amount), n2(t.fxRate), n2(t.taxableINR), s.cgst, n2(t.cgstINR), s.sgst, n2(t.sgstINR), s.igst, n2(t.igstINR), n2(t.taxINR), n2(t.totalINR), n2(t.total), 'N', s.lut || '', t.status, dmy(t.paidAt), t.gateway, t.paymentId, t.efirc, dmy(t.realisedAt), t.originalNo, s.why, t.sample ? 'Yes' : '']; })); } },
     gstr1:{ label:'GSTR-1 summary by section', file:'gstr1-summary', build:function(rows){
       const s = bosTaxSummary(rows), order = ['B2B','B2CL','B2CS','EXP (WOPAY)','EXP (WPAY)','CDNR','CDNUR','Review'];
       return [['GSTR-1 section','Documents','Taxable value (INR)','IGST (INR)','CGST (INR)','SGST (INR)','Note']].concat(order.filter(function(k){ return s.sections[k]; }).map(function(k){ const x = s.sections[k]; return [k, x.count, n2(x.taxableINR), n2(x.igstINR), n2(x.cgstINR), n2(x.sgstINR), k === 'Review' ? 'Customer location missing: fix before filing' : k.indexOf('EXP (WOPAY)') === 0 ? 'Zero-rated under LUT ' + TAX.profile.lut.arn : '']; }))
@@ -68712,9 +68714,9 @@ function cfScopeHTML(){
     exports:{ label:'Exports: LUT and eFIRC', file:'exports-lut-efirc', build:function(rows){
       return [['Document No','Date','Customer','Country','Currency','Value (currency)','Exchange rate','Value (INR)','Treatment','LUT ARN','IGST (INR)','Payment received','eFIRC / BRC','Realised on','Check']]
         .concat(rows.filter(function(t){ return t.segment.supply === 'Export'; }).map(function(t){ return [t.no, dmy(t.date), t.customer, (t.party || {}).country || '', t.currency, n2(t.amount), n2(t.fxRate), n2(t.taxableINR), t.segment.label, t.segment.lut || '', n2(t.igstINR), t.status === 'paid' ? 'Yes' : 'No', t.efirc, dmy(t.realisedAt), t.currency === 'INR' ? 'Paid in INR: confirm export conditions with your CA' : (t.status === 'paid' && !t.efirc ? 'eFIRC missing' : '')]; })); } },
-    credits:{ label:'Credit notes', file:'credit-notes', build:function(rows){
+    credits:{ label:'Credit and debit notes', file:'credit-debit-notes', build:function(rows){
       return [['Credit note No','Date','Original invoice','Customer','Customer GSTIN','Section','Currency','Value (currency)','Taxable value (INR)','CGST (INR)','SGST (INR)','IGST (INR)','Reason']]
-        .concat(rows.filter(function(t){ return t.kind === 'credit_note'; }).map(function(t){ return [t.no, dmy(t.date), t.originalNo, t.customer, (t.party || {}).gstin || '', (t.party || {}).gstin ? 'CDNR' : 'CDNUR', t.currency, n2(t.amount), n2(t.taxableINR), n2(t.cgstINR), n2(t.sgstINR), n2(t.igstINR), t.description]; })); } }
+        .concat(rows.filter(function(t){ return t.kind !== 'invoice'; }).map(function(t){ return [t.no + (t.kind === 'debit_note' ? ' (debit note)' : ''), dmy(t.date), t.originalNo, t.customer, (t.party || {}).gstin || '', (t.party || {}).gstin ? 'CDNR' : 'CDNUR', t.currency, n2(t.amount), n2(t.taxableINR), n2(t.cgstINR), n2(t.sgstINR), n2(t.igstINR), t.description]; })); } }
   };
   window.bosTaxReportCSV = function(kind, fy, part){ const r = REPORTS[kind]; if(!r) return ''; return csv(r.build(bosTaxRows(fy, part))); };
   window.bosTaxExport = function(kind, fy, part){
@@ -68784,7 +68786,7 @@ function cfScopeHTML(){
         (canExp ? Object.keys(REPORTS).map(function(k){ return '<button type="button" class="o-btn" onclick="bosResult(bosTaxExport(\'' + k + '\', BOS_UI.tax.fy, BOS_UI.tax.part), \'Downloaded.\')">' + E(REPORTS[k].label) + '</button>'; }).join('') + '<button type="button" class="o-btn o-btn--primary" onclick="bosResult(bosTaxExportAll(BOS_UI.tax.fy, BOS_UI.tax.part), \'All five reports downloaded.\')">Download all</button>' : '<span class="bos-muted">' + E(bosWhyNot('platform-finance', 'export')) + '</span>') + '</div></div>' +
       oNumbers([{ label:'Taxable value', value:inr(s.taxableINR), note:s.invoices + ' invoices · ' + s.creditNotes + ' credit notes' }, { label:'CGST + SGST', value:inr(s.cgstINR + s.sgstINR), note:'intra-state sales' }, { label:'IGST', value:inr(s.igstINR), note:'inter-state and exports without LUT' }, { label:'Zero-rated exports', value:inr(s.exportINR), note:s.review ? s.review + ' need a customer location' : 'under LUT ' + (p.lut.arn || '—') }]) +
       oTableCard({ id:'bos-tax', title:'Tax invoices and credit notes', sub:oPlural(rows.length, 'document') + ' in the period', cols:[{ label:'Document' }, { label:'Customer' }, { label:'Treatment' }, { label:'Section' }, { label:'Taxable (INR)', right:true }, { label:'Tax (INR)', right:true }, { label:'Total (INR)', right:true }, { label:'Status' }],
-        rows:rows.length ? rows.slice().reverse().map(function(t){ return '<tr><td><b>' + E(t.no) + '</b><small>' + E(dmy(t.date) + (t.sample ? ' · sample' : '') + (t.originalNo ? ' · for ' + t.originalNo : '')) + '</small></td><td><b>' + E(t.customer) + '</b><small>' + E(((t.party || {}).gstin || (t.party || {}).country || '') + ((t.party || {}).state ? ' · ' + t.party.state : '')) + '</small></td><td style="white-space:normal;min-width:200px" title="' + E(t.segment.why) + '">' + E(t.segment.label) + '</td><td>' + E(t.kind === 'credit_note' ? ((t.party || {}).gstin ? 'CDNR' : 'CDNUR') : t.segment.section) + '</td><td class="num">' + E(n2(t.taxableINR)) + '</td><td class="num">' + E(n2(t.taxINR)) + '</td><td class="num">' + E(n2(t.totalINR)) + '</td><td>' + bosBadge(t.status) + (t.efirc ? '<small>' + E(t.efirc) + '</small>' : '') + '</td></tr>'; }).join('') : oTableEmptyRow(8, 'No tax documents in this period.') });
+        rows:rows.length ? rows.slice().reverse().map(function(t){ return '<tr><td><b>' + E(t.no) + '</b><small>' + E(dmy(t.date) + (t.sample ? ' · sample' : '') + (t.originalNo ? ' · for ' + t.originalNo : '')) + '</small></td><td><b>' + E(t.customer) + '</b><small>' + E(((t.party || {}).gstin || (t.party || {}).country || '') + ((t.party || {}).state ? ' · ' + t.party.state : '')) + '</small></td><td style="white-space:normal;min-width:200px" title="' + E(t.segment.why) + '">' + E(t.segment.label) + '</td><td>' + E(t.kind !== 'invoice' ? ((t.party || {}).gstin ? 'CDNR' : 'CDNUR') : t.segment.section) + '</td><td class="num">' + E(n2(t.taxableINR)) + '</td><td class="num">' + E(n2(t.taxINR)) + '</td><td class="num">' + E(n2(t.totalINR)) + '</td><td>' + bosBadge(t.status) + (t.efirc ? '<small>' + E(t.efirc) + '</small>' : '') + '</td></tr>'; }).join('') : oTableEmptyRow(8, 'No tax documents in this period.') });
   };
   window.bosTaxProfileDialog = function(){ const p = TAX.profile; bosDialog('Oontu tax profile', bosField('bos-tp-name', 'Legal name', { value:p.legalName }) + '<div class="bos-row2">' + bosField('bos-tp-gstin', 'GSTIN', { value:p.gstin }) + bosField('bos-tp-sac', 'SAC', { value:p.sac }) + '</div>' + bosField('bos-tp-lut', 'LUT ARN (export without IGST)', { value:p.lut.arn }) + '<div class="bos-row2">' + bosField('bos-tp-from', 'LUT valid from', { type:'date', value:p.lut.from }) + bosField('bos-tp-to', 'LUT valid to', { type:'date', value:p.lut.to }) + '</div><p class="bos-muted">The state comes from the GSTIN. New invoices use these details; issued invoices keep the tax they were issued with.</p>', 'Save', "bosDlgDone(bosSetTaxProfile({ legalName:bosV('bos-tp-name'), gstin:bosV('bos-tp-gstin'), sac:bosV('bos-tp-sac'), lutArn:bosV('bos-tp-lut'), lutFrom:bosV('bos-tp-from'), lutTo:bosV('bos-tp-to') }), 'Tax profile saved.')"); };
   window.bosCustomerTaxDialog = function(accId){ const a = bosAccount(accId); bosDialog('Tax details · ' + a.name, bosField('bos-ct-country', 'Country', { options:['India','United Kingdom','United States','United Arab Emirates','Singapore','Germany','Australia','Other'], value:a.taxCountry || 'India' }) + bosField('bos-ct-gstin', 'GSTIN (Indian business customers)', { value:a.gstin || '' }) + bosField('bos-ct-state', 'State (if no GSTIN)', { options:[['', '—']].concat(Object.keys(STATES).map(function(c){ return [STATES[c], STATES[c]]; })), value:a.taxState || '' }), 'Save', "bosDlgDone(bosSetCustomerTax('" + a.id + "', { country:bosV('bos-ct-country'), gstin:bosV('bos-ct-gstin'), state:bosV('bos-ct-state') }), 'Tax details saved.')"); };
@@ -68847,6 +68849,896 @@ function cfScopeHTML(){
     return baseShow.apply(this, arguments);
   };
   try { showView = window.showView; } catch(e){}
+})();
+</script>
+<script id="bos-billing-script">
+/* ============================================================
+   BILLING ENGINE (prototype, 2026-11-25; the user approved the earlier recommendation)
+   One rule: only Razorpay's verified payment marks something paid, and only an invoice, credit note or debit note
+   changes what a customer owes. Every door ends in the same records: PLATFORM_SUBSCRIPTIONS, BOS.taxInvoices,
+   BOS.payLinks.
+   1. Pricing: plans priced per recruiter licence a month (Desk, Floor, Network, Hire, Scale) are priced
+      licences × price × months; Group is "talk to us". Legacy flat plans keep their flat price.
+   2. Promo codes: created by Revenue/Finance managers, approved by a Finance manager (not the creator), with dates,
+      plans, a use limit and new-customer-only; checked the same way for Sales proposals and customer checkout.
+   3. Invoices: draft (edit freely) → issue (number, tax, payment link) → correct:
+        unpaid, this month, GSTR-1 not yet filed → cancel and re-issue (new number, linked; old link expired)
+        otherwise → credit note (lower) or debit note (higher); a wrong GSTIN after filing is flagged for amendment.
+      A correction above ₹10,000 or on a paid invoice needs a Finance manager's approval (maker-checker).
+   4. Payment links: one open link per document; shared by email, WhatsApp or copy; expiry; reminders; opened/paid.
+   5. Customer checkout (in the app; the website uses the same function): plan, licences, add-ons, promo code,
+      prorated upgrade, GST/LUT → Razorpay → verified event → plan active, subscription, tax invoice, receipt.
+   6. Renewals: the mandate is charged on the renewal date (above ₹15,000 the customer must approve each charge, RBI);
+      a failed charge gets reminders on day 1, 3 and 7, then the workspace becomes read-only (never deleted).
+   PROTOTYPE: Razorpay, email and WhatsApp are simulated; nothing is charged or sent.
+============================================================ */
+(function(){
+  const NOW = bosNow, ISO = bosIso, D = BOS_D, H = BOS_H;
+  const r2 = function(n){ return Math.round(n * 100) / 100; };
+
+  /* ---------- permissions for billing work ---------- */
+  const FIN = PLATFORM_PERMISSION_MODULES.find(function(m){ return m.id === 'platform-finance'; });
+  ['invoice','correct_invoice','approve_correction'].forEach(function(a){ if(FIN.actions.indexOf(a) < 0) FIN.actions.push(a); });
+  const COM = PLATFORM_PERMISSION_MODULES.find(function(m){ return m.id === 'platform-commercial'; });
+  ['create_promo','approve_promo'].forEach(function(a){ if(COM.actions.indexOf(a) < 0) COM.actions.push(a); });
+  const grant = function(roleId, mod, acts, scope){ const r = platformRoleById(roleId); if(!r) return; r.permissions[mod] = (r.permissions[mod] || []).concat(acts.filter(function(a){ return (r.permissions[mod] || []).indexOf(a) < 0; })); r.scope = r.scope || {}; if(!r.scope[mod]) r.scope[mod] = scope || 'organization'; };
+  const sa = platformRoleById('role_oontu_super_admin'); PLATFORM_PERMISSION_MODULES.forEach(function(m){ sa.permissions[m.id] = m.actions.slice(); sa.scope[m.id] = 'global'; });
+  grant('tpl_commercial_op', 'platform-finance', ['invoice']); grant('tpl_fin_assoc', 'platform-finance', ['invoice']);
+  grant('tpl_fin_spec', 'platform-finance', ['invoice','correct_invoice']);
+  ['tpl_fin_mgr','tpl_fin_admin'].forEach(function(r){ grant(r, 'platform-finance', ['invoice','correct_invoice','approve_correction']); grant(r, 'platform-commercial', ['create_promo','approve_promo']); });
+  grant('tpl_rev_mgr', 'platform-commercial', ['create_promo']);
+  window.BOS_APPROVAL_TYPES['invoice-correction'] = { label:'Invoice correction', perm:['platform-finance','approve_correction'] };
+  window.BOS_APPROVAL_TYPES['promo'] = { label:'New promo code', perm:['platform-commercial','approve_promo'] };
+  /* the billing scheduler is a system identity (never a person, never in a login list) */
+  if(!platformUserById('SYS-BILLING')) PLATFORM_USER_ROSTER.push({ id:'SYS-BILLING', name:'Billing scheduler (system)', email:'billing-scheduler@oontu.system', platformRoleId:'tpl_fin_admin', platformRoleIds:['tpl_fin_admin'], status:'Active', system:true, createdAt:'2026-01-01T00:00:00.000Z', department:'Business & Finance', queues:[] });
+  if(!platformUserById('PU-110')) PLATFORM_USER_ROSTER.push({ id:'PU-110', name:'Ishaan Verma', email:'ishaan@oontu.internal', platformRoleId:'tpl_commercial_op', platformRoleIds:['tpl_commercial_op'], status:'Active', createdAt:'2026-03-02T00:00:00.000Z', department:'Business & Finance', teamId:'fin-1', region:'India', managerId:'PU-106', queues:['billing'], sessions:1, mfa:true });
+  window.bosAsScheduler = function(fn){ const prev = ACTIVE_PLATFORM_USER_ID; ACTIVE_PLATFORM_USER_ID = 'SYS-BILLING'; try { return fn(); } finally { ACTIVE_PLATFORM_USER_ID = prev; } };
+
+  /* ---------- 1. pricing (per licence) ---------- */
+  const basePrice = window.bosPrice;
+  window.bosPlanUnit = function(plan, currency){ if(!plan) return null; if(plan.prices && Object.keys(plan.prices).length) return plan.prices[currency] != null ? plan.prices[currency] : plan.prices.USD; return plan.price; };
+  window.bosPrice = function(input){
+    const plan = planById(input.planId);
+    if(!plan || !plan.prices) return basePrice.apply(this, arguments);        // legacy flat plans: unchanged
+    if(plan.talkToUs || !Object.keys(plan.prices).length) return { ok:false, field:'planId', reason:plan.name + ' is priced by quote. Ask Finance for a custom proposal.' };
+    const cur = plan.prices[input.currency] != null ? input.currency : 'USD', months = input.interval === 'annual' ? 12 : 1;
+    const seats = Math.round(Number(input.seats) || 0);
+    if(seats < BOS_POLICY.minSeats || seats > BOS_POLICY.maxSeats) return { ok:false, field:'seats', reason:'Licences must be between ' + BOS_POLICY.minSeats + ' and ' + BOS_POLICY.maxSeats + '.' };
+    const promo = input.promo ? bosPromoCheck(input.promo, plan.id, input.accountId) : null;
+    if(input.promo && !promo.ok) return { ok:false, field:'promo', reason:promo.reason };
+    const disc = Math.max(0, Number(input.discountPct) || 0);
+    if(disc > BOS_POLICY.maxDiscountPct) return { ok:false, field:'discountPct', reason:'Discounts above ' + BOS_POLICY.maxDiscountPct + '% are not allowed.' };
+    const trial = Math.max(0, Math.round(Number(input.trialDays) || 0));
+    const unit = bosPlanUnit(plan, cur), list = r2(unit * seats * months), totalPct = (promo ? promo.promo.pct : 0) + disc, net = Math.round(list * (1 - totalPct / 100));
+    let needs = null;
+    if(disc > BOS_POLICY.managerDiscountPct) needs = 'discount-restricted'; else if(disc > BOS_POLICY.selfDiscountPct) needs = 'discount';
+    if(trial > BOS_POLICY.managerTrialDays) needs = 'discount-restricted'; else if(trial > BOS_POLICY.trialDays && !needs) needs = 'trial-extension';
+    return { ok:true, plan:plan, seats:seats, unit:unit, months:months, listPrice:list, currency:cur, interval:months === 12 ? 'annual' : 'monthly', promo:promo ? promo.promo : null, discountPct:disc, totalPct:totalPct, net:net, trialDays:trial, needs:needs, perLicence:true };
+  };
+  const baseProp = window.bosCreateProposal;
+  window.bosCreateProposal = function(input){ input = input || {}; if(!input.currency){ const o = bosOpp(input.oppId), a = o && bosAccount(o.accountId); input.currency = a && (a.taxCountry || a.country || 'India') !== 'India' ? 'USD' : 'INR'; } if(!input.accountId){ const o2 = bosOpp(input.oppId); input.accountId = o2 && o2.accountId; } return baseProp.call(this, input); };
+
+  /* ---------- 2. promo codes ---------- */
+  BOS.promos = BOS_PROMOS.map(function(p){ return Object.assign({ plans:[], validFrom:'2026-01-01', maxUses:null, used:0, newOnly:false, status:'active', createdBy:'PU-109', approvedBy:'PU-106' }, p); });
+  BOS_PROMOS.length = 0; BOS.promos.forEach(function(p){ BOS_PROMOS.push(p); });   // one list; the older checks read the same objects
+  window.bosPromoCheck = function(code, planId, accountId){
+    const p = BOS.promos.find(function(x){ return x.code === String(code || '').toUpperCase().trim(); }), today = ISO().slice(0, 10);
+    if(!p || p.status !== 'active') return { ok:false, reason:'That offer code isn’t valid.' };
+    if(today < p.validFrom || today > p.validUntil) return { ok:false, reason:'That offer code has expired.' };
+    if(p.plans.length && p.plans.indexOf(planId) < 0) return { ok:false, reason:'That offer doesn’t apply to this plan.' };
+    if(p.maxUses != null && p.used >= p.maxUses) return { ok:false, reason:'That offer has been fully used.' };
+    if(p.newOnly && accountId){ const a = bosAccount(accountId); if(a && a.tenantIds && a.tenantIds.length) return { ok:false, reason:'That offer is for new customers only.' }; }
+    return { ok:true, promo:p };
+  };
+  window.bosCreatePromo = function(input){ return bosRun('promo.create', input, function(){
+    if(!bosCan('platform-commercial', 'create_promo')) return { ok:false, reason:bosWhyNot('platform-commercial', 'create_promo') };
+    const code = String(input.code || '').toUpperCase().trim(), pct = Number(input.pct);
+    if(!/^[A-Z0-9]{4,16}$/.test(code)) return { ok:false, field:'code', reason:'Use 4–16 letters or digits.' };
+    if(BOS.promos.some(function(p){ return p.code === code; })) return { ok:false, field:'code', reason:'That code already exists.' };
+    if(!(pct > 0 && pct <= BOS_POLICY.managerDiscountPct)) return { ok:false, field:'pct', reason:'A promo can give 1–' + BOS_POLICY.managerDiscountPct + '%. Deeper discounts go through a proposal approval.' };
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(input.validUntil || '') || input.validUntil < ISO().slice(0, 10)) return { ok:false, field:'validUntil', reason:'Pick an end date in the future.' };
+    const p = { code:code, label:String(input.label || code).trim(), pct:pct, plans:input.plans || [], validFrom:input.validFrom || ISO().slice(0, 10), validUntil:input.validUntil, maxUses:input.maxUses ? Number(input.maxUses) : null, used:0, newOnly:!!input.newOnly, status:'pending_approval', createdBy:ACTIVE_PLATFORM_USER_ID, approvedBy:null, approved:false };
+    BOS.promos.push(p);   // not added to the legacy list: an unapproved code must never apply anywhere
+    const a = bosRequestApproval('promo', code, code + ' · ' + pct + '% · until ' + p.validUntil + (p.maxUses ? ' · ' + p.maxUses + ' uses' : ''), { code:code });
+    return { ok:true, promo:p, approval:a, ref:code, audit:['Promo code created', code + ' · ' + pct + '% (waiting for approval)', { entityType:'Promo' }] }; }); };
+  bosOnApproval('promo', function(a, ok){ const p = BOS.promos.find(function(x){ return x.code === a.payload.code; }); if(!p) return; p.status = ok ? 'active' : 'declined'; p.approved = ok; p.approvedBy = a.decidedBy; });
+  window.bosPausePromo = function(code){ return bosRun('promo.pause', null, function(){ const p = BOS.promos.find(function(x){ return x.code === code; }); if(!p) return { ok:false, reason:'Not found.' }; if(!bosCan('platform-commercial', 'create_promo')) return { ok:false, reason:bosWhyNot('platform-commercial', 'create_promo') }; p.status = p.status === 'paused' ? 'active' : 'paused'; return { ok:true, ref:code, audit:['Promo code ' + p.status, code, { entityType:'Promo' }] }; }); };
+
+  /* ---------- 3. invoices: draft → issue → correct ---------- */
+  BOS.drafts = BOS.drafts || []; BOS.gstFiled = BOS.gstFiled || {};
+  const periodOf = function(iso){ return String(iso).slice(0, 7); };
+  window.bosDraft = function(id){ return BOS.drafts.find(function(d){ return d.id === id; }) || null; };
+  const linesTotal = function(lines){ return r2((lines || []).reduce(function(s, l){ return s + (Number(l.qty) || 0) * (Number(l.unitPrice) || 0); }, 0)); };
+  const checkLines = function(lines){ if(!Array.isArray(lines) || !lines.length) return 'Add at least one line.'; for(let i = 0; i < lines.length; i++){ const l = lines[i]; if(!String(l.desc || '').trim()) return 'Line ' + (i + 1) + ' needs a description.'; if(!(Number(l.qty) > 0)) return 'Line ' + (i + 1) + ' needs a quantity above 0.'; if(!(Number(l.unitPrice) >= 0)) return 'Line ' + (i + 1) + ' needs a price.'; } return ''; };
+  window.bosDraftInvoice = function(input){ input = input || {}; return bosRun('invoice.draft', input, function(){
+    if(!bosCan('platform-finance', 'invoice')) return { ok:false, reason:bosWhyNot('platform-finance', 'invoice') };
+    const a = bosAccount(input.accountId); if(!a) return { ok:false, field:'accountId', reason:'Pick the customer account.' };
+    const bad = checkLines(input.lines); if(bad) return { ok:false, field:'lines', reason:bad };
+    const cur = input.currency || ((a.taxCountry || 'India') === 'India' ? 'INR' : 'USD'); if(!BOS_TAX.rates[cur]) return { ok:false, field:'currency', reason:'Unsupported currency.' };
+    const d = { id:bosId('DRF', 4), status:'draft', accountId:a.id, tenantId:input.tenantId || a.tenantIds[0] || null, currency:cur, lines:input.lines.map(function(l){ return { desc:String(l.desc).trim(), qty:Number(l.qty), unitPrice:Number(l.unitPrice) }; }), dueDays:Number(input.dueDays) || 14, notes:input.notes || '', createdBy:ACTIVE_PLATFORM_USER_ID, createdAt:ISO(), history:[{ at:ISO(), text:'Draft created by ' + bosName(ACTIVE_PLATFORM_USER_ID) }] };
+    BOS.drafts.push(d);
+    return { ok:true, draft:d, ref:d.id, audit:['Invoice draft created', a.name + ' · ' + cur + ' ' + linesTotal(d.lines), { entityId:d.id, entityType:'Invoice' }] }; }); };
+  window.bosEditDraft = function(id, patch){ const d = bosDraft(id); return bosRun('invoice.edit-draft', null, function(){
+    if(!d) return { ok:false, reason:'Draft not found.' };
+    if(d.status !== 'draft') return { ok:false, reason:'Only a draft can be edited. An issued invoice is corrected instead.' };
+    if(!bosCan('platform-finance', 'invoice')) return { ok:false, reason:bosWhyNot('platform-finance', 'invoice') };
+    if(patch.lines){ const bad = checkLines(patch.lines); if(bad) return { ok:false, field:'lines', reason:bad }; d.lines = patch.lines.map(function(l){ return { desc:String(l.desc).trim(), qty:Number(l.qty), unitPrice:Number(l.unitPrice) }; }); }
+    if(patch.notes != null) d.notes = patch.notes; if(patch.dueDays) d.dueDays = Number(patch.dueDays);
+    d.history.push({ at:ISO(), text:'Edited by ' + bosName(ACTIVE_PLATFORM_USER_ID) });
+    return { ok:true, ref:d.id, audit:['Invoice draft edited', d.id + ' · ' + d.currency + ' ' + linesTotal(d.lines), { entityId:d.id }] }; }); };
+  window.bosIssueDraft = function(id){ const d = bosDraft(id); return bosRun('invoice.issue', null, function(){
+    if(!d || d.status !== 'draft') return { ok:false, reason:'Only a draft can be issued.' };
+    if(!bosCan('platform-finance', 'invoice')) return { ok:false, reason:bosWhyNot('platform-finance', 'invoice') };
+    const a = bosAccount(d.accountId), party = bosTaxPartyOf(a), seg = bosTaxSegment(party, ISO(), 1);
+    if(!seg.ok) return { ok:false, reason:'Add the customer’s tax details first (' + seg.why + ')' };
+    const t = bosTaxIssue({ account:a, tenantId:d.tenantId, amount:linesTotal(d.lines), currency:d.currency, sourceRef:d.id, description:d.lines.map(function(l){ return l.desc; }).join('; '), lines:d.lines, dueDate:ISO(NOW() + d.dueDays * D).slice(0, 10) });
+    d.status = 'issued'; d.docNo = t.no; d.history.push({ at:ISO(), text:'Issued as ' + t.no });
+    const l = bosLinkForDoc(t.no);
+    return { ok:true, doc:t, link:l.link, ref:t.no, audit:['Invoice issued', t.no + ' · ' + a.name + ' · ' + t.currency + ' ' + t.total + ' · ' + t.segment.label, { entityId:t.no, entityType:'Invoice' }] }; }); };
+
+  /* the correction decides the GST-correct path itself */
+  window.bosCorrectionPath = function(t){
+    if(!t || t.kind !== 'invoice') return { path:'none', why:'Only a tax invoice can be corrected.' };
+    if(t.status === 'cancelled') return { path:'none', why:'This invoice is cancelled.' };
+    const filed = !!BOS.gstFiled[periodOf(t.date)], samePeriod = periodOf(t.date) === periodOf(ISO());
+    if(t.status !== 'paid' && samePeriod && !filed) return { path:'reissue', why:'Unpaid, issued this month and not yet reported in GSTR-1: it can be cancelled and re-issued with a new number.' };
+    return { path:'note', why:(t.status === 'paid' ? 'Already paid' : filed ? 'Already reported in GSTR-1 for ' + periodOf(t.date) : 'Issued in an earlier month') + ': the original stays; the difference goes on a credit note (lower) or a debit note (higher).' };
+  };
+  window.bosCorrectInvoice = function(no, input){ input = input || {}; const t = bosTaxInvoice(no); return bosRun('invoice.correct', null, function(){
+    if(!bosCan('platform-finance', 'correct_invoice')) return { ok:false, reason:bosWhyNot('platform-finance', 'correct_invoice') };
+    const p = bosCorrectionPath(t); if(p.path === 'none') return { ok:false, reason:p.why };
+    if(!String(input.reason || '').trim()) return { ok:false, field:'reason', reason:'Say what was wrong. It is kept with the correction.' };
+    const lines = input.lines || t.lines || [{ desc:t.description, qty:1, unitPrice:t.amount }]; const bad = checkLines(lines); if(bad) return { ok:false, field:'lines', reason:bad };
+    const newAmount = linesTotal(lines), diff = r2(newAmount - t.amount), diffINR = Math.abs(diff * (t.fxRate || 1));
+    if(!diff && !input.customerFix) return { ok:false, reason:'Nothing changed.' };
+    const c = { no:t.no, lines:lines, newAmount:newAmount, diff:diff, reason:String(input.reason).trim(), path:p.path, customerFix:!!input.customerFix };
+    if(t.status === 'paid' || diffINR > 10000){ const a = bosRequestApproval('invoice-correction', t.no, t.no + ': ' + t.currency + ' ' + t.amount + ' → ' + newAmount + ' · ' + c.reason, c); t.pendingCorrection = a.id; return { ok:true, pending:true, approval:a, ref:t.no, audit:['Invoice correction requested', t.no + ' · ' + c.reason, { entityId:t.no }] }; }
+    const out = applyCorrection(t, c);
+    return Object.assign({ ok:true, ref:t.no, audit:['Invoice corrected', t.no + ' · ' + out.summary, { entityId:t.no }] }, out); }); };
+  function applyCorrection(t, c){
+    const a = bosAccount(t.accountId) || { name:t.customer, taxCountry:(t.party || {}).country, gstin:(t.party || {}).gstin, taxState:(t.party || {}).state };
+    BOS.payLinks.forEach(function(l){ if(l.docNo === t.no && l.status === 'open'){ l.status = 'cancelled'; l.cancelReason = 'Invoice corrected'; } });
+    if(c.path === 'reissue'){
+      t.status = 'cancelled'; t.cancelReason = c.reason;
+      const n = bosTaxIssue({ account:a, tenantId:t.tenantId, amount:c.newAmount, currency:t.currency, sourceRef:t.sourceRef, description:c.lines.map(function(l){ return l.desc; }).join('; '), lines:c.lines, revisedFrom:t.no, dueDate:t.dueDate });
+      const l = bosLinkForDoc(n.no);
+      return { result:'reissued', doc:n, link:l.link, summary:'cancelled and re-issued as ' + n.no };
+    }
+    if(c.customerFix && !c.diff){ t.amendmentNeeded = c.reason; return { result:'amendment', summary:'flagged for amendment in the next GSTR-1 (B2BA)' }; }
+    const kind = c.diff < 0 ? 'credit_note' : 'debit_note';
+    const n = bosTaxIssue({ kind:kind, account:a, tenantId:t.tenantId, amount:Math.abs(c.diff), currency:t.currency, sourceRef:t.no, originalNo:t.no, description:(kind === 'credit_note' ? 'Credit note: ' : 'Debit note: ') + c.reason });
+    if(kind === 'debit_note') bosLinkForDoc(n.no);
+    t.adjustedBy = (t.adjustedBy || []).concat(n.no);
+    return { result:kind, doc:n, summary:kind.replace('_', ' ') + ' ' + n.no + ' for ' + t.currency + ' ' + Math.abs(c.diff) };
+  }
+  bosOnApproval('invoice-correction', function(a, ok){ const t = bosTaxInvoice(a.payload.no); if(!t) return; t.pendingCorrection = null; if(ok){ const out = applyCorrection(t, a.payload); a.result = out.summary; logPlatformAudit('Invoice corrected (approved)', t.no + ' · ' + out.summary, { entityId:t.no }); } });
+  window.bosMarkGstr1Filed = function(period){ return bosRun('tax.gstr1-filed', null, function(){ if(!bosCan('platform-finance', 'reconcile')) return { ok:false, reason:bosWhyNot('platform-finance', 'reconcile') }; if(!/^\d{4}-\d{2}$/.test(period)) return { ok:false, reason:'Pick the month.' }; BOS.gstFiled[period] = { at:ISO(), by:ACTIVE_PLATFORM_USER_ID }; return { ok:true, ref:period, audit:['GSTR-1 marked filed', period, { entityType:'Tax' }] }; }); };
+
+  /* ---------- 4. payment links: one per document, shared, reminded, tracked ---------- */
+  window.bosLinkForDoc = function(no, days){ return bosRun('paylink.doc', null, function(){
+    const t = bosTaxInvoice(no); if(!t || t.kind === 'credit_note') return { ok:false, reason:'Only an invoice or a debit note can be paid by link.' };
+    if(t.status === 'paid' || t.status === 'cancelled') return { ok:false, reason:'This document is ' + t.status + '.' };
+    if(!bosCan('platform-finance', 'invoice') && !bosCan('platform-finance', 'view')) return { ok:false, reason:bosWhyNot('platform-finance', 'invoice') };
+    const open = BOS.payLinks.find(function(l){ return l.docNo === no && l.status === 'open'; }); if(open) return { ok:true, link:open, existing:true };
+    const l = { id:bosId('PL', 4), proposalId:null, invoiceId:null, docNo:no, accountId:t.accountId, amount:t.total, currency:t.currency, taxSegment:t.segment.label, status:'open', url:'https://rzp.io/l/oontu-' + Math.random().toString(36).slice(2, 9) + ' (simulated)', createdAt:ISO(), expiresAt:ISO(NOW() + (Number(days) || 14) * D), createdBy:ACTIVE_PLATFORM_USER_ID, version:0, shares:[], reminders:[], openedAt:null };
+    BOS.payLinks.push(l);
+    return { ok:true, link:l, ref:l.id, audit:['Payment link created', no + ' · ' + l.currency + ' ' + l.amount, { entityId:l.id }] }; }); };
+  window.bosShareLink = function(linkId, channel, to){ const l = BOS.payLinks.find(function(x){ return x.id === linkId; }); return bosRun('paylink.share', null, function(){
+    if(!l) return { ok:false, reason:'Link not found.' };
+    l.shares = l.shares || []; l.reminders = l.reminders || [];
+    if(l.status !== 'open') return { ok:false, reason:'This link is ' + l.status + '.' };
+    const p = l.proposalId && bosProposal(l.proposalId), o = p && bosOpp(p.oppId);
+    const may = (l.docNo || l.invoiceId) ? (bosCan('platform-finance', 'invoice') || bosCan('platform-finance', 'view')) : bosCan('platform-commercial', 'edit', o);
+    if(!may) return { ok:false, reason:'You can’t share this link.' };
+    if(['email','whatsapp','copy'].indexOf(channel) < 0) return { ok:false, reason:'Pick email, WhatsApp or copy.' };
+    to = String(to || '').trim();
+    if(channel === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return { ok:false, field:'to', reason:'Enter the customer’s email.' };
+    if(channel === 'whatsapp' && !/^\+?\d{10,15}$/.test(to.replace(/[\s-]/g, ''))) return { ok:false, field:'to', reason:'Enter the WhatsApp number with country code.' };
+    const text = 'Your Oontu payment of ' + l.currency + ' ' + l.amount + (l.docNo ? ' for ' + l.docNo : '') + ': ' + l.url;
+    if(channel === 'copy'){ try { navigator.clipboard && navigator.clipboard.writeText(l.url); } catch(e){} }
+    else BOS.outbox.push({ id:bosId('OUT'), to:to, subject:channel === 'whatsapp' ? 'WhatsApp: ' + text : 'Payment link: ' + text, at:ISO(), delivered:false, note:'Prototype: not sent' });
+    l.shares.push({ channel:channel, to:channel === 'copy' ? 'clipboard' : to, at:ISO(), by:ACTIVE_PLATFORM_USER_ID });
+    return { ok:true, text:text, ref:l.id, audit:['Payment link shared', l.id + ' · ' + channel + (channel === 'copy' ? '' : ' · ' + to), { entityId:l.id }] }; }); };
+  window.bosCancelLink = function(linkId, why){ const l = BOS.payLinks.find(function(x){ return x.id === linkId; }); return bosRun('paylink.cancel', null, function(){
+    if(!l || l.status !== 'open') return { ok:false, reason:'Only an open link can be cancelled.' };
+    if(!bosCan('platform-finance', 'invoice') && !bosCan('platform-commercial', 'edit', l.proposalId && bosOpp((bosProposal(l.proposalId) || {}).oppId))) return { ok:false, reason:'You can’t cancel this link.' };
+    l.status = 'cancelled'; l.cancelReason = why || 'Cancelled';
+    return { ok:true, ref:l.id, audit:['Payment link cancelled', l.id + ' · ' + l.cancelReason, { entityId:l.id }] }; }); };
+  /* reminders 5 and 2 days before expiry, expiry itself; run by the scheduler */
+  window.bosLinkSweep = function(){ const now = NOW(); let n = 0;
+    BOS.payLinks.forEach(function(l){ if(l.status !== 'open') return; l.shares = l.shares || []; l.reminders = l.reminders || []; const left = (new Date(l.expiresAt).getTime() - now) / D;
+      if(left <= 0){ l.status = 'expired'; n++; return; }
+      [5, 2].forEach(function(d){ if(left <= d && !l.reminders.some(function(r){ return r.d === d; }) && l.shares.length){ const last = l.shares.filter(function(s){ return s.channel !== 'copy'; }).slice(-1)[0]; if(last){ BOS.outbox.push({ id:bosId('OUT'), to:last.to, subject:'Reminder: payment link ends in ' + d + ' days · ' + l.url, at:ISO(), delivered:false, note:'Prototype: not sent' }); l.reminders.push({ d:d, at:ISO() }); n++; } } }); });
+    return n; };
+  BOS_PAY.open = function(linkId){ const l = BOS.payLinks.find(function(x){ return x.id === linkId; }); if(l && !l.openedAt){ l.openedAt = ISO(); } return !!l; };
+  /* a paid document link marks the document paid (after the verified event, through the tax hook chain) */
+  const recv = BOS_PAY.receive;
+  BOS_PAY.receive = function(raw, sig){ const out = recv.apply(this, arguments); try { if(out && out.applied){ const e = JSON.parse(raw); if(e.type === 'payment.captured'){ const l = BOS.payLinks.find(function(x){ return x.id === e.object.id; }); if(l && l.docNo) bosTaxMarkPaid(bosTaxInvoice(l.docNo), e.id, 'Razorpay ' + e.id); if(l && l.onPaid){ const cb = CHECKOUT_DONE[l.onPaid]; if(cb) cb(l, e); } } } } catch(x){ console.error(x); } return out; };
+
+  /* ---------- 5. customer checkout (in the app; the website calls the same function) ---------- */
+  const CHECKOUT_DONE = {};
+  function ensureAccount(tenantId, name){
+    let a = BOS.accounts.find(function(x){ return !x.mergedInto && x.tenantIds.indexOf(tenantId) > -1; }); if(a) return a;
+    a = { id:bosId('ACC', 4), name:name || 'Workspace ' + tenantId, parentId:null, kind:'Customer', domains:[], website:'', registryId:'', phone:'', city:'', country:'India', timezone:'Asia/Kolkata', currency:'INR', ownerId:null, coOwnerId:null, tenantIds:[tenantId], status:'customer', createdAt:ISO(), history:[{ at:ISO(), text:'Created from self-service checkout' }], notes:[], taxCountry:'India', taxState:'', gstin:'' };
+    BOS.accounts.push(a); return a;
+  }
+  window.bosCheckoutQuote = function(input){
+    const plan = planById(input.planId); if(!plan || plan.legacy) return { ok:false, field:'planId', reason:'Pick a plan.' };
+    if(plan.talkToUs) return { ok:false, field:'planId', reason:plan.name + ' is set up with our team. Use “Talk to us”.' };
+    const cur = input.currency || planCurrency(), months = input.interval === 'monthly' ? 1 : 12, seats = Math.max(1, Math.round(Number(input.seats) || 1));
+    if(plan.userLimit && seats > plan.userLimit) return { ok:false, field:'seats', reason:plan.name + ' allows up to ' + plan.userLimit + ' licences.' };
+    const lines = [{ desc:plan.name + ' plan · ' + seats + ' licence' + (seats === 1 ? '' : 's') + ' × ' + months + ' month' + (months === 1 ? '' : 's'), qty:seats * months, unitPrice:bosPlanUnit(plan, cur) }];
+    (input.boosts || []).forEach(function(id){ const b = boostById(id); if(b) lines.push({ desc:b.name + ' (' + b.unit + ') × ' + months + ' month' + (months === 1 ? '' : 's'), qty:months, unitPrice:b.prices[cur] != null ? b.prices[cur] : b.prices.USD }); });
+    let subtotal = linesTotal(lines), promo = null, promoOff = 0;
+    if(input.promo){ const pc = bosPromoCheck(input.promo, plan.id, input.accountId); if(!pc.ok) return { ok:false, field:'promo', reason:pc.reason }; promo = pc.promo; promoOff = r2(subtotal * promo.pct / 100); }
+    /* proration: a paid plan already running gives back the unused part of what was paid */
+    let credit = 0; const cur0 = input.current;
+    if(cur0 && cur0.paidThrough && cur0.amount){ const left = Math.max(0, new Date(cur0.paidThrough).getTime() - NOW()), span = Math.max(1, new Date(cur0.paidThrough).getTime() - new Date(cur0.paidFrom).getTime()); credit = r2(cur0.amount * left / span); }
+    const taxable = Math.max(0, r2(subtotal - promoOff - credit));
+    const tax = bosTaxCompute(input.account || { name:'Customer', taxCountry:'India', taxState:'Karnataka' }, taxable, cur, ISO());
+    return { ok:true, plan:plan, seats:seats, months:months, currency:cur, lines:lines, subtotal:subtotal, promo:promo, promoOff:promoOff, credit:credit, taxable:taxable, tax:tax, total:tax.total, interval:months === 1 ? 'monthly' : 'annual' };
+  };
+  window.bosCheckoutStart = function(input){
+    input = input || {};
+    const tenantId = input.tenantId || CURRENT_ORGANIZATION_ID, t = tenantById(tenantId), acc = ensureAccount(tenantId, t ? t.name : ORG_STRUCTURE.profile.brandName);
+    const q = bosCheckoutQuote(Object.assign({}, input, { account:acc, accountId:acc.id })); if(!q.ok) return q;
+    if(!q.tax.segment.ok) return { ok:false, field:'tax', reason:'Add your GST details (or state) in Settings › Workspace so the right tax applies.' };
+    return bosAsSystem('checkout', function(){
+      const id = bosId('CHK', 4);
+      const l = { id:bosId('PL', 4), proposalId:null, invoiceId:null, docNo:null, checkoutId:id, accountId:acc.id, amount:q.total, currency:q.currency, taxSegment:q.tax.segment.label, status:'open', url:'https://checkout.razorpay.example/' + id + ' (simulated)', createdAt:ISO(), expiresAt:ISO(NOW() + 1 * D), createdBy:'customer', version:0, shares:[], reminders:[], openedAt:null, onPaid:'checkout', checkout:{ id:id, tenantId:tenantId, planId:q.plan.id, seats:q.seats, interval:q.interval, boosts:input.boosts || [], promo:q.promo ? q.promo.code : '', lines:q.lines, promoOff:q.promoOff, credit:q.credit, taxable:q.taxable, channel:input.channel || 'in-app', by:(typeof authAppSession !== 'undefined' && authAppSession.email) || '' } };
+      BOS.payLinks.push(l);
+      logAudit('Billing', 'Checkout started', q.plan.name + ' × ' + q.seats + ' · ' + q.currency + ' ' + q.total + ' (' + (input.channel || 'in-app') + ')', {});
+      return { ok:true, link:l, quote:q };
+    });
+  };
+  CHECKOUT_DONE.checkout = function(l, e){
+    const c = l.checkout, acc = bosAccount(l.accountId);
+    // the tax invoice for exactly what was paid: the lines, less the promo and the proration credit
+    const lines = c.lines.slice(); if(c.promoOff) lines.push({ desc:'Offer ' + c.promo, qty:1, unitPrice:-c.promoOff }); if(c.credit) lines.push({ desc:'Unused time on the previous plan', qty:1, unitPrice:-c.credit });
+    const doc = bosTaxIssue({ account:acc, tenantId:c.tenantId, amount:c.taxable, currency:l.currency, sourceRef:l.id, description:'Oontu ' + planById(c.planId).name + ' (' + c.channel + ' checkout)', lines:lines });
+    doc.createdBy = 'checkout:' + (c.by || 'customer'); bosTaxMarkPaid(doc, e.id, 'Razorpay ' + e.id); l.docNo = doc.no;
+    if(c.promo){ const p = BOS.promos.find(function(x){ return x.code === c.promo; }); if(p) p.used++; }
+    // the subscription: one per tenant, updated on upgrade
+    let sub = typeof subscriptionForTenant === 'function' ? subscriptionForTenant(c.tenantId) : null;
+    const plan = planById(c.planId), until = new Date(NOW() + (c.interval === 'monthly' ? 31 : 365) * D).toISOString().slice(0, 10);
+    if(sub){ const from = sub.planId; sub.planId = c.planId; sub.status = 'active'; sub.price = r2(c.taxable); sub.currency = l.currency; sub.billingInterval = c.interval; sub.renewalDate = until; sub.seats = c.seats; sub.boosts = c.boosts; sub.paidFrom = ISO(); sub.paidThrough = until; sub.paidAmount = c.taxable; sub.mandate = { status:'active', method:'card', limitINR:c.taxable * (BOS_TAX.rates[l.currency] || 1) }; logPlatformAudit('Subscription changed by checkout', (tenantById(c.tenantId) || {}).name + ' · ' + from + ' → ' + c.planId, { entityId:sub.id }); }
+    else { sub = { id:'sub-' + (subscriptionIdSeq++), tenantId:c.tenantId, planId:c.planId, status:'active', startDate:ISO().slice(0, 10), renewalDate:until, billingInterval:c.interval, price:r2(c.taxable), currency:l.currency, createdAt:ISO(), seats:c.seats, boosts:c.boosts, paidFrom:ISO(), paidThrough:until, paidAmount:c.taxable, mandate:{ status:'active', method:'card' } }; PLATFORM_SUBSCRIPTIONS.push(sub); const tn = tenantById(c.tenantId); if(tn){ tn.subscriptionId = sub.id; tn.planId = c.planId; } }
+    // the workspace's own plan
+    const wid = (typeof authAppSession !== 'undefined' && authAppSession.workspaceId) || null;
+    if(wid && WS_PLANS[wid]){ WS_PLANS[wid].planId = c.planId; WS_PLANS[wid].status = 'active'; WS_PLANS[wid].boosts = c.boosts.map(function(b){ return boostById(b); }).filter(Boolean); try { wsPersist(); } catch(x){} }
+    c.done = { docNo:doc.no, subscriptionId:sub.id };
+    logAudit('Billing', 'Plan purchased', plan.name + ' × ' + c.seats + ' · ' + doc.no, {});
+  };
+  /* what the customer's "Pay" does in the prototype: Razorpay answers with a signed event */
+  window.bosCheckoutPay = function(linkId, fail){
+    const l = BOS.payLinks.find(function(x){ return x.id === linkId; }); if(!l || l.status !== 'open') return { ok:false, reason:'This checkout has ended. Start again.' };
+    BOS_PAY.open(l.id);
+    if(fail){ const r = BOS_PAY.simulate('payment.failed', { id:l.id, amount:l.amount, currency:l.currency, version:1, reason:'Card declined (simulated)' }); return { ok:false, failed:true, reason:'The payment didn’t go through (card declined). Nothing was charged; try another method.', event:r }; }
+    const r = BOS_PAY.simulate('payment.captured', { id:l.id, amount:l.amount, currency:l.currency, version:1 });
+    return r.applied ? { ok:true, link:l, doc:bosTaxInvoice(l.docNo), done:l.checkout && l.checkout.done } : { ok:false, reason:'The payment could not be confirmed.' };
+  };
+
+  /* ---------- 6. renewals and payment reminders (the scheduler) ---------- */
+  window.bosRenewalRun = function(){
+    const out = { charged:[], needsAuth:[], failed:[], reminded:[], readonly:[] }, today = ISO().slice(0, 10);
+    bosAsScheduler(function(){
+      PLATFORM_SUBSCRIPTIONS.forEach(function(s){
+        if(s.status !== 'active' && s.status !== 'past_due') return;
+        if(s.status === 'active' && !s.dunning && (!s.renewalDate || s.renewalDate > today)) return;
+        const tn = tenantById(s.tenantId) || {};
+        if(s.status === 'active' && !s.dunning){
+          const g = generateInvoiceForSubscription(s.id); if(!g.ok) return;
+          const inv = g.invoice, doc = g.taxInvoice, inr = (doc && doc.totalINR) || inv.amount;
+          const l = bosCreatePayLink(null, inv.id); const link = l.ok ? l.link : null;
+          if(s.mandate && s.mandate.status === 'active' && !s.mandate.fail && s.currency === 'INR' && inr > 15000){ out.needsAuth.push(s.id); s.dunning = { since:today, step:0, reason:'Above ₹15,000: the customer must approve this charge (RBI e-mandate rule)' }; if(link) bosShareLink(link.id, 'email', tn.ownerEmail || 'owner@customer.example'); return; }
+          if(s.mandate && s.mandate.status === 'active' && !s.mandate.fail && link){ const r = BOS_PAY.simulate('payment.captured', { id:link.id, amount:link.amount, currency:link.currency, version:1 }); if(r.applied){ s.renewalDate = new Date(new Date(s.renewalDate + 'T00:00:00').getTime() + (s.billingInterval === 'annual' ? 365 : 30) * D).toISOString().slice(0, 10); s.dunning = null; out.charged.push(s.id); logPlatformAudit('Renewal charged', tn.name + ' · ' + inv.id, { entityId:s.id }); return; } }
+          s.status = 'past_due'; s.dunning = { since:today, step:0, reason:'The automatic charge failed' }; out.failed.push(s.id); if(link) bosShareLink(link.id, 'email', tn.ownerEmail || 'owner@customer.example');
+          logPlatformAudit('Renewal charge failed', tn.name, { entityId:s.id });
+        }
+        if(s.dunning && s.dunning.step < 4){
+          const days = Math.floor((new Date(today) - new Date(s.dunning.since)) / D);
+          [1, 3, 7].forEach(function(d, i){ if(days >= d && s.dunning.step <= i){ s.dunning.step = i + 1; BOS.outbox.push({ id:bosId('OUT'), to:tn.ownerEmail || 'owner', subject:'Payment reminder ' + (i + 1) + ' of 3: your Oontu renewal', at:ISO(), delivered:false, note:'Prototype: not sent' }); out.reminded.push(s.id + ':' + d); } });
+          if(days > 7 && s.dunning.step >= 3 && !s.readOnly){ s.readOnly = true; s.dunning.step = 4; { const wid = (typeof authAppSession !== 'undefined' && authAppSession.workspaceId) || null; if(wid && WS_PLANS[wid] && tn.id === CURRENT_ORGANIZATION_ID) WS_PLANS[wid].status = 'readonly'; } out.readonly.push(s.id); logPlatformAudit('Workspace read-only for non-payment', (tn.name || s.tenantId) + ' · nothing deleted', { entityId:s.id }); }
+        }
+      });
+      bosLinkSweep();
+    });
+    return out;
+  };
+  /* paying the reminder link clears the reminders and the read-only state */
+  const recv2 = BOS_PAY.receive;
+  BOS_PAY.receive = function(raw, sig){ const out = recv2.apply(this, arguments); try { if(out && out.applied){ const e = JSON.parse(raw); if(e.type === 'payment.captured'){ const l = BOS.payLinks.find(function(x){ return x.id === e.object.id; }); const inv = l && l.invoiceId && invoiceById(l.invoiceId); const s = inv && subscriptionById(inv.subscriptionId); if(s && s.dunning){ s.status = 'active'; s.dunning = null; s.readOnly = false; s.renewalDate = new Date(Math.max(NOW(), new Date((s.renewalDate || ISO().slice(0, 10)) + 'T00:00:00').getTime()) + (s.billingInterval === 'annual' ? 365 : 30) * D).toISOString().slice(0, 10); } } } } catch(x){ console.error(x); } return out; };
+
+  /* ---------- screens: Finance › Billing (drafts, documents, links, promos, renewals) ---------- */
+  const E = oEsc;
+  window.bosBillingTabHTML = function(){
+    const canInv = canPlatform('platform-finance', 'invoice'), docs = BOS.taxInvoices.filter(function(t){ return !t.sample; }).slice().reverse();
+    const drafts = BOS.drafts.filter(function(d){ return d.status === 'draft'; });
+    const linkRow = function(l){ return '<tr><td><b>' + E(l.id) + '</b><small>' + E(l.docNo || l.proposalId || (l.checkout ? 'Checkout ' + l.checkout.id : '')) + '</small></td><td class="num">' + E(l.currency + ' ' + l.amount) + '</td><td>' + bosBadge(l.status) + (l.openedAt ? '<small>Opened ' + E(String(l.openedAt).slice(0, 10)) + '</small>' : '') + '</td><td style="white-space:normal">' + E((l.shares || []).map(function(s){ return s.channel + (s.to && s.channel !== 'copy' ? ' ' + s.to : ''); }).join(', ') || '—') + '</td><td>' + E(String(l.expiresAt).slice(0, 10)) + '</td><td>' + (l.status === 'open' ? '<button type="button" class="o-btn" onclick="bosShareDialog(\'' + l.id + '\')">Share</button> <button type="button" class="o-btn" onclick="bosResult(bosCancelLink(\'' + l.id + '\'), \'Link cancelled.\')">Cancel</button>' : '') + '</td></tr>'; };
+    return (canInv ? '<div class="bos-actions" style="margin:0 0 12px"><button type="button" class="o-btn o-btn--primary" onclick="bosDraftDialog()">New invoice</button><button type="button" class="o-btn" onclick="bosResult(bosRenewalRunUI(), \'Renewal run finished.\')">Run renewals now</button>' + (canPlatform('platform-commercial', 'create_promo') ? '<button type="button" class="o-btn" onclick="bosPromoDialog()">New promo code</button>' : '') + '</div>' : '') +
+      oTableCard({ id:'bos-drafts', title:'Drafts', sub:'Edit freely; issuing gives the number, the tax and a payment link', cols:[{ label:'Draft' }, { label:'Customer' }, { label:'Lines' }, { label:'Amount', right:true }, { label:'' }], rows:drafts.length ? drafts.map(function(d){ const a = bosAccount(d.accountId); return '<tr><td><b>' + E(d.id) + '</b><small>' + E(bosName(d.createdBy)) + '</small></td><td>' + E(a ? a.name : '') + '</td><td style="white-space:normal">' + E(d.lines.map(function(l){ return l.desc + ' ×' + l.qty; }).join('; ')) + '</td><td class="num">' + E(d.currency + ' ' + linesTotal(d.lines)) + '</td><td>' + (canInv ? '<button type="button" class="o-btn" onclick="bosDraftDialog(\'' + d.id + '\')">Edit</button> <button type="button" class="o-btn o-btn--primary" onclick="bosResult(bosIssueDraft(\'' + d.id + '\'), \'Issued with a payment link.\')">Issue</button>' : '') + '</td></tr>'; }).join('') : oTableEmptyRow(5, 'No drafts.') }) + '<div style="height:16px"></div>' +
+      oTableCard({ id:'bos-docs', title:'Invoices, credit notes and debit notes', sub:'Issued documents are never edited: corrections cancel and re-issue, or add a note', cols:[{ label:'Document' }, { label:'Customer' }, { label:'Amount', right:true }, { label:'Status' }, { label:'' }], rows:docs.length ? docs.map(function(t){ const p = bosCorrectionPath(t); return '<tr><td><b>' + E(t.no) + '</b><small>' + E(t.kind.replace('_', ' ') + (t.revisedFrom ? ' · replaces ' + t.revisedFrom : '') + (t.originalNo ? ' · for ' + t.originalNo : '') + (t.amendmentNeeded ? ' · amendment needed' : '')) + '</small></td><td>' + E(t.customer) + '</td><td class="num">' + E(t.currency + ' ' + t.total) + '</td><td>' + bosBadge(t.pendingCorrection ? 'awaiting approval' : t.status) + '</td><td>' + (t.kind !== 'credit_note' && t.status === 'issued' ? '<button type="button" class="o-btn" onclick="bosDocLinkUI(\'' + t.no + '\')">Payment link</button> ' : '') + (p.path !== 'none' && canPlatform('platform-finance', 'correct_invoice') && !t.pendingCorrection ? '<button type="button" class="o-btn" onclick="bosCorrectDialog(\'' + t.no + '\')">Correct</button>' : '') + '</td></tr>'; }).join('') : oTableEmptyRow(5, 'No documents yet.') }) + '<div style="height:16px"></div>' +
+      oTableCard({ id:'bos-links', title:'Payment links', sub:'One open link per document; shared by email, WhatsApp or copy; reminders before expiry', cols:[{ label:'Link' }, { label:'Amount', right:true }, { label:'Status' }, { label:'Shared' }, { label:'Expires' }, { label:'' }], rows:BOS.payLinks.length ? BOS.payLinks.slice().reverse().map(linkRow).join('') : oTableEmptyRow(6, 'No links.') }) + '<div style="height:16px"></div>' +
+      oTableCard({ id:'bos-promos', title:'Promo codes', sub:'Created by a revenue or finance manager, approved by a finance manager; customers enter them at checkout', cols:[{ label:'Code' }, { label:'Off', right:true }, { label:'Plans' }, { label:'Valid' }, { label:'Used' }, { label:'Status' }, { label:'' }], rows:BOS.promos.map(function(p){ return '<tr><td><b>' + E(p.code) + '</b><small>' + E(p.label) + '</small></td><td class="num">' + p.pct + '%</td><td>' + E(p.plans.length ? p.plans.map(function(id){ return (planById(id) || {}).name; }).join(', ') : 'All') + '</td><td>' + E(p.validFrom + ' → ' + p.validUntil) + '</td><td>' + E(p.used + (p.maxUses ? ' / ' + p.maxUses : '')) + '</td><td>' + bosBadge(p.status) + '</td><td>' + (canPlatform('platform-commercial', 'create_promo') && ['active','paused'].indexOf(p.status) > -1 ? '<button type="button" class="o-btn" onclick="bosResult(bosPausePromo(\'' + p.code + '\'), \'Updated.\')">' + (p.status === 'paused' ? 'Resume' : 'Pause') + '</button>' : '') + '</td></tr>'; }).join('') }) + '<div style="height:16px"></div>' +
+      oTableCard({ id:'bos-ren', title:'Renewals and reminders', sub:'Charged on the renewal date; above ₹15,000 the customer approves each charge; reminders on day 1, 3 and 7, then read-only', cols:[{ label:'Workspace' }, { label:'Plan' }, { label:'Renews' }, { label:'Status' }, { label:'Reminders' }], rows:PLATFORM_SUBSCRIPTIONS.map(function(s){ const tn = tenantById(s.tenantId) || {}; return '<tr><td><b>' + E(tn.name || s.tenantId) + '</b></td><td>' + E((planById(s.planId) || {}).name || s.planId) + '</td><td>' + E(s.renewalDate || '—') + '</td><td>' + bosBadge(s.readOnly ? 'read-only' : s.status) + '</td><td style="white-space:normal">' + E(s.dunning ? s.dunning.reason + ' · reminder ' + Math.min(3, s.dunning.step) + ' of 3' : '—') + '</td></tr>'; }).join('') });
+  };
+  window.bosRenewalRunUI = function(){ if(!canPlatform('platform-finance', 'invoice')) return { ok:false, reason:bosWhyNot('platform-finance', 'invoice') }; const r = bosRenewalRun(); toast(r.charged.length + ' charged, ' + r.needsAuth.length + ' need the customer, ' + r.failed.length + ' failed, ' + r.reminded.length + ' reminders.'); return { ok:true }; };
+  window.bosDocLinkUI = function(no){ const r = bosLinkForDoc(no); if(!r.ok){ toast(r.reason); return; } bosShareDialog(r.link.id); };
+  const lineRows = function(lines){ return (lines || [{ desc:'', qty:1, unitPrice:0 }]).concat([{ desc:'', qty:'', unitPrice:'' }]).map(function(l, i){ return '<div class="bos-row2" style="grid-template-columns:2fr 1fr 1fr">' + bosField('bos-ln-d' + i, i ? 'Description' : 'Description (e.g. Floor plan, setup fee, training)', { value:l.desc }) + bosField('bos-ln-q' + i, 'Qty', { type:'number', value:l.qty }) + bosField('bos-ln-p' + i, 'Unit price', { type:'number', value:l.unitPrice }) + '</div>'; }).join(''); };
+  const readLines = function(){ const out = []; for(let i = 0; i < 12; i++){ const d = document.getElementById('bos-ln-d' + i); if(!d) break; if(!String(d.value).trim()) continue; out.push({ desc:d.value, qty:Number(bosV('bos-ln-q' + i)), unitPrice:Number(bosV('bos-ln-p' + i)) }); } return out; };
+  window.bosReadLines = readLines;
+  window.bosDraftDialog = function(id){ const d = id && bosDraft(id);
+    bosDialog(d ? 'Edit draft ' + d.id : 'New invoice', (d ? '' : bosField('bos-dr-acc', 'Customer', { options:BOS.accounts.filter(function(a){ return !a.mergedInto; }).map(function(a){ return [a.id, a.name]; }) }) + bosField('bos-dr-cur', 'Currency', { options:Object.keys(BOS_TAX.rates) })) + lineRows(d ? d.lines : null) + bosField('bos-dr-due', 'Payment due in (days)', { type:'number', value:d ? d.dueDays : 14 }) + '<p class="bos-muted">Tax (CGST+SGST, IGST or LUT) is added automatically from the customer’s details when you issue it.</p>',
+      d ? 'Save draft' : 'Save as draft', d ? "bosDlgDone(bosEditDraft('" + d.id + "', { lines:bosReadLines(), dueDays:bosV('bos-dr-due') }), 'Draft saved.')" : "bosDlgDone(bosDraftInvoice({ accountId:bosV('bos-dr-acc'), currency:bosV('bos-dr-cur'), lines:bosReadLines(), dueDays:bosV('bos-dr-due') }), 'Draft saved.')"); };
+  window.bosCorrectDialog = function(no){ const t = bosTaxInvoice(no), p = bosCorrectionPath(t);
+    bosDialog('Correct ' + no, '<p class="bos-note">' + E(p.why) + '</p>' + lineRows(t.lines || [{ desc:t.description, qty:1, unitPrice:t.amount }]) + bosField('bos-cr-fix', 'Only the customer’s details (GSTIN, address) were wrong', { check:true }) + bosField('bos-cr-why', 'What was wrong', { textarea:true }) + '<p class="bos-muted">Above ₹10,000, or on a paid invoice, a finance manager approves the correction first.</p>', 'Correct', "bosDlgDone(bosCorrectInvoice('" + no + "', { lines:bosReadLines(), reason:bosV('bos-cr-why'), customerFix:bosV('bos-cr-fix') }), 'Done.')"); };
+  window.bosShareDialog = function(linkId){ const l = BOS.payLinks.find(function(x){ return x.id === linkId; }), a = l && bosAccount(l.accountId), c = a && bosContactsOf(a.id).find(function(x){ return x.primary; });
+    bosDialog('Share payment link', '<p class="bos-note">' + E(l.currency + ' ' + l.amount + ' · ' + (l.taxSegment || '') + ' · ' + l.url) + '</p>' + bosField('bos-sh-ch', 'Send by', { options:[['email', 'Email'], ['whatsapp', 'WhatsApp'], ['copy', 'Copy the link']] }) + bosField('bos-sh-to', 'To (email or WhatsApp number)', { value:c ? c.email : '' }) + '<p class="bos-muted">Reminders go 5 and 2 days before it ends. The link stops working once paid, cancelled or expired.</p>', 'Share', "bosDlgDone(bosShareLink('" + linkId + "', bosV('bos-sh-ch'), bosV('bos-sh-to')), 'Shared (simulated).')"); };
+  window.bosPromoDialog = function(){ bosDialog('New promo code', '<div class="bos-row2">' + bosField('bos-pc-code', 'Code', { placeholder:'DIWALI15' }) + bosField('bos-pc-pct', '% off', { type:'number', value:10 }) + '</div>' + bosField('bos-pc-label', 'Label', {}) + bosField('bos-pc-plans', 'Plans (none picked = all)', { options:choosablePlans('agency').concat(choosablePlans('corporate')).filter(function(p){ return !p.talkToUs; }).map(function(p){ return [p.id, p.name]; }), multiple:true }) + '<div class="bos-row2">' + bosField('bos-pc-until', 'Valid until', { type:'date' }) + bosField('bos-pc-max', 'Maximum uses (empty = no limit)', { type:'number' }) + '</div>' + bosField('bos-pc-new', 'New customers only', { check:true }), 'Create', "bosDlgDone(bosCreatePromo({ code:bosV('bos-pc-code'), pct:bosV('bos-pc-pct'), label:bosV('bos-pc-label'), plans:bosV('bos-pc-plans'), validUntil:bosV('bos-pc-until'), maxUses:bosV('bos-pc-max'), newOnly:bosV('bos-pc-new') }), 'Created. A finance manager approves it before customers can use it.')"); };
+
+  /* ---------- the customer's checkout dialog (Settings › Plan & billing, trial card, compare plans) ---------- */
+  const CK = { planId:null, seats:null, interval:'annual', boosts:[], promo:'', link:null, err:'' };
+  window.bosCheckoutOpen = function(planId){
+    const wp = typeof wsPlanCurrent === 'function' ? wsPlanCurrent() : null;
+    if(!(typeof wsIsOwner === 'function' && wsIsOwner()) && !(typeof sCan === 'function' && sCan('billing', 'Manage plan & add-ons'))){ toast('Only the workspace owner or a billing admin can buy a plan.'); return; }
+    CK.planId = planId || (wp && wp.planId) || 'plan-floor'; CK.seats = CK.seats || Math.max(1, (typeof RECRUITER_ROSTER !== 'undefined' ? RECRUITER_ROSTER.length : 1)); CK.boosts = wp ? (wp.boosts || []).map(function(b){ return b.id || b; }) : []; CK.promo = ''; CK.link = null; CK.err = '';
+    bosCheckoutDraw();
+  };
+  function currentPaid(){ const s = typeof subscriptionForTenant === 'function' ? subscriptionForTenant(CURRENT_ORGANIZATION_ID) : null; return s && s.paidThrough ? { paidFrom:s.paidFrom, paidThrough:s.paidThrough, amount:s.paidAmount } : null; }
+  window.bosCheckoutDraw = function(){
+    const audience = typeof sIsCorporate === 'function' && sIsCorporate() ? 'corporate' : 'agency';
+    const acc = BOS.accounts.find(function(a){ return a.tenantIds.indexOf(CURRENT_ORGANIZATION_ID) > -1; });
+    const q = bosCheckoutQuote({ planId:CK.planId, seats:CK.seats, interval:CK.interval, boosts:CK.boosts, promo:CK.promo, account:acc, accountId:acc && acc.id, current:currentPaid() });
+    const money = function(n){ const c = q.currency || planCurrency(); return (c === 'INR' ? '₹' : '$') + Number(r2(n)).toLocaleString(c === 'INR' ? 'en-IN' : 'en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }); };
+    const body = bosField('bos-ck-plan', 'Plan', { options:choosablePlans(audience).map(function(p){ return [p.id, p.name + (p.talkToUs ? ' · talk to us' : ' · ' + planMoney(bosPlanUnit(p, planCurrency()), planCurrency()) + ' per licence a month')]; }), value:CK.planId }) +
+      '<div class="bos-row2">' + bosField('bos-ck-seats', 'Licences', { type:'number', value:CK.seats }) + bosField('bos-ck-int', 'Billing', { options:[['annual', 'Yearly'], ['monthly', 'Monthly']], value:CK.interval }) + '</div>' +
+      bosField('bos-ck-boosts', 'Add-ons (optional)', { options:BOOSTS.map(function(b){ return [b.id, b.name + ' · ' + planMoney(b.prices[planCurrency()], planCurrency()) + ' ' + b.unit]; }), multiple:true, value:CK.boosts }) +
+      '<div class="bos-row2" style="grid-template-columns:2fr 1fr;align-items:end">' + bosField('bos-ck-promo', 'Promo code', { value:CK.promo, placeholder:'If you have one' }) + '<div class="bos-f"><button type="button" class="o-btn" onclick="bosCheckoutApply()">Apply</button></div></div>' +
+      (q.ok ? '<dl class="bos-kv" style="margin:6px 0 10px">' + q.lines.map(function(l){ return '<dt>' + E(l.desc) + '</dt><dd>' + E(money(l.qty * l.unitPrice)) + '</dd>'; }).join('') +
+        (q.promoOff ? '<dt>Offer ' + E(q.promo.code) + ' (' + q.promo.pct + '%)</dt><dd>− ' + E(money(q.promoOff)) + '</dd>' : '') + (q.credit ? '<dt>Unused time on your current plan</dt><dd>− ' + E(money(q.credit)) + '</dd>' : '') +
+        '<dt>' + E(q.tax.segment.label) + '</dt><dd>' + E(money(q.tax.taxForeign)) + '</dd><dt><b>Total today</b></dt><dd><b>' + E(money(q.total)) + '</b></dd></dl>' : '<p class="bos-err">' + E(q.reason) + '</p>') +
+      (CK.err ? '<p class="bos-err" role="alert">' + E(CK.err) + '</p>' : '') +
+      '<p class="bos-muted">Paid securely through Razorpay (simulated in this prototype). Your tax invoice and receipt arrive by email; renewals are charged automatically and you can cancel any time.</p>';
+    bosDialog('Choose your plan', body, q.ok ? 'Pay ' + money(q.total) : '', 'bosCheckoutGo(false)');
+    if(q.ok){ const acts = document.querySelector('#bos-dialog-root .bos-actions'); if(acts) acts.insertAdjacentHTML('afterbegin', '<button type="button" class="o-btn" onclick="bosCheckoutGo(true)" title="Prototype: see what happens when a card is declined">Simulate a declined card</button>'); }
+    ['bos-ck-plan','bos-ck-seats','bos-ck-int','bos-ck-boosts'].forEach(function(id){ const el = document.getElementById(id); if(el) el.addEventListener('change', function(){ CK.planId = bosV('bos-ck-plan'); CK.seats = Number(bosV('bos-ck-seats')) || 1; CK.interval = bosV('bos-ck-int'); CK.boosts = bosV('bos-ck-boosts'); bosCheckoutDraw(); }); });
+  };
+  window.bosCheckoutApply = function(){ CK.promo = String(bosV('bos-ck-promo') || '').trim(); CK.err = ''; bosCheckoutDraw(); };
+  window.bosCheckoutGo = function(fail){
+    CK.planId = bosV('bos-ck-plan') || CK.planId; CK.seats = Number(bosV('bos-ck-seats')) || CK.seats; CK.interval = bosV('bos-ck-int') || CK.interval; CK.boosts = bosV('bos-ck-boosts') || CK.boosts; CK.promo = String(bosV('bos-ck-promo') || '').trim();
+    const s = bosCheckoutStart({ planId:CK.planId, seats:CK.seats, interval:CK.interval, boosts:CK.boosts, promo:CK.promo, current:currentPaid(), channel:'in-app' });
+    if(!s.ok){ CK.err = s.reason; bosCheckoutDraw(); return s; }
+    const r = bosCheckoutPay(s.link.id, !!fail);
+    if(!r.ok){ CK.err = r.reason; bosCheckoutDraw(); return r; }
+    bosDialogClose(); toast((planById(CK.planId) || {}).name + ' is yours. Tax invoice ' + r.link.docNo + ' is in your email.');
+    try { renderSidebar(); if(state.activeNav === 'settings') settingsRefresh(); else showView(DEFAULT_VIEW[state.role]); } catch(e){}
+    return r;
+  };
+  /* the buttons that used to activate a plan without payment now open checkout (wsPlanChoose stays the activation step) */
+  /* the customer's Plan & billing: change plan through checkout, and their own invoices with what is still to pay */
+  const baseBilling = window.sec_billing;
+  window.sec_billing = sec_billing = function(ed){
+    const html = baseBilling.apply(this, arguments);
+    try {
+      const mine = BOS.taxInvoices.filter(function(t){ return t.tenantId === CURRENT_ORGANIZATION_ID; }).slice().reverse();
+      const buy = (typeof wsIsOwner === 'function' && wsIsOwner()) || sCan('billing', 'Manage plan & add-ons');
+      const rows = mine.map(function(t){ const l = BOS.payLinks.find(function(x){ return x.docNo === t.no && x.status === 'open'; }) || BOS.payLinks.find(function(x){ return x.invoiceId === t.sourceRef && x.status === 'open'; });
+        return sRow(t.no + ' · ' + t.currency + ' ' + t.total, (t.kind === 'invoice' ? 'Tax invoice' : t.kind.replace('_', ' ')) + ' · ' + String(t.date).slice(0, 10) + ' · ' + t.segment.label + (t.paidAt ? ' · paid ' + String(t.paidAt).slice(0, 10) : ''), (t.status === 'issued' && l ? sBtn('Pay now', "bosCheckoutPayLink('" + l.id + "')", 'primary') : oBadge(t.status === 'paid' ? 'success' : t.status === 'cancelled' ? 'neutral' : 'warn', t.status)) + ' ' + sBtn('View', "bosInvoiceView('" + t.no + "')")); }).join('');
+      return html + sCard('Buy or change your plan', 'Paid securely through Razorpay. Promo codes, licences and add-ons are set at checkout.', sRow('Checkout', 'Choose a plan, licences and add-ons; your GST or export treatment is applied automatically.', buy ? sBtn('Choose a plan', 'bosCheckoutOpen()', 'primary') : '<span class="o-card__sub">Only the owner or a billing admin can buy.</span>')) +
+        sCard('Invoices and receipts', mine.length ? mine.length + ' document(s)' : 'None yet', rows || sRow('No invoices yet', 'They appear here when you buy, renew or change your plan.', ''));
+    } catch(e){ console.error(e); return html; }
+  };
+  window.bosCheckoutPayLink = function(linkId){ const r = bosAsSystem('checkout', function(){ return BOS_PAY.simulate('payment.captured', (function(){ const l = BOS.payLinks.find(function(x){ return x.id === linkId; }); BOS_PAY.open(linkId); return { id:l.id, amount:l.amount, currency:l.currency, version:1 }; })()); }); toast(r && r.applied ? 'Paid. Your receipt is on its way.' : 'The payment didn’t go through.'); try { settingsRefresh(); } catch(e){} return r; };
+})();
+</script><script id="bos-team-script">
+/* ============================================================
+   ROLE FIXES AND "MY TEAM" (prototype, 2026-11-25)
+   - Approvals lists show only what you asked for or may decide; Insights shows only the departments you manage.
+   - My team: every manager sees the people who report to them (directly or through someone), with the numbers
+     that matter for that person's work, how each number is worked out, their workload and overdue items, and a
+     one-click way to hand work to a teammate (each hand-over still checks permissions). For coaching and balancing
+     work, not a public leaderboard: no ranking between people.
+============================================================ */
+(function(){
+  const NOW = bosNow, ISO = bosIso, D = BOS_D, H = BOS_H, E = oEsc;
+  const r1 = function(n){ return Math.round(n * 10) / 10; };
+  window.bosApprovalsVisible = function(){ const me = ACTIVE_PLATFORM_USER_ID, u = currentPlatformUser(); return BOS.approvals.filter(function(a){ const t = BOS_APPROVAL_TYPES[a.type]; return a.requestedBy === me || (t && bosCan(t.perm[0], t.perm[1], null, u)) || a.decidedBy === me; }); };
+  const ADMIN = function(){ return canPlatform('platform-settings', 'update') && canPlatform('platform-user', 'update'); };
+  window.bosSeesDept = function(d){
+    if(ADMIN()) return true;
+    if(d === 'revenue') return canPlatform('platform-lead', 'assign') || canPlatform('platform-commercial', 'approve_discount');
+    if(d === 'service') return canPlatform('platform-ticket', 'assign');
+    if(d === 'custops') return canPlatform('platform-success', 'assign') || canPlatform('platform-onboarding', 'assign');
+    if(d === 'finance') return canPlatform('platform-finance', 'approve_refund') || canPlatform('platform-finance', 'reconcile');
+    return false;
+  };
+  /* reports: direct and through someone; system identities never count */
+  window.bosReportsOf = function(id){
+    const out = [], seen = {}; const walk = function(m){ PLATFORM_USER_ROSTER.forEach(function(u){ if(u.managerId === m && !u.system && !seen[u.id] && u.id !== id){ seen[u.id] = 1; out.push(u); walk(u.id); } }); };
+    walk(id); return out;
+  };
+  const inP = function(iso, days){ if(!iso) return false; const t = new Date(iso).getTime(); return t >= NOW() - days * D && t <= NOW(); };
+  const wonAt = function(o, stage){ const h = (o.history || []).filter(function(x){ return new RegExp('→ ' + stage + '\\b').test(x.text); }).slice(-1)[0]; return h ? h.at : null; };
+  const inr = function(cur, v){ return (Number(v) || 0) * ((BOS_TAX && BOS_TAX.rates[cur]) || 1); };
+  const fmtINR = function(n){ return '₹' + Math.round(n).toLocaleString('en-IN'); };
+  const pct = function(a, b){ return b ? Math.round(100 * a / b) + '%' : '—'; };
+  /* the numbers for one person, by the kind of work they do; each comes with how it was worked out */
+  window.bosPersonMetrics = function(u, days){
+    days = days || 30; const id = u.id, dept = u.department || 'Platform', m = [];
+    const add = function(label, value, how){ m.push({ label:label, value:value, how:how }); };
+    if(dept === 'Revenue' || bosRolesOf(u).some(function(r){ return /sales|rev|sdr/.test(r); })){
+      const mine = BOS.opps.filter(function(o){ return o.ownerId === id; }), open = mine.filter(bosOppOpen);
+      const won = mine.filter(function(o){ return o.stage === 'Won' && inP(wonAt(o, 'Won') || o.lastActivityAt, days); }), lost = mine.filter(function(o){ return o.stage === 'Lost' && inP(wonAt(o, 'Lost') || o.lastActivityAt, days); });
+      const withNext = open.filter(function(o){ return o.nextStepAt; }), onTime = withNext.filter(function(o){ return new Date(o.nextStepAt).getTime() >= NOW() - 12 * H; });
+      const props = BOS.proposals.filter(function(p){ return p.createdBy === id && inP(p.createdAt, days); });
+      const demos = BOS.demos.filter(function(d){ return d.presenterId === id && d.status === 'attended' && inP(d.startsAt, days); });
+      const cycle = won.map(function(o){ return (new Date(wonAt(o, 'Won') || o.lastActivityAt) - new Date(o.createdAt)) / D; });
+      add('Open pipeline', fmtINR(open.reduce(function(s, o){ return s + inr(o.currency, o.value); }, 0)), open.length + ' open deals they own, in rupees at the reference rate');
+      add('Won', String(won.length), 'Deals they own marked Won in the period');
+      add('Win rate', pct(won.length, won.length + lost.length), 'Won ÷ (won + lost) in the period');
+      add('Demos held', String(demos.length), 'Demos they presented that the customer attended');
+      add('Follow-ups on time', pct(onTime.length, withNext.length), 'Open deals whose next step is not overdue');
+      add('Average discount', props.length ? r1(props.reduce(function(s, p){ return s + (p.discountPct || 0); }, 0) / props.length) + '%' : '—', props.length + ' proposals they prepared');
+      add('Days to close', cycle.length ? String(Math.round(cycle.reduce(function(a, b){ return a + b; }, 0) / cycle.length)) : '—', 'From created to won, average');
+    }
+    if(dept === 'Service' || bosRolesOf(u).some(function(r){ return /agent|support|desk|tech/.test(r); })){
+      const mine = BOS.tickets.filter(function(t){ return t.ownerId === id; }), res = mine.filter(function(t){ return t.resolvedAt && inP(t.resolvedAt, days); });
+      const met = res.filter(function(t){ return !bosSlaState(t).breached; }), frt = mine.filter(function(t){ return t.firstResponseAt && inP(t.firstResponseAt, days); }).map(function(t){ return (new Date(t.firstResponseAt) - new Date(t.createdAt)) / H; }).sort(function(a, b){ return a - b; });
+      add('Tickets resolved', String(res.length), 'Their tickets resolved in the period');
+      add('Within target time', pct(met.length, res.length), 'Resolved tickets that met the SLA');
+      add('First response', frt.length ? r1(frt[Math.floor(frt.length / 2)]) + ' h' : '—', 'Median time to the first reply');
+      add('Reopened', pct(mine.filter(function(t){ return t.reopenCount; }).length, mine.length), 'Their tickets reopened at least once');
+      add('Escalations', String(mine.filter(function(t){ return t.escalation; }).length), 'Their tickets escalated');
+      add('Open now', String(mine.filter(function(t){ return !/resolved|closed/.test(t.status); }).length), 'Their open tickets');
+    }
+    if(dept === 'Customer Operations' || bosRolesOf(u).some(function(r){ return /impl|cs_|co_|train/.test(r); })){
+      const obs = BOS.onboardings.filter(function(o){ return o.ownerId === id; }), act = obs.filter(function(o){ return bosActivation(o).activated; });
+      const accs = BOS.accounts.filter(function(a){ return a.ownerId === id && !a.mergedInto && a.tenantIds.length; }), hs = accs.map(function(a){ return bosHealth(a.id).score; });
+      const ren = bosRenewals().filter(function(r){ return r.account.ownerId === id; }), held = BOS.trainings.filter(function(s){ return s.trainerId === id && s.status === 'held' && inP(s.startsAt, days); });
+      add('Onboarding now', String(obs.filter(function(o){ return o.status !== 'completed'; }).length), 'Onboardings they own that are not complete');
+      add('Fully set up', pct(act.length, obs.length), 'Their onboardings that reached activation (evidence-based)');
+      add('Customer health', hs.length ? Math.round(hs.reduce(function(a, b){ return a + b; }, 0) / hs.length) + ' / 100' : '—', 'Average health of the customers they own');
+      add('Renewals in 90 days', String(ren.length), 'On customers they own');
+      add('Training held', String(held.length), 'Sessions they ran in the period');
+    }
+    if(dept === 'Business & Finance'){
+      const docs = BOS.taxInvoices.filter(function(t){ return t.createdBy === id && t.kind === 'invoice' && inP(t.date, days); });
+      const paid = BOS.taxInvoices.filter(function(t){ return t.createdBy === id && t.status === 'paid' && inP(t.paidAt, days); });
+      const overdue = BOS.taxInvoices.filter(function(t){ return t.createdBy === id && t.status === 'issued' && t.dueDate && t.dueDate < ISO().slice(0, 10); });
+      add('Invoices issued', String(docs.length), 'Tax invoices they issued in the period');
+      add('Collected', fmtINR(paid.reduce(function(s, t){ return s + (t.totalINR || 0); }, 0)), 'Their invoices paid in the period');
+      add('Overdue', String(overdue.length), 'Their invoices past the due date');
+      add('Refunds handled', String(BOS.refunds.filter(function(r){ return r.requestedBy === id && inP(r.at, days); }).length + BOS.approvals.filter(function(a){ return a.type === 'refund' && a.decidedBy === id && inP(a.decidedAt, days); }).length), 'Requested or decided in the period');
+    }
+    const fixed = BOS.exceptions.filter(function(e){ return e.reviewedBy === id && ['resolved','closed','false_positive','confirmed'].indexOf(e.status) > -1 && inP(e.closedAt || e.detectedAt, days); }).length;
+    if(fixed || dept === 'Platform') add('Findings reviewed', String(fixed), 'Integrity findings they reviewed');
+    const work = bosMyWork(id), over = work.filter(function(i){ return i.due && new Date(i.due).getTime() < NOW(); });
+    return { metrics:m, workload:work.length, overdue:over.length, items:work };
+  };
+
+  /* hand work to a teammate (each move is the normal command, so scope and permissions still apply) */
+  window.bosHandOver = function(fromId, toId, keys){
+    const to = platformUserById(toId); if(!to || to.status !== 'Active') return { ok:false, reason:'Pick an active teammate.' };
+    let moved = 0, refused = [];
+    (keys || []).forEach(function(k){ const p = k.split(':'), type = p[0], id = p[1]; let r = null;
+      if(type === 'Opportunity') r = bosAssignOpp(id, toId); else if(type === 'Ticket') r = bosTicketAssign(id, toId); else if(type === 'Onboarding') r = bosOnbAssign(id, toId);
+      if(r && r.ok) moved++; else if(r) refused.push(id + ': ' + r.reason); });
+    return moved ? { ok:true, moved:moved, refused:refused } : { ok:false, reason:refused[0] || 'Nothing to hand over.' };
+  };
+
+  /* ---------- the screen ---------- */
+  const UI = window.BOS_UI; UI.team = UI.team || { days:30 };
+  function renderTeam(){
+    const me = bosMe(), team = me ? bosReportsOf(me.id) : [];
+    if(!team.length) return oDashShell([oPageHead({ title:'My team', lede:'Nobody reports to you, so there is no team view.' })]);
+    const days = UI.team.days, rows = team.map(function(u){ return { u:u, p:bosPersonMetrics(u, days) }; });
+    const over = rows.reduce(function(s, r){ return s + r.p.overdue; }, 0), work = rows.reduce(function(s, r){ return s + r.p.workload; }, 0);
+    const cards = rows.map(function(r){ const u = r.u;
+      return '<section class="o-card" style="min-width:0"><div class="o-card__head"><div><h2 class="o-card__title">' + E(u.name) + '</h2><p class="o-card__sub">' + E(bosRolesOf(u).map(function(x){ return (platformRoleById(x) || {}).name; }).join(' + ') + ' · ' + (u.department || '') + (u.managerId !== me.id ? ' · via ' + bosName(u.managerId) : '')) + '</p></div>' + bosBadge(u.status) + '</div>' +
+        '<dl class="bos-kv">' + r.p.metrics.map(function(x){ return '<dt title="' + E(x.how) + '">' + E(x.label) + '</dt><dd title="' + E(x.how) + '">' + E(x.value) + '</dd>'; }).join('') + '<dt>Workload</dt><dd>' + r.p.workload + ' item(s) · ' + (r.p.overdue ? '<b>' + r.p.overdue + ' overdue</b>' : 'none overdue') + '</dd></dl>' +
+        '<div class="bos-actions">' + (r.p.items.length ? '<button type="button" class="o-btn" onclick="bosHandOverDialog(\'' + u.id + '\')">Hand work to a teammate</button>' : '') + '</div></section>'; }).join('');
+    return oDashShell([oPageHead({ ctx:oDateLine() + ' · My team', title:'My team', lede:oPlural(team.length, 'person', 'people') + ' report to you. Hover a number to see how it is worked out. For coaching and balancing work, not for ranking people.' }),
+      oNumbers([{ label:'People', value:String(team.length), note:'direct and through your managers' }, { label:'Open work', value:String(work), note:'across the team' }, { label:'Overdue', value:String(over), note:over ? 'hand some over below' : 'nothing overdue' }, { label:'Period', value:days + ' days', note:'for the numbers below' }]),
+      '<p class="bos-note">' + E(oPlural(team.length, 'person', 'people') + ' report to you. Hover a number to see how it is worked out. This view is for coaching and balancing work, not for ranking people.') + '</p>',
+      '<div class="seg bos-tabs" role="tablist" aria-label="Period">' + [7, 30, 90].map(function(d){ return '<button type="button" role="tab" class="seg__btn' + (d === days ? ' is-on' : '') + '" aria-selected="' + (d === days) + '" onclick="BOS_UI.team.days=' + d + '; bosRedraw()">' + d + ' days</button>'; }).join('') + '</div>',
+      '<div class="bos-grid">' + cards + '</div>']);
+  }
+  window.bosHandOverDialog = function(fromId){
+    const u = platformUserById(fromId), p = bosPersonMetrics(u, UI.team.days), mates = bosReportsOf(ACTIVE_PLATFORM_USER_ID).filter(function(x){ return x.id !== fromId && x.status === 'Active' && x.department === u.department; }).concat([bosMe()]);
+    const items = p.items.filter(function(i){ return ['Opportunity','Ticket','Onboarding'].indexOf(i.type) > -1; });
+    bosDialog('Hand work from ' + u.name, items.length ? '<ul class="bos-list">' + items.map(function(i, k){ return '<li><label class="bos-check" style="margin:0"><input type="checkbox" id="bos-ho-' + k + '" value="' + E(i.type + ':' + i.id) + '"' + (i.due && new Date(i.due).getTime() < NOW() ? ' checked' : '') + '> ' + E(i.title) + '</label><small>' + E(i.whyText) + '</small></li>'; }).join('') + '</ul>' + bosField('bos-ho-to', 'Hand to', { options:mates.map(function(x){ return [x.id, x.name]; }) }) : '<p class="bos-note">No opportunities, tickets or onboardings to hand over.</p>', items.length ? 'Hand over' : '', "bosHandOverSubmit('" + fromId + "', " + items.length + ")");
+  };
+  window.bosHandOverSubmit = function(fromId, n){ const keys = []; for(let k = 0; k < n; k++){ const c = document.getElementById('bos-ho-' + k); if(c && c.checked) keys.push(c.value); } const r = bosHandOver(fromId, bosV('bos-ho-to'), keys); if(bosDlgDone(r)) toast(r.moved + ' handed over' + (r.refused.length ? '; ' + r.refused.length + ' not allowed' : '') + '.'); };
+
+  RENDERERS['oontu-team'] = function(){ if(state.role === 'oontu' && !BOS_VIEW_ACCESS['oontu-team']()) return oDashShell([oPageHead({ title:'Not available', lede:'Nobody reports to you.' })]); return renderTeam(); };
+  PAGE_TITLES['oontu-team'] = 'My team';
+  BOS_VIEW_ACCESS['oontu-team'] = function(){ const u = currentPlatformUser(); return !!u && u.status === 'Active' && bosReportsOf(u.id).length > 0; };
+  const g0 = NAV.oontu[0]; if(g0 && g0.items && !g0.items.some(function(i){ return i.id === 'oontu-team'; })) g0.items.push({ id:'oontu-team', label:'My team', icon:'users' });
+  NAV_LAYOUT.oontu[0] = ['', ['oontu-dashboard', 'oontu-mywork', 'oontu-team']];
+  navApplyLayout('oontu');
+  /* system identities stay out of every people list */
+  const baseLogins = window.bosLogins; window.bosLogins = function(){ return baseLogins().filter(function(d){ const u = platformUserById(d.id); return !(u && u.system); }); };
+})();
+</script>
+<style id="tenant-support-style">
+/* Settings › Help & support (staffing agencies and corporates): the knowledge centre, tickets and the support plan. */
+.hs-search{ display:flex; gap:8px; align-items:center; margin:4px 0 12px; }
+.hs-search input{ flex:1; height:44px; border:1px solid var(--n-200); border-radius:12px; padding:0 14px; font:inherit; font-size:15px; background:var(--bg-card); color:var(--n-900, #1A1C22); }
+.hs-chips{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 14px; }
+.hs-chip{ height:30px; padding:0 12px; border-radius:999px; border:1px solid var(--n-200); background:var(--bg-card); font:inherit; font-size:13px; color:var(--n-700); cursor:pointer; }
+.hs-chip.is-on{ border-color:var(--navy, #0B1F3B); color:var(--navy, #0B1F3B); font-weight:600; }
+.hs-answer{ border:1px solid var(--n-100); border-radius:14px; padding:16px; background:var(--bg-card); margin-bottom:12px; }
+.hs-answer h3{ margin:0 0 6px; font-size:16px; font-weight:600; color:var(--n-900, #1A1C22); }
+.hs-answer p{ margin:0 0 8px; font-size:14px; color:var(--n-700); }
+.hs-steps{ margin:8px 0 10px; padding-left:22px; font-size:14px; color:var(--n-800, #2A2D36); list-style:decimal; }
+.hs-steps li{ margin:4px 0; }
+.hs-meta{ font-size:12px; color:var(--n-500); }
+.hs-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.hs-list button{ width:100%; text-align:left; background:var(--bg-card); border:1px solid var(--n-100); border-radius:10px; padding:10px 12px; font:inherit; font-size:14px; color:var(--n-800, #2A2D36); cursor:pointer; }
+.hs-list button:hover{ background:var(--n-25, #FAFAF9); }
+.hs-tier{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:8px 0 0; }
+.hs-tier div{ border:1px solid var(--n-100); border-radius:12px; padding:10px 12px; font-size:13px; }
+.hs-tier b{ display:block; font-size:15px; font-weight:600; color:var(--n-900, #1A1C22); }
+.hs-msg{ border:1px solid var(--n-100); border-radius:12px; padding:10px 12px; font-size:14px; white-space:pre-wrap; margin-bottom:8px; }
+.hs-msg.is-support{ background:var(--n-50); }
+</style>
+<script id="tenant-support-script">
+/* ============================================================
+   HELP & SUPPORT FOR CUSTOMERS (staffing agencies and corporates, prototype, 2026-11-25)
+   Settings › Help & support, for everyone in a customer workspace:
+   1. Knowledge centre: write the question in your own words. Answers come from the help articles (each a short
+      tutorial with steps and a button that opens the right screen) AND from the product itself: every screen and
+      settings section this person can open is indexed, so "where do I…" questions land on the real place. Only
+      what fits the workspace type (agency or corporate) and the person's access is shown.
+   2. Not answered? Raise a ticket (the question, the articles tried and the screen come along), write to support
+      or ask for a call, depending on the plan. Tickets land in Oontu's one ticket system (Service), with the plan's
+      response times; replies come back here.
+   3. Support by plan: Essential (Desk, Hire), Priority (Floor), Premium (Network, Scale), Enterprise (Group).
+      A read-only workspace (trial ended or unpaid) keeps the knowledge centre and billing/account help.
+   Searches that found nothing, and answers marked "didn't help", feed Oontu's product feedback (Insights).
+============================================================ */
+(function(){
+  const NOW = bosNow, ISO = bosIso, H = BOS_H, E = oEsc;
+  ['ticket.customer-reply','ticket.customer-close'].forEach(function(c){ if(BOS_SYSTEM_COMMANDS.indexOf(c) < 0) BOS_SYSTEM_COMMANDS.push(c); });
+
+  /* ---------- support plans ---------- */
+  const TIERS = window.SUPPORT_TIERS = {
+    essential:{ id:'essential', label:'Essential', plans:['plan-desk','plan-hire','plan-starter'], normal:24, urgent:8, chat:false, call:false, urgentAllowed:false, csm:false, hours:'Mon–Sat, 9:30–18:30 IST', training:'Weekly group training' },
+    priority:{ id:'priority', label:'Priority', plans:['plan-floor','plan-growth'], normal:8, urgent:4, chat:true, call:false, urgentAllowed:true, csm:false, hours:'Mon–Sat, 9:00–21:00 IST', training:'Weekly group training + one admin session' },
+    premium:{ id:'premium', label:'Premium', plans:['plan-network','plan-scale','plan-enterprise'], normal:4, urgent:1, chat:true, call:true, urgentAllowed:true, csm:true, hours:'Mon–Sat, 8:00–22:00 IST', training:'Individual sessions for your team' },
+    enterprise:{ id:'enterprise', label:'Enterprise', plans:['plan-group'], normal:2, urgent:1, chat:true, call:true, urgentAllowed:true, csm:true, hours:'24×7 for critical issues', training:'Tailored training and quarterly reviews' }
+  };
+  window.supportTierForPlan = function(planId){ return Object.keys(TIERS).map(function(k){ return TIERS[k]; }).find(function(t){ return t.plans.indexOf(planId) > -1; }) || TIERS.essential; };
+  function tenantPlanId(tenantId){ if(tenantId === CURRENT_ORGANIZATION_ID && typeof currentTenantPlanId === 'function') return currentTenantPlanId(); const s = typeof subscriptionForTenant === 'function' ? subscriptionForTenant(tenantId) : null; return s ? s.planId : null; }
+  function tenantReadOnly(tenantId){ const s = typeof subscriptionForTenant === 'function' ? subscriptionForTenant(tenantId) : null; if(s && s.readOnly) return true; if(tenantId === CURRENT_ORGANIZATION_ID && typeof wsPlanState === 'function'){ const st = wsPlanState(); if(st && st.status === 'readonly') return true; } return false; }
+  window.supportTierFor = function(tenantId){ tenantId = tenantId || CURRENT_ORGANIZATION_ID; const pid = tenantPlanId(tenantId), t = supportTierForPlan(pid); return Object.assign({}, t, { planId:pid, planName:(planById(pid) || {}).name || 'your plan', readOnly:tenantReadOnly(tenantId) }); };
+  /* the plan's response times also apply to tickets Oontu staff create for that customer */
+  const tierSla = function(t, tier){ const urgent = t.priority === 'P1' || t.priority === 'P2', respond = urgent ? tier.urgent : tier.normal; const c = new Date(t.createdAt).getTime(); return { respondBy:ISO(c + respond * H), resolveBy:ISO(c + respond * (urgent ? 6 : 9) * H), policy:tier.label + ' support · ' + (urgent ? 'urgent' : 'normal') + ' · first reply within ' + respond + ' h' }; };
+  const baseCreate = window.bosCreateTicket;
+  window.bosCreateTicket = function(input){ const r = baseCreate.apply(this, arguments); try { if(r && r.ok && r.ticket.tenantId && !r.replayed){ const tier = supportTierFor(r.ticket.tenantId); r.ticket.sla = tierSla(r.ticket, tier); r.ticket.supportTier = tier.label; } } catch(e){ console.error(e); } return r; };
+
+  /* ---------- the knowledge centre: articles (short tutorials) ---------- */
+  const A = function(id, area, aud, title, answer, steps, tags, go){ return { id:id, area:area, aud:aud, title:title, answer:answer, steps:steps, tags:tags, go:go || null }; };
+  const ARTICLES = window.HELP_ARTICLES = [
+    A('KB-101','Getting started','both','Set up your workspace in the first hour','Finish the setup checklist on Home: company profile, team, roles, and your first job.', ['Open Home and find “Complete your workspace”.','Add your company profile and logo (Settings › Workspace › Profile).','Invite your team (Settings › People & roles › Members).','Check the roles each person has (People & roles › Roles).','Create your first job.'], 'setup start onboarding checklist first steps new workspace begin', { settings:'workspace' }),
+    A('KB-102','Account and sign-in','both','Reset a password or unlock someone','You can reset your own password from the sign-in screen. Owners and admins can send a reset to a colleague.', ['On the sign-in screen choose “Sign in with password”, then “Forgot it?”.','For a colleague: Settings › People & roles › Members, open the person, “Send password reset”.','Links expire after 30 minutes; ask again if it has expired.'], 'password reset forgot locked login sign in cannot access otp code two-step', { settings:'people' }),
+    A('KB-103','Account and sign-in','both','Turn on two-step sign-in and single sign-on','Two-step sign-in protects every account; single sign-on lets your team use Google, Microsoft or Okta.', ['Settings › Security & audit › Security.','Switch on two-step sign-in for everyone.','Single sign-on is part of Network, Scale and Group, or the Single sign-on add-on.'], 'two-step 2fa mfa sso single sign on okta microsoft google security', { settings:'security' }),
+    A('KB-110','Team and roles','both','Invite people and give them the right role','Invite from People & roles; each role decides what a person can see and do.', ['Settings › People & roles › Members › Invite.','Pick the role; owners and admins can make custom roles under Roles.','The invitation lasts 7 days; resend it from the member list.'], 'invite team member user add colleague role permission access seat licence', { settings:'people' }),
+    A('KB-111','Team and roles','both','Someone is leaving: hand over their work','Deactivate the person and hand their jobs, candidates and tasks to a colleague in one step.', ['Settings › People & roles › Members, open the person.','Choose “Deactivate and hand over”.','Pick who takes over; their history stays as it was.'], 'leaving offboard deactivate remove user hand over reassign resign', { settings:'people' }),
+    A('KB-120','Jobs','agency','Create a job for a client','Jobs belong to a client; the job description reader fills most fields for you.', ['Open Jobs › New job.','Pick the client, then paste or upload the job description.','Check the fields it filled, set pay and fee, and publish.'], 'job create new opening position requirement jd job description post publish client mandate', { view:'jobs' }),
+    A('KB-121','Jobs','corporate','Raise a requisition and turn it into a job','Hiring managers raise requisitions; once approved, HR turns them into jobs.', ['Open Requisitions › New requisition.','Fill the role, band and headcount, then submit for approval.','After approval, HR publishes it as a job to the careers page and vendors.'], 'requisition hiring request headcount approval job opening hiring manager raise', { view:'requisitions' }),
+    A('KB-122','Jobs','both','Publish a job to the careers page and job boards','Publishing sends the job to your careers page and the boards you connected.', ['Open the job and choose Publish.','Pick the careers page and the boards.','Connect boards first in Settings › Integrations › Careers & publishing.'], 'publish careers page naukri linkedin indeed job board post advertise', { settings:'integrations' }),
+    A('KB-130','Candidates','both','Add or import candidates without duplicates','Add one candidate from a CV, or import a CSV; matching on email then phone prevents duplicates.', ['Talent pool › Add candidate, then drop the CV.','For many: Talent pool › Import, choose the CSV, check the preview.','Duplicates are matched on email first, then phone; you choose to merge or keep.'], 'import csv excel upload candidates duplicate cv resume bulk add talent pool', { view:'talent-pool' }),
+    A('KB-131','Candidates','both','Find the best candidates for a job','Kairo Match ranks candidates for a job and says why for each.', ['Open the job and go to Best fit.','Each candidate shows the reasons and what is missing.','Shortlist straight from the list.'], 'search match best fit find candidates shortlist ranking kairo match', { view:'talent-pool' }),
+    A('KB-132','Candidates','both','Candidate consent and data requests','Candidates give consent before you contact or share them; they can ask to see or delete their data.', ['Consent is asked automatically before submission.','Settings › Security & audit › Contact preferences for do-not-contact.','Data requests appear in Security & audit; finish them within the time shown.'], 'consent privacy gdpr dpdp delete data request do not contact unsubscribe', { settings:'security' }),
+    A('KB-140','Pipeline','agency','Submit a candidate to a client','Submissions go through your approval rules, then to the client with consent.', ['Open the job pipeline and choose the candidate.','Choose “Submit to client”; add the note the client sees.','If an approval rule applies, it waits for the approver first.'], 'submit submission send profile client pipeline stage move shortlist', { view:'jobs' }),
+    A('KB-141','Pipeline','both','Move candidates through stages faster','Drag cards between stages, or use the keyboard: Alt + arrow keys, then Enter.', ['Open the job pipeline.','Drag a card, or focus it and press Alt + → or Alt + ←.','Every move can be undone from the message that appears.'], 'pipeline stage move drag keyboard undo board kanban status', { view:'jobs' }),
+    A('KB-150','Interviews','both','Schedule an interview with free calendar times','Pick the people; Oontu offers times everyone is free and sends the invites.', ['From the candidate or job, choose Schedule interview.','Pick interviewers; free times appear from their calendars.','Connect your calendar first in Settings › My connections.'], 'interview schedule calendar invite reschedule slot meeting google microsoft', { view:'interviews' }),
+    A('KB-151','Interviews','both','Collect interview feedback on time','Interviewers get a link and reminders; feedback forms come from your templates.', ['Feedback links go out after each interview.','Reminders follow at the times in Approvals & hiring rules.','Change the form in Settings › Templates.'], 'feedback scorecard interviewer reminder form review rating', { settings:'templates' }),
+    A('KB-160','Offers and joining','both','Make an offer and track joining','Offers follow your approval rules; joining dates and documents are tracked to day one.', ['From the candidate, choose Make offer.','Offers outside the pay range go to the approver.','Track acceptance, documents and the joining date on the candidate.'], 'offer letter salary ctc approval joining onboarding accept decline', { view:'talent-pool' }),
+    A('KB-170','Clients and billing','agency','Add a client and their terms','Each client has terms: fee, replacement period, payment days and tax details.', ['Open Clients › Add client.','Fill the terms and the billing locations with GSTIN.','Jobs for this client use these terms unless an approved exception exists.'], 'client add company terms fee percentage replacement payment gst billing location', { view:'client-management' }),
+    A('KB-171','Clients and billing','agency','Raise an invoice to a client after a placement','PayTrack builds the invoice from the placement and the client’s terms.', ['Open PayTrack.','Find the placement and choose Raise invoice.','Check the tax lines, then send it.'], 'invoice placement paytrack bill client raise fee gst', { view:'admin-paytrack' }),
+    A('KB-180','Vendors','corporate','Work with staffing vendors','Invite agencies, publish jobs to them, and compare their submissions.', ['Settings › Workspace › Vendor defaults for default terms.','Publish a job to all vendors or chosen ones.','Vendors see only their own submissions and your feedback.'], 'vendor agency supplier invite publish submissions partner', { settings:'workspace' }),
+    A('KB-190','Approvals','both','Set up approval rules','Decide what needs approval, who approves, and how fast.', ['Settings › Approvals & hiring rules › Approvals.','Add a rule: what triggers it and which role approves.','Overdue approvals are reminded and escalated automatically.'], 'approval rules chain approver workflow sla escalate matrix setup', { settings:'approvals' }),
+    A('KB-191','Approvals','both','Out of office: delegate your approvals','Hand your approvals to a colleague while you are away.', ['Settings › Approvals & hiring rules › Delegation.','Pick the colleague and the dates.','Approvals go back to you when it ends.'], 'delegate out of office leave holiday away approver', { settings:'approvals' }),
+    A('KB-200','Cowork and Kairo','both','What Kairo and Cowork agents do','Kairo answers and drafts; Cowork agents do routine work within the limits you set.', ['Open Cowork to see the agents and what they did.','Settings › Cowork › Agents sets what each may do on its own.','Pause any agent at once from the same place.'], 'kairo cowork agent ai automation sourcing follow up autonomy pause', { view:'kairo-team' }),
+    A('KB-201','Cowork and Kairo','both','Ask Kairo about a job or candidate','Open the record and ask; Kairo answers from Oontu’s records and shows its sources.', ['Open the job or candidate.','Use Ask Kairo; it knows which record you are on.','Answers say what they were based on.'], 'ask kairo question chat assistant summary', null),
+    A('KB-210','Reports','both','See where hiring slows down','Reports and Intelligence show time in each stage, sources and who is waiting.', ['Open Intelligence for live signals.','Open Reports for time-to-hire and conversion.','Advanced Insights is part of Network or the add-on.'], 'report analytics dashboard time to hire conversion funnel intelligence insights', { view:'intelligence' }),
+    A('KB-220','Integrations','both','Connect email, calendar, WhatsApp and job boards','Personal mailbox and calendar in My connections; workspace tools in Integrations.', ['Settings › My connections for your own mailbox and calendar.','Settings › Integrations for job boards and WhatsApp Business.','Each integration lists what depends on it.'], 'connect integration gmail outlook calendar whatsapp naukri linkedin email sync', { settings:'connections' }),
+    A('KB-221','Integrations','both','Emails are not being sent from my address','Usually the mailbox needs reconnecting or the domain needs SPF and DKIM.', ['Settings › My connections: reconnect your mailbox.','Settings › Integrations › Connections: check the domain (SPF, DKIM, DMARC).','Still failing? Raise a ticket with one example email.'], 'email not sending bounce spf dkim dmarc mailbox disconnected spam', { settings:'connections' }),
+    A('KB-230','Plan and billing','both','Change your plan, licences or add-ons','Choose a plan in Plan & billing; you pay through Razorpay and the change is immediate.', ['Settings › Plan & billing › Choose a plan.','Pick licences, add-ons and enter a promo code if you have one.','On an upgrade the unused time on your current plan is credited.'], 'upgrade downgrade plan change licences seats add-on boost price promo code coupon', { settings:'billing' }),
+    A('KB-231','Plan and billing','both','Download invoices and fix GST details','Every invoice is in Plan & billing; update your GSTIN in the workspace profile.', ['Settings › Plan & billing › Invoices and receipts.','To change your GSTIN or address: Settings › Workspace › Profile.','An issued invoice is corrected by our finance team with a credit or debit note; raise a billing ticket.'], 'invoice download receipt gst gstin tax wrong address billing details credit note', { settings:'billing' }),
+    A('KB-232','Plan and billing','both','A payment failed or the workspace is read-only','Pay the reminder link or update the card; read-only ends as soon as payment arrives. Nothing is deleted.', ['Open the reminder email, or Settings › Plan & billing › Pay now.','Charges above ₹15,000 need your approval each time (RBI rule).','Everything stays readable while it is sorted out.'], 'payment failed declined card read only locked renewal overdue mandate autopay', { settings:'billing' }),
+    A('KB-240','Security','both','See who changed what (audit log)','Every change is in the audit log, with who and when.', ['Settings › Security & audit › Audit log.','Filter by person, area or date.','Export it for your auditors.'], 'audit log history who changed deleted track activity', { settings:'security' }),
+    A('KB-250','Data','both','Export your data or close the workspace','Owners can export everything or close the workspace in the Danger zone.', ['Settings › Danger zone.','Export everything first.','Closing keeps data for the period in your terms, then deletes it.'], 'export data download backup close delete workspace account cancel', { settings:'danger' }),
+    A('KB-260','Training','both','Book training for your team','Group sessions run every week; Priority plans and up add sessions for your team.', ['Help & support › Your support plan shows what your plan includes.','Raise a ticket with the category “Training request”.','We confirm a time in your time zone.'], 'training session demo learn tutorial onboarding webinar team walkthrough', null),
+    A('KB-270','Templates','both','Message and offer templates','Reusable messages, feedback forms and offer letters live in Templates.', ['Settings › Templates.','Edit or add a template; variables like the candidate name fill themselves.','Changes apply to new messages only.'], 'template email whatsapp message offer letter rejection reason format', { settings:'templates' }),
+    A('KB-280','Notifications','both','Too many or too few notifications','Choose events and channels per person; a daily digest keeps it quiet.', ['Settings › Notifications.','Turn events on or off for email, WhatsApp and in-app.','Set quiet hours and a daily digest.'], 'notification email alert too many digest quiet hours whatsapp reminder', { settings:'notifications' })
+  ];
+  /* one knowledge list for customers and for Kairo's support drafts (no second source) */
+  window.BOS_KB.length = 0; ARTICLES.forEach(function(a){ BOS_KB.push({ id:a.id, title:a.title, match:new RegExp('\\b(' + a.tags.split(/\s+/).filter(function(w){ return w.length > 3; }).slice(0, 10).join('|') + ')\\b', 'i'), body:a.answer + ' ' + a.steps.join(' ') }); });
+
+  /* ---------- search: words, synonyms, the person's own screens ---------- */
+  const SYN = { cv:'resume candidate', resume:'cv candidate', login:'sign in password', signin:'sign in', logon:'sign in', otp:'code two-step', bill:'invoice billing', invoice:'billing gst', gst:'tax invoice gstin', req:'requisition', supplier:'vendor', agency:'vendor', jd:'job description', opening:'job', position:'job', vacancy:'job', user:'member team', seat:'licence', seats:'licences', license:'licence', coupon:'promo code', upgrade:'plan change', cancel:'close plan', whatsapp:'whatsapp message', calendar:'interview schedule', slow:'report time', ai:'kairo', bot:'kairo', delete:'remove close', error:'not working', broken:'not working', crash:'not working' };
+  const STOP = /^(how|do|i|to|the|a|an|my|in|on|of|for|is|it|can|what|where|why|we|our|you|your|with|and|or|be|are|this|that|me|not|get|does|there|any|from|at|when|which)$/;
+  const words = function(q){ let w = String(q || '').toLowerCase().replace(/[^a-z0-9₹\s-]/g, ' ').split(/\s+/).filter(function(x){ return x && !STOP.test(x); }); w = w.concat(w.map(function(x){ return SYN[x] || ''; }).join(' ').split(/\s+/).filter(Boolean)); return w.filter(function(x, i, s){ return s.indexOf(x) === i; }); };
+  const aud = function(){ return typeof sIsCorporate === 'function' && sIsCorporate() ? 'corporate' : 'agency'; };
+  window.helpArticlesForMe = function(){ const a = aud(); return ARTICLES.filter(function(x){ return x.aud === 'both' || x.aud === a; }); };
+  function screensForMe(){
+    const out = [];
+    try { filterNavForPermissions(filterNavForOrgType(NAV[state.role] || [])).forEach(function(g){ (g.items || [g]).forEach(function(i){ out.push({ kind:'screen', id:i.id, title:(typeof sentenceCase === 'function' ? sentenceCase(i.label) : i.label), text:i.label + ' ' + (PAGE_TITLES[i.id] || ''), go:{ view:i.id } }); }); }); } catch(e){}
+    try { sVisible().filter(function(s){ return !s.go; }).forEach(function(s){ out.push({ kind:'setting', id:s.id, title:'Settings › ' + s.label, text:s.label + ' ' + (s.kw || '') + ' ' + (s.lede || ''), go:{ settings:s.id } }); }); } catch(e){}
+    return out;
+  }
+  window.helpSearch = function(q){
+    const w = words(q); if(!w.length) return { query:q, results:[], screens:[] };
+    const score = function(title, tags, body){ let s = 0; const T = title.toLowerCase(), G = (tags || '').toLowerCase(), B = (body || '').toLowerCase(); w.forEach(function(x){ if(T.indexOf(x) > -1) s += 3; if(G.indexOf(x) > -1) s += 2; if(B.indexOf(x) > -1) s += 1; }); if(T.indexOf(String(q).toLowerCase().trim()) > -1) s += 4; return s; };
+    const res = helpArticlesForMe().map(function(a){ return { a:a, s:score(a.title, a.tags, a.answer + ' ' + a.steps.join(' ')) }; }).filter(function(x){ return x.s >= 3; }).sort(function(x, y){ return y.s - x.s; });
+    const scr = screensForMe().map(function(s){ return { s:s, v:score(s.title, s.text, '') }; }).filter(function(x){ return x.v >= 3; }).sort(function(x, y){ return y.v - x.v; }).slice(0, 4).map(function(x){ return x.s; });
+    return { query:q, results:res.slice(0, 6).map(function(x){ return x.a; }), screens:scr, words:w };
+  };
+  /* what customers ask, for the "popular" list and for Oontu's product feedback */
+  BOS.helpSearches = BOS.helpSearches || [];
+  window.helpLog = function(q, found, helpful){ const e = { q:String(q || '').trim(), found:found || '', helpful:helpful == null ? null : !!helpful, at:ISO(), tenantId:CURRENT_ORGANIZATION_ID }; if(!e.q) return; BOS.helpSearches.push(e);
+    if(!found || helpful === false) BOS.feedback.push({ id:bosId('FB', 3), source:'Help centre', ref:found || 'no answer', theme:found ? (ARTICLES.find(function(a){ return a.id === found; }) || {}).area || 'Help' : 'Unanswered help question', text:e.q, at:e.at }); };
+  window.helpPopular = function(){ const c = {}; BOS.helpSearches.filter(function(s){ return s.found && s.helpful !== false; }).forEach(function(s){ c[s.found] = (c[s.found] || 0) + 1; }); const ids = Object.keys(c).sort(function(a, b){ return c[b] - c[a]; }); ['KB-102','KB-130','KB-230','KB-150','KB-190','KB-110'].forEach(function(id){ if(ids.indexOf(id) < 0) ids.push(id); }); const mine = helpArticlesForMe().map(function(a){ return a.id; }); return ids.filter(function(id){ return mine.indexOf(id) > -1; }).slice(0, 6).map(function(id){ return ARTICLES.find(function(a){ return a.id === id; }); }); };
+
+  /* ---------- tickets from customers (into the one ticket system) ---------- */
+  const CATS = window.SUPPORT_CATEGORIES = [
+    ['question','A question: how do I…','Product issue'], ['bug','Something isn’t working','Product issue'], ['login','Account and sign-in','Login / account'], ['billing','Billing and invoices','Billing'],
+    ['training','Training request','Training'], ['setup','Setup or configuration help','Setup / configuration'], ['import','Importing data','Import / data issue'], ['upgrade','Change plan or add licences','Upgrade'],
+    ['security','A security concern','Security report'], ['outage','Nothing works / outage','Outage'], ['feature','An idea or feature request','Product issue']
+  ];
+  const ROUTE = function(cat){ return BOS_ROUTES.find(function(r){ return r.category === cat; }); };
+  function me(){ const u = typeof currentActingUser === 'function' ? currentActingUser() : null; const email = (u && u.email) || (typeof authAppSession !== 'undefined' && authAppSession.email) || ''; return { name:(u && u.name) || (ROLE_META[state.role] || {}).name || 'Customer', email:String(email || 'owner@' + (ORG_STRUCTURE.profile.domain || 'customer.example')).toLowerCase() }; }
+  window.supportCanSeeAll = function(){ return typeof sCan === 'function' && (sCan('workspace', 'View settings') || sCan('billing', 'View')); };
+  window.supportMyTickets = function(){ const m = me(), all = supportCanSeeAll(); return BOS.tickets.filter(function(t){ return t.tenantId === CURRENT_ORGANIZATION_ID && (all || t.contactEmail === m.email); }).slice().reverse(); };
+  window.supportRaise = function(input){
+    input = input || {}; const tier = supportTierFor(), m = me(), cat = CATS.find(function(c){ return c[0] === input.category; });
+    if(!cat) return { ok:false, field:'category', reason:'Pick what it is about.' };
+    if(String(input.subject || '').trim().length < 5) return { ok:false, field:'subject', reason:'Write a short subject (at least 5 characters).' };
+    if(String(input.details || '').trim().length < 10) return { ok:false, field:'details', reason:'Tell us a little more: what you did, and what happened.' };
+    if(tier.readOnly && ['billing','login'].indexOf(cat[0]) < 0) return { ok:false, field:'category', reason:'Your workspace is read-only, so support covers billing and account questions until the plan is active. The knowledge centre is open as usual.' };
+    const urgent = input.urgency === 'urgent' || cat[0] === 'outage';
+    if(input.urgency === 'urgent' && !tier.urgentAllowed && cat[0] !== 'outage') return { ok:false, field:'urgency', reason:'Urgent tickets are part of Priority support (Floor and up). Your ticket can go as normal, or choose “Nothing works / outage” if your team can’t work.' };
+    const route = ROUTE(cat[2]) || BOS_ROUTES[1];
+    const body = String(input.details).trim() + (input.tried && input.tried.length ? '\n\nArticles tried: ' + input.tried.join(', ') : '') + (input.query ? '\nSearched for: “' + input.query + '”' : '') + '\nScreen: ' + (input.screen || state.activeNav) + ' · Plan: ' + tier.planName + ' (' + tier.label + ' support)';
+    const r = bosAsSystem('customer-portal', function(){ return bosCreateTicket({ subject:String(input.subject).trim(), body:body, contactEmail:m.email, tenantId:CURRENT_ORGANIZATION_ID, accountId:(BOS.accounts.find(function(a){ return !a.mergedInto && a.tenantIds.indexOf(CURRENT_ORGANIZATION_ID) > -1; }) || {}).id, source:input.channel || 'In-app', category:route.category, queue:route.queue, priority:cat[0] === 'outage' ? 'P1' : urgent ? 'P2' : cat[0] === 'feature' || cat[0] === 'training' ? 'P4' : 'P3', sensitive:cat[0] === 'security' }); });
+    if(r.ok){ r.ticket.raisedBy = m.name; r.ticket.customerCategory = cat[1]; if(cat[0] === 'feature') BOS.feedback.push({ id:bosId('FB', 3), source:'Feature request', ref:r.ticket.id, theme:'Feature request', text:input.subject, at:ISO() }); logAudit('Support', 'Ticket raised', r.ticket.id + ' · ' + input.subject, {}); }
+    return r;
+  };
+  window.supportReply = function(id, text){ const t = bosTicket(id), m = me(); return bosAsSystem('customer-portal', function(){ return bosRun('ticket.customer-reply', null, function(){
+    if(!t || t.tenantId !== CURRENT_ORGANIZATION_ID) return { ok:false, reason:'Ticket not found.' };
+    if(!supportCanSeeAll() && t.contactEmail !== m.email) return { ok:false, reason:'This ticket belongs to a colleague.' };
+    if(!String(text || '').trim()) return { ok:false, reason:'Write your reply.' };
+    if(t.status === 'closed') return { ok:false, reason:'This ticket is closed. Raise a new one and mention ' + t.id + '.' };
+    t.messages.push({ from:m.name + ' (' + m.email + ')', body:String(text).trim(), internal:false, at:ISO(), channel:'In-app', customer:true });
+    if(t.pausedAt){ t.pausedMs += NOW() - new Date(t.pausedAt).getTime(); t.pausedAt = null; }
+    if(t.status === 'waiting_customer') t.status = 'investigating';
+    if(t.status === 'resolved'){ t.status = 'investigating'; t.reopenCount++; t.resolvedAt = null; t.history.push({ at:ISO(), text:'Reopened: the customer replied' }); }
+    t.history.push({ at:ISO(), text:'Customer replied in the app' }); if(t.ownerId) bosNotify(t.ownerId, 'Customer replied on ' + t.id, t.id);
+    return { ok:true, ref:t.id, audit:['Customer replied on ticket', t.id, { entityId:t.id }] }; }); }); };
+  window.supportConfirm = function(id, rating){ const t = bosTicket(id); return bosAsSystem('customer-portal', function(){ return bosRun('ticket.customer-close', null, function(){
+    if(!t || t.tenantId !== CURRENT_ORGANIZATION_ID) return { ok:false, reason:'Ticket not found.' };
+    if(t.status !== 'resolved') return { ok:false, reason:'You can confirm once our team marks it resolved.' };
+    t.status = 'closed'; t.closedAt = ISO(); t.confirmation = 'Customer confirmed'; if(rating) t.csat = Math.max(1, Math.min(5, Number(rating)));
+    t.history.push({ at:ISO(), text:'Customer confirmed it is solved' + (t.csat ? ' · rated ' + t.csat + '/5' : '') });
+    return { ok:true, ref:t.id, audit:['Customer closed ticket', t.id + (t.csat ? ' · ' + t.csat + '/5' : ''), { entityId:t.id }] }; }); }); };
+
+  /* ---------- Settings › Help & support ---------- */
+  const HS = { q:'', area:'', open:null, tried:[], helped:null, view:null };
+  function articleHTML(a, primary){
+    return '<div class="hs-answer"><h3>' + E(a.title) + '</h3><p>' + E(a.answer) + '</p><p class="hs-meta">Step by step</p><ol class="hs-steps">' + a.steps.map(function(s){ return '<li>' + E(s) + '</li>'; }).join('') + '</ol>' +
+      '<div class="bos-actions" style="margin-top:6px">' + (a.go ? sBtn(a.go.view ? 'Open ' + (PAGE_TITLES[a.go.view] || 'it') : 'Open Settings › ' + ((sSectionById(a.go.settings) || {}).label || 'it'), "helpGo('" + a.id + "')", primary ? 'primary' : '') : '') +
+      (primary ? '<span class="hs-meta" style="align-self:center">Did this answer it?</span>' + sBtn('Yes', "helpFeedback('" + a.id + "', true)") + sBtn('No', "helpFeedback('" + a.id + "', false)") : '') + '</div><p class="hs-meta" style="margin:8px 0 0">' + E(a.area + ' · ' + a.id) + '</p></div>';
+  }
+  window.helpGo = function(id){ const a = ARTICLES.find(function(x){ return x.id === id; }); if(!a || !a.go) return; helpLog(HS.q || a.title, a.id, true); if(a.go.view) showView(a.go.view); else { openSettings(a.go.settings); } };
+  window.helpGoScreen = function(kind, id){ if(kind === 'screen') showView(id); else openSettings(id); };
+  window.helpFeedback = function(id, yes){ HS.helped = yes; if(HS.tried.indexOf(id) < 0) HS.tried.push(id); helpLog(HS.q || id, id, yes); if(yes) toast('Glad that helped.'); helpDraw(); };
+  window.helpType = function(v){ HS.q = v; HS.helped = null; clearTimeout(window.__hsq); window.__hsq = setTimeout(function(){ const r = helpSearch(HS.q); if(HS.q.trim().length > 2 && !r.results.length) helpLog(HS.q, '', null); helpDraw(); }, 250); };
+  window.helpArea = function(a){ HS.area = HS.area === a ? '' : a; HS.q = ''; helpDraw(); };
+  window.helpOpen = function(id){ HS.open = id; HS.q = ''; HS.helped = null; helpDraw(); };
+  function knowledgeHTML(){
+    const r = HS.q.trim() ? helpSearch(HS.q) : null, areas = helpArticlesForMe().map(function(a){ return a.area; }).filter(function(v, i, s){ return s.indexOf(v) === i; });
+    let body = '';
+    if(r){
+      if(r.results.length){ HS.tried = HS.tried.indexOf(r.results[0].id) < 0 ? HS.tried.concat(r.results[0].id) : HS.tried; body += articleHTML(r.results[0], true) + (r.results.length > 1 ? '<p class="hs-meta">Also related</p><ul class="hs-list">' + r.results.slice(1).map(function(a){ return '<li><button type="button" onclick="helpOpen(\'' + a.id + '\')">' + E(a.title) + '</button></li>'; }).join('') + '</ul>' : ''); }
+      else body += '<div class="hs-answer"><h3>No article answers that yet</h3><p>Try other words, or ask our team below; we’ll add the answer for the next person.</p></div>';
+      if(r.screens.length) body += '<p class="hs-meta" style="margin-top:12px">Places in Oontu that match</p><ul class="hs-list">' + r.screens.map(function(s){ return '<li><button type="button" onclick="helpGoScreen(\'' + s.kind + '\',\'' + E(s.id) + '\')">' + E(s.title) + '</button></li>'; }).join('') + '</ul>';
+      if(!r.results.length || HS.helped === false) body += stillHTML();
+    } else if(HS.open){ const a = ARTICLES.find(function(x){ return x.id === HS.open; }); body += articleHTML(a, true) + (HS.helped === false ? stillHTML() : '') + '<div class="bos-actions">' + sBtn('Back to all topics', "HS_back()") + '</div>'; }
+    else {
+      const list = HS.area ? helpArticlesForMe().filter(function(a){ return a.area === HS.area; }) : helpPopular();
+      body += '<p class="hs-meta">' + (HS.area ? E(HS.area) : 'Asked most often') + '</p><ul class="hs-list">' + list.map(function(a){ return '<li><button type="button" onclick="helpOpen(\'' + a.id + '\')">' + E(a.title) + '</button></li>'; }).join('') + '</ul>';
+    }
+    return '<section class="o-card s-card"><div class="o-card__head"><div><h2 class="o-card__title">Knowledge centre</h2><p class="o-card__sub">Ask in your own words. Answers come from Oontu’s help articles and the screens you can open.</p></div></div>' +
+      '<div class="hs-search"><input id="hs-q" type="search" aria-label="Ask a question" placeholder="e.g. how do I import candidates from Excel?" value="' + E(HS.q) + '" oninput="helpType(this.value)"></div>' +
+      '<div class="hs-chips" role="group" aria-label="Topics">' + areas.map(function(a){ return '<button type="button" class="hs-chip' + (HS.area === a ? ' is-on' : '') + '" aria-pressed="' + (HS.area === a) + '" onclick="helpArea(\'' + E(a) + '\')">' + E(a) + '</button>'; }).join('') + '</div>' +
+      '<div id="hs-results">' + body + '</div></section>';
+  }
+  window.HS_back = function(){ HS.open = null; HS.helped = null; helpDraw(); };
+  function stillHTML(){ const tier = supportTierFor();
+    return '<div class="hs-answer"><h3>Still stuck? Our team can help</h3><p>' + E(tier.readOnly ? 'Your workspace is read-only: we can help with billing and account questions now.' : 'First reply within ' + tier.normal + ' h on ' + tier.label + ' support' + (tier.urgentAllowed ? ' (' + tier.urgent + ' h if urgent)' : '') + ', ' + tier.hours + '.') + '</p>' +
+      '<div class="bos-actions" style="margin-top:6px">' + sBtn('Raise a ticket', "supportTicketDialog()", 'primary') + (tier.chat && !tier.readOnly ? sBtn('Write to support', "supportChatDialog()") : sBtn('Email support', "supportTicketDialog('email')")) + (tier.call && !tier.readOnly ? sBtn('Ask for a call', "supportCallDialog()") : '') + '</div></div>'; }
+  function helpDraw(){ const box = document.getElementById('hs-results'); if(box){ const wrap = document.createElement('div'); wrap.innerHTML = knowledgeHTML(); const nb = wrap.querySelector('#hs-results'); box.innerHTML = nb.innerHTML; const chips = document.querySelector('.hs-chips'), nc = wrap.querySelector('.hs-chips'); if(chips && nc) chips.innerHTML = nc.innerHTML; } else if(typeof settingsRefresh === 'function') settingsRefresh(); }
+  window.helpDraw = helpDraw;
+  function ticketsHTML(){
+    const list = supportMyTickets(), all = supportCanSeeAll();
+    if(HS.view){ const t = bosTicket(HS.view); if(t) return ticketHTML(t); HS.view = null; }
+    const rows = list.map(function(t){ const pub = t.messages.filter(function(m){ return !m.internal && !m.draft; }), last = pub[pub.length - 1], fromUs = last && !last.customer && last.from && !/@/.test(last.from.split(' (')[0]) && last.from !== t.contactEmail;
+      return sRow(t.id + ' · ' + t.subject, (t.customerCategory || t.category) + ' · ' + (t.raisedBy || t.contactEmail) + ' · ' + String(t.createdAt).slice(0, 10) + (t.supportTier ? ' · ' + t.supportTier + ' support' : ''), oBadge(/resolved|closed/.test(t.status) ? 'success' : t.status === 'waiting_customer' ? 'warn' : 'info', t.status === 'waiting_customer' ? 'Waiting for you' : /resolved/.test(t.status) ? 'Resolved' : t.status === 'closed' ? 'Closed' : 'Open') + ' ' + sBtn('Open', "supportOpen('" + t.id + "')")); }).join('');
+    return sCard(all ? 'Your workspace’s tickets' : 'Your tickets', all ? 'Everyone’s tickets in this workspace (you manage it)' : 'Tickets you raised', (rows || sRow('No tickets yet', 'Ask in the knowledge centre first; if it doesn’t answer, raise a ticket from there or here.', '')) , sBtn('Raise a ticket', "supportTicketDialog()", 'primary'));
+  }
+  function ticketHTML(t){
+    const pub = t.messages.filter(function(m){ return !m.internal && !m.draft; }), s = bosSlaState(t);
+    return '<section class="o-card s-card"><div class="o-card__head"><div><h2 class="o-card__title">' + E(t.id + ' · ' + t.subject) + '</h2><p class="o-card__sub">' + E((t.customerCategory || t.category) + ' · ' + (t.supportTier ? t.supportTier + ' support · ' : '') + (/resolved|closed/.test(t.status) ? 'resolved' : 'first reply due by ' + new Date(s.respondBy).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }))) + '</p></div>' + sBtn('Back', "supportOpen(null)") + '</div>' +
+      pub.map(function(m){ return '<div class="hs-msg' + (m.customer || m.from === t.contactEmail || m.from.indexOf(t.contactEmail) > -1 ? '' : ' is-support') + '"><span class="hs-meta">' + E(m.from + ' · ' + new Date(m.at).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })) + '</span>\n' + E(m.body) + '</div>'; }).join('') +
+      (t.status === 'resolved' ? '<div class="hs-answer"><h3>Did this solve it?</h3><div class="bos-actions">' + [5, 4, 3, 2, 1].map(function(n){ return sBtn(n + '★', "supportConfirmUI('" + t.id + "'," + n + ")"); }).join('') + '</div><p class="hs-meta">Or reply below to reopen it.</p></div>' : '') +
+      (t.status !== 'closed' ? '<label class="bos-f" for="hs-reply">Reply<textarea id="hs-reply" rows="3"></textarea></label><div class="bos-actions">' + sBtn('Send', "supportReplyUI('" + t.id + "')", 'primary') + '</div>' : '<p class="hs-meta">Closed' + (t.csat ? ' · you rated it ' + t.csat + '/5' : '') + '.</p>') + '</section>';
+  }
+  window.supportOpen = function(id){ HS.view = id; settingsTabs.support = 'tickets'; settingsRefresh(); };
+  window.supportReplyUI = function(id){ const r = supportReply(id, (document.getElementById('hs-reply') || {}).value); toast(r.ok ? 'Sent. We’ll reply here and by email.' : r.reason); if(r.ok) settingsRefresh(); };
+  window.supportConfirmUI = function(id, n){ const r = supportConfirm(id, n); toast(r.ok ? 'Thanks. The ticket is closed.' : r.reason); settingsRefresh(); };
+  function planHTML(){
+    const t = supportTierFor(), acc = BOS.accounts.find(function(a){ return !a.mergedInto && a.tenantIds.indexOf(CURRENT_ORGANIZATION_ID) > -1; }), csm = acc && acc.ownerId ? bosName(acc.ownerId) : null;
+    const tiers = ['essential','priority','premium','enterprise'].map(function(k){ const x = TIERS[k]; return '<div' + (x.id === t.id ? ' style="border-color:var(--navy,#0B1F3B)"' : '') + '><b>' + E(x.label) + (x.id === t.id ? ' · yours' : '') + '</b>' + E(x.plans.filter(function(p){ return planById(p) && !planById(p).legacy; }).map(function(p){ return planById(p).name; }).join(', ') || '—') + '<br>First reply ' + x.normal + ' h' + (x.urgentAllowed ? ', urgent ' + x.urgent + ' h' : '') + '<br>' + E([x.chat ? 'chat' : '', x.call ? 'calls' : '', x.csm ? 'named success manager' : ''].filter(Boolean).join(', ') || 'tickets and email') + '</div>'; }).join('');
+    return sCard('Your support plan: ' + t.label, 'Comes with ' + t.planName + (t.readOnly ? ' · workspace is read-only: billing and account help only' : ''),
+      sRow('First reply', 'Normal questions within ' + t.normal + ' h' + (t.urgentAllowed ? '; urgent within ' + t.urgent + ' h' : '; urgent tickets come with Priority support (Floor and up)') + '. Outages are always treated as urgent.', '') +
+      sRow('Ways to reach us', [ 'Knowledge centre', 'Tickets', t.chat ? 'Write to support (chat)' : 'Email', t.call ? 'Calls' : '' ].filter(Boolean).join(' · '), '') +
+      sRow('Hours', t.hours, '') + sRow('Training', t.training, '') + (t.csm ? sRow('Your success manager', csm || 'Assigned within one working day', '') : '')) +
+      '<section class="o-card s-card"><div class="o-card__head"><div><h2 class="o-card__title">Support with each plan</h2><p class="o-card__sub">Change plan in Plan & billing.</p></div></div><div class="hs-tier">' + tiers + '</div></section>';
+  }
+  /* dialogs (they reuse the Business OS dialog) */
+  window.supportTicketDialog = function(channel){ const tier = supportTierFor();
+    bosDialog(channel === 'email' ? 'Email support' : 'Raise a ticket', bosField('hs-cat', 'What is it about?', { options:CATS.map(function(c){ return [c[0], c[1]]; }), value:tier.readOnly ? 'billing' : 'question' }) + bosField('hs-subj', 'Subject', { value:HS.q ? HS.q.slice(0, 80) : '' }) + bosField('hs-det', 'What happened, and what did you expect?', { textarea:true }) +
+      bosField('hs-urg', 'How urgent?', { options:[['normal', 'Normal: first reply within ' + tier.normal + ' h']].concat(tier.urgentAllowed ? [['urgent', 'Urgent: my work is blocked (' + tier.urgent + ' h)']] : []) }) + '<p class="bos-muted">' + E((HS.tried.length ? 'The articles you tried go with it. ' : '') + 'We reply here and by email. ' + tier.label + ' support · ' + tier.hours + '.') + '</p>',
+      'Send', "supportSubmit('" + (channel === 'email' ? 'Email' : 'In-app') + "')"); };
+  window.supportSubmit = function(ch){ const r = supportRaise({ category:bosV('hs-cat'), subject:bosV('hs-subj'), details:bosV('hs-det'), urgency:bosV('hs-urg'), tried:HS.tried.slice(), query:HS.q, channel:ch, screen:'settings › support' }); if(bosDlgDone(r)){ toast('Ticket ' + r.ticket.id + ' is with our team. First reply within ' + (r.ticket.priority === 'P1' || r.ticket.priority === 'P2' ? supportTierFor().urgent : supportTierFor().normal) + ' h.'); HS.q = ''; HS.tried = []; HS.view = r.ticket.id; settingsTabs.support = 'tickets'; try { settingsRefresh(); } catch(e){} } };
+  window.supportChatDialog = function(){ const tier = supportTierFor(); if(!tier.chat || tier.readOnly){ toast('Chat comes with Priority support (Floor and up).'); return; } bosDialog('Write to support', bosField('hs-chat', 'Your message', { textarea:true, value:HS.q || '' }) + '<p class="bos-muted">A person from our team usually answers within ' + tier.normal + ' h (' + tier.hours + '). The conversation stays in your tickets.</p>', 'Send', "supportChatSend()"); };
+  window.supportChatSend = function(){ const v = String(bosV('hs-chat') || '').trim(); const r = supportRaise({ category:'question', subject:v.slice(0, 70) || 'Message to support', details:v, channel:'Chat', tried:HS.tried.slice(), query:HS.q }); if(bosDlgDone(r)){ toast('Sent to our team.'); HS.view = r.ticket.id; settingsTabs.support = 'tickets'; settingsRefresh(); } };
+  window.supportCallDialog = function(){ const tier = supportTierFor(); if(!tier.call || tier.readOnly){ toast('Calls come with Premium support (Network, Scale) and up.'); return; } bosDialog('Ask for a call', bosField('hs-call-num', 'Phone number', { value:'' }) + bosField('hs-call-when', 'Best time', { options:['Today, as soon as possible','Today afternoon','Tomorrow morning','Tomorrow afternoon'] }) + bosField('hs-call-what', 'What should we talk about?', { textarea:true, value:HS.q || '' }), 'Ask for the call', "supportCallSend()"); };
+  window.supportCallSend = function(){ const num = String(bosV('hs-call-num') || '').replace(/[\s-]/g, ''); if(!/^\+?\d{10,15}$/.test(num)){ const e = document.getElementById('bos-dlg-err'); if(e) e.textContent = 'Enter a phone number with the country code.'; return; } const r = supportRaise({ category:'question', subject:'Call request: ' + (bosV('hs-call-what') || '').slice(0, 50), details:'Please call ' + num + ' · ' + bosV('hs-call-when') + '\n' + (bosV('hs-call-what') || ''), channel:'Phone', tried:HS.tried.slice(), query:HS.q }); if(bosDlgDone(r)){ toast('We’ll call you · ' + bosV('hs-call-when') + '.'); } };
+
+  /* the section, for every person in a customer workspace (agency and corporate) */
+  if(!SETTINGS_SECTIONS.some(function(s){ return s.id === 'support'; })) SETTINGS_SECTIONS.push({ id:'support', group:'you', label:'Help & support', lede:'Find answers in the knowledge centre; if it doesn’t answer, our team is one step away.', kw:'help support knowledge centre faq question how do i ticket chat call contact training problem issue', for:'tenant', can:function(){ return true; }, edit:function(){ return true; },
+    tabs:[ { id:'knowledge', label:'Knowledge centre', render:function(){ return knowledgeHTML(); } },
+           { id:'tickets', label:function(){ const n = supportMyTickets().filter(function(t){ return !/closed/.test(t.status); }).length; return 'Tickets' + (n ? ' (' + n + ')' : ''); }, render:function(){ return ticketsHTML(); } },
+           { id:'plan', label:'Your support plan', render:function(){ return planHTML(); } } ] });
+})();
+</script>
+<style id="bos-invoice-style">
+/* The tax invoice document (what the customer receives and what is stored). Plain, print-ready. */
+.inv-doc{ font:13px/1.5 Inter, system-ui, sans-serif; color:#14171F; background:#fff; padding:28px; border:1px solid #E6E5E0; border-radius:12px; max-width:760px; }
+.inv-doc h1{ font-size:20px; font-weight:600; margin:0; }
+.inv-doc .inv-top{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+.inv-doc .inv-muted{ color:#5E6A82; font-size:12px; }
+.inv-doc table{ width:100%; border-collapse:collapse; margin:12px 0; }
+.inv-doc th, .inv-doc td{ text-align:left; padding:6px 8px; border-bottom:1px solid #EFEEEA; vertical-align:top; }
+.inv-doc th{ font-size:12px; font-weight:600; color:#4A4D5A; background:#F7F7F4; }
+.inv-doc td.n, .inv-doc th.n{ text-align:right; font-variant-numeric:tabular-nums; }
+.inv-doc .inv-total td{ font-weight:600; border-top:1px solid #14171F; }
+.inv-doc .inv-paid{ display:inline-block; padding:3px 10px; border-radius:999px; background:#E8F5EE; color:#17633F; font-weight:600; font-size:12px; }
+.inv-pipe{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 0; }
+.inv-pipe span{ font-size:12px; padding:3px 8px; border-radius:999px; background:var(--n-50); color:var(--n-700); }
+.inv-pipe span.is-done{ background:var(--n-100); color:var(--n-900, #1A1C22); }
+</style>
+<script id="bos-autoinvoice-script">
+/* ============================================================
+   AUTOMATIC INVOICING (prototype, 2026-11-25, the user: "once payment is done the system creates the invoice and
+   saves it; hassle-free")
+   Every verified payment runs one pipeline, with no person in the loop:
+     1. Payment verified      Razorpay's signed event (or Finance's referenced manual verification)
+     2. Invoice ready         the existing invoice is marked paid, or a GST tax invoice is created for it
+                              (numbered in the year's series, CGST+SGST / IGST / LUT chosen automatically)
+     3. Stored                a frozen copy of the invoice document is kept in the invoice vault, with a
+                              fingerprint, so what the customer received can never change afterwards
+     4. Sent                  the invoice and receipt go to the customer (simulated email)
+   Exactly one invoice per payment: a repeated event never makes a second one. A payment whose amount doesn't
+   match is not invoiced; it becomes a Finance exception. Finance sees every run in Billing desk › Invoice vault;
+   customers find their invoices in Settings › Plan & billing and can open or save each as a PDF.
+============================================================ */
+(function(){
+  const ISO = bosIso, E = oEsc;
+  BOS.vault = BOS.vault || [];            // stored invoice documents
+  BOS.autoRuns = BOS.autoRuns || [];      // one run per payment
+  const byPayment = {};
+  const r2 = function(n){ return Math.round(n * 100) / 100; };
+
+  /* ---------- amount in words (Indian numbering for INR) ---------- */
+  const ONES = ['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+  const TENS = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+  const two = function(n){ return n < 20 ? ONES[n] : TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : ''); };
+  const three = function(n){ return (n >= 100 ? ONES[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' and ' : '') : '') + (n % 100 ? two(n % 100) : ''); };
+  window.bosAmountInWords = function(amount, currency){
+    const whole = Math.floor(Math.abs(amount)), paise = Math.round((Math.abs(amount) - whole) * 100);
+    let words = '';
+    if(currency === 'INR'){ const cr = Math.floor(whole / 1e7), la = Math.floor(whole / 1e5) % 100, th = Math.floor(whole / 1e3) % 100, rest = whole % 1000;
+      words = [cr ? two(cr) + ' crore' : '', la ? two(la) + ' lakh' : '', th ? two(th) + ' thousand' : '', rest ? three(rest) : ''].filter(Boolean).join(' ') || 'zero'; }
+    else { const mi = Math.floor(whole / 1e6), th = Math.floor(whole / 1e3) % 1000, rest = whole % 1000; words = [mi ? three(mi) + ' million' : '', th ? three(th) + ' thousand' : '', rest ? three(rest) : ''].filter(Boolean).join(' ') || 'zero'; }
+    const unit = currency === 'INR' ? ['rupees', 'paise'] : currency === 'GBP' ? ['pounds', 'pence'] : currency === 'EUR' ? ['euros', 'cents'] : ['dollars', 'cents'];
+    return (unit[0].charAt(0).toUpperCase() + unit[0].slice(1)) + ' ' + words + (paise ? ' and ' + two(paise) + ' ' + unit[1] : '') + ' only';
+  };
+
+  /* ---------- the invoice document ---------- */
+  const money = function(cur, n){ return (cur === 'INR' ? '₹' : cur + ' ') + Number(n || 0).toLocaleString(cur === 'INR' ? 'en-IN' : 'en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }); };
+  window.bosInvoiceDocHTML = function(t){
+    const p = BOS_TAX.profile, pa = t.party || {}, s = t.segment || {}, cur = t.currency;
+    const lines = (t.lines && t.lines.length ? t.lines : [{ desc:t.description, qty:1, unitPrice:t.amount }]);
+    const title = t.kind === 'credit_note' ? 'Credit note' : t.kind === 'debit_note' ? 'Debit note' : 'Tax invoice';
+    const tax = function(label, pct, inr){ return pct ? '<tr><td colspan="4" class="n">' + E(label + ' ' + pct + '%') + '</td><td class="n">' + E(money(cur, r2(Math.abs(t.amount) * pct / 100) * (t.amount < 0 ? -1 : 1))) + (cur !== 'INR' && inr != null ? '<br><span class="inv-muted">' + E(money('INR', inr)) + '</span>' : '') + '</td></tr>' : ''; };
+    return '<div class="inv-doc" data-doc="' + E(t.no) + '"><div class="inv-top"><div><h1>' + E(title) + '</h1><div class="inv-muted">' + E(t.no) + ' · ' + E(String(t.date).slice(0, 10)) + (t.originalNo ? ' · against ' + E(t.originalNo) : '') + (t.revisedFrom ? ' · replaces ' + E(t.revisedFrom) : '') + '</div></div>' +
+      '<div style="text-align:right">' + (t.status === 'paid' ? '<span class="inv-paid">PAID</span><div class="inv-muted">' + E(String(t.paidAt || '').slice(0, 10)) + (t.paymentId ? ' · ' + E(t.paymentId) : '') + '</div>' : '<span class="inv-muted">' + E(t.status) + (t.dueDate ? ' · due ' + E(t.dueDate) : '') + '</span>') + '</div></div>' +
+      '<div class="inv-top"><div><div class="inv-muted">From</div><b>' + E(p.legalName) + '</b><br>GSTIN ' + E(p.gstin) + '<br>' + E(p.state + ' (' + p.stateCode + ')') + '</div>' +
+      '<div><div class="inv-muted">Bill to</div><b>' + E(t.customer) + '</b><br>' + (pa.gstin ? 'GSTIN ' + E(pa.gstin) + '<br>' : '') + E(pa.country === 'India' ? (pa.state || '') + ' (' + (pa.stateCode || '—') + ')' : pa.country || '') + '<br><span class="inv-muted">Place of supply: ' + E(pa.country === 'India' ? (pa.state || '—') + ' (' + (pa.stateCode || '—') + ')' : 'Outside India (96)') + '</span></div></div>' +
+      '<table><thead><tr><th>Description</th><th>SAC</th><th class="n">Qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>' +
+      lines.map(function(l){ return '<tr><td>' + E(l.desc) + '</td><td>' + E(t.sac) + '</td><td class="n">' + E(l.qty) + '</td><td class="n">' + E(money(cur, l.unitPrice)) + '</td><td class="n">' + E(money(cur, l.qty * l.unitPrice)) + '</td></tr>'; }).join('') +
+      '<tr><td colspan="4" class="n">Taxable value</td><td class="n">' + E(money(cur, t.amount)) + (cur !== 'INR' ? '<br><span class="inv-muted">' + E(money('INR', t.taxableINR)) + ' at ' + E(t.fxRate) + '</span>' : '') + '</td></tr>' +
+      tax('CGST', s.cgst, t.cgstINR) + tax('SGST', s.sgst, t.sgstINR) + tax('IGST', s.igst, t.igstINR) +
+      '<tr class="inv-total"><td colspan="4" class="n">Total</td><td class="n">' + E(money(cur, t.total)) + '</td></tr></tbody></table>' +
+      '<div class="inv-muted">' + E(bosAmountInWords(t.total, cur)) + '</div>' +
+      (s.code === 'EXPWOP' ? '<p class="inv-muted">Supply meant for export under LUT ' + E(s.lut || p.lut.arn) + ' without payment of IGST.</p>' : '') +
+      '<p class="inv-muted">' + E(s.label || '') + ' · Reverse charge: No · Paid through Razorpay. This is a computer-generated document and needs no signature.' + (t.sample ? ' · SAMPLE' : '') + '</p></div>';
+  };
+  /* a small fingerprint of the stored copy, so any later change would show */
+  const fingerprint = function(s){ let h = 2166136261; for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return ('00000000' + h.toString(16)).slice(-8); };
+  window.bosVaultFor = function(no){ return BOS.vault.find(function(v){ return v.docNo === no; }) || null; };
+  window.bosVaultVerify = function(no){ const v = bosVaultFor(no); return !!v && fingerprint(v.html) === v.fingerprint; };
+
+  /* ---------- the pipeline ---------- */
+  function contactFor(t){ const a = t.accountId && bosAccount(t.accountId), c = a && (bosContactsOf(a.id).find(function(x){ return x.primary; }) || bosContactsOf(a.id)[0]); const tn = t.tenantId && tenantById(t.tenantId); return (c && c.email) || (tn && tn.ownerEmail) || ''; }
+  window.bosAutoInvoice = function(paymentId, link, via){
+    if(byPayment[paymentId]) return byPayment[paymentId];
+    const run = { id:bosId('AUTO', 4), paymentId:paymentId, linkId:link ? link.id : null, via:via || 'Razorpay', steps:[{ step:'Payment verified', at:ISO(), detail:(via || 'Razorpay') + ' ' + paymentId }], docNo:null, ok:false };
+    let t = null;
+    if(link){
+      if(link.docNo) t = bosTaxInvoice(link.docNo);
+      if(!t && link.invoiceId) t = BOS.taxInvoices.find(function(x){ return x.sourceRef === link.invoiceId && x.kind === 'invoice'; });
+      if(!t && link.taxInvoiceNo) t = bosTaxInvoice(link.taxInvoiceNo);
+      if(!t){   // a paid link with no document behind it: create the invoice from what was paid (the amount includes tax)
+        const acc = link.accountId && bosAccount(link.accountId), seg = bosTaxSegment(bosTaxPartyOf(acc), ISO(), 1), rate = (seg.cgst + seg.sgst + seg.igst) / 100;
+        t = bosTaxIssue({ account:acc || { name:'Customer', taxCountry:'India', taxState:BOS_TAX.profile.state }, tenantId:acc && acc.tenantIds[0], amount:r2(link.amount / (1 + rate)), currency:link.currency, sourceRef:link.id, description:'Payment ' + link.id });
+        link.docNo = t.no; run.steps.push({ step:'Invoice created', at:ISO(), detail:t.no + ' · ' + t.segment.label });
+      } else run.steps.push({ step:'Invoice ready', at:ISO(), detail:t.no + ' (already issued; now paid)' });
+    }
+    if(!t){ run.steps.push({ step:'No invoice', at:ISO(), detail:'Nothing to invoice for this payment' }); BOS.autoRuns.push(run); return run; }
+    if(t.status !== 'paid') bosTaxMarkPaid(t, paymentId, (via || 'Razorpay') + ' ' + paymentId);
+    run.docNo = t.no;
+    if(!bosVaultFor(t.no)){ const html = bosInvoiceDocHTML(t); BOS.vault.push({ docNo:t.no, html:html, fingerprint:fingerprint(html), storedAt:ISO(), paymentId:paymentId, customer:t.customer, total:t.total, currency:t.currency }); }
+    run.steps.push({ step:'Stored', at:ISO(), detail:'Invoice vault · fingerprint ' + bosVaultFor(t.no).fingerprint });
+    const to = contactFor(t) || (link && link.checkout && link.checkout.by) || '';
+    BOS.outbox.push({ id:bosId('OUT'), to:to || 'customer', subject:'Your Oontu invoice ' + t.no + ' (paid) · ' + t.currency + ' ' + t.total, at:ISO(), delivered:false, note:'Prototype: not sent · invoice attached from the vault' });
+    run.steps.push({ step:'Sent to customer', at:ISO(), detail:to || 'owner on file' });
+    run.ok = true; byPayment[paymentId] = run; BOS.autoRuns.push(run);
+    logPlatformAudit('Invoice created automatically', t.no + ' · payment ' + paymentId + ' · stored and sent', { entityId:t.no, entityType:'Invoice', actorType:'system' });
+    return run;
+  };
+  /* runs after every other payment handler, for every verified payment; a repeated event never makes a second invoice */
+  const recv = BOS_PAY.receive;
+  BOS_PAY.receive = function(raw, sig){ const out = recv.apply(this, arguments); try { if(out && out.applied){ const e = JSON.parse(raw); if(e.type === 'payment.captured'){ const l = BOS.payLinks.find(function(x){ return x.id === e.object.id; }); if(l){ out.autoInvoice = bosAutoInvoice(e.id, l, 'Razorpay'); } } } } catch(x){ console.error(x); } return out; };
+  /* Finance's referenced manual verification (a bank transfer) runs the same pipeline */
+  const baseMark = window.markInvoicePaid;
+  window.markInvoicePaid = markInvoicePaid = function(invId, opts){ const out = baseMark.apply(this, arguments); try { if(out && out.ok){ const t = BOS.taxInvoices.find(function(x){ return x.sourceRef === invId && x.kind === 'invoice'; }); if(t) out.autoInvoice = bosAutoInvoice('manual-' + invId, { id:'manual', docNo:t.no, accountId:t.accountId }, 'Bank transfer ' + ((opts && opts.reference) || '')); } } catch(x){ console.error(x); } return out; };
+
+  /* ---------- viewing and saving ---------- */
+  window.bosInvoiceView = function(no){
+    const v = bosVaultFor(no), t = bosTaxInvoice(no); if(!t) return;
+    const html = v ? v.html : bosInvoiceDocHTML(t);
+    bosDialog((v ? 'Stored copy · ' : 'Preview · ') + no, '<div style="max-height:60vh;overflow:auto">' + html + '</div>' + (v ? '<p class="bos-muted" style="margin-top:8px">Stored ' + E(String(v.storedAt).slice(0, 16).replace('T', ' ')) + ' · fingerprint ' + E(v.fingerprint) + (bosVaultVerify(no) ? ' · unchanged since it was sent' : ' · CHANGED') + '</p>' : ''), 'Save as PDF', "bosInvoicePrint('" + no + "')");
+  };
+  window.bosInvoicePrint = function(no){
+    const v = bosVaultFor(no), t = bosTaxInvoice(no); const html = v ? v.html : bosInvoiceDocHTML(t);
+    const css = (document.getElementById('bos-invoice-style') || {}).textContent || '';
+    try { const w = window.open('', '_blank'); if(!w){ toast('Allow pop-ups to save the PDF.'); return false; } w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + E(no) + '</title><style>' + css + ' body{margin:24px} .inv-doc{border:0}</style></head><body>' + html + '<script>window.onload=function(){window.print();}<\/script></body></html>'); w.document.close(); return true; } catch(e){ toast('Your browser blocked the print window.'); return false; }
+  };
+
+  /* ---------- Finance: Billing desk gets the vault and the runs ---------- */
+  const baseDesk = window.bosBillingTabHTML;
+  window.bosBillingTabHTML = function(){
+    const runs = BOS.autoRuns.slice().reverse().slice(0, 25);
+    const vault = oTableCard({ id:'bos-vault', title:'Invoice vault · created automatically on payment', sub:'Every verified payment → invoice → stored → sent. No manual step; one invoice per payment.', cols:[{ label:'Invoice' }, { label:'Customer' }, { label:'Total', right:true }, { label:'Pipeline' }, { label:'' }],
+      rows:runs.length ? runs.map(function(r){ const v = r.docNo && bosVaultFor(r.docNo); return '<tr><td><b>' + E(r.docNo || '—') + '</b><small>' + E(r.via + ' · ' + r.paymentId) + '</small></td><td>' + E(v ? v.customer : '') + '</td><td class="num">' + E(v ? v.currency + ' ' + v.total : '') + '</td><td style="white-space:normal"><div class="inv-pipe">' + r.steps.map(function(s){ return '<span class="is-done" title="' + E(s.detail + ' · ' + String(s.at).slice(11, 19)) + '">✓ ' + E(s.step) + '</span>'; }).join('') + '</div></td><td>' + (r.docNo ? '<button type="button" class="o-btn" onclick="bosInvoiceView(\'' + r.docNo + '\')">View</button>' : '') + '</td></tr>'; }).join('') : oTableEmptyRow(5, 'No payments yet. Each verified payment creates, stores and sends its invoice here automatically.') });
+    return vault + '<div style="height:16px"></div>' + baseDesk.apply(this, arguments);
+  };
 })();
 </script>
 </body>

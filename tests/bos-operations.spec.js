@@ -70,7 +70,7 @@
     });
     await t('safe AI: Kairo drafts from approved knowledge, never sends or resolves', async function(){
       as('PU-103'); var tk = BOS.tickets.find(function(x){ return x.subject === 'Password reset link not arriving'; });
-      var d = bosKairo.draftReply(tk.id); ok(d.ok && d.state === 'needs_confirmation' && /KB-101/.test(d.sources.join()), 'draft with sources');
+      var d = bosKairo.draftReply(tk.id); ok(d.ok && d.state === 'needs_confirmation' && /KB-102/.test(d.sources.join()), 'draft with sources');
       ok(tk.messages.some(function(m){ return m.draft; }) && !tk.firstResponseAt, 'saved as draft, not a response'); ok(!/resolved|closed/.test(tk.status), 'not resolved');
       var none = bosKairo.draftReply(BOS.tickets.find(function(x){ return x.subject === 'Oontu is down for all users'; }).id); eq(none.state, 'partial', 'no approved article → says so');
     });
