@@ -41,50 +41,297 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-  "updated": "2026-11-26 21:30 IST",
-  "current": "0b",
-  "partA": [
-    {"id":"0a","name":"Persistence, switches, reset","status":"Done","tests":"14/14","tag":"o2-step-0a","what":"Demo data survives a reload; Export, Import and Reset demo data.","see":"Switch 0a · any login · Sign-in screen › Prototype · simulated sign-in › O2 build › turn on 0a; make a change, reload"},
-    {"id":"0b","name":"Policy store, metrics, access level","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"0c","name":"Billing customer","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"0d","name":"One visible invoice model","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"1a","name":"Navigation and redirects","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"1b","name":"Approvals inbox and bell","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"1c","name":"Platform search","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"2","name":"Home command center","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"3a","name":"Workspace lifecycle","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"3b","name":"Workspace screens","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"4a","name":"Subscriptions on the gateway","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"4b","name":"Subscription statuses","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"4c","name":"Billing screens","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"4d","name":"Payment allocations and TDS","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"5","name":"Customers","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"6","name":"Service and incidents","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"7a","name":"Audit completeness","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"7b","name":"MFA and step-up","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"7c","name":"People and access","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"8a","name":"Flags and entitlements","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"8b","name":"AI agents governance","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"9","name":"Integration and cleanup","status":"Waiting","tests":"","tag":"","what":"","see":""}
-  ],
-  "partB": [
-    {"id":"G1","name":"Live workflow triggers","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"G2","name":"Automation results","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"G3","name":"Money-at-risk board","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"G4","name":"Redeployment and contract-end decisions","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"G5","name":"Own talent first","status":"Waiting","tests":"","tag":"","what":"","see":""},
-    {"id":"G6","name":"Interview self-booking","status":"Waiting","tests":"","tag":"","what":"","see":""}
-  ],
-  "problems": [],
-  "flaky": [
-    "Headless Chrome occasionally hangs at launch (seen once on bos-tax before the build); a rerun alone passes.",
-    "cowork-visual gives no result when two test passes run at once; passes 15/15 alone. Passes are now always run one at a time."
-  ],
-  "decisions": [
-    ["Switch defaults", "Off in code; tests turn them on."],
-    ["Briefs location", "docs/O2-BUILD-BRIEF.md and docs/OONTU-GAME-CHANGERS-PROMPT.md were in Downloads, not in docs/; copied into docs/ at start."]
-  ],
-  "suite": { "off": "Before the build (0a tag): 1,031/1,031 across 72 specs", "on": "Before the build (0a on): 1,031/1,031 across 72 specs" }
+    "updated":  "2026-11-26 21:33 IST",
+    "current":  "0c",
+    "partA":  [
+                  {
+                      "id":  "0a",
+                      "name":  "Persistence, switches, reset",
+                      "status":  "Done",
+                      "tests":  "14/14",
+                      "tag":  "o2-step-0a",
+                      "what":  "Demo data survives a reload; Export, Import and Reset demo data.",
+                      "see":  "Switch 0a · any login · Sign-in screen › Prototype · simulated sign-in › O2 build › turn on 0a; make a change, reload"
+                  },
+                  {
+                      "id":  "0b",
+                      "name":  "Policy store, metrics, access level",
+                      "status":  "Done",
+                      "tests":  "10/10 (o2-metrics); regressions 313/313 off, 299/299 on",
+                      "tag":  "o2-step-0b",
+                      "what":  "Policy values in one place; MRR per currency from list prices (no proration, no tax); access level shown on each workspace.",
+                      "see":  "Switch 0b · Meera Krishnan (Super Admin) · Platform overview › MRR card (hover for the old figure); Tenants › a tenant › Access level; Platform Settings › Policy values"
+                  },
+                  {
+                      "id":  "0c",
+                      "name":  "Billing customer",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "0d",
+                      "name":  "One visible invoice model",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "1a",
+                      "name":  "Navigation and redirects",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "1b",
+                      "name":  "Approvals inbox and bell",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "1c",
+                      "name":  "Platform search",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "2",
+                      "name":  "Home command center",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "3a",
+                      "name":  "Workspace lifecycle",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "3b",
+                      "name":  "Workspace screens",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "4a",
+                      "name":  "Subscriptions on the gateway",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "4b",
+                      "name":  "Subscription statuses",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "4c",
+                      "name":  "Billing screens",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "4d",
+                      "name":  "Payment allocations and TDS",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "5",
+                      "name":  "Customers",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "6",
+                      "name":  "Service and incidents",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "7a",
+                      "name":  "Audit completeness",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "7b",
+                      "name":  "MFA and step-up",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "7c",
+                      "name":  "People and access",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "8a",
+                      "name":  "Flags and entitlements",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "8b",
+                      "name":  "AI agents governance",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "9",
+                      "name":  "Integration and cleanup",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  }
+              ],
+    "partB":  [
+                  {
+                      "id":  "G1",
+                      "name":  "Live workflow triggers",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "G2",
+                      "name":  "Automation results",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "G3",
+                      "name":  "Money-at-risk board",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "G4",
+                      "name":  "Redeployment and contract-end decisions",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "G5",
+                      "name":  "Own talent first",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  },
+                  {
+                      "id":  "G6",
+                      "name":  "Interview self-booking",
+                      "status":  "Waiting",
+                      "tests":  "",
+                      "tag":  "",
+                      "what":  "",
+                      "see":  ""
+                  }
+              ],
+    "problems":  [
+
+                 ],
+    "flaky":  [
+                  "Headless Chrome occasionally hangs at launch (seen once on bos-tax before the build); a rerun alone passes.",
+                  "cowork-visual gives no result when two test passes run at once; passes 15/15 alone. Passes are now always run one at a time."
+              ],
+    "decisions":  [
+                      [
+                          "Switch defaults",
+                          "Off in code; tests turn them on."
+                      ],
+                      [
+                          "Briefs location",
+                          "docs/O2-BUILD-BRIEF.md and docs/OONTU-GAME-CHANGERS-PROMPT.md were in Downloads, not in docs/; copied into docs/ at start."
+                      ],
+                      [
+                          "Internal workspaces",
+                          "No seed is Oontu\u0027s own or a test workspace, so every seeded workspace is internal:false; the flag is ready for future ones."
+                      ],
+                      [
+                          "Provisioning access level",
+                          "§3.2 has no provisioning column; a workspace still being set up is shown as Blocked (nobody signs in yet)."
+                      ],
+                      [
+                          "Policy data vs switch",
+                          "PLATFORM_SETTINGS.policy and tenant.internal are always present (additive, harmless); switches only change screens and code paths."
+                      ]
+                  ],
+    "suite":  {
+                  "off":  "Before the build (0a tag): 1,031/1,031 across 72 specs",
+                  "on":  "Before the build (0a on): 1,031/1,031 across 72 specs"
+              }
 }
 </script>
 <script>
