@@ -70092,6 +70092,184 @@ function cfScopeHTML(){
   };
 })();
 </script>
+<script id="o2-metrics-script">
+/* ============================================================
+   O2 STEP 0b: POLICY STORE, INTERNAL FLAG, MRR AND ACCESS LEVEL (2026-11-26)
+   - PLATFORM_SETTINGS.policy: every §4.1 key with its placeholder value. Data is always present (additive, harmless to
+     old code); the read-only "Policy values" card in Platform settings shows only with switch 0b on.
+   - tenant.internal (false unless set): internal workspaces are left out of every metric.
+   - o2Mrr(sub) / o2MrrTotals(): §3.8 MRR per currency from the plan's list price × licences ÷ months in the interval
+     (subscription items[] are used instead once Step 4a adds them). Excludes tax, one-off charges, proration and
+     first-period promos. Switch 0b on: the platform overview's MRR card shows it; the old oSubMrr figure stays in the
+     card's note for comparison.
+   - o2AccessLevel(tenant[, sub]): §3.2, computed and displayed only (badge on the tenant page, switch 0b on). Not enforced.
+============================================================ */
+(function(){
+  const r2 = function(n){ return Math.round(n * 100) / 100; };
+  const DAY = 86400000;
+
+  /* ---- policy values (§4.1); placeholders until the owner decides B1–B11 / the tax advisor answers T10 ---- */
+  const POLICY = [
+    ['trialGraceDays', 7, 'B1', 'Days a trial workspace stays open after the trial ends'],
+    ['dunningReminderDays', [1, 3, 7], 'B2', 'Reminder days after a failed renewal'],
+    ['readOnlyAfterDays', 7, 'B2', 'Days past due before a workspace becomes read-only'],
+    ['closedRetentionDays', 90, 'B3', 'Days a closed workspace is kept before archive'],
+    ['suspendNeedsSecondPerson', true, 'B4', 'Suspending a workspace needs a second person (Security emergency path allowed)'],
+    ['suspendedOwnerExport', 'after-review', 'B5', 'Owner export while suspended'],
+    ['downgradeTiming', 'next-renewal', 'B6', 'When a downgrade takes effect'],
+    ['cancelDefault', 'period-end', 'B6', 'Default cancellation timing'],
+    ['legacyPlans', 'grandfathered', 'B7', 'Plans no longer sold'],
+    ['marketRule', 'gstin-then-billing-country', 'B8', 'How a billing customer’s market is decided'],
+    ['discountAndTrial', null, 'B9', 'Discount and trial thresholds (today’s BOS_POLICY)'],
+    ['mfaMethod', 'simulated code 246810', 'B10', 'Second sign-in step (prototype)'],
+    ['exportLinkHours', 24, '', 'Hours an export link stays valid'],
+    ['incompleteAbandonHours', 24, '', 'Hours before an incomplete subscription is abandoned'],
+    ['unmatchedCreditDays', 7, '', 'Days before an unmatched bank credit is flagged'],
+    ['tdsCertificateDueDays', 60, 'T10', 'Days after quarter end a TDS certificate is due'],
+    ['tdsExpectedPercent', null, 'T10', 'Expected TDS percentage (warning off until answered)'],
+    ['stepUpMinutes', 15, '', 'Minutes before a high-risk action asks for the second step again']
+  ];
+  const copyOf = function(v){ return v && typeof v === 'object' ? JSON.parse(JSON.stringify(v)) : v; };
+  if(!PLATFORM_SETTINGS.policy || typeof PLATFORM_SETTINGS.policy !== 'object') PLATFORM_SETTINGS.policy = {};
+  POLICY.forEach(function(p){
+    if(p[0] in PLATFORM_SETTINGS.policy) return;
+    PLATFORM_SETTINGS.policy[p[0]] = p[0] === 'discountAndTrial' ? copyOf(typeof BOS_POLICY !== 'undefined' ? BOS_POLICY : {}) : copyOf(p[1]);
+  });
+  window.O2_POLICY_KEYS = POLICY.map(function(p){ return { key:p[0], decision:p[2], label:p[3] }; });
+  window.o2Policy = function(key){ const pol = PLATFORM_SETTINGS.policy || {}; if(key in pol) return pol[key]; const d = POLICY.find(function(p){ return p[0] === key; }); return d ? copyOf(d[1]) : undefined; };
+
+  /* ---- internal workspaces: none of today's seeds is Oontu's own or a test workspace, so every seed is false ---- */
+  PLATFORM_TENANTS.forEach(function(t){ if(typeof t.internal !== 'boolean') t.internal = false; });
+  window.o2IsInternal = function(t){ if(typeof t === 'string') t = tenantById(t); return !!(t && t.internal === true); };
+
+  /* ---- MRR (§3.8) ---- */
+  const monthsIn = function(interval){ return interval === 'annual' ? 12 : interval === 'quarterly' ? 3 : 1; };
+  const MRR_STATUSES = ['active', 'past_due'];
+  window.o2SubStatus = function(sub){
+    if(!sub) return null;
+    if(sub.o2Status) return sub.o2Status;                                   // Step 4b writes the new status here
+    if(sub.readOnly === true) return 'unpaid';
+    return { trial:'trialing', cancelled:'canceled', expired:'canceled' }[sub.status] || sub.status;
+  };
+  /* Monthly recurring value of one subscription, in its own currency. Zero for statuses outside active/past_due. */
+  window.o2Mrr = function(sub){
+    if(!sub || MRR_STATUSES.indexOf(o2SubStatus(sub)) < 0) return 0;
+    if(Array.isArray(sub.items) && sub.items.length){
+      return r2(sub.items.reduce(function(s, it){
+        if(it.recurring === false) return s;
+        const gross = (Number(it.unitPrice) || 0) * (Number(it.quantity) || 0) - (Number(it.recurringDiscount) || 0);
+        return s + gross / monthsIn(it.interval || sub.billingInterval);
+      }, 0));
+    }
+    const plan = typeof planById === 'function' ? planById(sub.planId) : null; if(!plan) return 0;
+    const cur = sub.currency || plan.currency;
+    let m = 0;
+    if(plan.prices && Object.keys(plan.prices).length){
+      const unit = bosPlanUnit(plan, cur);                                  // list price per licence per month
+      m = (Number(unit) || 0) * Math.max(1, Number(sub.seats) || 1);
+    } else {
+      const price = plan.currency === cur ? plan.price : sub.price;         // older plans: one price per billing period
+      m = (Number(price) || 0) / monthsIn(sub.billingInterval || plan.billingInterval);
+    }
+    (sub.boosts || []).forEach(function(id){                                // recurring add-ons are recurring items
+      const b = typeof boostById === 'function' ? boostById(id) : null; if(!b || !b.prices) return;
+      m += Number(b.prices[cur] != null ? b.prices[cur] : 0) || 0;
+    });
+    return r2(m);
+  };
+  /* Totals per currency over each workspace's current subscription; internal workspaces left out. Never converted. */
+  window.o2MrrTotals = function(){
+    const by = {}, counted = []; let internal = 0;
+    PLATFORM_SUBSCRIPTIONS.forEach(function(s){
+      const t = tenantById(s.tenantId);
+      if(t && t.subscriptionId && t.subscriptionId !== s.id) return;       // R1: only the current subscription counts
+      if(t && t.internal === true){ if(o2Mrr(s) > 0) internal++; return; }
+      const v = o2Mrr(s); if(!(v > 0)) return;
+      by[s.currency] = r2((by[s.currency] || 0) + v); counted.push(s.id);
+    });
+    return { byCurrency:by, subscriptions:counted, internalExcluded:internal };
+  };
+  window.o2MoneyByCurrency = function(by){
+    const keys = Object.keys(by || {}).filter(function(k){ return by[k] > 0; }).sort();
+    return keys.length ? keys.map(function(k){ return k + ' ' + Math.round(by[k]).toLocaleString(); }).join(' · ') : '—';
+  };
+
+  /* ---- access level (§3.2), computed and shown only ---- */
+  window.o2Lifecycle = function(t){
+    if(!t) return null;
+    if(t.lifecycleState) return t.lifecycleState;                           // Step 3a writes the new lifecycle here
+    if(t.status === 'invited') return 'provisioning';
+    if(t.status === 'cancelled') return 'closed';
+    if(t.status === 'active'){ const s = subscriptionForTenant(t.id); if(s && o2SubStatus(s) === 'trialing') return 'trial'; }
+    return t.status;
+  };
+  window.o2AccessLevel = function(t, subArg){
+    if(typeof t === 'string') t = tenantById(t);
+    if(!t) return { level:'blocked', banner:false, ownerExport:false, why:'Workspace not found.' };
+    const life = o2Lifecycle(t), sub = subArg !== undefined ? subArg : subscriptionForTenant(t.id), ss = o2SubStatus(sub);
+    const out = function(level, banner, why, ownerExport){ return { level:level, banner:!!banner, ownerExport:ownerExport || false, why:why, lifecycle:life, subStatus:ss }; };
+    if(life === 'archived') return out('blocked', false, 'Archived workspaces are always blocked.');
+    if(life === 'provisioning') return out('blocked', false, 'Still being set up; nobody signs in yet.');
+    if(life === 'suspended') return out('blocked', false, 'Suspended.', o2Policy('suspendedOwnerExport'));
+    if(life === 'closed') return out('read-only', false, 'Closed: read-only, the owner can export.', true);
+    const paidThroughLeft = sub && sub.paidThrough ? new Date(sub.paidThrough + (String(sub.paidThrough).length <= 10 ? 'T23:59:59' : '')).getTime() - Date.now() : null;
+    if(!sub || !ss) return out('full', false, 'No subscription recorded.');
+    switch(ss){
+      case 'incomplete': return out('full', false, life === 'trial' ? 'Trial with an incomplete subscription.' : 'Incomplete renewal: full access for the previous paid period.');
+      case 'trialing': return out('full', false, 'Trial.');
+      case 'active': return out('full', false, sub.cancelAt ? 'Cancels at period end; full access until ' + String(sub.cancelAt).slice(0, 10) + '.' : 'Paid and current.');
+      case 'past_due': return out('full', true, 'Payment overdue: full access with a payment banner.');
+      case 'unpaid': return out('read-only', true, 'Unpaid: read-only with a payment banner.');
+      case 'paused': return out('read-only', false, 'Paused: read-only.');
+      case 'canceled':
+        if(paidThroughLeft != null && paidThroughLeft > 0) return out('full', false, 'Canceled: full access until the paid-through date, then closed.');
+        return out('read-only', false, 'Canceled: the workspace moves to closed (read-only, owner export).', true);
+    }
+    return out('full', false, 'Status “' + ss + '”.');
+  };
+  window.o2AccessBadge = function(t){
+    const a = o2AccessLevel(t);
+    const tone = a.level === 'full' ? (a.banner ? 'warn' : 'success') : a.level === 'read-only' ? 'warn' : 'danger';
+    const label = (a.level === 'full' ? 'Full access' : a.level === 'read-only' ? 'Read-only' : 'Blocked') + (a.banner ? ' · payment banner' : '');
+    return '<div class="o2-access" data-o2-access="' + a.level + '" title="' + oEsc(a.why) + '"><span class="o2-access__k">Access level</span> ' + oBadge(tone, label) + ' <span class="o2-access__why">' + oEsc(a.why) + ' Shown only; not enforced yet.</span></div>';
+  };
+
+  /* ---- screens (switch 0b) ---- */
+  const wrapRenderer = function(id, fn){ const base = RENDERERS[id]; if(typeof base !== 'function') return; RENDERERS[id] = function(){ const html = base.apply(this, arguments); return o2On('0b') ? fn(html) : html; }; };
+  /* Platform overview: only the MRR card changes. oNumbers is swapped for the duration of the render call. */
+  const baseDash = RENDERERS['oontu-dashboard'];
+  if(typeof baseDash === 'function') RENDERERS['oontu-dashboard'] = function(){
+    if(!o2On('0b')) return baseDash.apply(this, arguments);
+    const realNumbers = window.oNumbers;
+    window.oNumbers = function(cards){
+      return realNumbers.call(this, (cards || []).map(function(k){
+        if(!k || k.label !== 'MRR') return k;
+        const tot = o2MrrTotals(), n = tot.subscriptions.length;
+        return Object.assign({}, k, { value:o2MoneyByCurrency(tot.byCurrency), note:oPlural(n, 'paying subscription') + ' · per currency, not converted' + (tot.internalExcluded ? ' · ' + tot.internalExcluded + ' internal left out' : '') + ' · old calculation: ' + k.value });
+      }));
+    };
+    try { return baseDash.apply(this, arguments); } finally { window.oNumbers = realNumbers; }
+  };
+  wrapRenderer('oontu-tenant-detail', function(html){
+    if(typeof oontuTenantDetailId === 'undefined' || !tenantById(oontuTenantDetailId)) return html;
+    return html.replace(/^(\s*<div[^>]*>)/, '$1' + o2AccessBadge(oontuTenantDetailId));
+  });
+  wrapRenderer('oontu-settings', function(html){
+    const pol = PLATFORM_SETTINGS.policy || {};
+    const fmt = function(v){ if(v === null || v === undefined) return 'Not set'; if(Array.isArray(v)) return v.join(', '); if(typeof v === 'object') return Object.keys(v).map(function(k){ return k + ' ' + v[k]; }).join(' · '); if(v === true) return 'Yes'; if(v === false) return 'No'; return String(v); };
+    const rows = O2_POLICY_KEYS.map(function(p){ return '<tr><td><b>' + oEsc(p.label) + '</b><small><code>' + oEsc(p.key) + '</code></small></td><td>' + oEsc(fmt(pol[p.key])) + '</td><td>' + (p.decision ? oBadge('neutral', 'Placeholder · pending ' + p.decision) : oBadge('neutral', 'Placeholder')) + '</td></tr>'; }).join('');
+    const card = '<div class="o2-policy" id="o2-policy">' + oTableCard({ id:'o2-policy-t', title:'Policy values', sub:'Read-only. Placeholders, pending the owner’s decisions; code reads these values from here.', cols:[{ label:'Policy' }, { label:'Value' }, { label:'Status' }], rows:rows }) + '</div>';
+    return html.replace(/<\/div>\s*$/, card + '</div>');
+  });
+})();
+</script>
+<style id="o2-metrics-style">
+.o2-access{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 14px; padding:10px 12px; border:1px solid var(--n-200, #E6E5E0); border-radius:10px; background:#fff; font-size:13px; }
+.o2-access__k{ font-size:12px; font-weight:500; color:var(--n-700, #4B5563); }
+.o2-access__why{ color:var(--n-700, #4B5563); font-size:12px; }
+.o2-policy{ margin-top:24px; }
+.o2-policy small{ display:block; margin-top:2px; }
+</style>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
