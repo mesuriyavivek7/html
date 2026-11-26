@@ -49,14 +49,14 @@
       ss('seed', summary());
       await t('switches: 22 steps, every default off; the runner turned 0a on for this spec', async function(){
         eq(O2_STEPS.length, 22); ok(O2_STEPS.every(function(s){ return O2_SWITCH_DEFAULTS[s.id] === false; }), 'all defaults off');
-        ok(o2On('0a') && !o2On('0b'), 'only 0a on'); ok(o2Persist.active(), 'saving active');
+        var forced = window.__O2_SWITCHES__ || {}; ok(o2On('0a') && (!o2On('0b') || forced['0b']), 'only 0a on (unless the runner turned others on)'); ok(o2Persist.active(), 'saving active');
         ok(localStorage.getItem(KEY) === null, 'a fresh browser has no saved state');
       });
       await t('nothing changes the seed shape between the last seed and page load', async function(){ eq(o2Persist.fingerprint(), o2Persist.bootFingerprint); });
       await t('the existing sign-in tools show the 22 switches and the demo-data controls', async function(){
         var d = document.createElement('div'); d.innerHTML = bosDevLoginsHTML();
         ok(d.querySelector('#bos-dl-pick'), 'the login dropdown is still there, first'); eq(d.querySelectorAll('.o2-dev .o-switch').length, 22);
-        eq(d.querySelector('[data-o2-step="0a"]').getAttribute('aria-checked'), 'true'); eq(d.querySelector('[data-o2-step="1a"]').getAttribute('aria-checked'), 'false');
+        eq(d.querySelector('[data-o2-step="0a"]').getAttribute('aria-checked'), 'true'); eq(d.querySelector('[data-o2-step="1a"]').getAttribute('aria-checked'), String(o2On('1a')));
         ok(/Export state/.test(d.textContent) && /Import state/.test(d.textContent) && /Reset demo data/.test(d.textContent) && /Saving is on/.test(d.textContent), d.textContent.slice(0, 200));
       });
       /* changes through the gateway and through an older platform screen */

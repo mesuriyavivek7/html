@@ -221,8 +221,10 @@
     });
     await t('the sidebar shows the five workspaces for the Super Admin', async function(){
       as('PU-001'); bosActAs('PU-001'); renderSidebar(); var heads = Array.prototype.map.call(document.querySelectorAll('#sidebar-nav .o-nav-head .sidebar-label'), function(x){ return x.textContent.trim(); }).filter(Boolean).join(',');
+      var n1a = typeof o2On === 'function' && o2On('1a');   /* with O2 step 1a the groups follow §5 */
+      if(n1a) ok(/Work/.test(heads) && /Customers/.test(heads) && /Service/.test(heads) && /Billing/.test(heads), heads); else
       ok(/Revenue/.test(heads) && /Service/.test(heads) && /Customer operations/i.test(heads) && /Business & finance/i.test(heads), heads);
-      ok(/Platform administration/i.test(document.getElementById('sidebar-nav').textContent), 'platform administration group');
+      ok((n1a ? /Admin/ : /Platform administration/i).test(document.getElementById('sidebar-nav').textContent), 'platform administration group');
     });
     pub();
   }, 300); });

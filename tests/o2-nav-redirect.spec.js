@@ -74,8 +74,9 @@
       var keys = Object.keys(WANT);
       for(var i = 0; i < keys.length; i++){
         var s = await login(keys[i]); ok(s.ok, keys[i]);
-        eq(vis().sort().join(), WANT[keys[i]].split(',').sort().join(), keys[i]);
-        eq(o2NavScreens().sort().join(), WANT[keys[i]].split(',').sort().join(), keys[i] + ' (one access table)');
+        var want = WANT[keys[i]].split(','); if(o2On('1b') && want.indexOf('oontu-approvals') < 0) want.push('oontu-approvals');   /* 1b opens Approvals to everyone */
+        eq(vis().sort().join(), want.slice().sort().join(), keys[i]);
+        eq(o2NavScreens().sort().join(), want.slice().sort().join(), keys[i] + ' (one access table)');
         eq(state.activeNav, canPlatform('platform-tenant', 'update') ? 'oontu-home' : 'oontu-mywork', keys[i] + ' home');
         ok(!/Not available/.test(main()), keys[i] + ' home is usable');
         var card = bosLoginDetails(platformUserById(ACTIVE_PLATFORM_USER_ID)); ok(card.sees.indexOf('Billing and payments') < 0 && card.sees.indexOf('Tenants') < 0, 'login card lists new names: ' + card.sees.join(', '));

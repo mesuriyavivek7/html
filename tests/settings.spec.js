@@ -68,7 +68,8 @@
       ok(anyAgentOn()===false, 'no agents for a candidate'); await everySection('candidate');
     });
     await t('Oontu Super Admin: platform group with Cowork agents, LinkedIn infrastructure and AI models, never mixed with tenant settings', async function(){
-      as('oontu'); has(['account','p-tenants','p-plans','p-agents','p-linkedin','p-ai','p-audit']); hasNot(['people','billing','workspace','cowork']); await everySection('oontu');
+      as('oontu'); if(typeof o2On === 'function' && o2On('1a')){ has(['account','p-linkedin','p-ai']); hasNot(['p-tenants','p-plans','p-agents','p-audit','people','billing','workspace','cowork']); }   /* O2 step 1a: the menu holds those links */
+      else { has(['account','p-tenants','p-plans','p-agents','p-linkedin','p-ai','p-audit']); hasNot(['people','billing','workspace','cowork']); } await everySection('oontu');
       settingsSection = 'p-linkedin'; showView('settings'); ok(/GoLogin/.test(q('#settings-content').textContent) && /••••/.test(q('#settings-content').textContent), 'GoLogin token shown masked');
       showView('oontu-agents'); await sleep(30); ok(/Talent Discovery/.test(q('#main-content').textContent) && /LinkedIn Outreach/.test(q('#main-content').textContent), 'agents catalog page'); showView('oontu-settings'); ok(/AI models/.test(q('#main-content').textContent), 'AI models only in platform settings');
     });

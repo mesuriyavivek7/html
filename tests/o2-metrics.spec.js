@@ -18,7 +18,7 @@
     var ob = document.getElementById('onboarding'); if(ob) ob.classList.add('hidden');
     state.role = 'oontu'; as('PU-001'); var app = document.getElementById('app'); app.classList.remove('hidden'); app.classList.add('flex'); renderSidebar(); await sleep(30);
 
-    await t('switch 0b is on for this spec; every other step off', async function(){ ok(o2On('0b'), '0b on'); ok(!o2On('0c') && !o2On('1a'), 'others off'); eq(O2_SWITCH_DEFAULTS['0b'], false, 'default off in code'); });
+    await t('switch 0b is on for this spec; every other step off', async function(){ ok(o2On('0b'), '0b on'); var forced = window.__O2_SWITCHES__ || {}; ok((!o2On('0c') || forced['0c']) && (!o2On('1a') || forced['1a']), 'others off unless the runner turned them on'); eq(O2_SWITCH_DEFAULTS['0b'], false, 'default off in code'); });
 
     await t('policy: every §4.1 key with its placeholder value', async function(){
       var p = PLATFORM_SETTINGS.policy;

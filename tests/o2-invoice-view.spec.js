@@ -49,7 +49,8 @@
       o2SetSwitch('0d', false); ok(isInvoiceOverdue(invN), 'with 0d off the internal date decides, as before'); o2SetSwitch('0d', true);
       taxN.dueDate = past; ok(isInvoiceOverdue(invN), 'tax invoice past due → overdue');
       var items = o2OverdueTaxInvoices(); eq(items.length, 1); eq(items[0].tax.no, taxN.no);
-      showView('oontu-dashboard'); var txt = mainText(); ok(txt.indexOf(taxN.no) > -1, 'overview names the tax invoice'); ok(!/\binv-\d+\b/.test(txt));
+      var ov = RENDERERS['oontu-dashboard']();   /* the overview itself (with steps 1a/2 on, its old id opens the new Home) */
+      ok(ov.indexOf(taxN.no) > -1, 'overview names the tax invoice'); ok(!/>[^<]*\binv-\d+\b/.test(ov), 'no inv-N text');
       taxN.dueDate = null; ok(isInvoiceOverdue(invN), 'no due date on the tax invoice: the internal one is used');
       taxS.dueDate = past; ok(!isInvoiceOverdue(invS), 'paid is never overdue');
     });

@@ -37,10 +37,11 @@
     await t('hiring manager, candidate and Oontu: grouped and in daily order', async function(){
       as('hm'); ok(shown().join() === 'hm-dashboard,hm-interviews,hm-feedback,hm-decisions,hm-jobs,intelligence,settings', shown().join()); ok(heads().join() === 'Your reviews,Requisitions,Insights', heads().join());
       as('candidate'); ok(shown().join() === 'candidate-home,candidate-opportunities,candidate-interviews,candidate-profile-self,settings', shown().join());
-      as('oontu'); ok(shown()[0] === 'oontu-dashboard' && shown()[shown().length - 1] === 'oontu-settings', shown().join()); ok(heads().join() === 'Revenue,Service,Customer operations,Business & finance', heads().join());   /* 2026-11-25 Business OS: five workspaces; Platform administration is a folding group, so it has no plain heading */
+      as('oontu'); var n1a = typeof o2On === 'function' && o2On('1a');   /* O2 step 1a: the §5 menu */
+      ok(shown()[0] === (n1a ? 'oontu-home' : 'oontu-dashboard') && shown()[shown().length - 1] === (n1a ? 'oontu-tax' : 'oontu-settings'), shown().join());   /* with 1a, Admin folds */ ok(heads().join() === (n1a ? 'Work,Customers,Service,Billing' : 'Revenue,Service,Customer operations,Business & finance'), heads().join());   /* 2026-11-25 Business OS: five workspaces; Platform administration is a folding group, so it has no plain heading */
     });
     await t('nothing is lost: every page that had a sidebar entry still has one', async function(){
-      Object.keys(NAV_LAYOUT).forEach(function(r){ var ids = []; NAV[r].forEach(function(g){ (g.items || [g]).forEach(function(i){ ids.push(i.id); }); }); ok(ids.length === new Set(ids).size, r + ' has no duplicates'); NAV_LAYOUT[r].forEach(function(g){ g[1].forEach(function(id){ ok(ids.indexOf(id) > -1 || ['oontu-agents'].indexOf(id) > -1, r + ' misses ' + id); }); }); });
+      Object.keys(NAV_LAYOUT).forEach(function(r){ var ids = []; NAV[r].forEach(function(g){ (g.items || [g]).forEach(function(i){ ids.push(i.id); }); }); ok(ids.length === new Set(ids).size, r + ' has no duplicates'); ((r === 'oontu' && typeof o2On === 'function' && o2On('1a')) ? O2_NAV.LAYOUT : NAV_LAYOUT[r]).forEach(function(g){ g[1].forEach(function(id){ ok(ids.indexOf(id) > -1 || ['oontu-agents'].indexOf(id) > -1, r + ' misses ' + id); }); }); });
       as('recruiter'); state.sidebarOpen = false; applySidebarVisibility(); ok(document.querySelectorAll('#sidebar-nav .nav-item').length === 11, 'all items reachable in the collapsed rail');   // 11 since M4c: Clients state.sidebarOpen = true; applySidebarVisibility();
     });
 

@@ -70718,6 +70718,17 @@ function cfScopeHTML(){
   /* a change made on a workspace page redraws it (older code only redrew when the old id was active) */
   const baseLog = window.logPlatformAudit;
   window.logPlatformAudit = logPlatformAudit = function(){ const out = baseLog.apply(this, arguments); if(on() && state.activeNav === 'oontu-workspace') setTimeout(function(){ try { if(state.activeNav === 'oontu-workspace') bosRedraw(); } catch(e){} }, 0); return out; };
+  /* switching an old Billing and payments tab while on one of its new screens opens the matching new screen */
+  const baseTab = window.bosTab;
+  if(typeof baseTab === 'function') window.bosTab = function(view, i){
+    if(on() && state.role === 'oontu' && view === 'oontu-finance' && ['oontu-approvals', 'oontu-invoices', 'oontu-tax'].indexOf(state.activeNav) > -1){
+      UI.tab[view] = i; const tg = o2NavTarget('oontu-finance');
+      if(tg && tg.id !== state.activeNav){ showView(tg.id); UI.tab[view] = i; if(typeof bosRedraw === 'function') bosRedraw(); return; }
+    }
+    return baseTab.apply(this, arguments);
+  };
+  /* Account help redraws itself only on its old id; under Workspaces › Requests it redraws the host */
+  if(typeof window.jnRedraw === 'function'){ const baseJn = window.jnRedraw; window.jnRedraw = function(){ if(on() && state.role === 'oontu' && state.activeNav === 'oontu-workspaces' && typeof bosRedraw === 'function'){ return bosRedraw(); } return baseJn.apply(this, arguments); }; }
 
   /* ---- the sign-in tools show the new screen names ---- */
   if(typeof window.bosLoginDetails === 'function'){
@@ -71140,8 +71151,8 @@ function cfScopeHTML(){
     return '<div class="o2-home-charts">' +
       chartCard('o2-ch-mrr', 'MRR movement', 'New and expansion vs contraction and churn, ' + cur + ' thousands; today ' + cur + ' ' + Math.round(realMrr).toLocaleString(), !hasHistory, bars({ labels:L, series:[{ name:'New + expansion', color:'#1D4ED8', values:mrrNew }, { name:'Contraction + churn', color:'#94A3B8', values:mrrChurn }], fmt:function(v){ return cur + ' ' + v + 'k'; }, onclick:"showView('oontu-subscriptions')", aria:'MRR movement by month' })) +
       chartCard('o2-ch-ws', 'New vs lost paying workspaces', 'Paying now: ' + k.paying.length, true, bars({ labels:L, series:[{ name:'New', color:'#2563EB', values:newWs }, { name:'Lost', color:'#9CA3AF', values:lostWs }], fmt:function(v){ return v + (v === 1 ? ' workspace' : ' workspaces'); }, onclick:"showView('oontu-tenants')", aria:'New and lost paying workspaces by month' })) +
-      chartCard('o2-ch-trial', 'Trial conversion', 'Monthly cohorts, shown when the cohort has matured', true, bars({ labels:L, series:[{ name:'Converted %', color:'#7C3AED', values:conv }], fmt:function(v){ return v + '%'; }, onclick:"showView('oontu-subscriptions')", aria:'Trial conversion by monthly cohort' })) +
-      chartCard('o2-ch-tk', 'Ticket backlog and SLA attainment', 'Open tickets now: ' + backlog[5] + ' · SLA this week ' + sla[5] + '%', true, bars({ labels:L.map(function(m, i){ return i === 5 ? 'Now' : m; }), series:[{ name:'Open tickets', color:'#0F766E', values:backlog }], line:{ name:'SLA attainment %', color:'#7C3AED', values:sla }, fmt:function(v){ return v + ' open'; }, onclick:"showView('oontu-service')", aria:'Ticket backlog and SLA attainment by month' })) +
+      chartCard('o2-ch-trial', 'Trial conversion', 'Monthly cohorts, shown when the cohort has matured', true, bars({ labels:L, series:[{ name:'Converted %', color:'#0E7490', values:conv }], fmt:function(v){ return v + '%'; }, onclick:"showView('oontu-subscriptions')", aria:'Trial conversion by monthly cohort' })) +
+      chartCard('o2-ch-tk', 'Ticket backlog and SLA attainment', 'Open tickets now: ' + backlog[5] + ' · SLA this week ' + sla[5] + '%', true, bars({ labels:L.map(function(m, i){ return i === 5 ? 'Now' : m; }), series:[{ name:'Open tickets', color:'#0F766E', values:backlog }], line:{ name:'SLA attainment %', color:'#475569', values:sla }, fmt:function(v){ return v + ' open'; }, onclick:"showView('oontu-service')", aria:'Ticket backlog and SLA attainment by month' })) +
     '</div>';
   };
 

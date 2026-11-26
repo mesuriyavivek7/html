@@ -41,7 +41,8 @@
       ok(bosCan('platform-ticket', 'edit', { queue:'technical' }, rohan) && !bosCan('platform-ticket', 'edit', { queue:'billing' }, rohan), 'Support Agent: own queues');
     });
     await t('navigation reflects access, and a hidden screen still refuses to render', async function(){
-      as('PU-001'); var sa = navShown(); ok(sa.indexOf('oontu-finance') > -1 && sa.indexOf('oontu-platform-users') > -1, 'super admin sees all');
+      as('PU-001'); var sa = navShown(); var n1a = typeof o2On === 'function' && o2On('1a');   /* O2 step 1a renames the screens (docs/O2-BUILD-BRIEF.md §5) */
+      ok(sa.indexOf(n1a ? 'oontu-invoices' : 'oontu-finance') > -1 && sa.indexOf(n1a ? 'oontu-people' : 'oontu-platform-users') > -1, 'super admin sees all');
       as('PU-101'); var se = navShown();
       ok(se.indexOf('oontu-revenue') > -1 && se.indexOf('oontu-mywork') > -1, 'sales sees revenue and my work: ' + se.join());
       ok(['oontu-finance','oontu-platform-users','oontu-tenants','oontu-service','oontu-dashboard','oontu-subscriptions','oontu-plans','oontu-help'].every(function(v){ return se.indexOf(v) === -1; }), 'strict: only the screens of their own work: ' + se.join());
