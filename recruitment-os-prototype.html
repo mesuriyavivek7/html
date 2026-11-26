@@ -71190,6 +71190,156 @@ function cfScopeHTML(){
   RENDERERS['oontu-dashboard'] = function(){ if(on() && !o2On('1a') && state.role === 'oontu' && canPlatform('platform-tenant', 'update')) return o2HomeHTML(); return baseDash.apply(this, arguments); };
 })();
 </script>
+<script id="o2-lifecycle-script">
+/* ============================================================
+   O2 STEP 3a: WORKSPACE LIFECYCLE COMMANDS (2026-11-26)
+   States provisioning · trial · active · suspended · closed · archived (§3.1), every change a bosRun command:
+   workspace.start-trial, workspace.activate, workspace.suspend, workspace.restore, workspace.close, workspace.archive,
+   plus the automatic moves run by o2LifecycleRun (trial → active on a paid subscription; trial → closed after
+   policy.trialGraceDays; closed → archived at policy.closedRetentionDays).
+   - Second person: suspension (unless policy.suspendNeedsSecondPerson is false), closing a suspended workspace and an
+     early archive go through approvals (workspace-suspend, workspace-close, workspace-archive-early). A Security
+     Administrator may suspend alone in an emergency; that raises the integrity finding "Emergency suspension to review".
+   - Each change writes tenant.lifecycle[] (from, to, at, by, actorType, reason, approvalId) and an audit row.
+   - Dual-write: tenant.lifecycleState holds the new value; tenant.status keeps a value the old code understands
+     (provisioning ↔ invited, closed ↔ cancelled) and tenant.statusLegacy records it; the old statusHistory is appended too.
+   - Archived refuses everything except reading; a tombstone (id, name, dates) is kept; invoices and audit stay.
+   Switch 3a on: the old tenant page's status actions call these commands (changeTenantStatus is wrapped).
+============================================================ */
+(function(){
+  const on = function(){ return o2On('3a'); };
+  const DAY = 864e5, ISO = function(t){ return new Date(t == null ? bosNow() : t).toISOString(); };
+  const OLD = { provisioning:'invited', closed:'cancelled', trial:'trial', active:'active', suspended:'suspended', archived:'archived' };
+  const ALLOWED = window.O2_LIFECYCLE = {
+    provisioning:['trial', 'active'], trial:['active', 'suspended', 'closed'], active:['suspended', 'closed'],
+    suspended:['active', 'closed'], closed:['active', 'archived'], archived:[]
+  };
+  const COMMAND = { 'trial':'workspace.start-trial', 'active':'workspace.activate', 'suspended':'workspace.suspend', 'closed':'workspace.close', 'archived':'workspace.archive' };
+  const lifeOf = function(t){ return typeof o2Lifecycle === 'function' ? o2Lifecycle(t) : t.status; };
+  const isSecurityAdmin = function(u){ try { return bosRolesOf(u || currentPlatformUser()).indexOf('tpl_security_admin') > -1; } catch(e){ return false; } };
+
+  /* approval types for this step, registered while the switch is on */
+  const TYPES = {
+    'workspace-suspend':{ label:'Workspace suspension', perm:['platform-tenant', 'activate'] },
+    'workspace-close':{ label:'Close a suspended workspace', perm:['platform-tenant', 'activate'] },
+    'workspace-archive-early':{ label:'Early workspace archive', perm:['platform-tenant', 'activate'] }
+  };
+  const registerTypes = function(){ Object.keys(TYPES).forEach(function(k){ if(on()){ if(!BOS_APPROVAL_TYPES[k]) BOS_APPROVAL_TYPES[k] = TYPES[k]; } else if(BOS_APPROVAL_TYPES[k] === TYPES[k]) delete BOS_APPROVAL_TYPES[k]; }); };
+  registerTypes(); o2OnSwitch(function(id){ if(id === '3a') registerTypes(); });
+
+  /* the one place a lifecycle value is written */
+  function move(t, to, ctx){
+    const from = lifeOf(t), by = ctx.actorType === 'system' ? (ctx.by || 'SYS-BILLING') : ACTIVE_PLATFORM_USER_ID;
+    t.lifecycleState = to; t.statusLegacy = OLD[to]; t.status = OLD[to]; t.updatedAt = ISO();
+    t.statusReason = ctx.reason || null; t.statusChangedBy = bosName(by); t.statusEffectiveAt = ISO().slice(0, 10);
+    if(!Array.isArray(t.lifecycle)) t.lifecycle = [];
+    t.lifecycle.push({ from:from, to:to, at:ISO(), by:by, actorType:ctx.actorType || 'employee', reason:ctx.reason || null, approvalId:ctx.approvalId || null, emergency:!!ctx.emergency });
+    if(!Array.isArray(t.statusHistory)) t.statusHistory = [];
+    t.statusHistory.push({ timestamp:ISO(), from:OLD[from] || from, to:OLD[to], reason:ctx.reason || null, changedBy:bosName(by), effectiveAt:ISO().slice(0, 10), reviewDate:null, notes:null });
+    if(to === 'closed') t.closedAt = ISO();
+    if(to === 'archived'){ t.archivedAt = ISO(); t.dataDeleted = true; t.tombstone = { id:t.id, name:t.name, createdAt:t.createdAt, closedAt:t.closedAt || null, archivedAt:t.archivedAt }; }
+    if(to === 'active' && from === 'closed') t.closedAt = null;
+    return from;
+  }
+  /* rules shared by every command; returns null when allowed, else a refusal */
+  function check(t, to, ctx){
+    if(!t) return { ok:false, reason:'Workspace not found.' };
+    const from = lifeOf(t);
+    if(from === 'archived') return { ok:false, reason:'This workspace is archived. It can only be read: its tombstone, invoices and audit are kept.' };
+    if((ALLOWED[from] || []).indexOf(to) < 0) return { ok:false, reason:'A workspace can’t move from ' + from + ' to ' + to + '.' + ((ALLOWED[from] || []).length ? ' From ' + from + ' it can go to ' + ALLOWED[from].join(' or ') + '.' : '') };
+    const needsReason = ['suspended', 'closed', 'archived'].indexOf(to) > -1 || (to === 'active' && (from === 'suspended' || from === 'closed'));
+    if(needsReason && ctx.actorType !== 'system' && String(ctx.reason || '').trim().length < 8) return { ok:false, field:'reason', reason:'Give the reason (a short sentence). It is kept with the workspace’s history.' };
+    if(ctx.actorType === 'system') return null;
+    if(to === 'suspended'){ if(!(canPlatform('platform-tenant', 'suspend') || (ctx.emergency && isSecurityAdmin()))) return { ok:false, reason:bosWhyNot('platform-tenant', 'suspend') }; }
+    else if(to === 'closed'){ if(!canPlatform('platform-tenant', 'suspend')) return { ok:false, reason:bosWhyNot('platform-tenant', 'suspend') }; }
+    else if(to === 'active' && (from === 'suspended' || from === 'closed')){
+      if(!canPlatform('platform-tenant', 'activate')) return { ok:false, reason:bosWhyNot('platform-tenant', 'activate') };
+      if(from === 'closed'){
+        const days = (bosNow() - new Date(t.closedAt || t.updatedAt || 0).getTime()) / DAY, keep = o2Policy('closedRetentionDays');
+        if(days > keep) return { ok:false, reason:'The retention period (' + keep + ' days) has passed; the workspace can only be archived.' };
+        const s = subscriptionForTenant(t.id), st = s ? o2SubStatus(s) : null;
+        if(!s || ['active', 'past_due', 'trialing'].indexOf(st) < 0) return { ok:false, reason:'Restoring a closed workspace needs an active subscription first.' };
+      }
+    }
+    else if(to === 'active' && from === 'provisioning'){ const s = subscriptionForTenant(t.id); if(!s || o2SubStatus(s) !== 'active') return { ok:false, reason:'Activation needs a paid subscription; start a trial instead.' }; if(!canPlatform('platform-tenant', 'update') && !canPlatform('platform-tenant', 'activate')) return { ok:false, reason:bosWhyNot('platform-tenant', 'activate') }; }
+    else if(to === 'trial'){ if(!canPlatform('platform-tenant', 'update')) return { ok:false, reason:bosWhyNot('platform-tenant', 'update') }; }
+    else if(to === 'archived'){ if(!canPlatform('platform-tenant', 'suspend') && !canPlatform('platform-tenant', 'activate')) return { ok:false, reason:'Only Platform Operations can archive a workspace early.' }; }
+    return null;
+  }
+  const nameOf = function(t){ return t ? t.name : ''; };
+  /* run one transition as a command; the second-person rule turns it into an approval request */
+  window.o2WorkspaceMove = function(tenantId, to, ctx){
+    ctx = ctx || {}; const t = tenantById(tenantId), cmd = COMMAND[to] || 'workspace.restore';
+    const name = (to === 'active' && t && ['suspended', 'closed'].indexOf(lifeOf(t)) > -1) ? 'workspace.restore' : cmd;
+    return bosRun(name, ctx.idempotencyKey ? { idempotencyKey:ctx.idempotencyKey } : null, function(){
+      if(!on()) return { ok:false, reason:'The workspace lifecycle is part of step 3a, which is off.' };
+      const bad = check(t, to, ctx); if(bad) return bad;
+      const from = lifeOf(t);
+      /* second person */
+      let type = null;
+      if(!ctx.approvalId && ctx.actorType !== 'system'){
+        if(to === 'suspended' && o2Policy('suspendNeedsSecondPerson') !== false && !ctx.emergency) type = 'workspace-suspend';
+        else if(to === 'closed' && from === 'suspended') type = 'workspace-close';
+        else if(to === 'archived') type = 'workspace-archive-early';
+      }
+      if(type){
+        if(BOS.approvals.some(function(a){ return a.type === type && a.status === 'pending' && a.payload && a.payload.tenantId === t.id; })) return { ok:false, reason:'A request for this is already waiting for a decision.' };
+        const a = bosRequestApproval(type, t.id, TYPES[type].label + ' · ' + t.name + ' · ' + ctx.reason, { tenantId:t.id, to:to, reason:ctx.reason, requestedFrom:from });
+        a.justification = a.justification || { category:'Workspace risk', reason:ctx.reason, withoutIt:'The workspace stays as it is.' };
+        return { ok:true, pending:true, approval:a, ref:a.id, audit:['Workspace change requested', t.name + ' · ' + from + ' → ' + to + ' · ' + ctx.reason + ' · waits for ' + a.id, { entityId:t.id, entityType:'Workspace' }] };
+      }
+      move(t, to, ctx);
+      if(ctx.emergency && to === 'suspended'){
+        try { bosRaiseException({ rule:'emergency-suspension-review', key:'emergency-suspension:' + t.id + ':' + t.lifecycle.length, domain:'Platform', severity:'high', title:'Emergency suspension to review: ' + t.name, ref:{ type:'tenant', id:t.id }, evidence:['Suspended alone by ' + bosName(ACTIVE_PLATFORM_USER_ID) + ' (Security Administrator) · ' + ctx.reason] }); } catch(e){ console.error(e); }
+      }
+      return { ok:true, tenant:t, from:from, to:to, ref:t.id, audit:['Workspace ' + to, t.name + ' · ' + from + ' → ' + to + (ctx.reason ? ' · ' + ctx.reason : '') + (ctx.approvalId ? ' · approved in ' + ctx.approvalId : '') + (ctx.emergency ? ' · emergency' : ''), { entityId:t.id, entityType:'Workspace', previousState:from, newState:to, approvalId:ctx.approvalId || null }] };
+    });
+  };
+  /* an approved request carries the change out, recorded with its approval id */
+  ['workspace-suspend', 'workspace-close', 'workspace-archive-early'].forEach(function(k){
+    bosOnApproval(k, function(a, approve){
+      if(!approve || !a.payload) return null;
+      const t = tenantById(a.payload.tenantId); if(!t) return null;
+      const bad = check(t, a.payload.to, { reason:a.payload.reason, actorType:'system' }); if(bad) return bad;
+      move(t, a.payload.to, { reason:a.payload.reason, approvalId:a.id, actorType:'employee', by:a.requestedBy });
+      logPlatformAudit('Workspace ' + a.payload.to, t.name + ' · ' + a.payload.requestedFrom + ' → ' + a.payload.to + ' · approved by ' + bosName(ACTIVE_PLATFORM_USER_ID) + ' · ' + a.id, { entityId:t.id, entityType:'Workspace', command:COMMAND[a.payload.to], approvalId:a.id });
+      return { moved:a.payload.to };
+    });
+  });
+  /* scheduled checks, run with the renewals */
+  window.o2LifecycleRun = function(nowMs){
+    const now = nowMs || bosNow(), done = [];
+    if(!on()) return done;
+    const sys = function(t, to, reason){ const prev = ACTIVE_PLATFORM_USER_ID; try { const bad = check(t, to, { actorType:'system' }); if(bad) return; move(t, to, { reason:reason, actorType:'system', by:'SYS-BILLING' }); logPlatformAudit('Workspace ' + to, t.name + ' · ' + reason, { entityId:t.id, entityType:'Workspace', actorType:'system', command:COMMAND[to] }); try { BOS.events.push({ id:bosId('EV'), name:COMMAND[to], at:ISO(now), actor:'SYS-BILLING', ref:t.id }); } catch(e){} done.push([t.id, to]); } finally { ACTIVE_PLATFORM_USER_ID = prev; } };
+    PLATFORM_TENANTS.forEach(function(t){
+      const life = lifeOf(t), s = subscriptionForTenant(t.id), st = s ? o2SubStatus(s) : null;
+      if(life === 'trial' && st === 'active') sys(t, 'active', 'Paid subscription started');
+      else if(life === 'trial' && s && st === 'trialing' && s.renewalDate && now > new Date(s.renewalDate + 'T23:59:59').getTime() + o2Policy('trialGraceDays') * DAY) sys(t, 'closed', 'Trial ended ' + o2Policy('trialGraceDays') + ' days ago without a paid subscription');
+      else if(life === 'closed' && t.closedAt && now > new Date(t.closedAt).getTime() + o2Policy('closedRetentionDays') * DAY) sys(t, 'archived', 'Retention period of ' + o2Policy('closedRetentionDays') + ' days ended');
+    });
+    return done;
+  };
+  if(typeof window.bosRenewalRun === 'function'){ const baseRun = window.bosRenewalRun; window.bosRenewalRun = bosRenewalRun = function(){ const out = baseRun.apply(this, arguments); if(on()) try { o2LifecycleRun(); } catch(e){ console.error(e); } return out; }; }
+
+  /* the old tenant page's actions use the commands */
+  const baseChange = window.changeTenantStatus;
+  window.changeTenantStatus = changeTenantStatus = function(tenantId, newStatus, context){
+    if(!on()) return baseChange.apply(this, arguments);
+    const ctx = typeof context === 'string' ? { reason:context } : (context || {});
+    const to = { invited:'provisioning', cancelled:'closed' }[newStatus] || newStatus;
+    const r = o2WorkspaceMove(tenantId, to, { reason:ctx.reason || ctx.notes || '', emergency:!!ctx.emergency });
+    if(r && r.ok && r.pending) return { ok:false, pending:true, approval:r.approval, reason:'A second person has to approve this. Request ' + r.approval.id + ' was sent.' };
+    return r && r.ok ? { ok:true, tenant:tenantById(tenantId) } : r;
+  };
+  /* archived: every older tenant command refuses */
+  ['suspendTenant', 'activateTenant', 'reactivateTenant', 'cancelTenantSubscriptionStatus'].forEach(function(fn){
+    const base = window[fn]; if(typeof base !== 'function') return;
+    window[fn] = function(tenantId){ if(on()){ const t = tenantById(tenantId); if(t && lifeOf(t) === 'archived') return { ok:false, reason:'This workspace is archived. It can only be read.' }; } return base.apply(this, arguments); };
+    try { (new Function('f', fn + ' = f'))(window[fn]); } catch(e){}
+  });
+  window.o2WorkspaceReadOnly = function(t){ if(typeof t === 'string') t = tenantById(t); return !!(t && lifeOf(t) === 'archived'); };
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
