@@ -70584,6 +70584,174 @@ function cfScopeHTML(){
 <style id="o2-invoice-view-style">
 .o2-gf{ display:block; margin-top:4px; }
 </style>
+<script id="o2-nav-script">
+/* ============================================================
+   O2 STEP 1a: NAVIGATION, REDIRECTS, ONE ACCESS TABLE (2026-11-26)
+   Switch 1a on:
+   - The Oontu menu follows §5: Home · Work · Customers · Service · Billing · Admin (folding).
+   - New screen ids exist now and render the screens they replace until their own step builds them. Where a new screen
+     will hold two older ones as tabs, a small tab strip hosts both (Workspaces: All · Requests; Pipeline: Pipeline ·
+     Sign-ups), so nothing becomes unreachable.
+   - Old ids redirect (showView), with the right tab. Record pages open as before.
+   - One access table: every new id takes exactly the permission of the screen it replaces (BOS_VIEW_ACCESS); the
+     strict rules of bos-access-strict-script are untouched. Home is oontu-home for platform-tenant:update, else My work.
+   - Settings › Platform keeps only its own sections (LinkedIn infrastructure, AI models); the links that duplicated the
+     menu are hidden.
+   Switch off: the old menu, ids and home. Nothing is written.
+============================================================ */
+(function(){
+  const ACC = window.BOS_VIEW_ACCESS, on = function(){ return o2On('1a'); };
+  const UI = window.BOS_UI || { tab:{} };
+  /* new id → what it renders until its step, the label, the icon (unique in the menu) */
+  const NEW = {
+    'oontu-home':{ label:'Home', icon:'home', old:'oontu-dashboard', title:'Home' },
+    'oontu-approvals':{ label:'Approvals', icon:'edit', old:'oontu-finance', tab:['oontu-finance', 0], title:'Approvals' },
+    'oontu-reports':{ label:'Reports', icon:'chart', old:'oontu-insights', title:'Reports' },
+    'oontu-workspaces':{ label:'Workspaces', icon:'globe', host:[['all', 'All', 'oontu-tenants'], ['requests', 'Requests', 'oontu-help']], title:'Workspaces' },
+    'oontu-incidents':{ label:'Incidents', icon:'zap', old:'oontu-service', tab:['oontu-service', 2], title:'Incidents' },
+    'oontu-announcements':{ label:'Announcements', icon:'bell', old:'oontu-notifications', title:'Announcements' },
+    'oontu-invoices':{ label:'Invoices & payments', icon:'doc', old:'oontu-finance', tab:['oontu-finance', 2], title:'Invoices & payments' },
+    'oontu-tax':{ label:'Tax & reports', icon:'docText', old:'oontu-finance', tab:['oontu-finance', 5], title:'Tax & reports' },
+    'oontu-people':{ label:'People & access', icon:'lock', old:'oontu-platform-users', title:'People & access' },
+    'oontu-ai':{ label:'AI agents', icon:'sparkles', old:'oontu-agents', title:'AI agents' },
+    'oontu-controls':{ label:'Product controls', icon:'cpu', old:'oontu-feature-controls', title:'Product controls' },
+    'oontu-workspace':{ old:'oontu-tenant-detail', title:'Workspace', record:true },
+    'oontu-incident':{ old:'oontu-service', tab:['oontu-service', 2], title:'Incident', record:true }
+  };
+  /* existing ids that keep their id but get the §5 label and icon */
+  const KEEP = { 'oontu-mywork':['My work', 'check'], 'oontu-team':['My team', 'users'], 'oontu-accounts':['Accounts', 'building'], 'oontu-revenue':['Pipeline', 'trending'], 'oontu-custops':['Onboarding & success', 'user'],
+    'oontu-service':['Tickets', 'chat'], 'oontu-subscriptions':['Subscriptions', 'refresh'], 'oontu-plans':['Plans & pricing', 'star'], 'oontu-audit':['Audit & security', 'eye'], 'oontu-integrity':['Integrity', 'shield'], 'oontu-settings':['Platform settings', 'cog'] };
+  const LAYOUT = [
+    ['', ['oontu-home']],
+    ['Work', ['oontu-mywork', 'oontu-approvals', 'oontu-team', 'oontu-reports']],
+    ['Customers', ['oontu-accounts', 'oontu-revenue', 'oontu-workspaces', 'oontu-custops']],
+    ['Service', ['oontu-service', 'oontu-incidents', 'oontu-announcements']],
+    ['Billing', ['oontu-subscriptions', 'oontu-invoices', 'oontu-plans', 'oontu-tax']],
+    ['Admin', ['oontu-people', 'oontu-audit', 'oontu-integrity', 'oontu-ai', 'oontu-controls', 'oontu-settings'], { fold:true }]
+  ];
+  /* old id → new id (and host tab) */
+  const REDIRECT = { 'oontu-dashboard':['oontu-home'], 'oontu-signups':['oontu-revenue', 'signups'], 'oontu-help':['oontu-workspaces', 'requests'], 'oontu-tenants':['oontu-workspaces', 'all'],
+    'oontu-tenant-detail':['oontu-workspace'], 'oontu-insights':['oontu-reports'], 'oontu-agents':['oontu-ai'], 'oontu-feature-controls':['oontu-controls'], 'oontu-notifications':['oontu-announcements'],
+    'oontu-platform-users':['oontu-people'], 'oontu-finance':['@finance'] };
+  window.O2_NAV = { NEW:NEW, LAYOUT:LAYOUT, REDIRECT:REDIRECT, KEEP:KEEP };
+  const NAVT = window.O2_NAV_TAB = { 'oontu-workspaces':'all', 'oontu-revenue':'pipeline' };
+  window.o2NavTarget = function(oldId){
+    const r = REDIRECT[oldId]; if(!r) return null;
+    if(r[0] === '@finance'){ const i = (UI.tab || {})['oontu-finance'] || 0; return { id:i === 0 ? 'oontu-approvals' : i === 5 ? 'oontu-tax' : 'oontu-invoices', tab:null }; }
+    return { id:r[0], tab:r[1] || null };
+  };
+
+  /* ---- one access table: a new id needs exactly what the screen it replaces needs ---- */
+  const hostAllowed = function(id){ const n = NEW[id]; if(n.host) return n.host.some(function(h){ return ACC[h[2]] && ACC[h[2]](); }); return ACC[n.old] ? ACC[n.old]() : false; };
+  Object.keys(NEW).forEach(function(id){ ACC[id] = function(){ return hostAllowed(id); }; });
+  const baseRevenueAcc = ACC['oontu-revenue'];
+  ACC['oontu-revenue'] = function(){ return baseRevenueAcc() || (on() && ACC['oontu-signups'] && ACC['oontu-signups']()); };
+  window.O2_NAV_ACCESS_NOTE = 'Each new id takes the permission of the screen it replaces; Pipeline also opens for someone who may only work sign-ups.';
+
+  /* ---- renderers for the new ids ---- */
+  const notAvail = function(){ return oDashShell([oPageHead({ title:'Not available', lede:'Your roles don’t include this area. Ask a platform administrator if you need it.' })]); };
+  const strip = function(id, tabs, cur){
+    return '<nav class="o2-host-tabs" aria-label="' + oEsc(NEW[id] ? NEW[id].label || id : 'Sections') + '">' + tabs.map(function(t){ return '<button type="button" class="o2-host-tab' + (t[0] === cur ? ' is-on' : '') + '" aria-current="' + (t[0] === cur ? 'page' : 'false') + '" onclick="o2NavTab(\'' + id + '\', \'' + t[0] + '\')">' + oEsc(t[1]) + '</button>'; }).join('') + '</nav>';
+  };
+  window.o2NavTab = function(id, tab){ NAVT[id] = tab; if(state.activeNav === id && typeof bosRedraw === 'function') bosRedraw(); else showView(id); };
+  const putStrip = function(html, s){ return /^\s*<div[^>]*>/.test(html) ? html.replace(/^(\s*<div[^>]*>)/, '$1' + s) : s + html; };
+  Object.keys(NEW).forEach(function(id){
+    const n = NEW[id];
+    RENDERERS[id] = function(){
+      if(state.role === 'oontu' && !hostAllowed(id)) return notAvail();
+      if(n.host){
+        const tabs = n.host.filter(function(h){ return ACC[h[2]] && ACC[h[2]](); });
+        let cur = tabs.find(function(h){ return h[0] === NAVT[id]; }) || tabs[0];
+        return putStrip(RENDERERS[cur[2]](), tabs.length > 1 ? strip(id, tabs, cur[0]) : '');
+      }
+      return RENDERERS[n.old]();
+    };
+    RENDERERS[id].__o2_1a = true;
+    PAGE_TITLES[id] = n.title;
+  });
+  /* Pipeline hosts Sign-ups until step 5 builds the tab */
+  const baseRevenue = RENDERERS['oontu-revenue'];
+  RENDERERS['oontu-revenue'] = function(){
+    if(!on() || state.role !== 'oontu' || o2On('5')) return baseRevenue.apply(this, arguments);   // step 5 builds the real tabs
+    const tabs = [['pipeline', 'Pipeline', 'oontu-revenue'], ['signups', 'Sign-ups', 'oontu-signups']].filter(function(h){ return h[0] === 'pipeline' ? baseRevenueAcc() : (ACC['oontu-signups'] && ACC['oontu-signups']()); });
+    if(!tabs.length) return notAvail();
+    const cur = tabs.find(function(h){ return h[0] === NAVT['oontu-revenue']; }) || tabs[0];
+    const html = cur[0] === 'pipeline' ? baseRevenue.apply(this, arguments) : RENDERERS['oontu-signups']();
+    return putStrip(html, tabs.length > 1 ? strip('oontu-revenue', tabs, cur[0]) : '');
+  };
+
+  /* ---- menu: built once, swapped by the switch ---- */
+  const OLD_NAV = NAV.oontu, OLD_DEFAULT = DEFAULT_VIEW.oontu;
+  const flat = []; (OLD_NAV || []).forEach(function(g){ (g.items || [g]).forEach(function(i){ flat.push(i); }); });
+  const itemFor = function(id){
+    const old = flat.find(function(i){ return i.id === id; });
+    if(NEW[id]) return { id:id, label:NEW[id].label, icon:NEW[id].icon };
+    const k = KEEP[id]; return old ? Object.assign({}, old, k ? { label:k[0], icon:k[1] } : {}) : (k ? { id:id, label:k[0], icon:k[1] } : null);
+  };
+  const NEW_NAV = LAYOUT.map(function(g){ return Object.assign({ group:g[0], items:g[1].map(itemFor).filter(Boolean) }, (g[2] || {}).fold ? { collapsible:true } : {}); });
+  window.O2_NEW_NAV = NEW_NAV;
+  const applyNav = function(){
+    NAV.oontu = on() ? NEW_NAV : OLD_NAV;
+    DEFAULT_VIEW.oontu = on() ? 'oontu-home' : OLD_DEFAULT;
+    try { if(state.role === 'oontu' && typeof renderSidebar === 'function' && document.getElementById('sidebar-nav')) renderSidebar(); } catch(e){ console.error(e); }
+  };
+  applyNav();
+
+  /* ---- home ---- */
+  const baseHome = window.bosHomeView;
+  window.bosHomeView = bosHomeView = function(){
+    if(!on() || state.role !== 'oontu') return baseHome.apply(this, arguments);
+    return canPlatform('platform-tenant', 'update') && ACC['oontu-home']() ? 'oontu-home' : 'oontu-mywork';
+  };
+
+  /* ---- redirects ---- */
+  const baseShow = window.showView;
+  window.showView = function(viewId){
+    if(on() && state.role === 'oontu'){
+      const tg = o2NavTarget(viewId);
+      if(tg){ if(tg.tab) NAVT[tg.id] = tg.tab; arguments[0] = viewId = tg.id; }
+      const n = NEW[viewId]; if(n && n.tab && UI.tab){ const cur = UI.tab[n.tab[0]]; if(viewId !== 'oontu-invoices' || cur == null || cur === 0 || cur === 5) UI.tab[n.tab[0]] = n.tab[1]; }
+    }
+    return baseShow.apply(this, arguments);
+  };
+  try { showView = window.showView; } catch(e){}
+  /* a change made on a workspace page redraws it (older code only redrew when the old id was active) */
+  const baseLog = window.logPlatformAudit;
+  window.logPlatformAudit = logPlatformAudit = function(){ const out = baseLog.apply(this, arguments); if(on() && state.activeNav === 'oontu-workspace') setTimeout(function(){ try { if(state.activeNav === 'oontu-workspace') bosRedraw(); } catch(e){} }, 0); return out; };
+
+  /* ---- the sign-in tools show the new screen names ---- */
+  if(typeof window.bosLoginDetails === 'function'){
+    const baseDetails = window.bosLoginDetails;
+    window.bosLoginDetails = function(u){
+      const out = baseDetails.apply(this, arguments);
+      if(!on() || !out) return out;
+      const prev = ACTIVE_PLATFORM_USER_ID;
+      try { ACTIVE_PLATFORM_USER_ID = u.id; out.sees = o2NavScreens().map(function(id){ const it = itemFor(id); return it ? it.label : id; }); if(out.lands) out.lands = (itemFor(bosHomeView()) || {}).label || out.lands; }
+      finally { ACTIVE_PLATFORM_USER_ID = prev; }
+      return out;
+    };
+  }
+  /* the menu ids the acting employee may open (switch on) */
+  window.o2NavScreens = function(){ const out = []; LAYOUT.forEach(function(g){ g[1].forEach(function(id){ const f = ACC[id]; if(f && f()) out.push(id); }); }); return out; };
+
+  /* ---- Settings › Platform: only its own sections ---- */
+  if(typeof SETTINGS_SECTIONS !== 'undefined') SETTINGS_SECTIONS.forEach(function(s){
+    if(s.group !== 'platform' || !s.go || s.__o2_1a) return;
+    const baseCan = s.can; s.__o2_1a = true;
+    s.can = function(){ if(on()) return false; return typeof baseCan === 'function' ? baseCan.apply(this, arguments) : true; };
+  });
+
+  o2OnSwitch(function(id){ if(id === '1a') applyNav(); });
+})();
+</script>
+<style id="o2-nav-style">
+.o2-host-tabs{ display:flex; flex-wrap:wrap; gap:4px; margin:0 0 16px; padding:4px; border:1px solid var(--n-200, #E6E5E0); border-radius:10px; background:#fff; width:max-content; max-width:100%; }
+.o2-host-tab{ height:32px; padding:0 14px; border:0; border-radius:8px; background:transparent; color:var(--n-700, #4B5563); font:inherit; font-size:13px; font-weight:500; cursor:pointer; }
+.o2-host-tab:hover{ background:var(--n-100, #F3F4F6); }
+.o2-host-tab.is-on{ background:var(--n-900, #111827); color:#fff; }
+.o2-host-tab:focus-visible{ outline:2px solid var(--focus, #2563EB); outline-offset:2px; }
+@media (prefers-reduced-motion: no-preference){ .o2-host-tab{ transition:background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); } }
+</style>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
