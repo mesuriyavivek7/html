@@ -70470,6 +70470,120 @@ function cfScopeHTML(){
   o2OnSwitch(function(id, on){ if(id === '0c' && on) linkSubs(); });
 })();
 </script>
+<script id="o2-invoice-view-script">
+/* ============================================================
+   O2 STEP 0d: ONE VISIBLE INVOICE MODEL, GRANDFATHERED PLANS (2026-11-26, billing step)
+   Switch 0d on:
+   - Platform screens and dialogs show tax-invoice numbers (OON/…) only. generateInvoiceForSubscription still creates its
+     internal PLATFORM_INVOICES row (linked by sourceRef / taxInvoiceNo); wherever an internal id would be shown as text,
+     the linked tax-invoice number is shown instead (attribute values and click handlers keep the internal id).
+   - isInvoiceOverdue reads the linked tax invoice: its due date (the internal row's due date when the tax invoice has
+     none) and its settlement (paid or cancelled is never overdue). The overview's overdue items read tax invoices.
+   - Legacy plans show "Grandfathered — not for sale" and are left out of the plan pickers (create workspace, change
+     plan, new proposal). Commands are not changed: existing records on a legacy plan keep working.
+   - The demo tenant stays on its plan (owner decision pending).
+   No record is created or changed by this step.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('0d'); };
+  const taxOf = function(inv){ return inv && inv.taxInvoiceNo && typeof bosTaxInvoice === 'function' ? bosTaxInvoice(inv.taxInvoiceNo) : (inv ? BOS.taxInvoices.find(function(t){ return t.sourceRef === inv.id && t.kind === 'invoice'; }) || null : null); };
+  window.o2TaxInvoiceOf = taxOf;
+  window.o2InvoiceLabel = function(invId){ const inv = typeof invoiceById === 'function' ? invoiceById(invId) : null, t = taxOf(inv); return t ? t.no : 'Invoice (tax number pending)'; };
+  /* text only: >…inv-12…< becomes >…OON/26-27/0007…<; attributes are left alone */
+  const mapText = function(html){
+    if(typeof html !== 'string' || html.indexOf('inv-') < 0) return html;
+    return html.replace(/>([^<]*)</g, function(m, text){ return text.indexOf('inv-') < 0 ? m : '>' + text.replace(/\binv-\d+\b/g, function(id){ return invoiceById(id) ? o2InvoiceLabel(id) : id; }) + '<'; });
+  };
+  window.o2MapInvoiceText = mapText;
+
+  /* ---- overdue reads the tax invoice ---- */
+  const baseOverdue = window.isInvoiceOverdue;
+  window.isInvoiceOverdue = isInvoiceOverdue = function(inv){
+    if(!on()) return baseOverdue.apply(this, arguments);
+    if(!inv || inv.status === 'void') return false;
+    const t = taxOf(inv);
+    if(!t) return baseOverdue.apply(this, arguments);
+    if(t.status === 'paid' || t.status === 'cancelled' || t.settlement === 'paid' || inv.status === 'paid') return false;
+    const due = t.dueDate || inv.dueDate; if(!due) return false;
+    return wsDay(Date.now()) >= String(due).slice(0, 10);
+  };
+  window.o2OverdueTaxInvoices = function(){
+    return PLATFORM_INVOICES.filter(function(inv){ return isInvoiceOverdue(inv); }).map(function(inv){ return { inv:inv, tax:taxOf(inv) }; }).filter(function(x){ return x.tax; });
+  };
+
+  /* ---- grandfathered plans ---- */
+  const isLegacy = function(p){ return !!(p && p.legacy); };
+  window.o2PlanForSale = function(p){ return p && p.status === 'active' && !p.legacy && !p.talkToUs; };
+  const stripLegacyOptions = function(html){
+    return html.replace(/<option value="([^"]+)"([^>]*)>([^<]*)<\/option>/g, function(m, id, attrs){ const p = planById(id); return p && isLegacy(p) && attrs.indexOf('selected') < 0 ? '' : m; });
+  };
+
+  /* ---- wrap every platform renderer (text mapping) and the specific places that list plans ---- */
+  const wrapped = {};
+  const wrapAll = function(){
+    Object.keys(RENDERERS).forEach(function(id){
+      if(id.indexOf('oontu-') !== 0 || (RENDERERS[id] && RENDERERS[id].__o2_0d)) return;
+      const base = RENDERERS[id]; if(typeof base !== 'function') return;
+      const w = function(){ let html = base.apply(this, arguments); if(!on()) return html; html = mapText(html); if(id === 'oontu-plans') html = labelPlans(html); return html; };
+      w.__o2_0d = true; RENDERERS[id] = w; wrapped[id] = true;
+    });
+  };
+  function labelPlans(html){
+    PLATFORM_PLANS.forEach(function(p){
+      if(!isLegacy(p)) return;
+      html = html.replace('<span class="text-zinc-400 text-xs block">' + p.id + '</span>', '<span class="text-zinc-400 text-xs block">' + p.id + '</span><span class="o2-gf">' + oBadge('neutral', 'Grandfathered — not for sale') + '</span>');
+    });
+    return html;
+  }
+  wrapAll(); window.addEventListener('load', wrapAll);
+  if(typeof window.bosDialog === 'function'){
+    const baseDialog = window.bosDialog;
+    window.bosDialog = bosDialog = function(title, body){
+      if(!on()) return baseDialog.apply(this, arguments);
+      const args = Array.prototype.slice.call(arguments); args[0] = typeof title === 'string' ? title.replace(/\binv-\d+\b/g, function(id){ return invoiceById(id) ? o2InvoiceLabel(id) : id; }) : title;
+      args[1] = stripLegacyOptions(mapText(String(body || '')));
+      return baseDialog.apply(this, args);
+    };
+  }
+  /* create workspace: legacy plans not offered; the default is the first plan for sale */
+  if(typeof window.ctSheetHTML === 'function'){
+    const baseCt = window.ctSheetHTML;
+    window.ctSheetHTML = ctSheetHTML = function(){ const html = baseCt.apply(this, arguments); return on() ? stripLegacyOptions(html) : html; };
+  }
+  if(typeof window.openCreateTenantModal === 'function'){
+    const baseOpen = window.openCreateTenantModal;
+    window.openCreateTenantModal = openCreateTenantModal = function(){
+      const out = baseOpen.apply(this, arguments);
+      if(on() && typeof ctSheet !== 'undefined' && ctSheet && isLegacy(planById(ctSheet.planId))){ const p = PLATFORM_PLANS.find(o2PlanForSale); ctSheet.planId = p ? p.id : ctSheet.planId; ctRender(); }
+      return out;
+    };
+  }
+  /* subscription page: change-plan picker (the current plan stays shown as selected) */
+  if(typeof window.oontuSubDetailBodyHTML === 'function'){
+    const baseSub = window.oontuSubDetailBodyHTML;
+    window.oontuSubDetailBodyHTML = oontuSubDetailBodyHTML = function(){ const html = baseSub.apply(this, arguments); return on() ? stripLegacyOptions(mapText(html)) : html; };
+  }
+
+  /* ---- overview: overdue items come from tax invoices (number, total, due date) ---- */
+  const baseDash = RENDERERS['oontu-dashboard'];
+  if(typeof baseDash === 'function'){
+    const w = function(){
+      if(!on()) return baseDash.apply(this, arguments);
+      const realAttn = window.oAttentionCard;
+      window.oAttentionCard = function(items, opts){
+        const keep = (items || []).filter(function(it){ return !(it && it.icon === 'money' && /^Payment overdue/.test(it.title || '')); });
+        const mine = o2OverdueTaxInvoices().map(function(x){ const t = tenantById(x.inv.tenantId); return { tone:'danger', icon:'money', title:'Payment overdue · ' + (t ? t.name : x.inv.tenantId), meta:x.tax.no + ' · ' + x.tax.currency + ' ' + Number(x.tax.total).toLocaleString() + ' · due ' + String(x.tax.dueDate || x.inv.dueDate).slice(0, 10), cta:'View', onclick:"showView('oontu-subscriptions')" }; });
+        return realAttn.call(this, mine.concat(keep), opts);
+      };
+      try { return mapText(baseDash.apply(this, arguments)); } finally { window.oAttentionCard = realAttn; }
+    };
+    w.__o2_0d = true; RENDERERS['oontu-dashboard'] = w;
+  }
+})();
+</script>
+<style id="o2-invoice-view-style">
+.o2-gf{ display:block; margin-top:4px; }
+</style>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
