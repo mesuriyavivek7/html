@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-26 21:33 IST",
-    "current":  "0c",
+    "updated":  "2026-11-26 21:44 IST",
+    "current":  "0d",
     "partA":  [
                   {
                       "id":  "0a",
@@ -65,11 +65,11 @@
                   {
                       "id":  "0c",
                       "name":  "Billing customer",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "8/8 (o2-billing-customer); regressions 180/180 off, 156/156 on",
+                      "tag":  "o2-step-0c",
+                      "what":  "A billing customer per paying account: invoices freeze buyer details; market locked by the first invoice; tax unchanged.",
+                      "see":  "Switch 0c · Meera Krishnan or a Finance login · Accounts › Northstar Talent Partners › Billing customer card › Edit billing details or Change market"
                   },
                   {
                       "id":  "0d",
@@ -326,6 +326,18 @@
                       [
                           "Policy data vs switch",
                           "PLATFORM_SETTINGS.policy and tenant.internal are always present (additive, harmless); switches only change screens and code paths."
+                      ],
+                      [
+                          "0c wrap point",
+                          "bosTaxPartyOf is wrapped (it builds the party bosTaxSegment receives); bosTaxSegment itself is untouched."
+                      ],
+                      [
+                          "0c snapshot hook",
+                          "Older paths issue invoices through a private function, so the buyer snapshot hooks pushes onto the invoice ledger after page load."
+                      ],
+                      [
+                          "International currency",
+                          "Billing customers outside India bill in USD (plans are priced only in INR and USD)."
                       ]
                   ],
     "suite":  {

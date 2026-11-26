@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-0c
+0d
 
 ## Steps
 
@@ -16,6 +16,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 | --- | --- | --- | --- | --- |
 | 0a | Done | o2-step-0a | o2-persistence 14/14 | committed at start |
 | 0b | Done | o2-step-0b | o2-metrics 10/10; regressions green off/on | o2-metrics-script; data always present, screens behind switch |
+| 0c | Done | o2-step-0c | o2-billing-customer 8/8; regressions green off/on | wraps bosTaxPartyOf (not bosTaxSegment: it receives a party); snapshot via BOS.taxInvoices.push hook |
 
 ## How to run tests (this machine)
 
