@@ -71026,6 +71026,159 @@ function cfScopeHTML(){
 <style id="o2-search-style">
 .o2-search-group{ margin:8px 12px 2px; font-size:11px; font-weight:600; letter-spacing:.02em; color:var(--n-500, #6B7280); }
 </style>
+<style id="o2-home-style">
+.o2-home-charts{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; }
+@media (max-width:900px){ .o2-home-charts{ grid-template-columns:minmax(0, 1fr); } }
+.o2-chart{ padding:16px 20px 18px; }
+.o2-chart h2{ margin:0; font-size:16px; font-weight:600; }
+.o2-chart p.o2-chart__sub{ margin:2px 0 10px; font-size:12px; color:var(--n-700, #4B5563); }
+.o2-chart svg{ width:100%; height:auto; display:block; }
+.o2-chart .o2-bar{ cursor:pointer; }
+.o2-chart .o2-bar:hover, .o2-chart .o2-bar:focus{ opacity:.8; outline:none; }
+.o2-chart text{ font-size:10px; fill:var(--n-700, #4B5563); font-variant-numeric:tabular-nums; }
+.o2-illus{ display:inline-block; margin-left:6px; padding:0 6px; border-radius:6px; background:var(--n-100, #F3F4F6); color:var(--n-700, #4B5563); font-size:11px; font-weight:500; vertical-align:middle; }
+.o2-legend{ display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; font-size:11px; color:var(--n-700, #4B5563); }
+.o2-legend i{ display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
+.o2-activity li{ display:flex; justify-content:space-between; gap:12px; padding:8px 20px; border-top:1px solid var(--n-100, #F3F4F6); font-size:13px; }
+.o2-activity li small{ color:var(--n-500, #6B7280); white-space:nowrap; }
+.o2-activity ul{ list-style:none; margin:0; padding:0 0 6px; }
+.o2-kpi-side{ font-size:12px; color:var(--n-700, #4B5563); }
+.o2-home-line{ margin:-8px 0 16px; font-size:14px; color:var(--n-700, #4B5563); }
+</style>
+<script id="o2-home-script">
+/* ============================================================
+   O2 STEP 2: HOME (COMMAND CENTER) (2026-11-26)
+   Switch 2 on: oontu-home (for platform-tenant:update; others land on My work) is a new page:
+   - head: date · Oontu platform · "N things need the platform team"; Create workspace for those who may;
+   - attention queue, ranked 1–9 as in the architecture doc (each only if the viewer can open its target), at most 8 rows
+     with "see all" when there are more;
+   - KPI strip of six (§3.8): MRR per currency, paying workspaces, trials ending (7 d), at-risk MRR (lapsed and scheduled
+     churn beside it, never added), open P1/P2 tickets, approvals waiting; each opens its list;
+   - four hand-drawn SVG charts (MRR movement, new vs lost paying workspaces, trial conversion, ticket backlog + SLA
+     attainment), labelled "Illustrative data" where there is no history; every mark opens its list and has a hover value;
+   - recent activity from BOS.events.
+   No chart library. The old overview stays reachable with the switch off.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('2'); };
+  const E = function(s){ return oEsc(s == null ? '' : s); };
+  const DAY = 864e5, NOWF = function(){ return typeof bosNow === 'function' ? bosNow() : Date.now(); };
+  const ACC = window.BOS_VIEW_ACCESS;
+  const canOpen = function(id){ const f = ACC[id]; return !f || f(); };
+  const ageText = function(ms){ const d = Math.floor(ms / DAY); if(d >= 1) return d + (d === 1 ? ' day' : ' days'); const h = Math.floor(ms / 36e5); return h ? h + ' h' : 'under an hour'; };
+  const tenantName = function(tid){ const t = tenantById(tid); return t ? t.name : tid; };
+  const isInternal = function(tid){ return typeof o2IsInternal === 'function' && o2IsInternal(tid); };
+  const fmtBy = function(by){ return typeof o2MoneyByCurrency === 'function' ? o2MoneyByCurrency(by) : Object.keys(by).map(function(k){ return k + ' ' + Math.round(by[k]); }).join(' · '); };
+  const go = function(view, extra){ return (extra || '') + "showView('" + view + "')"; };
+
+  /* ---------- KPIs (§3.8), each computed from records ---------- */
+  window.o2Kpis = function(){
+    const subs = PLATFORM_SUBSCRIPTIONS, now = NOWF();
+    const current = subs.filter(function(s){ const t = tenantById(s.tenantId); return !t || !t.subscriptionId || t.subscriptionId === s.id; }).filter(function(s){ return !isInternal(s.tenantId); });
+    const mrr = typeof o2MrrTotals === 'function' ? o2MrrTotals().byCurrency : {};
+    const life = function(t){ return typeof o2Lifecycle === 'function' ? o2Lifecycle(t) : t.status; };
+    const paying = PLATFORM_TENANTS.filter(function(t){ if(isInternal(t.id) || life(t) !== 'active') return false; const s = subscriptionForTenant(t.id); return s && ['active', 'past_due'].indexOf(o2SubStatus(s)) > -1 && o2Mrr(s) > 0; });
+    const today = new Date(now); today.setHours(0, 0, 0, 0); const end7 = today.getTime() + 7 * DAY;
+    const trials = current.filter(function(s){ if(o2SubStatus(s) !== 'trialing' || !s.renewalDate) return false; const e = new Date(s.renewalDate + 'T00:00:00').getTime(); return e >= today.getTime() && e < end7; });
+    const activated = trials.filter(function(s){ const ob = (BOS.onboardings || []).find(function(o){ return o.tenantId === s.tenantId; }); return ob && typeof bosActivation === 'function' && bosActivation(ob).activated; });
+    const sumBy = function(list){ const by = {}; list.forEach(function(s){ const v = o2Mrr(Object.assign({}, s, { status:'active', o2Status:'active', readOnly:false })); if(v > 0) by[s.currency] = Math.round(((by[s.currency] || 0) + v) * 100) / 100; }); return by; };
+    const atRisk = sumBy(current.filter(function(s){ return o2SubStatus(s) === 'past_due'; }));
+    const lapsed = sumBy(current.filter(function(s){ return o2SubStatus(s) === 'unpaid'; }));
+    const churn = sumBy(current.filter(function(s){ return s.cancelAt && new Date(s.cancelAt).getTime() <= now + 30 * DAY && ['active', 'past_due'].indexOf(o2SubStatus(s)) > -1; }));
+    const open12 = BOS.tickets.filter(function(t){ return !/resolved|closed/.test(t.status) && (t.priority === 'P1' || t.priority === 'P2'); });
+    const pastSla = open12.filter(function(t){ const s = bosSlaState(t); return s.breached && !s.paused; });
+    const u = currentPlatformUser();
+    const waiting = BOS.approvals.filter(function(a){ return a.status === 'pending' && bosCanDecide(a, u).ok; }).sort(function(a, b){ return new Date(a.requestedAt) - new Date(b.requestedAt); });
+    return { mrr:mrr, paying:paying, trials:trials, activated:activated, atRisk:atRisk, lapsed:lapsed, churn:churn, open12:open12, pastSla:pastSla, waiting:waiting };
+  };
+
+  /* ---------- attention queue (ranks 1–9) ---------- */
+  window.o2Attention = function(){
+    const out = [], now = NOWF(), u = currentPlatformUser();
+    const add = function(rank, o){ if(o.view && !canOpen(o.view)) return; out.push(Object.assign({ rank:rank }, o)); };
+    (BOS.incidents || []).filter(function(i){ return /SEV ?[12]/.test(i.severity) && !/resolved|reviewed|closed/.test(i.status); }).sort(function(a, b){ return String(a.severity).localeCompare(String(b.severity)); }).forEach(function(i){ add(1, { tone:'danger', icon:'zap', title:i.severity + ' incident · ' + i.title, meta:'Open for ' + ageText(now - new Date(i.startedAt).getTime()), cta:'Open incident', view:'oontu-service', onclick:"bosTab('oontu-service', 2); showView('oontu-service')" }); });
+    (BOS.exceptions || []).filter(function(e){ return e.rule === 'access-control' && ['detected', 'assigned', 'review', 'confirmed'].indexOf(e.status) > -1; }).forEach(function(e){ add(2, { tone:'danger', icon:'shield', title:'Security finding · ' + e.title, meta:'Found ' + ageText(now - new Date(e.detectedAt || e.at || now).getTime()) + ' ago', cta:'Review', view:'oontu-integrity', onclick:go('oontu-integrity') }); });
+    BOS.tickets.filter(function(t){ return !/resolved|closed/.test(t.status) && bosSlaState(t).breached && !bosSlaState(t).paused; }).forEach(function(t){ const a = t.accountId && BOS.accounts.find(function(x){ return x.id === t.accountId; }); add(3, { tone:'danger', icon:'chat', title:'SLA breached · ' + t.id + ' ' + t.subject, meta:(a ? a.name + ' · ' : '') + t.priority, cta:'Open queue', view:'oontu-service', onclick:"bosOpen('ticket','" + t.id + "')" }); });
+    BOS.approvals.filter(function(a){ return a.status === 'pending' && bosCanDecide(a, u).ok; }).sort(function(a, b){ return new Date(a.requestedAt) - new Date(b.requestedAt); }).forEach(function(a){ add(4, { tone:'warn', icon:'check', title:'Approval waiting · ' + a.summary, meta:'Asked ' + ageText(now - new Date(a.requestedAt).getTime()) + ' ago by ' + bosName(a.requestedBy), cta:'Decide', view:null, onclick:"bosApprovalDialog('" + a.id + "')" }); });
+    PLATFORM_SUBSCRIPTIONS.filter(function(s){ if(isInternal(s.tenantId)) return false; const st = o2SubStatus(s); if(st !== 'past_due') return false; return true; }).forEach(function(s){
+      const since = s.dunning && s.dunning.since ? new Date(s.dunning.since + 'T00:00:00').getTime() : now, ro = since + (o2Policy('readOnlyAfterDays') || 7) * DAY, left = Math.ceil((ro - now) / DAY);
+      add(5, { tone:'danger', icon:'refresh', title:'Payment failed · ' + tenantName(s.tenantId), meta:left <= 3 ? 'Read-only in ' + Math.max(0, left) + (left === 1 ? ' day' : ' days') : (s.dunning && s.dunning.reason) || 'Renewal not paid', cta:'Open subscription', view:'oontu-subscription-detail', onclick:"openOontuSubDetail('" + s.id + "')" });
+    });
+    (typeof bosReconcile === 'function' ? bosReconcile() : []).forEach(function(i){ add(6, { tone:'warn', icon:'doc', title:'Reconciliation · ' + i.title, meta:(i.evidence || []).join(' · ').slice(0, 90), cta:'Open reconciliation', view:'oontu-finance', onclick:"bosTab('oontu-finance', 3); showView('oontu-finance')" }); });
+    o2Kpis().trials.forEach(function(s){ const ob = (BOS.onboardings || []).find(function(o){ return o.tenantId === s.tenantId; }), act = ob && typeof bosActivation === 'function' ? bosActivation(ob) : null; if(act && act.activated) return; add(7, { tone:'warn', icon:'clock', title:'Trial ending, low activation · ' + tenantName(s.tenantId), meta:'Ends ' + s.renewalDate + (act ? ' · missing ' + act.missing.join(', ') : ' · no onboarding yet'), cta:'Follow up', view:'oontu-subscriptions', onclick:go('oontu-subscriptions') }); });
+    SIGNUP_LEADS.filter(function(l){ return l.status === 'in_progress' && now - new Date(l.lastActivityAt || l.createdAt).getTime() > DAY; }).forEach(function(l){ add(8, { tone:'warn', icon:'phone', title:'Sign-up stuck · ' + (l.company || l.name || l.email), meta:'No activity for ' + ageText(now - new Date(l.lastActivityAt || l.createdAt).getTime()), cta:'Assign', view:'oontu-signups', onclick:go('oontu-signups') }); });
+    (typeof bosRenewals === 'function' ? bosRenewals() : []).filter(function(r){ return r.days <= 60 && (!r.opp || !r.opp.ownerId); }).forEach(function(r){ add(9, { tone:'neutral', icon:'calendar', title:'Renewal without an owner · ' + r.account.name, meta:'Renews in ' + r.days + ' days · health ' + (r.health && r.health.band || '—'), cta:'Assign', view:'oontu-accounts', onclick:"bosOpen('account','" + r.account.id + "')" }); });
+    return out.sort(function(a, b){ return a.rank - b.rank; });
+  };
+
+  /* ---------- charts (SVG, hand-drawn) ---------- */
+  const MONTHS = function(n){ const out = [], d = new Date(NOWF()); d.setDate(1); for(let i = n - 1; i >= 0; i--){ const m = new Date(d.getFullYear(), d.getMonth() - i, 1); out.push(m.toLocaleDateString('en-GB', { month:'short' })); } return out; };
+  const bars = function(o){
+    const W = 320, H = 150, P = 24, n = o.series[0].values.length, max = Math.max(1, Math.max.apply(null, o.series.reduce(function(a, s){ return a.concat(s.values.map(Math.abs)); }, [])));
+    const bw = (W - P * 2) / n, inner = bw * 0.7 / o.series.length;
+    let marks = '';
+    o.series.forEach(function(s, si){ s.values.forEach(function(v, i){
+      const h = Math.max(1, Math.abs(v) / max * (H - P * 2)), x = P + i * bw + bw * 0.15 + si * inner, y = H - P - h;
+      marks += '<rect class="o2-bar" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + inner.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="2" fill="' + s.color + '" tabindex="0" role="button" aria-label="' + E(s.name + ' ' + o.labels[i] + ': ' + o.fmt(v)) + '" onclick="' + o.onclick + '"><title>' + E(s.name + ' · ' + o.labels[i] + ': ' + o.fmt(v)) + '</title></rect>';
+    }); });
+    if(o.line){ const pts = o.line.values.map(function(v, i){ return (P + i * bw + bw / 2).toFixed(1) + ',' + (H - P - v / 100 * (H - P * 2)).toFixed(1); }).join(' '); marks += '<polyline points="' + pts + '" fill="none" stroke="' + o.line.color + '" stroke-width="2"><title>' + E(o.line.name) + '</title></polyline>' + o.line.values.map(function(v, i){ return '<circle cx="' + (P + i * bw + bw / 2).toFixed(1) + '" cy="' + (H - P - v / 100 * (H - P * 2)).toFixed(1) + '" r="3" fill="' + o.line.color + '" tabindex="0" class="o2-bar" onclick="' + o.onclick + '" aria-label="' + E(o.line.name + ' ' + o.labels[i] + ': ' + v + '%') + '"><title>' + E(o.line.name + ' · ' + o.labels[i] + ': ' + v + '%') + '</title></circle>'; }).join(''); }
+    const axis = o.labels.map(function(l, i){ return '<text x="' + (P + i * bw + bw / 2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + E(l) + '</text>'; }).join('');
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + E(o.aria) + '"><line x1="' + P + '" y1="' + (H - P) + '" x2="' + (W - P) + '" y2="' + (H - P) + '" stroke="#D9D9D4"/>' + marks + axis + '</svg>' +
+      '<div class="o2-legend">' + o.series.map(function(s){ return '<span><i style="background:' + s.color + '"></i>' + E(s.name) + '</span>'; }).join('') + (o.line ? '<span><i style="background:' + o.line.color + '"></i>' + E(o.line.name) + '</span>' : '') + '</div>';
+  };
+  const chartCard = function(id, title, sub, illus, body){ return '<section class="o-card o2-chart" id="' + id + '" aria-labelledby="' + id + '-h"><h2 id="' + id + '-h">' + E(title) + (illus ? '<span class="o2-illus">Illustrative data</span>' : '') + '</h2><p class="o2-chart__sub">' + E(sub) + '</p>' + body + '</section>'; };
+  /* illustrative series are fixed numbers labelled as such; the last point is today's real value where one exists */
+  window.o2HomeCharts = function(k){
+    const L = MONTHS(6), cur = Object.keys(k.mrr)[0] || 'INR', realMrr = k.mrr[cur] || 0;
+    const hasHistory = !!(BOS.mrrSnapshots && BOS.mrrSnapshots.length >= 2);
+    const mrrNew = [12, 18, 9, 22, 15, 19], mrrChurn = [4, 6, 3, 5, 7, 4];
+    const newWs = [2, 3, 1, 4, 2, 3], lostWs = [0, 1, 0, 1, 1, 0];
+    const conv = [38, 42, 35, 44, 40, 46];
+    const backlog = [14, 11, 16, 12, 9, Math.max(0, BOS.tickets.filter(function(t){ return !/resolved|closed/.test(t.status); }).length)], sla = [88, 91, 84, 90, 93, 0];
+    const wk = BOS.tickets.filter(function(t){ return /resolved|closed/.test(t.status) && t.resolvedAt && NOWF() - new Date(t.resolvedAt).getTime() < 7 * DAY; });
+    sla[5] = wk.length ? Math.round(wk.filter(function(t){ return !bosSlaState(t).resolveBreached; }).length * 100 / wk.length) : sla[4];
+    return '<div class="o2-home-charts">' +
+      chartCard('o2-ch-mrr', 'MRR movement', 'New and expansion vs contraction and churn, ' + cur + ' thousands; today ' + cur + ' ' + Math.round(realMrr).toLocaleString(), !hasHistory, bars({ labels:L, series:[{ name:'New + expansion', color:'#1D4ED8', values:mrrNew }, { name:'Contraction + churn', color:'#94A3B8', values:mrrChurn }], fmt:function(v){ return cur + ' ' + v + 'k'; }, onclick:"showView('oontu-subscriptions')", aria:'MRR movement by month' })) +
+      chartCard('o2-ch-ws', 'New vs lost paying workspaces', 'Paying now: ' + k.paying.length, true, bars({ labels:L, series:[{ name:'New', color:'#2563EB', values:newWs }, { name:'Lost', color:'#9CA3AF', values:lostWs }], fmt:function(v){ return v + (v === 1 ? ' workspace' : ' workspaces'); }, onclick:"showView('oontu-tenants')", aria:'New and lost paying workspaces by month' })) +
+      chartCard('o2-ch-trial', 'Trial conversion', 'Monthly cohorts, shown when the cohort has matured', true, bars({ labels:L, series:[{ name:'Converted %', color:'#7C3AED', values:conv }], fmt:function(v){ return v + '%'; }, onclick:"showView('oontu-subscriptions')", aria:'Trial conversion by monthly cohort' })) +
+      chartCard('o2-ch-tk', 'Ticket backlog and SLA attainment', 'Open tickets now: ' + backlog[5] + ' · SLA this week ' + sla[5] + '%', true, bars({ labels:L.map(function(m, i){ return i === 5 ? 'Now' : m; }), series:[{ name:'Open tickets', color:'#0F766E', values:backlog }], line:{ name:'SLA attainment %', color:'#7C3AED', values:sla }, fmt:function(v){ return v + ' open'; }, onclick:"showView('oontu-service')", aria:'Ticket backlog and SLA attainment by month' })) +
+    '</div>';
+  };
+
+  window.o2HomeHTML = function(){
+    const k = o2Kpis(), att = o2Attention(), shown = att.slice(0, 8);
+    const items = shown.map(function(a){ return { tone:a.tone, icon:a.icon, title:a.title, meta:a.meta, cta:a.cta, onclick:a.onclick }; });
+    const kpi = [];
+    const add = function(view, card){ if(!view || canOpen(view)) kpi.push(card); };
+    add('oontu-subscriptions', { label:'MRR', value:fmtBy(k.mrr), note:'Per currency, before tax, not converted', onclick:"showView('oontu-subscriptions')" });
+    add('oontu-tenants', { label:'Paying workspaces', value:String(k.paying.length), note:'Active, paying, not internal', onclick:"showView('oontu-tenants')" });
+    add('oontu-subscriptions', { label:'Trials ending (7 days)', value:String(k.trials.length), note:k.trials.length ? Math.round(k.activated.length * 100 / k.trials.length) + '% activated' : 'None this week', onclick:"showView('oontu-subscriptions')" });
+    add('oontu-subscriptions', { label:'At-risk MRR', value:fmtBy(k.atRisk), note:'Lapsed ' + fmtBy(k.lapsed) + ' · scheduled churn ' + fmtBy(k.churn) + ' (shown beside, not added)', onclick:"showView('oontu-subscriptions')" });
+    add('oontu-service', { label:'Open P1/P2 tickets', value:String(k.open12.length), note:k.pastSla.length ? k.pastSla.length + ' past SLA now' : 'None past SLA', onclick:"showView('oontu-service')" });
+    add(null, { label:'Approvals waiting', value:String(k.waiting.length), note:k.waiting.length ? 'Oldest ' + ageText(NOWF() - new Date(k.waiting[0].requestedAt).getTime()) : 'None waiting', onclick:o2On('1b') ? "showView('oontu-approvals')" : "bosTab('oontu-finance', 0); showView('oontu-finance')" });
+    const ev = (BOS.events || []).slice(-8).reverse();
+    const activity = '<section class="o-card o2-activity" aria-labelledby="o2-act-h"><div class="o-card__head"><h2 class="o-card__title" id="o2-act-h">Recent activity</h2><span class="o-card__sub">From the platform’s event log</span></div>' + (ev.length ? '<ul>' + ev.map(function(e){ return '<li><span>' + E(e.name.replace(/[.-]/g, ' ')) + (e.ref ? ' · ' + E(e.ref) : '') + '</span><small>' + E(bosName(String(e.actor || '').replace(/^agent:/, '')) || e.actor) + ' · ' + E(new Date(e.at).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })) + '</small></li>'; }).join('') + '</ul>' : oEmpty('clock', 'Nothing has happened yet today.')) + '</section>';
+    return oDashShell([
+      oPageHead({ ctx:oDateLine() + ' · Oontu platform', title:'Home', lede:att.length ? oPlural(att.length, 'thing') + ' need the platform team.' : 'Nothing needs the platform team right now.', actions:canPlatform('platform-tenant', 'create') ? [{ label:'Create workspace', icon:'plus', primary:true, onclick:"showView('oontu-tenants'); openCreateTenantModal()" }] : [] }),
+      '<p class="o2-home-line">' + E(oDateLine() + ' · Oontu platform · ' + (att.length ? oPlural(att.length, 'thing') + ' need the platform team.' : 'Nothing needs the platform team right now.')) + '</p>' + '<div class="o-cols" style="grid-template-columns:minmax(0,1fr)">' + oAttentionCard(items, { id:'o2-home-att', limit:8, empty:'Nothing needs the platform team right now.', emptyAction:['Open workspaces', "showView('oontu-tenants')"] }) + (att.length > 8 ? '<p class="o2-kpi-side" style="margin:6px 4px 0"><button type="button" class="o-btn o-btn--ghost" onclick="o2HomeSeeAll()">See all ' + att.length + '</button></p>' : '') + '</div>',
+      oNumbers(kpi),
+      o2HomeCharts(k),
+      activity
+    ]);
+  };
+  window.o2HomeSeeAll = function(){ bosDialog('Everything that needs the platform team', '<ul class="bos-list">' + o2Attention().map(function(a){ return '<li><div><b>' + E(a.title) + '</b><small>' + E(a.meta) + '</small></div><button type="button" class="o-btn" onclick="bosDialogClose(); ' + a.onclick.replace(/"/g, '&quot;') + '">' + E(a.cta) + '</button></li>'; }).join('') + '</ul>', '', ''); };
+
+  const baseHome = RENDERERS['oontu-home'];
+  RENDERERS['oontu-home'] = function(){
+    if(!on()) return baseHome ? baseHome.apply(this, arguments) : RENDERERS['oontu-dashboard']();
+    if(state.role === 'oontu' && !canPlatform('platform-tenant', 'update')) return oDashShell([oPageHead({ title:'Not available', lede:'Home is for platform operations. Your work is in My work.' })]);
+    return o2HomeHTML();
+  };
+  /* the old overview id opens the new Home too when only switch 2 is on */
+  const baseDash = RENDERERS['oontu-dashboard'];
+  RENDERERS['oontu-dashboard'] = function(){ if(on() && !o2On('1a') && state.role === 'oontu' && canPlatform('platform-tenant', 'update')) return o2HomeHTML(); return baseDash.apply(this, arguments); };
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
