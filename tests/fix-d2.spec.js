@@ -92,6 +92,24 @@
       ok(!kairoChatOpen && !q('#kairo-chat-panel'), 'Esc closed it');
     });
 
+    /* Step 4 polish (26 Nov 2026) */
+    await t('Home numbers on Northstar: Placements says its change in words (“1 fewer than last month”), never a bare number; “people in guarantee”, never “persons”', async function(){
+      demoAct(RECRUITER_ROSTER.find(function(u){ return u.name === 'Priya Sharma'; }).id); renderSidebar(); var keep = dashDateFilter, bad = [];
+      ['last7', 'month', 'week', 'last30', 'quarter'].forEach(function(f){ dashDateFilter = f; showView(homeForMe()); var cell = [].slice.call(document.querySelectorAll('#main-content .bh-stat')).find(function(c){ return /Placements/.test(c.textContent); });
+        if(!cell){ bad.push(f + ': no Placements cell'); return; } var a = cell.querySelector('.bh-arrow'); if(a && !/^(\d+ (more|fewer) than (last (week|month|quarter)|yesterday|the week before|the 30 days before)|Same as .+)$/.test(a.textContent.trim())) bad.push(f + ': “' + a.textContent.trim() + '”');
+        if(/persons/.test(cell.textContent) || !/\d+ (person|people) in guarantee/.test(cell.textContent)) bad.push(f + ': ' + cell.textContent.replace(/\s+/g, ' ')); });
+      dashDateFilter = keep; ok(!bad.length, bad.join(' | ')); ok(!/persons/.test(main()), 'no “persons” on Home');
+    });
+    await t('at 390 width, a toast sits above the Kairo message box while the panel is open, and back at the bottom once it closes', async function(){
+      var fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:844px;border:0;z-index:-1;opacity:0'; fr.src = location.href.split('#')[0]; document.body.appendChild(fr);
+      for(var i = 0; i < 200 && !(fr.contentWindow && fr.contentWindow.kaAsk && fr.contentWindow.document.readyState === 'complete'); i++) await sleep(50);
+      await sleep(400); var w = fr.contentWindow, d = w.document; d.getElementById('onboarding').classList.add('hidden'); w.eval("state.role = 'admin'; enterApp(); KA.delay = 0;"); await sleep(100);
+      w.kaAsk('What should I do first?'); await sleep(150); w.toast('6 approvals need your attention. Open Approvals to see them.'); await sleep(150);
+      var t1 = d.querySelector('#toast-container .app-toast').getBoundingClientRect(), f = d.querySelector('.ka-form').getBoundingClientRect(), inp = d.querySelector('.ka-form input').getBoundingClientRect();
+      var res = [t1.bottom, f.top, inp.top]; w.closeKairoChat(); await sleep(100); w.toast('Saved'); await sleep(100); var t2 = d.querySelector('#toast-container .app-toast').getBoundingClientRect(); fr.remove();
+      ok(res[0] <= res[1], 'the toast ends at ' + Math.round(res[0]) + ', the message box starts at ' + Math.round(res[1])); ok(t2.bottom > 800, 'without the panel, the toast is back at the bottom: ' + Math.round(t2.bottom));
+    });
+
     await t('F1 a fresh sign-up starts empty: every count 0, no sample names on Home, Jobs, Clients, Candidates, Approvals or Inbox; Inbox only Kairo’s welcome', async function(){
       var seed = CANDIDATES.map(function(c){ return c.name; }).concat(CLIENTS.map(function(c){ return c.name; }), JOBS.map(function(j){ return j.title; }), RECRUITER_ROSTER.map(function(r){ return r.name; })).filter(function(n){ return n && n.length > 3; });
       await toSignIn(); authSwitchIntent('signup'); await sleep(60);
@@ -118,6 +136,10 @@
       var counts = [].map.call(document.querySelectorAll('#sidebar .nav-item'), function(n){ var c = (n.textContent.match(/(\d+)\s*$/) || [])[1]; return c && c !== '0' && ['li-uni-box', 'intelligence'].indexOf(n.getAttribute('data-nav')) < 0 ? n.getAttribute('data-nav') + '=' + c : ''; }).filter(Boolean);
       ok(!counts.length, 'sidebar counts are 0: ' + counts.join(', '));
     });
+    await t('the new workspace’s Home says ₹0 (not ₹0.0L) and “0 people in guarantee”; its Inbox says 0 of 4 channels linked', async function(){
+      showView(homeForMe()); var tx = main(); ok(!/₹0\.0L/.test(tx), 'no ₹0.0L: ' + (tx.match(/.{30}₹0\.0L.{20}/) || [''])[0]); ok(/Revenue earned\s*₹0\b/.test(tx), 'Revenue earned ₹0'); ok(/0 people in guarantee/.test(tx) && !/persons/.test(tx), 'people in guarantee');
+      showView('li-uni-box'); ok(/0 of 4 channels linked/.test(main()), 'Inbox: ' + (main().match(/\d+ of 4 channels linked/) || ['none'])[0]);
+    });
 
     await t('F6 Vistaar: Home within 3 s while history loads, Reports in under 2 s; F7 the Recruiter Manager’s To do lists his team’s work', async function(){
       var t0 = performance.now(), firstAt = null, done = false;
@@ -133,5 +155,6 @@
 
     var pre = document.createElement('pre'); pre.id = 'auth-test-results'; pre.textContent = JSON.stringify(results); document.body.appendChild(pre);
   }
-  window.addEventListener('load', function(){ setTimeout(function(){ run().catch(function(e){ results.push({ name:'Runner', pass:false, error:String(e && e.stack || e) }); var pre = document.createElement('pre'); pre.id = 'auth-test-results'; pre.textContent = JSON.stringify(results); document.body.appendChild(pre); }); }, 300); });
+  window.addEventListener('load', function(){ if(window.frameElement) return;   /* the 390 check loads this page in a frame: only the outer page runs the tests */
+    setTimeout(function(){ run().catch(function(e){ results.push({ name:'Runner', pass:false, error:String(e && e.stack || e) }); var pre = document.createElement('pre'); pre.id = 'auth-test-results'; pre.textContent = JSON.stringify(results); document.body.appendChild(pre); }); }, 300); });
 })();

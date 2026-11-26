@@ -127,6 +127,37 @@
       as('Priya Sharma'); showView('settings'); ok(/invite a teammate/.test(kaStarters().join(' ')), 'Settings starters are how-tos'); showView('client-management'); ok(/clients owe feedback/.test(kaStarters().join(' ')), 'Clients starters fit Clients'); showView('dashboard');
     });
 
+    /* Step 4 polish (26 Nov 2026): wording, plurals and search, checked on the built Northstar demo (last: it replaces the data). */
+    await t('a skill in a search matches the person’s own skills or title, never a job’s: a QA Engineer on a Java job is not a Java developer, and gets no “Java ✓”', async function(){
+      as('Priya Sharma'); var javaJob = JOBS.find(function(j){ return (j.skills || []).indexOf('Java') > -1; }); ok(javaJob, 'a Java job');
+      var qa = { id:9990901, name:'Quinn Arora', role:'QA Engineer', skills:['Selenium','API testing'], exp:'4 yrs', loc:'Bengaluru, KA, IN', notice:'15 Days', ownerId:currentActingUser().id }, titled = { id:9990902, name:'Tarun Iyer', role:'Java Developer', skills:[], exp:'5 yrs', loc:'Bengaluru, KA, IN', notice:'15 Days', ownerId:currentActingUser().id };
+      CANDIDATES.push(qa, titled);
+      try { ok(!caHasSkill(qa, 'Java') && caHasSkill(titled, 'Java') && caHasSkill({ skills:['java'] }, 'Java'), 'the rule');
+        ok(!caWhy(qa, javaJob, { locOk:false, noticeOk:true }).some(function(r){ return /Java/.test(r.t) && r.ok; }), 'no Java ✓ for the QA Engineer');
+        ok(caWhy(titled, javaJob, { locOk:false, noticeOk:true }).some(function(r){ return /Java/.test(r.t) && r.ok; }), 'Java ✓ from the title');
+        var a = kaAnswer('Java developers in Bengaluru'); ok(a.cards.join('').indexOf('Quinn Arora') < 0, 'the QA Engineer is not a Java developer'); }
+      finally { CANDIDATES.splice(CANDIDATES.indexOf(qa), 1); CANDIDATES.splice(CANDIDATES.indexOf(titled), 1); }
+      demoBuild('northstar'); as('Neha Kulkarni'); var b = kaAnswer('Java developers in Bengaluru'), people = b.cards.map(function(h){ return byId(+(h.match(/data-cand="(\d+)"/) || [])[1]); });
+      ok(people.length && people.every(function(c){ return caHasSkill(c, 'Java') && !/\bQA\b/i.test(c.role); }), 'the built demo: ' + people.map(function(c){ return c.name + ' (' + c.role + ': ' + (c.skills || []).join(',') + ')'; }).join(' | '));
+      var leak = CANDIDATES.filter(function(c){ return /QA|Data Analyst|DevOps|Frontend/.test(c.role || '') && (c.skills || []).indexOf('Java') > -1; }); ok(!leak.length, 'no QA, data, DevOps or frontend person carries a job’s Java: ' + leak.slice(0, 3).map(function(c){ return c.name + ' ' + c.role; }).join(', '));
+    });
+    await t('future time frames say have or has (“Your jobs have 3 interviews tomorrow”), past ones had', async function(){
+      as('Neha Kulkarni'); KA.ctx = null; var a = kaAnswer('interviews tomorrow'); ok(/^(Your jobs have \d+ interviews? tomorrow|No interviews tomorrow)/.test(a.text), a.text);
+      KA.ctx = null; a = kaAnswer('how many interviews tomorrow'); ok(!/\bhad\b/.test(a.text) && /^(Your jobs have|No interviews)/.test(a.text) && !/the period before/.test(a.text), a.text);
+      as('Priya Sharma'); KA.ctx = null; a = kaAnswer('interviews tomorrow'); ok(/^(Your workspace has \d+ interviews? tomorrow|No interviews tomorrow)/.test(a.text), a.text);
+      KA.ctx = null; a = kaAnswer('my interviews tomorrow'); ok(/^(You have \d+ interviews? tomorrow|No interviews tomorrow)/.test(a.text), a.text);
+      KA.ctx = null; a = kaAnswer('interviews yesterday'); ok(/^(Your workspace had \d+|No interviews yesterday)/.test(a.text), a.text);
+    });
+    await t('plurals: “1 yr”, “1 person”, “1 day” in every answer and record; never “1 yrs” or “persons”', async function(){
+      ok(kaPlural('1 yrs, 11 yrs, 2.1 yrs, 1 persons, 3 persons, 1 days') === '1 yr, 11 yrs, 2.1 yrs, 1 person, 3 people, 1 day', kaPlural('1 yrs, 11 yrs, 2.1 yrs, 1 persons, 3 persons, 1 days'));
+      ok(nYrs(1) === '1 yr' && nYrs(2) === '2 yrs' && nYrs('1') === '1 yr' && nYrs(1.5) === '1.5 yrs', 'nYrs');
+      ok(!CANDIDATES.some(function(c){ return /^1(\.0)? yrs$/.test(c.exp || ''); }), 'no record says 1 yrs');
+      var BADP = /(^|[^\d.,])1 (yrs|years|days|persons)\b|\bpersons\b/, bad = [];
+      ['Priya Sharma', 'Neha Kulkarni'].forEach(function(w){ as(w); Object.keys(Q).forEach(function(sk){ Q[sk].forEach(function(x){ KA.ctx = null; var t2 = text(kaAnswer(x)); if(BADP.test(t2)) bad.push(w + ' "' + x + '": ' + t2.match(BADP)[0]); }); }); });
+      as('Neha Kulkarni'); var one = kaCands().find(function(c){ return c.exp === '1 yr'; }); if(one){ var cc = kaAnswer('tell me about ' + one.name); if(/1 yrs/.test(text(cc))) bad.push('card: 1 yrs'); }
+      ok(!bad.length, bad.slice(0, 5).join(' | '));
+    });
+
     var pre = document.createElement('pre'); pre.id = 'auth-test-results'; pre.textContent = JSON.stringify(results); document.body.appendChild(pre);
   }, 800); });
 })();

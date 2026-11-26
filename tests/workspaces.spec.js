@@ -21,10 +21,23 @@
     document.getElementById('onboarding').classList.add('hidden'); state.role = 'admin'; enterApp(); await sleep(100); demoAct(by('Priya Sharma').id); renderSidebar(); window.__noReload = 1;
 
     await t('the workspace card opens the switcher: your workspaces with your role and a tick, Add a workspace, Workspace settings; demo controls only under Prototype tools; the account menu keeps Your settings and Sign out', async function(){
-      toggleRoleMenu(); await sleep(10); var rows = qa('#ws-switch .wsm-row'); ok(rows.length >= 3 && /Northstar Talent Partners\s*Owner/.test(rows[0].textContent) && rows[0].getAttribute('aria-checked') === 'true' && /✓/.test(rows[0].textContent), 'rows: ' + rows.map(function(r){ return r.textContent; }).join(' | '));
+      toggleRoleMenu(); await sleep(10); var rows = qa('#ws-switch .wsm-row'); ok(rows.length === 1 && /Northstar Talent Partners\s*Owner/.test(rows[0].textContent) && rows[0].getAttribute('aria-checked') === 'true' && /✓/.test(rows[0].textContent), 'rows: ' + rows.map(function(r){ return r.textContent; }).join(' | '));
       ok(q('[data-add-ws]') && /Workspace settings/.test(q('#ws-switch').textContent), 'add and settings'); var pt = q('#proto-tools'); ok(pt && pt.tagName === 'DETAILS' && !pt.open && /Prototype tools/.test(q('summary', pt).textContent) && q('#demo-menu', pt), 'Prototype tools, folded, with the demo controls');
       ok(!qa('#role-menu > *').some(function(x){ return x.id === 'demo-menu' || /switchRole/.test(x.getAttribute('onclick') || ''); }), 'nothing of the prototype outside it'); toggleRoleMenu(true);
       oOpenAccountMenu(q('#topbar-avatar')); await sleep(10); var vis = qa('#role-menu > *').filter(function(x){ return x.offsetParent !== null && x.textContent.trim(); }).map(function(x){ return x.textContent.trim(); }); ok(vis.join('|') === 'Your settings|Sign out', 'account menu: ' + vis.join('|')); toggleRoleMenu(true);
+    });
+
+    await t('a person only sees the workspaces they belong to: Priya Northstar, Meera Kesar, Anil Vistaar; only demo.owner@oontu.app sees all three; Prototype tools › Demo company is there for everyone', async function(){
+      var names = function(email){ return wsAuthMemberships(email).map(function(m){ return m.name + ' ' + m.roleLabel; }).sort().join(' | '); };
+      ok(names('priya.sharma@northstartalent.com') === 'Northstar Talent Partners Owner', 'Priya: ' + names('priya.sharma@northstartalent.com'));
+      ok(names('meera.kesar@gmail.com') === 'Kesar Staffing Owner', 'Meera: ' + names('meera.kesar@gmail.com')); ok(names('anil.desai@vistaarhr.in') === 'Vistaar HR Services Owner', 'Anil: ' + names('anil.desai@vistaarhr.in'));
+      ok(names('demo.owner@oontu.app') === 'Kesar Staffing Owner | Northstar Talent Partners Owner | Vistaar HR Services Owner', 'demo account: ' + names('demo.owner@oontu.app'));
+      ok(/^Northstar Talent Partners [A-Z]/.test(names(by('Divya Menon').email)) && names(by('Divya Menon').email).indexOf('|') < 0, 'Divya: Northstar only: ' + names(by('Divya Menon').email));
+      WSM.account = WSM_DEMO_ACCOUNT; toggleRoleMenu(); await sleep(10); var rows = qa('#ws-switch .wsm-row').map(function(r){ return r.textContent; }); toggleRoleMenu(true); WSM.account = null;
+      ok(rows.length === 3 && /Kesar/.test(rows.join()) && /Vistaar/.test(rows.join()), 'the demo account’s switcher: ' + rows.join(' | '));
+      ok(!wsSwitch('w-kesar') && ORG_STRUCTURE.profile.brandName === 'Northstar Talent Partners', 'Priya can’t switch into Kesar');
+      demoAct(by('Neha Kulkarni').id); renderSidebar(); toggleRoleMenu(); await sleep(10); var dm = q('#proto-tools #demo-menu'); ok(dm && /Kesar/.test(dm.textContent) && /Vistaar/.test(dm.textContent) && q('#proto-tools [onclick*="demoChoose"]'), 'a recruiter still has Prototype tools › Demo company'); ok(qa('#ws-switch .wsm-row').length === 1, 'and sees only Northstar'); toggleRoleMenu(true);
+      demoAct(by('Priya Sharma').id); renderSidebar();
     });
 
     var ns0 = { c:CANDIDATES.length, j:JOBS.length, roles:JSON.stringify(CUSTOM_ROLES.map(function(r){ return [r.name, r.permissions]; })), ap:JSON.stringify(WSX.approvals), tp:JSON.stringify(WSX.templates), cw:JSON.stringify(Object.keys(TENANT_AGENT_CONFIG).map(function(k){ return [k, TENANT_AGENT_CONFIG[k].enabled, TENANT_AGENT_CONFIG[k].settings]; })) }, A;
@@ -40,6 +53,11 @@
       wsSwitch('w-northstar'); await sleep(40); ok(CANDIDATES.length === ns0.c && JOBS.length === ns0.j && ORG_STRUCTURE.profile.brandName === 'Northstar Talent Partners', 'Northstar is untouched');
     });
 
+    await t('a new workspace’s Inbox says 0 of 4 channels linked until something is really connected; Northstar’s still counts its links', async function(){
+      wsSwitch(A); await sleep(30); showView('li-uni-box'); var m = (main().match(/\d+ of 4 channels linked/) || ['none'])[0]; ok(m === '0 of 4 channels linked', 'Brightpath: ' + m);
+      ok(['email', 'whatsapp', 'linkedin'].every(function(k){ return !ibLinked(k); }) && !ibTeamLive(), 'nothing assumed linked');
+      wsSwitch('w-northstar'); await sleep(30); showView('li-uni-box'); var n = +((main().match(/(\d+) of 4 channels linked/) || [0, 0])[1]); ok(n >= 2, 'Northstar keeps its links: ' + n); showView(homeForMe());
+    });
     await t('the same, with the team on and 3 people picked: they are Invited, with the same roles and reporting lines', async function(){
       var picks = ['Arjun Kapoor', 'Divya Menon', 'Neha Kulkarni'].map(function(n){ return by(n); }), B = await addWs('Northstar Contract', { team:picks.map(function(u){ return u.id; }) }), s = WSM.stores[B];
       ok(s.arr.RECRUITER_ROSTER.length === 4, 'Owner and 3: ' + s.arr.RECRUITER_ROSTER.map(function(u){ return u.name; }));
@@ -81,11 +99,18 @@
       wsSwitch('w-northstar'); await sleep(30);
     });
 
-    await t('Kesar, Northstar and Vistaar switch without a reload', async function(){
+    await t('demo.owner@oontu.app signs in, chooses from Kesar, Northstar and Vistaar, and switches between them without a reload, as each company’s Owner', async function(){
+      try { performLogout(); } catch(e){} await sleep(60); authApi._latency = 0; OA.resetSignIn(); authSwitchIntent('signin'); await sleep(30);
+      var e = q('#si-email'); e.value = 'demo.owner@oontu.app'; e.dispatchEvent(new Event('input', { bubbles:true })); q('form[data-form=si-email]').dispatchEvent(new Event('submit', { bubbles:true, cancelable:true })); for(var i = 0; i < 100 && !q('.oa-otp__input'); i++) await sleep(20);
+      var c = q('.oa-otp__input'); ok(c, 'the code screen for the demo account'); c.value = '123456'; c.dispatchEvent(new Event('input', { bubbles:true })); for(var k = 0; k < 150 && !q('.au-ws'); k++) await sleep(20);
+      var list = qa('.au-ws'), txt = list.map(function(b){ return b.textContent; }).join(' | '); ok(list.length === 3 && /Kesar/.test(txt) && /Northstar/.test(txt) && /Vistaar/.test(txt) && !/Brightpath/.test(txt), 'the chooser: ' + txt);
+      list.find(function(b){ return /Northstar/.test(b.textContent); }).click(); for(var m = 0; m < 150 && document.getElementById('app').classList.contains('hidden'); m++) await sleep(20); var en = q('[data-act=si-enter]'); if(en){ en.click(); await sleep(100); }
+      ok(ORG_STRUCTURE.profile.brandName === 'Northstar Talent Partners' && currentActingUser().name === 'Priya Sharma' && WSM.account === WSM_DEMO_ACCOUNT, 'in Northstar as its Owner: ' + (currentActingUser() || {}).name);
       wsSwitch('w-kesar'); await sleep(50); ok(ORG_STRUCTURE.profile.brandName === 'Kesar Staffing' && currentActingUser().name === 'Meera Shah' && CANDIDATES.length === 60, 'Kesar: ' + ORG_STRUCTURE.profile.brandName + ' ' + CANDIDATES.length);
-      wsSwitch('w-northstar'); await sleep(40); ok(ORG_STRUCTURE.profile.brandName === 'Northstar Talent Partners' && CANDIDATES.length === ns0.c, 'Northstar');
-      wsSwitch('w-vistaar'); for(var i = 0; i < 600 && DEMO.loading; i++) await sleep(100); ok(ORG_STRUCTURE.profile.brandName === 'Vistaar HR Services' && CANDIDATES.length === 4000 && currentActingUser().name === 'Anil Desai', 'Vistaar: ' + CANDIDATES.length);
+      wsSwitch('w-northstar'); await sleep(40); ok(ORG_STRUCTURE.profile.brandName === 'Northstar Talent Partners' && CANDIDATES.length === ns0.c && currentActingUser().name === 'Priya Sharma', 'Northstar');
+      wsSwitch('w-vistaar'); for(var j = 0; j < 600 && DEMO.loading; j++) await sleep(100); ok(ORG_STRUCTURE.profile.brandName === 'Vistaar HR Services' && CANDIDATES.length === 4000 && currentActingUser().name === 'Anil Desai', 'Vistaar: ' + CANDIDATES.length);
       wsSwitch('w-kesar'); await sleep(40); ok(ORG_STRUCTURE.profile.brandName === 'Kesar Staffing' && CANDIDATES.length === 60, 'Kesar again, as it was'); wsSwitch('w-northstar'); await sleep(40); ok(window.__noReload === 1, 'no reload');
+      WSM.account = null; demoAct(by('Priya Sharma').id); renderSidebar();
     });
 
     await t('close a workspace (Owner, typing the name), then restore it within 30 days', async function(){

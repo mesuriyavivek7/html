@@ -4085,6 +4085,8 @@ function idFind(list, id){
 function idFirstBefore(list, id, i){ const r = list[i]; return r.__dupChecked === list.length ? false : (function(){ for(let k = 0; k < i; k++) if(list[k] && list[k].id === id) return true; try { Object.defineProperty(r, '__dupChecked', { value:list.length, writable:true, configurable:true, enumerable:false }); } catch(e){} return false; })(); }
 function byId(id){ return idFind(CANDIDATES, id); }
 function jobById(id){ return idFind(JOBS, id); }
+// "1 yr", "2 yrs": a count of years, singular when it is one.
+function nYrs(n){ const x = String(n == null ? '' : n).trim(); return x + (Number(x) === 1 ? ' yr' : ' yrs'); }
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, function(ch){
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch];
@@ -6997,9 +6999,12 @@ function bhTrend(now, before, abs){
   const dir = now>before ? 'up' : 'down';
   return { dir:dir, text: abs || !before ? String(Math.abs(now-before)) : Math.round(Math.abs(now-before)/before*100)+'%' };
 }
+// A count's change in words: "1 fewer than last month", "2 more than last week", "Same as last month".
+function oPrevName(){ return ({ today:'yesterday', week:'last week', last7:'the week before', month:'last month', last30:'the 30 days before', quarter:'last quarter' })[dashDateFilter] || 'the previous range'; }
+function bhTrendSaid(now, before){ const t = bhTrend(now, before, true); if(!t) return null; const d = Math.abs(now - before), p = oPrevName(); t.text = t.dir === 'flat' ? 'Same as ' + p : d + (t.dir === 'up' ? ' more' : ' fewer') + ' than ' + p; t.said = true; return t; }
 function bhArrow(t, small){
   if(!t) return '';
-  return '<span class="bh-arrow is-'+t.dir+'">'+bhSvg(small ? (t.dir==='up' ? 'legUp' : t.dir==='down' ? 'legDown' : 'flat') : t.dir, small ? 11 : 13, small ? 2.4 : 2)+'<span>'+oEsc(t.text)+'</span></span>';
+  return '<span class="bh-arrow is-'+t.dir+(t.said ? ' is-said' : '')+'">'+bhSvg(small ? (t.dir==='up' ? 'legUp' : t.dir==='down' ? 'legDown' : 'flat') : t.dir, small ? 11 : 13, small ? 2.4 : 2)+'<span>'+oEsc(t.text)+'</span></span>';
 }
 /* status as a 7 px dot and text (B v2 §2.2): risk, attention, done coloured; info and review keep body text */
 function bhStatus(tone, label){ return '<span class="bh-st bh-st--'+(tone || 'info')+'"><i aria-hidden="true"></i>'+oEsc(label)+'</span>'; }
@@ -7443,13 +7448,13 @@ function renderAdminDashboard(){
   const plTs = PAYTRACK_JOINED.concat(PAYTRACK_COMPLETED).map(function(p){ const d = ptRecDate(p, 'doj'); return d ? d.getTime() : null; });
   const pPl = [bhInPeriod(plTs, pr), bhInPeriod(plTs, pp)];
   const cells = (corp ? [
-    { label:'Hires this quarter', value:String(hires), note:oPlural(PAYTRACK_JOINED.length, 'person')+' in their first weeks' },
+    { label:'Hires this quarter', value:String(hires), note:oPlural(PAYTRACK_JOINED.length, 'person', 'people')+' in their first weeks' },
     { label:'Open roles', value:String(open.length), note: noOwner ? noOwner+' with no recruiter' : 'All have a recruiter', onclick:"showView('jobs')" },
     { label:'Offer acceptance', value: offersAll ? Math.round(accepted/offersAll*100)+'%' : '—', note: accepted+' of '+offersAll+' offers accepted' },
     { label:'Time to hire', value:O_SEEDED.timeToHire, note:'Average across roles' }
   ] : [
     { label:'Revenue earned', value:odFmtL(money.earned), note:odFmtL(money.inLockin)+' still in guarantee', onclick:"showView('payroll-billing')" },
-    { label:'Placements', value:String(pPl[0]), trend:bhTrend(pPl[0], pPl[1], true), note:oPlural(PAYTRACK_JOINED.length, 'person')+' in guarantee', onclick:"showView('admin-paytrack')" },
+    { label:'Placements', value:String(pPl[0]), trend:bhTrendSaid(pPl[0], pPl[1]), note:oPlural(PAYTRACK_JOINED.length, 'person', 'people')+' in guarantee', onclick:"showView('admin-paytrack')" },
     { label:'Open jobs', value:String(open.length), risk:!!noOwner, note: noOwner ? noOwner+' with no recruiter' : 'All have a recruiter', onclick:"showView('jobs')" },
     { label:'Unpaid invoices', value:String(unpaid), note:unpaid ? odFmtL(money.toCollect)+' to collect' : 'All paid', onclick:"showView('payroll-billing')" }
   ]);
@@ -12024,7 +12029,7 @@ function shareCopyLink(){ const j = jobById(shareState.jobId); copyToClipboard(j
 function shareSubmitPreview(){
   const j = jobById(shareState.jobId);
   const v = function(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-  const a = { name:v('sp-ap-name'), email:v('sp-ap-email'), phone:v('sp-ap-phone'), role:v('sp-ap-role'), exp:v('sp-ap-exp') ? v('sp-ap-exp')+' yrs' : '', loc:v('sp-ap-loc'), skills:v('sp-ap-skills').split(',').map(function(x){ return x.trim(); }).filter(Boolean) };
+  const a = { name:v('sp-ap-name'), email:v('sp-ap-email'), phone:v('sp-ap-phone'), role:v('sp-ap-role'), exp:v('sp-ap-exp') ? nYrs(v('sp-ap-exp')) : '', loc:v('sp-ap-loc'), skills:v('sp-ap-skills').split(',').map(function(x){ return x.trim(); }).filter(Boolean) };
   if(!a.name || !a.email || !a.phone){ toast('Name, email and phone are required to apply.'); return; }
   const r = ingestInboundApplication(j.id, a, 'Shareable link · '+shareState.channel, {});
   if(!r){ toast('This job is not open for applications right now.'); return; }
@@ -12037,7 +12042,7 @@ const DEMO_APPLICANTS = ['Kavya Reddy','Arjun Malhotra','Meera Pillai','Rohan Gu
 function simulatePlatformApplication(jobId, platform){
   const j = jobById(jobId), n = DEMO_APPLICANTS[(SUBMISSIONS.length + platform.length) % DEMO_APPLICANTS.length];
   const slug = n.toLowerCase().replace(/\s+/g,'.')+'.'+(SUBMISSIONS.length+1);
-  const r = ingestInboundApplication(jobId, { name:n, email:slug+'@example.com', phone:'+91 98'+String(10000000+SUBMISSIONS.length*7331).slice(-8), role:j.title, exp:(3+SUBMISSIONS.length%6)+' yrs', loc:(j.locations&&j.locations[0])||j.loc, skills:(j.skills||[]).slice(0,3) }, platform, {});
+  const r = ingestInboundApplication(jobId, { name:n, email:slug+'@example.com', phone:'+91 98'+String(10000000+SUBMISSIONS.length*7331).slice(-8), role:j.title, exp:nYrs(3+SUBMISSIONS.length%6), loc:(j.locations&&j.locations[0])||j.loc, skills:(j.skills||[]).slice(0,3) }, platform, {});
   if(!r){ toast('This job is not open for applications.'); return null; }
   toast(n+' applied via '+platform+' — saved to the talent pool and submitted.');
   if(document.getElementById('share-modal')) shareRefresh();
@@ -16121,7 +16126,7 @@ function submitManualCandidate(e, mode){
   const payText = exp!=null ? jcMoney(acf.currency, exp)+(JC_PERIOD_SUFFIX[acf.period]||'') : cur!=null ? jcMoney(acf.currency, cur)+(JC_PERIOD_SUFFIX[acf.period]||'') : '—';
   const auth = acfV('acf-auth');
   const c = { id:nextCandidateId(), name:name, firstName:first, lastName:last, role:title, currentCompany:acfV('acf-company')||null,
-    exp:(yrs%1?yrs:Math.round(yrs))+' yrs', expYears:yrs, loc:city+(region?', '+region:'')+(iso?', '+iso:''), city:city, region:region||null, country:acf.country, market:acf.market,
+    exp:nYrs(yrs%1?yrs:Math.round(yrs)), expYears:yrs, loc:city+(region?', '+region:'')+(iso?', '+iso:''), city:city, region:region||null, country:acf.country, market:acf.market,
     avail:'Available', availScore:70, joinProb:60, respProb:60, bestTime:'—', counterRisk:30, trust:70, intent:'Medium',
     skills:acf.skills.length?acf.skills.slice():['—'], alsoKnows:acf.also.slice(), languages:acf.langs.slice(), prefLocations:acf.prefs.slice(),
     salary:payText, comp:comp, notice: noticeDays ? noticeDays+' Days' : 'Immediate', noticeDays:noticeDays, lastWorkingDay:acfV('acf-lwd')||null,
@@ -17012,7 +17017,7 @@ function bulkPreviewHTML(){
     '<div class="p-5">'+
       '<div class="flex items-center gap-3"><span class="w-12 h-12 rounded-full bg-gradient-to-br from-accent-500 to-accent-700 text-white flex items-center justify-center text-sm font-semibold">'+escapeHtml(((p.first[0]||'')+(p.last[0]||'')).toUpperCase() || '?')+'</span>'+
         '<div class="min-w-0"><p class="text-base font-semibold text-ink truncate">'+(name ? escapeHtml(name) : '<span class="text-zinc-300">No name</span>')+'</p><p class="text-xs text-zinc-500 truncate">'+escapeHtml([p.title, p.company].filter(Boolean).join(' · ') || '—')+'</p></div></div>'+
-      '<div class="flex flex-wrap gap-1.5 mt-4">'+[p.city, p.exp ? p.exp+' yrs' : '', p.notice, p.ctc ? 'CTC '+p.ctc : ''].filter(Boolean).map(function(x){ return '<span class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">'+escapeHtml(x)+'</span>'; }).join('')+'</div>'+
+      '<div class="flex flex-wrap gap-1.5 mt-4">'+[p.city, p.exp ? nYrs(p.exp) : '', p.notice, p.ctc ? 'CTC '+p.ctc : ''].filter(Boolean).map(function(x){ return '<span class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">'+escapeHtml(x)+'</span>'; }).join('')+'</div>'+
       '<div class="space-y-1.5 mt-4">'+line('mail', p.email)+line('phone', p.phone)+line('globe', p.linkedin)+'</div>'+
       (p.skills.length ? '<div class="flex flex-wrap gap-1 mt-4">'+p.skills.slice(0,8).map(function(x){ return '<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent-50 text-accent-700">'+escapeHtml(x)+'</span>'; }).join('')+'</div>' : '')+
       (p.custom.length ? '<div class="mt-4 pt-3 border-t border-zinc-100 space-y-1">'+p.custom.map(function(c){ return '<p class="text-[11px] text-zinc-500"><span class="text-zinc-400">'+escapeHtml(c[0])+':</span> '+escapeHtml(c[1])+'</p>'; }).join('')+'</div>' : '')+
@@ -17587,7 +17592,7 @@ function bulkImport(){
   pl.add.forEach(function(r){
     const miss = bulkMissing(r).map(function(f){ return f[1]; }), iso = ncIso(r.country), yrs = r.exp==='' || r.exp==null ? null : Number(r.exp);
     CANDIDATES.push({ id:nextId++, name:(String(r.first).trim()+' '+String(r.last||'').trim()).trim(), firstName:String(r.first).trim(), lastName:String(r.last||'').trim(), role:r.title||'Not specified', currentCompany:r.company||null,
-      exp: yrs!=null ? yrs+' yrs' : '\u2014', expYears:yrs, loc: r.city ? r.city+(iso?', '+iso:'') : r.country, city:r.city||null, country:r.country, market:'No market activity recorded yet.',
+      exp: yrs!=null ? nYrs(yrs) : '\u2014', expYears:yrs, loc: r.city ? r.city+(iso?', '+iso:'') : r.country, city:r.city||null, country:r.country, market:'No market activity recorded yet.',
       avail:'Available', availScore:60, joinProb:60, respProb:60, bestTime:'\u2014', counterRisk:30, trust:65, intent:'Medium',
       skills:r.skills.length ? r.skills.slice() : ['\u2014'], salary:'\u2014', notice:'\u2014', preferredRoles:[r.title||'\u2014'],
       email:r.email||null, phone:r.phone||null, source:bulk.source, labels:[], ownerId: me ? me.id : null,
@@ -18101,7 +18106,7 @@ function tsScorePrompt(cr){
     if(cr.modes.length){ max += 10; if(cr.modes.some(function(m){ return tsModes(c).indexOf(m)>-1; })){ got += 10; reasons.push(cr.modes.join('/')); } }
     if(cr.places.length) reasons.push(c.city || String(c.loc).split(',')[0]);
     if(cr.noticeMax!=null && nd!=null) reasons.push(nd===0 ? 'Immediate joiner' : nd+'-day notice');
-    if(cr.expMin!=null && yrs!=null) reasons.push(yrs+' yrs');
+    if(cr.expMin!=null && yrs!=null) reasons.push(nYrs(yrs));
     const pct = max ? Math.round(got/max*100) : (cr.boolean ? 80 : 70);
     if(max && got===0) return null;
     return { c:c, pct:Math.max(5, Math.min(99, pct)), reasons:Array.from(new Set(reasons.filter(Boolean))).slice(0,6), missing:missing.slice(0,3) };
@@ -18176,7 +18181,7 @@ function tsScoreFilters(){
     if(f.languages.length && !f.languages.some(function(l){ return (c.languages||[]).map(function(x){ return x.toLowerCase(); }).indexOf(l.toLowerCase())>-1; })) return null;
     if(f.locations.length) reasons.push(c.city || String(c.loc).split(',')[0]);
     if(f.noticeMax!=='' && nd!=null) reasons.push(nd===0 ? 'Immediate joiner' : nd+'-day notice');
-    if(f.expMin!=='' && yrs!=null) reasons.push(yrs+' yrs');
+    if(f.expMin!=='' && yrs!=null) reasons.push(nYrs(yrs));
     return { c:c, pct:pct, reasons:Array.from(new Set(reasons.filter(Boolean))).slice(0,6), missing:missing.slice(0,3) };
   }).filter(Boolean);
 }
@@ -26658,7 +26663,7 @@ function renderSettings(){
 ============================================================ */
 let odShowAllAttention = false;
 
-function odFmtL(lakhs){ return '\u20b9'+(Math.round(lakhs*10)/10).toFixed(1)+'L'; }
+function odFmtL(lakhs){ const v = Math.round((+lakhs || 0)*10)/10; return v === 0 ? '\u20b9'+'0' : '\u20b9'+v.toFixed(1)+'L'; }   // nothing is "₹0", not "₹0.0L"
 function odPlural(n, word){ return n+' '+word+(n===1?'':'s'); }
 function odGreeting(){ const h = new Date().getHours(); return h<12 ? 'Good morning' : h<17 ? 'Good afternoon' : 'Good evening'; }
 function odOpenClient(clientId){ showView('client-management'); setTimeout(function(){ openClientDrawer(clientId); }, 0); }
@@ -28260,6 +28265,9 @@ function createAuthSimulator(){
   const TEAM_PASSWORD = 'demo1234';
   function teamAccount(email){
     if(!AUTH_IS_PROTOTYPE || db.accounts[email] || typeof RECRUITER_ROSTER === 'undefined') return null;
+    // Step 4 polish: the demo account owns Kesar, Northstar and Vistaar (the "Choose a workspace" list comes from the app's registry)
+    if(email === 'demo.owner@oontu.app' && typeof wsAuthMemberships === 'function'){ const ms = wsAuthMemberships(email); if(!ms.length) return null; ms.forEach(function(m){ db.workspaces[m.workspaceId] = { id:m.workspaceId, name:m.name, type:m.type }; });
+      return db.accounts[email] = { name:'Demo Owner', pw:TEAM_PASSWORD, emailVerified:true, memberships:ms.map(function(m){ return { workspaceId:m.workspaceId, role:m.role, roleLabel:m.roleLabel }; }) }; }
     const u = RECRUITER_ROSTER.find(function(r){ return norm(r.email) === email && r.userStatus !== 'Suspended'; }); if(!u) return null;
     const wsId = 'ws_team_' + String(CURRENT_ORGANIZATION_ID || 'org').replace(/[^a-z0-9]+/gi, '_');
     db.workspaces[wsId] = db.workspaces[wsId] || { id:wsId, name:(ORG_STRUCTURE.profile && ORG_STRUCTURE.profile.brandName) || 'Workspace', type:ORG_STRUCTURE.profile.orgType || 'Staffing agency' };
@@ -45306,7 +45314,7 @@ function apBrief(row){
   const c = row.c, j = row.j, s = apSeed(c), f = apFacts(c, j), rows = [], have = (c.skills || []).map(function(x){ return x.toLowerCase(); });
   (j.skills || []).forEach(function(sk){ const met = have.indexOf(sk.toLowerCase()) > -1; rows.push({ k:sk, st:met ? 'met' : 'none', v:met ? 'Yes' : 'Not found', p:met ? (s && s.proof[sk] ? 'Source: ' + s.proof[sk] : 'Listed on the profile') : 'Not on the profile or the resume' }); });
   const need = /(\d+)/.exec(j.minExp || ''), yrs = tsYears(c);
-  if(need && yrs != null) rows.push({ k:'Experience', st: yrs >= +need[1] ? 'met' : yrs >= +need[1] - 1 ? 'part' : 'none', v:yrs + ' yrs', p:'Brief asks ' + j.minExp + ' · from the profile' });
+  if(need && yrs != null) rows.push({ k:'Experience', st: yrs >= +need[1] ? 'met' : yrs >= +need[1] - 1 ? 'part' : 'none', v:nYrs(yrs), p:'Brief asks ' + j.minExp + ' · from the profile' });
   if(f.lim != null && f.nd != null) rows.push({ k:'Notice', st:f.noticeOk ? 'met' : 'none', v:f.nd + ' days', p:'Brief allows ' + f.lim + ' days' });
   const city = String(j.loc || '').split(',')[0];
   if(city){ const here = j.workMode === 'Remote' || tsPlace(c).indexOf(city.toLowerCase()) > -1; rows.push({ k:'Location', st:here ? 'met' : 'part', v:here ? (j.workMode === 'Remote' ? 'Remote role' : city) : 'Not in ' + city, p:'Role is ' + (j.workMode || 'on site') + ' in ' + city }); }
@@ -45361,7 +45369,7 @@ function apRichHTML(row, inner){
   const head = '<div class="ap-pid"><div class="ap-pid__top"><span class="ap-eyebrow">Submission · ' + apEsc(row.req.requestedByName) + ' · ' + apEsc(apDur(APS.businessMinutesBetween(row.createdAt, APS.now()))) + ' ago</span>' + (v && v.state !== 'closed' ? apWaitHTML(row) : '') + (inner ? '' : '<button type="button" class="ap-x" aria-label="' + (AP.expanded ? 'Collapse the profile' : 'Expand the profile') + '" onclick="AP.expanded=!AP.expanded; apRefresh()">' + oIcon('plus', 14, 2).replace('M12 5v14M5 12h14', AP.expanded ? 'M9 15 4 20M4 15v5h5M15 9l5-5M20 9V4h-5' : 'M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7') + '</button>') + '</div>' +
     '<div class="ap-pid__who">' + candidateAvatarHTML(c, 'w-12 h-12', {}) + '<div><h3>' + apEsc(c.name) + '</h3><p>' + apEsc(c.role || '') + (co ? ' at ' + apEsc(co) : '') + '</p><small>' + apEsc(where) + '</small></div></div>' +
     '<p class="ap-pid__for">For <b>' + apEsc(j.title) + '</b> · ' + apEsc(j.client) + '</p><div class="ap-pid__links"><button type="button" class="o-btn" onclick="openPipelineDetail(\'' + row.sb.id + '\')">Resume</button><button type="button" class="o-btn" onclick="openCandidate(' + c.id + ')">Profile</button>' + (c.linkedin ? '<a class="o-btn" href="https://' + apEsc(String(c.linkedin).replace(/^https?:\/\//, '')) + '" target="_blank" rel="noopener">LinkedIn</a>' : '') + (s && s.screening ? '<button type="button" class="o-btn" onclick="AP.tab=\'screening\'; apDrawPanel()">Screening call</button>' : '') + '</div>' +
-    '<div class="ap-vitals">' + vital('Experience', yrs != null ? yrs + ' yrs' : '·', perRole != null ? perRole + ' yrs per role' : 'from the profile') + (exp != null && canI('candidates', 'View Salary') ? vital('Expects', apFmtMoney(exp), hike != null ? '+' + hike + '% on current' : 'expected', f.ctcOk === false ? 'is-amber' : '') : '') + vital('Notice', f.nd != null ? f.nd + ' days' : '·', f.lim != null ? 'brief allows ' + f.lim : '', f.noticeOk === false ? 'is-amber' : '') + vital('Fit', f.fit + '%', metN + ' of ' + brief.length + ' checks met', f.fit >= 80 ? 'is-mint' : '') + '</div></div>';
+    '<div class="ap-vitals">' + vital('Experience', yrs != null ? nYrs(yrs) : '·', perRole != null ? nYrs(perRole) + ' per role' : 'from the profile') + (exp != null && canI('candidates', 'View Salary') ? vital('Expects', apFmtMoney(exp), hike != null ? '+' + hike + '% on current' : 'expected', f.ctcOk === false ? 'is-amber' : '') : '') + vital('Notice', f.nd != null ? f.nd + ' days' : '·', f.lim != null ? 'brief allows ' + f.lim : '', f.noticeOk === false ? 'is-amber' : '') + vital('Fit', f.fit + '%', metN + ' of ' + brief.length + ' checks met', f.fit >= 80 ? 'is-mint' : '') + '</div></div>';
   const tabBar = '<div class="o-tabs-host"><div role="tablist" id="ap-tabs" aria-label="Profile sections">' + tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="' + (AP.tab === t[0]) + '" onclick="AP.tab=\'' + t[0] + '\'; apDrawPanel()">' + t[1] + (t[0] === 'checks' && flagN ? '<span class="ap-badge">' + flagN + '</span>' : '') + '</button>'; }).join('') + '</div></div>';
   let body = '';
   if(AP.tab === 'overview'){
@@ -47816,7 +47824,7 @@ function cpClientSpeed(job){ const c = !job.corp && typeof clientForJob === 'fun
   ];
   rows.forEach(function(r, i){
     const id = 101 + i; if(CANDIDATES.some(function(c){ return c.id === id; })) return;
-    CANDIDATES.push({ id:id, name:r[0], role:r[1], exp:r[3] + ' yrs', loc:r[4], avail:i % 3 === 0 ? 'Available' : 'Passive', availScore:60 + (i * 7) % 35, joinProb:60 + (i * 11) % 30, respProb:55 + (i * 13) % 35, bestTime:'7:00 PM', counterRisk:20 + (i * 9) % 40, trust:85, intent:'Medium',
+    CANDIDATES.push({ id:id, name:r[0], role:r[1], exp:nYrs(r[3]), loc:r[4], avail:i % 3 === 0 ? 'Available' : 'Passive', availScore:60 + (i * 7) % 35, joinProb:60 + (i * 11) % 30, respProb:55 + (i * 13) % 35, bestTime:'7:00 PM', counterRisk:20 + (i * 9) % 40, trust:85, intent:'Medium',
       skills:['Java','Spring Boot','AWS','Microservices'].slice(0, 3 + (i % 2)), salary:'₹' + r[5] + '–' + r[6] + ' LPA', notice:r[7], preferredRoles:['Backend Lead'], goals:'Found through a hiring campaign.', market:'Replied to a campaign message.', comms:'Replies on WhatsApp in the evening.', employmentType:'Full-time', industry:'Technology', domain:'Fintech',
       email:r[0].toLowerCase().replace(/[^a-z]+/g, '.') + '@example.com', phone:'98' + String(10000000 + i * 137).slice(0, 8), company:r[2], currentCompany:r[2], campaignSeed:true, linkedin:'linkedin.com/in/' + r[0].toLowerCase().replace(/[^a-z]+/g, '-') });
   });
@@ -53665,9 +53673,11 @@ function caTdWaiting(){
   return out.sort(function(a, b){ return b.s.score - a.s.score; });
 }
 function caCityOf(x){ return String(x || '').split(',')[0].trim(); }
+// A person has a skill when it is in their own skills or their own title (never because a job they are on asks for it).
+function caHasSkill(c, k){ const n = String(k || '').toLowerCase(); if(!n) return false; if((c.skills || []).some(function(x){ return String(x).toLowerCase() === n; })) return true; return new RegExp('(^|[^a-z])' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z]|$)').test(String(c.role || c.title || '').toLowerCase()); }
 // The reasons behind a match: what fits (green) and the one gap (amber), from the same rules the score uses.
 function caWhy(c, j, s){
-  const need = (j.skills || []).filter(function(x){ return x !== 'General'; }), have = need.filter(function(k){ return (c.skills || []).indexOf(k) > -1; }), out = [];
+  const need = (j.skills || []).filter(function(x){ return x !== 'General'; }), have = need.filter(function(k){ return caHasSkill(c, k); }), out = [];
   if(have.length) out.push({ ok:true, t:have.slice(0, 2).join(', ') + (have.length > 2 ? ' +' + (have.length - 2) : '') + ' ✓' });
   if(s.locOk) out.push({ ok:true, t:caCityOf(c.loc) + ' ✓' }); else if(c.loc) out.push({ ok:false, t:caCityOf(c.loc) + ', job in ' + caCityOf(j.loc) });
   if(s.noticeOk) out.push({ ok:true, t:(c.notice ? String(c.notice).replace(/\s*Days?/i, ' days') : 'Short') + ' notice ✓' }); else out.push({ ok:false, t:String(c.notice || '').replace(/\s*Days?/i, ' days') + ' notice' });
@@ -54557,7 +54567,7 @@ function demoJob(o){
 let demoCandSeq = 0;
 function demoPerson(state, role, skills, o){
   o = o || {}; const name = o.name || demoName(state), city = o.city || dPick(DEMO_CITIES[state] || ['Mumbai']), yrs = o.exp != null ? o.exp : dInt(1, 12);
-  return { name:name, email:demoSlug(name) + '.' + (++demoCandSeq) + '@' + dPick(['gmail.com','yahoo.co.in','outlook.com','rediffmail.com']), phone:'+91 ' + demoMobile(), role:role, skills:skills.slice(), exp:yrs + ' yrs', loc:city + ', ' + (DEMO_STATE_SHORT[state] || '') + ', IN', notice:dPick(['Immediate','15 Days','30 Days','60 Days','90 Days']) };
+  return { name:name, email:demoSlug(name) + '.' + (++demoCandSeq) + '@' + dPick(['gmail.com','yahoo.co.in','outlook.com','rediffmail.com']), phone:'+91 ' + demoMobile(), role:role, skills:skills.slice(), exp:nYrs(yrs), loc:city + ', ' + (DEMO_STATE_SHORT[state] || '') + ', IN', notice:dPick(['Immediate','15 Days','30 Days','60 Days','90 Days']) };
 }
 // A sourced person added to the talent pool (the manual add writes the same record and audit line).
 function demoPoolCandidate(p, ownerId){
@@ -54733,7 +54743,7 @@ function* demoSteps(def){
   // once the pool is full, more journeys use people already in it (on a job they're not on)
   const topPerson = function(job){
     if(CANDIDATES.length < def.candidates) return personFor(job);
-    for(let k = 0; k < 40; k++){ const c = CANDIDATES[Math.floor(dR() * CANDIDATES.length)]; if(c.email && !SUBMISSIONS.some(function(x){ return x.jobId === job.id && x.candidateId === c.id; })) return { name:c.name, email:c.email, phone:c.phone, role:job.title, skills:job.__demo.skills, loc:c.loc || '', exp:c.exp, notice:c.notice }; }
+    for(let k = 0; k < 40; k++){ const c = CANDIDATES[Math.floor(dR() * CANDIDATES.length)]; if(c.email && !SUBMISSIONS.some(function(x){ return x.jobId === job.id && x.candidateId === c.id; })) return { name:c.name, email:c.email, phone:c.phone, role:c.role || job.title, skills:(c.skills || []).slice(), loc:c.loc || '', exp:c.exp, notice:c.notice }; }   // their own title and skills, not the job's
     return personFor(job); };
   // top up to the guide's exact numbers: placements first, then journeys (people already in the pool, on a job they're not on)
   const placed = function(){ return PAYTRACK_JOINED.length + PAYTRACK_COMPLETED.length; };
@@ -54855,7 +54865,10 @@ const DEMO_NORTHSTAR = {
   ].map(function(o){ o.gstin = demoGstin(o.state); o.pct = 8.33; o.replacement = 90; o.paymentDays = 30; return o; }); },
   jobs:function(cl, p){
     const all = CLIENTS.filter(function(c){ return ['India'].indexOf(c.country || 'India') > -1 && c.id !== 'c8'; }), it = ['Java','Spring Boot','React','SQL','AWS'], non = ['Excel','Communication','CRM','Negotiation'];
-    const titles = [['Backend Engineer', it, 12, 22], ['Frontend Developer', it, 8, 16], ['QA Engineer', it, 6, 12], ['DevOps Engineer', it, 12, 24], ['Data Analyst', it, 6, 12], ['Business Development Manager', non, 8, 15], ['HR Generalist', non, 5, 9], ['Customer Success Manager', non, 7, 13], ['Accounts Manager', non, 6, 11], ['Inside Sales Executive', non, 3.5, 6]];
+    // each title has its own skills, so the people sourced for a job have skills that fit their own title (a QA Engineer is not a Java developer)
+    const titles = [['Backend Engineer', it.filter(function(x){ return x !== 'React'; }), 12, 22], ['Frontend Developer', ['React','JavaScript','TypeScript','CSS'], 8, 16], ['QA Engineer', ['Selenium','API Testing','Manual Testing','SQL'], 6, 12], ['DevOps Engineer', ['AWS','Docker','Kubernetes','Terraform'], 12, 24], ['Data Analyst', ['SQL','Python','Excel','Power BI'], 6, 12],
+      ['Business Development Manager', ['B2B Sales','Negotiation','CRM'], 8, 15], ['HR Generalist', ['Recruitment','Payroll','Employee Relations','Excel'], 5, 9], ['Customer Success Manager', ['Client Onboarding','CRM','Communication'], 7, 13], ['Accounts Manager', ['Tally','GST','Excel','Accounts Payable'], 6, 11], ['Inside Sales Executive', ['Cold Calling','CRM','Communication'], 3.5, 6]];
+    if(typeof CA_TITLE_SKILLS !== 'undefined') titles.forEach(function(t){ if(CA_TITLE_SKILLS[t[0]]) t[1] = CA_TITLE_SKILLS[t[0]].slice(); });   // one list per title, the same one Cowork's matching uses
     const out = [];
     for(let i = 0; i < 25; i++){ const t = titles[i % titles.length], c = i < 3 ? cl[i] : all[i % all.length], team = (i % 2 ? p.dTeam : p.aTeam).slice(0, 3), lead = i % 2 ? p.divya : p.arjun;
       const st = (c.locations && c.locations[0] && c.locations[0].state) || (i % 2 ? 'Karnataka' : 'Maharashtra'), city = (c.locations && c.locations[0] && c.locations[0].city) || (i % 2 ? 'Bengaluru' : 'Pune');
@@ -55047,7 +55060,7 @@ function wsStartEmpty(){
 }
 function wsFreshInbox(owner){
   if(typeof ibFresh !== 'function') return;
-  const ws = ibWs(); IB = ibFresh(ws); IB.seeded['p-' + owner.id] = true;   // no sample chats for the owner
+  const ws = ibWs(); IB_BARE[ws] = true; IB = ibFresh(ws); IB.seeded['p-' + owner.id] = true;   // no sample chats for the owner
   IB.convs.push({ id:'t-kairo-welcome', ch:'team', kind:'group', title:'Kairo', members:[owner.id], pinned:true, unread:{}, at:Date.now(),
     msgs:[ibMsg('kairo', 'Welcome to ' + ws + '. I’m Kairo. Link your email, WhatsApp or LinkedIn under LinkIt and your conversations with candidates, ' +
       ibCl('clients', 'hiring managers') + ' and the team will land here.', Date.now())] });
@@ -58038,8 +58051,10 @@ function ibState(){
   else { IB = ibFresh(ws); ibSeedTeam(); }
   return IB;
 }
+// A new workspace (a sign-up, or one added from the switcher) starts with nothing linked: no sample accounts are assumed.
+const IB_BARE = {};
 function ibFresh(ws){
-  return { v:1, ws:ws, convs:[], links:{}, seeded:{},
+  return { v:1, ws:ws, convs:[], links:{}, seeded:{}, bare:!!IB_BARE[ws],
     policy:{ email:true, whatsapp:true, linkedin:true, team:true, retention:365, exportChats:false },
     camp:ibCampDefaults(), wallet:ibWalletDefaults(), countryOver:{}, rates:ibRateDefaults(), markup:12,
     platform:{ bsp:'Gupshup', bspKeyMask:'••••9c21', techProvider:false, ses:{ region:'ap-south-1 (Mumbai)', keyMask:'••••AKIA', sandbox:false }, kill:{ whatsapp:false, email:false, linkedin:false } } };
@@ -58063,6 +58078,7 @@ function ibResetDemo(){
 /* ---------- linked accounts (Lane A) ---------- */
 function ibLinks(uid){
   const st = ibState(); uid = uid || ibMeId();
+  if(!st.links[uid] && st.bare){ st.links[uid] = { email:{ status:'none' }, whatsapp:{ status:'none' }, linkedin:{ status:'none' } }; }
   if(!st.links[uid]){
     const u = ibMember(uid) || ibMe(), idx = ibRoster().findIndex(function(x){ return x.id===uid; });
     const role = (typeof CUSTOM_ROLES!=='undefined' ? CUSTOM_ROLES : []).find(function(r){ return u && r.id===u.assignedRoleId; });
@@ -58075,6 +58091,8 @@ function ibLinks(uid){
   }
   return st.links[uid];
 }
+// Team chat counts as a linked channel once someone else is in the workspace (always, outside a new workspace).
+function ibTeamLive(){ const st = ibState(); if(!st.bare) return true; return ibRoster().filter(function(u){ return u.userStatus !== 'Invited' && u.inviteState !== 'pending' && u.userStatus !== 'Suspended' && u.userStatus !== 'Removed'; }).length > 1; }
 function ibLiLinked(uid){
   uid = uid || ibMeId(); const l = ibLinks(uid);
   if(l.linkedin && l.linkedin.status==='linked') return true;
@@ -58378,7 +58396,7 @@ function ibListHTML(mode){
       (mode==='drawer' ? '<button type="button" class="ib-ibtn" onclick="ibExpand()" aria-label="Open full page" title="Open full page">'+ibI('expand', 17)+'</button>' : '')+
       '<button type="button" class="ib-ibtn" onclick="ibNewOpen()" aria-label="New message" title="New message">'+ibI('edit', 17)+'</button>'+
       (mode==='drawer' ? '<button type="button" class="ib-ibtn" onclick="closeMessages()" aria-label="Close" title="Close (Esc)">'+ibI('x', 17)+'</button>' : '')+'</div>'+
-    (acct ? '<div class="ib-acct" data-st="'+acct[0]+'"><i></i><span>'+ibE(acct[1])+'</span></div>' : '<div class="ib-acct" data-st="on"><i></i><span>'+IB_ORDER.filter(function(k){ return ibLinked(k); }).length+' of 4 channels linked</span></div>')+
+    (acct ? '<div class="ib-acct" data-st="'+acct[0]+'"><i></i><span>'+ibE(acct[1])+'</span></div>' : '<div class="ib-acct" data-st="on"><i></i><span>'+IB_ORDER.filter(function(k){ return k==='team' ? ibTeamLive() : ibLinked(k); }).length+' of 4 channels linked</span></div>')+
     '<label class="ib-search">'+ibI('search', 15)+'<input id="ib-q" type="search" placeholder="Search people and messages" value="'+ibE(IBV.q)+'" oninput="IBV.q=this.value; ibRenderList()" aria-label="Search conversations"/></label>'+
     '<div class="ib-chips" role="group" aria-label="Filter">'+chips.map(function(x){ return '<button type="button" class="ib-chip" aria-pressed="'+(IBV.filter===x[0])+'" onclick="IBV.filter=\''+x[0]+'\'; ibRender()">'+x[1]+(x[0]==='unread' && n.unread ? '<b>'+n.unread+'</b>' : '')+'</button>'; }).join('')+'</div></div>';
   let body = '';
@@ -59459,7 +59477,7 @@ function kaTime(s, def){
   const bt = s.match(/between (.+?) and (.+)$/) || s.match(/from (.+?) to (.+)$/); if(bt && d(bt[1]) && d(bt[2])) return R(d(bt[1]), d(bt[2]), caShortDay(d(bt[1])) + ' to ' + caShortDay(d(bt[2])));
   return def === undefined ? R(mon(today), wsAddDays(mon(today), 6), 'this week') : def;
 }
-function kaPrev(t){ const span = t.to - t.from + 1; return { from:t.from - span, to:t.from - 1, label:t.label === 'this week' ? 'last week' : t.label === 'this month' ? 'last month' : t.label === 'today' ? 'yesterday' : 'the period before' }; }
+function kaPrev(t){ const span = t.to - t.from + 1; return { from:t.from - span, to:t.from - 1, label:t.label === 'this week' ? 'last week' : t.label === 'this month' ? 'last month' : t.label === 'today' ? 'yesterday' : t.label === 'tomorrow' ? 'today' : t.label === 'next week' ? 'this week' : t.label === 'yesterday' ? 'the day before' : t.label === 'last week' ? 'the week before' : t.label === 'last month' ? 'the month before' : 'the period before' }; }
 function kaIn(ms, t){ return ms >= t.from && ms <= t.to; }
 function kaSubAt(s){ const h = (s.stageHistory || []).find(function(x){ return /submitted/i.test(x.stage); }); return Date.parse((h && h.at) || s.createdAt) || 0; }
 
@@ -59511,7 +59529,8 @@ function kaCounts(s, p){
   const list = kaTimes(metric, mine), cur = list.filter(function(x){ return kaIn(x, t); }).length, prev = list.filter(function(x){ return kaIn(x, pv); }).length, d = cur - prev;
   const cmp = d > 0 ? d + ' more than ' + pv.label : d < 0 ? (-d) + ' fewer than ' + pv.label : 'the same as ' + pv.label;
   const who = mine ? 'You' : caOwnerish() ? 'Your workspace' : 'Your jobs';
-  const verb = { submissions:mine ? 'made' : 'had', offers:mine ? 'made' : 'had', interviews:'had', added:'added', placements:'had' }[metric];
+  const ahead = t.from > fmNow();   // tomorrow, next week: what is coming, so "have", not "had"
+  const verb = ahead ? (who === 'Your workspace' ? 'has' : 'have') : { submissions:mine ? 'made' : 'had', offers:mine ? 'made' : 'had', interviews:'had', added:'added', placements:'had' }[metric];
   const text = cur ? who + ' ' + verb + ' ' + caN(cur, word[metric], metric === 'added' ? 'candidates added' : null) + ' ' + t.label + ', ' + cmp + '.' : 'No ' + (metric === 'added' ? 'candidates added' : metric) + ' ' + t.label + (prev ? '. ' + pv.label.charAt(0).toUpperCase() + pv.label.slice(1) + ' had ' + prev + '.' : '.');
   const page = { submissions:['Talent pool', "showView('talent-pool')"], offers:['Talent pool', "showView('talent-pool')"], interviews:['Interviews', "showView('interviews')"], added:['Candidates', "showView('talent-pool')"], placements:['PayTrack', "showView(caOwnerish() ? 'admin-paytrack' : 'paytrack')"] }[metric];
   return kaA('counts', text, { cards:[kaStatCard(cur, (metric === 'added' ? 'candidates added' : metric) + ' · ' + t.label, cmp.charAt(0).toUpperCase() + cmp.slice(1), kaChart(series(list), labels))], src:kaSrc('From: ' + page[0] + ' · ' + t.label, page[1]) });
@@ -59534,13 +59553,13 @@ function kaFind(s, p){
     if(!top.length) return kaA('find', 'Nobody in your talent pool scores against ' + job.title + ' yet.', { src:kaSrc('From: ' + job.title, "openJob('" + job.id + "')") });
     return kaA('find', 'The best ' + top.length + ' for ' + job.title + ' at ' + job.client + ', from your talent pool:', { cards:top.map(function(x){ return kaCandCard(x.c, x.s.score, [['Open', 'openCandidate(' + x.c.id + ')'], ['Add to job', kaAskJs('Add ' + x.c.name + ' to ' + job.title + ' at ' + job.client), 'primary']], caWhy(x.c, job, x.s).filter(function(r){ return r.ok; }).map(function(r){ return r.t; })); }), src:kaSrc('From: ' + job.title + ' · Kairo picks', "openJob('" + job.id + "')") }); }
   if(!p.skills && !p.city && !p.notice && !p.budget && !p.exp && !p.role) return kaA('find', 'Who are you looking for? Give me a skill and a city, and I’ll search your talent pool.', { chips:['Java developers in Pune', 'React developers in Bengaluru with 30 days notice', 'Python developers under 20 LPA'] });
-  const rs = kaCands().map(function(c){ const cs = (c.skills || []).map(function(x){ return x.toLowerCase(); }), hit = (p.skills || []).filter(function(k){ return cs.indexOf(k.toLowerCase()) > -1; });
+  const rs = kaCands().map(function(c){ const hit = (p.skills || []).filter(function(k){ return caHasSkill(c, k); });
     const nd = typeof cwNoticeDays === 'function' ? cwNoticeDays(c.notice) : parseInt(c.notice, 10) || 0, exp = c.comp && c.comp.expected ? c.comp.expected / 100000 : null, yrs = parseFloat(c.exp) || 0; let sc = 0, max = 0, why = [];
     if(p.skills && p.skills.length){ max += 60; sc += 60 * hit.length / p.skills.length; if(hit.length) why.push(hit.join(', ')); }
     if(p.city){ max += 20; if(caCityOf(c.loc) === p.city){ sc += 20; why.push(p.city); } }
     if(p.notice != null){ max += 10; if(nd <= p.notice){ sc += 10; why.push(nd + ' days notice'); } }
     if(p.budget != null){ max += 10; if(exp == null || exp <= p.budget){ sc += 10; if(exp != null) why.push(kaMoney() ? 'expects ' + exp.toFixed(0) + ' LPA' : 'within budget'); } }
-    if(p.exp != null){ max += 10; if(yrs >= p.exp){ sc += 10; why.push(yrs + ' yrs'); } }
+    if(p.exp != null){ max += 10; if(yrs >= p.exp){ sc += 10; why.push(nYrs(yrs)); } }
     const roleOk = !p.role || p.role.some(function(w){ return String(c.role || '').toLowerCase().replace(/\s+/g, '').indexOf(w) > -1; }); if(p.role){ max += 40; if(roleOk){ sc += 40; why.unshift(c.role); } }
     return { c:c, pct:max ? Math.round(sc / max * 100) : 0, why:why, hard:(!p.skills || !p.skills.length || hit.length) && (!p.city || caCityOf(c.loc) === p.city) && roleOk }; })
     .filter(function(r){ return r.pct >= 40 && r.hard; }).sort(function(a, b){ return b.pct - a.pct || (b.c.joinProb || 0) - (a.c.joinProb || 0); });
@@ -59637,7 +59656,8 @@ function kaIv(s, p){
   const list = hmInterviews.filter(function(iv){ const x = ivTime(iv); return iv.jobId && jobs[iv.jobId] && (!mine || caJobMine(jobById(iv.jobId))) && iv.status !== 'Cancelled' && kaIn(x, t); }).sort(function(a, b){ return ivTime(a) - ivTime(b); });
   KA.ctx = { skill:'iv', p:{ time:t } };
   if(!list.length) return kaA('iv', 'No interviews ' + t.label + '.', { src:kaSrc('From: Interviews · ' + t.label, "showView('interviews')") });
-  return kaA('iv', caN(list.length, 'interview') + ' ' + t.label + '.', { cards:[kaListCard(list.slice(0, 6).map(function(iv){ return { title:caHM(ivTime(iv)) + ' · ' + iv.candidate, meta:caDay(ivTime(iv)) + ' · ' + (iv.round || 'Interview') + ' · ' + ((jobById(iv.jobId) || {}).client || iv.role || '') + (iv.candidateConfirmed ? ' · confirmed' : ' · not confirmed'), btns:[['Open', 'ivOpen(' + caJs(iv.id) + ')']] }; }), list.length > 6 ? (list.length - 6) + ' more on Interviews' : '')], src:kaSrc('From: Interviews · ' + t.label, "showView('interviews')") });
+  const who = /\bmy\b|\bi\b|\bme\b/.test(s) ? 'You' : caOwnerish() ? 'Your workspace' : 'Your jobs';
+  return kaA('iv', who + ' ' + (t.to < fmNow() ? 'had ' : who === 'Your workspace' ? 'has ' : 'have ') + caN(list.length, 'interview') + ' ' + t.label + '.', { cards:[kaListCard(list.slice(0, 6).map(function(iv){ return { title:caHM(ivTime(iv)) + ' · ' + iv.candidate, meta:caDay(ivTime(iv)) + ' · ' + (iv.round || 'Interview') + ' · ' + ((jobById(iv.jobId) || {}).client || iv.role || '') + (iv.candidateConfirmed ? ' · confirmed' : ' · not confirmed'), btns:[['Open', 'ivOpen(' + caJs(iv.id) + ')']] }; }), list.length > 6 ? (list.length - 6) + ' more on Interviews' : '')], src:kaSrc('From: Interviews · ' + t.label, "showView('interviews')") });
 }
 // Money (money roles only)
 const KA_NO_MONEY = 'I can’t share billing figures with your role.';
@@ -59814,6 +59834,11 @@ function kaGo(s){
   return kaA('go', 'Opening ' + pg[1] + '.', { go:id });
 }
 
+/* ---------- plurals: every answer says "1 yr", "1 person", "1 day", never "1 yrs" or "persons" ---------- */
+function kaPlural(x){ return String(x).replace(/(^|[^\d.,])1 yrs\b/g, '$11 yr').replace(/(^|[^\d.,])1 years\b/g, '$11 year').replace(/(^|[^\d.,])1 days\b/g, '$11 day').replace(/(^|[^\d.,])1 persons\b/g, '$11 person').replace(/(^|[^\d.,])1 people\b/g, '$11 person').replace(/\bpersons\b/g, 'people'); }
+function kaTidy(a){ if(!a || typeof a !== 'object') return a; a.text = kaPlural(a.text); a.cards = (a.cards || []).map(kaPlural); a.chips = (a.chips || []).map(function(c){ return typeof c === 'string' ? kaPlural(c) : Object.assign({}, c, { label:kaPlural(c.label) }); }); return a; }
+(function(){ const base = kaAnswer; kaAnswer = function(raw){ return kaTidy(base(raw)); }; })();
+
 /* ---------- starters per page ---------- */
 function kaStarters(){
   const v = state.activeNav, money = kaMoney(), j = KA.pageJob && jobById(KA.pageJob), c = KA.pageCand && byId(KA.pageCand);
@@ -59926,6 +59951,8 @@ function kaReset(){ KA.chats = []; KA.cur = null; KA.ctx = null; KA.pend = {}; K
 ============================================================ */
 const WSM = { list:[], cur:null, stores:{}, seq:1, alias:{}, ready:false, pristine:null };
 const WSM_DEMO_ACCOUNT = 'demo.owner@oontu.app';
+// Each demo company has its own Owner; only the demo account owns all three (and any workspace it adds).
+const WSM_DEMO_OWNERS = { kesar:'meera.kesar@gmail.com', northstar:'priya.sharma@northstartalent.com', vistaar:'anil.desai@vistaarhr.in' };
 // The records of one workspace (emptied by demoClearWorkspace), and its setup.
 function wsmArrays(){ return { CANDIDATES:CANDIDATES, CANDIDATE_TOUCHES:CANDIDATE_TOUCHES, JOBS:JOBS, CLIENTS:CLIENTS, ACTIONS:ACTIONS, RECRUITER_ROSTER:RECRUITER_ROSTER, PLACEMENTS:PLACEMENTS, PAYTRACK_JOINED:PAYTRACK_JOINED,
   PAYTRACK_COMPLETED:PAYTRACK_COMPLETED, PAYTRACK_AT_RISK:PAYTRACK_AT_RISK, AUDIT_LOG:AUDIT_LOG, APPROVAL_REQUESTS:APPROVAL_REQUESTS, SUBMISSIONS:SUBMISSIONS, APPLICATION_EVENTS:APPLICATION_EVENTS, DUPLICATE_REVIEWS:DUPLICATE_REVIEWS,
@@ -59971,7 +59998,6 @@ function wsmForget(){
 function wsmSlug(n){ return wsSlug(n) || 'workspace'; }
 function wsmEnsure(){
   if(WSM.ready) return; WSM.ready = true;
-  ['meera.kesar@gmail.com', 'priya.sharma@northstartalent.com', 'anil.desai@vistaarhr.in'].forEach(function(e){ WSM.alias[e] = WSM_DEMO_ACCOUNT; });   // the Owners of Kesar, Northstar and Vistaar: one demo account
   const curKey = DEMO.company || 'northstar', p = ORG_STRUCTURE.profile;
   const tint = function(k){ return ['--av-sand','--av-sage','--av-blush','--av-mist'][cwHash(k) % 4]; };
   WSM.list.push({ id:'w-' + curKey, name:p.brandName, slug:wsmSlug(p.brandName), type:p.orgType || 'Staffing agency', demo:curKey, tint:tint(curKey), status:'active', createdAt:Date.now() });
@@ -59981,16 +60007,23 @@ function wsmEnsure(){
 function wsmGet(id){ wsmEnsure(); return WSM.list.find(function(w){ return w.id === id; }); }
 function wsmCur(){ wsmEnsure(); return wsmGet(WSM.cur); }
 function wsmAccount(email){ const e = authNormEmail(email || ''); return WSM.alias[e] || e; }
+// Who is asking: the signed-in account when it is the demo account (it acts as each company's Owner), otherwise the person acting.
+function wsmMe(){ if(WSM.account === WSM_DEMO_ACCOUNT) return WSM_DEMO_ACCOUNT; const me = currentActingUser(); return wsmAccount(me && me.email); }
 function wsmRoster(w){ return w.id === WSM.cur ? RECRUITER_ROSTER : (WSM.stores[w.id] ? WSM.stores[w.id].arr.RECRUITER_ROSTER : []); }
 function wsmRoles(w){ return w.id === WSM.cur ? CUSTOM_ROLES : (WSM.stores[w.id] ? WSM.stores[w.id].roles : []); }
 // This account's place in a workspace: the member, their role, and whether they have accepted.
 function wsmMember(w, acct){
-  if(w.unbuilt) return acct === WSM_DEMO_ACCOUNT ? { id:null, roleName:'Owner', active:true, demoOwner:true } : null;
+  if(acct === WSM_DEMO_ACCOUNT && (w.demo || w.by === WSM_DEMO_ACCOUNT)){
+    if(w.unbuilt) return { id:null, roleName:'Owner', active:true, demoOwner:true };
+    const ro = wsmRoster(w), own = ro.find(function(x){ return x.email && authNormEmail(x.email) === WSM_DEMO_OWNERS[w.demo]; }) || ro.find(function(x){ return /^owner$/i.test((wsmRoles(w).find(function(r){ return r.id === x.assignedRoleId; }) || {}).name || ''); });
+    return own ? { id:own.id, u:own, roleName:'Owner', active:true, demoOwner:true } : null;
+  }
+  if(w.unbuilt) return acct === WSM_DEMO_OWNERS[w.demo] ? { id:null, roleName:'Owner', active:true } : null;
   const u = wsmRoster(w).find(function(x){ return x.email && wsmAccount(x.email) === acct && x.userStatus !== 'Suspended' && x.userStatus !== 'Removed'; }); if(!u) return null;
   const r = wsmRoles(w).find(function(x){ return x.id === u.assignedRoleId; }) || {};
   const invited = u.userStatus === 'Invited' || u.inviteState === 'pending'; return { id:u.id, u:u, roleName:r.name || 'Member', active:!invited, invited:invited };
 }
-function wsmMine(){ const me = currentActingUser(); const acct = wsmAccount(me && me.email); return WSM.list.map(function(w){ return { w:w, m:wsmMember(w, acct) }; }).filter(function(x){ return x.m; }); }
+function wsmMine(){ const acct = wsmMe(); return WSM.list.map(function(w){ return { w:w, m:wsmMember(w, acct) }; }).filter(function(x){ return x.m; }); }
 // Something there needs you: approvals waiting on you and Kairo items of yours, in a workspace you are not in right now.
 function wsmNeeds(w, m){
   if(w.id === WSM.cur || !m || !m.id || !WSM.stores[w.id]) return 0; const a = WSM.stores[w.id].arr;
@@ -60004,7 +60037,7 @@ function wsSwitch(id, o){
   o = o || {}; wsmEnsure(); const to = wsmGet(id); if(!to || to.id === WSM.cur) return true;
   if(DEMO.loading){ toast('Wait a moment: ' + (wsmCur() || {}).name + ' is still loading.'); return false; }
   if(to.status === 'closed'){ toast(to.name + ' is closed.'); return false; }
-  const me = currentActingUser(), acct = o.account || wsmAccount(me && me.email), m = wsmMember(to, acct);
+  const acct = o.account || wsmMe(), m = wsmMember(to, acct);
   if(!m && !o.force){ toast('You’re not a member of ' + to.name + '.'); return false; }
   try { demoClearOverlays(); } catch(e){} try { toggleRoleMenu(true); } catch(e){} if(typeof closeKairoChat === 'function' && kairoChatOpen) closeKairoChat();
   WSM.stores[WSM.cur] = wsmCapture();
@@ -60034,12 +60067,15 @@ function wsAuthMemberships(email){
   return ms;
 }
 (function(){ const base = authEnter; window.authEnter = function(res, kind){
-  const id = res && res.workspace && res.workspace.id; if(id && /^ws_w-/.test(id)){ const wid = id.slice(3), email = res.user && res.user.email; if(wid !== WSM.cur) wsSwitch(wid, { quiet:true, account:wsmAccount(email), force:true }); else wsmRemember(wsmAccount(email), wid); }
-  return base.apply(this, arguments); }; })();
+  const email = res && res.user && res.user.email; WSM.account = email ? wsmAccount(email) : null;
+  const id = res && res.workspace && res.workspace.id; if(id && /^ws_w-/.test(id)){ const wid = id.slice(3); if(wid !== WSM.cur) wsSwitch(wid, { quiet:true, account:WSM.account, force:true }); else wsmRemember(WSM.account, wid); }
+  const r = base.apply(this, arguments);
+  if(WSM.account === WSM_DEMO_ACCOUNT){ const m = wsmMember(wsmCur(), WSM_DEMO_ACCOUNT); if(m && m.id) try { demoAct(m.id); renderSidebar(); showView(homeForMe()); } catch(e){} }
+  return r; }; })();
 
 /* ---------- the switcher: the sidebar card's menu ---------- */
 function wsmSwitchHTML(){
-  const mine = wsmMine(), cur = WSM.cur, own = caOwnerish(), acct = wsmAccount((currentActingUser() || {}).email);
+  const mine = wsmMine(), cur = WSM.cur, own = caOwnerish(), acct = wsmMe();
   const row = function(x){ const w = x.w, on = w.id === cur, n = wsmNeeds(w, x.m);
     return '<button type="button" role="menuitemradio" aria-checked="' + on + '" class="o-menu__item wsm-row' + (on ? ' is-on' : '') + '" data-ws="' + w.id + '" onclick="event.stopPropagation(); wsSwitch(\'' + w.id + '\')"><span class="wsm-tile" style="background:var(' + w.tint + ')">' + cwEsc(initials(w.name)) + (n ? '<i class="wsm-dot" title="' + n + ' waiting for you"></i>' : '') + '</span><span class="wsm-t"><b>' + cwEsc(w.name) + '</b><small>' + cwEsc(x.m.roleName) + (w.unbuilt ? ' · demo' : '') + '</small></span>' + (on ? '<span class="wsm-tick" aria-hidden="true">✓</span>' : '') + '</button>'; };
   const active = mine.filter(function(x){ return x.w.status === 'active' && x.m.active; }), invites = mine.filter(function(x){ return x.w.status === 'active' && !x.m.active && x.m.invited; }), closed = WSM.list.filter(function(w){ return w.status === 'closed' && wsmMember(w, acct); });
@@ -60145,14 +60181,14 @@ function wsmCreate(g){
   s.maps.WS_SETUPS = {}; s.maps.WS_SETUPS[authNormEmail(me.email)] = ws;
   s.lets = { picks:{}, dec:{}, done:{}, ext:{}, setupEmail:authNormEmail(me.email), demo:{ company:null, mode:null, as:owner.id, built:null }, plan:{ planId:g.plan, plan:O.subscription.plan }, role:'admin' };
   const p = ORG_STRUCTURE.profile, w = { id:id, name:g.name, slug:wsmSlug(g.name), type:g.type, demo:null, tint:['--av-sand','--av-sage','--av-blush','--av-mist'][cwHash(id) % 4], status:'active', createdAt:Date.now(), createdBy:me.name, invited:invited, pendingPlan:g.plan, from:copy ? g.src : null };
-  WSM.list.push(w); WSM.stores[id] = s;
+  w.by = wsmMe(); if(typeof IB_BARE !== 'undefined') IB_BARE[w.name] = true; WSM.list.push(w); WSM.stores[id] = s;
   try { EXISTING_WORKSPACES.push({ name:g.name, domain:null, type:g.type, sample:false, wsmId:id }); } catch(e){}
   logAudit('Organization', 'Workspace added', g.name + ' · ' + (copy ? 'copied from ' + g.src : 'fresh') + (invited ? ' · ' + invited + ' invited' : '') + ' · by ' + me.name);
   return w;
 }
 // An invitation to another workspace: accept, then it is yours to switch to.
 function wsmAccept(id){
-  const w = wsmGet(id), me = currentActingUser(), acct = wsmAccount(me && me.email), m = w && wsmMember(w, acct); if(!m || !m.invited) return false;
+  const w = wsmGet(id), acct = wsmMe(), m = w && wsmMember(w, acct); if(!m || !m.invited) return false;
   m.u.userStatus = 'Active'; m.u.inviteState = 'accepted'; m.u.acceptedAt = new Date(fmNow()).toISOString();
   const log = w.id === WSM.cur ? AUDIT_LOG : WSM.stores[w.id].arr.AUDIT_LOG; log.unshift({ id:'al-' + Date.now(), timestamp:new Date(fmNow()).toISOString(), at:fmNow(), user:m.u.name, action:'Invite accepted', detail:m.u.name + ' joined ' + w.name + ' as ' + m.roleName, module:'User Management' });
   toast('You joined ' + w.name + ' as ' + m.roleName + '.'); wsmArrange(); return true;
@@ -60186,12 +60222,20 @@ function wsmRestoreWs(id){ const w = wsmGet(id); if(!w || w.status !== 'closed')
 // the untouched setup of the boot data: the base for "start fresh" and for building a demo company
 WSM.pristine = wsmCapture();
 </script>
+<style id="home-numbers-style">
+/* A count's change is said in words ("1 fewer than last month"): on a narrow card it wraps under the number instead of running off it. */
+:root body .bh-stat__row{ flex-wrap:wrap; row-gap:2px; }
+:root body .bh-stat__row .bh-arrow.is-said{ flex-basis:100%; white-space:normal; min-width:0; align-items:flex-start; gap:4px; }
+:root body .bh-stat__row .bh-arrow.is-said svg{ flex:none; margin-top:3px; }
+</style>
 <style id="kairo-chat-style">
 /* F2 (2026-11-22): the Kairo chat is a fixed side panel on the right, under the top bar, full height; a full-screen sheet on a phone.
    Its own rules beat the Design 2.0 .card layout, which had put it back into the page flow. */
 :root body #kairo-chat-panel{ position:fixed !important; top:var(--kc-top, 72px); right:0; bottom:0; left:auto; width:400px; max-width:100vw; height:auto; max-height:none; margin:0;
   z-index:70; border-radius:20px 0 0 0; box-shadow:0 0 0 1px rgba(11,31,59,.06), -24px 0 60px -30px rgba(11,31,59,.35); background:#FFFFFF; }
 @media (max-width:700px){ :root body #kairo-chat-panel{ top:0; width:100vw; border-radius:0; z-index:90; } }
+/* On a phone the open panel fills the screen: a toast sits above its message box (91 px with the footer), never over it. */
+@media (max-width:700px){ :root body:has(#kairo-chat-panel) .app-toasts{ bottom:calc(100px + env(safe-area-inset-bottom)); } }
 </style>
 <script id="kairo-chat-esc">
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && typeof kairoChatOpen !== 'undefined' && kairoChatOpen){ e.preventDefault(); closeKairoChat(); const b = document.getElementById('topbar-kairo'); if(b) b.focus({ preventScroll:true }); } });

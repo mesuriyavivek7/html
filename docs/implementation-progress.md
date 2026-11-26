@@ -2064,3 +2064,28 @@ One new block, `<script id="workspaces-script">`, plus a small change in the aut
   - "Which clients owe feedback?" is understood.
   - Every sidebar page has starters that fit it (Clients, Cowork, Inbox, Approvals, To do, Team, Reports, Settings).
 - Tests: `tests/workspaces.spec.js` (9); 5 more in `tests/kairo-assistant.spec.js`. `tests/fix-d2.spec.js` signs in as Priya, who now has several workspaces, so its helper picks Northstar on the chooser. Full suite 46 specs, 802 / 802.
+
+## Step 4 polish (26 November 2026)
+
+1. **Who sees which workspace.** A person sees only the workspaces they belong to, in the switcher and in "Choose a workspace". Priya sees Northstar, Meera sees Kesar, and Anil sees Vistaar.
+   - `demo.owner@oontu.app` is now a real sign-in. It owns all three companies and acts as each one's Owner.
+   - Prototype tools › Demo company is unchanged and available to everyone. It reloads into a company.
+2. **Kairo wording.**
+   - Future time frames say "have" or "has": "Your jobs have 3 interviews tomorrow", "Your workspace has…".
+   - Comparisons name the right period ("1 fewer than today").
+   - Every answer says "1 yr", "1 person" and "1 day" (`kaPlural`). `nYrs()` writes "1 yr" wherever experience is recorded or shown.
+3. **Kairo search uses the person's own skills.**
+   - A skill matches only the person's own skills or title (`caHasSkill`), and the "Java ✓" chip uses the same rule.
+   - The Northstar demo had given every IT title one shared skill list, so QA and DevOps people "had Java". Each title now has its own list (`CA_TITLE_SKILLS`).
+   - People reused for a second job keep their own title and skills.
+4. **Home numbers.**
+   - "people in guarantee", never "persons".
+   - ₹0 shows as "₹0".
+   - Placements says its change in words ("1 fewer than the week before"), on its own line under the number.
+5. **New workspaces start with nothing linked.** Their Inbox says "0 of 4 channels linked" until something is really connected. Team counts once someone else has joined.
+6. **Toasts and the Kairo panel.** At phone width, toasts sit above the Kairo message box while the panel is open.
+- Tests:
+  - `workspaces` has 2 new checks and 2 rewritten for the membership rule.
+  - `fix-d2` has 3 new checks. The spec skips itself inside the 390 frame.
+  - `kairo-assistant` has 3 new checks.
+  - Full suite: 46 specs, 810 / 810.
