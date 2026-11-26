@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-1a
+1b
 
 ## Steps
 
@@ -18,6 +18,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 | 0b | Done | o2-step-0b | o2-metrics 10/10; regressions green off/on | o2-metrics-script; data always present, screens behind switch |
 | 0c | Done | o2-step-0c | o2-billing-customer 8/8; regressions green off/on | wraps bosTaxPartyOf (not bosTaxSegment: it receives a party); snapshot via BOS.taxInvoices.push hook |
 | 0d | Done | o2-step-0d | o2-invoice-view 6/6; regressions green off/on | text-only inv-N → OON mapping on platform screens + bosDialog; isInvoiceOverdue reads tax invoice; legacy plans stripped from pickers (commands unchanged) |
+| 1a | Done | o2-step-1a | o2-nav-redirect 9/9; bos-login 8/8 on and off; screens-crawl, light, motion green (motion collapse-pill flake passes alone) | new ids host old screens; bos-login made 1a-aware (same strictness) |
 
 ## How to run tests (this machine)
 
@@ -35,3 +36,12 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 ## Open problems
 
 none
+
+## Queued after the overnight build (owner message, 2026-11-26 22:3x)
+
+Start only when the overnight build has printed its final "Done. Report: …" line, every step is Done/Blocked/Skipped and git is clean.
+- **Phase 1 — audit** on o2/overnight-2026-11-26: tag per Done step; full suite twice (off / all passed on); re-check every acceptance list; review diff from o2-step-0a (nothing deleted or weakened, switches default off, bos-tax output unchanged, no numbering/price/tax change, data changes through bosRun, mock numbers labelled); retry Blocked steps once; fix ("O2 audit: …"); write docs/O2-AUDIT-REPORT.md; tag o2-audited.
+- **Phase 2 — G1–G6** from docs/OONTU-GAME-CHANGERS-PROMPT.md behind RX_SWITCH (default off), from tag o2-audited, same branch; per upgrade: read, baseline, build, self-review, test (new spec on; regressions on/off; screens-crawl; bos-login), acceptance, commit "RX G<n>: …", tag rx-g<n>. If rx-g tags exist from the overnight build, audit them and build only the missing ones.
+- Progress page gets sections "Audit" and "Recruiter-app upgrades G1–G6". End: full suite twice; docs/RX-REPORT.md.
+- Final line: `Done. Audit: docs/O2-AUDIT-REPORT.md · Upgrades: docs/RX-REPORT.md · Progress page: docs/o2-progress.html · Branch: o2/overnight-2026-11-26`
+- Same never-list (no push/merge/force/delete, no packages, never two test passes at once, no uncommitted changes).

@@ -12,6 +12,7 @@ _In progress. Written in full when the build finishes._
 - **0b** Policy values in one place; MRR per currency from list prices; access level shown on each workspace. Switch 0b · Meera Krishnan · Platform overview › MRR card; Tenants › a tenant › Access level; Platform Settings › Policy values.
 - **0c** Billing customer per account: invoices freeze the buyer details; market locked by the first invoice, changed only from the next renewal; tax identical. Switch 0c · Meera Krishnan (or Finance) · Accounts › Northstar Talent Partners › Billing customer card › Edit billing details / Change market.
 - **0d** Only tax invoices (OON/…) are shown on platform screens; overdue follows the tax invoice; legacy plans say “Grandfathered — not for sale” and are not offered. Switch 0d · Meera Krishnan · Business & finance › Invoices and refunds (OON numbers); Plans (labels); Tenants › Create workspace (no legacy plans).
+- **1a** The §5 menu (Home · Work · Customers · Service · Billing · Admin), old screen ids redirect, one access table, Home for platform operations. Switch 1a · any login · the sidebar; open an old link such as Tenants and land on Workspaces.
 
 ## 3. Blocked steps
 
@@ -32,10 +33,27 @@ None yet.
 | Demo tenant plan (0d) | Not moved: Northstar stays on Growth, labelled grandfathered. |
 | Legacy plans in commands (0d) | Hidden from pickers only; commands still accept them so existing records and specs that use them keep working. |
 | Overdue date (0d) | Tax invoices for subscriptions carry no due date today, so the internal row's due date is used when the tax invoice has none; settlement always comes from the tax invoice. |
+| 1a merged screens | Until their own step, a new id that merges two screens shows both behind a small tab strip (Workspaces: All · Requests; Pipeline: Pipeline · Sign-ups); Approvals, Invoices and Tax open the old finance screen on the right tab. |
+| 1a and bos-login.spec | The spec reads its screen lists through the old→new id map when 1a is on (exact lists, same strictness); with 1a off it is unchanged. |
 
 ## 5. Step 1a screen lists
 
-Pending.
+Derived from the strict access rules (same permission per screen; new ids replace old). Checked by `o2-nav-redirect.spec.js` and by `bos-login.spec.js` with 1a on.
+
+| Login | Before (1a off) | After (1a on) |
+| --- | --- | --- |
+| Meera (Super Admin) | every screen (18+) | Home · My work · Approvals · My team · Reports · Accounts · Pipeline · Workspaces · Onboarding & success · Tickets · Incidents · Announcements · Subscriptions · Invoices & payments · Plans & pricing · Tax & reports · People & access · Audit & security · Integrity · AI agents · Product controls · Platform settings |
+| Arjun (Sales Executive) | My work · Pipeline · Accounts · Sign-ups | My work · Accounts · Pipeline (Sign-ups is a tab) |
+| Kavya (Sales Manager) | My team · My work · Pipeline · Accounts · Sign-ups · Insights | My work · My team · Reports · Accounts · Pipeline |
+| Leela (Revenue Manager) | My work · Pipeline · Accounts · Sign-ups · Billing and payments · Integrity · Insights | My work · Approvals · Reports · Accounts · Pipeline · Invoices & payments · Tax & reports · Integrity |
+| Rohan (Support Agent) | My work · Accounts · Tickets | My work · Accounts · Tickets · Incidents |
+| Nisha (Support Manager) | My team · My work · Accounts · Tickets · Integrity · Insights | My work · My team · Reports · Accounts · Tickets · Incidents · Integrity |
+| Aditi (Implementation + Trainer) | My work · Accounts · Tickets · Onboarding · Tenants | My work · Accounts · Workspaces · Onboarding & success · Tickets · Incidents |
+| Sana (CS Manager) | My team · My work · Pipeline · Accounts · Sign-ups · Onboarding · Tenants · Integrity · Insights | My work · My team · Reports · Accounts · Pipeline · Workspaces · Onboarding & success · Integrity |
+| Vikram (Finance Manager) | My team · My work · Accounts · Tickets · Billing and payments · Subscriptions · Plans · Integrity · Insights | My work · Approvals · My team · Reports · Accounts · Tickets · Incidents · Subscriptions · Invoices & payments · Plans & pricing · Tax & reports · Integrity |
+| Dev (Security Admin) | My work · Employees and access · Integrity · Insights · Audit | My work · Reports · People & access · Audit & security · Integrity |
+
+With 1b on, Approvals is open to every active employee (their own requests and decisions).
 
 ## 6. Old code that can be removed
 

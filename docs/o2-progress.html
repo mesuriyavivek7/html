@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-26 21:55 IST",
-    "current":  "1a (full-suite checkpoint after 0d running)",
+    "updated":  "2026-11-26 23:29 IST",
+    "current":  "1b",
     "partA":  [
                   {
                       "id":  "0a",
@@ -83,11 +83,11 @@
                   {
                       "id":  "1a",
                       "name":  "Navigation and redirects",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "9/9 (o2-nav-redirect); bos-login 8/8 on and off; crawl, light, motion green",
+                      "tag":  "o2-step-1a",
+                      "what":  "The new menu (Home · Work · Customers · Service · Billing · Admin); old links redirect; one access table.",
+                      "see":  "Switch 1a · any login (try Arjun, then Vikram) · the sidebar; open Tenants or Billing and payments from an old link and land on Workspaces or Invoices \u0026 payments"
                   },
                   {
                       "id":  "1b",
@@ -304,7 +304,8 @@
                  ],
     "flaky":  [
                   "Headless Chrome occasionally hangs at launch (seen once on bos-tax before the build); a rerun alone passes.",
-                  "cowork-visual gives no result when two test passes run at once; passes 15/15 alone. Passes are now always run one at a time."
+                  "cowork-visual gives no result when two test passes run at once; passes 15/15 alone. Passes are now always run one at a time.",
+                  "Dialog-focus checks (submission-flow K4, intake-flow G6) and jd-reader occasionally fail in long runs and pass alone; motion collapse-pill is the brief\u0027s known flake."
               ],
     "decisions":  [
                       [
@@ -350,11 +351,19 @@
                       [
                           "Overdue date",
                           "Subscription tax invoices carry no due date today, so the internal row\u0027s due date is used when the tax invoice has none; settlement always comes from the tax invoice."
+                      ],
+                      [
+                          "1a merged screens",
+                          "Until its own step, a new id that merges two screens shows both behind a tab strip (Workspaces: All · Requests; Pipeline: Pipeline · Sign-ups)."
+                      ],
+                      [
+                          "1a and bos-login.spec",
+                          "With 1a on the spec reads its screen lists through the old→new id map (exact lists); with 1a off it is unchanged. Before/after table in the report."
                       ]
                   ],
     "suite":  {
-                  "off":  "Before the build (0a tag): 1,031/1,031 across 72 specs",
-                  "on":  "Before the build (0a on): 1,031/1,031 across 72 specs"
+                  "off":  "After 0d (o2-step-0d): 1,111/1,112 across 75 specs; the 1 failure (submission-flow K4, a dialog-focus check) and a jd-reader no-result passed when rerun alone.",
+                  "on":  "After 0d, switches 0a–0d on with saving: 1,091/1,096 on the specs committed at 0d; failures were o2-metrics / o2-persistence (they assert only their own switch is on: expected), motion collapse-pill (known flake, passes alone on this tag and before 0a), intake-flow G6 and submission-flow K4 (dialog focus; pass alone)."
               }
 }
 </script>
