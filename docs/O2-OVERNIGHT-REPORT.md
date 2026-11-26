@@ -15,6 +15,7 @@ _In progress. Written in full when the build finishes._
 - **1a** The §5 menu (Home · Work · Customers · Service · Billing · Admin), old screen ids redirect, one access table, Home for platform operations. Switch 1a · any login · the sidebar; open an old link such as Tenants and land on Workspaces.
 - **1b** One approvals inbox for everyone (Waiting for me · I asked · Decided by me · All) and a platform bell that opens the record. Switches 1a+1b · Arjun raises a 15% discount on a deal, then Kavya opens Work › Approvals (and the bell).
 - **1c** Platform search: IDs first, then names, grouped and permission-filtered, with actions. Switch 1c · Meera · press Ctrl+K and type TCK-1001, an OON/ number, “Northstar” or a GSTIN.
+- **2** Home: ranked attention queue, six KPIs per the definitions, four SVG charts (illustrative where no history), recent activity. Switches 0b, 1a, 1b, 2 · Meera Krishnan · Home.
 
 ## 3. Blocked steps
 
@@ -39,6 +40,8 @@ None yet.
 | 1a and bos-login.spec | The spec reads its screen lists through the old→new id map when 1a is on (exact lists, same strictness); with 1a off it is unchanged. |
 | 1b Approvals access | Approvals is open to every active employee (they see their own requests and decisions); deciding still needs the approving permission. |
 | 1c Sales ticket scope | A Sales Executive may read tickets (inside Account 360) but has no Tickets screen; search shows them tickets only on accounts they or their reports own. |
+| 2 Home charts | No monthly history exists yet (BOS.mrrSnapshots), so MRR movement, new vs lost, trial conversion and the backlog history are fixed illustrative series labelled “Illustrative data”; the latest points that exist (backlog now, SLA this week, MRR now) are real. |
+| 2 Home lede | A product-wide design layer hides page-head ledes, so “N things need the platform team” is shown as the first line of the page body. |
 
 ## 5. Step 1a screen lists
 

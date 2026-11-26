@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-2
+3a (checkpoint after 2 running in worktree scratchpad/wt-cp)
 
 ## Steps
 
@@ -21,6 +21,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 | 1a | Done | o2-step-1a | o2-nav-redirect 9/9; bos-login 8/8 on and off; screens-crawl, light, motion green (motion collapse-pill flake passes alone) | new ids host old screens; bos-login made 1a-aware (same strictness) |
 | 1b | Done | o2-step-1b | o2-approvals 5/5, o2-bell 6/6; regressions 130/130 off, on green | Approvals open to all active employees; bos-login 1b-aware |
 | 1c | Done | o2-step-1c | o2-search 6/6; crawl, bos-login, a11y green off/on (no older search spec exists) | Sales ticket scope = accounts they or their reports own |
+| 2 | Done | o2-step-2 | o2-home 5/5; crawl, light, auth-flow, bos-login green off/on | status line in the body (a later design layer hides page-head ledes); chart colours avoid red/green (light.spec rule) |
 
 ## How to run tests (this machine)
 
