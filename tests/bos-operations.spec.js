@@ -137,8 +137,8 @@
       as('PU-101'); ok(!bosRequestRefund({ invoiceId:inv.id, amount:1, reason:'x' }).ok, 'sales can’t request');
       as('PU-106'); ok(!bosRequestRefund({ invoiceId:inv.id, amount:inv.amount + 1, reason:'Too much' }).ok, 'not more than paid');
       var r = bosRequestRefund({ invoiceId:inv.id, amount:1, reason:'Goodwill credit for the outage' }); ok(r.ok, r.reason);
-      ok(!bosDecide(r.approval.id, true).ok, 'not by the requester');
-      as('PU-001'); ok(bosDecide(r.approval.id, true).ok, 'approved by someone else'); eq(r.refund.status, 'approved');
+      ok(!bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'not by the requester');
+      as('PU-001'); ok(bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'approved by someone else'); eq(r.refund.status, 'approved');
       var done = BOS_PAY.simulate('refund.processed', { id:r.refund.providerId, amount:1, currency:inv.currency, version:1 }); ok(done.applied, 'provider event'); eq(r.refund.status, 'refunded');
     });
     await t('Finance handles a reconciliation exception', async function(){
@@ -164,8 +164,8 @@
       ok(!bosRequestAccess({ tenantId:CURRENT_ORGANIZATION_ID, scope:'workspace-data', purpose:'Check the import mapping', hours:2, ticketId:tk.id }).ok, 'needs customer authorisation');
       var r = bosRequestAccess({ tenantId:CURRENT_ORGANIZATION_ID, scope:'workspace-data', purpose:'Check the import mapping', hours:2, ticketId:tk.id, customerAuthorised:true }); ok(r.ok && r.grant.status === 'requested', r.reason);
       ok(!bosHasAccess(CURRENT_ORGANIZATION_ID, 'workspace-data'), 'no access before approval');
-      ok(!bosDecide(r.approval.id, true).ok, 'not self-approved');
-      as('PU-104'); ok(bosDecide(r.approval.id, true).ok, 'support manager approves');
+      ok(!bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'not self-approved');
+      as('PU-104'); ok(bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'support manager approves');
       as('PU-103'); ok(bosHasAccess(CURRENT_ORGANIZATION_ID, 'workspace-data'), 'granted');
       APS.clockOffsetMs = (APS.clockOffsetMs || 0) + 3 * H; ok(!bosHasAccess(CURRENT_ORGANIZATION_ID, 'workspace-data'), 'expired'); APS.clockOffsetMs -= 3 * H;
       ok(AUDIT_LOG.some(function(e){ return /Sensitive access requested/.test(e.action); }) && AUDIT_LOG.some(function(e){ return /Access expired/.test(e.action); }), 'audited');

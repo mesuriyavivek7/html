@@ -107,6 +107,44 @@ Finance and the customer can each open an invoice ("View") and save it as a PDF 
 
 Tests: `tests/bos-autoinvoice.spec.js`.
 
+## 1b. Accountable approvals (`bos-approval-guard-script`, 26 Nov 2026)
+
+Both sides of every approval must explain themselves. The record keeps what was asked, what the approver saw and why they decided.
+
+**The requester: discounts and trials above policy.** No approval is requested until there is a business case:
+
+- a reason type: competitor offer, volume or multi-year commitment, strategic or reference customer, budget limit, expansion, or other;
+- the case itself, with facts;
+- the competitor and their offer, when the reason is a competitor match;
+- the commitment in licences, months or years, when the reason is volume;
+- what happens without the discount.
+
+Stock phrases such as "please approve", "urgent" or "ok" are refused.
+
+**The approver: every approval type.** The approval dialog shows:
+
+- the business case;
+- the deal context: stage, confidence, close date, terms, list price against net, and the rupees given away;
+- the customer's earlier proposals;
+- the requester's last 90 days of requests;
+- risk checks: stacked offers, restricted level, a low-confidence deal, a deal not yet qualified, undercutting an existing customer, a competitor quote with no figure.
+
+The approver must pick a reason and write their reasoning, whether they approve or decline. Money approvals and other approvals use different reason lists. The requester is told why.
+
+**Protection:**
+
+- Nobody approves their own request.
+- Nobody approves a discount on a deal they own.
+- Only one discount request can be pending per deal. This stops asking several approvers with different numbers.
+- An approval holds only for the exact terms approved, and for 14 days.
+- A declined case can't be resubmitted unchanged.
+- The requester can withdraw a request while it is pending.
+- Promo codes need a business purpose.
+- New integrity rule `discount-pattern`: three or more above-policy requests by one person in 30 days, or most of them declined, opens a finding for review. It is not treated as proof.
+- The case, the context seen, the decision reason and the reasoning are all stored on the approval and in the audit log.
+
+Tests: `tests/bos-approval-guard.spec.js`.
+
 ## 2. Role fixes (from the role check)
 
 - **Approvals lists:** each person sees only requests they made, requests they may decide, or requests they decided. Finance no longer sees security approvals.

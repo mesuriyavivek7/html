@@ -60,7 +60,7 @@
     await t('a refund becomes a credit note against the original invoice', async function(){
       var ti = BOS.taxInvoices.find(function(x){ return x.kind === 'invoice' && x.status === 'paid' && /^inv-/.test(x.sourceRef); }); var inv = invoiceById(ti.sourceRef);
       as('PU-106'); var rq = bosRequestRefund({ invoiceId:inv.id, amount:Math.round(inv.amount / 2), reason:'Downtime credit' }); ok(rq.ok, rq.reason);
-      as('PU-001'); ok(bosDecide(rq.approval.id, true).ok, 'approved');
+      as('PU-001'); ok(bosDecide(rq.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'approved');
       ok(BOS_PAY.simulate('refund.processed', { id:rq.refund.providerId, amount:rq.refund.amount, currency:inv.currency, version:1 }).applied, 'processed');
       var cn = bosTaxInvoice(rq.refund.creditNoteNo); ok(cn && cn.kind === 'credit_note' && /^OON-CN\//.test(cn.no) && cn.originalNo === ti.no && cn.taxableINR < 0, JSON.stringify(cn && { no:cn.no, t:cn.taxableINR }));
     });

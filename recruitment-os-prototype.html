@@ -69174,7 +69174,7 @@ function cfScopeHTML(){
     bosDialog('Correct ' + no, '<p class="bos-note">' + E(p.why) + '</p>' + lineRows(t.lines || [{ desc:t.description, qty:1, unitPrice:t.amount }]) + bosField('bos-cr-fix', 'Only the customer’s details (GSTIN, address) were wrong', { check:true }) + bosField('bos-cr-why', 'What was wrong', { textarea:true }) + '<p class="bos-muted">Above ₹10,000, or on a paid invoice, a finance manager approves the correction first.</p>', 'Correct', "bosDlgDone(bosCorrectInvoice('" + no + "', { lines:bosReadLines(), reason:bosV('bos-cr-why'), customerFix:bosV('bos-cr-fix') }), 'Done.')"); };
   window.bosShareDialog = function(linkId){ const l = BOS.payLinks.find(function(x){ return x.id === linkId; }), a = l && bosAccount(l.accountId), c = a && bosContactsOf(a.id).find(function(x){ return x.primary; });
     bosDialog('Share payment link', '<p class="bos-note">' + E(l.currency + ' ' + l.amount + ' · ' + (l.taxSegment || '') + ' · ' + l.url) + '</p>' + bosField('bos-sh-ch', 'Send by', { options:[['email', 'Email'], ['whatsapp', 'WhatsApp'], ['copy', 'Copy the link']] }) + bosField('bos-sh-to', 'To (email or WhatsApp number)', { value:c ? c.email : '' }) + '<p class="bos-muted">Reminders go 5 and 2 days before it ends. The link stops working once paid, cancelled or expired.</p>', 'Share', "bosDlgDone(bosShareLink('" + linkId + "', bosV('bos-sh-ch'), bosV('bos-sh-to')), 'Shared (simulated).')"); };
-  window.bosPromoDialog = function(){ bosDialog('New promo code', '<div class="bos-row2">' + bosField('bos-pc-code', 'Code', { placeholder:'DIWALI15' }) + bosField('bos-pc-pct', '% off', { type:'number', value:10 }) + '</div>' + bosField('bos-pc-label', 'Label', {}) + bosField('bos-pc-plans', 'Plans (none picked = all)', { options:choosablePlans('agency').concat(choosablePlans('corporate')).filter(function(p){ return !p.talkToUs; }).map(function(p){ return [p.id, p.name]; }), multiple:true }) + '<div class="bos-row2">' + bosField('bos-pc-until', 'Valid until', { type:'date' }) + bosField('bos-pc-max', 'Maximum uses (empty = no limit)', { type:'number' }) + '</div>' + bosField('bos-pc-new', 'New customers only', { check:true }), 'Create', "bosDlgDone(bosCreatePromo({ code:bosV('bos-pc-code'), pct:bosV('bos-pc-pct'), label:bosV('bos-pc-label'), plans:bosV('bos-pc-plans'), validUntil:bosV('bos-pc-until'), maxUses:bosV('bos-pc-max'), newOnly:bosV('bos-pc-new') }), 'Created. A finance manager approves it before customers can use it.')"); };
+  window.bosPromoDialog = function(){ bosDialog('New promo code', '<div class="bos-row2">' + bosField('bos-pc-code', 'Code', { placeholder:'DIWALI15' }) + bosField('bos-pc-pct', '% off', { type:'number', value:10 }) + '</div>' + bosField('bos-pc-label', 'Label', {}) + bosField('bos-pc-plans', 'Plans (none picked = all)', { options:choosablePlans('agency').concat(choosablePlans('corporate')).filter(function(p){ return !p.talkToUs; }).map(function(p){ return [p.id, p.name]; }), multiple:true }) + '<div class="bos-row2">' + bosField('bos-pc-until', 'Valid until', { type:'date' }) + bosField('bos-pc-max', 'Maximum uses (empty = no limit)', { type:'number' }) + '</div>' + bosField('bos-pc-new', 'New customers only', { check:true }) + bosField('bos-pc-reason', 'Business purpose (why this offer, for whom, expected result)', { textarea:true }), 'Create', "bosDlgDone(bosCreatePromo({ reason:bosV('bos-pc-reason'), code:bosV('bos-pc-code'), pct:bosV('bos-pc-pct'), label:bosV('bos-pc-label'), plans:bosV('bos-pc-plans'), validUntil:bosV('bos-pc-until'), maxUses:bosV('bos-pc-max'), newOnly:bosV('bos-pc-new') }), 'Created. A finance manager approves it before customers can use it.')"); };
 
   /* ---------- the customer's checkout dialog (Settings › Plan & billing, trial card, compare plans) ---------- */
   const CK = { planId:null, seats:null, interval:'annual', boosts:[], promo:'', link:null, err:'' };
@@ -69739,6 +69739,291 @@ function cfScopeHTML(){
       rows:runs.length ? runs.map(function(r){ const v = r.docNo && bosVaultFor(r.docNo); return '<tr><td><b>' + E(r.docNo || '—') + '</b><small>' + E(r.via + ' · ' + r.paymentId) + '</small></td><td>' + E(v ? v.customer : '') + '</td><td class="num">' + E(v ? v.currency + ' ' + v.total : '') + '</td><td style="white-space:normal"><div class="inv-pipe">' + r.steps.map(function(s){ return '<span class="is-done" title="' + E(s.detail + ' · ' + String(s.at).slice(11, 19)) + '">✓ ' + E(s.step) + '</span>'; }).join('') + '</div></td><td>' + (r.docNo ? '<button type="button" class="o-btn" onclick="bosInvoiceView(\'' + r.docNo + '\')">View</button>' : '') + '</td></tr>'; }).join('') : oTableEmptyRow(5, 'No payments yet. Each verified payment creates, stores and sends its invoice here automatically.') });
     return vault + '<div style="height:16px"></div>' + baseDesk.apply(this, arguments);
   };
+})();
+</script>
+<script id="bos-approval-guard-script">
+/* ============================================================
+   ACCOUNTABLE APPROVALS (prototype, 2026-11-26, the user: "the applier and the approver must give a valid reason;
+   the approver must find it genuinely required to close the deal; a decline needs valid reasoning too; the system
+   must protect Oontu's business")
+   Requester (discounts and trials above policy): a business case is required before any approval is asked for:
+     category · reason (a real sentence, not "please approve") · competitor (for a competitor match) · commitment
+     (for volume or multi-year) · what happens without it.
+   Approver (every approval type): sees the deal context and risk checks, then must pick a decision reason and
+     write their reasoning, for approve AND decline. Generic text ("ok", "approved") is refused.
+   Protection:
+     - nobody approves their own request, and nobody approves a discount on a deal they own
+     - one pending discount request per opportunity (no asking several approvers with different numbers)
+     - an approval is bound to the exact terms approved; changed terms or more than 14 days later need a new approval
+     - a declined case can't be resubmitted unchanged
+     - a pattern of above-policy requests by one person becomes an integrity finding (a signal for review, not proof)
+   Everything (case, context seen, reasoning) is kept on the approval and in the audit log.
+============================================================ */
+(function(){
+  const NOW = bosNow, ISO = bosIso, D = BOS_D, E = oEsc;
+  const MONEY_TYPES = ['discount','discount-restricted','trial-extension'];
+  const CASE_CATS = window.BOS_DISCOUNT_CASES = ['Competitor offer','Volume or multi-year commitment','Strategic or reference customer','Budget limit: the deal is at risk','Expansion of an existing account','Other (explained in the reason)'];
+  const APPROVE_WHY = window.BOS_APPROVE_REASONS = {
+    money:['Matches a verified competitor offer','Volume or multi-year commitment secures the revenue','Strategic or reference customer worth the margin','Deal closes this quarter and margin stays acceptable','Other (explained in note)'],
+    other:['Evidence checked and valid','The customer asked for it or authorised it','Needed to keep operations running','Other (explained in note)'] };
+  const DECLINE_WHY = window.BOS_DECLINE_REASONS = {
+    money:['Margin too low for this deal','The business case is not convincing','Offer a smaller discount instead','Needs more information first','Against pricing policy','Other (explained in note)'],
+    other:['Not justified','Needs more information first','Risk too high','Against policy','Other (explained in note)'] };
+  const GENERIC = /^(ok|okay|fine|yes|no|approved?|declined?|rejected?|done|urgent|asap|na|n\/a|test|please approve|pls approve|as discussed|go ahead|good|not ok|nope)[.! ]*$/i;
+  /* a reason has to say something: enough characters, enough different words, not a stock phrase */
+  window.bosReasonProblem = function(text, min){
+    const t = String(text || '').trim(), words = t.toLowerCase().split(/[^a-z0-9₹%]+/).filter(Boolean);
+    if(!t) return 'Write the reason.';
+    if(GENERIC.test(t)) return 'Say why in your own words; “' + t + '” is not a reason.';
+    if(t.length < (min || 20)) return 'Give a fuller reason (at least ' + (min || 20) + ' characters).';
+    if(words.filter(function(w, i, s){ return s.indexOf(w) === i; }).length < 5) return 'Give a fuller reason (at least five different words).';
+    return '';
+  };
+
+  /* ---------- the requester's business case ---------- */
+  window.bosCaseProblem = function(j){
+    if(!j || CASE_CATS.indexOf(j.category) < 0) return { field:'case', reason:'Pick why this customer needs the discount.' };
+    const rp = bosReasonProblem(j.reason, 40); if(rp) return { field:'caseReason', reason:'Business case: ' + rp };
+    if(j.category === 'Competitor offer' && String(j.competitor || '').trim().length < 2) return { field:'competitor', reason:'Name the competitor and their offer.' };
+    if(j.category === 'Volume or multi-year commitment' && String(j.commitment || '').trim().length < 3) return { field:'commitment', reason:'State the commitment (licences, months or years).' };
+    if(String(j.withoutIt || '').trim().length < 10) return { field:'withoutIt', reason:'Say what happens without the discount (for example: they sign with the competitor).' };
+    return null;
+  };
+  const sameTerms = function(p, t){ return t && p.planId === t.planId && p.seats === t.seats && p.discountPct === t.discountPct && p.trialDays === t.trialDays && (p.promo || '') === (t.promo || ''); };
+  const baseProp = window.bosCreateProposal;
+  window.bosCreateProposal = function(input){
+    input = input || {};
+    const o = bosOpp(input.oppId);
+    if(o && !('price' in input) && !('listPrice' in input)){
+      const a = bosAccount(o.accountId), cur = input.currency || (a && (a.taxCountry || a.country || 'India') !== 'India' ? 'USD' : 'INR');
+      const q = bosPrice(Object.assign({}, input, { currency:cur, accountId:o.accountId }));
+      if(q.ok && q.needs && MONEY_TYPES.indexOf(q.needs) > -1 && bosCan('platform-commercial', 'create', o)){
+        const cp = bosCaseProblem(input.justification); if(cp) return { ok:false, field:cp.field, reason:cp.reason };
+        const pending = BOS.approvals.find(function(x){ return MONEY_TYPES.indexOf(x.type) > -1 && x.status === 'pending' && x.payload && bosProposal(x.payload.proposalId) && bosProposal(x.payload.proposalId).oppId === o.id; });
+        if(pending) return { ok:false, reason:'A discount request for this deal is already waiting (' + pending.id + ', asked by ' + bosName(pending.requestedBy) + '). Withdraw it or wait for the decision; one request at a time per deal.' };
+        const declined = BOS.approvals.find(function(x){ return MONEY_TYPES.indexOf(x.type) > -1 && x.status === 'declined' && x.justification && x.terms && x.terms.oppId === o.id && x.terms.discountPct === q.discountPct && x.terms.trialDays === q.trialDays && String(x.justification.reason).trim() === String(input.justification.reason).trim(); });
+        if(declined) return { ok:false, reason:'The same terms with the same case were declined (' + declined.id + ': ' + declined.decisionCategory + '). Change the terms or give new information.' };
+      }
+    }
+    const r = baseProp.apply(this, arguments);
+    if(r && r.ok && r.approval){
+      const p = r.proposal, a = r.approval;
+      a.justification = Object.assign({}, input.justification, { by:ACTIVE_PLATFORM_USER_ID, at:ISO() });
+      a.terms = { oppId:p.oppId, planId:p.planId, seats:p.seats, discountPct:p.discountPct, trialDays:p.trialDays, promo:p.promo || '', net:p.net, list:p.listPrice, currency:p.currency };
+      p.justification = a.justification;
+      logPlatformAudit('Discount case submitted', a.id + ' · ' + a.justification.category + ' · ' + a.justification.reason, { entityId:a.id, entityType:'Approval' });
+    }
+    return r;
+  };
+  window.bosWithdrawApproval = function(id, why){ const a = BOS.approvals.find(function(x){ return x.id === id; }); return bosRun('approval.withdraw', null, function(){
+    if(!a || a.status !== 'pending') return { ok:false, reason:'Only a pending request can be withdrawn.' };
+    if(a.requestedBy !== ACTIVE_PLATFORM_USER_ID) return { ok:false, reason:'Only the person who asked can withdraw it.' };
+    a.status = 'withdrawn'; a.decidedAt = ISO(); a.note = why || 'Withdrawn by the requester';
+    const p = a.payload && a.payload.proposalId && bosProposal(a.payload.proposalId); if(p && p.status === 'awaiting_approval'){ p.status = 'withdrawn'; p.policyNote = 'Request withdrawn'; }
+    return { ok:true, ref:a.id, audit:['Approval withdrawn', a.id + ' · ' + a.note, { entityId:a.id }] }; }); };
+
+  /* ---------- what the approver sees ---------- */
+  window.bosApprovalContext = function(a){
+    const out = { facts:[], risks:[] };
+    if(MONEY_TYPES.indexOf(a.type) > -1 && a.payload && a.payload.proposalId){
+      const p = bosProposal(a.payload.proposalId), o = p && bosOpp(p.oppId), acc = p && bosAccount(p.accountId); if(!p) return out;
+      const fx = (BOS_TAX && BOS_TAX.rates[p.currency]) || 1, give = Math.round((p.listPrice - p.net) * fx);
+      out.facts.push(['Deal', (o ? o.title : '') + ' · ' + (o ? o.stage : '') + (o && o.confidence != null ? ' · ' + o.confidence + '% confidence' : '') + (o && o.expectedClose ? ' · closes ' + String(o.expectedClose).slice(0, 10) : '')]);
+      out.facts.push(['Terms', (planById(p.planId) || {}).name + ' × ' + p.seats + ' · ' + p.interval + (p.promo ? ' · offer ' + p.promo : '') + ' · ' + p.discountPct + '% discount' + (p.trialDays ? ' · ' + p.trialDays + '-day trial' : '')]);
+      out.facts.push(['Price', p.currency + ' ' + p.listPrice + ' list → ' + p.currency + ' ' + p.net + ' · gives away ₹' + give.toLocaleString('en-IN')]);
+      const prior = BOS.proposals.filter(function(x){ return x.accountId === p.accountId && x.id !== p.id; });
+      out.facts.push(['This customer before', prior.length ? prior.map(function(x){ return x.id + ' ' + x.discountPct + '% (' + x.status.replace('_', ' ') + ')'; }).join(', ') : 'No earlier proposals']);
+      const mine = BOS.approvals.filter(function(x){ return x.requestedBy === a.requestedBy && MONEY_TYPES.indexOf(x.type) > -1 && NOW() - new Date(x.requestedAt).getTime() < 90 * D; });
+      const decided = mine.filter(function(x){ return x.status === 'approved' || x.status === 'declined'; }), appr = decided.filter(function(x){ return x.status === 'approved'; }).length;
+      out.facts.push([bosName(a.requestedBy) + ', last 90 days', mine.length + ' above-policy request(s); ' + (decided.length ? Math.round(100 * appr / decided.length) + '% approved' : 'none decided yet')]);
+      if(o && o.ownerId === ACTIVE_PLATFORM_USER_ID) out.risks.push('You own this deal: someone else must decide.');
+      if(p.promo && p.discountPct) out.risks.push('Discount stacked on top of the offer ' + p.promo + '.');
+      if(p.discountPct >= BOS_POLICY.managerDiscountPct) out.risks.push('At or above ' + BOS_POLICY.managerDiscountPct + '%: restricted level.');
+      if(o && o.confidence != null && o.confidence < 40) out.risks.push('Low confidence deal (' + o.confidence + '%): the discount may not close it.');
+      if(mine.length >= 3) out.risks.push(bosName(a.requestedBy) + ' asked for ' + mine.length + ' above-policy discounts in 90 days.');
+      if(o && !(o.qualification && o.qualification.need)) out.risks.push('The deal is not qualified yet (no business need recorded).');
+      if(acc && acc.tenantIds && acc.tenantIds.length && !(a.justification && /expansion/i.test(a.justification.category))) out.risks.push('Existing customer: check it is not undercutting their current price.');
+      if(a.justification && a.justification.category === 'Competitor offer' && !/\d/.test(String(a.justification.competitor) + ' ' + a.justification.reason)) out.risks.push('Competitor offer named without a figure: ask for the actual quote.');
+    }
+    return out;
+  };
+
+  /* ---------- the decision: reason and reasoning, both ways ---------- */
+  const baseDecide = window.bosDecide;
+  window.bosDecide = function(id, approve, note, category){
+    const a = BOS.approvals.find(function(x){ return x.id === id; });
+    if(!a || bosActor().type !== 'employee') return baseDecide.apply(this, arguments);   // agents and integrations are refused inside
+    const can = bosCanDecide(a); if(!can.ok) return can;
+    const money = MONEY_TYPES.indexOf(a.type) > -1, list = (approve ? APPROVE_WHY : DECLINE_WHY)[money ? 'money' : 'other'];
+    if(list.indexOf(category) < 0) return { ok:false, field:'category', reason:'Pick the reason for your decision.' };
+    const rp = bosReasonProblem(note, 20); if(rp) return { ok:false, field:'note', reason:(approve ? 'Approving' : 'Declining') + ' needs your reasoning. ' + rp };
+    if(money){
+      const p = a.payload && bosProposal(a.payload.proposalId), o = p && bosOpp(p.oppId);
+      if(o && o.ownerId === ACTIVE_PLATFORM_USER_ID) return { ok:false, reason:'You own this deal, so someone else has to decide its discount.' };
+      if(approve && !a.justification) return { ok:false, reason:'This request has no business case. Decline it with “Needs more information first”.' };
+      if(approve && p && a.terms && !sameTerms(p, a.terms)) return { ok:false, reason:'The proposal’s terms changed after the request. Decline it and ask for a new request.' };
+    }
+    const r = baseDecide.call(this, id, approve, note);
+    if(r && r.ok){ a.decisionCategory = category; a.decisionReason = String(note).trim(); a.contextSeen = bosApprovalContext(a); logPlatformAudit('Decision reasoning', a.id + ' · ' + (approve ? 'approved' : 'declined') + ' · ' + category + ' · ' + a.decisionReason, { entityId:a.id, entityType:'Approval' }); }
+    return r;
+  };
+  /* an approval holds only for the exact terms, and for 14 days */
+  const baseSend = window.bosSendProposal;
+  window.bosSendProposal = function(id){
+    const p = bosProposal(id), a = p && p.approval && BOS.approvals.find(function(x){ return x.id === p.approval.id; });
+    if(p && a && a.status === 'approved'){
+      if(a.terms && !sameTerms(p, a.terms)) return { ok:false, reason:'These terms differ from what was approved. Ask for a new approval.' };
+      if(NOW() - new Date(a.decidedAt).getTime() > 14 * D){ p.status = 'approval_expired'; p.policyNote = 'Approval expired after 14 days'; return { ok:false, reason:'The approval was given more than 14 days ago. Ask again with up-to-date information.' }; }
+    }
+    return baseSend.apply(this, arguments);
+  };
+  /* promo codes need a business purpose too */
+  const basePromo = window.bosCreatePromo;
+  window.bosCreatePromo = function(input){ input = input || {}; const rp = bosReasonProblem(input.reason, 20); if(rp && bosCan('platform-commercial', 'create_promo')) return { ok:false, field:'reason', reason:'Business purpose: ' + rp }; const r = basePromo.apply(this, arguments); if(r && r.ok && r.approval){ r.approval.justification = { category:'Promo purpose', reason:String(input.reason).trim(), by:ACTIVE_PLATFORM_USER_ID, at:ISO() }; r.promo.purpose = String(input.reason).trim(); } return r; };
+  /* integrity: a pattern is a signal for review, never proof */
+  BOS_RULES.push({ id:'discount-pattern', domain:'Commercial', looks:'One person asking for 3 or more above-policy discounts in 30 days, or most of them declined', run:function(out){
+    const by = {}; BOS.approvals.filter(function(x){ return MONEY_TYPES.indexOf(x.type) > -1 && NOW() - new Date(x.requestedAt).getTime() < 30 * D; }).forEach(function(x){ (by[x.requestedBy] = by[x.requestedBy] || []).push(x); });
+    Object.keys(by).forEach(function(u){ const l = by[u], dec = l.filter(function(x){ return x.status === 'declined'; }).length;
+      if(l.length >= 3 || (l.length >= 2 && dec / l.length > 0.5)) out.push({ rule:'discount-pattern', key:'disc-pattern:' + u + ':' + l.length, domain:'Commercial', severity:'medium', title:bosName(u) + ': ' + l.length + ' above-policy discount requests in 30 days', ref:{ type:'employee', id:u }, evidence:[l.length + ' requests (' + l.map(function(x){ return x.id; }).join(', ') + ')', dec + ' declined'], confidence:70 }); }); } });
+  /* the seeded Northstar request carries a proper case */
+  BOS.approvals.forEach(function(x){ if(MONEY_TYPES.indexOf(x.type) > -1 && !x.justification){ const p = x.payload && bosProposal(x.payload.proposalId); x.justification = { category:'Competitor offer', reason:'Northstar has a written quote from a competitor at about 15% below our list price for 35 seats; the CFO wants us within reach before signing this quarter.', competitor:'Competitor quote at 15% below list, 35 seats', withoutIt:'They sign the competitor’s 2-year contract this month.', by:x.requestedBy, at:x.requestedAt }; if(p){ x.terms = { oppId:p.oppId, planId:p.planId, seats:p.seats, discountPct:p.discountPct, trialDays:p.trialDays, promo:p.promo || '', net:p.net, list:p.listPrice, currency:p.currency }; p.justification = x.justification; } } });
+
+  /* ---------- screens ---------- */
+  window.bosApprovalDialog = function(id){
+    const a = BOS.approvals.find(function(x){ return x.id === id; }); if(!a) return;
+    const t = BOS_APPROVAL_TYPES[a.type], can = bosCanDecide(a), money = MONEY_TYPES.indexOf(a.type) > -1, ctx = bosApprovalContext(a), j = a.justification;
+    const kv = function(rows){ return '<dl class="bos-kv">' + rows.filter(function(r){ return r[1]; }).map(function(r){ return '<dt>' + E(r[0]) + '</dt><dd>' + E(r[1]) + '</dd>'; }).join('') + '</dl>'; };
+    let body = kv([['Request', a.summary], ['Asked by', bosName(a.requestedBy) + ' · ' + new Date(a.requestedAt).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })], ['Status', a.status]]);
+    body += '<p class="bos-muted" style="margin:12px 0 4px">Why they ask</p>' + (j ? kv([['Reason type', j.category], ['Business case', j.reason], ['Competitor', j.competitor], ['Commitment', j.commitment], ['Without it', j.withoutIt]]) : '<p class="bos-note">' + (money ? 'No business case was given.' : E(a.summary)) + '</p>');
+    if(ctx.facts.length) body += '<p class="bos-muted" style="margin:12px 0 4px">Deal context</p>' + kv(ctx.facts);
+    if(ctx.risks.length) body += '<p class="bos-muted" style="margin:12px 0 4px">Check before deciding</p><ul class="bos-list">' + ctx.risks.map(function(r){ return '<li><div>' + E(r) + '</div>' + oBadge('warn', 'Check') + '</li>'; }).join('') + '</ul>';
+    if(a.status !== 'pending') body += '<p class="bos-muted" style="margin:12px 0 4px">Decision</p>' + kv([['By', bosName(a.decidedBy)], ['Reason', a.decisionCategory], ['Reasoning', a.decisionReason || a.note]]);
+    else if(can.ok) body += '<div style="height:10px"></div>' + bosField('bos-ap-cat', 'Reason for your decision', { options:[['', 'Pick one…']].concat(APPROVE_WHY[money ? 'money' : 'other'].map(function(x){ return ['A|' + x, 'Approve: ' + x]; })).concat(DECLINE_WHY[money ? 'money' : 'other'].map(function(x){ return ['D|' + x, 'Decline: ' + x]; })) }) + bosField('bos-ap-note', 'Your reasoning (kept with the decision, both ways)', { textarea:true }) + (money ? '<p class="bos-muted">Approve only if this discount is genuinely needed to close the deal and the margin stays acceptable.</p>' : '');
+    else body += '<p class="bos-note" style="margin-top:12px">' + E(can.reason) + '</p>';
+    const mineWithdraw = a.status === 'pending' && a.requestedBy === ACTIVE_PLATFORM_USER_ID;
+    bosDialog(t.label, body, a.status === 'pending' && can.ok ? 'Record decision' : '', "bosApprovalSubmit('" + a.id + "')");
+    if(mineWithdraw){ const acts = document.querySelector('#bos-dialog-root .bos-actions'); if(acts) acts.insertAdjacentHTML('afterbegin', '<button type="button" class="o-btn" onclick="bosDlgDone(bosWithdrawApproval(\'' + a.id + '\'), \'Withdrawn.\')">Withdraw my request</button>'); }
+  };
+  window.bosApprovalSubmit = function(id){
+    const v = String(bosV('bos-ap-cat') || ''); if(!v){ const e = document.getElementById('bos-dlg-err'); if(e) e.textContent = 'Pick the reason for your decision.'; return; }
+    const approve = v.charAt(0) === 'A', cat = v.slice(2);
+    bosDlgDone(bosDecide(id, approve, bosV('bos-ap-note'), cat), approve ? 'Approved, with your reasoning recorded.' : 'Declined, with your reasoning recorded. The requester is told why.');
+  };
+  window.bosProposalDialog = function(id){
+    const plans = PLATFORM_PLANS.filter(function(p){ return p.status === 'active' && !p.talkToUs; });
+    bosDialog('New proposal', bosField('bos-pr-plan', 'Plan (official list price)', { options:plans.map(function(p){ return [p.id, p.name + (p.prices ? ' · per licence a month' : ' · ' + p.currency + ' ' + p.price)]; }) }) +
+      '<div class="bos-row2">' + bosField('bos-pr-seats', 'Licences', { type:'number', value:10 }) + bosField('bos-pr-int', 'Billing', { options:[['annual', 'Yearly'], ['monthly', 'Monthly']] }) + '</div>' +
+      '<div class="bos-row2">' + bosField('bos-pr-promo', 'Offer code', { options:[['', 'None']].concat(BOS.promos.filter(function(p){ return p.status === 'active'; }).map(function(p){ return [p.code, p.code + ' · ' + p.pct + '%']; })) }) + bosField('bos-pr-disc', 'Extra discount %', { type:'number', value:0 }) + '</div>' + bosField('bos-pr-trial', 'Trial days', { type:'number', value:0 }) +
+      '<p class="bos-muted">Up to ' + BOS_POLICY.selfDiscountPct + '% and ' + BOS_POLICY.trialDays + ' trial days need no approval. Above that, give the business case below; a manager (above ' + BOS_POLICY.managerDiscountPct + '%, a revenue or finance manager) decides, and must record their reasoning.</p>' +
+      '<p class="bos-muted" style="margin:10px 0 4px"><b>Business case</b> (required above policy)</p>' + bosField('bos-pr-case', 'Why does this customer need it?', { options:[['', 'Pick one…']].concat(CASE_CATS.map(function(c){ return [c, c]; })) }) +
+      bosField('bos-pr-reason', 'The case, with facts (what they said, numbers, dates)', { textarea:true }) + '<div class="bos-row2">' + bosField('bos-pr-comp', 'Competitor and their offer (if any)', {}) + bosField('bos-pr-commit', 'Commitment (licences, months, years)', {}) + '</div>' + bosField('bos-pr-without', 'What happens without the discount?', {}),
+      'Prepare', "bosDlgDone(bosCreateProposal({ oppId:'" + id + "', planId:bosV('bos-pr-plan'), seats:bosV('bos-pr-seats'), interval:bosV('bos-pr-int'), promo:bosV('bos-pr-promo'), discountPct:bosV('bos-pr-disc'), trialDays:bosV('bos-pr-trial'), justification:bosV('bos-pr-case') ? { category:bosV('bos-pr-case'), reason:bosV('bos-pr-reason'), competitor:bosV('bos-pr-comp'), commitment:bosV('bos-pr-commit'), withoutIt:bosV('bos-pr-without') } : null }), 'Proposal prepared.')");
+  };
+})();
+</script>
+<style id="bos-deal-flow-style">
+/* Opportunity page, simplified (2026-11-26): five steps, one next action, a short "to win" checklist. */
+.df-steps{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin:4px 0 14px; }
+.df-step{ position:relative; border:1px solid var(--n-100); background:var(--bg-card); border-radius:12px; padding:10px 12px; text-align:left; font:inherit; cursor:pointer; color:var(--n-700); min-width:0; }
+.df-step b{ display:block; font-size:14px; font-weight:600; color:var(--n-800, #2A2D36); }
+.df-step small{ display:block; font-size:12px; color:var(--n-500); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.df-step.is-done{ background:var(--n-50); }
+.df-step.is-done b::before{ content:'✓ '; color:var(--success-text, #17633F); }
+.df-step.is-now{ border-color:var(--navy, #0B1F3B); box-shadow:inset 0 0 0 1px var(--navy, #0B1F3B); }
+.df-step:disabled{ cursor:default; }
+.df-next{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; justify-content:space-between; padding:14px 16px; border-radius:12px; background:var(--n-50); }
+.df-next p{ margin:0; font-size:14px; color:var(--n-800, #2A2D36); }
+.df-next small{ display:block; font-size:12px; color:var(--n-500); margin-top:2px; }
+.df-check{ display:flex; flex-wrap:wrap; gap:6px 14px; margin:12px 0 0; padding:0; list-style:none; font-size:13px; color:var(--n-600); }
+.df-check li.is-ok::before{ content:'✓ '; color:var(--success-text, #17633F); }
+.df-check li.is-miss::before{ content:'○ '; color:var(--n-400, #9A9CA5); }
+.df-more{ display:flex; gap:8px; margin-top:10px; }
+@media (max-width:640px){ .df-steps{ grid-template-columns:repeat(5,minmax(56px,1fr)); overflow-x:auto; } .df-step small{ display:none; } }
+</style>
+<script id="bos-deal-flow-script">
+/* ============================================================
+   MOVING A DEAL, MADE SIMPLE (2026-11-26, the user: "too complicated and confusing; make it easy and smooth")
+   - Five steps instead of ten stages: Lead → Qualify → Demo → Proposal → Won. The detailed stage still exists
+     underneath (reports, rules), but people work with the five.
+   - One "Next step" button that always says what to do now, worked out from the deal itself (take it, qualify,
+     book the demo, record the outcome, prepare / send the proposal, record acceptance, mark won, open onboarding).
+     If something is waiting on someone else, it says who.
+   - A short "To win" checklist shows what is still missing.
+   - Clicking a step moves the deal there; the same rules apply (Won needs an accepted proposal), and a refusal
+     says exactly what is missing. "Mark lost" asks for the reason. Kairo's suggestion uses the same logic.
+============================================================ */
+(function(){
+  const E = oEsc, NOW = bosNow;
+  const PHASES = window.BOS_DEAL_PHASES = [
+    { id:'lead', label:'Lead', stages:['New lead','Identity resolution'], to:'New lead' },
+    { id:'qualify', label:'Qualify', stages:['Qualified','Discovery'], to:'Qualified' },
+    { id:'demo', label:'Demo', stages:['Demo','Evaluation'], to:'Demo' },
+    { id:'proposal', label:'Proposal', stages:['Proposal','Negotiation','Approval'], to:'Proposal' },
+    { id:'won', label:'Won', stages:['Won'], to:'Won' }
+  ];
+  window.bosDealPhase = function(o){ const i = PHASES.findIndex(function(p){ return p.stages.indexOf(o.stage) > -1; }); return i; };
+  const qualified = function(o){ const q = o.qualification || {}; return ['need','volume','teamSize','decisionMaker','timeline'].every(function(k){ return String(q[k] || '').trim(); }); };
+  window.bosDealChecklist = function(o){
+    const demos = BOS.demos.filter(function(d){ return d.oppId === o.id; }), props = BOS.proposals.filter(function(p){ return p.oppId === o.id; });
+    return [
+      { label:'Owner', ok:!!o.ownerId }, { label:'Contact', ok:!!o.contactId }, { label:'Qualified', ok:qualified(o) },
+      { label:'Demo held', ok:demos.some(function(d){ return d.status === 'attended'; }) || BOS_STAGES.indexOf(o.stage) >= BOS_STAGES.indexOf('Proposal') },
+      { label:'Proposal sent', ok:props.some(function(p){ return ['sent','accepted'].indexOf(p.status) > -1; }) }, { label:'Customer accepted', ok:props.some(function(p){ return p.status === 'accepted'; }) }
+    ];
+  };
+  /* the one next action, from the deal's own records */
+  window.bosDealNext = function(o){
+    const id = o.id, demos = BOS.demos.filter(function(d){ return d.oppId === id; }), props = BOS.proposals.filter(function(p){ return p.oppId === id; }), last = props.slice(-1)[0];
+    const pendingDemo = demos.find(function(d){ return d.status === 'scheduled'; }), ob = BOS.onboardings.find(function(x){ return x.oppId === id; });
+    const A = function(label, onclick, hint, waiting){ return { label:label, onclick:onclick, hint:hint || '', waiting:!!waiting }; };
+    if(o.stage === 'Won') return ob ? A('Open onboarding', "bosOpen('onboarding','" + ob.id + "')", 'Won. Customer Operations has the hand-over (' + ob.handover.completeness + '% complete).') : A('Won', '', 'Won.', true);
+    if(BOS_SIDE.indexOf(o.stage) > -1) return A('Reopen the deal', "bosResult(bosMoveStage('" + id + "','Reopened'), 'Reopened.')", o.stage + (o.lostReason ? ': ' + o.lostReason : '') + '.');
+    if(!o.ownerId) return A('Take this deal', "bosResult(bosAssignOpp('" + id + "', ACTIVE_PLATFORM_USER_ID), 'It’s yours.')", 'Nobody owns it yet.');
+    if(!qualified(o)) return A('Qualify', "bosQualifyDialog('" + id + "')", 'Five answers: business need, hires per year, team size, decision maker, timeline.');
+    if(pendingDemo) return new Date(pendingDemo.startsAt).getTime() < NOW() ? A('Record the demo outcome', "bosDemoOutcomeDialog('" + pendingDemo.id + "')", 'The demo was ' + new Date(pendingDemo.startsAt).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) + '. Did they attend? What did they say?')
+      : A('Prepare for the demo', "bosOpen('opp','" + id + "')", 'Demo booked for ' + (pendingDemo.customerTime || new Date(pendingDemo.startsAt).toLocaleString('en-GB')) + '.', true);
+    if(!demos.some(function(d){ return d.status === 'attended'; }) && !props.length) return A('Book a demo', "bosDemoDialog('" + id + "')", 'Pick a time in the customer’s time zone.');
+    if(!last || ['declined','superseded','withdrawn','approval_expired'].indexOf(last.status) > -1) return A('Prepare the proposal', "bosProposalDialog('" + id + "')", last ? 'The last proposal was ' + last.status.replace('_', ' ') + '; prepare a new one.' : 'Official plan prices; a discount above ' + BOS_POLICY.selfDiscountPct + '% needs a business case.');
+    if(last.status === 'awaiting_approval'){ const ap = last.approval && BOS.approvals.find(function(x){ return x.id === last.approval.id; }); return A('Waiting for approval', ap ? "bosApprovalDialog('" + ap.id + "')" : '', 'Discount request ' + (ap ? ap.id : '') + ' is with an approver. You’ll be told the decision and why.', true); }
+    if(last.status === 'ready') return A('Send the proposal', "bosResult(bosSendProposal('" + last.id + "'), 'Sent (simulated).')", last.id + ' is ready to send.');
+    if(last.status === 'sent') return A('Customer accepted', "bosResult(bosAcceptProposal('" + last.id + "'), 'Accepted.')", 'Waiting for the customer on ' + last.id + '. Or send a payment link: they pay, and the invoice is made automatically.');
+    if(last.status === 'accepted') return A('Mark as won', "bosResult(bosMoveStage('" + id + "','Won'), 'Won! Handed to Customer Operations.')", 'The customer accepted ' + last.id + '. Winning hands the deal to Customer Operations.');
+    return A('Open the proposal', "bosOpen('opp','" + id + "')", '');
+  };
+  window.bosDealGoTo = function(id, phaseId){
+    const o = bosOpp(id), ph = PHASES.find(function(p){ return p.id === phaseId; }); if(!o || !ph) return;
+    if(ph.stages.indexOf(o.stage) > -1) return;
+    const r = bosMoveStage(id, ph.to);
+    if(!r.ok){ toast(r.reason); return; }
+    toast('Moved to ' + ph.label + '.'); bosRedraw();
+  };
+  window.bosDealLostDialog = function(id){
+    bosDialog('Mark as lost', bosField('df-lost', 'Why did we lose it?', { options:[['', 'Pick one…'], 'Price too high for team size', 'Chose a competitor', 'No budget this year', 'Missing feature', 'No decision / went quiet', 'Other'] }) + bosField('df-lost-note', 'Anything to remember (optional)', { textarea:true }) + '<p class="bos-muted">You can reopen it later. Lost reasons feed the product feedback.</p>',
+      'Mark as lost', "bosDealLostSubmit('" + id + "')");
+  };
+  window.bosDealLostSubmit = function(id){ const why = bosV('df-lost'); if(!why){ const e = document.getElementById('bos-dlg-err'); if(e) e.textContent = 'Pick the reason.'; return; } const note = String(bosV('df-lost-note') || '').trim(); bosDlgDone(bosMoveStage(id, 'Lost', { reason:why + (note ? ' · ' + note : '') }), 'Marked as lost.'); };
+  window.bosDealFlowHTML = function(o){
+    const at = bosDealPhase(o), side = BOS_SIDE.indexOf(o.stage) > -1, next = bosDealNext(o), chk = bosDealChecklist(o), edit = bosCan('platform-lead', 'edit', o);
+    const steps = '<div class="df-steps" role="list" aria-label="Deal steps">' + PHASES.map(function(p, i){ const now = i === at, done = !side && i < at;
+      return '<button type="button" role="listitem" class="df-step' + (now ? ' is-now' : '') + (done ? ' is-done' : '') + '"' + (edit && !now ? ' onclick="bosDealGoTo(\'' + o.id + '\',\'' + p.id + '\')" title="Move to ' + p.label + '"' : now && edit ? ' tabindex="-1"' : ' disabled') + (now ? ' aria-current="step"' : '') + '><b>' + E(p.label) + '</b><small>' + E(now ? o.stage : done ? 'Done' : side && i === 0 ? o.stage : '') + '</small></button>'; }).join('') + '</div>';
+    const nextBox = '<div class="df-next"><div><p><b>Next step:</b> ' + E(next.label) + '</p>' + (next.hint ? '<small>' + E(next.hint) + '</small>' : '') + '</div>' +
+      (next.onclick && edit ? '<button type="button" class="o-btn' + (next.waiting ? '' : ' o-btn--primary') + '" onclick="' + next.onclick + '">' + E(next.waiting ? 'View' : next.label) + '</button>' : '') + '</div>';
+    const list = '<ul class="df-check" aria-label="To win">' + '<li style="color:var(--n-500)">To win:</li>' + chk.map(function(c){ return '<li class="' + (c.ok ? 'is-ok' : 'is-miss') + '">' + E(c.label) + '</li>'; }).join('') + '</ul>';
+    const more = edit && bosOppOpen(o) ? '<div class="df-more"><button type="button" class="o-btn o-btn--ghost" onclick="bosDealLostDialog(\'' + o.id + '\')">Mark as lost</button>' + (bosCan('platform-lead', 'assign', o) ? '<button type="button" class="o-btn o-btn--ghost" onclick="bosAssignDialog(\'' + o.id + '\')">Reassign</button>' : '') + '<button type="button" class="o-btn o-btn--ghost" onclick="showView(\'oontu-revenue\')">Back to Revenue</button></div>'
+      : '<div class="df-more"><button type="button" class="o-btn o-btn--ghost" onclick="showView(\'oontu-revenue\')">Back to Revenue</button></div>';
+    return '<div class="o-card" style="margin-bottom:16px">' + steps + nextBox + list + more + '</div>';
+  };
+  /* replace the old stage card on the opportunity page with the simple one */
+  const baseOpp = RENDERERS['oontu-opp'];
+  RENDERERS['oontu-opp'] = function(){
+    const html = baseOpp.apply(this, arguments), o = bosOpp(BOS_UI.sel.opp);
+    if(!o || html.indexOf('Not available') > -1) return html;
+    const start = html.indexOf('<div class="o-card" style="margin-bottom:16px">'), endMark = 'Back to Revenue</button></div></div>', end = html.indexOf(endMark, start);
+    if(start < 0 || end < 0) return html;
+    return html.slice(0, start) + bosDealFlowHTML(o) + html.slice(end + endMark.length);
+  };
+  /* Kairo's suggestion follows the same logic (no more "Qualify" on a won deal) */
+  bosKairo.nextAction = function(oppId){ const o = bosOpp(oppId); if(!o || !bosCan('platform-lead', 'view', o)) return { ok:false, reason:'Not available to you.' }; const n = bosDealNext(o); return { ok:true, state:'completed', text:n.label + (n.hint ? ': ' + n.hint : '.'), note:'Suggestion from the deal’s records. You decide.' }; };
 })();
 </script>
 </body>
