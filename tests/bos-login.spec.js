@@ -14,6 +14,10 @@
   var NEW1A = { 'oontu-dashboard':['oontu-home'], 'oontu-signups':['oontu-revenue'], 'oontu-help':['oontu-workspaces'], 'oontu-tenants':['oontu-workspaces'], 'oontu-insights':['oontu-reports'], 'oontu-agents':['oontu-ai'], 'oontu-feature-controls':['oontu-controls'], 'oontu-notifications':['oontu-announcements'], 'oontu-platform-users':['oontu-people'], 'oontu-finance':['oontu-approvals','oontu-invoices','oontu-tax'], 'oontu-service':['oontu-service','oontu-incidents'] };
   function on1a(){ return typeof o2On === 'function' && o2On('1a'); }
   function ids(list){ if(!on1a()) return list; var out = []; list.forEach(function(id){ (NEW1A[id] || [id]).forEach(function(n){ if(out.indexOf(n) < 0) out.push(n); }); }); return out; }
+  /* with step 1b on, Approvals is every active employee's inbox (their own requests and decisions) */
+  function on1b(){ return on1a() && o2On('1b'); }
+  function strict(list){ var out = ids(list); if(on1b() && out.indexOf('oontu-approvals') < 0) out.push('oontu-approvals'); return out; }
+  function notSeen(list){ return ids(list).filter(function(x){ return !(on1b() && x === 'oontu-approvals'); }); }
   function vis(){ var v = []; filterNavForPermissions(NAV.oontu).forEach(function(g){ (g.items || [g]).forEach(function(i){ v.push(i.id); }); }); return v; }
   async function login(email, pw){
     var r = await authApi.passwordSignIn({ email:email, password:pw || 'demo1234' });
@@ -50,7 +54,7 @@
       for(var i = 0; i < cases.length; i++){
         var c = cases[i]; var s = await login(c[0]); ok(s.ok, c[0] + ' ' + s.reason);
         eq(ACTIVE_PLATFORM_USER_ID, c[1], c[0]); eq(ROLE_META.oontu.name, platformUserById(c[1]).name);
-        var v = vis(); ok(ids([c[2]]).every(function(x){ return v.indexOf(x) > -1; }), c[0] + ' sees ' + c[2] + ': ' + v.join()); ok(ids([c[3]]).every(function(x){ return v.indexOf(x) === -1; }), c[0] + ' does not see ' + c[3]);
+        var v = vis(); ok(ids([c[2]]).every(function(x){ return v.indexOf(x) > -1; }), c[0] + ' sees ' + c[2] + ': ' + v.join()); ok(notSeen([c[3]]).every(function(x){ return v.indexOf(x) === -1; }), c[0] + ' does not see ' + c[3]);
         ok(!/Not available|Something went wrong/.test(document.getElementById('main-content').textContent), c[0] + ' home renders');
       }
     });
@@ -72,7 +76,7 @@
         var s = await login(keys[i]); ok(s.ok, keys[i]);
         var v = vis().sort().join(), w = want[keys[i]];
         if(w === '*') ok(v.split(',').length >= 18, 'super admin sees everything: ' + v);
-        else eq(v, ids(w.split(',')).sort().join(), keys[i]);
+        else eq(v, strict(w.split(',')).sort().join(), keys[i]);
         ok(!/Not available/.test(document.getElementById('main-content').textContent), keys[i] + ' home is usable');
         if(w !== '*'){ showView('oontu-platform-users'); await sleep(10); if(w.indexOf('oontu-platform-users') === -1) eq(state.activeNav, bosHomeView(), keys[i] + ': a screen outside the role sends you home'); }
       }

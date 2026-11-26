@@ -70752,6 +70752,202 @@ function cfScopeHTML(){
 .o2-host-tab:focus-visible{ outline:2px solid var(--focus, #2563EB); outline-offset:2px; }
 @media (prefers-reduced-motion: no-preference){ .o2-host-tab{ transition:background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); } }
 </style>
+<script id="o2-approvals-script">
+/* ============================================================
+   O2 STEP 1b: APPROVALS INBOX AND BELL (2026-11-26)
+   Switch 1b on:
+   - oontu-approvals is the inbox for every active employee: Waiting for me · I asked · Decided by me · All (All needs
+     platform-audit:view). Columns: request, type, amount/risk, asked by, age, expires in, record. Decide opens the
+     existing bosApprovalDialog, so every guard (no self-approval, deal owner can't decide, business case, reasoning,
+     14-day validity, withdraw) is the same code as before.
+   - Billing and payments › Approvals (finance tab 0) shows the same inbox table; record pages show a "Pending approval"
+     chip that opens the inbox at that request instead of their own Decide button.
+   - Bell (platform role): the employee's BOS.notifications plus open account-help cases, in the bell's shape; each opens
+     its record and marks itself read (bosMarkRead's rule); the dot shows unread. My work › Updates links to the bell.
+   Switch off: the old places and the old bell. Approvals and notifications are the same records either way.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('1b'); };
+  const ACC = window.BOS_VIEW_ACCESS, UI = window.BOS_UI;
+  const E = function(s){ return oEsc(s == null ? '' : s); };
+  const me = function(){ return ACTIVE_PLATFORM_USER_ID; };
+  const nameOf = function(id){ const u = typeof platformUserById === 'function' ? platformUserById(id) : null; return u ? u.name : (id || '—'); };
+  const DAY = 864e5;
+  const ageOf = function(iso){ const d = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / DAY)); if(d >= 1) return d + (d === 1 ? ' day' : ' days'); const h = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 36e5)); return h ? h + ' h' : 'just now'; };
+  const fmtMoney = function(cur, n){ return (cur || '') + ' ' + Number(n || 0).toLocaleString(undefined, { maximumFractionDigits:2 }); };
+  const UIA = window.O2_APPROVALS_UI = { tab:'waiting', focus:null };
+
+  /* ---- the four lists ---- */
+  window.o2ApprovalLists = function(){
+    const u = currentPlatformUser(), id = me();
+    return {
+      waiting:BOS.approvals.filter(function(a){ return a.status === 'pending' && bosCanDecide(a, u).ok; }),
+      asked:BOS.approvals.filter(function(a){ return a.requestedBy === id; }),
+      decided:BOS.approvals.filter(function(a){ return a.decidedBy === id; }),
+      all:canPlatform('platform-audit', 'view') ? BOS.approvals.slice() : null
+    };
+  };
+  const amountOf = function(a){
+    const t = a.terms || (a.payload && a.payload.terms) || null, p = a.payload || {};
+    const parts = [];
+    if(t && t.discountPct) parts.push(t.discountPct + '% off');
+    if(t && t.net != null) parts.push(fmtMoney(t.currency, t.net));
+    else if(p.amount != null) parts.push(fmtMoney(p.currency, p.amount));
+    if(p.trialDays) parts.push(p.trialDays + '-day trial');
+    if(!parts.length && /access|role-grant|account-merge/.test(a.type)) parts.push('Access risk');
+    return parts.join(' · ') || '—';
+  };
+  const expiresOf = function(a){
+    const until = a.validUntil || a.expiresAt || (a.status === 'approved' && a.decidedAt ? new Date(new Date(a.decidedAt).getTime() + 14 * DAY).toISOString() : null);
+    if(!until) return a.status === 'pending' ? 'When decided: 14 days' : '—';
+    const d = Math.ceil((new Date(until).getTime() - Date.now()) / DAY); return d <= 0 ? 'Expired' : d + (d === 1 ? ' day' : ' days');
+  };
+  /* where the request lives */
+  window.o2ApprovalRecord = function(a){
+    const ref = a.ref, p = a.payload || {};
+    if(/^(discount|discount-restricted|trial-extension)$/.test(a.type)){ const pr = BOS.proposals.find(function(x){ return x.id === ref || x.id === p.proposalId; }); if(pr && pr.oppId) return { label:'Deal', onclick:"bosOpen('opp','" + pr.oppId + "')" }; }
+    if(a.type === 'account-merge' && ref) return { label:'Account', onclick:"bosOpen('account','" + ref + "')" };
+    if(a.type === 'refund'){ const r = BOS.refunds.find(function(x){ return x.id === ref; }); if(r && r.ticketId) return { label:'Ticket', onclick:"bosOpen('ticket','" + r.ticketId + "')" }; return { label:'Refunds', onclick:"bosTab('oontu-finance', 2); showView('oontu-finance')" }; }
+    if(a.type === 'invoice-correction' || a.type === 'promo') return { label:a.type === 'promo' ? 'Promo code' : 'Invoice', onclick:"bosTab('oontu-finance', 6); showView('oontu-finance')" };
+    if(a.type === 'access' || a.type === 'role-grant') return { label:'Access', onclick:"showView('oontu-platform-users')" };
+    if(p.oppId) return { label:'Deal', onclick:"bosOpen('opp','" + p.oppId + "')" };
+    if(p.accountId) return { label:'Account', onclick:"bosOpen('account','" + p.accountId + "')" };
+    return { label:'Details', onclick:"bosApprovalDialog('" + a.id + "')" };
+  };
+  const statusBadge = function(a){ const tone = { pending:'warn', approved:'success', declined:'danger', withdrawn:'neutral', expired:'neutral' }[a.status] || 'neutral'; return oBadge(tone, a.status.charAt(0).toUpperCase() + a.status.slice(1)); };
+  window.o2ApprovalsTableHTML = function(listKey){
+    const L = o2ApprovalLists(), key = listKey || UIA.tab, list = (L[key] || []).slice().sort(function(a, b){ return new Date(b.requestedAt) - new Date(a.requestedAt); });
+    const u = currentPlatformUser();
+    const rows = list.map(function(a){
+      const t = BOS_APPROVAL_TYPES[a.type] || { label:a.type }, rec = o2ApprovalRecord(a), can = bosCanDecide(a, u).ok;
+      return '<tr id="o2-apr-' + E(a.id) + '"' + (UIA.focus === a.id ? ' class="o2-apr--focus"' : '') + '><td style="white-space:normal"><b>' + E(a.summary) + '</b><small>' + E(a.id) + '</small></td><td>' + E(t.label) + '</td><td>' + E(amountOf(a)) + '</td><td>' + E(nameOf(a.requestedBy)) + '</td><td>' + E(ageOf(a.requestedAt)) + '</td><td>' + E(expiresOf(a)) + '</td>' +
+        '<td><button type="button" class="o-btn o-btn--ghost" onclick="' + rec.onclick + '">' + E(rec.label) + '</button></td><td>' + (can ? '<button type="button" class="o-btn o-btn--primary" onclick="bosApprovalDialog(\'' + E(a.id) + '\')">Decide</button>' : statusBadge(a) + (a.status === 'pending' ? '' : '')) + '</td></tr>';
+    });
+    const empty = { waiting:'Nothing is waiting for you. Requests you can decide appear here.', asked:'You haven’t asked for an approval. Requests you raise appear here with their status.', decided:'You haven’t decided a request yet.', all:'No approvals yet.' }[key];
+    return oTableCard({ id:'o2-apr', title:{ waiting:'Waiting for me', asked:'I asked', decided:'Decided by me', all:'All approvals' }[key] || 'Approvals', sub:'Maker-checker: the requester never approves their own request', cols:[{ label:'Request' }, { label:'Type' }, { label:'Amount or risk' }, { label:'Asked by' }, { label:'Age' }, { label:'Expires in' }, { label:'Record' }, { label:'' }], rows:rows.length ? rows.join('') : oTableEmptyRow(8, empty) });
+  };
+  window.o2ApprovalsTab = function(k){ UIA.tab = k; UIA.focus = null; if(typeof bosRedraw === 'function') bosRedraw(); };
+  const tabsHTML = function(){
+    const L = o2ApprovalLists(), tabs = [['waiting', 'Waiting for me', L.waiting.length], ['asked', 'I asked', L.asked.filter(function(a){ return a.status === 'pending'; }).length], ['decided', 'Decided by me', null]].concat(L.all ? [['all', 'All', null]] : []);
+    if(!L.all && UIA.tab === 'all') UIA.tab = 'waiting';
+    return '<nav class="o2-host-tabs" aria-label="Approvals">' + tabs.map(function(t){ return '<button type="button" class="o2-host-tab' + (t[0] === UIA.tab ? ' is-on' : '') + '" aria-current="' + (t[0] === UIA.tab ? 'page' : 'false') + '" onclick="o2ApprovalsTab(\'' + t[0] + '\')">' + E(t[1]) + (t[2] ? ' <span class="o2-count">' + t[2] + '</span>' : '') + '</button>'; }).join('') + '</nav>';
+  };
+  window.o2ApprovalsInboxHTML = function(){
+    const L = o2ApprovalLists(), oldest = L.waiting.slice().sort(function(a, b){ return new Date(a.requestedAt) - new Date(b.requestedAt); })[0];
+    return oDashShell([
+      oPageHead({ ctx:'Work', title:'Approvals', lede:L.waiting.length ? oPlural(L.waiting.length, 'request') + ' waiting for you' + (oldest ? '; the oldest for ' + ageOf(oldest.requestedAt) + '.' : '.') : 'Nothing is waiting for you.' }),
+      oNumbers([
+        { label:'Waiting for me', value:String(L.waiting.length), note:oldest ? 'Oldest ' + ageOf(oldest.requestedAt) : 'None waiting', onclick:"o2ApprovalsTab('waiting')" },
+        { label:'I asked, still open', value:String(L.asked.filter(function(a){ return a.status === 'pending'; }).length), note:oPlural(L.asked.length, 'request') + ' in all', onclick:"o2ApprovalsTab('asked')" },
+        { label:'Decided by me', value:String(L.decided.length), note:'Approved or declined with your reasoning', onclick:"o2ApprovalsTab('decided')" }
+      ]),
+      tabsHTML() + o2ApprovalsTableHTML()
+    ]);
+  };
+  /* open the inbox at one request */
+  window.o2OpenApproval = function(id){
+    const a = BOS.approvals.find(function(x){ return x.id === id; }); if(!a) return;
+    const u = currentPlatformUser(); UIA.tab = a.status === 'pending' && bosCanDecide(a, u).ok ? 'waiting' : a.requestedBy === me() ? 'asked' : a.decidedBy === me() ? 'decided' : (canPlatform('platform-audit', 'view') ? 'all' : 'waiting'); UIA.focus = id;
+    showView('oontu-approvals');
+    setTimeout(function(){ const r = document.getElementById('o2-apr-' + id); if(r && r.scrollIntoView) try { r.scrollIntoView({ block:'center' }); } catch(e){} }, 0);
+  };
+
+  /* ---- the inbox screen and its access ---- */
+  const baseAccApprovals = ACC['oontu-approvals'];
+  ACC['oontu-approvals'] = function(){ if(on()){ const u = currentPlatformUser(); return !!u && u.status === 'Active'; } return baseAccApprovals ? baseAccApprovals() : false; };
+  const baseApprovalsRenderer = RENDERERS['oontu-approvals'];
+  RENDERERS['oontu-approvals'] = function(){ if(!on()) return baseApprovalsRenderer ? baseApprovalsRenderer.apply(this, arguments) : ''; if(state.role === 'oontu' && !ACC['oontu-approvals']()) return oDashShell([oPageHead({ title:'Not available', lede:'Sign in as an active Oontu employee.' })]); return o2ApprovalsInboxHTML(); };
+  PAGE_TITLES['oontu-approvals'] = 'Approvals';
+  /* Billing and payments › Approvals shows the inbox table */
+  const baseFinance = RENDERERS['oontu-finance'];
+  RENDERERS['oontu-finance'] = function(){
+    const html = baseFinance.apply(this, arguments);
+    if(!on() || ((UI.tab || {})['oontu-finance'] || 0) !== 0) return html;
+    const s = html.indexOf('<section aria-labelledby="bos-apr-h"'); if(s < 0) return html;
+    const e = html.indexOf('</section>', s); if(e < 0) return html;
+    return html.slice(0, s) + '<div class="o2-apr-in-fin">' + tabsHTML() + o2ApprovalsTableHTML() + '</div>' + html.slice(e + 10);
+  };
+  /* record pages: a chip to the inbox instead of their own Decide / View approval button */
+  const chip = function(id){ const a = BOS.approvals.find(function(x){ return x.id === id; }); const pending = a && a.status === 'pending'; return '<button type="button" class="o2-apr-chip' + (pending ? ' is-pending' : '') + '" onclick="o2OpenApproval(\'' + E(id) + '\')">' + (pending ? 'Pending approval' : 'Approval ' + E(a ? a.status : '')) + ' · open in Approvals</button>'; };
+  ['oontu-opp', 'oontu-account', 'oontu-ticket'].forEach(function(id){
+    const base = RENDERERS[id]; if(typeof base !== 'function') return;
+    RENDERERS[id] = function(){ const html = base.apply(this, arguments); if(!on()) return html; return html.replace(/<button[^>]*onclick="bosApprovalDialog\('([^']+)'\)"[^>]*>[^<]*<\/button>/g, function(m, aid){ return chip(aid); }); };
+  });
+
+  /* ---- bell ---- */
+  const NOTE_ID = function(n){ return 'o2n-' + n.id; };
+  const openFor = function(ref){
+    if(!ref) return "showView('oontu-mywork')";
+    if(/^APR-/.test(ref)) return "o2OpenApproval('" + ref + "')";
+    if(/^TCK-/.test(ref)) return "bosOpen('ticket','" + ref + "')";
+    if(/^ACC-/.test(ref)) return "bosOpen('account','" + ref + "')";
+    if(/^OPP-/.test(ref)) return "bosOpen('opp','" + ref + "')";
+    if(/^ONB-/.test(ref)) return "bosOpen('onboarding','" + ref + "')";
+    if(BOS.opps.some(function(o){ return o.id === ref; })) return "bosOpen('opp','" + ref + "')";
+    if(BOS.tickets.some(function(t){ return t.id === ref; })) return "bosOpen('ticket','" + ref + "')";
+    return "showView('oontu-mywork')";
+  };
+  window.o2BellItems = function(){
+    const id = me(), items = BOS.notifications.filter(function(n){ return n.userId === id; }).slice().reverse().map(function(n){
+      return { id:NOTE_ID(n), noteId:n.id, category:/^APR-/.test(n.ref || '') ? 'Approvals' : 'Updates', icon:/^APR-/.test(n.ref || '') ? 'check' : 'bell', tone:n.read ? 'navy' : 'gold', text:E(n.text), unread:!n.read, at:n.at, ref:n.ref, onclick:"o2BellOpen('" + n.id + "')" };
+    });
+    if(typeof JN !== 'undefined' && canPlatform('platform-tenant', 'update')){
+      JN.escalations.filter(function(e){ return e.status !== 'resolved'; }).forEach(function(e){
+        items.push({ id:'o2jn-' + e.id, category:'Account help', icon:'shield', tone:'gold', text:E('Account help: ' + (e.company || e.email || e.name || e.id) + (e.reason ? ' · ' + e.reason : '')), unread:true, onclick:"closeNotifications(); showView('oontu-help')" });
+      });
+    }
+    return items;
+  };
+  window.o2BellUnread = function(){ return o2BellItems().filter(function(i){ return i.unread; }).length; };
+  window.o2BellOpen = function(noteId){
+    const n = BOS.notifications.find(function(x){ return x.id === noteId; }); if(!n) return;
+    n.read = true; if(typeof closeNotifications === 'function') closeNotifications();
+    try { renderQuickActions(); } catch(e){}
+    const js = openFor(n.ref); (new Function(js))();
+  };
+  const baseCompute = window.computeNotifications;
+  window.computeNotifications = computeNotifications = function(){
+    if(!on() || state.role !== 'oontu') return baseCompute.apply(this, arguments);
+    return o2BellItems().filter(function(n){ return !dismissedNotifications.has(n.id); });
+  };
+  const baseMarkAll = window.markAllNotificationsRead;
+  if(typeof baseMarkAll === 'function') window.markAllNotificationsRead = markAllNotificationsRead = function(){
+    if(on() && state.role === 'oontu'){ BOS.notifications.forEach(function(n){ if(n.userId === me()) n.read = true; }); refreshNotifications(); renderQuickActions(); return; }
+    return baseMarkAll.apply(this, arguments);
+  };
+  const baseQA = window.renderQuickActions;
+  if(typeof baseQA === 'function') window.renderQuickActions = renderQuickActions = function(){
+    const out = baseQA.apply(this, arguments);
+    if(on() && state.role === 'oontu'){
+      const n = o2BellUnread(), dot = document.getElementById('topbar-bell-dot'), bell = document.getElementById('topbar-bell');
+      if(dot) dot.hidden = n === 0;
+      if(bell){ bell.classList.toggle('has-unread', n > 0); bell.setAttribute('aria-label', 'Notifications' + (n ? ', ' + n + ' unread' : '')); bell.dataset.o2Unread = String(n); }
+    }
+    return out;
+  };
+  const baseMarkRead = window.bosMarkRead;
+  window.bosMarkRead = function(id){ const r = baseMarkRead.apply(this, arguments); if(on()) try { renderQuickActions(); } catch(e){} return r; };
+  /* My work › Updates becomes a link to the bell */
+  const baseMyWork = RENDERERS['oontu-mywork'];
+  if(typeof baseMyWork === 'function') RENDERERS['oontu-mywork'] = function(){
+    const html = baseMyWork.apply(this, arguments); if(!on()) return html;
+    const s = html.indexOf('Updates for you'); if(s < 0) return html;
+    const start = html.lastIndexOf('<section', s), end = html.indexOf('</section>', s); if(start < 0 || end < 0) return html;
+    const n = o2BellUnread();
+    const link = '<section class="o-card o2-updates-link"><div class="o-card__head"><h2 class="o-card__title">Updates for you</h2><span class="o-card__sub">' + (n ? oPlural(n, 'unread update') : 'Nothing unread') + '</span></div><div class="bos-actions" style="padding:0 20px 16px"><button type="button" class="o-btn" onclick="openNotifications()">Open the bell</button></div></section>';
+    return html.slice(0, start) + link + html.slice(end + 10);
+  };
+  o2OnSwitch(function(id){ if(id === '1b') try { renderQuickActions(); } catch(e){} });
+})();
+</script>
+<style id="o2-approvals-style">
+.o2-count{ display:inline-block; min-width:18px; padding:0 5px; margin-left:4px; border-radius:999px; background:var(--n-100, #F3F4F6); color:var(--n-900, #111827); font-size:11px; font-variant-numeric:tabular-nums; }
+.o2-host-tab.is-on .o2-count{ background:rgba(255,255,255,.2); color:#fff; }
+.o2-apr--focus td{ background:var(--warn-50, #FFF8E6); }
+.o2-apr-chip{ display:inline-flex; align-items:center; height:30px; padding:0 12px; border-radius:999px; border:1px solid var(--n-200, #E6E5E0); background:#fff; font:inherit; font-size:12px; font-weight:600; color:var(--n-900, #111827); cursor:pointer; }
+.o2-apr-chip.is-pending{ border-color:#E8C77A; background:#FFF8E6; }
+.o2-apr-in-fin{ display:grid; gap:12px; }
+</style>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
