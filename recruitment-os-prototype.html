@@ -70026,5 +70026,428 @@ function cfScopeHTML(){
   bosKairo.nextAction = function(oppId){ const o = bosOpp(oppId); if(!o || !bosCan('platform-lead', 'view', o)) return { ok:false, reason:'Not available to you.' }; const n = bosDealNext(o); return { ok:true, state:'completed', text:n.label + (n.hint ? ': ' + n.hint : '.'), note:'Suggestion from the deal’s records. You decide.' }; };
 })();
 </script>
+<style id="o2-0a-style">
+/* O2 Step 0a: build-step switches and demo-data controls inside the existing "Prototype · simulated sign-in" tools.
+   Reuses the panel's own text styles (au-dev__h, au-dev__dim), the product switch (o-switch) and the login card's box. */
+.o2-dev{ margin:10px 0 4px; padding:10px 12px; border:1px solid var(--au-border, #E6E5E0); border-radius:10px; background:var(--bg-subtle, #F7F7F4); }
+.o2-dev .au-dev__h:first-child{ margin-top:0; }
+.o2-dev details{ margin-top:6px; }
+.o2-dev summary{ cursor:pointer; font-weight:600; color:var(--au-text, #0B1F3B); }
+.o2-dev__sw{ list-style:none; margin:8px 0 0; padding:0; display:grid; gap:6px; }
+.o2-dev__sw .o-switchrow{ font-size:12px; color:var(--au-text, #0B1F3B); }
+.o2-dev__sw b{ display:inline-block; min-width:22px; font-variant-numeric:tabular-nums; }
+.o2-dev__acts{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.o2-dev__btn{ height:30px; padding:0 10px; border-radius:8px; border:1px solid var(--au-border, #E6E5E0); background:#fff; color:var(--au-text, #0B1F3B); font:inherit; font-size:12px; font-weight:600; cursor:pointer; }
+.o2-dev__btn--danger{ border-color:#E8B4B0; color:#A3352C; }
+.o2-dev__msg{ margin-top:6px; }
+.o2-dev__msg:empty{ display:none; }
+.o2-dev__msg.is-err{ color:#A3352C; }
+</style>
+<script id="o2-switch-script">
+/* ============================================================
+   O2 STEP SWITCHES (Step 0a, 2026-11-26)
+   A switch chooses which code path runs for one O2 build step. It never deletes, reverts or rewrites data.
+   Every step is off until the owner accepts it; then its default in code becomes true.
+   Stored per browser in localStorage['oontu.o2.switches.v1'] (only switches someone set by hand).
+   The test runner may force values with window.__O2_SWITCHES__ = { '0a':true } before the page scripts run.
+============================================================ */
+(function(){
+  const KEY = 'oontu.o2.switches.v1';
+  const STEPS = [
+    ['0a','Persistence, switches, reset'], ['0b','Policy store, metrics, access level'], ['0c','Billing customer'], ['0d','One visible invoice model'],
+    ['1a','Navigation and redirects'], ['1b','Approvals inbox and bell'], ['1c','Platform search'], ['2','Home command center'],
+    ['3a','Workspace lifecycle'], ['3b','Workspace screens'], ['4a','Subscriptions on the gateway'], ['4b','Subscription statuses'],
+    ['4c','Billing screens'], ['4d','Payment allocations and TDS'], ['5','Customers'], ['6','Service and incidents'],
+    ['7a','Audit completeness'], ['7b','MFA and step-up'], ['7c','People and access'], ['8a','Flags and entitlements'],
+    ['8b','AI agents governance'], ['9','Integration and cleanup']
+  ];
+  const DEFAULTS = {}; STEPS.forEach(function(s){ DEFAULTS[s[0]] = false; });   // a step's default turns true only after owner acceptance
+  let chosen = {};
+  try { chosen = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ chosen = {}; }
+  const forced = (window.__O2_SWITCHES__ && typeof window.__O2_SWITCHES__ === 'object') ? window.__O2_SWITCHES__ : null;
+  const SW = window.O2_SWITCH = {};
+  STEPS.forEach(function(s){
+    const id = s[0];
+    SW[id] = forced && Object.prototype.hasOwnProperty.call(forced, id) ? !!forced[id] : (typeof chosen[id] === 'boolean' ? chosen[id] : DEFAULTS[id]);
+  });
+  window.O2_STEPS = STEPS.map(function(s){ return { id:s[0], name:s[1] }; });
+  window.O2_SWITCH_DEFAULTS = Object.freeze(Object.assign({}, DEFAULTS));
+  window.o2On = function(id){ return SW[id] === true; };
+  const listeners = [];
+  window.o2OnSwitch = function(fn){ if(typeof fn === 'function') listeners.push(fn); };
+  /* Re-render only: the current screen if the app is showing. Data is not touched. */
+  window.o2Rerender = function(){
+    try {
+      const app = document.getElementById('app');
+      if(app && !app.classList.contains('hidden') && typeof state !== 'undefined' && state.activeNav && typeof RENDERERS !== 'undefined' && RENDERERS[state.activeNav]) showView(state.activeNav);
+    } catch(e){ console.error(e); }
+  };
+  window.o2SetSwitch = function(id, on){
+    if(!Object.prototype.hasOwnProperty.call(SW, id)) return { ok:false, reason:'There is no O2 step “' + id + '”.' };
+    SW[id] = !!on; chosen[id] = !!on;
+    try { localStorage.setItem(KEY, JSON.stringify(chosen)); } catch(e){}
+    listeners.forEach(function(fn){ try { fn(id, !!on); } catch(e){ console.error(e); } });
+    o2Rerender();
+    return { ok:true };
+  };
+})();
+</script>
+<script id="o2-persist-script">
+/* ============================================================
+   O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
+   - Saves the platform stores to localStorage['oontu.o2.state.v1'] after each successful bosRun, after each platform
+     audit row (every older platform change writes one) and when the page is hidden or closed. Debounced.
+   - Restores once, synchronously, after every seed has run (this block is the last script) and before any page code
+     reads the stores at load. Stores are refilled IN PLACE: seed records are matched by id and refilled, so references
+     other code holds keep working. Objects shared between records (a proposal and its approval) stay shared.
+   - Saved state is dropped (seeds load) when its schemaVersion or seed fingerprint (the seed record ids) differs.
+   - Off when switch 0a is off, when the URL has ?fresh=1, or when window.__O2_NO_PERSIST__ is true (tests).
+   - Reset demo data removes only the O2 saved state. Export downloads it; Import validates everything first and
+     changes nothing when anything is wrong.
+   A real product keeps this in its database; nothing here leaves the browser.
+============================================================ */
+(function(){
+  const KEY = 'oontu.o2.state.v1', NOTICE = 'oontu.o2.notice', SCHEMA = 1, APP = 'oontu-o2-state';
+  const disabledByEnv = function(){ return window.__O2_NO_PERSIST__ === true || /[?&]fresh=1(&|$)/.test(location.search || ''); };
+  const active = function(){ return o2On('0a') && !disabledByEnv(); };
+
+  /* What is saved. read() returns the value to save; JN keeps only its data (ui and pg are screen state). */
+  const STORES = [
+    { name:'BOS', read:function(){ return BOS; }, kind:'object' },
+    { name:'PLATFORM_TENANTS', read:function(){ return PLATFORM_TENANTS; } },
+    { name:'PLATFORM_TENANT_ADMINS', read:function(){ return PLATFORM_TENANT_ADMINS; } },
+    { name:'PLATFORM_SUBSCRIPTIONS', read:function(){ return PLATFORM_SUBSCRIPTIONS; } },
+    { name:'PLATFORM_INVOICES', read:function(){ return PLATFORM_INVOICES; } },
+    { name:'PLATFORM_PLANS', read:function(){ return PLATFORM_PLANS; } },
+    { name:'PLATFORM_USER_ROSTER', read:function(){ return PLATFORM_USER_ROSTER; } },
+    { name:'PLATFORM_ROLES', read:function(){ return PLATFORM_ROLES; } },
+    { name:'PLATFORM_ANNOUNCEMENTS', read:function(){ return PLATFORM_ANNOUNCEMENTS; } },
+    { name:'PLATFORM_FEATURE_CONTROLS', read:function(){ return PLATFORM_FEATURE_CONTROLS; } },
+    { name:'PLATFORM_ADDON_LEDGER', read:function(){ return PLATFORM_ADDON_LEDGER; } },
+    { name:'PLATFORM_SETTINGS', read:function(){ return PLATFORM_SETTINGS; }, kind:'object' },
+    { name:'SIGNUP_LEADS', read:function(){ return SIGNUP_LEADS; } },
+    { name:'JN', read:function(){ return JN; }, kind:'object', omit:['ui','pg'] },
+    { name:'PROVISIONING', read:function(){ return PROVISIONING; }, kind:'object' }
+  ];
+  /* Id counters kept outside the stores. Restored as max(saved, current) so an id is never reused. */
+  const SEQS = [
+    ['subscriptionIdSeq', function(){ return subscriptionIdSeq; }, function(v){ subscriptionIdSeq = v; }],
+    ['invoiceIdSeq', function(){ return invoiceIdSeq; }, function(v){ invoiceIdSeq = v; }],
+    ['tenantAdminIdSeq', function(){ return tenantAdminIdSeq; }, function(v){ tenantAdminIdSeq = v; }],
+    ['platformUserIdSeq', function(){ return platformUserIdSeq; }, function(v){ platformUserIdSeq = v; }],
+    ['announcementIdSeq', function(){ return announcementIdSeq; }, function(v){ announcementIdSeq = v; }],
+    ['signupLeadSeq', function(){ return signupLeadSeq; }, function(v){ signupLeadSeq = v; }],
+    ['tenantIdSeqPlatform', function(){ return tenantIdSeqPlatform; }, function(v){ tenantIdSeqPlatform = v; }],
+    ['auditNextId', function(){ return auditNextId; }, function(v){ auditNextId = v; }]
+  ];
+  const isObj = function(v){ return v !== null && typeof v === 'object'; };
+  const storeValue = function(s){
+    const v = s.read();
+    if(!s.omit) return v;
+    const o = {}; Object.keys(v).forEach(function(k){ if(s.omit.indexOf(k) < 0) o[k] = v[k]; }); return o;
+  };
+  const platformAuditRows = function(){ return AUDIT_LOG.filter(function(e){ return e && e.module === 'Platform'; }); };
+
+  /* ---- fingerprint of the seed shape: record ids and keys only (seed timestamps differ on every load) ---- */
+  function shape(v){
+    if(Array.isArray(v)) return '[' + v.map(function(x){ return isObj(x) ? (x.id != null ? String(x.id) : '#') : typeof x; }).join(',') + ']';
+    if(isObj(v)) return '{' + Object.keys(v).sort().map(function(k){ const c = v[k]; return k + (Array.isArray(c) ? '=' + shape(c) : '=' + (c === null ? 'null' : typeof c)); }).join(';') + '}';
+    return typeof v;
+  }
+  function hash(str){ let h = 0x811c9dc5; for(let i = 0; i < str.length; i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return ('0000000' + h.toString(16)).slice(-8); }
+  function fingerprint(){ return 's' + SCHEMA + '-' + hash(STORES.map(function(s){ return s.name + ':' + shape(storeValue(s)); }).join('|')); }
+
+  /* ---- encoding that keeps shared objects shared ----
+     Every object or array becomes { $o2id:n, ... } (arrays: { $o2id:n, $o2arr:[...] }); a second sight of the same
+     object is { $o2ref:n }. Records in a store's top-level arrays are written in place there (their "home"), so on
+     restore they can be matched to the seed record with the same id. */
+  function encode(){
+    const tags = new Map(), home = new Set(), emitted = new Set(); let next = 1;
+    const roots = {}; STORES.forEach(function(s){ roots[s.name] = storeValue(s); }); roots.AUDIT = platformAuditRows();
+    const claim = function(arr){ arr.forEach(function(o){ if(isObj(o) && !tags.has(o)){ tags.set(o, next++); home.add(o); } }); };
+    Object.keys(roots).forEach(function(k){ const v = roots[k]; if(Array.isArray(v)) claim(v); else if(isObj(v)) Object.keys(v).forEach(function(p){ if(Array.isArray(v[p])) claim(v[p]); }); });
+    function enc(v, atHome){
+      if(v === undefined || typeof v === 'function' || typeof v === 'symbol') return undefined;
+      if(!isObj(v)) return (typeof v === 'number' && !isFinite(v)) ? null : v;
+      if(v instanceof Date) return { $o2date:v.toISOString() };
+      let t = tags.get(v);
+      if(t !== undefined && (emitted.has(v) || (home.has(v) && !atHome))) return { $o2ref:t };
+      if(t === undefined){ t = next++; tags.set(v, t); }
+      emitted.add(v);
+      if(Array.isArray(v)) return { $o2id:t, $o2arr:v.map(function(x){ const e = enc(x, false); return e === undefined ? null : e; }) };
+      const o = { $o2id:t };
+      Object.keys(v).forEach(function(k){ if(k.slice(0, 3) === '$o2') throw new Error('Reserved key ' + k); const e = enc(v[k], false); if(e !== undefined) o[k] = e; });
+      return o;
+    }
+    function encArray(a){ let t = tags.get(a); if(t === undefined){ t = next++; tags.set(a, t); } emitted.add(a); return { $o2id:t, $o2arr:a.map(function(x){ const e = enc(x, true); return e === undefined ? null : e; }) }; }
+    const out = {};
+    Object.keys(roots).forEach(function(k){
+      const v = roots[k];
+      if(Array.isArray(v)){ out[k] = encArray(v); return; }
+      const o = { $o2id:next++ };
+      Object.keys(v).forEach(function(p){ const c = v[p]; if(Array.isArray(c) && !emitted.has(c)) o[p] = encArray(c); else { const e = enc(c, false); if(e !== undefined) o[p] = e; } });
+      out[k] = o;
+    });
+    return out;
+  }
+
+  /* Builds the stores back from an encoded payload. With reuse=false it is pure (used to validate); with reuse=true
+     existing containers and seed records are refilled in place. Throws on any malformed node. */
+  function decode(enc, reuse){
+    const defs = new Map();
+    const collectRoot = function(n){
+      (function collect(x){
+        if(!isObj(x)) return;
+        if(Array.isArray(x)) throw new Error('An untagged list was found.');
+        if('$o2ref' in x){ if(typeof x.$o2ref !== 'number') throw new Error('A reference is malformed.'); return; }
+        if('$o2date' in x) return;
+        if(typeof x.$o2id !== 'number') throw new Error('A record without an id was found.');
+        if(defs.has(x.$o2id)) throw new Error('Two records share id ' + x.$o2id + '.');
+        defs.set(x.$o2id, x);
+        if('$o2arr' in x){ if(!Array.isArray(x.$o2arr)) throw new Error('A list is malformed.'); x.$o2arr.forEach(collect); }
+        else Object.keys(x).forEach(function(k){ if(k !== '$o2id') collect(x[k]); });
+      })(n);
+    };
+    Object.keys(enc).forEach(function(k){ collectRoot(enc[k]); });
+
+    const into = new Map(), used = new Set(); let reused = 0;
+    if(reuse){
+      const matchArray = function(node, cur){
+        if(!Array.isArray(cur) || !node || !('$o2arr' in node)) return;
+        into.set(node.$o2id, cur);
+        const byId = new Map(); cur.forEach(function(o){ if(isObj(o) && o.id != null && !byId.has(o.id)) byId.set(o.id, o); });
+        node.$o2arr.forEach(function(el){
+          if(!isObj(el) || !('$o2id' in el) || '$o2arr' in el || el.id == null) return;
+          const ex = byId.get(el.id); if(ex && !used.has(ex)){ used.add(ex); into.set(el.$o2id, ex); reused++; }
+        });
+      };
+      STORES.forEach(function(s){
+        const node = enc[s.name], cur = s.read();
+        if(s.kind === 'object') Object.keys(node).forEach(function(k){
+          if(k === '$o2id') return; const c = cur[k], n = node[k];
+          if(Array.isArray(c)) matchArray(n, c);
+          else if(isObj(c) && isObj(n) && '$o2id' in n && !('$o2arr' in n)) into.set(n.$o2id, c);
+        });
+        else matchArray(node, cur);
+      });
+    }
+    const built = new Map();
+    function val(n){
+      if(!isObj(n)) return n;
+      if('$o2ref' in n){ if(!defs.has(n.$o2ref)) throw new Error('A reference points to nothing.'); return build(n.$o2ref); }
+      if('$o2date' in n) return new Date(n.$o2date);
+      return build(n.$o2id);
+    }
+    function build(id){
+      if(built.has(id)) return built.get(id);
+      const n = defs.get(id), isArr = '$o2arr' in n;
+      let c = into.get(id);
+      if(c){ if(isArr) c.length = 0; else Object.keys(c).forEach(function(k){ delete c[k]; }); }
+      else c = isArr ? [] : {};
+      built.set(id, c);
+      if(isArr) n.$o2arr.forEach(function(x){ c.push(val(x)); });
+      else Object.keys(n).forEach(function(k){ if(k !== '$o2id') c[k] = val(n[k]); });
+      return c;
+    }
+    const out = {};
+    Object.keys(enc).forEach(function(k){
+      const n = enc[k];
+      if('$o2arr' in n){ out[k] = build(n.$o2id); return; }
+      const o = {}; Object.keys(n).forEach(function(p){ if(p !== '$o2id') o[p] = val(n[p]); }); out[k] = o;   // object stores: the store object itself is never cleared
+    });
+    out.__reused = reused;
+    return out;
+  }
+
+  function snapshot(){
+    const seqs = {}; SEQS.forEach(function(s){ try { seqs[s[0]] = s[1](); } catch(e){} });
+    return { app:APP, schemaVersion:SCHEMA, seedFingerprint:BOOT_FP, savedAt:new Date().toISOString(), seqs:seqs, data:encode() };
+  }
+
+  /* Full validation; changes nothing. Returns { ok, reason, payload }. */
+  function validate(payload){
+    if(!isObj(payload) || Array.isArray(payload)) return { ok:false, reason:'This file is not an O2 saved state.' };
+    if(payload.app !== APP) return { ok:false, reason:'This file is not an O2 saved state.' };
+    if(payload.schemaVersion !== SCHEMA) return { ok:false, reason:'This file uses a different save format (version ' + payload.schemaVersion + '; this prototype reads version ' + SCHEMA + '). Nothing was changed.' };
+    if(payload.seedFingerprint !== BOOT_FP) return { ok:false, reason:'This file was saved from a different build of the prototype, so its records may not match. Nothing was changed.' };
+    if(!isObj(payload.seqs) || !isObj(payload.data)) return { ok:false, reason:'The file is incomplete. Nothing was changed.' };
+    const names = STORES.map(function(s){ return s.name; }).concat('AUDIT');
+    const keys = Object.keys(payload.data);
+    if(keys.length !== names.length || names.some(function(n){ return keys.indexOf(n) < 0; })) return { ok:false, reason:'The file does not hold the expected stores. Nothing was changed.' };
+    for(const s of SEQS){ const v = payload.seqs[s[0]]; if(typeof v !== 'number' || !isFinite(v) || v < 0) return { ok:false, reason:'An id counter in the file is not valid (' + s[0] + '). Nothing was changed.' }; }
+    let d;
+    try { d = decode(payload.data, false); } catch(e){ return { ok:false, reason:'The file is damaged: ' + e.message + ' Nothing was changed.' }; }
+    for(const s of STORES){
+      const cur = s.read(), got = d[s.name];
+      if(s.kind === 'object'){
+        if(!isObj(got) || Array.isArray(got)) return { ok:false, reason:'The store ' + s.name + ' is malformed. Nothing was changed.' };
+        for(const k of Object.keys(cur)){ if(s.omit && s.omit.indexOf(k) > -1) continue; if(Array.isArray(cur[k]) && !Array.isArray(got[k])) return { ok:false, reason:'The store ' + s.name + '.' + k + ' is malformed. Nothing was changed.' }; }
+      } else if(!Array.isArray(got)) return { ok:false, reason:'The store ' + s.name + ' is malformed. Nothing was changed.' };
+    }
+    if(!Array.isArray(d.AUDIT) || d.AUDIT.some(function(r){ return !isObj(r) || r.module !== 'Platform' || typeof r.id !== 'number'; })) return { ok:false, reason:'The audit rows in the file are malformed. Nothing was changed.' };
+    return { ok:true, payload:payload };
+  }
+
+  /* Applies a validated payload to the live stores, in place. */
+  let lastRestore = null;
+  function apply(payload){
+    const d = decode(payload.data, true);
+    STORES.forEach(function(s){
+      if(s.kind !== 'object') return;   // array stores were refilled in place by decode
+      const target = s.read(), got = d[s.name];
+      Object.keys(got).forEach(function(k){ if(target[k] !== got[k]) target[k] = got[k]; });
+    });
+    // platform audit rows: replace the rows the seeds just wrote with the saved ones; recruiter-app rows are untouched
+    const keep = AUDIT_LOG.filter(function(e){ return !(e && e.module === 'Platform'); });
+    const rows = keep.concat(d.AUDIT);
+    rows.sort(function(a, b){ return (b.id || 0) - (a.id || 0); });
+    AUDIT_LOG.splice.apply(AUDIT_LOG, [0, AUDIT_LOG.length].concat(rows));
+    let maxAudit = 0; AUDIT_LOG.forEach(function(e){ if(typeof e.id === 'number' && e.id > maxAudit) maxAudit = e.id; });
+    SEQS.forEach(function(s){ try { const cur = s[1](), v = payload.seqs[s[0]]; s[2](Math.max(cur, typeof v === 'number' ? v : 0)); } catch(e){} });
+    try { if(auditNextId <= maxAudit) auditNextId = maxAudit + 1; } catch(e){}
+    lastRestore = { at:new Date().toISOString(), savedAt:payload.savedAt, reused:d.__reused };
+  }
+
+  /* ---- saving ---- */
+  let timer = null, lastSavedAt = null, lastBytes = 0;
+  let SUPPRESS = false;   // set by Reset and Import just before the reload, so no later save writes the old state back
+  function saveNow(){
+    if(timer){ clearTimeout(timer); timer = null; }
+    if(SUPPRESS) return { ok:false, reason:'A reset or import is reloading the page.' };
+    if(!active()) return { ok:false, reason:'Saving is off.' };
+    try {
+      const text = JSON.stringify(snapshot());
+      localStorage.setItem(KEY, text);
+      lastSavedAt = new Date().toISOString(); lastBytes = text.length;
+      return { ok:true, bytes:text.length };
+    } catch(e){ console.error(e); return { ok:false, reason:'The browser refused to save (' + e.message + ').' }; }
+  }
+  function scheduleSave(){ if(!active() || RESTORING || SUPPRESS) return; if(timer) clearTimeout(timer); timer = setTimeout(saveNow, 300); }
+
+  /* ---- restore once, now: every seed has run, no load handler has run yet ---- */
+  const BOOT_FP = fingerprint();
+  let RESTORING = false;
+  function noticeLater(text){ try { sessionStorage.setItem(NOTICE, text); } catch(e){} }
+  (function restoreAtBoot(){
+    if(!active()) return;
+    let raw = null; try { raw = localStorage.getItem(KEY); } catch(e){}
+    if(!raw) return;
+    let payload = null; try { payload = JSON.parse(raw); } catch(e){}
+    const v = payload ? validate(payload) : { ok:false, reason:'The saved demo data could not be read.' };
+    if(!v.ok){
+      try { localStorage.removeItem(KEY); } catch(e){}
+      noticeLater('Saved demo data was cleared and the sample data loaded. ' + v.reason.replace(' Nothing was changed.', ''));
+      return;
+    }
+    RESTORING = true;
+    try { apply(payload); }
+    catch(e){
+      console.error(e);
+      try { localStorage.removeItem(KEY); } catch(x){}
+      noticeLater('Saved demo data could not be restored and was cleared. The sample data will load.');
+      try { sessionStorage.setItem('oontu.o2.reloadAfterFailedRestore', '1'); } catch(x){}
+      location.reload(); return;
+    } finally { RESTORING = false; }
+  })();
+  window.addEventListener('load', function(){
+    let n = null; try { n = sessionStorage.getItem(NOTICE); sessionStorage.removeItem(NOTICE); } catch(e){}
+    if(n) setTimeout(function(){ try { toast(n); } catch(e){} }, 400);
+  });
+
+  /* ---- save triggers: wrap, never edit ---- */
+  const baseRun = window.bosRun;
+  const wrappedRun = function(){ const res = baseRun.apply(this, arguments); if(res && res.ok) scheduleSave(); return res; };
+  Object.keys(baseRun).forEach(function(k){ wrappedRun[k] = baseRun[k]; });
+  Object.defineProperty(wrappedRun, 'quiet', { get:function(){ return baseRun.quiet; }, set:function(v){ baseRun.quiet = v; }, configurable:true });
+  window.bosRun = wrappedRun;
+  const baseAudit = window.logPlatformAudit;
+  window.logPlatformAudit = logPlatformAudit = function(){ const out = baseAudit.apply(this, arguments); scheduleSave(); return out; };
+  window.addEventListener('pagehide', function(){ if(active()) saveNow(); });
+  document.addEventListener('visibilitychange', function(){ if(document.hidden && active()) saveNow(); });
+  o2OnSwitch(function(id, on){ if(id === '0a' && on) saveNow(); if(id === '0a' && !on && timer){ clearTimeout(timer); timer = null; } });
+
+  /* ---- Reset, Export, Import ---- */
+  function exportText(){ return JSON.stringify(snapshot(), null, 1); }
+  window.o2Persist = {
+    KEY:KEY, SCHEMA:SCHEMA,
+    active:active, saveNow:saveNow, fingerprint:fingerprint, bootFingerprint:BOOT_FP,
+    lastRestore:function(){ return lastRestore; }, status:function(){ return { active:active(), lastSavedAt:lastSavedAt, bytes:lastBytes, restored:lastRestore }; },
+    exportText:exportText, validate:function(text){ let p; try { p = JSON.parse(text); } catch(e){ return { ok:false, reason:'This file is not valid JSON. Nothing was changed.' }; } return validate(p); },
+    /* Import: validate everything first; only then write the saved state and reload so it is restored the normal way. */
+    importText:function(text, opts){
+      opts = opts || {};
+      if(!active()) return { ok:false, reason:disabledByEnv() ? 'Saving is turned off for this page, so nothing can be imported.' : 'Turn on step 0a first. Nothing was changed.' };
+      const v = window.o2Persist.validate(text); if(!v.ok) return v;
+      let previous = null; try { previous = localStorage.getItem(KEY); } catch(e){}
+      try { localStorage.setItem(KEY, JSON.stringify(v.payload)); }
+      catch(e){ try { if(previous !== null) localStorage.setItem(KEY, previous); } catch(x){} return { ok:false, reason:'The browser refused to store the file (' + e.message + '). Nothing was changed.' }; }
+      if(timer){ clearTimeout(timer); timer = null; }
+      SUPPRESS = true;   // the page still holds the old state until it reloads; it must not be saved over the import
+      noticeLater('Demo data imported (saved ' + new Date(v.payload.savedAt).toLocaleString() + ').');
+      if(opts.reload !== false) location.reload();
+      return { ok:true };
+    },
+    /* Reset: removes only the O2 saved state, then reloads to the sample data. Switches and every other key stay. */
+    reset:function(opts){
+      opts = opts || {};
+      if(timer){ clearTimeout(timer); timer = null; }
+      SUPPRESS = true;
+      try { localStorage.removeItem(KEY); } catch(e){}
+      noticeLater('Demo data reset to the sample data.');
+      if(opts.reload !== false) location.reload();
+      return { ok:true };
+    }
+  };
+
+  /* ---- the panel section, appended to the existing login tools ---- */
+  function fmtTime(iso){ try { return new Date(iso).toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' }); } catch(e){ return ''; } }
+  function statusLine(){
+    if(disabledByEnv()) return 'Saving is off for this page (test or ?fresh=1).';
+    if(!o2On('0a')) return 'Saving is off. Turn on 0a to keep demo data after a reload.';
+    const st = window.o2Persist.status();
+    return 'Saving is on.' + (st.restored ? ' Restored data saved ' + fmtTime(st.restored.savedAt) + '.' : '') + (st.lastSavedAt ? ' Last saved ' + fmtTime(st.lastSavedAt) + ' (' + Math.max(1, Math.round(st.bytes / 1024)) + ' KB).' : '');
+  }
+  window.o2DevHTML = function(){
+    const on = O2_STEPS.filter(function(s){ return o2On(s.id); }).length;
+    return '<div class="o2-dev" id="o2-dev"><p class="au-dev__h">O2 build</p>' +
+      '<p class="au-dev__dim">Each step is off until it is accepted. A switch changes which code runs, never the data.</p>' +
+      '<details><summary>Build steps · <span id="o2-dev-on">' + on + '</span> on</summary><ul class="o2-dev__sw">' +
+      O2_STEPS.map(function(s){ return '<li><label class="o-switchrow"><button type="button" role="switch" class="o-switch" data-o2-step="' + s.id + '" aria-checked="' + o2On(s.id) + '" onclick="o2DevToggle(\'' + s.id + '\', this)"><i></i></button><span><b>' + s.id + '</b> ' + oEsc(s.name) + '</span></label></li>'; }).join('') +
+      '</ul></details>' +
+      '<p class="au-dev__h">Demo data</p><p class="au-dev__dim" id="o2-dev-status">' + oEsc(statusLine()) + '</p>' +
+      '<div class="o2-dev__acts"><button type="button" class="o2-dev__btn" onclick="o2DevExport()">Export state</button>' +
+      '<button type="button" class="o2-dev__btn" onclick="document.getElementById(\'o2-dev-file\').click()">Import state</button>' +
+      '<input type="file" id="o2-dev-file" accept="application/json,.json" hidden onchange="o2DevImport(this)">' +
+      '<button type="button" class="o2-dev__btn o2-dev__btn--danger" onclick="o2DevReset()">Reset demo data</button></div>' +
+      '<p class="au-dev__dim o2-dev__msg" id="o2-dev-msg" role="status" aria-live="polite"></p></div>';
+  };
+  function msg(text, err){ const el = document.getElementById('o2-dev-msg'); if(el){ el.textContent = text; el.classList.toggle('is-err', !!err); } }
+  function refreshStatus(){ const el = document.getElementById('o2-dev-status'); if(el) el.textContent = statusLine(); const c = document.getElementById('o2-dev-on'); if(c) c.textContent = O2_STEPS.filter(function(s){ return o2On(s.id); }).length; }
+  window.o2DevToggle = function(id, btn){ const r = o2SetSwitch(id, !o2On(id)); if(btn) btn.setAttribute('aria-checked', String(o2On(id))); refreshStatus(); if(!r.ok) msg(r.reason, true); };
+  window.o2DevExport = function(){
+    try {
+      const text = exportText(), d = new Date(), pad = function(n){ return String(n).padStart(2, '0'); };
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type:'application/json' }));
+      a.download = 'oontu-o2-state-' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.json';
+      document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+      msg('Exported ' + Math.max(1, Math.round(text.length / 1024)) + ' KB.');
+    } catch(e){ msg('Export failed: ' + e.message, true); }
+  };
+  window.o2DevImport = function(input){
+    const f = input && input.files && input.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = function(){ const res = window.o2Persist.importText(String(r.result || '')); if(!res.ok) msg(res.reason, true); input.value = ''; };
+    r.onerror = function(){ msg('The file could not be read. Nothing was changed.', true); input.value = ''; };
+    r.readAsText(f);
+  };
+  window.o2DevReset = function(){
+    if(!confirm('Reset the O2 demo data to the sample data? Changes made in this browser are lost. Export first to keep them. Sign-in, workspace setup and other saved settings are not touched.')) return;
+    window.o2Persist.reset();
+  };
+  const baseLogins = window.bosDevLoginsHTML;
+  window.bosDevLoginsHTML = function(){ return (typeof baseLogins === 'function' ? baseLogins.apply(this, arguments) : '') + o2DevHTML(); };
+})();
+</script>
 </body>
 </html>

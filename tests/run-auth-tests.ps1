@@ -2,8 +2,11 @@
   Runs tests/auth-flow.spec.js against recruitment-os-prototype.html in headless Chrome or Edge.
   Usage:  powershell -ExecutionPolicy Bypass -File tests\run-auth-tests.ps1 [-Browser <path to chrome.exe>]
   Exit code 0 = all passed, 1 = failures, 2 = the run itself failed.
+  O2 (Step 0a): every run starts from the seeds in a new browser profile, and saving demo data is OFF
+  (window.__O2_NO_PERSIST__). -Persist turns saving on; -Switches 0a,1b forces O2 step switches on.
+  A spec can ask for the same with a line "// @o2-runner persist switches=0a" (used by o2-persistence.spec.js).
 #>
-param([string]$Browser, [string]$Spec, [int]$Width = 1440, [int]$Height = 900, [int]$Budget = 200000)
+param([string]$Browser, [string]$Spec, [int]$Width = 1440, [int]$Height = 900, [int]$Budget = 200000, [switch]$Persist, [string]$Switches)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $src  = Join-Path $root 'recruitment-os-prototype.html'
@@ -28,7 +31,16 @@ try {
   $html = [IO.File]::ReadAllText($src, $utf8)
   $idx = $html.LastIndexOf('</body>')
   if($idx -lt 0){ Write-Host 'Could not find </body> in the prototype.'; exit 2 }
-  $html = $html.Substring(0, $idx) + "<script>`n" + [IO.File]::ReadAllText($spec, $utf8) + "`n</script>`n" + $html.Substring($idx)
+  $specText = [IO.File]::ReadAllText($spec, $utf8)
+  $html = $html.Substring(0, $idx) + "<script>`n" + $specText + "`n</script>`n" + $html.Substring($idx)
+  # O2 test setup, placed before every page script
+  $dir = [regex]::Match($specText, '//\s*@o2-runner\s+persist(?:\s+switches=([\w,]+))?')
+  $usePersist = $Persist -or $dir.Success
+  $sw = @(); if($Switches){ $sw += $Switches -split ',' }; if($dir.Success -and $dir.Groups[1].Success){ $sw += $dir.Groups[1].Value -split ',' }
+  $o2 = '<script>' + $(if($usePersist){ 'window.__O2_NO_PERSIST__=false;' } else { 'window.__O2_NO_PERSIST__=true;' }) +
+        $(if($sw.Count){ 'window.__O2_SWITCHES__={' + (($sw | Where-Object { $_ } | ForEach-Object { "'" + $_.Trim() + "':true" }) -join ',') + '};' } else { '' }) + '</script>'
+  $h = $html.IndexOf('<head>'); if($h -lt 0){ Write-Host 'Could not find <head> in the prototype.'; exit 2 }
+  $html = $html.Substring(0, $h + 6) + $o2 + $html.Substring($h + 6)
   $page = Join-Path $tmp 'test.html'
   [IO.File]::WriteAllText($page, $html, $utf8)
   $url = ([Uri]$page).AbsoluteUri   # percent-encodes spaces in the temp path
