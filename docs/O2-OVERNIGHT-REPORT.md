@@ -17,6 +17,7 @@ _In progress. Written in full when the build finishes._
 - **1c** Platform search: IDs first, then names, grouped and permission-filtered, with actions. Switch 1c · Meera · press Ctrl+K and type TCK-1001, an OON/ number, “Northstar” or a GSTIN.
 - **2** Home: ranked attention queue, six KPIs per the definitions, four SVG charts (illustrative where no history), recent activity. Switches 0b, 1a, 1b, 2 · Meera Krishnan · Home.
 - **3a** Workspace lifecycle commands with a second person for suspension, closing a suspended workspace and early archive; emergency path for Security; archive keeps a tombstone. Switches 1a, 3a · Meera Krishnan · Workspaces › a workspace › suspend (asks for approval).
+- **3b** Workspaces list (cards, tabs, filters, ten columns) and Workspace 360 (eight tabs, danger zone); Account help actions run as commands. Switches 0b, 1a, 3a, 3b · Meera Krishnan · Workspaces › a row; Requests tab.
 
 ## 3. Blocked steps
 
