@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oontu overnight build</title>
+<style>
+  :root{ --bg:#fff; --text:#16181d; --dim:#5d6370; --line:#e4e6ea; --soft:#f6f7f9;
+    --done:#1f7a3f; --done-bg:#e6f4ea; --prog:#1d5fbf; --prog-bg:#e7effb; --block:#b3261e; --block-bg:#fbe9e7;
+    --skip:#7a5b00; --skip-bg:#fdf3d7; --wait:#5d6370; --wait-bg:#eef0f3; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--text); font:14px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main{ max-width:1180px; margin:0 auto; padding:24px 16px 64px; }
+  h1{ font-size:24px; font-weight:600; margin:0 0 4px; }
+  h2{ font-size:16px; font-weight:600; margin:32px 0 10px; }
+  .meta{ color:var(--dim); margin:0 0 14px; }
+  .bar{ height:12px; background:var(--soft); border:1px solid var(--line); border-radius:999px; overflow:hidden; }
+  .bar i{ display:block; height:100%; background:var(--done); }
+  .barlbl{ font-size:13px; color:var(--dim); margin-top:6px; }
+  .wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:10px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th, td{ text-align:left; vertical-align:top; padding:9px 10px; border-bottom:1px solid var(--line); }
+  th{ background:var(--soft); font-weight:600; font-size:12px; color:var(--dim); white-space:nowrap; }
+  tr:last-child td{ border-bottom:0; }
+  td.id{ font-weight:600; white-space:nowrap; }
+  .st{ display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .st-Done{ color:var(--done); background:var(--done-bg); } .st-Done::before{ content:"✓ "; }
+  .st-In-progress{ color:var(--prog); background:var(--prog-bg); } .st-In-progress::before{ content:"● "; }
+  .st-Blocked{ color:var(--block); background:var(--block-bg); } .st-Blocked::before{ content:"✕ "; }
+  .st-Skipped{ color:var(--skip); background:var(--skip-bg); } .st-Skipped::before{ content:"↷ "; }
+  .st-Waiting{ color:var(--wait); background:var(--wait-bg); } .st-Waiting::before{ content:"○ "; }
+  .see{ color:var(--dim); font-size:12px; }
+  .see b{ color:var(--text); font-weight:600; }
+  code{ font-family:ui-monospace, Consolas, monospace; font-size:12px; background:var(--soft); padding:0 4px; border-radius:4px; }
+  ul.plain{ margin:0; padding-left:18px; } ul.plain li{ margin:4px 0; }
+  .empty{ color:var(--dim); }
+  @media (max-width:700px){ th:nth-child(5), td:nth-child(5){ min-width:220px; } }
+</style>
+</head>
+<body>
+<main id="root"><p>Loading…</p></main>
+<script id="o2-data" type="application/json">
+{
+  "updated": "2026-11-26 21:30 IST",
+  "current": "0b",
+  "partA": [
+    {"id":"0a","name":"Persistence, switches, reset","status":"Done","tests":"14/14","tag":"o2-step-0a","what":"Demo data survives a reload; Export, Import and Reset demo data.","see":"Switch 0a · any login · Sign-in screen › Prototype · simulated sign-in › O2 build › turn on 0a; make a change, reload"},
+    {"id":"0b","name":"Policy store, metrics, access level","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"0c","name":"Billing customer","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"0d","name":"One visible invoice model","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"1a","name":"Navigation and redirects","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"1b","name":"Approvals inbox and bell","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"1c","name":"Platform search","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"2","name":"Home command center","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"3a","name":"Workspace lifecycle","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"3b","name":"Workspace screens","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"4a","name":"Subscriptions on the gateway","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"4b","name":"Subscription statuses","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"4c","name":"Billing screens","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"4d","name":"Payment allocations and TDS","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"5","name":"Customers","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"6","name":"Service and incidents","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"7a","name":"Audit completeness","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"7b","name":"MFA and step-up","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"7c","name":"People and access","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"8a","name":"Flags and entitlements","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"8b","name":"AI agents governance","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"9","name":"Integration and cleanup","status":"Waiting","tests":"","tag":"","what":"","see":""}
+  ],
+  "partB": [
+    {"id":"G1","name":"Live workflow triggers","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"G2","name":"Automation results","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"G3","name":"Money-at-risk board","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"G4","name":"Redeployment and contract-end decisions","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"G5","name":"Own talent first","status":"Waiting","tests":"","tag":"","what":"","see":""},
+    {"id":"G6","name":"Interview self-booking","status":"Waiting","tests":"","tag":"","what":"","see":""}
+  ],
+  "problems": [],
+  "flaky": [
+    "Headless Chrome occasionally hangs at launch (seen once on bos-tax before the build); a rerun alone passes.",
+    "cowork-visual gives no result when two test passes run at once; passes 15/15 alone. Passes are now always run one at a time."
+  ],
+  "decisions": [
+    ["Switch defaults", "Off in code; tests turn them on."],
+    ["Briefs location", "docs/O2-BUILD-BRIEF.md and docs/OONTU-GAME-CHANGERS-PROMPT.md were in Downloads, not in docs/; copied into docs/ at start."]
+  ],
+  "suite": { "off": "Before the build (0a tag): 1,031/1,031 across 72 specs", "on": "Before the build (0a on): 1,031/1,031 across 72 specs" }
+}
+</script>
+<script>
+(function(){
+  var d = JSON.parse(document.getElementById('o2-data').textContent);
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function rows(list){
+    return '<div class="wrap"><table><thead><tr><th>Step</th><th>Name</th><th>Status</th><th>Tests</th><th>What it adds</th><th>See it</th><th>Tag</th></tr></thead><tbody>' +
+      list.map(function(s){
+        return '<tr><td class="id">' + esc(s.id) + '</td><td>' + esc(s.name) + '</td><td><span class="st st-' + esc(s.status).replace(/ /g, '-') + '">' + esc(s.status) + '</span></td>' +
+          '<td>' + (esc(s.tests) || '<span class="empty">—</span>') + '</td><td>' + (esc(s.what) || '<span class="empty">—</span>') + '</td>' +
+          '<td class="see">' + (s.see ? esc(s.see).replace(/^([^·]+)·([^·]+)·/, '<b>$1</b>·<b>$2</b>·') : '<span class="empty">—</span>') + '</td><td>' + (s.tag ? '<code>' + esc(s.tag) + '</code>' : '<span class="empty">—</span>') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+  var all = d.partA.concat(d.partB), done = all.filter(function(s){ return s.status === 'Done'; }).length;
+  var pct = Math.round(done * 100 / all.length);
+  var html = '<h1>Oontu overnight build</h1><p class="meta">Last updated ' + esc(d.updated) + ' · Current step: <b>' + esc(d.current) + '</b> · Branch <code>o2/overnight-2026-11-26</code></p>' +
+    '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + all.length + '" aria-valuenow="' + done + '" aria-label="Steps done"><i style="width:' + pct + '%"></i></div>' +
+    '<p class="barlbl">' + done + ' of ' + all.length + ' steps done (' + pct + '%) · Blocked: ' + all.filter(function(s){ return s.status === 'Blocked'; }).length + ' · Skipped: ' + all.filter(function(s){ return s.status === 'Skipped'; }).length + '</p>' +
+    '<h2>Part A · O2 platform</h2>' + rows(d.partA) +
+    '<h2>Part B · Recruiter app</h2>' + rows(d.partB) +
+    '<h2>Problems</h2>' + (d.problems.length ? '<ul class="plain">' + d.problems.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<p class="empty">No blocked steps.</p>') +
+    '<p><b>Flaky tests noted</b></p>' + (d.flaky.length ? '<ul class="plain">' + d.flaky.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<p class="empty">None.</p>') +
+    '<h2>Decisions made</h2><div class="wrap"><table><thead><tr><th>Situation</th><th>Decision</th></tr></thead><tbody>' + d.decisions.map(function(r){ return '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+    '<h2>Last full-suite result</h2><ul class="plain"><li><b>Switches off:</b> ' + esc(d.suite.off) + '</li><li><b>Switches on:</b> ' + esc(d.suite.on) + '</li></ul>';
+  document.getElementById('root').innerHTML = html;
+})();
+</script>
+</body>
+</html>

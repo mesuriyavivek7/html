@@ -4,7 +4,8 @@
   Exit code 0 = all passed, 1 = failures, 2 = the run itself failed.
   O2 (Step 0a): every run starts from the seeds in a new browser profile, and saving demo data is OFF
   (window.__O2_NO_PERSIST__). -Persist turns saving on; -Switches 0a,1b forces O2 step switches on.
-  A spec can ask for the same with a line "// @o2-runner persist switches=0a" (used by o2-persistence.spec.js).
+  A spec can ask for the same with a line "// @o2-runner persist switches=0a" (used by o2-persistence.spec.js);
+  "// @o2-runner switches=0b,1a" turns switches on with saving still off.
 #>
 param([string]$Browser, [string]$Spec, [int]$Width = 1440, [int]$Height = 900, [int]$Budget = 200000, [switch]$Persist, [string]$Switches)
 $ErrorActionPreference = 'Stop'
@@ -34,9 +35,9 @@ try {
   $specText = [IO.File]::ReadAllText($spec, $utf8)
   $html = $html.Substring(0, $idx) + "<script>`n" + $specText + "`n</script>`n" + $html.Substring($idx)
   # O2 test setup, placed before every page script
-  $dir = [regex]::Match($specText, '//\s*@o2-runner\s+persist(?:\s+switches=([\w,]+))?')
-  $usePersist = $Persist -or $dir.Success
-  $sw = @(); if($Switches){ $sw += $Switches -split ',' }; if($dir.Success -and $dir.Groups[1].Success){ $sw += $dir.Groups[1].Value -split ',' }
+  $dir = [regex]::Match($specText, '//\s*@o2-runner(\s+persist)?(?:\s+switches=([\w,]+))?')
+  $usePersist = $Persist -or ($dir.Success -and $dir.Groups[1].Success)
+  $sw = @(); if($Switches){ $sw += $Switches -split ',' }; if($dir.Success -and $dir.Groups[2].Success){ $sw += $dir.Groups[2].Value -split ',' }
   $o2 = '<script>' + $(if($usePersist){ 'window.__O2_NO_PERSIST__=false;' } else { 'window.__O2_NO_PERSIST__=true;' }) +
         $(if($sw.Count){ 'window.__O2_SWITCHES__={' + (($sw | Where-Object { $_ } | ForEach-Object { "'" + $_.Trim() + "':true" }) -join ',') + '};' } else { '' }) + '</script>'
   $h = $html.IndexOf('<head>'); if($h -lt 0){ Write-Host 'Could not find <head> in the prototype.'; exit 2 }
