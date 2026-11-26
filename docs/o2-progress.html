@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-26 23:35 IST",
-    "current":  "1c",
+    "updated":  "2026-11-26 23:39 IST",
+    "current":  "2",
     "partA":  [
                   {
                       "id":  "0a",
@@ -101,11 +101,11 @@
                   {
                       "id":  "1c",
                       "name":  "Platform search",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "6/6 (o2-search); crawl, bos-login, a11y green off and on",
+                      "tag":  "o2-step-1c",
+                      "what":  "Platform search: IDs first, then names, grouped, permission-filtered, with actions.",
+                      "see":  "Switch 1c · Meera Krishnan · press Ctrl+K and type TCK-1001, an OON/ invoice number, Northstar or a GSTIN"
                   },
                   {
                       "id":  "2",
@@ -363,6 +363,10 @@
                       [
                           "1b Approvals access",
                           "Approvals is open to every active employee; deciding still needs the approving permission."
+                      ],
+                      [
+                          "1c Sales ticket scope",
+                          "Sales read tickets inside Account 360 but have no Tickets screen; search shows them tickets only on accounts they or their reports own."
                       ]
                   ],
     "suite":  {
