@@ -13,6 +13,7 @@ _In progress. Written in full when the build finishes._
 - **0c** Billing customer per account: invoices freeze the buyer details; market locked by the first invoice, changed only from the next renewal; tax identical. Switch 0c · Meera Krishnan (or Finance) · Accounts › Northstar Talent Partners › Billing customer card › Edit billing details / Change market.
 - **0d** Only tax invoices (OON/…) are shown on platform screens; overdue follows the tax invoice; legacy plans say “Grandfathered — not for sale” and are not offered. Switch 0d · Meera Krishnan · Business & finance › Invoices and refunds (OON numbers); Plans (labels); Tenants › Create workspace (no legacy plans).
 - **1a** The §5 menu (Home · Work · Customers · Service · Billing · Admin), old screen ids redirect, one access table, Home for platform operations. Switch 1a · any login · the sidebar; open an old link such as Tenants and land on Workspaces.
+- **1b** One approvals inbox for everyone (Waiting for me · I asked · Decided by me · All) and a platform bell that opens the record. Switches 1a+1b · Arjun raises a 15% discount on a deal, then Kavya opens Work › Approvals (and the bell).
 
 ## 3. Blocked steps
 
@@ -35,6 +36,7 @@ None yet.
 | Overdue date (0d) | Tax invoices for subscriptions carry no due date today, so the internal row's due date is used when the tax invoice has none; settlement always comes from the tax invoice. |
 | 1a merged screens | Until their own step, a new id that merges two screens shows both behind a small tab strip (Workspaces: All · Requests; Pipeline: Pipeline · Sign-ups); Approvals, Invoices and Tax open the old finance screen on the right tab. |
 | 1a and bos-login.spec | The spec reads its screen lists through the old→new id map when 1a is on (exact lists, same strictness); with 1a off it is unchanged. |
+| 1b Approvals access | Approvals is open to every active employee (they see their own requests and decisions); deciding still needs the approving permission. |
 
 ## 5. Step 1a screen lists
 

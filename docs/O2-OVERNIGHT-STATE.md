@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-1b
+1c
 
 ## Steps
 
@@ -19,6 +19,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 | 0c | Done | o2-step-0c | o2-billing-customer 8/8; regressions green off/on | wraps bosTaxPartyOf (not bosTaxSegment: it receives a party); snapshot via BOS.taxInvoices.push hook |
 | 0d | Done | o2-step-0d | o2-invoice-view 6/6; regressions green off/on | text-only inv-N → OON mapping on platform screens + bosDialog; isInvoiceOverdue reads tax invoice; legacy plans stripped from pickers (commands unchanged) |
 | 1a | Done | o2-step-1a | o2-nav-redirect 9/9; bos-login 8/8 on and off; screens-crawl, light, motion green (motion collapse-pill flake passes alone) | new ids host old screens; bos-login made 1a-aware (same strictness) |
+| 1b | Done | o2-step-1b | o2-approvals 5/5, o2-bell 6/6; regressions 130/130 off, on green | Approvals open to all active employees; bos-login 1b-aware |
 
 ## How to run tests (this machine)
 

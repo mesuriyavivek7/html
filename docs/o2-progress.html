@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-26 23:29 IST",
-    "current":  "1b",
+    "updated":  "2026-11-26 23:35 IST",
+    "current":  "1c",
     "partA":  [
                   {
                       "id":  "0a",
@@ -92,11 +92,11 @@
                   {
                       "id":  "1b",
                       "name":  "Approvals inbox and bell",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "11/11 (o2-approvals, o2-bell); regressions green off and on",
+                      "tag":  "o2-step-1b",
+                      "what":  "One approvals inbox and a platform bell that opens each record.",
+                      "see":  "Switches 1a, 1b · Arjun raises a 15% discount on his deal, then sign in as Kavya · Work › Approvals; the bell"
                   },
                   {
                       "id":  "1c",
@@ -359,6 +359,10 @@
                       [
                           "1a and bos-login.spec",
                           "With 1a on the spec reads its screen lists through the old→new id map (exact lists); with 1a off it is unchanged. Before/after table in the report."
+                      ],
+                      [
+                          "1b Approvals access",
+                          "Approvals is open to every active employee; deciding still needs the approving permission."
                       ]
                   ],
     "suite":  {
