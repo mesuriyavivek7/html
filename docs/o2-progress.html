@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-26 21:44 IST",
-    "current":  "0d",
+    "updated":  "2026-11-26 21:55 IST",
+    "current":  "1a (full-suite checkpoint after 0d running)",
     "partA":  [
                   {
                       "id":  "0a",
@@ -74,11 +74,11 @@
                   {
                       "id":  "0d",
                       "name":  "One visible invoice model",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "6/6 (o2-invoice-view); regressions 240/240 off, 222/222 on",
+                      "tag":  "o2-step-0d",
+                      "what":  "Only tax invoices (OON/…) are visible; overdue follows the tax invoice; legacy plans grandfathered and not offered.",
+                      "see":  "Switch 0d · Meera Krishnan · Business \u0026 finance › Invoices and refunds (OON numbers); Plans (Grandfathered labels); Tenants › Create workspace (no legacy plans)"
                   },
                   {
                       "id":  "1a",
@@ -338,6 +338,18 @@
                       [
                           "International currency",
                           "Billing customers outside India bill in USD (plans are priced only in INR and USD)."
+                      ],
+                      [
+                          "Demo tenant plan",
+                          "Not moved: Northstar stays on Growth, labelled grandfathered."
+                      ],
+                      [
+                          "Legacy plans in commands",
+                          "Hidden from pickers only; commands still accept them so existing records keep working."
+                      ],
+                      [
+                          "Overdue date",
+                          "Subscription tax invoices carry no due date today, so the internal row\u0027s due date is used when the tax invoice has none; settlement always comes from the tax invoice."
                       ]
                   ],
     "suite":  {
