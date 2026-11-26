@@ -70270,6 +70270,206 @@ function cfScopeHTML(){
 .o2-policy{ margin-top:24px; }
 .o2-policy small{ display:block; margin-top:2px; }
 </style>
+<script id="o2-billing-customer-script">
+/* ============================================================
+   O2 STEP 0c: BILLING CUSTOMER (2026-11-26, billing step)
+   - BOS.billingCustomers (R2/R4): id, accountId, legalName, gstin, address, stateCode, state, country, market, currency,
+     mandate, createdAt, history[], marketLockedAt, pendingMarket. Seeded once per account that has a subscription, from
+     the account's tax details (data always present; harmless to old code). billingCustomerId added to subscriptions.
+   - Market (policy.marketRule 'gstin-then-billing-country'): India when there is a GSTIN or the billing country is India,
+     otherwise International. Locked by the first invoice; afterwards only billing-customer.change-market (Finance, reason)
+     changes it, from the next renewal.
+   - Switch 0c on: the buyer facts for tax come from the billing customer (bosTaxPartyOf is wrapped: it is the only place
+     bosTaxSegment's input is built, so the decision function itself is untouched); bosSetCustomerTax and billing-customer
+     edits write both places (dual-write); invoices issued store the buyer snapshot (R4); Account 360 shows the card.
+   - Tax rules, numbering and amounts are not changed: for every seed the billing customer holds the account's own facts.
+============================================================ */
+(function(){
+  const ISO = function(t){ return new Date(t == null ? Date.now() : t).toISOString(); };
+  const RULE_VERSION = 'gst-sample-2026-11';
+  BOS.billingCustomers = BOS.billingCustomers || [];
+  const accOf = function(id){ return BOS.accounts.find(function(a){ return a.id === id; }) || null; };
+  const accountOfTenant = function(tid){ return BOS.accounts.find(function(a){ return !a.mergedInto && (a.tenantIds || []).indexOf(tid) > -1; }) || null; };
+  const stateCodeOf = function(name){ const S = window.BOS_GST_STATES || {}; return Object.keys(S).find(function(c){ return S[c].toLowerCase() === String(name || '').toLowerCase(); }) || ''; };
+  window.o2MarketFor = function(facts){
+    const rule = (typeof o2Policy === 'function' ? o2Policy('marketRule') : null) || 'gstin-then-billing-country';
+    if(rule === 'gstin-then-billing-country') return (facts.gstin || (facts.country || 'India') === 'India') ? 'India' : 'International';
+    return (facts.country || 'India') === 'India' ? 'India' : 'International';
+  };
+  const factsOfAccount = function(a){
+    const g = String(a.gstin || '').toUpperCase(), country = a.taxCountry || a.country || 'India';
+    const code = g && typeof bosGstinValid === 'function' && bosGstinValid(g) ? g.slice(0, 2) : stateCodeOf(a.taxState || '');
+    return { gstin:country === 'India' ? g : '', country:country, stateCode:country === 'India' ? code : '', state:country === 'India' ? ((window.BOS_GST_STATES || {})[code] || a.taxState || '') : '' };
+  };
+  window.o2BillingCustomer = function(id){ return BOS.billingCustomers.find(function(b){ return b.id === id; }) || null; };
+  window.o2BillingCustomerOfAccount = function(accId){ return BOS.billingCustomers.find(function(b){ return b.accountId === accId; }) || null; };
+  /* creates the billing customer for an account from its tax details (internal; callers decide when) */
+  window.o2EnsureBillingCustomer = function(accId, why){
+    let b = o2BillingCustomerOfAccount(accId); if(b) return b;
+    const a = accOf(accId); if(!a) return null;
+    const f = factsOfAccount(a), market = o2MarketFor(f);
+    b = { id:bosId('BC', 4), accountId:a.id, legalName:a.name, gstin:f.gstin, address:[a.city, a.country].filter(Boolean).join(', '), stateCode:f.stateCode, state:f.state, country:f.country,
+      market:market, currency:market === 'India' ? 'INR' : 'USD', mandate:null, createdAt:ISO(), marketLockedAt:null, pendingMarket:null,
+      history:[{ at:ISO(), by:typeof ACTIVE_PLATFORM_USER_ID !== 'undefined' ? ACTIVE_PLATFORM_USER_ID : null, text:why || 'Created from the account’s tax details' }] };
+    BOS.billingCustomers.push(b); return b;
+  };
+  /* seed: one per account that has a subscription; link subscriptions */
+  const linkSubs = function(){
+    PLATFORM_SUBSCRIPTIONS.forEach(function(s){
+      if(s.billingCustomerId) return;
+      const a = accountOfTenant(s.tenantId); if(!a) return;
+      const b = o2EnsureBillingCustomer(a.id, 'Created for the workspace’s subscription');
+      if(b){ s.billingCustomerId = b.id; if(!b.mandate && s.mandate) b.mandate = Object.assign({}, s.mandate); }
+    });
+  };
+  linkSubs();
+
+  /* ---- tax reads buyer facts from the billing customer (switch on) ---- */
+  const basePartyOf = window.bosTaxPartyOf;
+  window.bosTaxPartyOf = bosTaxPartyOf = function(acc){
+    const p = basePartyOf.apply(this, arguments);
+    if(!o2On('0c') || !acc || !p) return p;
+    const b = o2BillingCustomerOfAccount(acc.id); if(!b) return p;
+    return { name:b.legalName || p.name, country:b.country, gstin:b.gstin, stateCode:b.country === 'India' ? b.stateCode : '', state:b.country === 'India' ? b.state : '', billingCustomerId:b.id };
+  };
+
+  /* ---- dual-write: account tax edits reach the billing customer ---- */
+  const baseSetTax = window.bosSetCustomerTax;
+  window.bosSetCustomerTax = bosSetCustomerTax = function(accId, input){
+    const res = baseSetTax.apply(this, arguments);
+    if(res && res.ok && o2On('0c')){ const a = accOf(accId), b = a && o2BillingCustomerOfAccount(a.id); if(b) copyFacts(b, factsOfAccount(a), 'Tax details changed on the account'); }
+    return res;
+  };
+  function copyFacts(b, f, why){
+    const before = { gstin:b.gstin, country:b.country, stateCode:b.stateCode };
+    b.gstin = f.gstin; b.country = f.country; b.stateCode = f.stateCode; b.state = f.state;
+    if(!b.marketLockedAt){ b.market = o2MarketFor(b); if(b.market === 'India') b.currency = 'INR'; }
+    b.history.push({ at:ISO(), by:ACTIVE_PLATFORM_USER_ID, text:why + ': ' + (before.gstin || before.country) + ' → ' + (b.gstin || b.country) });
+  }
+  const canBill = function(){ return bosCan('platform-finance', 'reconcile') || bosCan('platform-finance', 'invoice'); };
+  /* Finance edits the billing details. Tax facts are written to the account too (dual-write, so switching 0c off keeps tax right). */
+  window.o2BillingCustomerUpdate = function(id, patch){
+    const b = o2BillingCustomer(id);
+    return bosRun('billing-customer.update', null, function(){
+      if(!o2On('0c')) return { ok:false, reason:'Billing customers are part of step 0c, which is off.' };
+      if(!b) return { ok:false, reason:'Billing customer not found.' };
+      if(!canBill()) return { ok:false, reason:bosWhyNot('platform-finance', 'reconcile') };
+      patch = patch || {};
+      const legal = patch.legalName != null ? String(patch.legalName).trim() : b.legalName; if(!legal) return { ok:false, field:'legalName', reason:'The legal name can’t be empty.' };
+      const changed = [];
+      if(legal !== b.legalName){ changed.push('legal name'); b.legalName = legal; }
+      if(patch.address != null && String(patch.address).trim() !== b.address){ changed.push('address'); b.address = String(patch.address).trim(); }
+      if(patch.gstin != null || patch.country != null || patch.state != null){
+        const a = accOf(b.accountId);
+        const r = baseSetTax.call(this, b.accountId, { country:patch.country != null ? patch.country : b.country, gstin:patch.gstin != null ? patch.gstin : b.gstin, state:patch.state != null ? patch.state : b.state });
+        if(!r || !r.ok) return r || { ok:false, reason:'The tax details were refused.' };
+        if(a) copyFacts(b, factsOfAccount(a), 'Tax details changed on the billing customer'); changed.push('tax details');
+      }
+      if(!changed.length) return { ok:true, ref:b.id, unchanged:true };
+      b.history.push({ at:ISO(), by:ACTIVE_PLATFORM_USER_ID, text:'Changed ' + changed.join(', ') + '. Issued invoices keep the details they were issued with.' });
+      return { ok:true, ref:b.id, billingCustomer:b, audit:['Billing customer changed', b.legalName + ' · ' + changed.join(', '), { entityId:b.id, entityType:'Billing customer' }] };
+    });
+  };
+  /* Market change after the lock: Finance, a reason, applies from the next renewal of the customer's subscriptions. */
+  window.o2BillingChangeMarket = function(id, market, reason){
+    const b = o2BillingCustomer(id);
+    return bosRun('billing-customer.change-market', null, function(){
+      if(!o2On('0c')) return { ok:false, reason:'Billing customers are part of step 0c, which is off.' };
+      if(!b) return { ok:false, reason:'Billing customer not found.' };
+      if(!canBill()) return { ok:false, reason:bosWhyNot('platform-finance', 'reconcile') };
+      if(['India', 'International'].indexOf(market) < 0) return { ok:false, field:'market', reason:'Pick India or International.' };
+      if(String(reason || '').trim().length < 10) return { ok:false, field:'reason', reason:'Give the reason (at least a short sentence).' };
+      if(market === b.market && !b.pendingMarket) return { ok:false, reason:'The market is already ' + market + '.' };
+      const subs = PLATFORM_SUBSCRIPTIONS.filter(function(s){ return s.billingCustomerId === b.id && s.renewalDate; }).map(function(s){ return s.renewalDate; }).sort();
+      const from = subs[0] || null;
+      if(!b.marketLockedAt){ b.market = market; b.history.push({ at:ISO(), by:ACTIVE_PLATFORM_USER_ID, text:'Market set to ' + market + ' (no invoice yet): ' + reason }); return { ok:true, ref:b.id, immediate:true, audit:['Billing market changed', b.legalName + ' · ' + market + ' · ' + reason, { entityId:b.id }] }; }
+      b.pendingMarket = { to:market, from:from, reason:String(reason).trim(), by:ACTIVE_PLATFORM_USER_ID, at:ISO() };
+      b.history.push({ at:ISO(), by:ACTIVE_PLATFORM_USER_ID, text:'Market change to ' + market + ' from the next renewal' + (from ? ' (' + from + ')' : '') + ': ' + reason });
+      return { ok:true, ref:b.id, from:from, audit:['Billing market change scheduled', b.legalName + ' · ' + b.market + ' → ' + market + ' from ' + (from || 'next renewal') + ' · ' + reason, { entityId:b.id }] };
+    });
+  };
+  /* Applies pending market changes whose renewal date has come (run with the renewals). */
+  window.o2BillingApplyDue = function(todayIso){
+    const today = String(todayIso || ISO()).slice(0, 10), done = [];
+    BOS.billingCustomers.forEach(function(b){
+      const p = b.pendingMarket; if(!p || (p.from && p.from > today)) return;
+      b.market = p.to; b.currency = p.to === 'India' ? 'INR' : (b.currency === 'INR' ? 'USD' : b.currency); b.pendingMarket = null;
+      b.history.push({ at:ISO(), by:'SYS-BILLING', text:'Market changed to ' + p.to + ' at renewal' }); done.push(b.id);
+      try { logPlatformAudit('Billing market changed at renewal', b.legalName + ' · ' + p.to, { entityId:b.id, actorType:'system', command:'billing-customer.change-market' }); } catch(e){}
+    });
+    return done;
+  };
+  if(typeof window.bosRenewalRun === 'function'){
+    const baseRenewal = window.bosRenewalRun;
+    window.bosRenewalRun = bosRenewalRun = function(){ if(o2On('0c')) o2BillingApplyDue(); return baseRenewal.apply(this, arguments); };
+  }
+
+  /* ---- buyer snapshot on every document issued while on (R4); the first invoice locks the market ----
+     Several older paths call the tax block's private issue(), so the snapshot hooks the ledger itself: a push after the
+     page has loaded (never seeds, never a restore, which happen while the document is still loading). */
+  function snapshot(t){
+    if(!t || t.buyer || !t.accountId) return;
+    const b = o2BillingCustomerOfAccount(t.accountId) || o2EnsureBillingCustomer(t.accountId, 'Created at the first invoice'); if(!b) return;
+    t.billingCustomerId = b.id;
+    t.buyer = { billingCustomerId:b.id, legalName:b.legalName, gstin:b.gstin, address:b.address, stateCode:b.stateCode, state:b.state, country:b.country, market:b.market,
+      placeOfSupply:b.country === 'India' ? (b.state ? b.state + ' (' + b.stateCode + ')' : '') : 'Outside India', currency:t.currency,
+      taxDecision:{ code:t.segment && t.segment.code, label:t.segment && t.segment.label, section:t.segment && t.segment.section, why:t.segment && t.segment.why, ruleVersion:RULE_VERSION }, frozenAt:t.date };
+    if(t.currency && t.currency !== 'INR' && t.fxRate) t.buyer.inr = { value:t.taxableINR, rate:t.fxRate, rateDate:String(t.date).slice(0, 10), rateSource:'Sample reference rate (pending T6)' };
+    if(!b.marketLockedAt && t.kind === 'invoice'){ b.marketLockedAt = t.date; b.history.push({ at:ISO(), by:'SYS-BILLING', text:'Market ' + b.market + ' locked by the first invoice ' + t.no }); }
+  }
+  window.o2BuyerSnapshot = snapshot;
+  const hookLedger = function(){
+    const arr = BOS.taxInvoices; if(!arr || arr.__o2Hooked) return;
+    Object.defineProperty(arr, '__o2Hooked', { value:true, enumerable:false });
+    Object.defineProperty(arr, 'push', { enumerable:false, configurable:true, writable:true, value:function(){
+      const n = Array.prototype.push.apply(this, arguments);
+      if(document.readyState !== 'loading' && o2On('0c')) for(let i = 0; i < arguments.length; i++){ try { snapshot(arguments[i]); } catch(e){ console.error(e); } }
+      return n;
+    } });
+  };
+  hookLedger(); window.addEventListener('load', hookLedger);
+
+  /* ---- checkout: the billing customer exists from the start; the subscription links to it ---- */
+  if(typeof window.bosCheckoutStart === 'function'){
+    const baseStart = window.bosCheckoutStart;
+    window.bosCheckoutStart = bosCheckoutStart = function(input){
+      const res = baseStart.apply(this, arguments);
+      if(res && res.ok && o2On('0c') && res.link){ const b = o2EnsureBillingCustomer(res.link.accountId, 'Created at checkout'); if(b && res.link.checkout) res.link.checkout.billingCustomerId = b.id; }
+      return res;
+    };
+  }
+  if(typeof CHECKOUT_DONE === 'object' && typeof CHECKOUT_DONE.checkout === 'function'){
+    const baseDone = CHECKOUT_DONE.checkout;
+    CHECKOUT_DONE.checkout = function(l){
+      const out = baseDone.apply(this, arguments);
+      if(o2On('0c')){ const c = l && l.checkout, sub = c && c.done && subscriptionById(c.done.subscriptionId); if(sub && !sub.billingCustomerId){ const b = c.billingCustomerId ? o2BillingCustomer(c.billingCustomerId) : o2EnsureBillingCustomer(l.accountId); if(b) sub.billingCustomerId = b.id; } }
+      return out;
+    };
+  }
+
+  /* ---- Account 360: the billing customer card (switch on) ---- */
+  const E = function(s){ return oEsc(s == null ? '' : s); };
+  window.o2BillingCustomerCardHTML = function(a){
+    const b = o2BillingCustomerOfAccount(a.id), can = canBill();
+    if(!b) return '<section class="o-card o2-bc" id="o2-bc" style="margin-bottom:16px"><div class="o-card__head"><h2 class="o-card__title">Billing customer</h2><span class="o-card__sub">None yet: created with the first subscription, checkout or invoice.</span></div></section>';
+    const lastInv = BOS.taxInvoices.filter(function(t){ return t.billingCustomerId === b.id; }).slice(-1)[0];
+    return '<section class="o-card o2-bc" id="o2-bc" style="margin-bottom:16px"><div class="o-card__head"><h2 class="o-card__title">Billing customer</h2><span class="o-card__sub">' + E(b.id) + ' · invoices are issued to these details</span></div><dl class="bos-kv">' +
+      '<dt>Legal name</dt><dd>' + E(b.legalName) + '</dd><dt>GSTIN</dt><dd>' + E(b.gstin || '—') + '</dd><dt>Address</dt><dd>' + E(b.address || '—') + '</dd><dt>State</dt><dd>' + E(b.state ? b.state + ' (' + b.stateCode + ')' : b.country !== 'India' ? 'Outside India' : '—') + '</dd><dt>Country</dt><dd>' + E(b.country) + '</dd>' +
+      '<dt>Market</dt><dd>' + E(b.market) + ' · ' + E(b.currency) + (b.marketLockedAt ? ' · locked by the first invoice' : ' · not locked yet') + (b.pendingMarket ? ' · changes to ' + E(b.pendingMarket.to) + ' from ' + E(b.pendingMarket.from || 'the next renewal') : '') + '</dd>' +
+      '<dt>Mandate</dt><dd>' + E(b.mandate ? (b.mandate.method || 'card') + ' · ' + (b.mandate.status || '') : 'None') + '</dd>' + (lastInv ? '<dt>Last invoice</dt><dd>' + E(lastInv.no) + '</dd>' : '') + '</dl>' +
+      (can ? '<div class="bos-actions"><button type="button" class="o-btn" onclick="o2BillingCustomerDialog(\'' + b.id + '\')">Edit billing details</button><button type="button" class="o-btn" onclick="o2BillingMarketDialog(\'' + b.id + '\')">Change market</button></div>' : '<p class="bos-muted" style="padding:0 20px 14px">Finance can change these details.</p>') + '</section>';
+  };
+  window.o2BillingCustomerDialog = function(id){ const b = o2BillingCustomer(id); if(!b) return; bosDialog('Billing details · ' + b.legalName, bosField('o2-bc-legal', 'Legal name', { value:b.legalName }) + bosField('o2-bc-addr', 'Address', { value:b.address }) + bosField('o2-bc-gstin', 'GSTIN (Indian business customers)', { value:b.gstin }) + '<p class="bos-muted">Issued invoices keep the details they were issued with. Tax details are saved on the account too.</p>', 'Save', "bosDlgDone(o2BillingCustomerUpdate('" + b.id + "', { legalName:bosV('o2-bc-legal'), address:bosV('o2-bc-addr'), gstin:bosV('o2-bc-gstin') }), 'Billing details saved.')"); };
+  window.o2BillingMarketDialog = function(id){ const b = o2BillingCustomer(id); if(!b) return; bosDialog('Change market · ' + b.legalName, bosField('o2-bc-mk', 'Market', { options:['India', 'International'], value:b.market === 'India' ? 'International' : 'India' }) + bosField('o2-bc-why', 'Reason', { textarea:true }) + '<p class="bos-muted">' + (b.marketLockedAt ? 'The market is locked by the first invoice, so the change applies from the next renewal.' : 'No invoice yet, so the change applies now.') + '</p>', 'Change market', "bosDlgDone(o2BillingChangeMarket('" + b.id + "', bosV('o2-bc-mk'), bosV('o2-bc-why')), 'Market change saved.')"); };
+  const baseAcc = RENDERERS['oontu-account'];
+  if(typeof baseAcc === 'function') RENDERERS['oontu-account'] = function(){
+    const html = baseAcc.apply(this, arguments);
+    if(!o2On('0c')) return html;
+    try { const a = bosLiveAccount(BOS_UI.sel.account); if(!a || html.indexOf('Not available') > -1) return html; return html.replace('<div class="bos-grid">', o2BillingCustomerCardHTML(a) + '<div class="bos-grid">'); } catch(e){ console.error(e); return html; }
+  };
+  o2OnSwitch(function(id, on){ if(id === '0c' && on) linkSubs(); });
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
