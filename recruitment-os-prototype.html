@@ -28235,7 +28235,7 @@ function createAuthSimulator(){
   }
   function wsList(email){
     const a = db.accounts[email];
-    return a ? a.memberships.map(function(m){ const w = db.workspaces[m.workspaceId]; return { id:w.id, name:w.name, role:m.role, roleLabel:AUTH_ROLE_LABELS[m.role]||m.role }; }) : [];
+    return a ? a.memberships.map(function(m){ const w = db.workspaces[m.workspaceId]; return { id:w.id, name:w.name, role:m.role, roleLabel:m.roleLabel||AUTH_ROLE_LABELS[m.role]||m.role }; }) : [];
   }
   function userOf(email){ const a = db.accounts[email]; return { email:email, name:a ? a.name : (db.oauthNames && db.oauthNames[email]) || '', emailVerified: !(a && a.emailVerified===false), setupPending: !!(a && a.setupPending) }; }
   /* Corporate workspaces need a work email on a domain no other workspace has claimed. */
@@ -28268,6 +28268,8 @@ function createAuthSimulator(){
   }
   sim._teamPassword = TEAM_PASSWORD;
   function signIn(email, method, remember){
+    // Step 4: an account in several workspaces gets them all (last used first); the app's workspace registry decides
+    if(typeof wsAuthMemberships === 'function' && db.accounts[email]){ try { const ms = wsAuthMemberships(email); if(ms && ms.length > 1){ ms.forEach(function(m){ db.workspaces[m.workspaceId] = { id:m.workspaceId, name:m.name, type:m.type }; }); db.accounts[email].memberships = ms.map(function(m){ return { workspaceId:m.workspaceId, role:m.role, roleLabel:m.roleLabel }; }); } } catch(e){} }
     db.session = { email:email, activeWorkspaceId:null, lastSeen:now(), method:method, remember:!!remember }; // a fresh session on every sign-in (no fixation)
     return { ok:true, status: db.accounts[email] ? 'signed_in' : 'new_user', method:method, user:userOf(email), workspaces:wsList(email) };
   }
@@ -59389,7 +59391,8 @@ function kaIsManagerUp(){ return caOwnerish() || caManager(); }
 function kaHas(){ if(typeof oAgentsOn === 'function' && !oAgentsOn()) return false; if(['candidate','oontu','hm'].indexOf(state.role) > -1) return false; try { return sCan('kairo', 'Use agents') || (NAV[state.role] || []).some(function(i){ return i.items ? i.items.some(function(x){ return x.id === 'intelligence'; }) : i.id === 'intelligence'; }); } catch(e){ return true; } }
 
 /* ---------- language ---------- */
-const KA_SHORT = [[/\btmrw|\btmr\b|\btomo\b|\bkal\b/g, 'tomorrow'], [/\baaj\b/g, 'today'], [/\bkitne|\bkitna|\bkitni\b/g, 'how many'], [/\bsubs\b|\bsub\b/g, 'submissions'], [/\bwa\b|\bwhats app\b/g, 'whatsapp'],
+const KA_SHORT = [[/\byaad (dila(na|o|do|dena|iye|ana)|karwa(na|o|do))\b/g, 'remind me'], [/\b(\d{1,2}) baje\b/g, 'at $1'], [/\b(ke )?(baare|bare) (mein|me)\b/g, 'about'], [/\b(likho|likh do|likhna|likhiye|bhejo|bhej do|banao|bana do)\b/g, 'draft'],
+  [/\b(dikhao|dikhaao|dikha do|dikhaiye|batao|bata do|bataiye)\b/g, 'show'], [/\b(kholo|khol do|kholiye)\b/g, 'open'], [/\bmein\b/g, 'in'], [/\bdin\b/g, 'day'], [/\bko\b/g, ''], [/\btmrw|\btmr\b|\btomo\b|\bkal\b/g, 'tomorrow'], [/\baaj\b/g, 'today'], [/\bkitne|\bkitna|\bkitni\b/g, 'how many'], [/\bsubs\b|\bsub\b/g, 'submissions'], [/\bwa\b|\bwhats app\b/g, 'whatsapp'],
   [/\bnp\b|\bnotice period\b/g, 'notice'], [/\bjd\b/g, 'job description'], [/\bctc\b/g, 'pay'], [/\bis week\b|\biss hafte\b|\bthis wk\b|\bis hafte\b/g, 'this week'], [/\bpichle hafte\b|\blast wk\b|\bpichhle hafte\b/g, 'last week'],
   [/\bis mahine\b|\biss mahine\b/g, 'this month'], [/\bmera\b|\bmere\b|\bmeri\b/g, 'my'], [/\bkya\b/g, 'what'], [/\bkarna hai\b|\bkarna\b/g, 'to do'], [/\bdevs\b|\bdev\b/g, 'developers'], [/\bppl\b/g, 'people'],
   [/\bplz\b|\bpls\b|\bplease\b/g, ''], [/\binterviews?\b/g, 'interview'], [/\bmsg\b/g, 'message'], [/\bsummari[sz]e\b|\bsummary of\b/g, 'summarise'], [/\bjoinings?\b/g, 'placements'], [/\bclosures?\b/g, 'placements']];
@@ -59571,8 +59574,11 @@ function caAgoR(ms){ const d = Math.max(0, fmNow() - ms), m = Math.round(d / 600
 // A candidate, by name (asks when two fit)
 function kaCandFor(s, raw, verb){
   if(/this candidate|\bthem\b|\bhim\b|\bher\b/.test(s) && KA.pageCand) return { c:byId(KA.pageCand) };
+  const pk = KA.pick && KA.pick[s]; if(pk && byId(pk)) return { c:byId(pk) };   // a chip that named one of two people with the same name
   const r = kaFindPeople(kaWords(s), kaCands()); if(r.list.length === 1) return { c:r.list[0] };
-  if(r.list.length > 1){ const first = r.list[0].name.split(' ')[0]; return { ask:kaA('clarify', 'Which ' + first + '?', { chips:r.list.slice(0, 4).map(function(c){ const j = (kaSubs().find(function(x){ return x.candidateId === c.id; }) || {}).jobId; return { label:c.name + (j ? ' (' + (jobById(j) || {}).client + ')' : c.role ? ' (' + c.role + ')' : ''), q:raw.replace(new RegExp('\\b' + first + '\\b(\\s+\\w+)?', 'i'), c.name) }; }) }) }; }
+  if(r.list.length > 1){ const first = r.list[0].name.split(' ')[0]; KA.pick = KA.pick || {}; return { ask:kaA('clarify', 'Which ' + first + '?', { chips:r.list.slice(0, 4).map(function(c){ const j = (kaSubs().find(function(x){ return x.candidateId === c.id; }) || {}).jobId, tag = j ? (jobById(j) || {}).client : c.role, twin = r.list.filter(function(x){ return x.name === c.name; }).length > 1;
+    const q = raw.replace(new RegExp('\\b' + first + '\\b(\\s+(' + r.list.map(function(x){ return x.name.split(' ').slice(1).join(' ').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).filter(Boolean).join('|') + ')\\b)?', 'i'), c.name + (twin && tag ? ' (' + tag + ')' : '')); if(twin) KA.pick[kaNorm(q)] = c.id;
+    return { label:c.name + (tag ? ' (' + tag + ')' : ''), q:q }; }) }) }; }
   const all = kaFindPeople(kaWords(s), CANDIDATES); if(all.list.length) return { ask:kaA(verb, 'I can’t find ' + (all.list[0].name.split(' ')[0]) + ' among your candidates. They may be on another recruiter’s jobs.') };
   return { ask:kaA(verb, 'Which candidate? Tell me their name.', { chips:kaSubs().slice(-3).map(function(x){ const c = byId(x.candidateId); return { label:c.name, q:(verb === 'draft' ? 'Draft a WhatsApp to ' : 'Tell me about ') + c.name }; }) }) };
 }
@@ -59601,9 +59607,8 @@ function kaDraft(s, raw){
   const f = kaCandFor(s, raw, 'draft'); if(f.ask) return f.ask; const c = f.c, me = kaMe(), ws = ibWs().split(' ')[0], ch = /\bemail|\bmail\b/.test(s) ? 'email' : 'whatsapp', first = caFirst(c.name), mine = caFirst(me.name);
   const subs = kaSubs().filter(function(x){ return x.candidateId === c.id; }), jHit = kaFindJobs(kaWords(s)).find(function(j){ return subs.some(function(x){ return x.jobId === j.id; }); }), sb = (jHit && subs.find(function(x){ return x.jobId === jHit.id; })) || subs[0], j = sb ? jobById(sb.jobId) : null;
   const iv = hmInterviews.filter(function(v){ return v.candidateId === c.id && ivTime(v) > fmNow() && v.status !== 'Cancelled'; }).sort(function(a, b){ return ivTime(a) - ivTime(b); })[0];
-  let text, topic;
-  if(/interview/.test(s) && iv){ topic = 'the interview'; text = 'Hi ' + first + ', this is ' + mine + ' from ' + ws + '. A quick note on your ' + (iv.round || 'interview') + ' for ' + (iv.role || (j || {}).title || 'the role') + ' on ' + caDay(ivTime(iv)) + ' at ' + caHM(ivTime(iv)) + '. Please reply 1 to confirm, or 2 if you need another time.'; }
-  else if(/interview/.test(s)) return kaA('draft', first + ' has no interview coming up. I can draft a follow-up instead.', { chips:[{ label:'Draft a follow-up to ' + first, q:'Draft a WhatsApp follow-up to ' + c.name }] });
+  let text, topic; const noIv = /interview/.test(s) && !iv;
+  if(!noIv && /interview/.test(s) && iv){ topic = 'the interview'; text = 'Hi ' + first + ', this is ' + mine + ' from ' + ws + '. A quick note on your ' + (iv.round || 'interview') + ' for ' + (iv.role || (j || {}).title || 'the role') + ' on ' + caDay(ivTime(iv)) + ' at ' + caHM(ivTime(iv)) + '. Please reply 1 to confirm, or 2 if you need another time.'; }
   else if(/consent/.test(s) && sb){ topic = 'consent'; text = 'Hi ' + first + ', ' + mine + ' from ' + ws + ' here. Before I share your profile with ' + j.client + ' for ' + j.title + ', I need your OK. Could you reply YES, or open the link I sent earlier?'; }
   else if(/offer/.test(s) && sb && sb.offer){ topic = 'the offer'; text = 'Hi ' + first + ', ' + mine + ' here. Checking in on the ' + j.title + ' offer from ' + j.client + '. Any questions I can help with before you decide?'; }
   else { topic = 'a follow-up'; text = 'Hi ' + first + ', ' + mine + ' from ' + ws + ' here. ' + (j ? 'Following up on the ' + j.title + ' role at ' + j.client + '. ' : 'Following up on our last chat. ') + 'Are you free for a quick call this week?'; }
@@ -59611,7 +59616,7 @@ function kaDraft(s, raw){
   const id = 'd' + (KA.seq++); KA.pend[id] = { type:'draft', cid:c.id, jobId:j ? j.id : null, ch:ch };
   const card = '<div class="ka-card ka-draft" data-card="draft" data-pend="' + id + '"><p class="ka-draft__h">' + (ch === 'email' ? 'Email' : 'WhatsApp') + ' to ' + kaEsc(c.name) + ' · ' + kaEsc(topic) + '</p><textarea class="app-input ka-draft__t" id="ka-dt-' + id + '" rows="8" aria-label="Message to ' + cwEsc(c.name) + '" readonly>' + kaEsc(text) + '</textarea><div class="ka-acts">' + kaBtn('Send', "kaSendDraft('" + id + "')", 'primary') + kaBtn('Edit', "kaEditDraft('" + id + "')") + kaBtn('Copy', "kaCopyDraft('" + id + "')", 'ghost') + '</div></div>';
   KA.ctx = { skill:'draft', p:{ cid:c.id } };
-  return kaA('draft', 'Here’s ' + (ch === 'email' ? 'an email' : 'a WhatsApp') + ' to ' + first + ' about ' + topic + '. Edit it if you like, then send.', { cards:[card], src:kaSrc('From: ' + c.name + '’s journeys', 'openCandidate(' + c.id + ')') });
+  return kaA('draft', (noIv ? first + ' has no interview booked, so here’s a follow-up instead. ' : 'Here’s ' + (ch === 'email' ? 'an email' : 'a WhatsApp') + ' to ' + first + ' about ' + topic + '. ') + 'Edit it if you like, then send.', { cards:[card], src:kaSrc('From: ' + c.name + '’s journeys', 'openCandidate(' + c.id + ')') });
 }
 function kaEditDraft(id){ const t = document.getElementById('ka-dt-' + id); if(t){ t.removeAttribute('readonly'); t.focus({ preventScroll:true }); } }
 function kaCopyDraft(id){ const t = document.getElementById('ka-dt-' + id); if(!t) return; try { navigator.clipboard.writeText(t.value); } catch(e){ t.select(); try { document.execCommand('copy'); } catch(x){} } toast('Copied.'); }
@@ -59709,7 +59714,7 @@ function kaMove(s, raw){
 function kaRemind(s, raw){
   const tm = s.match(/\bat (\d{1,2})(?::(\d{2}))? ?(am|pm)?/), day = /tomorrow/.test(s) ? 'tomorrow' : 'today';
   let h = tm ? +tm[1] : 10; const mi = tm && tm[2] ? +tm[2] : 0, ap = tm && tm[3]; if(ap === 'pm' && h < 12) h += 12; if(!ap && h < 8) h += 12;
-  const what = (raw.match(/\bto (.+)$/i) || raw.match(/\babout (.+)$/i) || [0, 'follow up'])[1].replace(/[?.!]+$/, ''), time = ((h % 12) || 12) + ':' + String(mi).padStart(2, '0') + ' ' + (h < 12 ? 'AM' : 'PM');
+  const hi = raw.match(/\b([A-Za-z]+) ko (call|phone|message|whatsapp|email|mail|follow ?up)\b/i), what = (raw.match(/\bto (.+)$/i) || raw.match(/\babout (.+)$/i) || (hi ? [0, hi[2].toLowerCase() + ' ' + hi[1]] : [0, 'follow up']))[1].replace(/[?.!]+$/, ''), time = ((h % 12) || 12) + ':' + String(mi).padStart(2, '0') + ' ' + (h < 12 ? 'AM' : 'PM');
   const id = 'p' + (KA.seq++); KA.pend[id] = { type:'remind', text:what.charAt(0).toUpperCase() + what.slice(1) + (day === 'tomorrow' ? ' (tomorrow)' : ''), time:time };
   return kaA('action', 'Please confirm.', { cards:[kaConfirmCard(id, 'Remind you ' + day + ' at ' + time + ' to ' + what + '?')] });
 }
@@ -59744,7 +59749,7 @@ const KA_SKILLS = [
   ['how', /^(how (do|can|to|does|should|would) |where (do|can|is|are) |what is (a |an |the )?(consent|rtr|kairo)|explain |help (me )?(with|to) |steps to )/],
   ['team', /\bmy team\b|\bteam\b.*\b(overdue|workload|doing|most|least|load|busy)\b|\bwhich recruiter\b|\bwho on (my )?team\b|\bworkload\b|\bteam (status|performance)\b/],
   ['counts', /\bhow many\b|\bcount\b|\bnumber of\b|\btotal\b|\brate\b|\bvs\b|\bversus\b|\bcompared\b|\btrend\b/],
-  ['iv', /\binterview\b|\bfeedback (pending|due|waiting|from)\b|\bclient feedback\b/],
+  ['iv', /\binterview\b|\bfeedback (pending|due|waiting|from)\b|\bclient feedback\b|\b(owe|owes|owed|owing) (us )?feedback\b|\bfeedback (is )?(owed|overdue|outstanding)\b/],
   ['follow', /follow.?up|gone quiet|\bquiet\b|\bno reply\b|not replied|haven'?t replied|\bconsents?\b|\bchase\b|\bghost/],
   ['day', /what should i|what('?s| is) (pending|next)|\bpending\b|\bmy day\b|\bto do\b|\btodo\b|priorit|\bfirst\b|needs me|start (with|my)|plan for (today|the day)|what now/],
   ['job', /no recruiter|unassigned|without (a )?recruiter|how('?s| is) .* (job|doing|going)|status of|job status|pipeline (for|of)|\bdoing\b/],
@@ -59787,11 +59792,26 @@ function kaAnswer(raw){
   const s = kaNorm(raw); if(!s) return kaA('help', 'Ask me anything about your work.', { chips:kaStarters() });
   if(/^(hi|hello|hey|yo|namaste|good (morning|afternoon|evening))\b/.test(s) && kaWords(s).length <= 3) return kaA('hello', 'Hi ' + caFirst(kaMe().name) + '. What can I help with?', { chips:kaStarters() });
   if(/^(thanks|thank you|thx|ok|okay|great|cool)\b/.test(s) && kaWords(s).length <= 3) return kaA('hello', 'Any time.');
+  const go = kaGo(s); if(go) return go;
   const id0 = kaClassify(s);
   if(!id0 || ['counts','iv','money','find','follow'].indexOf(id0) < 0 || /^(and|what about|how about|only|just)\b/.test(s)){ const f = kaFollowUp(s); if(f) return f; }
   if(!id0) return kaFallback(s);
   try { return id0 === 'addcand' ? kaAddCand(s, raw) : KA_HANDLER[id0](s, raw); }
   catch(e){ console.error('kairo ' + id0, e); return kaA(id0, 'Something went wrong working that out. Try asking it another way.'); }
+}
+
+/* ---------- "show agents", "open inbox", "jobs kholo": go to a page the person's role can open ---------- */
+const KA_PAGES = [[/^(agents?|cowork|automations?|my agents)$/, 'Cowork', ['kairo-team']], [/^(home|dashboard)$/, 'Home', ['admin-dashboard', 'manager-dashboard', 'dashboard']], [/^(my )?jobs$/, 'Jobs', ['jobs']],
+  [/^(my )?(candidates|talent pool|talent)$/, 'Candidates', ['talent-pool']], [/^(my )?interview$/, 'Interviews', ['interviews', 'hm-interviews']], [/^clients$/, 'Clients', ['client-management']], [/^(my )?(inbox|messages|linkit)$/, 'Inbox', ['li-uni-box']],
+  [/^approvals$/, 'Approvals', ['approval-center']], [/^(my )?(tasks|to do|todo)$/, 'To do', ['all-tasks', 'manager-todo', 'my-todo']], [/^(my )?team$/, 'Team', ['team-members', 'manager-team']], [/^settings$/, 'Settings', ['settings']],
+  [/^revenue$/, 'Revenue', ['admin-revenue']], [/^paytrack$/, 'PayTrack', ['admin-paytrack', 'paytrack']], [/^(reports|insights|analytics|intelligence)$/, 'Reports', ['reports', 'intelligence', 'recruiter-analytics']]];
+function kaGo(s){
+  const m = s.match(/^(?:(?:please )?(?:show|open|go to|goto|take me to|navigate to|switch to|jump to)(?: me)? )?(?:the |my )?(.+?)(?: (?:page|tab|screen|section))?(?: (?:show|open))?$/); if(!m || !/^(show|open|go|take|navigate|switch|jump)\b|\b(show|open)$/.test(s)) return null;
+  const pg = KA_PAGES.find(function(x){ return x[0].test(m[1].trim()); }); if(!pg) return null;
+  const inBar = function(id){ return !!document.querySelector('#sidebar [data-nav="' + id + '"]'); }, can = function(id){ return typeof navAllowedForMe !== 'function' || navAllowedForMe(id); };
+  const id = pg[2].find(function(v){ return inBar(v) && can(v); }) || pg[2].find(function(v){ return can(v) && !document.querySelector('#sidebar [data-nav]'); });
+  if(!id) return kaA('go', 'Your role can’t open ' + pg[1] + '. I can help with your jobs, candidates and interviews instead.', { chips:kaStarters() });
+  return kaA('go', 'Opening ' + pg[1] + '.', { go:id });
 }
 
 /* ---------- starters per page ---------- */
@@ -59800,6 +59820,13 @@ function kaStarters(){
   if(c) return ['Summarise ' + caFirst(c.name), 'Draft a follow-up to ' + caFirst(c.name), 'Move ' + caFirst(c.name) + ' to Interview'].map(function(x){ return x.replace(caFirst(c.name), c.name); });
   if(j) return ['Who are the best 5 for this job?', 'How is this job doing?', 'Who’s gone quiet?'];
   if(v === 'jobs') return ['Which jobs have no recruiter?', 'How many interviews this week?', 'How many submissions this week?'];
+  if(v === 'client-management') return ['Which clients owe feedback?', 'Which jobs have no recruiter?', money ? 'Which invoices are overdue?' : 'How many submissions this week?'];
+  if(v === 'kairo-team') return ['Who’s gone quiet?', 'Which consents are not answered?', 'Which candidates need follow-up today?'];
+  if(v === 'li-uni-box') return ['Which candidates need follow-up today?', 'Who’s gone quiet?', 'What should I do first?'];
+  if(v === 'approval-center' || /todo|tasks/.test(v || '')) return ['What should I do first?', 'Which consents are not answered?', 'Which clients owe feedback?'];
+  if((v === 'team-members' || v === 'manager-team') && kaIsManagerUp()) return ['Who on my team has the most overdue items?', 'How is my team doing?', 'Which jobs have no recruiter?'];
+  if(/reports|intelligence|analytics|admin-recruiters/.test(v || '')) return ['How many submissions this week?', 'Interviews this month vs last', money ? 'Revenue this month' : 'How many placements this month?'];
+  if(v === 'settings') return ['How do I invite a teammate?', 'How does consent work?', 'How do I add a client?'];
   if(v === 'talent-pool' || v === 'candidate-search') return ['Java developers in Pune with 30 days notice', 'Who’s gone quiet?', 'Which consents are not answered?'];
   if(v === 'interviews') return ['My interviews tomorrow', 'Which clients owe feedback?', 'Interviews this month vs last'];
   if(/paytrack|payroll|revenue/.test(v || '')) return money ? ['Which invoices are overdue?', 'Revenue this month', 'Commission for ' + caFirst((kaMembers()[0] || {}).name || 'Rohit')] : ['How many placements this month?', 'What should I do first?', 'Who’s gone quiet?'];
@@ -59817,7 +59844,7 @@ function kaAsk(q){ if(!kairoChatOpen){ kairoChatOpen = true; } kaSend(q); }
 function kaSend(q){
   q = String(q || '').trim(); if(!q) return; const c = kaChat(); KA.hist = false; c.msgs.push({ from:'user', text:q, id:'m' + (KA.seq++) }); if(!c.title) c.title = q;
   KA.typing = true; renderKairoChat(); focusKairoChatInput();
-  setTimeout(function(){ const a = kaAnswer(q); KA.typing = false; kaSay(a); focusKairoChatInput(); }, KA.delay != null ? KA.delay : 420);
+  setTimeout(function(){ const a = kaAnswer(q); KA.typing = false; kaSay(a); if(a.go){ try { showView(a.go); } catch(e){ console.error('kairo go', e); } } focusKairoChatInput(); }, KA.delay != null ? KA.delay : 420);
 }
 function kaWordsHTML(text, anim){ const ws = String(text).split(' '), step = ws.length ? Math.min(30, 400 / ws.length) : 0; return ws.map(function(w, i){ return '<span class="ka-w"' + (anim ? ' style="animation-delay:' + Math.round(i * step) + 'ms"' : '') + '>' + kaEsc(w) + '</span>'; }).join(' '); }
 function kaMsgHTML(m){
@@ -59884,6 +59911,280 @@ function kaReset(){ KA.chats = []; KA.cur = null; KA.ctx = null; KA.pend = {}; K
   '.ka-foot{display:flex;justify-content:space-between;align-items:center;padding:0 16px 10px;font-size:12px}.ka-muted{color:var(--text-3)}.ka-askbtn{display:inline-flex;align-items:center;gap:6px}' +
   '@media (max-width:700px){.ka-foot .ka-muted{display:none}}';
   document.head.appendChild(css); })();
+</script>
+<script id="workspaces-script">
+/* ============================================================
+   MORE THAN ONE WORKSPACE (Step 4, 25 November 2026)
+   Each workspace keeps its own data in its own store, keyed by workspace id. The active workspace lives in the app's
+   globals; switching saves the current one to its store and puts the target's back (records by reference, setup objects
+   as deep copies, because a demo build edits the profile in place). The demo companies are three workspaces of one demo
+   account (demo.owner@oontu.app), built the first time they are opened.
+   - the sidebar card opens the switcher; prototype controls move to "Prototype tools" in it; the account menu keeps
+     Your settings and Sign out
+   - Add a workspace: a short guide (name and type, copy or fresh, what to copy, location and plan, done)
+   - sign-in: an account in several workspaces chooses one, last used first
+============================================================ */
+const WSM = { list:[], cur:null, stores:{}, seq:1, alias:{}, ready:false, pristine:null };
+const WSM_DEMO_ACCOUNT = 'demo.owner@oontu.app';
+// The records of one workspace (emptied by demoClearWorkspace), and its setup.
+function wsmArrays(){ return { CANDIDATES:CANDIDATES, CANDIDATE_TOUCHES:CANDIDATE_TOUCHES, JOBS:JOBS, CLIENTS:CLIENTS, ACTIONS:ACTIONS, RECRUITER_ROSTER:RECRUITER_ROSTER, PLACEMENTS:PLACEMENTS, PAYTRACK_JOINED:PAYTRACK_JOINED,
+  PAYTRACK_COMPLETED:PAYTRACK_COMPLETED, PAYTRACK_AT_RISK:PAYTRACK_AT_RISK, AUDIT_LOG:AUDIT_LOG, APPROVAL_REQUESTS:APPROVAL_REQUESTS, SUBMISSIONS:SUBMISSIONS, APPLICATION_EVENTS:APPLICATION_EVENTS, DUPLICATE_REVIEWS:DUPLICATE_REVIEWS,
+  TEAMS:TEAMS, FOLLOW_UPS:FOLLOW_UPS, WORKFLOWS:WORKFLOWS, WORKFLOW_RUNS:WORKFLOW_RUNS, SEND_LEDGER:SEND_LEDGER, CW_APPROVALS:CW_APPROVALS, CAMPAIGNS:CAMPAIGNS, CAMPAIGN_PEOPLE:CAMPAIGN_PEOPLE, hmInterviews:hmInterviews,
+  SECURE_LINKS:SECURE_LINKS, IV_REQS:IV_REQS, DUPLICATE_CLAIMS:DUPLICATE_CLAIMS, ASSIGNMENTS:ASSIGNMENTS, ASSIGNMENT_SHEETS:ASSIGNMENT_SHEETS, PERSONAL_TASKS:PERSONAL_TASKS, decisionHistory:decisionHistory,
+  SUPPRESSION_LIST:SUPPRESSION_LIST, LI_SENDER_PROFILES:LI_SENDER_PROFILES, CA_SUGGEST:CA_SUGGEST, CW_TASKS:CW.tasks, CW_NOTES:CW.notes, FM_NOTICES:FM.notices }; }
+function wsmMaps(){ return { DM_THREADS:DM_THREADS, CW_OPTINS:CW_OPTINS, CW_INBOUND:CW_INBOUND, CL_MONEY_CACHE:CL_MONEY_CACHE, WS_SETUPS:WS_SETUPS, CA_CHECK:CA_CHECK }; }
+function wsmSetup(){ return { ORG_STRUCTURE:ORG_STRUCTURE, WSX:WSX, TENANT_AGENT_CONFIG:TENANT_AGENT_CONFIG, SECURITY_SETTINGS:SECURITY_SETTINGS, TENANT_AGENT_SUBSCRIPTIONS:TENANT_AGENT_SUBSCRIPTIONS }; }
+function wsmClone(x){ try { return structuredClone(x); } catch(e){ return JSON.parse(JSON.stringify(x)); } }
+function wsmTenant(){ return typeof tenantById === 'function' ? tenantById(CURRENT_ORGANIZATION_ID) : null; }
+function wsmCapture(){
+  const s = { arr:{}, maps:{}, setup:{} }, A = wsmArrays(), M = wsmMaps(), S = wsmSetup(), t = wsmTenant();
+  Object.keys(A).forEach(function(k){ s.arr[k] = A[k].slice(); });
+  Object.keys(M).forEach(function(k){ s.maps[k] = Object.assign({}, M[k]); });
+  Object.keys(S).forEach(function(k){ s.setup[k] = wsmClone(S[k]); });
+  s.roles = wsmClone(CUSTOM_ROLES); s.conn = wsmClone(CONNECTORS); s.pauseAll = wsmClone(CW.pauseAll);
+  s.lets = { picks:CA_PICKS, dec:CA_DEC, done:CA_DONE, ext:CA_EXT, setupEmail:wsSetup ? wsSetup.email : null, demo:{ company:DEMO.company, mode:DEMO.mode, as:DEMO.as, built:DEMO.built }, plan:t ? { planId:t.planId, plan:t.plan } : null, role:state.role };
+  try { if(typeof ibSave === 'function' && IB) ibSave(); } catch(e){}
+  return s;
+}
+function wsmFill(target, from){ Object.keys(target).forEach(function(k){ delete target[k]; }); Object.assign(target, from); }
+function wsmRestore(s){
+  const A = wsmArrays(), M = wsmMaps(), S = wsmSetup(), t = wsmTenant();
+  Object.keys(A).forEach(function(k){ const a = A[k], b = s.arr[k] || []; a.length = 0; for(let i = 0; i < b.length; i++) a.push(b[i]); });
+  Object.keys(M).forEach(function(k){ wsmFill(M[k], s.maps[k] || {}); });
+  Object.keys(S).forEach(function(k){ if(s.setup[k]) wsmFill(S[k], wsmClone(s.setup[k])); });
+  CUSTOM_ROLES = wsmClone(s.roles); CONNECTORS = wsmClone(s.conn); wsmFill(CW.pauseAll, s.pauseAll || { on:false });
+  CA_PICKS = s.lets.picks || {}; CA_DEC = s.lets.dec || {}; CA_DONE = s.lets.done || {}; CA_EXT = s.lets.ext || {};
+  wsSetup = s.lets.setupEmail ? WS_SETUPS[s.lets.setupEmail] || null : null;
+  DEMO.company = s.lets.demo.company; DEMO.mode = s.lets.demo.mode; DEMO.as = s.lets.demo.as; DEMO.built = s.lets.demo.built;
+  if(t && s.lets.plan){ t.planId = s.lets.plan.planId; t.plan = s.lets.plan.plan; }
+  wsmForget();
+}
+// caches built from the old workspace's records
+function wsmForget(){
+  CA_SCORE_MEMO = { key:'', jobs:{} }; KA_VOCAB = null; CA_HIST = { key:'', bins:null }; IB = null; try { kaReset(); } catch(e){}
+  CA.agent = null; CA.tab = 'agents'; CA.draft = null; CA.g = null; CA.run = null; CA.pop = null; CA.f = { agent:'', job:'', recruiter:'', result:'', date:'' };
+  try { globalSearchQuery = ''; ts.ran = false; ts.f = tsBlankFilters(); talentSearchAiQuery = ''; } catch(e){}
+  if(typeof JOURNEY_INDEX !== 'undefined') try { JOURNEY_INDEX = null; } catch(e){}
+}
+
+/* ---------- the registry ---------- */
+function wsmSlug(n){ return wsSlug(n) || 'workspace'; }
+function wsmEnsure(){
+  if(WSM.ready) return; WSM.ready = true;
+  ['meera.kesar@gmail.com', 'priya.sharma@northstartalent.com', 'anil.desai@vistaarhr.in'].forEach(function(e){ WSM.alias[e] = WSM_DEMO_ACCOUNT; });   // the Owners of Kesar, Northstar and Vistaar: one demo account
+  const curKey = DEMO.company || 'northstar', p = ORG_STRUCTURE.profile;
+  const tint = function(k){ return ['--av-sand','--av-sage','--av-blush','--av-mist'][cwHash(k) % 4]; };
+  WSM.list.push({ id:'w-' + curKey, name:p.brandName, slug:wsmSlug(p.brandName), type:p.orgType || 'Staffing agency', demo:curKey, tint:tint(curKey), status:'active', createdAt:Date.now() });
+  if(typeof openAsOk === 'function' && (openAsOk() || AUTH_IS_PROTOTYPE)) DEMO_COMPANIES.forEach(function(c){ if(c[0] !== curKey) WSM.list.push({ id:'w-' + c[0], name:c[1], slug:wsmSlug(c[1]), type:'Staffing agency', demo:c[0], unbuilt:true, tint:tint(c[0]), status:'active', createdAt:Date.now() }); });
+  WSM.cur = WSM.list[0].id;
+}
+function wsmGet(id){ wsmEnsure(); return WSM.list.find(function(w){ return w.id === id; }); }
+function wsmCur(){ wsmEnsure(); return wsmGet(WSM.cur); }
+function wsmAccount(email){ const e = authNormEmail(email || ''); return WSM.alias[e] || e; }
+function wsmRoster(w){ return w.id === WSM.cur ? RECRUITER_ROSTER : (WSM.stores[w.id] ? WSM.stores[w.id].arr.RECRUITER_ROSTER : []); }
+function wsmRoles(w){ return w.id === WSM.cur ? CUSTOM_ROLES : (WSM.stores[w.id] ? WSM.stores[w.id].roles : []); }
+// This account's place in a workspace: the member, their role, and whether they have accepted.
+function wsmMember(w, acct){
+  if(w.unbuilt) return acct === WSM_DEMO_ACCOUNT ? { id:null, roleName:'Owner', active:true, demoOwner:true } : null;
+  const u = wsmRoster(w).find(function(x){ return x.email && wsmAccount(x.email) === acct && x.userStatus !== 'Suspended' && x.userStatus !== 'Removed'; }); if(!u) return null;
+  const r = wsmRoles(w).find(function(x){ return x.id === u.assignedRoleId; }) || {};
+  const invited = u.userStatus === 'Invited' || u.inviteState === 'pending'; return { id:u.id, u:u, roleName:r.name || 'Member', active:!invited, invited:invited };
+}
+function wsmMine(){ const me = currentActingUser(); const acct = wsmAccount(me && me.email); return WSM.list.map(function(w){ return { w:w, m:wsmMember(w, acct) }; }).filter(function(x){ return x.m; }); }
+// Something there needs you: approvals waiting on you and Kairo items of yours, in a workspace you are not in right now.
+function wsmNeeds(w, m){
+  if(w.id === WSM.cur || !m || !m.id || !WSM.stores[w.id]) return 0; const a = WSM.stores[w.id].arr;
+  return (a.APPROVAL_REQUESTS || []).filter(function(r){ return r.status === 'Pending' && r.approverUserId === m.id; }).length + (a.CA_SUGGEST || []).filter(function(s){ return s.status === 'pending' && s.ownerId === m.id; }).length;
+}
+function wsmRemember(acct, id){ try { const k = 'oontu.lastWs', o = JSON.parse(localStorage.getItem(k) || '{}'); o[acct] = id; localStorage.setItem(k, JSON.stringify(o)); } catch(e){} }
+function wsmLast(acct){ try { return (JSON.parse(localStorage.getItem('oontu.lastWs') || '{}'))[acct] || null; } catch(e){ return null; } }
+
+/* ---------- switching ---------- */
+function wsSwitch(id, o){
+  o = o || {}; wsmEnsure(); const to = wsmGet(id); if(!to || to.id === WSM.cur) return true;
+  if(DEMO.loading){ toast('Wait a moment: ' + (wsmCur() || {}).name + ' is still loading.'); return false; }
+  if(to.status === 'closed'){ toast(to.name + ' is closed.'); return false; }
+  const me = currentActingUser(), acct = o.account || wsmAccount(me && me.email), m = wsmMember(to, acct);
+  if(!m && !o.force){ toast('You’re not a member of ' + to.name + '.'); return false; }
+  try { demoClearOverlays(); } catch(e){} try { toggleRoleMenu(true); } catch(e){} if(typeof closeKairoChat === 'function' && kairoChatOpen) closeKairoChat();
+  WSM.stores[WSM.cur] = wsmCapture();
+  if(to.unbuilt){
+    wsmRestore(WSM.pristine); if(to.demo !== 'northstar') demoClearWorkspace();   // Northstar builds on the boot data
+    if(to.demo === 'vistaar' && !o.sync){ DEMO.company = to.demo; demoBuildInBackground(to.demo, { first:function(){ wsmEnter(to, acct, o); } }); to.unbuilt = false; WSM.cur = to.id; return true; }
+    demoBuild(to.demo); to.unbuilt = false;
+  } else { wsmRestore(WSM.stores[to.id]); }
+  delete WSM.stores[to.id]; WSM.cur = to.id;
+  if(to.pendingPlan){ try { demoPlan(to.pendingPlan); } catch(e){} to.pendingPlan = null; }
+  wsmEnter(to, acct, o); return true;
+}
+function wsmEnter(to, acct, o){
+  const m = wsmMember(to, acct), who = m && m.id ? m.id : (typeof demoOwnerOf === 'function' && demoOwnerOf() ? demoOwnerOf().id : null);
+  if(who) try { demoAct(who); } catch(e){}
+  wsmRemember(acct, to.id); try { renderSidebar(); } catch(e){} wsmCardSync();
+  if(!o.quiet){ showView(homeForMe()); toast('Switched to ' + to.name + (m ? ' · ' + m.roleName : '')); }
+}
+function wsmCardSync(){ const w = wsmCur(); if(!w) return; const n = document.getElementById('ws-name'), i = document.getElementById('ws-initials'); if(n) n.textContent = ORG_STRUCTURE.profile.brandName || w.name; if(i) i.textContent = initials(ORG_STRUCTURE.profile.brandName || w.name); w.name = ORG_STRUCTURE.profile.brandName || w.name; }
+
+/* ---------- sign-in: every workspace of this account, last used first ---------- */
+function wsAuthMemberships(email){
+  wsmEnsure(); const acct = wsmAccount(email), last = wsmLast(acct);
+  const ms = WSM.list.filter(function(w){ return w.status === 'active'; }).map(function(w){ const m = wsmMember(w, acct); if(!m || !m.active) return null;
+    const role = /owner|admin/i.test(m.roleName) ? 'admin' : /manager/i.test(m.roleName) ? 'manager' : 'recruiter'; return { workspaceId:'ws_' + w.id, name:w.name, type:w.type, role:role, roleLabel:m.roleName }; }).filter(Boolean);
+  ms.sort(function(a, b){ return (b.workspaceId === 'ws_' + last) - (a.workspaceId === 'ws_' + last); });
+  return ms;
+}
+(function(){ const base = authEnter; window.authEnter = function(res, kind){
+  const id = res && res.workspace && res.workspace.id; if(id && /^ws_w-/.test(id)){ const wid = id.slice(3), email = res.user && res.user.email; if(wid !== WSM.cur) wsSwitch(wid, { quiet:true, account:wsmAccount(email), force:true }); else wsmRemember(wsmAccount(email), wid); }
+  return base.apply(this, arguments); }; })();
+
+/* ---------- the switcher: the sidebar card's menu ---------- */
+function wsmSwitchHTML(){
+  const mine = wsmMine(), cur = WSM.cur, own = caOwnerish(), acct = wsmAccount((currentActingUser() || {}).email);
+  const row = function(x){ const w = x.w, on = w.id === cur, n = wsmNeeds(w, x.m);
+    return '<button type="button" role="menuitemradio" aria-checked="' + on + '" class="o-menu__item wsm-row' + (on ? ' is-on' : '') + '" data-ws="' + w.id + '" onclick="event.stopPropagation(); wsSwitch(\'' + w.id + '\')"><span class="wsm-tile" style="background:var(' + w.tint + ')">' + cwEsc(initials(w.name)) + (n ? '<i class="wsm-dot" title="' + n + ' waiting for you"></i>' : '') + '</span><span class="wsm-t"><b>' + cwEsc(w.name) + '</b><small>' + cwEsc(x.m.roleName) + (w.unbuilt ? ' · demo' : '') + '</small></span>' + (on ? '<span class="wsm-tick" aria-hidden="true">✓</span>' : '') + '</button>'; };
+  const active = mine.filter(function(x){ return x.w.status === 'active' && x.m.active; }), invites = mine.filter(function(x){ return x.w.status === 'active' && !x.m.active && x.m.invited; }), closed = WSM.list.filter(function(w){ return w.status === 'closed' && wsmMember(w, acct); });
+  return '<div id="ws-switch"><p class="o-menu__head">Your workspaces</p>' + active.map(row).join('') +
+    invites.map(function(x){ return '<div class="wsm-inv" data-invite="' + x.w.id + '"><span class="wsm-tile" style="background:var(' + x.w.tint + ')">' + cwEsc(initials(x.w.name)) + '</span><span class="wsm-t"><b>' + cwEsc(x.w.name) + '</b><small>Invited as ' + cwEsc(x.m.roleName) + '</small></span><button type="button" class="o-btn o-btn--primary wsm-acc" onclick="event.stopPropagation(); wsmAccept(\'' + x.w.id + '\')">Accept</button></div>'; }).join('') +
+    closed.map(function(w){ return '<div class="wsm-inv is-closed" data-closed="' + w.id + '"><span class="wsm-tile">' + cwEsc(initials(w.name)) + '</span><span class="wsm-t"><b>' + cwEsc(w.name) + '</b><small>Closed · restore by ' + cwEsc(caShortDay(wsDay(w.closedUntil))) + '</small></span>' + (wsmMember(w, acct).roleName === 'Owner' ? '<button type="button" class="o-btn wsm-acc" onclick="event.stopPropagation(); wsmRestoreWs(\'' + w.id + '\')">Restore</button>' : '') + '</div>'; }).join('') +
+    '<div class="o-menu__sep"></div>' + (own ? '<button type="button" class="o-menu__item" data-add-ws onclick="event.stopPropagation(); toggleRoleMenu(true); wsmAddOpen()">' + oIcon('plus', 16, 1.75) + ' Add a workspace</button>' : '') +
+    '<button type="button" class="o-menu__item" onclick="toggleRoleMenu(true); settingsSection=\'workspace\'; showView(\'settings\')">' + oIcon('building', 16, 1.75) + ' Workspace settings</button></div>';
+}
+// One menu, two doors: from the sidebar card it is the switcher (with Prototype tools folded at the bottom); from the avatar it is the account menu.
+function wsmArrange(){
+  const menu = document.getElementById('role-menu'); if(!menu) return; wsmEnsure();
+  let sw = document.getElementById('ws-switch'); if(sw) sw.remove(); menu.insertAdjacentHTML('afterbegin', wsmSwitchHTML()); sw = document.getElementById('ws-switch');
+  let pt = document.getElementById('proto-tools');
+  if(!pt){ pt = document.createElement('details'); pt.id = 'proto-tools'; pt.className = 'wsm-proto'; pt.innerHTML = '<summary>Prototype tools</summary><div id="proto-body"></div>'; }
+  const body = pt.querySelector('#proto-body'), keep = function(el){ return el === sw || el === pt || el.hasAttribute('data-acct') || el.id === 'logout-menu-btn'; };
+  [].slice.call(menu.children).forEach(function(el){ if(keep(el)) return; if(el.tagName === 'BUTTON' && /showView\('settings'\)/.test(el.getAttribute('onclick') || '') && /Your settings/.test(el.textContent)){ el.setAttribute('data-acct', ''); return; } body.appendChild(el); });
+  sw.after(pt); pt.hidden = !(typeof AUTH_IS_PROTOTYPE !== 'undefined' && AUTH_IS_PROTOTYPE) && !(typeof openAsOk === 'function' && openAsOk());
+  const lo = document.getElementById('logout-menu-btn'); if(lo){ lo.setAttribute('data-acct', ''); if(!menu.querySelector('.wsm-acct-sep')){ const s = document.createElement('div'); s.className = 'o-menu__sep wsm-acct-sep'; s.setAttribute('data-acct', ''); lo.before(s); } }
+}
+(function(){ const base = toggleRoleMenu; window.toggleRoleMenu = toggleRoleMenu = function(forceClose){ const r = base.apply(this, arguments); if(!forceClose) wsmArrange(); return r; }; })();
+
+/* ---------- Add a workspace ---------- */
+const WSM_COPY = [['roles','Roles and permissions','Including custom roles.'],['team','Team structure','The same people, roles and reporting lines. Each gets an invitation.'],['approvals','Approval rules and SLAs',''],['hiring','Hiring defaults','Submission review, applicant routing, duplicate window, consent.'],['templates','Message templates and careers page',''],['terms','Client terms templates','Fee slabs, replacement window, payment terms. Not the clients.'],['cowork','Cowork agent settings','Which agents are on, limits, messages. No activity.'],['pay','Pay and invoice settings','GST details are left blank; you choose a new invoice prefix.']];
+const WSM_COUNTRIES = [['IN','India','Asia/Kolkata (IST, UTC+5:30)','INR (₹)'],['AE','United Arab Emirates','Asia/Dubai (GST, UTC+4)','AED (د.إ)'],['SG','Singapore','Asia/Singapore (SGT, UTC+8)','SGD (S$)'],['GB','United Kingdom','Europe/London (GMT, UTC+0)','GBP (£)'],['US','United States','America/New_York (ET, UTC−5)','USD ($)']];
+let WSM_G = null;
+function wsmAddOpen(){
+  if(!caOwnerish()){ toast('Only an Owner or Admin can add a workspace.'); return false; }
+  const p = ORG_STRUCTURE.profile, cc = WSM_COUNTRIES.find(function(c){ return c[1] === p.country || c[0] === p.countryIso; }) || WSM_COUNTRIES[0];
+  WSM_G = { i:0, name:'', type:/corporate|in-house/i.test(p.orgType || '') ? 'Corporate' : 'Staffing agency', from:'copy', copy:{ roles:true, team:false, approvals:true, hiring:true, templates:true, terms:true, cowork:true, pay:true }, people:{}, country:cc[0], prefix:'', plan:'plan-starter', done:null, src:wsmCur().name };
+  wsmGDraw(); setTimeout(function(){ const i = document.getElementById('wsm-name'); if(i) i.focus(); }, 30); return true;
+}
+function wsmSteps(){ return WSM_G.from === 'copy' ? ['name','from','copy','place'] : ['name','from','place']; }
+function wsmGDraw(){
+  let root = document.getElementById('wsm-g-root'); if(!root){ root = document.createElement('div'); root.id = 'wsm-g-root'; document.body.appendChild(root); }
+  const g = WSM_G; if(!g){ root.innerHTML = ''; document.body.classList.remove('ca-g-open'); return; }
+  const steps = wsmSteps(), k = g.done ? 'done' : steps[g.i], last = !g.done && g.i === steps.length - 1, slug = wsmSlug(g.name || 'your-workspace'), me = currentActingUser() || {};
+  let q = '', sub = '', body = '';
+  if(k === 'name'){ q = 'Name your new workspace'; sub = 'A second brand, another city or a contract-staffing arm. Each workspace has its own candidates, jobs, clients and money.';
+    body = '<label class="cl-field"><span>Workspace name</span><input id="wsm-name" class="app-input" value="' + cwEsc(g.name) + '" placeholder="Brightpath Pune" oninput="WSM_G.name=this.value; document.getElementById(\'wsm-slug\').textContent=wsmSlug(this.value||\'your-workspace\')+\'.oontu.app\'" onkeydown="if(event.key===\'Enter\'){event.preventDefault(); wsmGNext()}"></label><p class="wsm-slug">' + oIcon('building', 14, 1.75) + ' <span id="wsm-slug">' + cwEsc(slug) + '.oontu.app</span></p>' +
+      '<p class="wsm-lab">Type</p>' + caChoice('Type', [['Staffing agency','Staffing agency','You hire for clients.'],['Corporate','In-house hiring','You hire for your own company.']], g.type, "WSM_G.type='$v'; wsmGDraw()", true); }
+  if(k === 'from'){ q = 'Start from'; body = caChoice('Start from', [['copy','Copy my setup from ' + g.src,'Roles, rules, templates and settings. Never the candidates, clients or jobs.'],['fresh','Start fresh','Oontu’s recommended defaults.']], g.from, "WSM_G.from='$v'; wsmGDraw()", true); }
+  if(k === 'copy'){ q = 'What to copy'; const team = RECRUITER_ROSTER.filter(function(u){ return u.userStatus !== 'Suspended' && u.id !== me.id; });
+    body = '<div class="wsm-copy">' + WSM_COPY.map(function(c){ return '<label class="wsm-ck" data-copy="' + c[0] + '"><input type="checkbox"' + (g.copy[c[0]] ? ' checked' : '') + ' onchange="WSM_G.copy[\'' + c[0] + '\']=this.checked; wsmGDraw()"><span><b>' + cwEsc(c[1]) + '</b>' + (c[2] ? '<small>' + cwEsc(c[2]) + '</small>' : '') + '</span></label>' +
+      (c[0] === 'team' && g.copy.team ? '<div class="wsm-people">' + team.map(function(u){ const r = (CUSTOM_ROLES.find(function(x){ return x.id === u.assignedRoleId; }) || {}).name || ''; return '<label class="wsm-person" data-person="' + u.id + '"><input type="checkbox"' + (g.people[u.id] ? ' checked' : '') + ' onchange="WSM_G.people[\'' + u.id + '\']=this.checked"> ' + caAv(u.name, 22) + '<span>' + cwEsc(u.name) + ' <small>' + cwEsc(r) + '</small></span></label>'; }).join('') + '</div>' : ''); }).join('') + '</div>' +
+      '<p class="wsm-never">' + oIcon('lock', 12, 1.75) + ' Never copied: candidates, clients, jobs, journeys, interviews, invoices, PayTrack, activity, Inbox conversations and the audit log.</p>'; }
+  if(k === 'place'){ q = 'Location, money and plan'; const cc = WSM_COUNTRIES.find(function(c){ return c[0] === g.country; }) || WSM_COUNTRIES[0];
+    body = '<div class="wsm-grid"><label class="cl-field"><span>Country</span><select class="app-input app-select" onchange="WSM_G.country=this.value; wsmGDraw()">' + WSM_COUNTRIES.map(function(c){ return '<option value="' + c[0] + '"' + (c[0] === g.country ? ' selected' : '') + '>' + c[1] + '</option>'; }).join('') + '</select></label>' +
+      '<label class="cl-field"><span>Time zone</span><input class="app-input" value="' + cwEsc(cc[2]) + '" readonly></label><label class="cl-field"><span>Currency</span><input class="app-input" value="' + cwEsc(cc[3]) + '" readonly></label>' +
+      (g.from === 'copy' && g.copy.pay ? '<label class="cl-field"><span>Invoice prefix</span><input class="app-input" id="wsm-prefix" value="' + cwEsc(g.prefix) + '" placeholder="' + cwEsc(String(g.name || 'NEW').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'NEW') + '-" oninput="WSM_G.prefix=this.value"></label>' : '') + '</div>' +
+      '<p class="wsm-lab">Plan</p>' + caChoice('Plan', [['plan-starter','Starter, free for 14 days','Talent Discovery and Engagement. 3 seats.'],['plan-growth','Growth','Every agent but LinkedIn Outreach. 15 seats.'],['plan-enterprise','Enterprise','Everything, no seat cap.']], g.plan, "WSM_G.plan='$v'; wsmGDraw()", true) + '<p class="wsm-never">Billing for this workspace is separate. Nothing is charged during the 14 days.</p>'; }
+  if(k === 'done'){ q = g.done.name + ' is ready'; sub = 'It starts empty, with ' + (g.from === 'copy' ? 'the setup you copied from ' + g.src : 'Oontu’s recommended setup') + '. You are its Owner' + (g.done.invited ? '; ' + caN(g.done.invited, 'person was', 'people were') + ' invited' : '') + '.'; body = '<div class="wsm-done">' + caAv(g.done.name, 56) + '<p>' + cwEsc(wsmSlug(g.done.name)) + '.oontu.app</p></div>'; }
+  const counter = k === 'done' ? 'Done' : 'Step ' + (g.i + 1) + ' of ' + steps.length, pct = k === 'done' ? 100 : Math.round(g.i / steps.length * 100);
+  const foot = k === 'done' ? '<button type="button" class="o-btn" data-g="back-to" onclick="wsmGClose()">Back to ' + cwEsc(g.src) + '</button><button type="button" class="o-btn o-btn--primary" data-g="open" onclick="wsmGOpenNew()">Open ' + cwEsc(g.done.name) + '</button>'
+    : (g.i ? '<button type="button" class="o-btn" data-g="back" onclick="WSM_G.i--; wsmGDraw()">Back</button>' : '<span></span>') + '<button type="button" class="o-btn o-btn--primary" data-g="next" onclick="wsmGNext()">' + (last ? 'Create workspace' : 'Continue') + '</button>';
+  root.innerHTML = '<div class="ca-g__scrim" onclick="wsmGClose()"></div><div class="ca-g" role="dialog" aria-modal="true" aria-labelledby="wsm-q"><div class="ca-g__h"><span class="ca-g__who">Add a workspace</span><span class="ca-g__n" data-g="counter">' + counter + '</span><button type="button" class="o-btn o-btn--ghost ca-g__x" aria-label="Close" onclick="wsmGClose()">' + oIcon('x', 16) + '</button></div><div class="ca-g__prog" aria-hidden="true"><i style="width:' + pct + '%"></i></div><div class="ca-g__b"><h2 class="ca-g__q" id="wsm-q" tabindex="-1">' + cwEsc(q) + '</h2>' + (sub ? '<p class="ca-g__sub">' + cwEsc(sub) + '</p>' : '') + '<div class="ca-g__body">' + body + '</div></div><div class="ca-g__f">' + foot + '</div></div>';
+  document.body.classList.add('ca-g-open');
+}
+function wsmGNext(){
+  const g = WSM_G, steps = wsmSteps(), k = steps[g.i];
+  if(k === 'name'){ g.name = String(g.name || '').trim(); if(g.name.length < 2){ toast('Give the workspace a name.'); return; } if(WSM.list.some(function(w){ return w.name.toLowerCase() === g.name.toLowerCase() && w.status === 'active'; })){ toast('You already have a workspace called ' + g.name + '.'); return; } }
+  if(g.i < steps.length - 1){ g.i++; wsmGDraw(); return; }
+  const w = wsmCreate(g); if(!w) return; g.done = { id:w.id, name:w.name, invited:w.invited }; wsmGDraw();
+}
+function wsmGClose(){ WSM_G = null; wsmGDraw(); }
+function wsmGOpenNew(){ const id = WSM_G && WSM_G.done && WSM_G.done.id; WSM_G = null; wsmGDraw(); if(id) wsSwitch(id); }
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && WSM_G){ e.preventDefault(); wsmGClose(); } });
+
+/* ---------- creating it: the store, built from the current setup (or the recommended one) ---------- */
+function wsmCreate(g){
+  wsmEnsure(); const me = currentActingUser(); if(!me || !caOwnerish()) return null;
+  const src = wsmCapture(), base = WSM.pristine, copy = g.from === 'copy', cc = WSM_COUNTRIES.find(function(c){ return c[0] === g.country; }) || WSM_COUNTRIES[0], id = 'w-' + wsmSlug(g.name) + '-' + (WSM.seq++);
+  const s = { arr:{}, maps:{}, setup:{}, lets:{} };
+  Object.keys(src.arr).forEach(function(k){ s.arr[k] = []; }); Object.keys(src.maps).forEach(function(k){ s.maps[k] = {}; });
+  const pick = function(on, a, b){ return wsmClone(on ? a : b); };
+  // setup
+  s.roles = copy && g.copy.roles ? wsmClone(src.roles) : roleTemplatesForOrgType(g.type);
+  const W = wsmClone(src.setup.WSX), P = base.setup.WSX;
+  if(!(copy && g.copy.approvals)){ W.approvals = wsmClone(P.approvals); W.matrix = wsmClone(P.matrix); }
+  if(!(copy && g.copy.hiring)){ W.hiring = wsmClone(P.hiring); if(P.cand) W.cand = wsmClone(P.cand); }
+  if(!(copy && g.copy.templates)){ W.templates = wsmClone(P.templates); W.careers = wsmClone(P.careers); }
+  if(!(copy && g.copy.terms)){ const keep = { invoicePrefix:W.terms.invoicePrefix }; W.terms = Object.assign(wsmClone(P.terms), keep); }
+  W.careers = Object.assign(W.careers || {}, { domain:wsmSlug(g.name) + '.oontu.careers' });
+  W.terms.invoicePrefix = (copy && g.copy.pay ? (String(g.prefix || '').trim() || String(g.name).replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() + '-') : 'INV-'); W.terms.invoiceSeq = {}; W.terms.creditSeq = {};
+  W.billing = Object.assign(wsmClone(P.billing || {}), { invoices:[] }); delete W.closing; s.setup.WSX = W;
+  const O = wsmClone(src.setup.ORG_STRUCTURE); O.profile = Object.assign(O.profile || {}, { brandName:g.name, legalName:g.name, orgType:g.type, country:cc[1], countryIso:cc[0], timezone:cc[2], currency:cc[3], gstin:'', verification:'unverified', website:'', linkedin:'' });
+  O.branches = []; O.subscription = { plan:{ 'plan-starter':'Starter', 'plan-growth':'Growth', 'plan-enterprise':'Enterprise' }[g.plan], trial:true, trialEndsOn:wsAddDays(wsDay(fmNow()), 14) }; s.setup.ORG_STRUCTURE = O;
+  const T = copy && g.copy.cowork ? wsmClone(src.setup.TENANT_AGENT_CONFIG) : wsmClone(base.setup.TENANT_AGENT_CONFIG);
+  Object.keys(T).forEach(function(k){ const c = T[k]; c.saved = null; c.team = {}; c.paused = null; c.jobTh = {}; if(!(copy && g.copy.cowork)){ c.setupDone = false; c.enabled = false; } }); s.setup.TENANT_AGENT_CONFIG = T;
+  s.setup.SECURITY_SETTINGS = wsmClone(src.setup.SECURITY_SETTINGS); s.setup.TENANT_AGENT_SUBSCRIPTIONS = wsmClone(src.setup.TENANT_AGENT_SUBSCRIPTIONS);
+  s.conn = wsmClone(src.conn).map(function(c){ if(c.id === 'whatsapp') c.status = 'not_connected'; return c; }); s.pauseAll = { on:false };
+  // people: you as Owner; the team you picked, invited with the same roles and reporting lines
+  const roleIdFor = function(oldId){ const n = ((src.roles.find(function(r){ return r.id === oldId; }) || {}).name || ''); return (s.roles.find(function(r){ return r.name === n; }) || s.roles[s.roles.length - 1]).id; };
+  const ownerRole = (s.roles.find(function(r){ return /^owner$/i.test(r.name); }) || s.roles[0]).id, n = WSM.seq, ids = {};
+  const owner = Object.assign({}, me, { id:'W' + n + '-001', assignedRoleId:ownerRole, userStatus:'Active', inviteState:'accepted', reportingManagerId:null, note:'Created the workspace' }); ids[me.id] = owner.id; s.arr.RECRUITER_ROSTER.push(owner);
+  let invited = 0;
+  if(copy && g.copy.team) src.arr.RECRUITER_ROSTER.filter(function(u){ return g.people[u.id] && u.id !== me.id; }).forEach(function(u, i){ const nu = Object.assign({}, u, { id:'W' + n + '-' + String(i + 2).padStart(3, '0'), assignedRoleId:roleIdFor(u.assignedRoleId), userStatus:'Invited', inviteState:'pending', invitedAt:new Date(fmNow()).toISOString(), invitedBy:me.name }); ids[u.id] = nu.id; s.arr.RECRUITER_ROSTER.push(nu); invited++; });
+  s.arr.RECRUITER_ROSTER.forEach(function(u){ if(u === owner) return; const old = src.arr.RECRUITER_ROSTER.find(function(x){ return ids[x.id] === u.id; }), m = old ? tmManagerIdOf(old) : null; u.reportingManagerId = m && ids[m] ? ids[m] : owner.id; });
+  s.arr.AUDIT_LOG.push({ id:'al-' + Date.now(), timestamp:new Date(fmNow()).toISOString(), at:fmNow(), user:me.name, action:'Workspace created', detail:g.name + ' · ' + (copy ? 'setup copied from ' + g.src + ' (' + Object.keys(g.copy).filter(function(k){ return g.copy[k]; }).join(', ') + ')' : 'started fresh') + (invited ? ' · ' + invited + ' invited' : ''), module:'Organization' });
+  // the setup checklist, with what was copied already ticked
+  const ws = (function(){ const keep = WS_SETUPS[me.email]; const w = wsSetupStart(g.type === 'Corporate' ? 'Corporate' : 'Staffing agency', me.email, null, '', { country:cc[0] }); delete WS_SETUPS[me.email]; if(keep) WS_SETUPS[me.email] = keep; return w; })();
+  ws.companyName = g.name; ws.baseClients = 0; ws.baseJobs = 0; if(copy){ if(g.copy.team && invited) ws.done['agency-team'] = true; if(g.copy.templates) ws.done['jobs-site'] = true; if(g.copy.pay || g.copy.terms) ws.done['agency-profile'] = true; }
+  s.maps.WS_SETUPS = {}; s.maps.WS_SETUPS[authNormEmail(me.email)] = ws;
+  s.lets = { picks:{}, dec:{}, done:{}, ext:{}, setupEmail:authNormEmail(me.email), demo:{ company:null, mode:null, as:owner.id, built:null }, plan:{ planId:g.plan, plan:O.subscription.plan }, role:'admin' };
+  const p = ORG_STRUCTURE.profile, w = { id:id, name:g.name, slug:wsmSlug(g.name), type:g.type, demo:null, tint:['--av-sand','--av-sage','--av-blush','--av-mist'][cwHash(id) % 4], status:'active', createdAt:Date.now(), createdBy:me.name, invited:invited, pendingPlan:g.plan, from:copy ? g.src : null };
+  WSM.list.push(w); WSM.stores[id] = s;
+  try { EXISTING_WORKSPACES.push({ name:g.name, domain:null, type:g.type, sample:false, wsmId:id }); } catch(e){}
+  logAudit('Organization', 'Workspace added', g.name + ' · ' + (copy ? 'copied from ' + g.src : 'fresh') + (invited ? ' · ' + invited + ' invited' : '') + ' · by ' + me.name);
+  return w;
+}
+// An invitation to another workspace: accept, then it is yours to switch to.
+function wsmAccept(id){
+  const w = wsmGet(id), me = currentActingUser(), acct = wsmAccount(me && me.email), m = w && wsmMember(w, acct); if(!m || !m.invited) return false;
+  m.u.userStatus = 'Active'; m.u.inviteState = 'accepted'; m.u.acceptedAt = new Date(fmNow()).toISOString();
+  const log = w.id === WSM.cur ? AUDIT_LOG : WSM.stores[w.id].arr.AUDIT_LOG; log.unshift({ id:'al-' + Date.now(), timestamp:new Date(fmNow()).toISOString(), at:fmNow(), user:m.u.name, action:'Invite accepted', detail:m.u.name + ' joined ' + w.name + ' as ' + m.roleName, module:'User Management' });
+  toast('You joined ' + w.name + ' as ' + m.roleName + '.'); wsmArrange(); return true;
+}
+// Invite someone (by email) to a workspace that isn't open, as the prototype's stand-in for an emailed invitation.
+function wsmInvite(id, person, roleName, managerId){
+  const w = wsmGet(id); if(!w) return null; const roster = wsmRoster(w), roles = wsmRoles(w), r = roles.find(function(x){ return x.name === roleName; }) || roles[roles.length - 1];
+  const u = { id:'W' + (WSM.seq++) + '-' + String(roster.length + 1).padStart(3, '0'), name:person.name, email:person.email, assignedRoleId:r.id, userStatus:'Invited', inviteState:'pending', reportingManagerId:managerId || (roster[0] || {}).id || null, organizationId:CURRENT_ORGANIZATION_ID, dept:'', loc:'', successRate:0 };
+  roster.push(u); return u;
+}
+// Close and restore (Settings › Danger zone; Owner only, after typing the name)
+(function(){ const base = window.sCloseWorkspace; if(typeof base !== 'function') return; window.sCloseWorkspace = function(){ const v = (document.getElementById('close-confirm') || {}).value, ok = v === ORG_STRUCTURE.profile.brandName; const r = base.apply(this, arguments); if(!ok) return r;
+  const w = wsmCur(), others = wsmMine().filter(function(x){ return x.w.id !== w.id && x.w.status === 'active' && x.m.active; }); w.status = 'closed'; w.closedUntil = fmNow() + 30 * CW_DAY;
+  if(others.length){ wsSwitch(others[0].w.id, { force:true }); toast(w.name + ' is closed. You can restore it until ' + caShortDay(wsDay(w.closedUntil)) + '.'); } return r; }; })();
+function wsmRestoreWs(id){ const w = wsmGet(id); if(!w || w.status !== 'closed') return false; if(fmNow() > w.closedUntil){ toast('The 30 days have passed.'); return false; } w.status = 'active'; w.closedUntil = null; const st = WSM.stores[id]; if(st && st.setup.WSX) delete st.setup.WSX.closing; logAudit('Organization', 'Workspace restored', w.name); toast(w.name + ' is back.'); wsmArrange(); return true; }
+
+(function(){ const css = document.createElement('style'); css.id = 'workspaces-style'; css.textContent =
+  '#ws-switch .wsm-row{height:auto;min-height:44px;padding:6px 10px;gap:10px;justify-content:flex-start}.wsm-tile{position:relative;flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:11px;font-weight:600;color:var(--av-fg,#3E4152);background:var(--st-neutral-bg)}' +
+  '.wsm-dot{position:absolute;top:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:var(--st-risk-dot);box-shadow:0 0 0 2px var(--bg-card,#fff)}.wsm-t{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:left}.wsm-t b{font-size:13px;font-weight:600;color:var(--text-1);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wsm-t small{font-size:11px;color:var(--text-3)}.wsm-tick{color:var(--st-good-fg);font-weight:700}.wsm-row.is-on{background:var(--bg-subtle)}' +
+  '.wsm-inv{display:flex;align-items:center;gap:10px;padding:6px 10px}.wsm-inv.is-closed{opacity:.7}.wsm-acc{height:28px;padding:0 10px;font-size:12px}' +
+  '.wsm-proto{margin:4px 0}.wsm-proto summary{list-style:none;cursor:pointer;padding:8px 10px;border-radius:10px;font-size:12px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em}.wsm-proto summary::-webkit-details-marker{display:none}.wsm-proto summary::after{content:" ›"}.wsm-proto[open] summary::after{content:" ⌄"}.wsm-proto summary:hover{background:var(--bg-subtle)}' +
+  ':root body.ow-white #sidebar:not(.rail) .o-role-menu:not(.is-from-topbar){position:absolute;left:0;right:0;top:calc(100% + 8px);bottom:auto;width:auto;max-width:none;max-height:min(70vh,640px)}' +
+  '#ws-switch .o-menu__item{justify-content:flex-start;gap:10px}#ws-switch .wsm-t{flex:1;min-width:0}#ws-switch .wsm-t b{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#ws-switch .wsm-tick{flex:none;margin-left:4px}' +
+  ':root body .o-role-menu:not(.is-from-topbar) [data-acct]{display:none!important}:root body .o-role-menu.is-from-topbar #ws-switch,:root body .o-role-menu.is-from-topbar #proto-tools{display:none!important}' +
+  '.wsm-slug{display:flex;align-items:center;gap:6px;margin:6px 0 16px;font-size:13px;color:var(--st-info-fg)}.wsm-lab{margin:12px 0 8px;font-size:13px;font-weight:600;color:var(--text-1)}' +
+  '.wsm-copy{display:flex;flex-direction:column;gap:2px}.wsm-ck{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}.wsm-ck:first-child{border-top:0}.wsm-ck input{margin-top:3px}.wsm-ck b{display:block;font-size:14px;font-weight:500;color:var(--text-1)}.wsm-ck small{display:block;font-size:12px;color:var(--text-3)}' +
+  '.wsm-people{display:flex;flex-direction:column;gap:2px;margin:0 0 8px 24px;max-height:220px;overflow:auto}.wsm-person{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer}.wsm-person small{color:var(--text-3)}' +
+  '.wsm-never{display:flex;align-items:flex-start;gap:6px;margin:12px 0 0;font-size:12px;color:var(--text-3)}.wsm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}.wsm-grid .cl-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-2)}.wsm-done{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0}.wsm-done p{margin:0;color:var(--st-info-fg);font-size:14px}' +
+  '@media (max-width:700px){.wsm-grid{grid-template-columns:minmax(0,1fr)}}';
+  document.head.appendChild(css); })();
+// the untouched setup of the boot data: the base for "start fresh" and for building a demo company
+WSM.pristine = wsmCapture();
 </script>
 <style id="kairo-chat-style">
 /* F2 (2026-11-22): the Kairo chat is a fixed side panel on the right, under the top bar, full height; a full-screen sheet on a phone.

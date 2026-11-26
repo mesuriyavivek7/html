@@ -2026,3 +2026,41 @@ There is no live model. Kairo is an intent engine over the app's own records, in
   - Roles without the money permission get "I can’t share billing figures with your role." and no ₹ anywhere.
   - Actions show a confirm card and call the app's own functions, so the page's permissions apply. Each is audit-logged as "Kairo for <person>".
   - Drafts carry the AI disclosure line when that setting is on.
+
+## Step 4 · More than one workspace (25 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-workspaces.html`. Screenshots: `docs/screenshots/workspaces/` (1440 and 390). New spec: `tests/workspaces.spec.js` (9 checks).
+
+One new block, `<script id="workspaces-script">`, plus a small change in the auth simulator's `signIn` and `wsList`.
+
+- **Stores.** Each workspace keeps its own records and setup in a store keyed by workspace id.
+  - The active one lives in the app's globals. Switching saves it and swaps the target's in.
+  - Records (the arrays `demoClearWorkspace` empties, plus Kairo and Cowork items) are kept by reference. The setup (company profile, settings, roles, Cowork config, plan, connections) is deep-copied, because a demo build edits the profile in place.
+  - Caches, search, Kairo and open overlays reset on every switch, so nothing from one workspace shows in another.
+- **The switcher.** The sidebar card opens it:
+  - your workspaces, with your role in each, a tick on the current one and a dot where something needs you;
+  - invitations to accept, and closed workspaces to restore;
+  - Add a workspace (Owner or Admin) and Workspace settings;
+  - Prototype tools, folded and only in prototype mode, holding every demo and persona control.
+  - The top-bar avatar's menu shows only Your settings and Sign out.
+- **Add a workspace.** A short guide:
+  - name and type, with the live address;
+  - copy my setup or start fresh;
+  - what to copy: eight choices, with the team off by default and people picked one by one;
+  - the line on what is never copied;
+  - location, currency and plan (Starter, free for 14 days);
+  - done: "Brightpath Pune is ready", with Open or Back.
+  - The new workspace starts empty (Step 1 F1) with the copied setup. GST is blank and the invoice prefix is new. Copied people are Invited with the same roles and reporting lines. The setup checklist ticks what was copied.
+- **People.** The same person can hold a different role in each workspace; the menu, Home and permissions follow the workspace. An invitation is accepted from the switcher.
+- **Demo.** Kesar, Northstar and Vistaar are three workspaces of one demo account (demo.owner@oontu.app, whose Owners are Meera, Priya and Anil). They are built the first time they're opened and kept after that, with no reload; Vistaar loads in the background.
+- **Sign-in.** An account in several workspaces gets "Choose a workspace" after the code, last used first. The last workspace is remembered per browser.
+- **Closing.** Settings › Danger zone (Owner, typing the name) closes a workspace for 30 days, switches you to another, and lists it as closed with Restore.
+- **Fix found while taking screenshots.** With the white shell (`body.ow-white`) the menu was `position:fixed`, so the Design 2.0 `top:calc(100% + 8px)` put it below the screen when opened from the sidebar card. It is now anchored under the card, and long workspace names end in "…" instead of running into the tick.
+- **Checked against the review checklist (Steps 1–4).** Fixes in Kairo:
+  - "show agents", "open inbox" and "jobs kholo" go to that page, if your role can open it (`kaGo`).
+  - More Hinglish: yaad dilana, baje, ke baare mein, likho/bhejo, dikhao, kholo, din.
+  - The "Which Aditya?" chips keep the whole question. Two people with the same name each get their own chip.
+  - "…about his interview" with none booked drafts a follow-up instead of only offering one.
+  - "Which clients owe feedback?" is understood.
+  - Every sidebar page has starters that fit it (Clients, Cowork, Inbox, Approvals, To do, Team, Reports, Settings).
+- Tests: `tests/workspaces.spec.js` (9); 5 more in `tests/kairo-assistant.spec.js`. `tests/fix-d2.spec.js` signs in as Priya, who now has several workspaces, so its helper picks Northstar on the chooser. Full suite 46 specs, 802 / 802.

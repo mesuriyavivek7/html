@@ -96,6 +96,37 @@
       ['stat','chart','list','candidate','draft','confirm','job'].forEach(function(k){ ok(seen[k], 'a ' + k + ' card'); });
     });
 
+    /* From the review checklist (Steps 1 and 3), checked word for word. */
+    await t('“show agents” opens Cowork; “open inbox” and “jobs kholo” go there too; a page the role can’t open is refused, and “show java developers” is still a search', async function(){
+      as('Neha Kulkarni'); showView('dashboard'); kairoChatOpen = false; kaAsk('show agents'); await sleep(60); ok(state.activeNav === 'kairo-team', 'Cowork opened: ' + state.activeNav); ok(kairoChatOpen, 'the chat stays open');
+      ok(kaAnswer('open inbox').go === 'li-uni-box' && kaAnswer('jobs kholo').go === 'jobs', 'inbox and jobs');
+      var r = kaAnswer('show revenue'); ok(r.skill === 'go' && !r.go && /can.t open Revenue/.test(r.text), 'refused: ' + r.text);
+      ok(kaAnswer('show java developers').skill === 'find', 'a search, not a page'); closeKairoChat && closeKairoChat();
+      as('Priya Sharma'); ok(kaAnswer('show revenue').go === 'admin-revenue', 'an Owner can open Revenue');
+    });
+    await t('Hinglish: the day, counts, a search, a draft and a reminder', async function(){
+      as('Neha Kulkarni'); var want = [['aaj kya karna hai', 'day'], ['mera din kaisa hai', 'day'], ['is hafte maine kitne submissions kiye', 'counts'], ['Pune mein Java developers dikhao', 'find'], ['Aditya Kulkarni ko interview ke baare mein WhatsApp likho', 'draft'], ['kal 10 baje Sana ko call karna yaad dilana', 'action']];
+      want.forEach(function(w){ KA.ctx = null; var a = kaAnswer(w[0]); ok(a.skill === w[1], w[0] + ' → ' + a.skill + ': ' + a.text.slice(0, 60)); ok(!BAD.test(text(a)), w[0] + ' has ' + (text(a).match(BAD) || [])[0]); });
+      var r = kaAnswer('kal 10 baje Sana ko call karna yaad dilana'); ok(/tomorrow at 10:00 AM to call Sana/.test(text(r)), 'the reminder reads right: ' + text(r).slice(0, 120));
+    });
+    await t('“Draft a WhatsApp to Aditya about his interview”: the chips keep the whole question; with no interview booked it still drafts a follow-up with Edit, Send and Copy', async function(){
+      as('Neha Kulkarni'); var a = kaAnswer('Draft a WhatsApp to Aditya about his interview'); ok(a.skill === 'clarify' && a.chips.every(function(c){ return /^Draft a WhatsApp to Aditya \w+ about his interview$/.test(c.q); }), 'chips: ' + JSON.stringify(a.chips));
+      a.chips.forEach(function(c){ var d = kaAnswer(c.q); ok(d.skill === 'draft' && /data-card="draft"/.test(d.cards.join('')) && /Edit/.test(d.cards.join('')) && /Copy/.test(d.cards.join('')), c.q + ' → ' + d.text.slice(0, 80)); });
+    });
+    await t('two people with the same full name: each chip names one of them and answers for that person, never asking again', async function(){
+      as('Neha Kulkarni'); var c1 = CANDIDATES.find(function(c){ return c.name === 'Aditya Kulkarni'; }), twin = Object.assign({}, c1, { id:9990777, role:'Inside Sales Executive' }); CANDIDATES.push(twin);
+      try { var a = kaAnswer('Draft a WhatsApp to Aditya Kulkarni about his interview'), qs = a.chips.map(function(c){ return c.q; }); ok(a.skill === 'clarify' && qs.length >= 2 && new Set(qs).size === qs.length, 'different chips: ' + JSON.stringify(a.chips));
+        var tc = a.chips.find(function(c){ return /Inside Sales Executive/.test(c.q); }); ok(tc, 'a chip for the twin'); var d = kaAnswer(tc.q); ok(d.skill === 'draft' && /data-card="draft"/.test(d.cards.join('')), 'the twin’s chip drafts: ' + d.skill + ' ' + d.text.slice(0, 80)); ok(KA.pick[kaNorm(tc.q)] === twin.id, 'it remembers which person'); }
+      finally { CANDIDATES.splice(CANDIDATES.indexOf(twin), 1); }
+    });
+    await t('every sidebar page has 3 starters that answer (none falls back), for the Owner and a Recruiter', async function(){
+      for(var who of ['Priya Sharma', 'Neha Kulkarni']){ as(who); var bad = [];
+        qa('#sidebar [data-nav]').map(function(e){ return e.dataset.nav; }).forEach(function(v){ showView(v); KA.pageJob = null; KA.pageCand = null; var s = kaStarters(); if(s.length !== 3) bad.push(v + ' has ' + s.length);
+          s.forEach(function(x){ KA.ctx = null; var a = kaAnswer(x); if(a.skill === 'help' || BAD.test(text(a))) bad.push(v + ': ' + x + ' → ' + a.skill); }); });
+        ok(!bad.length, who + ': ' + bad.join(' | ')); }
+      as('Priya Sharma'); showView('settings'); ok(/invite a teammate/.test(kaStarters().join(' ')), 'Settings starters are how-tos'); showView('client-management'); ok(/clients owe feedback/.test(kaStarters().join(' ')), 'Clients starters fit Clients'); showView('dashboard');
+    });
+
     var pre = document.createElement('pre'); pre.id = 'auth-test-results'; pre.textContent = JSON.stringify(results); document.body.appendChild(pre);
   }, 800); });
 })();

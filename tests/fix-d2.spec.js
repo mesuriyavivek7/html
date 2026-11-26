@@ -15,7 +15,10 @@
   function setv(sel, v){ var el = q(sel); if(!el) throw new Error('missing ' + sel); el.value = v; el.dispatchEvent(new Event('input', { bubbles:true })); }
   async function idle(){ for(var i = 0; i < 400; i++){ await sleep(0); if(!authFlow.busy) break; } await sleep(20); }
   async function waitFor(cond, ms){ for(var i = 0; i < (ms || 4000) / 20; i++){ if(cond()) return true; await sleep(20); } return false; }
-  async function enterIfAsked(){ await waitFor(function(){ return appOpen() || q('[data-act=si-enter]'); }, 5000); var en = q('[data-act=si-enter]'); if(en){ en.click(); await idle(); await waitFor(appOpen, 3000); } }
+  /* Step 4: someone in several workspaces (Priya is also the demo account's Owner of Kesar and Vistaar) chooses one after the code; these checks are about Northstar. */
+  async function enterIfAsked(){ await waitFor(function(){ return appOpen() || q('[data-act=si-enter]') || q('.au-ws'); }, 5000);
+    var ws = [].slice.call(document.querySelectorAll('.au-ws')).find(function(b){ return /Northstar/.test(b.textContent); }); if(ws){ ws.click(); await idle(); await waitFor(function(){ return appOpen() || q('[data-act=si-enter]'); }, 5000); }
+    var en = q('[data-act=si-enter]'); if(en){ en.click(); await idle(); await waitFor(appOpen, 3000); } }
   function screen(){ return ((q('#oa-h') || {}).textContent || '') + ' | ' + [].map.call(document.querySelectorAll('#oa-body .oa-msg'), function(m){ return m.textContent; }).join(' '); }
   async function toSignIn(){ try { if(appOpen()) performLogout(); } catch(e){} await sleep(60); authApi._latency = 0; OA.resetSignIn(); authSwitchIntent('signin'); await sleep(40); }
   async function signInByCode(email, code){
