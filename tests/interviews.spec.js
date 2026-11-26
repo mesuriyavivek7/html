@@ -124,7 +124,13 @@
     });
 
     await t('dev panel has the three buttons and they open the right pages', async function(){
-      var menu = document.getElementById('role-menu'); ok(menu && /Open interviewer link \(Rohit\)/.test(menu.textContent) && /Open client link \(Ravi, HealthAI\)/.test(menu.textContent), 'buttons'); slDevOpen('interviewer'); await sleep(40); ok(/Rohit/.test(txt()), 'interviewer'); ok(byText('#sl-root .sl-dev button', /Back to app/), 'back to app'); slBack(); ok(!document.body.classList.contains('sl-on') && !location.hash.match(/#\/l\//), 'back'); slDevOpen('client'); await sleep(40); ok(/Ravi/.test(txt()), 'client'); slBack();
+      devToolsSync(); var menu = document.getElementById('role-menu'), g = menu && menu.querySelector('.dev-grp[data-dev="links"]');
+      ok(g && /Interviewer’s page/.test(g.textContent) && /Rohit Bansal/.test(g.textContent) && /Client’s page/.test(g.textContent) && /Ravi Menon, HealthAI/.test(g.textContent) && g.querySelectorAll('.dev-row').length === 3, 'buttons, each saying who it opens as');
+      ok(/2 active/.test(g.querySelector('summary').textContent) && g.querySelectorAll('.dev-chip--ok').length === 2, 'both links active');
+      slDevExpire(); g = menu.querySelector('.dev-grp[data-dev="links"]'); ok(/Expired/.test(g.querySelector('summary').textContent) && /Renew both links/.test(g.textContent), 'expired, with Renew');
+      slDevOpen('interviewer'); await sleep(40); ok(/This link has expired/.test(txt()), 'opening an expired link shows the expired page (it is not renewed quietly)'); slBack();
+      slDevRenew(); g = menu.querySelector('.dev-grp[data-dev="links"]'); ok(/2 active/.test(g.querySelector('summary').textContent) && /Expire both links/.test(g.textContent), 'renewed');
+      slDevOpen('interviewer'); await sleep(40); ok(/Rohit/.test(txt()), 'interviewer'); ok(byText('#sl-root .sl-dev button', /Back to app/), 'back to app'); slBack(); ok(!document.body.classList.contains('sl-on') && !location.hash.match(/#\/l\//), 'back'); slDevOpen('client'); await sleep(40); ok(/Ravi/.test(txt()), 'client'); slBack();
     });
 
     await t('design rules: no dead hrefs, no “AI”, “smart” or “Optional”, only brand colours, Plus Jakarta Sans and JetBrains Mono', async function(){

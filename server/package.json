@@ -1,0 +1,24 @@
+{
+  "name": "@oontu/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Oontu server: the production implementation of the rules in recruitment-os-prototype.html (docs/oontu-evolution 21-23).",
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "migrate": "node src/migrate.ts",
+    "start": "node src/server.ts",
+    "test": "node --test --test-concurrency=1 test/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "typescript": "^7.0.2"
+  }
+}

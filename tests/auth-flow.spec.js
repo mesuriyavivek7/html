@@ -51,7 +51,12 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
   /* ---- sign in ---- */
   async function openApp(){ if(q('[data-act=si-enter]')){ await click('[data-act=si-enter]'); await settle(); } }   // the "You're in" screen
   async function enterEmail(email){ if(authFlow.step!=='email') authGo('email'); setv('#si-email', email); submitForm('form[data-form=si-email]'); await idle(); }
-  async function enterCode(code){ setv('.oa-otp__input', code); await idle(); await settle(); }
+  /* A sign-in code is checked with a short collapse-and-verify motion before the screen changes; wait for it to finish (or reverse). */
+  async function enterCode(code){
+    setv('.oa-otp__input', code); await idle();
+    await waitFor(function(){ return !authFlow.busy; }, 9000);
+    await idle(); await settle();
+  }
   async function signInWithCode(email){
     await enterEmail(email);
     assert(authFlow.codePending, 'a code was sent');
@@ -145,6 +150,8 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
   function customRoleId(name){ const r = CUSTOM_ROLES.find(function(x){ return x.name===name; }); return r ? r.id : ''; }
   async function test(name, fn){
     reset();
+    window.AUTH_OPEN_SIGNIN = /^01g\b/.test(name);   // the prototype lets any unknown address in; the other tests need the real "no account" answer
+    window.OONTU_MOTION_SCALE = /^(01b|01c|02P)\b/.test(name) ? 1 : 0.05;   // full length only where the timing is the point; the rest would not fit the runner's clock
     try { await fn(); results.push({ name:name, pass:true }); }
     catch(e){ results.push({ name:name, pass:false, error:String(e && e.message || e) }); }
   }
@@ -164,16 +171,235 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       eq(authAppSession.method, 'password');
     });
 
-    await test('01b Existing user signs in with a one-time code: email, six digits, "You’re in", Open my day', async function(){
+    await test('01b Existing user signs in with a one-time code: the boxes collapse and verify, a welcome, then in on its own', async function(){
       await enterEmail('alex@northstar.example');
       eq(heading(), 'Check your inbox.'); assert(/a•••@northstar\.example/.test(oaText()), 'the address is masked');
       eq(qa('.oa-otp__box').length, 6, 'six boxes');
-      await enterCode(authApi._latestEmail('alex@northstar.example').code);
-      eq(heading(), 'You’re in.', 'the tidy-up screen');
+      const t0 = Date.now(), seen = {};
+      new MutationObserver(function(){ const o = q('.oa-otp'); if(o && o.classList.contains('is-collapsing')) seen.collapsing = true; if(o && o.classList.contains('is-verified')) seen.verified = true; if(q('.oa-verify')) seen.ring = true; if(/Checking it’s you/.test(oaMsg())) seen.msg = true; }).observe(document.getElementById('oontu-auth'), { attributes:true, childList:true, subtree:true, characterData:true });
+      setv('.oa-otp__input', authApi._latestEmail('alex@northstar.example').code);
+      assert(await waitFor(function(){ return !!q('[data-act=si-enter]'); }, 8000), 'then the welcome');
+      assert(seen.collapsing && seen.ring, 'the six boxes collapsed into the verifying ring'); assert(seen.msg, 'it said what was happening'); assert(seen.verified, 'the ring completed into a tick');
+      assert(Date.now() - t0 >= 1000, 'the motion is never skipped, even when the answer is instant');
+      assert(/^Welcome back, Alex\.$/.test(heading()), 'a welcome, not "You’re in": '+heading()); assert(await waitFor(function(){ return !!q('#oa-h .oa-dotland.is-in'); }, 2000), 'the green tick lands as the full stop'); assert(!q('#oa-h .oa-roll'), 'the roll has settled'); assert(!/Open my day/.test(oaText()), 'no extra button to press');
       assert(q('.oa-stage').classList.contains('is-done'), 'the scene tidies up');
-      assert(!appVisible(), 'not until Open my day');
-      await click('[data-act=si-enter]'); await settle();
-      assert(appVisible()); eq(state.role, 'admin'); eq(authAppSession.method, 'email_code');
+      assert(!appVisible(), 'not before the welcome has been seen');
+      assert(await waitFor(function(){ return appVisible(); }, 8000), 'it opens the app by itself');
+      eq(state.role, 'admin'); eq(authAppSession.method, 'email_code');
+    });
+
+    await test('01d An account made through Create workspace is still there after a page reload, so signing in is a sign-in', async function(){
+      const email = 'returning.owner@startup.example';
+      await authApi.sendCode({ email:email }); const v = await authApi.verifyCode({ email:email, code:authApi._latestEmail(email).code });
+      eq(v.status, 'new_user', 'a stranger on the first visit');
+      assert((await authApi.createWorkspace({ name:'Dana', workspaceName:'Startup Talent', type:'Staffing agency', mobileCode:'+91', mobile:'9825041207' })).ok, 'workspace created');
+      assert((await authApi.completeSetup()).ok);
+      const reloaded = createAuthSimulator();   // what a page reload builds: a fresh server that reads what was saved
+      await reloaded.sendCode({ email:email }); const again = await reloaded.verifyCode({ email:email, code:reloaded._latestEmail(email).code });
+      eq(again.status, 'signed_in', 'known again, not offered Create workspace'); eq(again.workspaces.length, 1); eq(again.workspaces[0].name, 'Startup Talent');
+      const sample = createAuthSimulator(); await sample.sendCode({ email:'alex@northstar.example' });
+      eq((await sample.verifyCode({ email:'alex@northstar.example', code:sample._latestEmail('alex@northstar.example').code })).status, 'signed_in', 'the samples are still there');
+    });
+
+    await test('01e Coming back: an unfinished owner sees only what is left, a finished one sees no list, other roles never get one, and an unknown email is told why', async function(){
+      SIGNUP_LEADS.length = 0;
+      await signUpAll('Staffing agency', 'Dana Lee', 'dana@startup.example');
+      const titles = function(){ return Array.from(document.querySelectorAll('#ws-card .ws-item__title')).map(function(e){ return e.textContent; }); };
+      eq(titles().length, 7, 'brand new: everything is still to do');
+      wsSetup.done['agency-profile'] = true; wsSetup.done['agency-tools'] = true; wsRefreshCard();   // two items finished
+      const reload = function(){ backToSignIn(); authApi._advance(40000); WS_SETUPS = {}; WS_PROFILES = {}; wsSetup = null; wsRestore(); };   // sign out, then a page reload reads what was saved
+      reload();
+      await signInWithCode('dana@startup.example');
+      assert(appVisible() && state.role === 'admin', 'straight into the product as the owner');
+      eq(titles().join('|'), 'Invite your team|Marketplace listing|Oontu jobs website|Add your first client|Open your first job', 'only the unfinished items');
+      assert(/2 of 7 done/.test(cardText()), 'progress is kept'); assert(!/Welcome to Oontu/.test(document.querySelector('#main-content .o-page-head__title').textContent), 'the first-visit welcome is not repeated');
+      showView('setup-hub'); eq(document.querySelectorAll('#ws-setup-section #ws-card .ws-item').length, 7, 'Settings still lists all of it');
+      wsItems(wsSetup).forEach(function(k){ wsSetup.done[k] = true; }); showView('admin-dashboard'); assert(document.getElementById('ws-card'), 'finished: the "ready" note shows once');
+      reload();
+      await signInWithCode('dana@startup.example');
+      assert(appVisible() && !document.getElementById('ws-card'), 'a finished owner goes straight to everything, with no list');
+      backToSignIn(); await signInWithCode('alex@northstar.example'); assert(appVisible() && !document.getElementById('ws-card'), 'an admin the setup does not belong to has no list');
+      backToSignIn(); await signInWithCode('sam@harbor.example'); await sleep(50);
+      if(q('[data-act=ws-pick], .au-ws, [data-ws-id]') || authFlow.step === 'workspaces'){ await authSelectWorkspaceNow('ws_harbor'); await openApp(); }
+      assert(appVisible() && !document.getElementById('ws-card'), 'a manager has no owner setup list');
+      backToSignIn(); await enterEmail('newcomer@startup.example'); await enterCode(authApi._latestEmail('newcomer@startup.example').code);
+      eq(authFlow.step, 'signup'); assert(/from your email/.test(q('.oa-sub').textContent), 'an email we do not know goes on to create a workspace, its name taken from the address: ' + q('.oa-sub').textContent);
+    });
+
+    await test('01f A new teammate sees only their own unfinished step (mailbox, calendar) on Home; it is kept, and the demo personas are untouched', async function(){
+      const as = function(role, email, ws){ authAppSession = { method:'email_code', email:email, emailVerified:true, workspaceId:ws, role:role === 'admin' ? 'admin' : role }; state.role = role; myConnApply(); };
+      const app = document.getElementById('app'); app.classList.remove('hidden'); app.classList.add('flex'); document.getElementById('onboarding').classList.add('hidden');
+      const card = function(){ return document.getElementById('my-conn-card'); }, titles = function(){ return card() ? Array.from(card().querySelectorAll('.ws-item__title')).map(function(e){ return e.textContent; }).join('|') : ''; };
+      as('recruiter', 'newhire@startup.example', 'ws_9_abc123');
+      showView('dashboard'); await idle();
+      eq(titles(), 'Connect your mailbox|Connect your calendar', 'a new teammate starts with both to do'); assert(/Two things before you start/.test(card().textContent));
+      myConnect('mail'); eq(titles(), 'Connect your calendar', 'only what is left'); assert(/One thing left/.test(card().textContent));
+      as('recruiter', 'newhire@startup.example', 'ws_9_abc123'); showView('dashboard'); await idle();   // signs out and in again
+      eq(titles(), 'Connect your calendar', 'the mailbox stays connected');
+      myConnect('calendar'); assert(!card(), 'the card is gone once both are done'); assert(/connected\. You’re all set/.test(document.querySelector('.app-toasts').textContent), 'and says so');
+      as('recruiter', 'newhire@startup.example', 'ws_9_abc123'); showView('dashboard'); await idle(); assert(!card(), 'it does not come back');
+      as('manager', 'second.hire@startup.example', 'ws_9_abc123'); showView('manager-dashboard'); await idle(); eq(titles(), 'Connect your mailbox|Connect your calendar', 'each person has their own');
+      as('hm', 'hm.hire@startup.example', 'ws_9_abc123'); showView('hm-dashboard'); await idle(); assert(card(), 'hiring managers too, they take interviews');
+      as('recruiter', 'sam@harbor.example', 'ws_northstar'); showView('dashboard'); await idle(); assert(!card(), 'a demo persona never sees it'); eq(WSX.accounts.mail.status, 'connected', 'and keeps the demo connections');
+      as('admin', 'owner@startup.example', 'ws_9_abc123'); authAppSession.role = 'owner'; myConnApply(); assert(!myConnectCardHTML(), 'the owner has the workspace list instead');
+    });
+
+    await test('01g Prototype sign-in: test@incomplete.com always opens an unfinished workspace; any other address goes straight into a complete dashboard; Create workspace is untouched', async function(){
+      const titles = function(){ return Array.from(document.querySelectorAll('#ws-card .ws-item__title')).map(function(e){ return e.textContent; }).join('|'); };
+      // the fixed incomplete account
+      await signInWithCode('test@incomplete.com');
+      assert(appVisible() && state.role === 'admin', 'in as the owner');
+      eq(titles(), 'Invite your team|Marketplace listing|Oontu jobs website|Add your first client|Open your first job', 'only what is left'); assert(/2 of 7 done/.test(cardText()));
+      eq(document.getElementById('ws-name').textContent, 'Incomplete Demo Agency');
+      wsSetup.done['agency-team'] = true; wsRefreshCard(); assert(/3 of 7 done/.test(cardText()), 'progress works inside the session');
+      authApi._advance(40000); backToSignIn(); await signInWithCode('test@incomplete.com');
+      assert(/2 of 7 done/.test(cardText()), 'and the demo starts the same way every time');
+      // any other address
+      authApi._advance(40000); backToSignIn(); await signInWithCode('someone.new@brightpath.example');
+      assert(appVisible() && state.role === 'admin', 'an address nobody has used goes straight in'); assert(!document.getElementById('ws-card'), 'with nothing left to set up');
+      eq(document.getElementById('ws-name').textContent, 'Brightpath', 'the workspace is named from the address'); eq(authAppSession.role, 'owner');
+      authApi._advance(40000); backToSignIn(); await signInWithCode('someone.new@brightpath.example');
+      assert(appVisible() && !document.getElementById('ws-card'), 'and the same account is there next time');
+      authApi._advance(40000); backToSignIn(); await signInWithCode('person@gmail.com'); eq(document.getElementById('ws-name').textContent, 'Person’s workspace', 'a personal address names it after the person');
+      // Create workspace still asks for a workspace
+      await authApi.sendCode({ email:'brand.new@startup.example', intent:'signup' });
+      eq((await authApi.verifyCode({ email:'brand.new@startup.example', code:authApi._latestEmail('brand.new@startup.example').code })).status, 'new_user', 'sign-up is still a sign-up');
+    });
+
+    await test('01h A new workspace gets one welcome email; a code user is offered a password after a while, once more later, then never; a trusted browser needs no code', async function(){
+      window.OONTU_PW_NUDGE_MS = 600;
+      try {
+        await signUpAll('Staffing agency', 'Dana Lee', 'dana@startup.example');
+        const mails = authApi._welcomeMail().filter(function(m){ return m.to === 'dana@startup.example'; });
+        eq(mails.length, 1, 'one welcome email'); assert(/is live on Oontu/.test(mails[0].subject), mails[0].subject);
+        eq(authApi._verifyMailCount('dana@startup.example'), 0, 'and no verification email: the code already proved it');
+        assert(!document.getElementById('pw-nudge'), 'not straight away');
+        await sleep(700); assert(document.getElementById('pw-nudge'), 'a little later, a quiet password suggestion'); assert(/Faster next time\?/.test(document.getElementById('pw-nudge').textContent));
+        pwNudgeDismiss(); assert(!document.getElementById('pw-nudge'), '"Codes are fine" hides it');
+        assert(authTrustedToken('dana@startup.example') || await waitFor(function(){ return !!authTrustedToken('dana@startup.example'); }, 2000), 'this browser is trusted after a code');
+        // a reload while still signed in: "Continue as Dana" goes straight in
+        authAppSession = { method:'', email:'' }; const app = document.getElementById('app'); app.classList.add('hidden'); app.classList.remove('flex'); document.getElementById('onboarding').classList.remove('hidden');
+        authFlow = authInitialState(); authGo('email'); await sleep(10);
+        assert(q('[data-act=si-continue]'), 'Continue as Dana'); const before = authApi._outboxCount('dana@startup.example');
+        await click('[data-act=si-continue]'); await idle(); await waitFor(function(){ return !!q('[data-act=si-enter]') || appVisible(); }, 4000); await openApp();
+        assert(appVisible(), 'in without a code'); eq(authApi._outboxCount('dana@startup.example'), before, 'no code was sent');
+        // signing out forgets the browser; the third code sign-in asks once more, a second "no" is final
+        for(let i = 0; i < 2; i++){ authApi._advance(40000); backToSignIn(); assert(!authTrustedToken('dana@startup.example'), 'signed out: no longer trusted'); await signInWithCode('dana@startup.example'); }
+        await sleep(700); assert(document.getElementById('pw-nudge') && /signed in with a code 3 times/.test(document.getElementById('pw-nudge').textContent), 'asked once more on the third code sign-in');
+        pwNudgeDismiss(); authApi._advance(40000); backToSignIn(); await signInWithCode('dana@startup.example'); await sleep(700); assert(!document.getElementById('pw-nudge'), 'then never again');
+        // setting a password ends it for good
+        authApi._advance(40000); backToSignIn(); await signInWithCode('alex@northstar.example'); await sleep(700);
+        assert(!document.getElementById('pw-nudge'), 'someone who already has a password is never asked');
+      } finally { delete window.OONTU_PW_NUDGE_MS; }
+    });
+
+    await test('01i Plans: the trial shown as results, locks that explain, Boosts, compare and choose, read-only after the trial', async function(){
+      await signInWithCode('test@incomplete.com');
+      const card = function(){ return document.getElementById('trial-card'); };
+      assert(card(), 'the owner sees the trial card'); assert(/Your 14 days so far/.test(card().textContent) && /Floor · 9 days left/.test(card().textContent), card().textContent);
+      eq(Array.from(card().querySelectorAll('.trial-nums b')).map(function(b){ return b.textContent; }).join('|'), '3|18|5|16 h', 'jobs, candidates, interviews, hours Kairo saved');
+      assert(!/\bAI\b/.test(card().textContent), 'no "AI" wording');
+      // locks: visible, explained, and the owner can try
+      assert(navPlanLocked('contract-hiring') && !navPlanLocked('client-management'), 'Floor includes client billing, not contract hiring');
+      planLockOpen('contract-hiring'); const dlg = document.getElementById('plan-lock-root').textContent;
+      assert(/Contract hiring and timesheets/.test(dlg) && /Included in Network/.test(dlg) && /Contract Desk/.test(dlg) && /per active contractor/.test(dlg), dlg);
+      planTry('boost'); assert(!navPlanLocked('contract-hiring'), 'the Boost unlocks just that'); assert(/billed only for who uses it/i.test(document.querySelector('.app-toasts').textContent));
+      eq(wsPlanState().plan.name, 'Floor', 'still on Floor');
+      // compare and choose
+      showView('admin-dashboard'); wsPlanCompareOpen(); const cmp = document.getElementById('plan-compare-root').textContent;
+      assert(/Desk/.test(cmp) && /Floor/.test(cmp) && /Network/.test(cmp) && /LinkedIn Reach/.test(cmp) && /always free/.test(cmp), 'all plans and Boosts');
+      wsPlanChoose('plan-network'); eq(wsPlanState().plan.name, 'Network'); eq(wsPlanState().status, 'active'); assert(!card(), 'a chosen plan: no trial card');
+      // a trial that has run out: readable, nothing new
+      const wp = wsPlanCurrent(); wp.status = 'trial'; wp.trialEndsAt = Date.now() - 1000; showView('admin-dashboard');
+      assert(/Your trial has ended/.test(card().textContent) && /read-only/.test(card().textContent), 'says so');
+      assert(wsReadOnlyBlocked(), 'creating is paused'); assert(/Choose a plan/.test(document.querySelector('.app-toasts').textContent));
+      // a recruiter is never asked to buy
+      authAppSession.role = 'recruiter'; assert(!wsTrialCardHTML(), 'only the owner sees plan prompts'); planLockOpen('vendors'); assert(/Ask your owner/.test(document.getElementById('plan-lock-root').textContent)); planLockClose();
+    });
+
+    await test('01j Hide for now: the setup card folds into a small pill in the top bar; its panel lists only what is left; snooze, show on Home, all done', async function(){
+      SIGNUP_LEADS.length = 0;
+      await signUpAll('Staffing agency', 'Dana Lee', 'dana@startup.example');
+      const pill = function(){ return document.getElementById('ws-pill'); };
+      assert(document.getElementById('ws-card') && !pill(), 'on Home the full card shows, no pill');
+      wsHideForNow(); assert(!document.getElementById('ws-card'), 'the card leaves');
+      assert(pill() && /Setup 0\/7/.test(pill().textContent) && pill().getAttribute('aria-label') === 'Workspace setup, 0 of 7 done', 'a small pill in the top bar');
+      assert(pill().getBoundingClientRect().width < 160, 'small: ' + pill().getBoundingClientRect().width);
+      assert(await waitFor(function(){ return /top bar/.test(document.querySelector('.app-toasts').textContent); }, 3000), 'says where it went, once it lands');
+      showView('jobs'); await idle(); assert(pill(), 'it follows every screen');
+      pill().click(); const pop = document.getElementById('ws-pop'); assert(pop && /Complete your workspace/.test(pop.textContent) && pop.querySelectorAll('.ws-pop__item').length === 7, 'the panel lists what is left');
+      document.body.click(); assert(!document.getElementById('ws-pop'), 'a click elsewhere closes it');
+      wsSetup.done['agency-profile'] = true; wsRefreshCard(); assert(/Setup 1\/7/.test(pill().textContent), 'the ring fills as items are done');
+      pill().click(); eq(document.querySelectorAll('#ws-pop .ws-pop__item').length, 6, 'only the unfinished'); wsPillShowOnHome(); await idle();
+      assert(document.getElementById('ws-card') && !pill(), 'Show on Home brings the card back');
+      wsHideForNow(); pill().click(); wsPillSnooze(); assert(!pill(), 'Remind me tomorrow: out of the way'); showView('admin-dashboard'); assert(!document.getElementById('ws-card'), 'on Home too');
+      wsSetup.snoozeUntil = 0; showView('jobs'); assert(pill(), 'back the next day');
+      state.role = 'recruiter'; wsPillRender(); assert(!pill(), 'recruiters never see setup prompts'); state.role = 'admin'; wsPillRender();
+      wsItems(wsSetup).forEach(function(k){ wsSetup.done[k] = true; }); wsRefreshCard();
+      assert(document.querySelector('#ws-pill-slot .is-ready') && /Workspace ready/.test(document.getElementById('ws-pill-slot').textContent), 'all done: it says so');
+      assert(await waitFor(function(){ return !document.getElementById('ws-pill-slot').textContent; }, 4000), 'then goes for good');
+    });
+
+    await test('01k Skip: any setup item can be skipped; it leaves Home and the pill, waits in Settings, and can come back', async function(){
+      SIGNUP_LEADS.length = 0;
+      await signUpAll('Staffing agency', 'Dana Lee', 'dana@startup.example');
+      const titles = function(sel){ return Array.from(document.querySelectorAll(sel + ' .ws-item__title, ' + sel + ' .ws-pop__item span:not(.first-run__check)')).map(function(e){ return e.textContent; }); };
+      assert(document.querySelectorAll('#ws-card .ws-skip').length === 7, 'every unfinished row can be skipped');
+      wsSkip('agency-marketplace'); await sleep(520);
+      assert(titles('#ws-card').indexOf('Marketplace listing') < 0, 'it leaves the list'); assert(/0 of 6 done · 1 skipped/.test(cardText()), 'the count says so: ' + cardText());
+      assert(/skipped\. It’s in Settings/.test(document.querySelector('.app-toasts').textContent) && document.querySelector('.app-toast__undo'), 'with Undo');
+      document.querySelector('.app-toast__undo').click(); assert(/0 of 7 done/.test(cardText()), 'Undo brings it back');
+      wsSkip('agency-marketplace'); wsSkip('jobs-site'); await sleep(520);
+      wsHideForNow(); document.getElementById('ws-pill').click();
+      eq(document.querySelectorAll('#ws-pop .ws-pop__item').length, 5, 'the pill lists only what is left'); assert(/Setup 0\/5/.test(document.getElementById('ws-pill').textContent), 'and counts only that');
+      wsPillOpen = false; showView('setup-hub'); await idle();
+      const s = document.querySelector('#ws-setup-section').textContent;
+      assert(/Skipped for now/.test(s) && /Marketplace listing/.test(s) && /Oontu jobs website/.test(s) && document.querySelectorAll('#ws-setup-section .ws-skip--back').length === 2, 'Settings keeps the skipped ones, with Bring back');
+      wsUnskip('jobs-site'); assert(document.querySelectorAll('#ws-setup-section .ws-skip--back').length === 1, 'Bring back'); assert(/0 of 6 done · 1 skipped/.test(document.querySelector('#ws-setup-section').textContent));
+      wsItems(wsSetup).forEach(function(k){ if(!wsItemSkipped(k)) wsSetup.done[k] = true; }); wsRefreshCard(); showView('setup-hub'); await idle();
+      assert(/Everything you kept on the list is done/.test(document.querySelector('#ws-setup-section').textContent) && document.querySelector('#ws-setup-section .ws-skip--back'), 'done, with the skipped one still waiting in Settings');
+    });
+
+    await test('01l One account-type switch for developers: Staffing | Corporate, tagged Demo, both ways', async function(){
+      state.role = 'admin'; const app = document.getElementById('app'); app.classList.remove('hidden'); app.classList.add('flex'); document.getElementById('onboarding').classList.add('hidden');
+      ORG_STRUCTURE.profile.orgType = 'Staffing agency'; CO.demo = null; CO.agencyView = null; renderSidebar(); showView('admin-dashboard'); acctSwitchSync();
+      eq(document.querySelectorAll('.acct-seg').length, 1, 'one switch in the whole prototype'); assert(!document.getElementById('co-menu-toggle'), 'the old menu entry is gone');
+      eq(document.querySelector('.acct-switch .demo-tag').textContent, 'Demo', 'tagged Demo');
+      eq(Array.from(document.querySelectorAll('.acct-seg [data-acct]')).map(function(b){ return b.textContent + ':' + b.getAttribute('aria-checked'); }).join('|'), 'Staffing:true|Corporate:false');
+      acctTypeSwitch('corporate'); assert(coCorp(), 'corporate'); eq(document.querySelector('[data-acct=corporate]').getAttribute('aria-checked'), 'true'); assert(!document.querySelector('[data-nav="client-management"]'), 'no Clients in a company workspace');
+      acctTypeSwitch('agency'); assert(!coCorp(), 'back to staffing'); eq(ORG_STRUCTURE.profile.orgType, 'Staffing agency');
+      ORG_STRUCTURE.profile.orgType = 'Corporate'; CO.demo = null; acctTypeSwitch('agency'); assert(!coCorp(), 'a corporate workspace can be viewed as staffing'); acctTypeSwitch('corporate'); eq(ORG_STRUCTURE.profile.orgType, 'Corporate', 'and back');
+      ORG_STRUCTURE.profile.orgType = 'Staffing agency'; CO.demo = null; CO.agencyView = null;
+    });
+
+    await test('01m Developer tools: three folding groups, one open at a time, the clock moves with the menu still open', async function(){
+      state.role = 'admin'; renderSidebar(); showView('admin-dashboard'); APS.clockOffsetMs = 0; apClockAhead = 0; DEV_OPEN = ''; devToolsSync();
+      eq(document.querySelector('.acct-switch .o-menu__head').textContent.replace(/\s+/g, ' ').trim(), 'Developer tools Demo');
+      eq(Array.from(document.querySelectorAll('#dev-grps .dev-grp summary > span:first-of-type')).map(function(s){ return s.textContent; }).join('|'), 'Pages outside the app|Secure links|Approval clock');
+      assert(!document.querySelector('#ap-dev') && !document.querySelector('#iv-dev'), 'no loose prototype blocks left in the menu');
+      Array.from(document.querySelectorAll('#dev-grps .dev-grp')).forEach(function(d){ assert(d.querySelector('.dev-why') && d.querySelector('.dev-why').textContent.length > 40, d.getAttribute('data-dev') + ' says what it is for'); });
+      const grp = function(id){ return document.querySelector('#dev-grps .dev-grp[data-dev="' + id + '"]'); };
+      grp('links').open = true; devToggle(grp('links')); grp('clock').open = true; devToggle(grp('clock'));
+      assert(grp('clock').open && !grp('links').open, 'one open at a time');
+      toggleRoleMenu(); assert(!document.getElementById('role-menu').classList.contains('hidden'), 'menu open');
+      assert(/Real time/.test(grp('clock').querySelector('summary').textContent) && grp('clock').querySelector('.is-quiet').disabled, 'real time, nothing to reset');
+      grp('clock').querySelector('button[onclick="apClock(9)"]').click(); await sleep(20);
+      assert(!document.getElementById('role-menu').classList.contains('hidden'), 'the menu stays open after a redraw');
+      assert(grp('clock').open, 'and the clock group stays open'); assert(/\+1 day/.test(grp('clock').querySelector('summary').textContent) && /1 day of working time ahead/.test(grp('clock').querySelector('.dev-clock').textContent), 'readout moved');
+      grp('clock').querySelector('.is-quiet').click(); await sleep(20); eq(APS.clockOffsetMs, 0, 'reset'); assert(/Real time/.test(grp('clock').querySelector('summary').textContent));
+      toggleRoleMenu(true); DEV_OPEN = '';
+    });
+
+    await test('01c A wrong code slides the boxes back out with an error; "Open now" skips the welcome', async function(){
+      await enterEmail('alex@northstar.example');
+      const t0 = Date.now();
+      setv('.oa-otp__input', wrongCode(authApi._latestEmail('alex@northstar.example').code)); await sleep(60);
+      assert(q('.oa-otp.is-collapsing'), 'it starts verifying at once');
+      assert(await waitFor(function(){ return !q('.oa-otp.is-collapsing') && q('.oa-otp.is-error'); }, 4000), 'then reverses with the error');
+      assert(Date.now() - t0 >= 800, 'a no takes as long to read as a yes, so it never flickers');
+      eq(heading(), 'Check your inbox.'); assert(!appVisible());
+      await enterCode(authApi._latestEmail('alex@northstar.example').code);
+      assert(!!q('[data-act=si-enter]'), 'the welcome'); await click('[data-act=si-enter]'); await settle(); assert(appVisible(), 'Open now goes straight in');
     });
 
     await test('04a Wrong code shows an error, clears the boxes and keeps the code step', async function(){
@@ -598,6 +824,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
 
     await test('02L Where the team is based is the last question: it sets the workspace defaults and creates the workspace', async function(){
       await signUpTo('place', 'agency');
+      delete window.OONTU_DETECT_COUNTRY;
       eq(suTitle(), 'Where’s your team based?'); eq(qa('.oa-place').length, 1); eq(q('.oa-place b').textContent, 'Yes, India');
       eq(qa('.oa-chip--sm').map(function(c){ return c.textContent; }).join('|'), 'UAE|United Kingdom|United States|Singapore');
       await suPick('GB');
@@ -1103,7 +1330,8 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       await saveSheet();
       assert(!wsSheet, 'closed'); eq(ORG_STRUCTURE.profile.brandName, 'Startup Talent'); eq(ORG_STRUCTURE.profile.gstin, '24AAACC1206D1ZM');
       eq((await authApi.session()).workspaces[0].name, 'Startup Talent', 'renamed on the server');
-      assert(/1 of 7 done/.test(cardText()) && document.querySelector('#ws-card .ws-item.is-done'), 'ticked');
+      assert(/1 of 7 done/.test(cardText()) && !document.querySelector('#ws-card .ws-item.is-done') && document.querySelectorAll('#ws-card .ws-item').length === 6, 'Home lists only what is still unfinished');
+      assert(wsItemDone('agency-profile'), 'and it is still counted as done');
       assert(/Agency profile saved/.test(document.querySelector('.app-toasts').textContent), 'toast');
       wsOpenItem('agency-tools'); suConnect('calendar'); await sleep(600);
       assert(/Connected/.test(document.querySelector('.ws-sheet').textContent)); await saveSheet();
@@ -1177,15 +1405,15 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       showView('oontu-signups'); await idle();
       const rows = function(){ return Array.from(document.querySelectorAll('#oontu-signups-table tbody tr')); };
       eq(rows().length, 7, 'seven sign-ups still answering questions');
-      eq(LEAD_STOP_STEPS.join('|'), 'Workspace type|Team size|Location|Name|Email|Mobile|Password');
+      eq(LEAD_STOP_STEPS.join('|'), 'Workspace type|Team size|Location|Name|Email|Email code');
       assert(Array.from(document.querySelectorAll('#oontu-signups-table th')).some(function(th){ return th.textContent==='Team size'; }), 'Team size column');
       const calls = oontuSignupsRows().filter(leadNeedsCall).map(function(l){ return teamSizeRank(l.teamSize); });
       assert(calls.length>1 && calls.every(function(r, i){ return i===0 || r<=calls[i-1]; }), 'leads that need a call: bigger teams first');
       assert(oontuSignupsRows().slice(0, calls.length).every(leadNeedsCall), 'and they come first');
       assert(/Bigger teams are called first\./.test(document.getElementById('main-content').textContent));
-      eq(leadStoppedAt(signupLeadById('lead-s1')), 'Password'); eq(leadStoppedAt(signupLeadById('lead-s2')), 'Mobile'); eq(leadStoppedAt(signupLeadById('lead-s7')), 'Workspace type');
+      eq(leadStoppedAt(signupLeadById('lead-s1')), 'Email code'); eq(leadStoppedAt(signupLeadById('lead-s2')), 'Email code'); eq(leadStoppedAt(signupLeadById('lead-s6')), 'Email', 'stopped at the email question'); eq(leadStoppedAt(signupLeadById('lead-s7')), 'Workspace type');
       const stops = document.getElementById('oontu-signups-stops').textContent;
-      assert(/Workspace type/.test(stops) && /Name/.test(stops) && /Mobile/.test(stops) && /Password/.test(stops) && !/Workspace setup|Verify email/.test(stops), 'Where people stop uses the question names');
+      assert(/Workspace type/.test(stops) && /Name/.test(stops) && /Email code/.test(stops) && !/Plan/.test(stops) && !/Mobile|Password/.test(stops) && !/Workspace setup|Verify email/.test(stops), 'Where people stop uses the question names');
       assert(Array.from(document.querySelectorAll('[data-lead-filter]')).some(function(b){ return b.textContent==='Setup not finished'; }), 'separate filter');
       setSignupFilter('Setup not finished');
       eq(rows().length, 2); assert(rows().every(function(r){ return /Setup \d of \d/.test(r.textContent) && /In product/.test(r.textContent); }), 'owners in the product, with checklist progress');
@@ -1193,6 +1421,51 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       setSignupFilter('All');
       openSignupSheet('lead-s3'); assignSignupLead('Farhan Ali'); eq(leadFollowUp(signupLeadById('lead-s3')).label, 'Assigned');
       suLeadSheet.call = { outcome:'will_finish', reason:'Too many steps', nextDate:'', note:'' }; logSignupCall(); eq(leadFollowUp(signupLeadById('lead-s3')).label, 'Will finish');
+    });
+
+    await test('06n Call outcomes: Not interested closes with reason, note, who and when; has its own tab and summary; can be reopened', async function(){
+      state.role = 'oontu'; const app = document.getElementById('app'); app.classList.remove('hidden'); app.classList.add('flex'); document.getElementById('onboarding').classList.add('hidden');
+      SIGNUP_LEADS.length = 0; seedSignupLeads();
+      suLeadFilter = 'All'; suLeadSearch = ''; suLeadShowClosed = false; suLeadCountry = '';
+      showView('oontu-signups'); await idle();
+      const rows = function(){ return Array.from(document.querySelectorAll('#oontu-signups-table tbody tr')); };
+      const log = function(id, o){ openSignupSheet(id); suLeadSheet.call = Object.assign({ outcome:'', reason:'', nextDate:'', note:'' }, o); logSignupCall(); return signupLeadById(id); };
+      const queue = signupsNeedingFollowUp();
+      // validation: an outcome and a reason are both required, and nothing is saved without them
+      openSignupSheet('lead-s4'); suLeadSheet.call = { outcome:'not_interested', reason:'', nextDate:'', note:'' }; const before = signupLeadById('lead-s4').followUp.calls.length; logSignupCall();
+      eq(signupLeadById('lead-s4').followUp.calls.length, before, 'no reason, nothing saved'); assert(suLeadSheet.errors.reason, 'the reason is asked for');
+      // every outcome
+      let l = log('lead-s1', { outcome:'will_finish', reason:'Just exploring' }); eq(leadFollowUp(l).label, 'Will finish');
+      l = log('lead-s2', { outcome:'needs_help', reason:'Too many steps' }); eq(leadFollowUp(l).label, 'Needs help');
+      openSignupSheet('lead-s6'); suLeadSheet.call = { outcome:'call_back', reason:'Pricing', nextDate:'', note:'' }; logSignupCall(); assert(suLeadSheet.errors.nextDate, 'call back needs a date');
+      l = log('lead-s6', { outcome:'call_back', reason:'Pricing', nextDate:'2099-01-01' }); assert(/Call back/.test(leadFollowUp(l).label), 'call back later');
+      // not interested
+      l = log('lead-s4', { outcome:'not_interested', reason:'Pricing', note:'Too expensive for six seats.' });
+      const call = l.followUp.calls[l.followUp.calls.length-1];
+      eq(l.status, 'not_interested'); eq(call.outcome, 'not_interested'); eq(call.reason, 'Pricing'); eq(call.note, 'Too expensive for six seats.'); assert(call.at && call.by, 'when and by whom');
+      assert(l.followUp.assignedTo, 'an admin is assigned'); eq(leadClosure(l).reason, 'Pricing');
+      assert(!oontuSignupsRows().some(function(x){ return x.id==='lead-s4'; }), 'out of the active list');
+      assert(!leadNeedsCall(l) && signupsNeedingFollowUp() <= queue, 'and out of the follow-up queue');
+      // the tab, its table and the summary
+      setSignupFilter('Not interested');
+      eq(rows().length, 4, 'the three seeded plus this one'); assert(rows().every(function(r){ return !/Within 24 h|Call needed/.test(r.textContent); }), 'no follow-up status here');
+      assert(Array.from(document.querySelectorAll('#oontu-signups-table th')).some(function(th){ return th.textContent==='Drop-off reason'; }), 'a reason column');
+      assert(/Pricing/.test(rows()[0].textContent) && /Too expensive for six seats/.test(rows()[0].textContent), 'the newest first, with its reason and note');
+      const sum = document.getElementById('oontu-signups-ni').textContent;
+      assert(/Why people say no/.test(sum) && /Most common: Pricing \(75%\)/.test(sum) && /Too many steps/.test(sum), 'summary: '+sum);
+      eq(document.getElementById('lead-ni-count').textContent, '4', 'the tab count');
+      setSignupFilter('All'); eq(document.getElementById('oontu-signups-ni').textContent, '', 'the summary belongs to its tab');
+      // the drawer
+      openSignupSheet('lead-s4'); const sheet = document.getElementById('signup-sheet-root').textContent;
+      assert(/Closed because/.test(sheet) && /Pricing/.test(sheet) && /Too expensive for six seats/.test(sheet) && /Log a new call/.test(sheet), 'the drawer shows the reason and note, and a way back');
+      // interest changes: history stays, status updates
+      const n = l.followUp.calls.length;
+      l = log('lead-s4', { outcome:'needs_help', reason:'Wanted a demo first', note:'Changed her mind after a demo.' });
+      eq(l.followUp.calls.length, n + 1, 'the call history is kept'); eq(l.followUp.calls[n-1].outcome, 'not_interested');
+      assert(l.status !== 'not_interested' && leadFollowUp(l).label === 'Needs help', 'back in the queue');
+      assert(leadTimeline(l).some(function(e){ return /Back in the follow-up queue/.test(e.text); }) && leadTimeline(l).some(function(e){ return /Not interested/.test(e.text); }), 'timeline has both');
+      setSignupFilter('Not interested'); eq(rows().length, 3); setSignupFilter('All');
+      eq(document.getElementById('lead-ni-count').textContent, '3');
     });
 
   }

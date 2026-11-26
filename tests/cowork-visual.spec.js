@@ -25,25 +25,29 @@
     });
 
     await t('every agent that is On has 5–8 waiting items in Northstar, as real cards; nothing waiting shows “All caught up · checked …”', async function(){
-      CW.order.forEach(function(id){ var n = caNeeds(id).length; ok(n >= 5 && n <= 8, id + ': ' + n); caOpenAgent(id); var cards = qa('#ca-sec-waiting .ca-wc'); ok(cards.length === Math.min(6, n), id + ' cards: ' + cards.length); cards.forEach(function(c){ ok(c.querySelector('.ca-wc__a button'), id + ' a card with actions'); }); });
-      caOpenAgent('talent-discovery'); var c = q('#ca-sec-waiting .ca-wc'); ok(c.querySelector('.ca-ring') && c.querySelector('.ca-av') && c.querySelector('.ca-jobchip') && qa('.ca-chip2--good', c).length >= 1, 'a match card: ring, avatar, job chip, green reasons');
-      ok(qa('button', c).map(function(b){ return b.textContent; }).join().indexOf('Add to job,Not a fit,View profile') === 0, 'Add to job, Not a fit, View profile'); ok(q('[data-add-all]') && /^Add all \d+$/.test(q('[data-add-all]').textContent), 'Add all');
+      /* 2026-11-23: Talent Discovery's picks are worked in Talent pool › Prospects; Cowork shows one hand-off card for them (other items stay cards) */
+      CW.order.forEach(function(id){ var n = caNeeds(id).length; ok(n >= 5 && n <= 8, id + ': ' + n); caOpenAgent(id); var picks = id === 'talent-discovery' ? caTdWaiting().length : 0, cards = qa('#ca-sec-waiting .ca-wc');
+        ok(cards.length === Math.min(6, n - picks), id + ' cards: ' + cards.length); cards.forEach(function(c){ ok(c.querySelector('.ca-wc__a button'), id + ' a card with actions'); });
+        if(picks) ok(+q('#ca-sec-waiting [data-pr-hand]').getAttribute('data-pr-hand') === picks, id + ' hand-off card'); });
+      caOpenAgent('talent-discovery'); var c = q('#ca-sec-waiting [data-pr-hand]'); ok(c && c.querySelector('.pr-hand__jobs button') && c.querySelector('[data-pr-open]'), 'the hand-off: jobs and Review in Prospects');
+      ok(!q('#ca-sec-waiting [data-wait^="pk:"]') && !q('[data-add-all]'), 'no pick cards, no Add all');
       var keep = caTdWaiting().map(function(n){ return n.id; }); keep.forEach(function(k){ var p = k.split(':'); CA_DEC[p[1] + '|' + p[2]] = { d:'dismissed' }; }); caRefresh(); ok(/All caught up · checked \d+ min ago|All caught up · checked just now/.test(q('#ca-sec-waiting').textContent), 'empty state: ' + q('#ca-sec-waiting').textContent); keep.forEach(function(k){ var p = k.split(':'); delete CA_DEC[p[1] + '|' + p[2]]; });
     });
 
-    await t('Talent Discovery: adding one removes its card, puts the person on the job, and every number on the page and the Agents card moves the same way', async function(){
-      caOpenAgent('talent-discovery'); var n0 = tile('new'), a0 = tile('added'), w0 = caTdWaiting().length; ok(n0 === w0 && n0 >= 5, 'New matches = the cards: ' + n0 + ' / ' + w0);
-      var first = caTdWaiting()[0], subs0 = SUBMISSIONS.length; q('[data-wait="' + first.id + '"] [data-act=add]').click(); await sleep(300);
-      ok(!q('[data-wait="' + first.id + '"]'), 'the card is gone'); ok(SUBMISSIONS.length === subs0 + 1 && SUBMISSIONS.some(function(s){ return s.candidateId === first.candidateId && s.jobId === first.jobId; }), 'on the job');
-      ok(tile('new') === n0 - 1 && tile('added') === a0 + 1, 'numbers: new ' + tile('new') + ', added ' + tile('added')); var key = q('[data-sec=numbers][data-where=today]').getAttribute('data-nums');
+    await t('Talent Discovery: adding one in Prospects puts the person on the job, and every number on the agent page and the Agents card moves the same way', async function(){
+      caOpenAgent('talent-discovery'); var n0 = tile('new'), a0 = tile('added'), w0 = caTdWaiting().length; ok(n0 === w0 && n0 >= 5, 'New matches = the picks: ' + n0 + ' / ' + w0);
+      ok(+q('[data-pr-hand]').getAttribute('data-pr-hand') === w0, 'the hand-off card says the same');
+      var first = caTdWaiting()[0], subs0 = SUBMISSIONS.length; prDo([first.id], 'add'); await sleep(300);
+      ok(SUBMISSIONS.length === subs0 + 1 && SUBMISSIONS.some(function(s){ return s.candidateId === first.candidateId && s.jobId === first.jobId; }), 'on the job');
+      caOpenAgent('talent-discovery'); await sleep(20); ok(tile('new') === n0 - 1 && tile('added') === a0 + 1, 'numbers: new ' + tile('new') + ', added ' + tile('added')); ok(+q('[data-pr-hand]').getAttribute('data-pr-hand') === n0 - 1, 'hand-off card follows'); var key = q('[data-sec=numbers][data-where=today]').getAttribute('data-nums');
       cowork(); ok(q('.ca-card[data-agent="talent-discovery"] .ca-card__nums').getAttribute('data-nums') === key, 'the Agents card agrees: ' + key); ok(q('.ca-card[data-agent="talent-discovery"] [data-waiting]').textContent === (n0 - 1) + ' waiting', 'and its chip');
-      caOpenAgent('talent-discovery'); var two = caTdWaiting()[0]; q('[data-wait="' + two.id + '"] [data-act=nf]').click(); ok(q('.ca-menu [role=menuitem]'), 'Not a fit asks why'); qa('.ca-menu [role=menuitem]')[0].click(); await sleep(300); ok(CA_DEC[two.jobId + '|' + two.candidateId].d === 'dismissed' && tile('new') === n0 - 2, 'Not a fit removes it too');
+      var two = caTdWaiting()[0]; prDo([two.id], 'nf', PR_REASONS[0]); await sleep(300); caOpenAgent('talent-discovery'); await sleep(20); ok(CA_DEC[two.jobId + '|' + two.candidateId].d === 'dismissed' && tile('new') === n0 - 2, 'Not a fit removes it too');
     });
 
     var check = function(label){ return t(label + ': the numbers row equals the lists on the same page, for every agent', async function(){
       var bad = [];
       CW.order.forEach(function(id){ if(!caWorking(id)) return; caOpenAgent(id); CA.waitAll = true; caRefresh(); var waiting = caNeeds(id);
-        if(id === 'talent-discovery'){ if(tile('new') !== qa('#ca-sec-waiting [data-wait^="pk:"]').length) bad.push(id + ' new ' + tile('new') + ' vs cards ' + qa('#ca-sec-waiting [data-wait^="pk:"]').length); var h = +((q('[data-jt-filter] [data-value=healthy]') || {}).textContent || '').replace(/\D/g, ''); if(tile('enough') !== h) bad.push(id + ' enough ' + tile('enough') + ' vs table ' + h); }
+        if(id === 'talent-discovery'){ var hand = +((q('#ca-sec-waiting [data-pr-hand]') || { getAttribute:function(){ return 0; } }).getAttribute('data-pr-hand')); if(tile('new') !== hand) bad.push(id + ' new ' + tile('new') + ' vs hand-off ' + hand); var h = +((q('[data-jt-filter] [data-value=healthy]') || {}).textContent || '').replace(/\D/g, ''); if(tile('enough') !== h) bad.push(id + ' enough ' + tile('enough') + ' vs table ' + h); }
         if(id === 'engagement'){ if(tile('ready') !== waiting.filter(function(n){ return n.type === 'reply'; }).length) bad.push('ready'); [['sent','Sent'],['replies','Replied'],['interested','Interested'],['ready','Ready to shortlist']].forEach(function(x){ if(tile(x[0]) !== funnel(x[1])) bad.push(id + ' ' + x[0] + ' ' + tile(x[0]) + ' vs funnel ' + funnel(x[1])); }); }
         if(id === 'interviews'){ if(tile('feedback') !== +q('[data-fb-count]').textContent) bad.push('feedback ' + tile('feedback') + ' vs board ' + q('[data-fb-count]').textContent); }
         if(id === 'offers-joining'){ var col = function(k){ return +q('[data-risk="' + k + '"] .ca-count').textContent; }; if(tile('high') !== col('High')) bad.push('high ' + tile('high') + ' vs ' + col('High')); if(tile('watched') !== col('Low') + col('Medium') + col('High')) bad.push('watched'); if(tile('join14') !== caJoinings(14).length) bad.push('join14'); }

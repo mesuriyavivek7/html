@@ -5,15 +5,22 @@ Brand palette
 - Signature Green: `#10B981`
 - Warm White: `#F8F8F6`
 
-## App icon, favicon and compact mark (2026-11-20)
-The icon is the wordmark's own first letter and full stop: **"O."**. The O is the exact outline of the wordmark's O (Inter ExtraBold), and the green dot sits on the baseline at the wordmark's own spacing.
-- **App icon:** a Deep Navy tile with a macOS-style 22.4% corner radius, a white O and a Signature Green dot.
-- **Light variant:** a Warm White tile with a navy O.
-- **Favicon:** the same tile, with the mark drawn larger so it still reads at 16 px.
-- **Compact mark:** the mark alone, with no tile.
-- **Collapsed sidebar rail:** shows the app icon.
-- **PNG exports:** rendered from the SVGs at 1024 px, then downscaled.
-- **Earlier versions:** kept in `original/2026-11-20/`.
+## App icon, favicon and compact mark (2026-11-23: "O. on Deep Navy")
+The icon is the wordmark's own first letter and full stop: **"O."**. The O is the exact outline of the wordmark's O (Inter ExtraBold), and the green dot keeps the wordmark's own spacing. Nothing is redrawn.
+- **App icon** (`oontu-app-icon.svg`):
+  - **Tile:** a continuous-curve squircle in Deep Navy with a soft top light (#14305A → #0B1F3B).
+  - **Mark:** a white O and a Signature Green dot, about 58% of the tile, optically centred.
+- **One file, two drawings:** at 48 px and below, a small-size version takes over by itself, through a media query inside the SVG. The O grows and the dot gets bigger, so the icon never disappears in a browser tab or the collapsed sidebar rail (32 px). Use the same file everywhere; never pick a size by hand.
+- **Light variant** (`oontu-app-icon-light.svg`): a white squircle with a hairline edge and a navy O. Best kept for print and light surfaces, because it blends into white home screens.
+- **Favicon:** `favicon.svg` is the app icon, so the small-size version applies by itself. `favicon-16/32/48.png` are the small-size version in the squircle, with transparent corners.
+- **Platform PNGs:** `oontu-app-icon-180/192/512/1024.png` are full-bleed squares. iOS, Android and the stores apply their own corner mask, so never pre-round them.
+- **Never:**
+  - Kairo colours.
+  - Changing the dot colour.
+  - Tilting.
+  - The full wordmark in the tile.
+  - Outlines.
+- **Earlier versions:** kept in `original/2026-11-20/`. The 2026-11-23 round replaced the rounded-square tile.
 
 ## Recommended usage
 - Header / primary brand: `oontu-wordmark.svg` (subtle shadow).

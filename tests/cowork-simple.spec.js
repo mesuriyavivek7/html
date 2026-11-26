@@ -158,7 +158,7 @@
     });
 
     await t('no Cowork Settings, Activity or Agents page is taller than 2,200 px at 1440 with the cards collapsed (Northstar)', async function(){
-      ok(innerWidth === 1440, 'at 1440: ' + innerWidth); var tall = []; cowork(); await sleep(5); if(height() > 2200) tall.push('agents ' + height()); CA.tab = 'activity'; caRefresh(); if(height() > 2200) tall.push('activity ' + height()); CA.tab = 'agents';
+      ok(innerWidth >= 1400, 'desktop width (a 1440 window reports about 1418 in headless Chrome): ' + innerWidth); var tall = []; cowork(); await sleep(5); if(height() > 2200) tall.push('agents ' + height()); CA.tab = 'activity'; caRefresh(); if(height() > 2200) tall.push('activity ' + height()); CA.tab = 'agents';
       CW.order.forEach(function(id){ ['settings','activity'].forEach(function(s){ caOpenAgent(id, s); if(height() > 2200) tall.push(id + '/' + s + ' ' + height()); }); }); ok(!tall.length, tall.join(', '));
     });
 

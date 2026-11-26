@@ -44,15 +44,15 @@
 
     await t('custom Account manager (clients, jobs, interviews, approvals; no team, no money) sees exactly those and lands on My day', async function(){
       var u = person('Account Person', AM.id); actAs(u.id);
-      ok(shown() === 'dashboard,approval-center,my-todo,jobs,interviews,client-management,settings', shown()); ok(homeFor(AM.id) === 'dashboard' && homeForMe() === 'dashboard', 'My day');
+      ok(shown() === 'dashboard,approval-center,my-todo,jobs,interviews,client-management,intelligence,settings', shown()); ok(homeFor(AM.id) === 'dashboard' && homeForMe() === 'dashboard', 'My day');
       ok(!clCanSeeMoney(), 'no money');
     });
 
     await t('custom Accounts role (billing only) sees only PayTrack and Billing and lands on PayTrack; Sourcer sees the talent pool, Cowork and LinkIt', async function(){
-      var u = person('Accounts Person', ACC.id); actAs(u.id); ok(homeFor(ACC.id) === 'admin-paytrack', 'Home is PayTrack'); ok(shown() === 'admin-paytrack,settings', shown());   // M8: Billing is PayTrack (the route redirects)
+      var u = person('Accounts Person', ACC.id); actAs(u.id); ok(homeFor(ACC.id) === 'admin-paytrack', 'Home is PayTrack'); ok(shown() === 'admin-paytrack,intelligence,settings', shown());   // M8: Billing is PayTrack (the route redirects)
       ok(document.querySelector('#sidebar-nav .nav-item[data-nav="admin-paytrack"]').textContent.trim() === 'Home', 'PayTrack is their Home entry');
       var s = person('Sourcer Person', SRC.id); actAs(s.id); ok(homeFor(SRC.id) === 'dashboard', 'Sourcer: My day'); ok(navItemAllowed(SRC, 'kairo-team') && !navItemAllowed(SRC, 'jobs'), 'the role allows Cowork, not Jobs');
-      ok(shown() === (oAgentsOn() ? 'dashboard,my-todo,talent-pool,kairo-team,li-uni-box,settings' : 'dashboard,my-todo,talent-pool,li-uni-box,settings'), 'Cowork follows the agents switch as before: ' + shown());
+      ok(shown() === (oAgentsOn() ? 'dashboard,my-todo,talent-pool,kairo-team,li-uni-box,intelligence,settings' : 'dashboard,my-todo,talent-pool,li-uni-box,intelligence,settings'), 'Cowork follows the agents switch as before: ' + shown());
     });
 
     await t('removing Clients · View from a role removes Clients at once, and its people on Clients go to Home', async function(){
@@ -86,7 +86,7 @@
     });
 
     await t('role preview uses the role’s menu and Home', async function(){
-      as('admin'); startPreviewAsRole(AM.id); ok(state.activeNav === 'dashboard', 'Home: ' + state.activeNav); ok(shown() === 'dashboard,approval-center,my-todo,jobs,interviews,client-management,settings', shown());
+      as('admin'); startPreviewAsRole(AM.id); ok(state.activeNav === 'dashboard', 'Home: ' + state.activeNav); ok(shown() === 'dashboard,approval-center,my-todo,jobs,interviews,client-management,intelligence,settings', shown());
       exitPreviewAsRole(); ok(state.activeNav === 'admin-dashboard' && /admin-revenue/.test(shown()), 'back to the Owner');
     });
 
@@ -96,9 +96,9 @@
       as('manager'); ok(shown() === 'manager-dashboard,approval-center,manager-todo,jobs,talent-pool,interviews,requisitions,vendors,marketplace,contract-hiring,kairo-team,li-uni-box,manager-team,intelligence,settings', 'corp manager: ' + shown());
       as('admin'); ok(shown() === 'admin-dashboard,approval-center,all-tasks,jobs,talent-pool,interviews,requisitions,vendors,marketplace,contract-hiring,kairo-team,li-uni-box,admin-revenue,reports,recruiter-analytics,admin-recruiters,intelligence,team-members,settings', 'corp owner: ' + shown());
       ok(homeForMe() === DEFAULT_VIEW.admin, 'corporate Home unchanged');
-      as('hm'); ok(shown() === 'hm-dashboard,hm-interviews,hm-feedback,hm-decisions,hm-jobs,requisitions,settings', 'corp hm: ' + shown());
+      as('hm'); ok(shown() === 'hm-dashboard,hm-interviews,hm-feedback,hm-decisions,hm-jobs,requisitions,intelligence,settings', 'corp hm: ' + shown());
       ORG_STRUCTURE.profile.orgType = 'Agency';
-      as('hm'); ok(shown() === 'hm-dashboard,hm-interviews,hm-feedback,hm-decisions,hm-jobs,settings', 'hm: ' + shown());
+      as('hm'); ok(shown() === 'hm-dashboard,hm-interviews,hm-feedback,hm-decisions,hm-jobs,intelligence,settings', 'hm: ' + shown());
       as('candidate'); ok(shown() === 'candidate-home,candidate-opportunities,candidate-interviews,candidate-profile-self,settings', 'candidate: ' + shown());
       as('oontu'); var o = shown(); ok(o.split(',')[0] === 'oontu-dashboard' && /oontu-settings$/.test(o), 'oontu: ' + o);
     });
