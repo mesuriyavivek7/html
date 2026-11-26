@@ -70948,6 +70948,84 @@ function cfScopeHTML(){
 .o2-apr-chip.is-pending{ border-color:#E8C77A; background:#FFF8E6; }
 .o2-apr-in-fin{ display:grid; gap:12px; }
 </style>
+<script id="o2-search-script">
+/* ============================================================
+   O2 STEP 1c: PLATFORM SEARCH (2026-11-26)
+   Switch 1c on, platform role only (state.role === 'oontu'); every tenant role keeps the recruiter search unchanged.
+   - ⌘K / Ctrl+K opens search. IDs first: TCK-, OON/, OON-CN/, OON-DN/, APR-, deal, account (ACC-) and workspace ids,
+     GSTIN, email or domain. Then names across accounts, workspaces, employees, deals, tickets, invoices, payments,
+     incidents. Results are grouped (in that order) and filtered by permission per record (bosCan …,'view').
+   - Actions where permitted: Create workspace, New ticket, Go to Approvals.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('1c') && state.role === 'oontu'; };
+  const E = function(s){ return oEsc(s == null ? '' : s); };
+  const GROUPS = ['Action', 'Account', 'Workspace', 'Employee', 'Deal', 'Ticket', 'Invoice', 'Payment', 'Incident', 'Approval'];
+  const can = function(mod, rec){ try { return bosCan(mod, 'view', rec); } catch(e){ return false; } };
+  const has = function(s, q){ return String(s || '').toLowerCase().indexOf(q) > -1; };
+  /* people without the Tickets screen (Sales) see a ticket only through an account they or their reports own */
+  const ticketInScope = function(t){ const f = BOS_VIEW_ACCESS['oontu-service']; if(!f || f()) return true; const a = t.accountId && BOS.accounts.find(function(x){ return x.id === t.accountId; }); if(!a || !a.ownerId) return false; const me = ACTIVE_PLATFORM_USER_ID, mine = [me].concat(typeof bosReportsOf === 'function' ? bosReportsOf(me).map(function(u){ return u.id || u; }) : []); return mine.indexOf(a.ownerId) > -1; };
+  const GSTIN = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/i;
+  const r = function(type, icon, label, sub, onclick){ return { type:type, icon:icon, label:E(label), sub:E(sub || ''), onclick:'closeGlobalSearch(); ' + onclick }; };
+  /* where each record type comes from, who may see it, how it opens */
+  const SOURCES = {
+    Account:function(){ return BOS.accounts.filter(function(a){ return !a.mergedInto && can('platform-account', a); }).map(function(a){ return { rec:a, keys:[a.id, a.name, a.gstin, (a.domains || []).join(' '), a.website], item:r('Account', 'building', a.name, a.id + (a.gstin ? ' · ' + a.gstin : ''), "bosOpen('account','" + a.id + "')") }; }); },
+    Workspace:function(){ return PLATFORM_TENANTS.filter(function(t){ return can('platform-tenant', t); }).map(function(t){ return { rec:t, keys:[t.id, t.name, t.ownerEmail], item:r('Workspace', 'globe', t.name, t.id + ' · ' + t.status, "openOontuTenantDetail('" + t.id + "')") }; }); },
+    Employee:function(){ return canPlatform('platform-user', 'view') ? PLATFORM_USER_ROSTER.filter(function(u){ return !u.system; }).map(function(u){ return { rec:u, keys:[u.id, u.name, u.email], item:r('Employee', 'user', u.name, u.email + ' · ' + (u.department || ''), "showView('oontu-platform-users')") }; }) : []; },
+    Deal:function(){ return BOS.opps.filter(function(o){ return can('platform-lead', o); }).map(function(o){ return { rec:o, keys:[o.id, o.title], item:r('Deal', 'trending', o.title, o.id + ' · ' + (o.stage || ''), "bosOpen('opp','" + o.id + "')") }; }); },
+    Ticket:function(){ return BOS.tickets.filter(function(t){ return can('platform-ticket', t) && ticketInScope(t); }).map(function(t){ return { rec:t, keys:[t.id, t.subject, t.contactEmail], item:r('Ticket', 'chat', t.subject, t.id + ' · ' + (t.status || ''), "bosOpen('ticket','" + t.id + "')") }; }); },
+    Invoice:function(){ return canPlatform('platform-finance', 'view') ? BOS.taxInvoices.filter(function(t){ return !t.sample; }).map(function(t){ return { rec:t, keys:[t.no, t.customer, (t.party || {}).gstin], item:r('Invoice', 'doc', t.no, t.customer + ' · ' + t.currency + ' ' + Number(t.total).toLocaleString() + ' · ' + t.status, "bosTab('oontu-finance', 6); showView('oontu-finance')") }; }) : []; },
+    Payment:function(){ return canPlatform('platform-finance', 'view') ? BOS.payLinks.map(function(l){ return { rec:l, keys:[l.id, l.docNo, l.proposalId], item:r('Payment', 'zap', l.id, (l.docNo || l.proposalId || '') + ' · ' + l.currency + ' ' + Number(l.amount).toLocaleString() + ' · ' + l.status, "bosTab('oontu-finance', 1); showView('oontu-finance')") }; }) : []; },
+    Incident:function(){ return (BOS.incidents || []).filter(function(i){ return canPlatform('platform-ticket', 'view'); }).map(function(i){ return { rec:i, keys:[i.id, i.title, i.summary], item:r('Incident', 'shield', i.title || i.id, i.id + ' · ' + (i.status || ''), "bosTab('oontu-service', 2); showView('oontu-service')") }; }); },
+    Approval:function(){ const vis = typeof bosApprovalsVisible === 'function' ? bosApprovalsVisible() : []; return vis.map(function(a){ return { rec:a, keys:[a.id, a.summary], item:r('Approval', 'check', a.summary, a.id + ' · ' + a.status, typeof o2OpenApproval === 'function' && o2On('1b') ? "o2OpenApproval('" + a.id + "')" : "bosApprovalDialog('" + a.id + "')") }; }); }
+  };
+  /* ID detection: which source an id belongs to */
+  const ID_RULES = [
+    [/^TCK-\d+$/i, 'Ticket'], [/^OON(-CN|-DN)?\/\d\d-\d\d\/\d{1,4}$/i, 'Invoice'], [/^APR-\d+$/i, 'Approval'], [/^ACC-\d+$/i, 'Account'], [/^OPP-\d+$/i, 'Deal'], [/^org-[\w-]+$/i, 'Workspace'], [/^PL-\d+$/i, 'Payment'], [/^INC-\d+$/i, 'Incident'], [/^PU-\d+$/i, 'Employee']
+  ];
+  window.o2PlatformSearch = function(query){
+    const raw = String(query || '').trim(), q = raw.toLowerCase(); if(!q) return [];
+    const out = [];
+    const actions = [];
+    if(canPlatform('platform-tenant', 'create')) actions.push(r('Action', 'plus', 'Create workspace', 'Start an assisted workspace', "showView('oontu-tenants'); openCreateTenantModal()"));
+    if(canPlatform('platform-ticket', 'create') || canPlatform('platform-ticket', 'edit')) actions.push(r('Action', 'plus', 'New ticket', 'Raise a ticket for a customer', "showView('oontu-service'); bosTicketDialog()"));
+    actions.push(r('Action', 'check', 'Go to Approvals', 'Requests waiting for you', o2On('1a') || o2On('1b') ? "showView('oontu-approvals')" : "bosTab('oontu-finance', 0); showView('oontu-finance')"));
+    actions.forEach(function(a){ const words = q.split(/\s+/); if(words.every(function(w){ return has(a.label + ' ' + a.sub, w); })) out.push(a); });
+    /* 1. an exact id or reference */
+    const rule = ID_RULES.find(function(x){ return x[0].test(raw); });
+    if(rule){ SOURCES[rule[1]]().forEach(function(s){ if(String(s.keys[0]).toLowerCase() === q) out.push(s.item); }); return out; }
+    if(GSTIN.test(raw)){ SOURCES.Account().forEach(function(s){ if(String(s.rec.gstin || '').toLowerCase() === q) out.push(s.item); }); SOURCES.Invoice().forEach(function(s){ if(String(((s.rec.party || {}).gstin) || '').toLowerCase() === q) out.push(s.item); }); return out; }
+    const domain = q.indexOf('@') > -1 ? q.split('@')[1] : (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(q) ? q : null);
+    if(domain){
+      SOURCES.Account().forEach(function(s){ const a = s.rec; if((a.domains || []).some(function(d){ return String(d).toLowerCase() === domain; }) || has(a.website, domain) || (BOS.contacts || []).some(function(c){ return c.accountId === a.id && String(c.email || '').toLowerCase().split('@')[1] === domain; })) out.push(s.item); });
+      ['Workspace', 'Employee', 'Ticket'].forEach(function(g){ SOURCES[g]().forEach(function(s){ if(s.keys.some(function(k){ return String(k || '').toLowerCase().split('@')[1] === domain || String(k || '').toLowerCase() === q; })) out.push(s.item); }); });
+      if(out.length) return out;
+    }
+    /* 2. names and text, grouped */
+    GROUPS.slice(1).forEach(function(g){ SOURCES[g]().forEach(function(s){ if(s.keys.some(function(k){ return has(k, q); })) out.push(s.item); }); });
+    return out;
+  };
+
+  const baseAll = window.globalSearchAllResults;
+  window.globalSearchAllResults = globalSearchAllResults = function(){ return on() ? o2PlatformSearch(globalSearchQuery) : baseAll.apply(this, arguments); };
+  const baseHTML = window.globalSearchHTML;
+  window.globalSearchHTML = globalSearchHTML = function(){
+    const html = baseHTML.apply(this, arguments); if(!on()) return html;
+    let out = html.replace('placeholder="Search jobs, candidates, skills…"', 'placeholder="Search accounts, workspaces, tickets, invoices, IDs…"').replace('Search across your jobs and candidates', 'Type a name, an ID (TCK-, OON/, APR-, ACC-), a GSTIN or an email domain');
+    out = out.replace(/<div class="flex gap-1 px-3 pt-2">[\s\S]*?<\/div>/, '');   // the Jobs/Candidates filter has no meaning here
+    /* group headers before the first result of each type */
+    let last = null;
+    out = out.replace(/<button onmouseenter="globalSearchHighlight=(\d+);[^"]*"[\s\S]*?<\/button>/g, function(m, i){ const it = globalSearchResults()[Number(i)]; if(!it) return m; const head = it.type !== last ? '<p class="o2-search-group">' + E(it.type === 'Action' ? 'Actions' : it.type + 's') + '</p>' : ''; last = it.type; return head + m; });
+    return out;
+  };
+  document.addEventListener('keydown', function(e){
+    if((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K') && on()){ e.preventDefault(); if(!globalSearchOpen) openGlobalSearch(); else closeGlobalSearch(); }
+  });
+})();
+</script>
+<style id="o2-search-style">
+.o2-search-group{ margin:8px 12px 2px; font-size:11px; font-weight:600; letter-spacing:.02em; color:var(--n-500, #6B7280); }
+</style>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
