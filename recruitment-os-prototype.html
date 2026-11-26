@@ -71340,6 +71340,217 @@ function cfScopeHTML(){
   window.o2WorkspaceReadOnly = function(t){ if(typeof t === 'string') t = tenantById(t); return !!(t && lifeOf(t) === 'archived'); };
 })();
 </script>
+<style id="o2-workspace-style">
+.o2-ws-filters{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 12px; }
+.o2-ws-filters select, .o2-ws-filters input{ height:34px; border:1px solid var(--n-200, #E6E5E0); border-radius:8px; padding:0 10px; font:inherit; font-size:13px; background:#fff; color:var(--n-900, #111827); }
+.o2-ws-filters input{ min-width:220px; }
+.o2-ws-head{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:-6px 0 16px; font-size:13px; color:var(--n-700, #4B5563); }
+.o2-kv{ display:grid; grid-template-columns:minmax(120px, 200px) 1fr; gap:6px 16px; margin:0; padding:4px 20px 16px; font-size:13px; }
+.o2-kv dt{ color:var(--n-700, #4B5563); }
+.o2-kv dd{ margin:0; }
+.o2-danger{ border:1px solid #E8B4B0; border-radius:12px; padding:14px 16px; margin:16px 0 0; background:#FFFBFA; }
+.o2-danger h3{ margin:0 0 6px; font-size:14px; font-weight:600; color:#A3352C; }
+.o2-danger p{ margin:0 0 10px; font-size:12px; color:var(--n-700, #4B5563); }
+.o2-danger .o2-row{ display:flex; flex-wrap:wrap; gap:8px; }
+.o2-danger input, .o2-danger textarea{ border:1px solid var(--n-200, #E6E5E0); border-radius:8px; padding:6px 10px; font:inherit; font-size:13px; min-width:220px; }
+.o2-ws-legacy summary{ cursor:pointer; font-size:13px; font-weight:600; margin:16px 0 8px; }
+.o2-muted{ color:var(--n-500, #6B7280); font-size:12px; }
+.o2-next{ margin-left:auto; }
+</style>
+<script id="o2-workspace-script">
+/* ============================================================
+   O2 STEP 3b: WORKSPACE SCREENS (2026-11-26)
+   Switch 3b on:
+   - oontu-workspaces: number cards (Active · Trials ending in 7 days · Read-only (unpaid) · Suspended), tabs
+     All · Needs attention · Requests, columns workspace, account, owner, plan, lifecycle, access level, onboarding,
+     health, last active, created; filters lifecycle, access level, plan, market, owner, health band; search by name,
+     domain or workspace ID. Requests hosts the Account help screen, whose platform actions (jn*) each run as a bosRun
+     command. Create workspace runs as workspace.create.
+   - oontu-workspace (Workspace 360): head with lifecycle and access badges, account link, owner and a worked-out Next
+     step; tabs Overview (with a danger zone: typed-name confirm and a reason, using the 3a commands), Users, Billing,
+     Entitlements (read-only), Usage, Support, Activity, Configuration. The earlier tenant page (bosTenant360HTML and
+     every action on it) is kept inside Overview, so nothing it offered is lost. "Not held in this prototype" where
+     the prototype keeps no data.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('3b'); };
+  const E = function(s){ return oEsc(s == null ? '' : s); };
+  const DAY = 864e5, NOWF = function(){ return bosNow(); };
+  const ST = window.O2_WS_UI = { tab:'all', f:{ life:'', access:'', plan:'', market:'', owner:'', health:'', q:'' }, wsTab:'overview' };
+  const life = function(t){ return o2Lifecycle(t); };
+  const accOf = function(tid){ return BOS.accounts.find(function(a){ return !a.mergedInto && (a.tenantIds || []).indexOf(tid) > -1; }) || null; };
+  const NOT_HELD = 'Not held in this prototype';
+  const fmtD = function(iso){ return iso ? new Date(iso).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '—'; };
+  const lifeBadge = function(l){ const tone = { active:'success', trial:'neutral', provisioning:'neutral', suspended:'danger', closed:'warn', archived:'neutral' }[l] || 'neutral'; return '<span data-o2-life="' + E(l || '') + '">' + oBadge(tone, l ? l.charAt(0).toUpperCase() + l.slice(1) : '—') + '</span>'; };
+  const accessBadge = function(t){ const a = o2AccessLevel(t); const tone = a.level === 'full' ? (a.banner ? 'warn' : 'success') : a.level === 'read-only' ? 'warn' : 'danger'; return '<span data-o2-access="' + a.level + '" title="' + E(a.why) + '">' + oBadge(tone, (a.level === 'full' ? 'Full' : a.level === 'read-only' ? 'Read-only' : 'Blocked') + (a.banner ? ' · banner' : '')) + '</span>'; };
+  const ownerOf = function(t){ const adm = (typeof PLATFORM_TENANT_ADMINS !== 'undefined' ? PLATFORM_TENANT_ADMINS : []).find(function(x){ return x.tenantId === t.id; }); return t.ownerName || (adm && (adm.name || adm.email)) || (typeof tenantPrimaryAdminName === 'function' ? tenantPrimaryAdminName(t) : '—'); };
+  const onboardingOf = function(t){ const ob = (BOS.onboardings || []).find(function(o){ return o.tenantId === t.id; }); if(!ob) return { text:'Not started', ob:null }; const a = bosActivation(ob); return { text:a.activated ? 'Activated' : a.have.length + ' of 5 milestones', ob:ob, act:a }; };
+  const healthOf = function(t){ const a = accOf(t.id); if(!a || typeof bosHealth !== 'function') return { band:NOT_HELD }; try { return bosHealth(a.id); } catch(e){ return { band:NOT_HELD }; } };
+  const marketOf = function(t){ const a = accOf(t.id), b = a && typeof o2BillingCustomerOfAccount === 'function' ? o2BillingCustomerOfAccount(a.id) : null; return b ? b.market : (a ? ((a.taxCountry || a.country || 'India') === 'India' ? 'India' : 'International') : '—'); };
+  const planOf = function(t){ const s = subscriptionForTenant(t.id), p = s ? planById(s.planId) : (t.planId ? planById(t.planId) : null); return p ? p.name : '—'; };
+  const lastActive = function(t){ const ev = (BOS.events || []).filter(function(e){ return e.ref === t.id; }).slice(-1)[0]; return ev ? fmtD(ev.at) : (t.id === CURRENT_ORGANIZATION_ID ? 'Today' : NOT_HELD); };
+  const trialEnding = function(t){ const s = subscriptionForTenant(t.id); if(!s || o2SubStatus(s) !== 'trialing' || !s.renewalDate) return false; const d = new Date(s.renewalDate + 'T00:00:00').getTime() - NOWF(); return d >= -DAY && d < 7 * DAY; };
+  const needsAttention = function(t){ const l = life(t), a = o2AccessLevel(t); return l === 'suspended' || l === 'provisioning' || a.level !== 'full' || a.banner || trialEnding(t) || (onboardingOf(t).act && !onboardingOf(t).act.activated && l !== 'closed' && l !== 'archived'); };
+
+  /* ---------- Workspaces list ---------- */
+  window.o2WorkspacesFiltered = function(){
+    const f = ST.f, q = f.q.trim().toLowerCase();
+    return PLATFORM_TENANTS.filter(function(t){
+      if(ST.tab === 'attention' && !needsAttention(t)) return false;
+      if(f.life && life(t) !== f.life) return false;
+      if(f.access && o2AccessLevel(t).level !== f.access) return false;
+      if(f.plan && planOf(t) !== f.plan) return false;
+      if(f.market && marketOf(t) !== f.market) return false;
+      if(f.owner && ownerOf(t) !== f.owner) return false;
+      if(f.health && healthOf(t).band !== f.health) return false;
+      if(q){ const a = accOf(t.id), hay = [t.id, t.name, t.domain, a && a.name, a && (a.domains || []).join(' '), a && a.website].join(' ').toLowerCase(); if(hay.indexOf(q) < 0) return false; }
+      return true;
+    });
+  };
+  window.o2WsSet = function(k, v){ if(k === 'tab'){ ST.tab = v; } else ST.f[k] = v; bosRedraw(); if(k === 'q') setTimeout(function(){ const el = document.getElementById('o2-ws-q'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 0); };
+  window.o2WsCard = function(kind){ ST.tab = 'all'; ST.f = { life:'', access:'', plan:'', market:'', owner:'', health:'', q:'' }; if(kind === 'active') ST.f.life = 'active'; if(kind === 'suspended') ST.f.life = 'suspended'; if(kind === 'readonly') ST.f.access = 'read-only'; if(kind === 'trials') ST.tab = 'attention'; bosRedraw(); };
+  const sel = function(k, label, opts){ return '<select aria-label="' + E(label) + '" onchange="o2WsSet(\'' + k + '\', this.value)"><option value="">' + E(label) + ': all</option>' + opts.map(function(o){ return '<option value="' + E(o) + '"' + (ST.f[k] === o ? ' selected' : '') + '>' + E(o) + '</option>'; }).join('') + '</select>'; };
+  const uniq = function(list){ return list.filter(function(x, i){ return x && list.indexOf(x) === i; }).sort(); };
+  window.o2WorkspacesHTML = function(){
+    /* a redirect from an old id (Account help → Requests, Tenants → All) chooses the tab once */
+    if(window.O2_NAV_TAB && O2_NAV_TAB['oontu-workspaces']){ ST.tab = O2_NAV_TAB['oontu-workspaces'] === 'requests' ? 'requests' : 'all'; O2_NAV_TAB['oontu-workspaces'] = null; }
+    const all = PLATFORM_TENANTS, can = function(id){ const f = BOS_VIEW_ACCESS[id]; return !f || f(); };
+    const showReq = can('oontu-help'), showAll = can('oontu-tenants');
+    if(ST.tab === 'requests' && !showReq) ST.tab = 'all';
+    if(ST.tab !== 'requests' && !showAll && showReq) ST.tab = 'requests';
+    const tabs = (showAll ? [['all', 'All'], ['attention', 'Needs attention']] : []).concat(showReq ? [['requests', 'Requests']] : []);
+    const tabsHTML = '<nav class="o2-host-tabs" aria-label="Workspaces">' + tabs.map(function(x){ return '<button type="button" class="o2-host-tab' + (x[0] === ST.tab ? ' is-on' : '') + '" aria-current="' + (x[0] === ST.tab ? 'page' : 'false') + '" onclick="o2WsSet(\'tab\', \'' + x[0] + '\')">' + E(x[1]) + (x[0] === 'requests' ? ' <span class="o2-count">' + JN.escalations.filter(function(e){ return e.status !== 'resolved'; }).length + '</span>' : '') + '</button>'; }).join('') + '</nav>';
+    let body;
+    if(ST.tab === 'requests'){ body = RENDERERS['oontu-help'](); }
+    else {
+      const list = o2WorkspacesFiltered();
+      const rows = list.map(function(t){ const a = accOf(t.id), ob = onboardingOf(t), h = healthOf(t);
+        return '<tr data-ws="' + E(t.id) + '" onclick="openOontuTenantDetail(\'' + E(t.id) + '\')" style="cursor:pointer"><td><b>' + E(t.name) + '</b><small>' + E(t.id) + '</small></td><td>' + (a ? '<a href="#" onclick="event.stopPropagation(); bosOpen(\'account\', \'' + E(a.id) + '\'); return false;">' + E(a.name) + '</a>' : '—') + '</td><td>' + E(ownerOf(t)) + '</td><td>' + E(planOf(t)) + '</td><td>' + lifeBadge(life(t)) + '</td><td>' + accessBadge(t) + '</td><td>' + E(ob.text) + '</td><td>' + E(h.band || NOT_HELD) + '</td><td>' + E(lastActive(t)) + '</td><td>' + E(fmtD(t.createdAt)) + '</td></tr>'; });
+      const filters = '<div class="o2-ws-filters"><input id="o2-ws-q" type="search" placeholder="Search name, domain or workspace ID" value="' + E(ST.f.q) + '" oninput="o2WsSet(\'q\', this.value)" aria-label="Search workspaces">' +
+        sel('life', 'Lifecycle', ['provisioning', 'trial', 'active', 'suspended', 'closed', 'archived']) + sel('access', 'Access', ['full', 'read-only', 'blocked']) + sel('plan', 'Plan', uniq(all.map(planOf))) + sel('market', 'Market', uniq(all.map(marketOf))) + sel('owner', 'Owner', uniq(all.map(ownerOf))) + sel('health', 'Health', uniq(all.map(function(t){ return healthOf(t).band; }))) + '</div>';
+      body = filters + oTableCard({ id:'o2-ws', title:ST.tab === 'attention' ? 'Needs attention' : 'All workspaces', sub:oPlural(list.length, 'workspace') + ' · rows open Workspace 360', cols:[{ label:'Workspace' }, { label:'Account' }, { label:'Owner' }, { label:'Plan' }, { label:'Lifecycle' }, { label:'Access level' }, { label:'Onboarding' }, { label:'Health' }, { label:'Last active' }, { label:'Created' }], rows:rows.length ? rows.join('') : oTableEmptyRow(10, ST.tab === 'attention' ? 'No workspace needs attention right now.' : 'No workspace matches these filters.') });
+    }
+    const n = { active:all.filter(function(t){ return life(t) === 'active'; }).length, trials:all.filter(trialEnding).length, ro:all.filter(function(t){ const a = o2AccessLevel(t); return a.level === 'read-only' && a.subStatus === 'unpaid'; }).length, sus:all.filter(function(t){ return life(t) === 'suspended'; }).length };
+    return oDashShell([
+      oPageHead({ ctx:'Customers', title:'Workspaces', lede:oPlural(all.length, 'workspace') + ' · ' + all.filter(needsAttention).length + ' need attention', actions:canPlatform('platform-tenant', 'create') ? [{ label:'Create workspace', icon:'plus', primary:true, onclick:'openCreateTenantModal()' }] : [] }),
+      showAll ? oNumbers([{ label:'Active', value:String(n.active), note:'Lifecycle active', onclick:"o2WsCard('active')" }, { label:'Trials ending in 7 days', value:String(n.trials), note:'Follow up before they lapse', onclick:"o2WsCard('trials')" }, { label:'Read-only (unpaid)', value:String(n.ro), note:'Payment banner shown', onclick:"o2WsCard('readonly')" }, { label:'Suspended', value:String(n.sus), note:'Blocked until restored', onclick:"o2WsCard('suspended')" }]) : '',
+      tabsHTML + body + '<div id="create-tenant-modal-root"></div>'
+    ]);
+  };
+
+  /* ---------- Workspace 360 ---------- */
+  const nextStep = function(t){
+    const l = life(t), s = subscriptionForTenant(t.id), st = s ? o2SubStatus(s) : null;
+    if(l === 'provisioning') return { label:'Finish provisioning', onclick:"o2WsTab('overview')" };
+    if(l === 'suspended' || l === 'closed') return { label:'Restore', onclick:"o2WsTab('overview'); setTimeout(function(){ var el = document.getElementById('o2-dz-name'); if(el) el.focus(); }, 0)" };
+    if(st === 'past_due' || st === 'unpaid') return { label:'Payment failed — see dunning', onclick:"o2WsTab('billing')" };
+    if(st === 'trialing' && s.renewalDate){ const d = Math.ceil((new Date(s.renewalDate + 'T00:00:00').getTime() - NOWF()) / DAY); return { label:'Trial ends in ' + Math.max(0, d) + (d === 1 ? ' day' : ' days') + ' — contact owner', onclick:"o2WsTab('users')" }; }
+    return { label:'Open support', onclick:"o2WsTab('support')" };
+  };
+  window.o2WsTab = function(k){ ST.wsTab = k; bosRedraw(); };
+  const TABS = [['overview', 'Overview'], ['users', 'Users'], ['billing', 'Billing'], ['entitlements', 'Entitlements'], ['usage', 'Usage'], ['support', 'Support'], ['activity', 'Activity'], ['configuration', 'Configuration']];
+  const card = function(title, sub, inner){ return '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">' + E(title) + '</h2>' + (sub ? '<span class="o-card__sub">' + E(sub) + '</span>' : '') + '</div>' + inner + '</section>'; };
+  const kv = function(pairs){ return '<dl class="o2-kv">' + pairs.map(function(p){ return '<dt>' + E(p[0]) + '</dt><dd>' + (p[2] ? p[1] : E(p[1])) + '</dd>'; }).join('') + '</dl>'; };
+  window.o2WorkspaceTabHTML = function(t, k){
+    const a = accOf(t.id), s = subscriptionForTenant(t.id), p = s ? planById(s.planId) : null, l = life(t);
+    if(k === 'overview'){
+      const users = typeof tenantUserCount === 'function' ? tenantUserCount(t.id) : 0, limit = s && s.seats ? s.seats : (p && p.userLimit) || null, ob = onboardingOf(t), h = healthOf(t);
+      const tix = BOS.tickets.filter(function(x){ return a && x.accountId === a.id && !/resolved|closed/.test(x.status); });
+      const allowed = (window.O2_LIFECYCLE || {})[l] || [];
+      const acts = [['suspended', 'Suspend'], ['active', l === 'provisioning' ? 'Activate' : 'Restore'], ['closed', 'Close'], ['archived', 'Archive early']].filter(function(x){ return allowed.indexOf(x[0]) > -1 && (x[0] !== 'active' || l !== 'trial'); });
+      const danger = '<div class="o2-danger" id="o2-dz"><h3>Danger zone</h3><p>Type the workspace’s name and a reason. Suspension, closing a suspended workspace and an early archive need a second person.' + (o2On('3a') ? '' : ' Turn on step 3a to use these actions.') + '</p>' +
+        (l === 'archived' ? '<p><b>Archived.</b> Read only: the tombstone, invoices and audit are kept.</p>' : '<div class="o2-row"><input id="o2-dz-name" placeholder="' + E(t.name) + '" aria-label="Type the workspace name to confirm"><input id="o2-dz-why" placeholder="Reason" aria-label="Reason"></div><div class="o2-row" style="margin-top:8px">' + acts.map(function(x){ return '<button type="button" class="o-btn' + (x[0] === 'active' ? '' : ' o2-dz-btn') + '" onclick="o2WsDanger(\'' + E(t.id) + '\', \'' + x[0] + '\')">' + E(x[1]) + '</button>'; }).join('') + '</div><p class="bos-err" id="o2-dz-err" role="alert" style="margin-top:8px"></p>') + '</div>';
+      let legacy = ''; try { const prevId = oontuTenantDetailId; oontuTenantDetailId = t.id; legacy = RENDERERS['oontu-tenant-detail'](); oontuTenantDetailId = prevId; } catch(e){ legacy = ''; }
+      return card('Overview', p ? p.name + ' plan' : 'No plan', kv([['Plan', p ? p.name + (s ? ' · ' + (s.billingInterval || '') : '') : '—'], ['Licences', users + ' used' + (limit ? ' of ' + limit : ''), false], ['Health', (h.band || NOT_HELD) + (h.reasons ? ' · ' + [].concat(h.reasons).slice(0, 2).join('; ') : ''), false], ['Onboarding', ob.text + (ob.act && !ob.act.activated ? ' · missing ' + ob.act.missing.join(', ') : ''), false], ['Open tickets', String(tix.length)]]) + '<div style="padding:0 20px 18px">' + danger + '</div>') +
+        (legacy ? '<details class="o2-ws-legacy"><summary>Everything on the earlier tenant page</summary>' + legacy + '</details>' : '');
+    }
+    if(k === 'users'){
+      const admins = (typeof PLATFORM_TENANT_ADMINS !== 'undefined' ? PLATFORM_TENANT_ADMINS : []).filter(function(x){ return x.tenantId === t.id; });
+      const others = typeof tenantUserCount === 'function' ? tenantUserCount(t.id) : 0;
+      return oTableCard({ id:'o2-ws-users', title:'Workspace admins and invites', sub:'Other people are shown as a count only: ' + others + ' in this workspace', cols:[{ label:'Name' }, { label:'Email' }, { label:'Role' }, { label:'Status' }], rows:admins.length ? admins.map(function(x){ return '<tr><td>' + E(x.name || '—') + '</td><td>' + E(x.email || '—') + '</td><td>' + E(x.role || 'Admin') + '</td><td>' + E(x.status || '—') + '</td></tr>'; }).join('') : oTableEmptyRow(4, 'No admins or invites recorded for this workspace.') });
+    }
+    if(k === 'billing'){
+      const b = a && typeof o2BillingCustomerOfAccount === 'function' ? o2BillingCustomerOfAccount(a.id) : null;
+      const docs = BOS.taxInvoices.filter(function(x){ return x.tenantId === t.id && !x.sample; }).slice(-5).reverse();
+      return card('Subscription', s ? s.id : 'None', kv([['Plan', p ? p.name : '—'], ['Status', s ? o2SubStatus(s) : '—'], ['Renews', s && s.renewalDate ? s.renewalDate : '—'], ['MRR', s ? s.currency + ' ' + Math.round(o2Mrr(s)).toLocaleString() : '—'], ['Billing customer', b ? b.legalName + ' · ' + b.id : 'None yet'], ['Dunning', s && s.dunning ? (s.dunning.reason || 'In progress') + ' since ' + s.dunning.since : 'None']]) + '<div class="bos-actions" style="padding:0 20px 16px">' + (s ? '<button type="button" class="o-btn" onclick="openOontuSubDetail(\'' + E(s.id) + '\')">Open subscription</button>' : '') + '<button type="button" class="o-btn" onclick="showView(\'oontu-invoices\')">Invoices &amp; payments</button></div>') +
+        oTableCard({ id:'o2-ws-inv', title:'Last invoices', sub:'Tax invoices issued to this workspace', cols:[{ label:'Number' }, { label:'Date' }, { label:'Total', right:true }, { label:'Status' }], rows:docs.length ? docs.map(function(x){ return '<tr><td>' + E(x.no) + '</td><td>' + E(fmtD(x.date)) + '</td><td class="num">' + E(x.currency + ' ' + Number(x.total).toLocaleString()) + '</td><td>' + E(x.status) + '</td></tr>'; }).join('') : oTableEmptyRow(4, 'No invoices yet.') });
+    }
+    if(k === 'entitlements'){
+      const ents = p ? (p.entitlements || []) : [], cat = typeof ENTITLEMENT_CATALOG !== 'undefined' ? ENTITLEMENT_CATALOG : [];
+      return oTableCard({ id:'o2-ws-ent', title:'Entitlements', sub:'Read-only. From the plan; add-ons and overrides come with step 8a', cols:[{ label:'Feature' }, { label:'Included' }], rows:cat.length ? cat.map(function(e){ return '<tr><td>' + E(e.label || e.name || e.id) + '</td><td>' + (ents.indexOf(e.id) > -1 ? oBadge('success', 'Included') : oBadge('neutral', 'Not in plan')) + '</td></tr>'; }).join('') : oTableEmptyRow(2, NOT_HELD) });
+    }
+    if(k === 'usage'){ const jobs = typeof tenantJobCount === 'function' ? tenantJobCount(t.id) : null; return card('Usage', 'What the prototype holds', kv([['Licences in use', String(typeof tenantUserCount === 'function' ? tenantUserCount(t.id) : NOT_HELD)], ['Jobs', jobs != null && (jobs > 0 || t.id === CURRENT_ORGANIZATION_ID) ? String(jobs) : NOT_HELD], ['AI runs', NOT_HELD]])); }
+    if(k === 'support'){
+      const tix = BOS.tickets.filter(function(x){ return a && x.accountId === a.id; }), dom = a && (a.domains || [])[0], reqs = JN.escalations.filter(function(e){ return dom && e.domain === dom; }), grants = (BOS.grants || []).filter(function(g){ return g.tenantId === t.id || (a && g.accountId === a.id); });
+      return oTableCard({ id:'o2-ws-tk', title:'Tickets', sub:oPlural(tix.length, 'ticket'), cols:[{ label:'Ticket' }, { label:'Priority' }, { label:'Status' }], rows:tix.length ? tix.map(function(x){ return '<tr onclick="bosOpen(\'ticket\', \'' + E(x.id) + '\')" style="cursor:pointer"><td><b>' + E(x.subject) + '</b><small>' + E(x.id) + '</small></td><td>' + E(x.priority) + '</td><td>' + E(x.status) + '</td></tr>'; }).join('') : oTableEmptyRow(3, 'No tickets for this workspace.') }) +
+        oTableCard({ id:'o2-ws-req', title:'Account help requests', sub:'From people on this workspace’s domain', cols:[{ label:'Request' }, { label:'Status' }], rows:reqs.length ? reqs.map(function(e){ return '<tr><td>' + E(e.id + ' · ' + (e.reason || '')) + '</td><td>' + E(e.status) + '</td></tr>'; }).join('') : oTableEmptyRow(2, 'No account help requests.') }) +
+        oTableCard({ id:'o2-ws-gr', title:'Support access', sub:'Sensitive access grants and sessions', cols:[{ label:'Grant' }, { label:'Status' }, { label:'Expires' }], rows:grants.length ? grants.map(function(g){ return '<tr><td>' + E(g.id + ' · ' + (g.purpose || '')) + '</td><td>' + E(g.status) + '</td><td>' + E(fmtD(g.expiresAt)) + '</td></tr>'; }).join('') : oTableEmptyRow(3, 'No support access granted.') });
+    }
+    if(k === 'activity'){
+      const rows = [].concat((t.lifecycle || []).map(function(e){ return { at:e.at, text:'Lifecycle ' + e.from + ' → ' + e.to + (e.reason ? ' · ' + e.reason : '') + (e.approvalId ? ' · ' + e.approvalId : ''), by:e.by }; }),
+        (t.statusHistory || []).filter(function(){ return !(t.lifecycle || []).length; }).map(function(h){ return { at:h.timestamp, text:'Status ' + h.from + ' → ' + h.to + (h.reason ? ' · ' + h.reason : ''), by:h.changedBy }; }),
+        (BOS.events || []).filter(function(e){ return e.ref === t.id; }).map(function(e){ return { at:e.at, text:e.name, by:e.actor }; })).sort(function(x, y){ return new Date(y.at) - new Date(x.at); });
+      return oTableCard({ id:'o2-ws-act', title:'Activity', sub:'Lifecycle and domain events', cols:[{ label:'When' }, { label:'What' }, { label:'Who' }], rows:rows.length ? rows.map(function(r){ return '<tr><td>' + E(new Date(r.at).toLocaleString('en-GB')) + '</td><td style="white-space:normal">' + E(r.text) + '</td><td>' + E(bosName(r.by) || r.by) + '</td></tr>'; }).join('') : oTableEmptyRow(3, 'Nothing recorded yet.') });
+    }
+    if(k === 'configuration') return card('Configuration', 'Read-only', kv([['Region', t.region || 'India (prototype)'], ['Domain', (a && (a.domains || [])[0]) || t.domain || NOT_HELD], ['SSO', NOT_HELD], ['Data retention after closing', o2Policy('closedRetentionDays') + ' days (policy)'], ['Workspace ID', t.id]]));
+    return '';
+  };
+  window.o2Workspace360HTML = function(tid){
+    const t = tenantById(tid); if(!t) return oDashShell([oPageHead({ title:'Workspace not found', lede:'It may have been removed. Open Workspaces to find it.' })]);
+    const a = accOf(t.id), nx = nextStep(t), k = TABS.some(function(x){ return x[0] === ST.wsTab; }) ? ST.wsTab : 'overview';
+    return oDashShell([
+      oPageHead({ ctx:'Workspaces', title:t.name, lede:'', actions:[{ label:nx.label, primary:true, onclick:nx.onclick }] }),
+      '<div class="o2-ws-head">' + lifeBadge(life(t)) + accessBadge(t) + (a ? '<span>Account <a href="#" onclick="bosOpen(\'account\', \'' + E(a.id) + '\'); return false;">' + E(a.name) + '</a></span>' : '') + '<span>Owner ' + E(ownerOf(t)) + '</span><span class="o2-muted">' + E(t.id) + '</span></div>' +
+      '<nav class="o2-host-tabs" aria-label="Workspace">' + TABS.map(function(x){ return '<button type="button" class="o2-host-tab' + (x[0] === k ? ' is-on' : '') + '" aria-current="' + (x[0] === k ? 'page' : 'false') + '" onclick="o2WsTab(\'' + x[0] + '\')">' + E(x[1]) + '</button>'; }).join('') + '</nav>' + o2WorkspaceTabHTML(t, k)
+    ]);
+  };
+  window.o2WsDanger = function(tid, to){
+    const t = tenantById(tid), err = document.getElementById('o2-dz-err'), name = (document.getElementById('o2-dz-name') || {}).value || '', why = (document.getElementById('o2-dz-why') || {}).value || '';
+    const say = function(m){ if(err) err.textContent = m; else toast(m); };
+    if(!t) return say('Workspace not found.');
+    if(name.trim() !== t.name) return say('Type the workspace’s name exactly to confirm.');
+    if(typeof o2WorkspaceMove !== 'function' || !o2On('3a')) return say('The lifecycle commands are part of step 3a, which is off.');
+    const r = o2WorkspaceMove(t.id, to, { reason:why });
+    if(!r.ok) return say(r.reason);
+    toast(r.pending ? 'Sent for a second person’s approval (' + r.approval.id + ').' : 'Workspace ' + to + '.'); bosRedraw();
+  };
+
+  /* ---------- screens and the account-help commands ---------- */
+  const baseList = RENDERERS['oontu-workspaces'];
+  RENDERERS['oontu-workspaces'] = function(){ if(!on()) return baseList.apply(this, arguments); if(state.role === 'oontu' && !BOS_VIEW_ACCESS['oontu-workspaces']()) return baseList.apply(this, arguments); return o2WorkspacesHTML(); };
+  const baseOne = RENDERERS['oontu-workspace'];
+  RENDERERS['oontu-workspace'] = function(){ if(!on()) return baseOne.apply(this, arguments); if(state.role === 'oontu' && !BOS_VIEW_ACCESS['oontu-workspace']()) return baseOne.apply(this, arguments); return o2Workspace360HTML(oontuTenantDetailId); };
+  /* bosTenant360HTML stays as a function; with 3b on it returns the Workspace 360 summary tabs' content */
+  const baseT360 = window.bosTenant360HTML;
+  if(typeof baseT360 === 'function') window.o2BaseTenant360 = baseT360;
+  /* open a workspace page from the old id when 1a is off */
+  const baseOpenTenant = window.openOontuTenantDetail;
+  window.openOontuTenantDetail = openOontuTenantDetail = function(tid){ if(on() && o2On('1a')){ oontuTenantDetailId = tid; ST.wsTab = 'overview'; return showView('oontu-workspace'); } return baseOpenTenant.apply(this, arguments); };
+
+  const JN_CMDS = { jnAssign:'assign', jnContactOwner:'contact-owner', jnApproveJoin:'approve-join', jnDeclineJoin:'decline-join', jnTransferOwner:'transfer-owner', jnFreeDomain:'free-domain', jnAllowSeparate:'allow-separate', jnResolve:'resolve', jnAssistAsk:'assist-ask', jnAssistRevoke:'assist-revoke', jnAssistDo:'assist-do', jnAssistFinish:'assist-finish' };
+  Object.keys(JN_CMDS).forEach(function(fn){
+    const base = window[fn]; if(typeof base !== 'function') return;
+    const wrapped = function(){
+      if(!on()) return base.apply(this, arguments);
+      const self = this, args = arguments; let out, called = false;
+      const res = bosRun('workspace-request.' + JN_CMDS[fn], null, function(){
+        called = true; out = base.apply(self, args);
+        const good = out === true || (out && typeof out === 'object' && out.ok);
+        if(!good) return { ok:false, reason:(out && out.reason) || 'Not done.' };
+        return { ok:true, ref:String(args[0] && typeof args[0] === 'object' ? (args[0].escId || args[0].leadId || '') : args[0]), audit:['Account help · ' + JN_CMDS[fn].replace(/-/g, ' '), String(typeof args[0] === 'object' ? JSON.stringify(args[0]).slice(0, 80) : args[0]), { entityType:'Account help' }] };
+      });
+      if(!called) return typeof out === 'undefined' && fn === 'jnAssign' ? false : res;
+      return out;
+    };
+    window[fn] = wrapped; try { (new Function('f', fn + ' = f'))(wrapped); } catch(e){}
+  });
+  /* Create workspace runs on the gateway too */
+  if(typeof window.ctSubmit === 'function'){
+    const baseSubmit = window.ctSubmit;
+    window.ctSubmit = ctSubmit = function(){ if(!on()) return baseSubmit.apply(this, arguments); const self = this, args = arguments; let out; const before = PLATFORM_TENANTS.length; bosRun('workspace.create', null, function(){ out = baseSubmit.apply(self, args); const made = PLATFORM_TENANTS.length > before ? PLATFORM_TENANTS[PLATFORM_TENANTS.length - 1] : null; return made ? { ok:true, ref:made.id, audit:['Workspace created (assisted)', made.name, { entityId:made.id, entityType:'Workspace' }] } : { ok:false, reason:'Not created.' }; }); return out; };
+  }
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
