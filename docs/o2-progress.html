@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 04:12 IST",
-    "current":  "3a",
+    "updated":  "2026-11-27 04:19 IST",
+    "current":  "3b",
     "partA":  [
                   {
                       "id":  "0a",
@@ -119,11 +119,11 @@
                   {
                       "id":  "3a",
                       "name":  "Workspace lifecycle",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "8/8 (o2-workspace-lifecycle); regressions 238/238 off, 239/239 on",
+                      "tag":  "o2-step-3a",
+                      "what":  "Workspace lifecycle as commands: second person for suspension, emergency path, archive tombstone, retention.",
+                      "see":  "Switches 1a, 3a · Meera Krishnan · Workspaces › Northstar › Suspend from the tenant page (a second person must approve)"
                   },
                   {
                       "id":  "3b",
@@ -375,6 +375,10 @@
                       [
                           "Older specs and the new menu",
                           "Specs that assert the old Oontu menu read the §5 menu only while 1a is on (same strictness); with 1a off their expectations are unchanged."
+                      ],
+                      [
+                          "3a second approver in seeds",
+                          "Only the Super Admin holds platform-tenant:activate in the seeds; a workspace-close approval type was added for suspended→closed. Recommended: a seeded Platform Manager login."
                       ]
                   ],
     "suite":  {
