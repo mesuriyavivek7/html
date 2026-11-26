@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 02:44 IST",
-    "current":  "3a (checkpoint after 2 running)",
+    "updated":  "2026-11-27 04:12 IST",
+    "current":  "3a",
     "partA":  [
                   {
                       "id":  "0a",
@@ -371,11 +371,15 @@
                       [
                           "2 Home charts",
                           "No monthly history exists yet, so chart history is a fixed illustrative series labelled Illustrative data; the current points are real."
+                      ],
+                      [
+                          "Older specs and the new menu",
+                          "Specs that assert the old Oontu menu read the §5 menu only while 1a is on (same strictness); with 1a off their expectations are unchanged."
                       ]
                   ],
     "suite":  {
-                  "off":  "After 0d (o2-step-0d): 1,111/1,112 across 75 specs; the 1 failure (submission-flow K4, a dialog-focus check) and a jd-reader no-result passed when rerun alone.",
-                  "on":  "After 0d, switches 0a–0d on with saving: 1,091/1,096 on the specs committed at 0d; failures were o2-metrics / o2-persistence (they assert only their own switch is on: expected), motion collapse-pill (known flake, passes alone on this tag and before 0a), intake-flow G6 and submission-flow K4 (dialog focus; pass alone)."
+                  "off":  "After Step 2 (o2-step-2): 1,152/1,153 across 80 specs; the one failure was motion collapse-pill (known flake, passes alone).",
+                  "on":  "After Step 2, switches 0a–2 on with saving: first run 1,139/1,155. Fixed: a finance-tab redirect and the Account help redraw under the new ids (1a), chart colours (2), and seven older specs that assert the old Oontu menu now follow the §5 menu when 1a is on. Rerun of every affected spec: all green on and off."
               }
 }
 </script>
