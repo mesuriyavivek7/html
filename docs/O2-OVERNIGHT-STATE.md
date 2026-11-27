@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-G5 Own talent first (in progress)
+G6 Interview self-booking (in progress)
 
 ## Steps
 
@@ -40,6 +40,7 @@ G5 Own talent first (in progress)
 | G2 | Done | rx-g2 | rx-g2-results 11/11; regressions on 61/61 + 18 specs, off 351/351 | Results tab + Home card; agency Cowork forbids the word workflow, copy says automation |
 | G3 | Done | rx-g3 | rx-g3-leaks 10/10; regressions on 580/580, off 550/550 | fixes for G4/G5 items open today's screens; joining-at-risk uses call task |
 | G4 | Done | rx-g4 | rx-g4-redeploy 10/10; regressions on 617/617, off 576/577 (motion collapse-pill flake, passes alone) | work orders extend via coWoExtend; end records endDecision |
+| G5 | Done | rx-g5 | rx-g5-own-first 6/6; regressions on 575/575, off 529/529 | window = existing internalUntil hold, extended only |
 
 ## How to run tests (this machine)
 
