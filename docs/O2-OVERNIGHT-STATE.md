@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-G6 Interview self-booking (in progress)
+Overnight build COMPLETE. Next: queued task Phase 1 (audit)
 
 ## Steps
 
@@ -41,6 +41,8 @@ G6 Interview self-booking (in progress)
 | G3 | Done | rx-g3 | rx-g3-leaks 10/10; regressions on 580/580, off 550/550 | fixes for G4/G5 items open today's screens; joining-at-risk uses call task |
 | G4 | Done | rx-g4 | rx-g4-redeploy 10/10; regressions on 617/617, off 576/577 (motion collapse-pill flake, passes alone) | work orders extend via coWoExtend; end records endDecision |
 | G5 | Done | rx-g5 | rx-g5-own-first 6/6; regressions on 575/575, off 529/529 | window = existing internalUntil hold, extended only |
+| G6 | Done | rx-g6 | rx-g6-booking 10/10; regressions on 478/478; full suite off 1311/1311 | availability added (none existed); fixed tz offsets |
+| G6 checkpoint | Done | rx-g6 | full suite off 1311/1311, all on 1313/1313 | overnight build complete |
 
 ## How to run tests (this machine)
 
