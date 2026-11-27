@@ -70438,11 +70438,12 @@ function cfScopeHTML(){
       return res;
     };
   }
-  if(typeof CHECKOUT_DONE === 'object' && typeof CHECKOUT_DONE.checkout === 'function'){
-    const baseDone = CHECKOUT_DONE.checkout;
-    CHECKOUT_DONE.checkout = function(l){
-      const out = baseDone.apply(this, arguments);
-      if(o2On('0c')){ const c = l && l.checkout, sub = c && c.done && subscriptionById(c.done.subscriptionId); if(sub && !sub.billingCustomerId){ const b = c.billingCustomerId ? o2BillingCustomer(c.billingCustomerId) : o2EnsureBillingCustomer(l.accountId); if(b) sub.billingCustomerId = b.id; } }
+  /* checkout completion lives in a private object of the billing script; the verified payment event is the public way in */
+  if(typeof BOS_PAY === 'object' && typeof BOS_PAY.receive === 'function'){
+    const baseRecv = BOS_PAY.receive;
+    BOS_PAY.receive = function(raw){
+      const out = baseRecv.apply(this, arguments);
+      if(o2On('0c')) try { const e = JSON.parse(raw), l = e && e.object && BOS.payLinks.find(function(x){ return x.id === e.object.id; }), c = l && l.checkout, sub = c && c.done && subscriptionById(c.done.subscriptionId); if(sub && !sub.billingCustomerId){ const b = c.billingCustomerId ? o2BillingCustomer(c.billingCustomerId) : o2EnsureBillingCustomer(l.accountId); if(b) sub.billingCustomerId = b.id; } } catch(x){}
       return out;
     };
   }
@@ -71548,6 +71549,99 @@ function cfScopeHTML(){
   if(typeof window.ctSubmit === 'function'){
     const baseSubmit = window.ctSubmit;
     window.ctSubmit = ctSubmit = function(){ if(!on()) return baseSubmit.apply(this, arguments); const self = this, args = arguments; let out; const before = PLATFORM_TENANTS.length; bosRun('workspace.create', null, function(){ out = baseSubmit.apply(self, args); const made = PLATFORM_TENANTS.length > before ? PLATFORM_TENANTS[PLATFORM_TENANTS.length - 1] : null; return made ? { ok:true, ref:made.id, audit:['Workspace created (assisted)', made.name, { entityId:made.id, entityType:'Workspace' }] } : { ok:false, reason:'Not created.' }; }); return out; };
+  }
+})();
+</script>
+<script id="o2-subscription-gateway-script">
+/* ============================================================
+   O2 STEP 4a: SUBSCRIPTIONS ON THE GATEWAY (2026-11-26, billing step; statuses unchanged)
+   Switch 4a on: every subscription change runs as a bosRun command, so it leaves an audit row and a domain event:
+     subscription.create (createSubscriptionRecord), subscription.change-plan, subscription.extend-trial,
+     subscription.set-renewal-date, subscription.change-status, subscription.invoice (generateInvoiceForSubscription),
+     subscription.checkout (CHECKOUT_DONE.checkout, run by the payment provider's verified event).
+   - Subscriptions gain items[] (priceRef, unitPrice, quantity, interval, recurring) and history[] (R1). price, seats,
+     planId, billingInterval and currency are still written exactly as before.
+   - o2Mrr reads items when present; items reproduce today's prices, so MRR is unchanged for every seed.
+   - The renewal job and checkout run as the system; their commands are added to BOS_SYSTEM_COMMANDS while on.
+   Statuses and transitions are not changed here (Step 4b).
+============================================================ */
+(function(){
+  const on = function(){ return o2On('4a'); };
+  const ISO = function(){ return new Date(bosNow()).toISOString(); };
+  const CMDS = ['subscription.create', 'subscription.change-plan', 'subscription.extend-trial', 'subscription.set-renewal-date', 'subscription.change-status', 'subscription.invoice', 'subscription.checkout'];
+  const allowSystem = function(){ CMDS.forEach(function(c){ const i = BOS_SYSTEM_COMMANDS.indexOf(c); if(on() && i < 0) BOS_SYSTEM_COMMANDS.push(c); if(!on() && i > -1) BOS_SYSTEM_COMMANDS.splice(i, 1); }); };
+  /* items reproduce the price the subscription is billed at today */
+  window.o2SubItems = function(sub){
+    const plan = planById(sub.planId); if(!plan) return [];
+    const cur = sub.currency || plan.currency, items = [];
+    if(plan.prices && Object.keys(plan.prices).length){ items.push({ priceRef:plan.id + ':' + cur + ':licence-month', kind:'plan', unitPrice:Number(bosPlanUnit(plan, cur)) || 0, quantity:Math.max(1, Number(sub.seats) || 1), interval:'monthly', recurring:true }); }
+    else items.push({ priceRef:plan.id + ':' + plan.currency + ':' + (sub.billingInterval || plan.billingInterval), kind:'plan', unitPrice:plan.currency === cur ? Number(plan.price) || 0 : Number(sub.price) || 0, quantity:1, interval:sub.billingInterval || plan.billingInterval, recurring:true });
+    (sub.boosts || []).forEach(function(id){ const b = typeof boostById === 'function' ? boostById(id) : null; if(b && b.prices) items.push({ priceRef:b.id + ':' + cur + ':month', kind:'add-on', unitPrice:Number(b.prices[cur] != null ? b.prices[cur] : 0) || 0, quantity:1, interval:'monthly', recurring:true }); });
+    return items;
+  };
+  const FIELDS = ['planId', 'status', 'price', 'currency', 'billingInterval', 'seats', 'renewalDate', 'boosts'];
+  const shot = function(s){ const o = {}; FIELDS.forEach(function(k){ o[k] = Array.isArray(s[k]) ? s[k].slice() : s[k]; }); return o; };
+  const diff = function(a, b){ const out = {}; FIELDS.forEach(function(k){ if(JSON.stringify(a[k]) !== JSON.stringify(b[k])) out[k] = [a[k], b[k]]; }); return out; };
+  function record(sub, before, cmd){
+    sub.items = o2SubItems(sub);
+    if(!Array.isArray(sub.history)) sub.history = [];
+    const ch = before ? diff(before, shot(sub)) : null;
+    sub.history.push({ at:ISO(), command:cmd, by:bosActor().type === 'employee' ? ACTIVE_PLATFORM_USER_ID : bosActor().id || 'system', changed:ch });
+  }
+  window.o2EnsureSubItems = function(){ PLATFORM_SUBSCRIPTIONS.forEach(function(s){ if(!Array.isArray(s.items)) s.items = o2SubItems(s); if(!Array.isArray(s.history)) s.history = []; }); };
+  allowSystem(); if(on()) o2EnsureSubItems();
+  o2OnSwitch(function(id, v){ if(id === '4a'){ allowSystem(); if(v) o2EnsureSubItems(); } });
+
+  /* no Oontu employee signed in (self-service sign-up, provisioning): the change runs as the system */
+  const exec = function(f){ const u = typeof currentPlatformUser === 'function' ? currentPlatformUser() : null; return (bosActor().type === 'employee' && (!u || u.status !== 'Active')) ? bosAsSystem('o2-gateway', f) : f(); };
+  /* wrap one older function as a command; it returns exactly what the older function returned */
+  function gate(name, cmd, subOf){
+    const base = window[name]; if(typeof base !== 'function') return;
+    const w = function(){
+      if(!on()) return base.apply(this, arguments);
+      const self = this, args = arguments; let out, ran = false;
+      const res = exec(function(){ return bosRun(cmd, null, function(){
+        const sub0 = subOf(args, null), before = sub0 ? shot(sub0) : null;
+        ran = true; out = base.apply(self, args);
+        if(!out || !out.ok) return { ok:false, reason:(out && out.reason) || 'Not done.' };
+        const sub = subOf(args, out); if(sub) record(sub, before, cmd);
+        return { ok:true, ref:sub ? sub.id : null };
+      }); });
+      return ran ? out : res;
+    };
+    window[name] = w; try { (new Function('f', name + ' = f'))(w); } catch(e){}
+  }
+  const byId = function(args){ return subscriptionById(args[0]); };
+  gate('changeSubscriptionPlan', 'subscription.change-plan', byId);
+  gate('extendSubscriptionTrial', 'subscription.extend-trial', byId);
+  gate('setSubscriptionRenewalDate', 'subscription.set-renewal-date', byId);
+  gate('changeSubscriptionStatus', 'subscription.change-status', byId);
+  gate('generateInvoiceForSubscription', 'subscription.invoice', byId);
+  gate('createSubscriptionRecord', 'subscription.create', function(args, out){ return out && out.subscription ? out.subscription : null; });
+  /* checkout completion and paid subscription links: the verified provider event changes the subscription, so the event
+     runs as a command (checkout completion lives in a private object of the billing script; the event is the public way in) */
+  if(BOS_SYSTEM_COMMANDS.indexOf('subscription.payment') < 0 && on()) BOS_SYSTEM_COMMANDS.push('subscription.payment');
+  o2OnSwitch(function(id, v){ if(id === '4a'){ const i = BOS_SYSTEM_COMMANDS.indexOf('subscription.payment'); if(v && i < 0) BOS_SYSTEM_COMMANDS.push('subscription.payment'); if(!v && i > -1) BOS_SYSTEM_COMMANDS.splice(i, 1); } });
+  if(typeof BOS_PAY === 'object' && typeof BOS_PAY.receive === 'function'){
+    const baseRecv = BOS_PAY.receive;
+    BOS_PAY.receive = function(raw){
+      if(!on()) return baseRecv.apply(this, arguments);
+      let e = null; try { e = JSON.parse(raw); } catch(x){}
+      const l = e && e.type === 'payment.captured' && e.object ? BOS.payLinks.find(function(x){ return x.id === e.object.id; }) : null;
+      const c = l && l.checkout && !l.checkout.done ? l.checkout : null;
+      const inv = l && l.invoiceId && typeof invoiceById === 'function' ? invoiceById(l.invoiceId) : null, subInv = inv && inv.subscriptionId ? subscriptionById(inv.subscriptionId) : null;
+      if(!c && !subInv) return baseRecv.apply(this, arguments);
+      const cmd = c ? 'subscription.checkout' : 'subscription.payment';
+      const self = this, args = arguments; let out, ran = false;
+      const sub0 = c ? subscriptionForTenant(c.tenantId) : subInv, before = sub0 ? shot(sub0) : null;
+      const res = exec(function(){ return bosRun(cmd, null, function(){
+        ran = true; out = baseRecv.apply(self, args);
+        const sub = c ? (c.done ? subscriptionById(c.done.subscriptionId) : null) : subInv; if(sub && (!before || JSON.stringify(before) !== JSON.stringify(shot(sub)))) record(sub, before, cmd);
+        return { ok:true, ref:sub ? sub.id : null, audit:c ? ['Subscription changed by checkout', (sub ? sub.id : '') + ' · ' + c.planId + ' × ' + c.seats, { entityId:sub ? sub.id : null, entityType:'Subscription' }] : null };
+      }); });
+      if(!ran){ console.error('payment refused by the gateway', res); return baseRecv.apply(this, arguments); }
+      return out;
+    };
   }
 })();
 </script>
