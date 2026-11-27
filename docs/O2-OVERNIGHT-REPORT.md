@@ -24,6 +24,7 @@ _In progress. Written in full when the build finishes._
 - **4d** Payments and allocations: one bank credit across invoices, several payments to one invoice, partial payments, TDS with certificates, customer credit, reversals; suggestions are never applied without Finance. Switches 1a, 4c, 4d · Vikram Shah · Billing › Invoices & payments › Reconciliation.
 - **5** Account 360 (rail, seven tabs, both renewals side by side), Pipeline tabs including Sign-ups, Reports with pipeline analytics. Switches 1a, 5 · Kavya Iyer or Meera · Customers › Accounts › Northstar; Customers › Pipeline › Sign-ups.
 - **6** Six visible ticket states; Incidents with severity, flow, cadence reminder and review; Publish update makes an announcement. Switches 1a, 6 · Nisha Pillai or Meera · Service › Incidents › an incident › Publish update.
+- **7a** Refused and failed commands and failed sign-ins are audited once, with who, outcome and reason. Switches 7a (+7c to browse) · log in as Arjun and try a Finance export; then Meera › Admin › Audit & security › Refusals.
 
 ## 3. Blocked steps
 

@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-7a (checkpoint after 6 running)
+7b
 
 ## Steps
 
@@ -30,6 +30,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 | 4d | Done | o2-step-4d | o2-allocation 10/10; regressions 181/181 off, 182/182 on | ambiguous amount matches are not suggested; allocate permission = holders of verify_payment |
 | 5 | Done | o2-step-5 | o2-customers 6/6; regressions 155/155 off, 156/156 on | old account page kept inside Overview; 1a's Pipeline/Sign-ups strip steps aside when 5 is on |
 | 6 | Done | o2-step-6 | o2-incident 5/5; regressions 141/141 off, 142/142 on | visible states on ticket rows and ticket head only; 'att' badge variant handled |
+| 7a | Done | o2-step-7a | o2-audit 7/7; BOS + shell specs 316/316 off and on (full suite at the 7c checkpoint) | logged once at the outermost command |
 
 ## How to run tests (this machine)
 
