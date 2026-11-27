@@ -73104,7 +73104,7 @@ function cfScopeHTML(){
   window.rxSeesMoney = function(){ try { return typeof canI === 'function' && canI('billing', 'View'); } catch(e){ return false; } };
   const inr = function(n){ return typeof formatINR === 'function' ? formatINR(n) : '₹' + Math.round(n); };
   const corp = function(){ try { return typeof sIsCorporate === 'function' && sIsCorporate(); } catch(e){ return false; } };
-  const wfName = function(id){ const w = (typeof WORKFLOWS !== 'undefined' ? WORKFLOWS : []).find(function(x){ return x.id === id; }); return w ? w.name : id; };
+  const wfName = function(id){ const w = (typeof WORKFLOWS !== 'undefined' ? WORKFLOWS : []).find(function(x){ return x.id === id; }); return w ? w.name : ((window.RX_PSEUDO_WF || {})[id] || id); };
   const cand = function(id){ try { return byId(id); } catch(e){ return null; } };
 
   /* ---- attribution ---- */
@@ -73112,8 +73112,9 @@ function cfScopeHTML(){
     if(!outcome || outcome.candidateId == null) return null;
     const at = ms(outcome.at); if(at == null) return null;
     const win = Math.max(0, Number(WSX.rx.attributionDays) || 0) * DAY;
-    const ts = ((window.RX && RX.touches) || []).filter(function(t){ const x = ms(t.at); return t.candidateId === outcome.candidateId && x != null && x <= at && x >= at - win; })
-      .sort(function(a, b){ return ms(b.at) - ms(a.at); });
+    const all = (window.RX && RX.touches) || [];
+    const ts = all.filter(function(t){ const x = ms(t.at); return t.candidateId === outcome.candidateId && x != null && x <= at && x >= at - win; })
+      .sort(function(a, b){ return ms(b.at) - ms(a.at) || all.indexOf(b) - all.indexOf(a); });   // same moment: the touch recorded last counts as most recent
     if(!ts.length) return null;
     const also = []; ts.slice(1).forEach(function(t){ if(t.workflowId !== ts[0].workflowId && also.indexOf(t.workflowId) < 0) also.push(t.workflowId); });
     return { workflowId:ts[0].workflowId, touch:ts[0], also:also, daysBefore:Math.floor((at - ms(ts[0].at)) / DAY) };
@@ -73774,6 +73775,148 @@ function cfScopeHTML(){
     const wa = function(rq){ const r = ba.apply(this, arguments); try { if(rxOn('g4') && rq) rq.silver = rxSilverFor(rq); } catch(e){ console.error(e); } return r; };
     wa.__g4 = true; window.coReqApproved = wa; try { coReqApproved = wa; } catch(e){}
   }
+})();
+</script>
+<script id="rx-g5-script">
+/* RX G5 — Own talent first. Switch g5, off by default; off = today.
+   Agency: when a job is published (publishJob) or re-opened (setJobStatus from Closed / On Hold to Active), a
+   Database-first shortlist of the top WSX.rx.dbFirstCount (25) existing candidates by the existing match score
+   (computeJobMatchPct). Left out, with the reason kept: contacted for another job in the last 14 days (live touches or
+   a submission sent), in an active process (any open submission), or no consent (rxHasConsent). One action sends the
+   approved "new role" message (simulated, same WhatsApp counter) and records touches under the pseudo-automation
+   "rx-dbfirst", so G2 credits what follows. The job shows the shortlist and "placements from own database".
+   Corporate: a Direct sourcing window. When a job opens from an approved requisition, vendors are held for
+   WSX.rx.directWindowDays (5) working days from approval (0 = no window) using the job's existing internal-first
+   hold (job.internalUntil, which coAssignBlock already enforces). Urgent requisitions (rq.urgent or priority
+   "Urgent") skip it. "Release to vendors now" is the existing coVendorEarlyOpen dialog (reason required). During the
+   window the own pool, past applicants and silver medalists (G4 when on) are matched and can be invited; invites are
+   touches under "rx-direct", so a hire from the window shows in G2 as agency fees avoided (estimate). */
+(function(){
+  const D = 86400000;
+  const NOW = function(){ return typeof fmNow === 'function' ? fmNow() : Date.now(); };
+  const ISO = function(){ return new Date(NOW()).toISOString(); };
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const corp = function(){ try { return typeof jsCorp === 'function' && jsCorp(); } catch(e){ return false; } };
+  const RX = window.RX = window.RX || { touches:[], replies:[], runs:[], seen:{}, skips:[] };
+  RX.g5 = RX.g5 || { lists:{}, sent:{}, direct:{} };
+  const G = RX.g5;
+  /* names for the two pseudo-automations in G2's Results */
+  window.RX_PSEUDO_WF = Object.assign(window.RX_PSEUDO_WF || {}, { 'rx-dbfirst':'Database-first shortlist', 'rx-direct':'Direct sourcing window' });
+  let seq = 1;
+  const CLOSED = /Rejected|Withdrawn|Joined|Dropped|Declined|Closed|Not selected|Placed/i;
+
+  /* ---- agency: database-first shortlist ---- */
+  window.rxDbFirstExclusion = function(c, jobId){
+    const now = NOW();
+    if(typeof rxHasConsent === 'function' ? !rxHasConsent(c) : !(c.consent && c.consent.given === true)) return 'No consent';
+    if(SUBMISSIONS.some(function(s){ return s.candidateId === c.id && !CLOSED.test(s.stage || '') && !CLOSED.test(s.status || ''); })) return 'In an active process';
+    const recent = RX.touches.some(function(t){ return t.candidateId === c.id && t.jobId && t.jobId !== jobId && now - Date.parse(t.at) <= 14 * D; })
+      || SUBMISSIONS.some(function(s){ return s.candidateId === c.id && s.jobId !== jobId && (s.stageHistory || []).some(function(h){ return now - Date.parse(h.at) <= 14 * D; }); });
+    if(recent) return 'Contacted for another job in the last 14 days';
+    return null;
+  };
+  window.rxDbFirstBuild = function(jobId, why){
+    const j = jobById(jobId); if(!j) return null;
+    const n = Number(WSX.rx.dbFirstCount) || 25, ranked = [], excluded = [];
+    CANDIDATES.forEach(function(c){ if(SUBMISSIONS.some(function(s){ return s.candidateId === c.id && s.jobId === jobId; })) return; const score = computeJobMatchPct(c, j); if(!(score > 0)) return; const ex = rxDbFirstExclusion(c, jobId); if(ex) excluded.push({ candidateId:c.id, score:score, reason:ex }); else ranked.push({ candidateId:c.id, score:score }); });
+    ranked.sort(function(x, y){ return y.score - x.score; });
+    const list = { jobId:jobId, at:ISO(), why:why || 'Published', list:ranked.slice(0, n), excluded:excluded };
+    G.lists[jobId] = list; return list;
+  };
+  window.rxDbFirstSend = function(jobId){
+    const L = G.lists[jobId], j = jobById(jobId); if(!L || !j) return { ok:false, reason:'No shortlist yet.' };
+    let sent = 0; const out = [];
+    L.list.forEach(function(x){
+      const key = jobId + '|' + x.candidateId; if(G.sent[key]) return; const c = byId(x.candidateId); if(!c || rxDbFirstExclusion(c, jobId)) return;
+      const wa = typeof WA_BUSINESS_ACCOUNT !== 'undefined' && typeof WA_TIER_INFO !== 'undefined' ? WA_BUSINESS_ACCOUNT : null;
+      const ch = wa && WA_TIER_INFO[wa.tier] && wa.messagesToday < WA_TIER_INFO[wa.tier].dailyLimit ? 'whatsapp' : 'email'; if(ch === 'whatsapp') wa.messagesToday += 1;
+      const t = { id:'TCH-DB-' + (seq++), workflowId:'rx-dbfirst', candidateId:c.id, jobId:jobId, submissionId:null, channel:ch, action:'message', at:ISO(), outcome:'new role sent (simulated)', event:'Database-first shortlist' };
+      RX.touches.push(t); G.sent[key] = t.at; out.push(t); sent++;
+    });
+    if(sent && typeof logAudit === 'function') logAudit('Jobs', 'New role sent to own database', j.title + ' · ' + sent + ' people');
+    return { ok:true, sent:sent, touches:out };
+  };
+  window.rxDbFirstPlacements = function(jobId){
+    return SUBMISSIONS.filter(function(s){ return s.jobId === jobId && (/Joined|Placed/i.test(s.stage || '') || (s.offer && /Joined/.test(s.offer.status || ''))) && RX.touches.some(function(t){ return t.workflowId === 'rx-dbfirst' && t.candidateId === s.candidateId && t.jobId === jobId; }); }).length;
+  };
+  function wrapFn(name, after){
+    const o = window[name]; if(typeof o !== 'function' || o.__g5) return;
+    const w = function(){ const before = JOBS.length, prev = arguments[0] && jobById(arguments[0]) ? jobById(arguments[0]).status : null; const r = o.apply(this, arguments); try { if(rxOn('g5') && !corp()) after(arguments, r, before, prev); } catch(e){ console.error(e); } return r; };
+    w.__g5 = true; window[name] = w; try { if(name === 'publishJob') publishJob = w; else if(name === 'setJobStatus') setJobStatus = w; } catch(e){}
+  }
+  wrapFn('publishJob', function(a, r, before){ if(JOBS.length > before) rxDbFirstBuild(JOBS[JOBS.length - 1].id, 'Published'); });
+  wrapFn('setJobStatus', function(a, r, before, prev){ if(r && r.ok !== false && a[1] === 'Active' && prev && prev !== 'Active') rxDbFirstBuild(a[0], 'Re-opened'); });
+  window.rxDbFirstHTML = function(jobId){
+    const L = G.lists[jobId]; if(!L) return '';
+    const sentN = L.list.filter(function(x){ return G.sent[jobId + '|' + x.candidateId]; }).length, place = rxDbFirstPlacements(jobId);
+    const why = {}; L.excluded.forEach(function(x){ why[x.reason] = (why[x.reason] || 0) + 1; });
+    return '<section class="o-card rx-dbfirst" id="rx-dbfirst"><div class="o-card__head"><div><h2 class="o-card__title">Database-first shortlist</h2><p class="o-card__sub">Top ' + L.list.length + ' people already in your database for this job (' + esc(L.why.toLowerCase()) + ' ' + esc(L.at.slice(0, 10)) + '). Placements from own database: <b id="rx-dbfirst-placed">' + place + '</b>.</p></div>' +
+      (L.list.length && sentN < L.list.length ? sBtn('Send the new role to ' + (L.list.length - sentN), "rxDbFirstUI('" + jobId + "')", 'primary') : '') + '</div>' +
+      '<ul class="o-list">' + L.list.slice(0, 10).map(function(x){ const c = byId(x.candidateId); return '<li data-dbfirst="' + esc(x.candidateId) + '"><button type="button" class="o-link" onclick="openCandidate(' + JSON.stringify(x.candidateId).replace(/"/g, '&quot;') + ')">' + esc(c ? c.name : x.candidateId) + '</button> · ' + x.score + '% match' + (G.sent[jobId + '|' + x.candidateId] ? ' · sent' : '') + '</li>'; }).join('') + '</ul>' +
+      (L.excluded.length ? '<p class="o-card__sub">Left out: ' + Object.keys(why).map(function(k){ return why[k] + ' · ' + esc(k.toLowerCase()); }).join('; ') + '.</p>' : '') + '</section>';
+  };
+  window.rxDbFirstUI = function(jobId){ const r = rxDbFirstSend(jobId); toast(r.ok ? 'Sent to ' + r.sent + (r.sent === 1 ? ' person.' : ' people.') : r.reason); if(typeof openJob === 'function') openJob(jobId); };
+  function hookJobDetail(){
+    const d = window.renderJobDetail; if(typeof d !== 'function' || d.__g5) return;
+    const w = function(id){ const h = d.apply(this, arguments); if(!rxOn('g5') || corp() || typeof h !== 'string' || !G.lists[id]) return h; const i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + rxDbFirstHTML(id) + h.slice(i); };
+    w.__g5 = true; window.renderJobDetail = w; try { renderJobDetail = w; } catch(e){}
+  }
+  hookJobDetail(); window.addEventListener('load', hookJobDetail);
+
+  /* ---- corporate: direct sourcing window ---- */
+  const addWorkdays = function(t, n){ let d = t, k = 0; while(k < n){ d += D; const w = new Date(d).getDay(); if(w !== 0 && w !== 6) k++; } return d; };
+  window.rxDirectUntil = function(rq){
+    if(!rq) return null; const n = Number(WSX.rx.directWindowDays); if(!(n > 0)) return null;
+    if(rq.urgent === true || /urgent/i.test(String(rq.priority || ''))) return null;
+    const h = (rq.history || []).filter(function(x){ return /Approved/.test(x.what || ''); }).pop(), from = rq.approvedAt || (h && h.at) || NOW();
+    return addWorkdays(from, n);
+  };
+  if(typeof window.coReqOpenJob === 'function' && !window.coReqOpenJob.__g5){
+    const bo = window.coReqOpenJob;
+    const wo = function(rq){
+      const had = rq && rq.jobId && jobById(rq.jobId); const r = bo.apply(this, arguments);
+      try { if(rxOn('g5') && rq && rq.jobId && !had){ const j = jobById(rq.jobId), until = rxDirectUntil(rq);
+        if(j && until){ j.rxDirectUntil = until; if(!j.internalUntil || j.internalUntil < until) j.internalUntil = until; G.direct[rq.id] = { until:until, jobId:j.id, at:NOW() }; coReqLog(rq, 'Direct sourcing until ' + coDate(until)); coAudit('Direct sourcing window', rq.title + ' · vendors from ' + coDate(until), { entityType:'Requisition', entityId:rq.id }); }
+        else if(j && (rq.urgent === true || /urgent/i.test(String(rq.priority || '')))) G.direct[rq.id] = { until:null, skipped:'Urgent', jobId:j.id, at:NOW() }; } } catch(e){ console.error(e); }
+      return r;
+    };
+    wo.__g5 = true; window.coReqOpenJob = wo; try { coReqOpenJob = wo; } catch(e){}
+  }
+  window.rxDirectMatches = function(rq){
+    const j = rq && rq.jobId && jobById(rq.jobId); if(!j) return [];
+    const vendorCand = {}; ((typeof CO !== 'undefined' && CO.vsubs) || []).forEach(function(v){ if(v.candidateId != null) vendorCand[v.candidateId] = true; });
+    const silver = typeof rxSilverFor === 'function' && rxOn('g4') ? (rq.silver || rxSilverFor(rq)) : [], silverIds = silver.map(function(x){ return x.candidateId; });
+    const past = {}; SUBMISSIONS.forEach(function(s){ const sj = jobById(s.jobId); if(sj && sj.corp && s.jobId !== j.id) past[s.candidateId] = true; });
+    return CANDIDATES.filter(function(c){ return !vendorCand[c.id] && !SUBMISSIONS.some(function(s){ return s.candidateId === c.id && s.jobId === j.id; }); }).map(function(c){
+      return { candidateId:c.id, score:computeJobMatchPct(c, j), source:silverIds.indexOf(c.id) > -1 ? 'Silver medalist' : past[c.id] ? 'Past applicant' : 'Own pool' };
+    }).filter(function(x){ return x.score > 0 || x.source === 'Silver medalist'; }).sort(function(x, y){ return (y.source === 'Silver medalist') - (x.source === 'Silver medalist') || y.score - x.score; }).slice(0, Number(WSX.rx.dbFirstCount) || 25);
+  };
+  window.rxDirectInvite = function(rqId, candidateId){
+    const rq = CO.reqs.find(function(r){ return r.id === rqId; }), c = byId(candidateId); if(!rq || !rq.jobId || !c) return { ok:false, reason:'Not found.' };
+    if(RX.touches.some(function(t){ return t.workflowId === 'rx-direct' && t.candidateId === candidateId && t.jobId === rq.jobId; })) return { ok:false, reason:'Already invited.' };
+    RX.touches.push({ id:'TCH-DS-' + (seq++), workflowId:'rx-direct', candidateId:candidateId, jobId:rq.jobId, submissionId:null, channel:'email', action:'invite', at:ISO(), outcome:'invited to apply (simulated)', event:'Direct sourcing' });
+    coAudit('Invited during direct sourcing', c.name + ' · ' + rq.title, { entityType:'Requisition', entityId:rq.id }); return { ok:true };
+  };
+  window.rxDirectHTML = function(rq){
+    const j = rq.jobId && jobById(rq.jobId); if(!j) return '';
+    const until = j.rxDirectUntil, on = until && j.internalUntil && NOW() < j.internalUntil, info = G.direct[rq.id];
+    if(!until && !(info && info.skipped)) return '';
+    const can = typeof coVendorEarlyOpen === 'function';
+    const head = on ? '<p class="o-card__sub" id="rx-direct-until">Direct sourcing until <b>' + esc(coDate(j.internalUntil)) + '</b>. Vendors get this role after that.</p>' + (can ? sBtn('Release to vendors now', "coVendorEarlyOpen('" + j.id + "')") : '')
+      : info && info.skipped ? '<p class="o-card__sub">Urgent role: no direct sourcing window. Vendors can be given it now.</p>' : '<p class="o-card__sub">Direct sourcing ended ' + esc(coDate(Math.min(until, j.internalUntil || until))) + '. Vendors can be given this role.</p>';
+    const list = on ? rxDirectMatches(rq) : [];
+    return '<section class="o-card rx-direct" id="rx-direct"><h2 class="o-card__title">Direct sourcing</h2>' + head +
+      (list.length ? '<ul class="o-list">' + list.slice(0, 10).map(function(x){ const c = byId(x.candidateId), inv = RX.touches.some(function(t){ return t.workflowId === 'rx-direct' && t.candidateId === x.candidateId && t.jobId === j.id; });
+        return '<li data-direct="' + esc(x.candidateId) + '"><b>' + esc(c ? c.name : '') + '</b> · ' + esc(x.source) + ' · ' + x.score + '% match ' + (inv ? '<span class="o-card__sub">Invited</span>' : sBtn('Invite', "rxDirectUI('" + rq.id + "'," + JSON.stringify(x.candidateId).replace(/"/g, '&quot;') + ')', 'ghost')) + '</li>'; }).join('') + '</ul>' : '') + '</section>';
+  };
+  window.rxDirectUI = function(rqId, cid){ const r = rxDirectInvite(rqId, cid); toast(r.ok ? 'Invitation sent.' : r.reason); if(state.activeNav === 'requisition-detail') showView('requisition-detail', 'requisitions'); };
+  function hookReq(){
+    if(typeof RENDERERS === 'undefined') return; const rd = RENDERERS['requisition-detail'];
+    if(typeof rd !== 'function' || rd.__g5) return;
+    const w = function(){ const h = rd.apply(this, arguments); if(!rxOn('g5') || !corp() || typeof h !== 'string') return h; const rq = CO.reqs.find(function(r){ return r.id === CO.ui.sel; }); if(!rq) return h; const x = rxDirectHTML(rq); if(!x) return h; const i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + x + h.slice(i); };
+    w.__g5 = true; w.__g4 = rd.__g4; RENDERERS['requisition-detail'] = w;
+  }
+  hookReq(); window.addEventListener('load', hookReq);
 })();
 </script>
 <script id="o2-persist-script">
