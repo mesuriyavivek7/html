@@ -2089,3 +2089,31 @@ One new block, `<script id="workspaces-script">`, plus a small change in the aut
   - `fix-d2` has 3 new checks. The spec skips itself inside the 390 frame.
   - `kairo-assistant` has 3 new checks.
   - Full suite: 46 specs, 810 / 810.
+
+## After the merge: one Kairo (27 November 2026)
+
+The merge of agency-prototype-v2 is commit db10490. Then:
+
+1. **Sign-up's last step.** `afterSuStep` read `suTick`, which was never declared, and then called `arriveInto`, which doesn't exist.
+   - `suTick` is now declared and set when the step turns "done", from the code check's bar, as sign-in does.
+   - The automatic entry calls `enterProduct`, the same as "Open now". It waits 3 seconds of reading time, which isn't shortened like animations.
+2. **One Kairo.** Ask Kairo and the side panel give the same answer to the same question.
+   - What Kairo's skills understand is answered by Kairo on both: search, drafts, reminders, confirm cards, going to a page, Hinglish, counts and interviews. The page lays it out with its own blocks plus a block of Kairo's cards.
+   - Kairo's answer wins over one of the page's reports only when it produced something: a card, a "which one?" choice, a page to open, or hello.
+   - A report Ask Kairo has its own plan for stays that report: revenue, team wins, setup playbooks, bottlenecks and the others. Where Kairo has a skill for the question, the report opens with Kairo's sentence. A recruiter asking about money gets Kairo's refusal plus the page's "isn't visible to your role" card, with no figures.
+   - An action that would act at once (call, email) keeps the page's ask-first "Do it" card. "Do it" runs Kairo's real answer and records the exchange in the side panel too.
+   - Weuphire's hand-over test now uses "Call …", because "Show my interviews" is a read that Kairo answers directly.
+   - In the panel, a question Kairo has no skill for but Ask Kairo has a report for (bottlenecks, for example) is answered from that report.
+   - Revenue on Ask Kairo comes from PayTrack's earned revenue, the same records Home and PayTrack add up.
+   - Closure rate in the panel is Home's definition: joined ÷ sent across all journeys, and under 5 sent isn't a rate yet.
+   - "This month vs the previous month" is read as this month.
+   - Thin-pipeline bottleneck cards give Talent Discovery's match count.
+3. **Kairo history per workspace and person.**
+   - Ask Kairo saves conversations under workspace + person, not organisation + role.
+   - The side panel keeps each person's chats per workspace and brings them back. Switching workspace sets them aside rather than deleting them.
+4. **Prospects and "Jobs with enough matches".** A job's coverage is the matches still waiting plus the people already on the job who meet its match threshold (`caCoverN`). Adding a Prospect moves a person from one to the other, so the count never goes down. The jobs table still shows how many matches are waiting.
+- Tests:
+  - `auth-flow` 02T;
+  - `intelligence-workspace`: the hand-over check uses a call;
+  - `kairo-assistant`: 4 new checks (same answers, page cards and actions, revenue/closure/bottlenecks, history per person);
+  - `cowork-visual`: Prospects and "enough".

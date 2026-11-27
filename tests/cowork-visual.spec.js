@@ -44,6 +44,18 @@
       var two = caTdWaiting()[0]; prDo([two.id], 'nf', PR_REASONS[0]); await sleep(300); caOpenAgent('talent-discovery'); await sleep(20); ok(CA_DEC[two.jobId + '|' + two.candidateId].d === 'dismissed' && tile('new') === n0 - 2, 'Not a fit removes it too');
     });
 
+    await t('adding a Prospect to a job never lowers “Jobs with enough matches”: the person now counts as on the job (27 Nov 2026)', async function(){
+      var enough = function(){ return caWeekNums('talent-discovery').tiles.find(function(x){ return x.key === 'enough'; }).n; };
+      var rows = caScopeJobs('talent-discovery').filter(function(j){ return !caJobPaused('talent-discovery', j); }).map(function(j){ return { j:j, n:caMatches(j).length }; });
+      var pick = rows.find(function(r){ return r.n === CA_ENOUGH; }) || rows.find(function(r){ return r.n > CA_ENOUGH; }); ok(pick, 'a job with enough matches');
+      var j = pick.j, e0 = enough(), c0 = caCoverN(j), w = caTdWaiting().find(function(x){ return x.jobId === j.id; }), subs0 = SUBMISSIONS.length;
+      if(w) prDo([w.id], 'add'); else createProspectForCandidate(caMatches(j)[0].c.id, j.id); await sleep(300);
+      ok(SUBMISSIONS.length === subs0 + 1, 'the person is on the job');
+      ok(caCoverN(j) === c0 && caCoverN(j) >= CA_ENOUGH, j.title + ' is still covered: ' + c0 + ' → ' + caCoverN(j) + ' (matches waiting ' + caMatches(j).length + ')');
+      ok(enough() >= e0, '“Jobs with enough matches” did not go down: ' + e0 + ' → ' + enough());
+      caOpenAgent('talent-discovery'); await sleep(20); var row = caJobRows('talent-discovery').find(function(r){ return r.j.id === j.id; }); ok(row && row.cov >= CA_ENOUGH, 'and the Jobs list still calls it healthy');
+    });
+
     var check = function(label){ return t(label + ': the numbers row equals the lists on the same page, for every agent', async function(){
       var bad = [];
       CW.order.forEach(function(id){ if(!caWorking(id)) return; caOpenAgent(id); CA.waitAll = true; caRefresh(); var waiting = caNeeds(id);

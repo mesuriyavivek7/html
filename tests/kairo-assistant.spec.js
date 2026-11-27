@@ -127,6 +127,54 @@
       as('Priya Sharma'); showView('settings'); ok(/invite a teammate/.test(kaStarters().join(' ')), 'Settings starters are how-tos'); showView('client-management'); ok(/clients owe feedback/.test(kaStarters().join(' ')), 'Clients starters fit Clients'); showView('dashboard');
     });
 
+    /* One Kairo (27 Nov 2026): Ask Kairo and the side panel give the same answer; history per workspace and person. */
+    var plain = function(h){ return String(h || '').replace(/<[^>]+>/g, ' ').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim(); };
+    var pageOf = function(qq){ KA.ctx = null; var pl = iqPlan({ text:qq }, iqContext()); KA.ctx = null; return pl; };
+    await t('the same question gives the same answer on Ask Kairo and in the side panel: hello, a search, a draft, Hinglish, a reminder, revenue, closure rate, going to a page', async function(){
+      as('Priya Sharma'); var bad = [];
+      ['hello', 'Java developers in Pune', 'Draft a WhatsApp to Aditya about his interview', 'Draft a WhatsApp to Aditya Nair about his interview', 'aaj kya karna hai', 'Remind me tomorrow at 10 to call Sana', 'Revenue this month', 'What is our closure rate?', 'show agents'].forEach(function(qq){
+        KA.ctx = null; var a = kaAnswer(qq), pl = pageOf(qq), first = (pl.blocks || []).find(function(b){ return b.type === 'text'; }), ka = (pl.blocks || []).find(function(b){ return b.type === 'ka'; });
+        if(!first || plain(first.md) !== plain(a.text)) bad.push(qq + ': page “' + plain(first && first.md).slice(0, 60) + '” vs panel “' + plain(a.text).slice(0, 60) + '”');
+        var strip = function(x){ return plain(x).replace(/\b[pd]\d+\b/g, ''); }; if(a.cards.length && !pl.report && (!ka || strip(ka.html) !== strip(a.cards.join('')))) bad.push(qq + ': the cards differ');
+        if(a.skill !== 'help' && /couldn’t match that/.test(JSON.stringify(pl.blocks))) bad.push(qq + ': the page says it couldn’t match'); });
+      ok(!bad.length, bad.join(' | '));
+      ok(pageOf('Which Aditya?') && /Aditya Nair/.test(JSON.stringify(pageOf('Draft a WhatsApp to Aditya about his interview').followups)), 'the page offers the same “Which Aditya?” choices');
+      as('Neha Kulkarni'); var n = pageOf('Revenue this month'); ok(plain(n.blocks[0].md) === KA_NO_MONEY && !n.blocks.some(function(b){ return b.type === 'kpis'; }), 'a recruiter gets the same money refusal on the page, with no figures');
+      ok(/count|submission/i.test(plain(pageOf('kitne submissions is week').blocks[0].md)), 'Hinglish on the page');
+    });
+    await t('on Ask Kairo the answer shows Kairo’s own cards, and an answer that goes somewhere goes there', async function(){
+      as('Priya Sharma'); var keep = Object.assign({}, IQ_ADAPTER.pace); Object.keys(IQ_ADAPTER.pace).forEach(function(k){ if(k !== 'words') IQ_ADAPTER.pace[k] = 0; });
+      try { showView('intelligence'); await sleep(30); IQ.active = null; iqAsk('Java developers in Pune'); for(var i = 0; i < 150 && IQ.running; i++) await sleep(20); await sleep(30);
+        ok(q('#main-content [data-iq-ka] .ka-cand'), 'candidate cards on the page');
+        IQ.active = null; iqAsk('show agents'); for(var k = 0; k < 150 && IQ.running; k++) await sleep(20); await sleep(40); ok(state.activeNav === 'kairo-team', 'show agents opens Cowork from the page too: ' + state.activeNav); }
+      finally { IQ_ADAPTER.pace = Object.assign(IQ_ADAPTER.pace, keep); }
+    });
+    await t('Ask Kairo’s revenue and closure rate match Home, PayTrack and the panel; its bottleneck cards use Talent Discovery’s matches', async function(){
+      as('Priya Sharma'); var rev = pageOf('Compare our recruitment revenue this month with the previous month.'), k = (rev.blocks.find(function(b){ return b.type === 'kpis'; }) || { items:[] }).items, L = function(v){ return Math.round(parseFloat(String(v).replace(/[₹L,\s]/g, '')) * 10) / 10; };
+      var thisM = k.find(function(x){ return x.label === 'This month'; }), all = k.find(function(x){ return x.label === 'All time'; }), panel = kaAnswer('Revenue this month').text;
+      ok(thisM && panel.indexOf('₹' + L(thisM.value).toFixed(1) + 'L') > -1, 'this month: page ' + (thisM || {}).value + ', panel “' + panel + '”');
+      ok(all && L(all.value) === Math.round(odMoney().earned * 10) / 10, 'all time ' + (all || {}).value + ' = Home’s revenue earned ' + odFmtL(odMoney().earned));
+      ok(plain(rev.blocks[0].md) === plain(panel), 'the report opens with the panel’s sentence');
+      var me = intelClosure(currentActingUser()), my = kaAnswer('What is my closure rate?').text; ok(me.rate === null ? /isn’t a rate yet/.test(my) : my.indexOf(me.rate + '%') > -1, 'my closure rate = Home’s coach card: ' + my + ' / ' + me.rate);
+      var bn = intelBottlenecks().filter(function(i){ return /thin pipeline/.test(i.title); }), wrong = bn.filter(function(i){ var j = jobById(i.jobId); if(!j) return false; var m = caMatches(j).length; return m ? i.detail.indexOf(m + ' match') < 0 : !/no matches/.test(i.detail); });
+      ok(!wrong.length, 'thin-pipeline cards say Talent Discovery’s count: ' + wrong.map(function(i){ return i.title + ' · ' + i.detail; }).join(' | ')); ok(!bn.some(function(i){ return /recommended so far/.test(i.detail); }), 'no “recommended so far” count of its own');
+      var pb = kaAnswer('Find the bottlenecks in our recruitment pipeline.'), pp = pageOf('Find the bottlenecks in our recruitment pipeline.'); ok(pb.skill === 'report' && plain(pb.text) === plain((pp.blocks.find(function(b){ return b.type === 'text'; }) || {}).md), 'the panel answers bottlenecks from the same report: ' + pb.text);
+    });
+    await t('Kairo history is per workspace and person: Neha’s chats never show for Priya, in the panel or on Ask Kairo, and come back for Neha', async function(){
+      as('Neha Kulkarni'); kairoChatOpen = true; renderKairoChat(); kaSend('Neha secret question about Java'); await sleep(30); closeKairoChat();
+      var neha = RECRUITER_ROSTER.find(function(u){ return u.name === 'Neha Kulkarni'; }), priya = RECRUITER_ROSTER.find(function(u){ return u.name === 'Priya Sharma'; });
+      demoAct(priya.id); renderSidebar(); kairoChatOpen = true; renderKairoChat(); KA.hist = true; renderKairoChat();
+      ok(!/Neha secret/.test(q('#kairo-chat-panel').textContent) && !KA.chats.some(function(c){ return c.msgs.some(function(m){ return /Neha secret/.test(m.text); }); }), 'Priya’s panel and history have nothing of Neha’s'); KA.hist = false; closeKairoChat();
+      demoAct(neha.id); renderSidebar(); kaChat(); ok(KA.chats.some(function(c){ return c.msgs.some(function(m){ return /Neha secret/.test(m.text); }); }), 'Neha’s chat is still hers');
+      var keep = Object.assign({}, IQ_ADAPTER.pace); Object.keys(IQ_ADAPTER.pace).forEach(function(k){ if(k !== 'words') IQ_ADAPTER.pace[k] = 0; });
+      try { showView('intelligence'); await sleep(30); IQ.active = null; iqAsk('Neha page question about Pune'); for(var i = 0; i < 150 && IQ.running; i++) await sleep(20); var nk = iqKey();
+        demoAct(priya.id); renderSidebar(); showView('intelligence'); await sleep(30); ok(iqKey() !== nk && iqKey().indexOf(String(priya.id)) > -1, 'a key per person: ' + iqKey());
+        ok(!(IQ.convs || []).some(function(c){ return /Neha page question/.test(c.title + JSON.stringify(c.messages)); }) && !/Neha page question/.test(q('#main-content').textContent), 'Ask Kairo shows Priya none of Neha’s conversations');
+        demoAct(neha.id); renderSidebar(); showView('intelligence'); await sleep(30); ok((IQ.convs || []).some(function(c){ return /Neha page question/.test(c.title); }), 'Neha’s conversation is still hers');
+        ok(nk.indexOf(String((typeof WSM !== 'undefined' && WSM.cur) || CURRENT_ORGANIZATION_ID)) > -1, 'and per workspace: ' + nk); }
+      finally { IQ_ADAPTER.pace = Object.assign(IQ_ADAPTER.pace, keep); showView('jobs'); }
+    });
+
     /* Step 4 polish (26 Nov 2026): wording, plurals and search, checked on the built Northstar demo (last: it replaces the data). */
     await t('a skill in a search matches the person’s own skills or title, never a job’s: a QA Engineer on a Java job is not a Java developer, and gets no “Java ✓”', async function(){
       as('Priya Sharma'); var javaJob = JOBS.find(function(j){ return (j.skills || []).indexOf('Java') > -1; }); ok(javaJob, 'a Java job');

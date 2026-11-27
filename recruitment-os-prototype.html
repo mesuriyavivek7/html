@@ -20769,9 +20769,11 @@ function intelBottlenecks(){
         detail:j.client+' \u00b7 '+jobSentCount(j)+' submitted so far against '+j.positions+' opening'+(j.positions===1?'':'s'),
         action:'Review job', onclick:"openJob('"+j.id+"')" });
     } else if(submissionsForJob(j.id).length < 2){
-      items.push({ icon:'users', tone:'gold', title:j.title+' has a thin pipeline',
-        detail:'Only '+submissionsForJob(j.id).length+' candidate'+(submissionsForJob(j.id).length===1?'':'s')+' recommended so far',
-        action:'Source more candidates', onclick:"showView('talent-pool'); switchTalentPoolTab('search');" });
+      /* the same matches Cowork's Talent Discovery shows for this job (27 Nov 2026), so the two never disagree */
+      const on = submissionsForJob(j.id).length, m = typeof caMatches==='function' ? caMatches(j).length : 0;
+      items.push({ icon:'users', tone:'gold', jobId:j.id, title:j.title+' has a thin pipeline',
+        detail:'Only '+on+' candidate'+(on===1?'':'s')+' on it so far · '+(m ? m+' match'+(m===1?'':'es')+' waiting in Talent Discovery' : 'no matches in Talent Discovery yet'),
+        action:m ? 'Review matches' : 'Source more candidates', onclick:m ? "caOpenAgent('talent-discovery')" : "showView('talent-pool'); switchTalentPoolTab('search');" });
     }
   });
   flowStalled(7).slice(0,4).forEach(function(x){
@@ -31165,6 +31167,7 @@ const OA = (function(){
   }
   function goSu(patch){
     clearTimers(); clearInterval(countdown);
+    if(patch && patch.done && !SU.done){ const fill = $('.oa-verify__fill', root()); suTick = fill ? fill.getBoundingClientRect() : null; }
     Object.assign(SU, patch || {});
     try { if(window.joinLeadSync) window.joinLeadSync(snapshot()); } catch(e){ console.error('sign-up save', e); }   /* every answered question is saved at once */
     $('#oa-body', root()).innerHTML = SU.done ? suDoneHTML() : suFlowHTML();
@@ -31176,6 +31179,8 @@ const OA = (function(){
       i:SU.i, last:steps[SU.i - 1] || null, next:steps[SU.i] || null, done:!!SU.done, verified:!!SU.verified, orgType:SU.type ? wsType() : '' };
   }
   const suNext = function(){ goSu({ i:SU.i + 1 }); };
+  /* Where the finished-step tick flies from: the code check's fill bar, measured just before the screen turns into "ready" (as sign-in does). */
+  let suTick = null;
   /* Back to a question, with a message under it (a server answer that belongs to an earlier question). */
   function goSuStep(key, html){
     const idx = suSteps().indexOf(key);
@@ -31194,7 +31199,7 @@ const OA = (function(){
         const tail = $('[data-su-tail]', body); if(tail) tail.outerHTML = '<div class="oa-actions oa-tail" style="margin-top:18px"><button type="button" class="oa-link oa-link--quiet" data-act="su-enter">Open now</button></div>';
       }, T(from && !reduced() ? 660 : 0));
     }
-    if(SU.done && SU.result){ const res = SU.result; later(function(){ if(SU.done && SU.result === res) arriveInto(res); }, T(reduced() ? 700 : 3000)); }
+    if(SU.done && SU.result){ const res = SU.result; later(function(){ if(SU.done && SU.result === res && !authFlow.busy) enterProduct(res); }, reduced() ? 700 : 3000); }   /* on its own after 3 s of reading time (not scaled like motion), the same way "Open now" enters; arriveInto was never defined */
     if(!SU.done && suSteps()[SU.i] === 'code'){
       wireOtp(body, 'Type or paste it — I’ll take it from there.', async function(code){
         const r = await authApi.verifyCode({ email:SU.email.trim().toLowerCase(), code:code, intent:'signup' });
@@ -56186,6 +56191,12 @@ window.caPicksFor = function(j, th, cap){
   return out;
 };
 function caMatches(j){ return caPicksFor(j); }
+/* How well a job is covered (27 Nov 2026): the matches still waiting, plus the people already on the job who meet its match
+   threshold. Adding a match to the job (a Prospect, or Add from Talent Discovery) moves them from one to the other, so
+   "Jobs with enough matches" never goes down because someone was added. */
+function caOnJobMatches(j){ const th = typeof caThFor === 'function' ? caThFor(j) : caThreshold(), seen = {};
+  return SUBMISSIONS.filter(function(x){ if(x.jobId !== j.id || seen[x.candidateId] || /Rejected|Withdrawn|Dropped/i.test(x.stage || '')) return false; seen[x.candidateId] = 1; const c = byId(x.candidateId); return c && cwScore(c, j).score >= th; }).length; }
+function caCoverN(j, m){ return (m || caMatches(j)).length + caOnJobMatches(j); }
 function caPickFirst(j, c){ const m = CA_PICKS[j.id]; return m && m[c.id] ? (typeof m[c.id] === 'object' ? m[c.id].at : m[c.id]) : null; }
 // Kairo's pass. On its own it runs at most every 10 minutes; Run now, a guide and a changed setting force it.
 window.caPickSweep = function(force, jobIds){
@@ -56276,7 +56287,7 @@ window.caWeekNums = function(id){
   let tiles, line;
   if(id === 'talent-discovery'){
     const wait = caTdWaiting(), found = cnt(function(r){ return r.action === 'pick'; }), added = cnt(function(r){ return r.action === 'added'; });
-    const jobs = caMyJobs().filter(function(j){ return caInScope(id, j) && !caJobPaused(id, j); }), cov = jobs.map(function(j){ return caMatches(j); }), enough = cov.filter(function(m){ return m.length >= CA_ENOUGH; }).length;
+    const jobs = caMyJobs().filter(function(j){ return caInScope(id, j) && !caJobPaused(id, j); }), cov = jobs.map(function(j){ return caMatches(j); }), enough = jobs.filter(function(j, i){ return caCoverN(j, cov[i]) >= CA_ENOUGH; }).length;
     const scores = [].concat.apply([], cov.map(function(m){ return m.map(function(x){ return x.s.score; }); })), avg = scores.length ? Math.round(scores.reduce(function(a, b){ return a + b; }, 0) / scores.length) : 0;
     const suggest = caLevelFor(id, 'addPipeline', null) === 'suggest';
     tiles = [ T('new', suggest ? wait.length : found[0], 'New matches', suggest ? caN(found[0], 'found', 'found') + ' this week, waiting for you' : 'found this week', found[1], found[2], { go:'waiting', dn:found[0] }),
@@ -56640,11 +56651,11 @@ function caJobRows(id, mode){
   const li = mode === 'li', wk = cwNow() - 7 * CW_DAY, liRows = li ? caRows({ agent:'linkedin', since:wk }) : null;
   return caMyJobs().filter(function(j){ return caInScope(id, j); }).map(function(j){ const p = !!caJobPaused(id, j);
     if(li){ const r = liRows.filter(function(x){ return x.jobId === j.id; }); return { j:j, paused:p, inv:r.filter(function(x){ return x.action === 'invite'; }).length, acc:r.filter(function(x){ return x.action === 'accept'; }).length, rep:r.filter(function(x){ return x.action === 'reply'; }).length, n:0 }; }
-    const m = p ? [] : caMatches(j); return { j:j, paused:p, m:m, n:m.length, best:m.length ? m[0].s.score : 0 }; });
+    const m = p ? [] : caMatches(j); return { j:j, paused:p, m:m, n:m.length, cov:p ? 0 : caCoverN(j, m), best:m.length ? m[0].s.score : 0 }; });
 }
 function caJobsPanel(id, mode){
   const li = mode === 'li', st = CA.jt, all = caJobRows(id, mode), paused = all.filter(function(r){ return r.paused; }).length;
-  const cat = function(r){ return r.paused ? 'paused' : li ? 'healthy' : r.n >= CA_ENOUGH ? 'healthy' : 'needs'; };
+  const cat = function(r){ return r.paused ? 'paused' : li ? 'healthy' : r.cov >= CA_ENOUGH ? 'healthy' : 'needs'; };
   const cnt = { all:all.length, needs:all.filter(function(r){ return cat(r) === 'needs'; }).length, healthy:all.filter(function(r){ return cat(r) === 'healthy'; }).length, paused:paused };
   const clients = {}; all.forEach(function(r){ clients[r.j.client] = 1; });
   let rows = all.filter(function(r){ return (st.f === 'all' || cat(r) === st.f) && (!st.client || r.j.client === st.client) && (!st.q || (r.j.title + ' ' + r.j.client).toLowerCase().indexOf(st.q.toLowerCase()) > -1); });
@@ -56657,7 +56668,7 @@ function caJobsPanel(id, mode){
   const bulk = sel.length ? '<div class="ca-bulk" role="region" aria-label="Selected jobs"><b>' + sel.length + ' selected</b>' + caBtn('Pause Kairo on these', "caBulk('" + id + "','pause')", '', ' data-bulk="pause"') + caBtn('Resume', "caBulk('" + id + "','resume')", '', ' data-bulk="resume"') + (li ? '' : caBtn('Run now on these', "caBulk('" + id + "','run')", '', ' data-bulk="run"')) + caBtn('Clear', 'CA.jt.sel={}; caRefresh()', 'ghost') + '</div>' : '';
   const allOn = shown.length && shown.every(function(r){ return st.sel[r.j.id]; });
   const head = '<div class="ca-jt__row ca-jt__head" role="row"><span role="columnheader"><input type="checkbox" aria-label="Select all shown" ' + (allOn ? 'checked' : '') + ' onchange="caSelAll(this.checked)"></span><span role="columnheader">Job</span>' + (li ? '<span role="columnheader">Invites</span><span role="columnheader">Accepted</span><span role="columnheader">Replies</span>' : '<span role="columnheader">Matches</span><span role="columnheader">Top matches</span><span role="columnheader">Best</span><span role="columnheader">Checked</span>') + '<span role="columnheader">Kairo</span></div>';
-  const body = shown.map(function(r){ const j = r.j, tone = r.n >= CA_ENOUGH ? 'good' : r.n ? 'warn' : 'none', can = caJobMine(j);
+  const body = shown.map(function(r){ const j = r.j, tone = r.cov >= CA_ENOUGH ? 'good' : r.cov ? 'warn' : 'none', can = caJobMine(j);
     return '<div class="ca-jt__row' + (r.paused ? ' is-paused' : '') + '" role="row" data-jrow="' + j.id + '" tabindex="0" onclick="caJobDrawer(\'' + id + '\',\'' + j.id + '\')" onkeydown="if(event.key===\'Enter\' && event.target===this) caJobDrawer(\'' + id + '\',\'' + j.id + '\')">' +
       '<span role="cell" onclick="event.stopPropagation()"><input type="checkbox" aria-label="Select ' + cwEsc(j.title) + '"' + (st.sel[j.id] ? ' checked' : '') + ' onchange="CA.jt.sel[\'' + j.id + '\']=this.checked; caRefresh()"></span>' +
       '<span role="cell" class="ca-jt__job"><b>' + cwEsc(j.title) + '</b><small>' + cwEsc(j.client) + (r.paused ? ' · paused' : '') + '</small></span>' +
@@ -58316,10 +58327,13 @@ function iqMonthLabel(key){ const p = key.split('-'); return new Date(+p[0], +p[
 function iqLakh(rupees){ return '₹'+(rupees/100000).toFixed(rupees>=1e7 ? 0 : 2).replace(/\.00$/, '')+'L'; }
 function iqPct(n){ return n==null || !isFinite(n) ? '—' : Math.round(n)+'%'; }
 /* revenue earned: accepted and joined offers, fee from the client's terms (the same rule as Revenue everywhere) */
+/* Revenue earned (27 Nov 2026): PayTrack's completed placements, the records Home's "Revenue earned", PayTrack and the Kairo panel add up,
+   so every surface says the same amount (lakhs × 1,00,000 = rupees). */
 function iqRevenueRows(){
-  return iqOffers().filter(function(o){ return o.status==='Offer Accepted' || o.status==='Joined'; }).map(function(o){
-    const d = new Date(o.sb.joinDate || o.offer.acceptedAt || o.offer.at || Date.now()), amt = offerRevenue(o).amount || 0;
-    return { o:o, at:isNaN(d) ? new Date() : d, amount:amt, client:o.client || 'Unknown client', recruiterId:o.sb.recruiterId };
+  const roster = typeof RECRUITER_ROSTER!=='undefined' ? RECRUITER_ROSTER : [];
+  return (typeof PAYTRACK_COMPLETED!=='undefined' ? PAYTRACK_COMPLETED : []).map(function(c){
+    const d = ptParseDate(c.completedDate), u = roster.find(function(x){ return x.name===c.recruiter; });
+    return { o:{ name:c.name, status:'Joined' }, at:d || new Date(), amount:Math.round((c.revenueEarned||0)*100000), client:c.client || 'Unknown client', recruiterId:u ? u.id : null };
   });
 }
 function iqRecruiterRows(){
@@ -58447,7 +58461,7 @@ function iqPlanGrowth(ctx){
   const finds = [];
   if(pending.length) finds.push({ t:pending.length+' offer'+(pending.length===1 ? '' : 's')+' still out', d:'Worth about '+iqLakh(pendingValue)+' in fees once accepted (client terms).' });
   if(stalled.length) finds.push({ t:stalled.length+' candidate'+(stalled.length===1 ? '' : 's')+' with no movement for 7+ days', d:'Each stalled journey delays a possible placement.' });
-  if(thin.length) finds.push({ t:thin.length+' open job'+(thin.length===1 ? ' has' : 's have')+' fewer than 2 profiles', d:thin.slice(0, 3).map(function(j){ return j.title+' ('+j.client+')'; }).join(', ')+'.' });
+  if(thin.length) finds.push({ t:thin.length+' open job'+(thin.length===1 ? ' has' : 's have')+' fewer than 2 profiles', d:thin.slice(0, 3).map(function(j){ const m = typeof caMatches==='function' ? caMatches(j).length : 0; return j.title+' ('+j.client+', '+(m ? m+' match'+(m===1?'':'es')+' in Talent Discovery' : 'no matches yet')+')'; }).join(', ')+'.' });
   if(old.length) finds.push({ t:old.length+' job'+(old.length===1 ? '' : 's')+' open more than 30 days', d:'Long-open roles usually need a pay or scope conversation.' });
   if(topClient) finds.push({ t:topClient+' has the most open positions ('+byClient[topClient]+')', d:'Your largest live demand.' });
   const ideas = [
@@ -58655,7 +58669,10 @@ function iqPlanLookup(raw, ctx){
 ========================================================================================== */
 const IQ = { convs:null, active:null, sb:false,   /* both side panels start closed; the conversation is the page */ sbm:false, panel:null, ptab:'signals', q:'', filter:'all', menu:null, renaming:null, editing:null, running:null, files:[], draft:'', seq:1, voice:{ state:'idle', text:'', interim:'', t0:0 }, srcMsg:null, stick:true,
   sections:[], secRenaming:null, secMenu:null, dragId:null };   /* sections: [{ id, name, collapsed }], a conversation's c.sectionId */
-function iqKey(){ return 'oontu.intelligence.'+CURRENT_ORGANIZATION_ID+'.'+state.role+'.'+((typeof coCorp==='function' && coCorp()) ? 'co' : 'ag'); }
+/* One history per workspace AND person (27 Nov 2026): one recruiter's conversations never show for another, or in another workspace. */
+function iqWho(){ const u = typeof currentActingUser==='function' ? currentActingUser() : null; return (u && (u.id || u.email)) || state.role; }
+function iqWsId(){ return (typeof WSM!=='undefined' && WSM.cur) || CURRENT_ORGANIZATION_ID; }
+function iqKey(){ return 'oontu.intelligence.'+iqWsId()+'.'+iqWho()+'.'+state.role+'.'+((typeof coCorp==='function' && coCorp()) ? 'co' : 'ag'); }
 function iqLoad(){
   if(IQ.convs && IQ.loadedFor===iqKey()) return;
   IQ.loadedFor = iqKey(); IQ.convs = null; IQ.active = null; IQ.sections = []; IQ.secRenaming = null; IQ.secMenu = null;
@@ -58758,6 +58775,7 @@ function iqBlockHTML(b, m, i){
     case 'actions': return '<div class="flex flex-wrap gap-2">'+b.items.map(function(a){ return '<button type="button" class="iq-btn" onclick="'+iqE(a.go)+'">'+iqE(a.label)+' →</button>'; }).join('')+'</div>';
     case 'sources': return '<div class="iq-src">'+icon('doc','w-3.5 h-3.5')+'<span>'+iqE(b.asOf)+'</span><button type="button" onclick="iqShowSources(\''+id+'\')">'+b.items.length+' source'+(b.items.length===1 ? '' : 's')+'</button></div>';
     case 'empty': return '<div class="iq-empty">'+icon('info','w-4 h-4')+'<div><b>'+iqE(b.title||'Nothing yet')+'</b>'+iqE(b.md||'')+'</div></div>';
+    case 'ka': return '<div class="iq-ka ka-cards" data-iq-ka>'+(b.html||'')+'</div>';   /* Kairo's cards, the same ones the side panel shows */
     case 'kairo': return '<div class="iq-kairo">'+icon('zap','w-4 h-4')+'<div class="min-w-0 flex-1"><b>Kairo can do this now</b>'+iqMd(b.md)+(b.result ? '<p class="mt-2"><strong>Kairo:</strong> '+iqE(b.result)+'</p>' : '')+
       (b.result ? '' : '<div class="mt-2 flex gap-2"><button type="button" class="iq-btn is-primary" onclick="iqKairoRun(\''+id+'\','+i+')">Do it</button><button type="button" class="iq-btn" onclick="IQ.draft=\'\'; iqRenderComposer(); iqFocus()">Not now</button></div>')+'</div></div>';
   }
@@ -59872,7 +59890,7 @@ function iqBottleItems(){
   if(iqScope().level==='all' && typeof intelBottlenecks==='function') return intelBottlenecks();
   const out = [], thin = iqJobs().filter(function(j){ return j.status==='Active' && iqSubsForJob(j.id).length<2; }), st = iqStalled(7);
   if(st.length) out.push({ title:st.length+' candidate'+(st.length===1 ? '' : 's')+' with no movement for 7+ days', detail:st.slice(0, 3).map(function(x){ const c = byId(x.sb.candidateId); return c ? c.name : 'Candidate'; }).join(', ')+'.' });
-  if(thin.length) out.push({ title:thin.length+' job'+(thin.length===1 ? ' has' : 's have')+' fewer than 2 profiles', detail:thin.slice(0, 3).map(function(j){ return j.title; }).join(', ')+'.' });
+  if(thin.length) out.push({ title:thin.length+' job'+(thin.length===1 ? ' has' : 's have')+' fewer than 2 profiles', detail:thin.slice(0, 3).map(function(j){ const m = typeof caMatches==='function' ? caMatches(j).length : 0; return j.title+' ('+(m ? m+' match'+(m===1?'':'es')+' in Talent Discovery' : 'no matches yet')+')'; }).join(', ')+'.' });   /* matches as Cowork's Talent Discovery counts them */
   const old = iqJobs().filter(function(j){ return j.status==='Active' && j.daysOpen>30; }); if(old.length) out.push({ title:old.length+' job'+(old.length===1 ? '' : 's')+' open more than 30 days', detail:old.slice(0, 3).map(function(j){ return j.title+' ('+j.daysOpen+' d)'; }).join(', ')+'.' });
   return out;
 }
@@ -64584,6 +64602,7 @@ function kaStageIn(s){ const m = s.match(/\bto (?:the )?([a-z ]+?)(?: stage)?$/)
 /* ---------- time words, in the workspace time zone ---------- */
 function kaDayMs(day, end){ const a = day.split('-'); return wsWallMs(+a[0], +a[1], +a[2], end ? 23 : 0, end ? 59 : 0) + (end ? 59999 : 0); }
 function kaTime(s, def){
+  if(/\bthis (week|month)\b/.test(s) && /\b(last|previous|prior) (week|month)\b/.test(s)) s = s.replace(/\b(last|previous|prior) (week|month)\b/g, ' ');   /* "this month vs the previous month": the answer is this month, compared with the one before */
   const today = wsDay(fmNow()), mon = function(d){ while(wsDow(d) !== 1) d = wsAddDays(d, -1); return d; }, ym = today.slice(0, 8);
   const R = function(a, b, label){ return { from:kaDayMs(a), to:kaDayMs(b, true), label:label, days:wsDaysBetween(a, b) + 1 }; };
   if(/\byesterday\b/.test(s)) return R(wsAddDays(today, -1), wsAddDays(today, -1), 'yesterday');
@@ -64630,7 +64649,7 @@ function kaDay(){
 }
 // Counts and trends
 const KA_METRICS = [['placements', /placement|joined|hires?\b|closure rate|joining/], ['offers', /\boffers?\b/], ['interviews', /\binterview/], ['added', /candidates? added|new candidates|added candidates/], ['submissions', /submission|submitted|submit/]];
-function kaMetricOf(s){ if(/closure rate|conversion/.test(s)) return 'rate'; const m = KA_METRICS.find(function(x){ return x[1].test(s); }); return m ? m[0] : 'submissions'; }
+function kaMetricOf(s){ if(/closure rate|placements rate|conversion/.test(s)) return 'rate';   /* "closure" is read as "placements" by the word list */ const m = KA_METRICS.find(function(x){ return x[1].test(s); }); return m ? m[0] : 'submissions'; }
 function kaTimes(metric, mine){
   const me = kaMe(), subs = kaSubs().filter(function(s){ return !mine || s.recruiterId === me.id; }), jobs = {}; kaJobs().forEach(function(j){ jobs[j.id] = 1; });
   if(metric === 'submissions') return subs.map(kaSubAt);
@@ -64646,9 +64665,10 @@ function kaCounts(s, p){
   const series = function(list){ const out = []; for(let i = 0; i < n; i++){ const a = t.from + i * step, b = Math.min(t.to, a + step - 1); out.push(list.filter(function(x){ return x >= a && x <= b; }).length); } return out; };
   const labels = []; for(let i = 0; i < n; i++){ const a = t.from + i * step; labels.push(step === CW_DAY ? caDay(a).split(' ')[0].slice(0, 2) : caShortDay(wsDay(a))); }
   KA.ctx = { skill:'counts', p:{ metric:metric, mine:mine, time:t } };
-  if(metric === 'rate'){ const subs = kaTimes('submissions', mine), pl = kaTimes('placements', mine), a = subs.filter(function(x){ return kaIn(x, t); }).length, b = pl.filter(function(x){ return kaIn(x, t); }).length, r = a ? Math.round(b / a * 100) : 0;
-    const all = subs.length ? Math.round(pl.length / subs.length * 100) : 0;
-    return kaA('counts', a ? (mine ? 'Your' : 'The') + ' closure rate for ' + t.label + ' is ' + r + '%: ' + caN(b, 'placement') + ' from ' + caN(a, 'submission') + '.' : 'No submissions ' + t.label + ', so there is no closure rate yet. Over all time it is ' + all + '%.', { cards:[kaStatCard(a ? r + '%' : '—', 'closure rate · ' + t.label, 'All time: ' + all + '% (' + pl.length + ' of ' + subs.length + ')')], src:kaSrc('From: Reports', "showView('reports')") }); }
+  if(metric === 'rate'){   /* the same closure rate as Home's coach card and Ask Kairo: joined ÷ sent, all journeys to date; under 5 sent isn't a rate yet */
+    const me = kaMe(), sent = kaSubs().filter(function(x){ return (!mine || x.recruiterId === me.id) && journeySent(x); }), joined = sent.filter(journeyJoined).length, min = RECRUITER_SCORE_RULES.minSent, r = sent.length ? Math.round(joined * 100 / sent.length) : 0, rated = sent.length >= (mine ? min : 1);
+    KA.ctx = { skill:'counts', p:{ metric:metric, mine:mine, time:t } };
+    return kaA('counts', rated ? (mine ? 'Your' : 'The team’s') + ' closure rate is ' + r + '%: ' + joined + ' joined of ' + sent.length + ' sent, across all journeys to date.' : (mine ? 'Your closure rate isn’t a rate yet: ' : 'No closure rate yet: ') + recruiterTooFewText(sent.length).toLowerCase() + '.', { cards:[kaStatCard(rated ? r + '%' : '—', 'closure rate · joined ÷ sent', joined + ' joined of ' + sent.length + ' sent')], src:kaSrc('From: journeys · all to date', "showView('reports')") }); }
   const list = kaTimes(metric, mine), cur = list.filter(function(x){ return kaIn(x, t); }).length, prev = list.filter(function(x){ return kaIn(x, pv); }).length, d = cur - prev;
   const cmp = d > 0 ? d + ' more than ' + pv.label : d < 0 ? (-d) + ' fewer than ' + pv.label : 'the same as ' + pv.label;
   const who = mine ? 'You' : caOwnerish() ? 'Your workspace' : 'Your jobs';
@@ -65113,7 +65133,7 @@ function wsmRestore(s){
 }
 // caches built from the old workspace's records
 function wsmForget(){
-  CA_SCORE_MEMO = { key:'', jobs:{} }; KA_VOCAB = null; CA_HIST = { key:'', bins:null }; IB = null; try { kaReset(); } catch(e){}
+  CA_SCORE_MEMO = { key:'', jobs:{} }; KA_VOCAB = null; CA_HIST = { key:'', bins:null }; IB = null; try { (window.kaPark || kaReset)(); } catch(e){}   /* a workspace switch puts this person's chats aside for when they come back */
   CA.agent = null; CA.tab = 'agents'; CA.draft = null; CA.g = null; CA.run = null; CA.pop = null; CA.f = { agent:'', job:'', recruiter:'', result:'', date:'' };
   try { globalSearchQuery = ''; ts.ran = false; ts.f = tsBlankFilters(); talentSearchAiQuery = ''; } catch(e){}
   if(typeof JOURNEY_INDEX !== 'undefined') try { JOURNEY_INDEX = null; } catch(e){}
@@ -70619,8 +70639,14 @@ function cfScopeHTML(){
     return null;   // a screen keeps the hello and its starters
   }
   // one conversation per context, per person
+  /* history per workspace AND person: a person's chats are kept aside when someone else (or another workspace) takes over, and come back with them */
+  KA.saved = KA.saved || {};
+  const whoKey = function(){ return ((typeof WSM !== 'undefined' && WSM.cur) || CURRENT_ORGANIZATION_ID) + '|' + (kaMe().id || state.role); };
+  const park = function(){ if(KA.whoKey) KA.saved[KA.whoKey] = { chats:KA.chats, byCtx:KA.byCtx }; };
+  window.kaPark = function(){ park(); KA.whoKey = null; KA.cur = null; KA.ctx = null; KA.pend = {}; KA.ctxKey = null; };
+  const rk = kaReset; kaReset = window.kaReset = function(){ if(KA.whoKey) delete KA.saved[KA.whoKey]; rk(); KA.byCtx = {}; KA.ctxKey = null; KA.whoKey = null; };   /* an explicit reset starts this person fresh */
   kaChat = window.kaChat = function(){
-    const me = kaMe().id || state.role; if(KA.who !== me){ KA.who = me; KA.chats = []; KA.cur = null; KA.ctx = null; KA.byCtx = {}; KA.ctxKey = null; }
+    const k = whoKey(); if(KA.whoKey !== k){ park(); const b = KA.saved[k] || { chats:[], byCtx:{} }; KA.whoKey = k; KA.who = kaMe().id || state.role; KA.chats = b.chats; KA.byCtx = b.byCtx; KA.cur = null; KA.ctx = null; KA.ctxKey = null; KA.pend = KA.pend || {}; }
     const ctx = ctxNow(); if(KA.ctxKey !== ctx.key){ KA.ctxKey = ctx.key; KA.cur = KA.byCtx[ctx.key] || null; KA.ctx = null; }
     if(!KA.cur){ KA.cur = { id:'c' + (KA.seq++), at:Date.now(), msgs:[], ctxKey:ctx.key }; const g = greet(ctx); if(g) KA.cur.msgs.push({ from:'kairo', skill:'hello', text:g, cards:[], chips:[], starters:true, id:'m' + (KA.seq++) });   /* the page's suggested questions under the greeting */ KA.chats.unshift(KA.cur); KA.byCtx[ctx.key] = KA.cur; }
     return KA.cur;
@@ -70657,6 +70683,85 @@ function cfScopeHTML(){
       return kaTidy(kaA('contact', (how === 'call' ? 'Calling ' : 'Opening an email to ') + c.name + '.' + note, { run:function(){ if(typeof window[fn] === 'function') window[fn](id); }, src:kaSrc('From: ' + c.name, 'openCandidate(' + id + ')') }));
     }
     return base(raw);
+  };
+})();
+</script>
+<script id="one-kairo-script">
+/* One Kairo (27 Nov 2026): the Ask Kairo page and the side panel give the same answer to the same question.
+   - What Kairo's skills understand (search, drafts, reminders, confirm cards, going to a page, Hinglish, the money refusal,
+     counts, interviews, …) is answered by Kairo in both places; the page lays it out with its own blocks plus Kairo's cards.
+   - A report Ask Kairo has its own plan for stays that report; when Kairo has a skill for the question, the report opens
+     with Kairo's sentence, from the same records. A refusal keeps the page's "isn't visible to your role" card, no figures.
+   - An action that would act at once (call, email) keeps the page's ask-first hand-over; "Do it" runs Kairo's answer.
+   - In the panel, a question Kairo has no skill for but Ask Kairo has a report for is answered from that report. */
+(function(){
+  if(typeof iqPlan !== 'function' || typeof kaAnswer !== 'function') return;
+  const STEP = { find:'Searching your candidates', draft:'Writing the message', day:'Reading what needs you', counts:'Counting from your records', money:'Reading PayTrack', iv:'Reading interviews', follow:'Reading replies and consents', job:'Reading the job', candidate:'Reading the profile', action:'Getting it ready for you to confirm', go:'Opening the page', team:'Reading your team’s work', how:'Looking it up', clarify:'Checking who you mean', hello:'Saying hello', contact:'Finding the person', summary:'Reading the record' };
+  const kaOn = function(){ try { return kaHas(); } catch(e){ return false; } };
+  const qOf = function(c){ return typeof c === 'string' ? c : (c && c.q) || ''; };
+  const ka0 = kaAnswer;   /* Kairo's skills, before the panel's report fallback below */
+  /* which of Ask Kairo's answers a plan is: its generic look-up, "my week", the hand-over to Kairo, or a report of its own */
+  let branch = null;
+  [['iqPlanLookup', 'lookup'], ['iqPlanMyWeek', 'myweek'], ['iqPlanKairo', 'kairo']].forEach(function(x){ const f = window[x[0]]; if(typeof f !== 'function') return; window[x[0]] = function(){ branch = x[1]; return f.apply(this, arguments); }; try { if(x[0] === 'iqPlanLookup') iqPlanLookup = window[x[0]]; if(x[0] === 'iqPlanMyWeek') iqPlanMyWeek = window[x[0]]; if(x[0] === 'iqPlanKairo') iqPlanKairo = window[x[0]]; } catch(e){} });
+  const plan0 = iqPlan;
+  const pagePlan = function(req, ctx){ branch = null; const p = plan0(req, ctx); return { p:p, kind:branch || 'report' }; };
+  const claims = function(a){ return a && a.skill !== 'help' && !(a.skill === 'find' && !(a.cards || []).length); };
+  const kaPlan = function(a, raw){ IQ.after = a.run || a.go ? { run:a.run, go:a.go } : null;
+    return { title:a.skill === 'hello' ? 'Hello' : raw.replace(/\s+/g, ' ').slice(0, 60), steps:[STEP[a.skill] || 'Reading your workspace'],
+      blocks:[{ type:'text', md:a.text }, a.cards && a.cards.length ? { type:'ka', html:a.cards.join('') } : null, a.src ? { type:'actions', items:[{ label:a.src.label.replace(/^From: /, 'Open '), go:a.src.go }] } : null].filter(Boolean),
+      followups:(a.chips || []).map(qOf).filter(Boolean), kairo:a.skill }; };
+  iqPlan = window.iqPlan = function(req, ctx){
+    const raw = String((req && req.text) || '').trim();
+    if(!kaOn() || (req.attachments && req.attachments.length) || !raw) return plan0.apply(this, arguments);
+    const pp = pagePlan(req, ctx), p = pp.p; let a = null; try { a = ka0(raw); } catch(e){ console.error('kairo on Ask Kairo', e); }
+    if(!claims(a)) return p;
+    if(pp.kind === 'kairo' && (a.run || a.skill === 'contact')) return p;   /* it would act at once: the page asks first ("Do it") */
+    /* a draft, a confirm card, "which one?", a page, a search with results, a record summary or hello: Kairo's own job, whatever the page's words match */
+    if(['draft', 'action', 'find', 'summary', 'candidate'].indexOf(a.skill) > -1 && ((a.cards || []).length || a.skill === 'summary') || (a.skill === 'clarify' && (a.chips || []).length) || a.skill === 'go' || a.skill === 'hello') return kaPlan(a, raw);   /* only when Kairo actually produced it */
+    if(pp.kind === 'report' && p && p.blocks && !p.error){
+      const refused = a.skill === 'money' && !kaMoney();
+      p.blocks = [{ type:'text', md:a.text }].concat(refused ? p.blocks.filter(function(b){ return ['kpis', 'chart', 'table', 'report-head'].indexOf(b.type) < 0; }) : p.blocks);
+      if(refused){ p.report = false; if(!(p.followups || []).length) p.followups = (a.chips || []).map(qOf); }
+      return p; }
+    return kaPlan(a, raw);
+  };
+  /* an answer that goes somewhere (show agents) goes there once it has been written */
+  const resp = IQ_ADAPTER.respond;
+  IQ_ADAPTER.respond = function(request, ctx, sink){
+    IQ.after = null; const wrapped = Object.assign({}, sink), d = sink.done; let after = null;
+    wrapped.done = function(meta){ d(meta); const f = after; after = null; if(f){ try { if(f.run) f.run(); if(f.go) showView(f.go); } catch(e){ console.error('Ask Kairo after', e); } } };
+    const job = resp.call(this, request, ctx, wrapped); after = IQ.after; IQ.after = null; return job;
+  };
+  /* "Do it" on a hand-over: Kairo's own answer, its action done, and the exchange in the side panel's conversation too */
+  window.iqKairoRun = iqKairoRun = function(msgId, bi){
+    const m = iqMsg(msgId); if(!m) return; const b = m.blocks[bi]; if(!b) return;
+    let a = null; try { a = kaAnswer(b.text); if(a.run) a.run(); } catch(e){ a = { text:'Kairo couldn’t do that here: ' + (e && e.message || 'unknown error') }; }
+    b.result = (a && a.text) || 'Kairo didn’t return an answer.'; if(a && a.go){ try { showView(a.go); } catch(e){} }
+    if(state.activeNav !== 'intelligence') b.result += ' Kairo opened ' + ((PAGE_TITLES || {})[state.activeNav] || state.activeNav) + '; this conversation stays here.';
+    try { if(typeof kairoChatMessages !== 'undefined'){ kairoChatMessages.push({ from:'user', text:b.text }); kairoChatMessages.push({ from:'kairo', text:b.result }); } } catch(e){}
+    try { const c = kaChat(); c.msgs.push({ from:'user', text:b.text, id:'m' + (KA.seq++) }); if(!c.title) c.title = b.text; if(a && a.text) c.msgs.push(Object.assign({}, a, { from:'kairo', id:'m' + (KA.seq++), run:null })); } catch(e){}
+    logAudit('Kairo', 'Action handed over from Intelligence', b.text); iqPersist(); iqRenderMsg(m);
+  };
+  /* the panel: a question Kairo has no skill for, but Ask Kairo has a report for, is answered from that report */
+  const md = function(x){ return String(x || '').replace(/^#+\s*/gm, '').replace(/\*\*/g, '').replace(/^- /gm, '• ').trim(); };
+  const ans = kaAnswer;
+  kaAnswer = window.kaAnswer = function(raw){
+    const a = ans(raw);
+    if(!claims(a) && kaOn()){
+      let pp = null; try { pp = pagePlan({ text:raw }, iqContext()); } catch(e){ pp = null; }
+      const p = pp && pp.kind === 'report' ? pp.p : null;
+      if(p && p.blocks && p.blocks.length && !p.error){
+        const blocks = p.blocks, text = blocks.filter(function(b){ return b.type === 'text' || b.type === 'callout'; }).map(function(b){ return md(b.md); })[0] || p.title || '', cards = [];
+        blocks.forEach(function(b){
+          if(b.type === 'findings') cards.push(kaListCard(b.items.slice(0, 6).map(function(i){ return { title:i.t, meta:i.d }; }), b.items.length > 6 ? (b.items.length - 6) + ' more on Ask Kairo' : ''));
+          else if(b.type === 'kpis') b.items.slice(0, 3).forEach(function(k){ cards.push(kaStatCard(k.value, k.label, k.sub || '')); });
+          else if(b.type === 'table' && b.rows && b.rows.length) cards.push('<div class="ka-card ka-table" data-card="list"><table><thead><tr>' + b.columns.slice(0, 4).map(function(c){ return '<th>' + kaEsc(c.l) + '</th>'; }).join('') + '</tr></thead><tbody>' + b.rows.slice(0, 6).map(function(r){ return '<tr>' + b.columns.slice(0, 4).map(function(c){ return '<td>' + kaEsc(typeof iqFmt === 'function' ? iqFmt(r[c.k], c.fmt) : r[c.k]) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>');
+        });
+        const go = typeof RENDERERS !== 'undefined' && RENDERERS.intelligence ? "closeKairoChat(); showView('intelligence'); setTimeout(function(){ iqAsk(" + JSON.stringify(String(raw)).replace(/"/g, '&quot;') + "); }, 60)" : null;
+        return kaTidy(kaA('report', text, { cards:cards.slice(0, 5), chips:(p.followups || []).slice(0, 3), src:go ? kaSrc('From: Ask Kairo · ' + (p.title || 'report') + ' · open the full report', go) : null }));
+      }
+    }
+    return a;
   };
 })();
 </script>
