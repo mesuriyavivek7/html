@@ -72882,6 +72882,206 @@ function cfScopeHTML(){
   RENDERERS['oontu-ai'] = function(){ if(!on() || state.role !== 'oontu' || !BOS_VIEW_ACCESS['oontu-ai']()) return BASE.apply(this, arguments); return o2AiHTML(); };
 })();
 </script>
+<style id="rx-g1-style">
+.rx-live{ margin-top:8px; padding-top:8px; border-top:1px solid var(--n-100, #F3F4F6); font-size:12px; color:var(--n-700, #4B5563); display:grid; gap:2px; }
+.rx-live b{ color:var(--n-900, #111827); font-weight:600; }
+.rx-dev{ margin:10px 0 4px; padding:10px 12px; border:1px solid var(--au-border, #E6E5E0); border-radius:10px; background:var(--bg-subtle, #F7F7F4); }
+</style>
+<script id="rx-g1-script">
+/* ============================================================
+   RX G1: LIVE WORKFLOW TRIGGERS (recruiter app, 2026-11-27) — docs/OONTU-GAME-CHANGERS-PROMPT.md
+   Switches: window.RX_SWITCH (g1…g6, all off; rxOn(id), rxSetSwitch(id, on)); toggles in the prototype tools.
+   Settings: WSX.rx with the prompt's defaults (data always present; Settings › Automation edits them).
+   Switch g1 on:
+   - rxEmit(event, payload) fires on real changes: Stage Changed (moveSubmissionStage, which also covers corporate
+     vendor submissions), Interview Scheduled, Offer Released ('Made') and Offer Accepted (offerSetStatus), Candidate
+     Joined (ptCreateJoinedRecord), Job Published (publishJob), Candidate Added (a new record in CANDIDATES) and
+     Candidate Added to Talent Pool (the same add, for the pool trigger).
+   - rxRunWorkflow runs only Published workflows whose trigger matches, with conditions checked for that candidate
+     only, through wfPerform(wf, candidate, context): the same checks as Run Test (approved template, WhatsApp tier
+     quota, LinkedIn sender limits, weekend rule, duplicate task suppression). wfRunTest itself is not changed, so Run
+     Test output stays identical.
+   - Guards: never twice for workflowId + event + candidateId + eventId; WSX.rx.maxActionsPerDay per workflow; no
+     consent → skipped with "No consent".
+   - rxSweep for time-based triggers (Notice Period Expiring, Scheduled Refresh, and those G3–G5 add): on load, every
+     60 s while open, and a "Run sweep now" button in the prototype tools.
+   - RX.touches[] and RX.replies[]; each workflow card shows the last live run, actions today and skips with reasons.
+   Everything outbound is simulated.
+============================================================ */
+(function(){
+  /* ---- switches ---- */
+  const IDS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'], NAMES = { g1:'Live workflow triggers', g2:'Automation results', g3:'Money at risk', g4:'Redeployment and contract-end decisions', g5:'Own talent first', g6:'Interview self-booking' };
+  const KEY = 'oontu.rx.switches.v1'; let chosen = {}; try { chosen = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){}
+  const forced = window.__RX_SWITCHES__ && typeof window.__RX_SWITCHES__ === 'object' ? window.__RX_SWITCHES__ : null;
+  const SW = window.RX_SWITCH = {}; IDS.forEach(function(id){ SW[id] = forced && id in forced ? !!forced[id] : (typeof chosen[id] === 'boolean' ? chosen[id] : false); });
+  window.RX_SWITCH_NAMES = NAMES;
+  window.rxOn = function(id){ return SW[id] === true; };
+  const listeners = []; window.rxOnSwitch = function(fn){ listeners.push(fn); };
+  window.rxSetSwitch = function(id, on){ if(!(id in SW)) return { ok:false, reason:'No upgrade ' + id + '.' }; SW[id] = !!on; chosen[id] = !!on; try { localStorage.setItem(KEY, JSON.stringify(chosen)); } catch(e){} listeners.forEach(function(f){ try { f(id, !!on); } catch(e){ console.error(e); } }); try { if(typeof o2Rerender === 'function') o2Rerender(); } catch(e){} return { ok:true }; };
+
+  /* ---- settings (WSX.rx) ---- */
+  const DEFAULTS = { maxActionsPerDay:200, attributionDays:30, defaultAgencyFeePct:8.33, invoiceGraceDays:3, contractInvoiceDay:3, reqIdleDays:7, redeployLeadDays:21, redeployWindowDays:14, silverMonths:12, dbFirstCount:25, directWindowDays:5, bookingSlots:6, rescheduleCutoffHours:12 };
+  WSX.rx = WSX.rx || {}; Object.keys(DEFAULTS).forEach(function(k){ if(!(k in WSX.rx)) WSX.rx[k] = DEFAULTS[k]; });
+  window.RX_DEFAULTS = DEFAULTS;
+
+  /* ---- the store ---- */
+  const RX = window.RX = window.RX || { touches:[], replies:[], runs:[], seen:{}, skips:[] };
+  let seq = 1; const nid = function(p){ return p + '-' + (seq++); };
+  const ISO = function(){ return new Date().toISOString(); }, today = function(){ return ISO().slice(0, 10); };
+  const cand = function(id){ return typeof byId === 'function' ? byId(id) : CANDIDATES.find(function(c){ return c.id === id; }); };
+
+  /* ---- conditions for one candidate (same rules as wfEvaluateConditions) ---- */
+  window.rxConditionsMet = function(wf, c){
+    if(!wf.conditions || !wf.conditions.length) return true;
+    const logic = wf.conditionLogic || 'AND';
+    const res = wf.conditions.map(function(cond){
+      const f = WF_CONDITION_FIELDS.find(function(x){ return x.key === cond.field; }); if(!f) return true;
+      const actual = f.extract(c);
+      if(f.type === 'number'){ const t = parseFloat(cond.value); if(isNaN(t)) return true; return cond.op === '>' ? actual > t : cond.op === '<' ? actual < t : actual === t; }
+      if(!cond.value) return true; return String(actual).toLowerCase().indexOf(String(cond.value).toLowerCase()) > -1;
+    });
+    return logic === 'OR' ? res.some(Boolean) : res.every(Boolean);
+  };
+
+  /* ---- one workflow, one candidate: the same checks as Run Test ---- */
+  window.wfPerform = function(wf, c, ctx){
+    ctx = ctx || {};
+    const out = { actions:[], skipped:[] };
+    const approved = wf.templateStatus === 'Approved';
+    const li = wf.agentKey === 'linkedin', sp = li && typeof liGetSenderProfile === 'function' ? liGetSenderProfile(wf) : null;
+    const dow = new Date().getDay(), weekendBlocked = li && sp && sp.activeDays.indexOf(dow === 0 ? 7 : dow) === -1;
+    let dayOffset = 0;
+    (wf.steps || []).forEach(function(s){
+      if(s.kind === 'wait'){ dayOffset += (s.days || 1); return; }
+      if(s.disabled || s.kind !== 'do') return;
+      const touch = function(channel, action, outcome){ const t = { id:nid('TCH'), workflowId:wf.id, candidateId:c.id, jobId:ctx.jobId || null, submissionId:ctx.submissionId || null, channel:channel, action:action, at:ISO(), outcome:outcome, event:ctx.event || null, dayOffset:dayOffset }; RX.touches.push(t); out.actions.push(t); return t; };
+      if(s.type === 'liVisitReactConnect' || s.type === 'liConnect'){
+        if(s.type === 'liVisitReactConnect' && !(sp && LI_TIER_INFO[sp.tier].canNote)){ touch('linkedin', 'follow', 'done'); return; }
+        const r = liSendConnectionRequests(wf, [c], approved, weekendBlocked);
+        if(r.skippedApproval){ out.skipped.push('Template not approved'); return; }
+        if(r.sent) touch('linkedin', 'connect', 'sent'); else out.skipped.push(weekendBlocked ? 'Weekend: LinkedIn sender off' : 'LinkedIn sender limit reached');
+        return;
+      }
+      if(WF_MESSAGE_TYPES.indexOf(s.type) > -1 && !approved){ out.skipped.push('Template not approved'); return; }
+      if(s.type === 'sendWhatsapp'){
+        const left = Math.max(0, WA_TIER_INFO[WA_BUSINESS_ACCOUNT.tier].dailyLimit - WA_BUSINESS_ACCOUNT.messagesToday);
+        if(left < 1){ out.skipped.push('WhatsApp daily tier limit'); return; }
+        WA_BUSINESS_ACCOUNT.messagesToday += 1; touch('whatsapp', 'message', 'sent (simulated)'); return;
+      }
+      if(s.type === 'sendEmail'){ touch('email', 'message', 'sent (simulated)'); return; }
+      if(s.type === 'liMessage'){ wf.messagesSentCount = (wf.messagesSentCount || 0) + 1; touch('linkedin', 'message', 'sent (simulated)'); return; }
+      if(s.type === 'liFollowUp'){ wf.followUpsSentCount = (wf.followUpsSentCount || 0) + 1; touch('linkedin', 'follow-up', 'sent (simulated)'); return; }
+      if(s.type === 'createTask'){
+        const src = 'Workflow: ' + wf.name;
+        if(FOLLOW_UPS.some(function(f){ return f.candidateId === c.id && f.status === 'Pending' && f.source === src; })){ out.skipped.push('A task is already open'); return; }
+        const due = new Date(); if(dayOffset > 0){ due.setDate(due.getDate() + dayOffset); due.setHours(10, 0, 0, 0); } else due.setHours(due.getHours() + 1, 0, 0, 0);
+        createFollowUp({ candidateId:c.id, submissionId:ctx.submissionId || null, dueAt:due, channel:'Any', source:src, notes:'Created by your “' + wf.name + '” workflow on “' + (ctx.event || wf.trigger) + '” (live)' });
+        touch('task', 'task', 'created'); return;
+      }
+      if(s.type === 'moveToProspect'){
+        const owner = typeof prospectAssignedRecruiter === 'function' ? prospectAssignedRecruiter(c) : null;
+        if(owner && owner !== 'Priya Sharma'){ out.skipped.push('Owned by another recruiter'); return; }
+        if(manualLineupIds.indexOf(c.id) < 0) manualLineupIds.push(c.id); touch('pipeline', 'prospect', 'added'); return;
+      }
+      touch('internal', s.type, 'done');
+    });
+    return out;
+  };
+
+  function skip(wf, ev, c, reason){ const s = { workflowId:wf.id, candidateId:c ? c.id : ev.candidateId, event:ev.event, reason:reason, at:ISO() }; RX.skips.push(s); return { ok:false, skipped:reason }; }
+  /* consent: the prompt's candidate.consent.given, or the candidate's yes on any submission (M7 right to represent) */
+  window.rxHasConsent = function(c){ if(c && c.consent && c.consent.given === true) return true; return SUBMISSIONS.some(function(s){ return s.candidateId === c.id && s.consent && s.consent.state === 'given'; }); };
+  window.rxRunWorkflow = function(wf, ev){
+    if(wf.status !== 'Published') return { ok:false, skipped:'Not active' };
+    const c = cand(ev.candidateId); if(!c) return skip(wf, ev, null, 'No candidate');
+    const key = wf.id + '|' + ev.event + '|' + c.id + '|' + (ev.eventId || '');
+    if(RX.seen[key]) return { ok:false, skipped:'Already run for this event' };
+    RX.seen[key] = ISO();
+    if(!rxHasConsent(c)) return skip(wf, ev, c, 'No consent');
+    if(!rxConditionsMet(wf, c)) return skip(wf, ev, c, 'Conditions not met');
+    const todays = RX.touches.filter(function(t){ return t.workflowId === wf.id && t.at.slice(0, 10) === today(); }).length;
+    if(todays >= (WSX.rx.maxActionsPerDay || 200)) return skip(wf, ev, c, 'Daily action limit reached');
+    const r = wfPerform(wf, c, { event:ev.event, jobId:ev.jobId, submissionId:ev.submissionId });
+    r.skipped.forEach(function(reason){ RX.skips.push({ workflowId:wf.id, candidateId:c.id, event:ev.event, reason:reason, at:ISO() }); });
+    const run = { id:nid('RUN'), workflowId:wf.id, event:ev.event, eventId:ev.eventId, candidateId:c.id, at:ISO(), actions:r.actions.length, skipped:r.skipped };
+    RX.runs.push(run); wf.lastLiveRunAt = run.at;
+    if(r.actions.length) logAudit('Kairo', 'Automation ran', wf.name + ' · ' + ev.event + ' · ' + c.name + ' · ' + r.actions.length + ' action' + (r.actions.length === 1 ? '' : 's'));
+    return { ok:true, run:run, actions:r.actions };
+  };
+  /* the event bus */
+  window.rxEmit = function(event, payload){
+    if(!rxOn('g1')) return [];
+    const ev = Object.assign({ event:event, at:ISO(), actor:(typeof currentActingUser === 'function' && currentActingUser() ? currentActingUser().name : 'system') }, payload || {});
+    if(!ev.eventId) ev.eventId = event + ':' + (ev.submissionId || ev.candidateId || ev.jobId || '') + ':' + ev.at;
+    (RX.events = RX.events || []).push(ev);
+    const out = [];
+    WORKFLOWS.filter(function(w){ return w.trigger === event; }).forEach(function(w){ out.push(rxRunWorkflow(w, ev)); });
+    (window.RX_LISTENERS || []).forEach(function(fn){ try { fn(ev); } catch(e){ console.error(e); } });
+    return out;
+  };
+  window.RX_LISTENERS = window.RX_LISTENERS || [];
+
+  /* ---- emit from the functions that change ---- */
+  const wrap = function(name, after){ const base = window[name]; if(typeof base !== 'function') return; const w = function(){ const r = base.apply(this, arguments); try { if(rxOn('g1')) after.call(this, arguments, r); } catch(e){ console.error(e); } return r; }; window[name] = w; try { (new Function('f', name + ' = f'))(w); } catch(e){} };
+  wrap('moveSubmissionStage', function(a, sub){ if(!sub) return; const s = SUBMISSIONS.find(function(x){ return x.id === a[0]; }); if(!s) return; const p = { candidateId:s.candidateId, jobId:s.jobId, submissionId:s.id, stage:a[1], eventId:'stage:' + s.id + ':' + a[1] + ':' + (s.stageHistory || []).length };
+    rxEmit('Stage Changed', p); if(a[1] === 'Interview Scheduled') rxEmit('Interview Scheduled', Object.assign({}, p, { eventId:'interview:' + s.id + ':' + (s.stageHistory || []).length })); });
+  wrap('offerSetStatus', function(a, changed){ if(!changed) return; const sb = a[0], st = a[1]; if(!sb) return; const p = { candidateId:sb.candidateId, jobId:sb.jobId, submissionId:sb.id };
+    if(st === 'Made') rxEmit('Offer Released', Object.assign({ eventId:'offer-made:' + sb.id }, p)); if(st === 'Accepted') rxEmit('Offer Accepted', Object.assign({ eventId:'offer-accepted:' + sb.id }, p)); });
+  wrap('ptCreateJoinedRecord', function(a, rec){ const c = CANDIDATES.find(function(x){ return x.name === a[0]; }); if(c) rxEmit('Candidate Joined', { candidateId:c.id, jobId:a[3] || null, submissionId:(a[5] || {}).submissionId || null, eventId:'joined:' + c.id + ':' + (a[4] || '') }); });
+  wrap('publishJob', function(){ const j = JOBS[JOBS.length - 1]; if(j) rxEmit('Job Published', { jobId:j.id, eventId:'job:' + j.id }); });
+  /* a new candidate record */
+  const hookCandidates = function(){ const arr = CANDIDATES; if(!arr || arr.__rxHooked) return; Object.defineProperty(arr, '__rxHooked', { value:true }); Object.defineProperty(arr, 'push', { configurable:true, writable:true, enumerable:false, value:function(){ const n = Array.prototype.push.apply(this, arguments); if(document.readyState !== 'loading' && rxOn('g1')) for(let i = 0; i < arguments.length; i++){ const c = arguments[i]; if(c && c.id != null){ rxEmit('Candidate Added', { candidateId:c.id, eventId:'cand:' + c.id }); rxEmit('Candidate Added to Talent Pool', { candidateId:c.id, eventId:'pool:' + c.id }); } } return n; } }); };
+  hookCandidates(); window.addEventListener('load', hookCandidates);
+
+  /* ---- time-based triggers ---- */
+  const SWEEPERS = window.RX_SWEEPERS = window.RX_SWEEPERS || [];
+  window.rxSweep = function(){
+    if(!rxOn('g1')) return { ran:false };
+    const fired = [];
+    /* Notice Period Expiring: accepted offers whose notice period ends within 7 days */
+    SUBMISSIONS.forEach(function(s){ const o = s.offer; if(!o || o.status !== 'Accepted') return; const c = cand(s.candidateId); if(!c) return; const days = parseInt(String(c.notice || '').replace(/\D/g, ''), 10); if(!(days >= 0)) return; const ends = new Date(new Date(o.acceptedAt || Date.now()).getTime() + days * 864e5); const left = Math.ceil((ends - Date.now()) / 864e5);
+      if(left >= 0 && left <= 7){ fired.push(rxEmit('Notice Period Expiring', { candidateId:c.id, jobId:s.jobId, submissionId:s.id, eventId:'notice:' + s.id + ':' + ends.toISOString().slice(0, 10) })); } });
+    /* Scheduled Refresh: once a day per workflow, for its whole pool */
+    WORKFLOWS.filter(function(w){ return w.status === 'Published' && w.trigger === 'Scheduled Refresh'; }).forEach(function(w){ CANDIDATES.forEach(function(c){ fired.push(rxRunWorkflow(w, { event:'Scheduled Refresh', candidateId:c.id, eventId:'refresh:' + today() })); }); });
+    SWEEPERS.forEach(function(fn){ try { fn(); } catch(e){ console.error(e); } });
+    RX.lastSweepAt = ISO();
+    return { ran:true, fired:fired.length };
+  };
+  window.addEventListener('load', function(){ setTimeout(function(){ try { rxSweep(); } catch(e){} }, 0); });
+  if(!window.__RX_NO_TIMER__) setInterval(function(){ try { if(rxOn('g1')) rxSweep(); } catch(e){} }, 60000);
+
+  /* ---- replies landing in the Uni Box ---- */
+  window.rxRecordReply = function(candidateId, channel, text){ const r = { id:nid('RPL'), candidateId:candidateId, channel:channel || 'inbox', at:ISO(), preview:String(text || '').slice(0, 80) }; RX.replies.push(r); return r; };
+
+  /* ---- each workflow card: last live run, actions today, skipped with reasons ---- */
+  window.rxWorkflowStats = function(wf){ const t = today(), acts = RX.touches.filter(function(x){ return x.workflowId === wf.id && x.at.slice(0, 10) === t; }).length, sk = RX.skips.filter(function(x){ return x.workflowId === wf.id && x.at.slice(0, 10) === t; }); const why = {}; sk.forEach(function(s){ why[s.reason] = (why[s.reason] || 0) + 1; }); return { lastLiveRunAt:wf.lastLiveRunAt || null, actionsToday:acts, skippedToday:sk.length, reasons:why }; };
+  if(typeof window.workflowCardHTML === 'function'){
+    const baseCard = window.workflowCardHTML;
+    window.workflowCardHTML = workflowCardHTML = function(wf){
+      const h = baseCard.apply(this, arguments); if(!rxOn('g1') || !wf) return h;
+      const s = rxWorkflowStats(wf), why = Object.keys(s.reasons).map(function(k){ return s.reasons[k] + ' × ' + k; }).join(' · ');
+      const box = '<div class="rx-live" data-rx-live="' + oEsc(wf.id) + '"><span>Last live run: <b>' + (s.lastLiveRunAt ? new Date(s.lastLiveRunAt).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) : 'not yet') + '</b>' + (wf.status !== 'Published' ? ' · runs only when published' : '') + '</span><span>Actions today: <b>' + s.actionsToday + '</b></span>' + (s.skippedToday ? '<span>Skipped today: ' + oEsc(why) + '</span>' : '') + '</div>';
+      return h.replace(/<\/div>\s*$/, box + '</div>');
+    };
+  }
+
+  /* ---- settings › Automation (Owner/Admin) ---- */
+  const LABELS = { maxActionsPerDay:'Actions per workflow per day', attributionDays:'Attribution window (days)', defaultAgencyFeePct:'Default agency fee (%) · assumption', invoiceGraceDays:'Invoice grace after joining (days)', contractInvoiceDay:'Contract invoice day of month', reqIdleDays:'Idle requisition after (days)', redeployLeadDays:'Redeploy lead time (days)', redeployWindowDays:'Redeployment window (days)', silverMonths:'Silver medalists look-back (months)', dbFirstCount:'Database-first shortlist size', directWindowDays:'Direct sourcing window (working days)', bookingSlots:'Booking slots offered', rescheduleCutoffHours:'Reschedule cut-off (hours)' };
+  window.rxSetSetting = function(k, v){ if(!(k in DEFAULTS)) return { ok:false, reason:'Unknown setting.' }; const n = Number(v); if(!isFinite(n) || n < 0) return { ok:false, reason:'Enter a number of 0 or more.' }; const prev = WSX.rx[k]; WSX.rx[k] = n; logAudit('Settings', 'Automation setting changed', LABELS[k] + ': ' + prev + ' → ' + n); return { ok:true }; };
+  if(typeof SETTINGS_SECTIONS !== 'undefined' && !SETTINGS_SECTIONS.some(function(s){ return s.id === 'rx-automation'; })){
+    SETTINGS_SECTIONS.push({ id:'rx-automation', group:'workspace', label:'Workflow automation', kw:'workflows triggers attribution leaks redeploy booking automation', for:'tenant',
+      can:function(){ return IDS.some(rxOn) && (state.role === 'admin' || (typeof sCan === 'function' && sCan('workspace', 'Edit company profile'))); },
+      edit:function(){ return state.role === 'admin'; },
+      render:function(){ return sCard('Workflow automation', 'Defaults for live workflows and the recruiter-app upgrades. Estimates use these as stated assumptions.', Object.keys(DEFAULTS).map(function(k){ return sRow(LABELS[k], '', '<input class="app-input" type="number" step="any" min="0" value="' + WSX.rx[k] + '" style="width:110px" aria-label="' + oEsc(LABELS[k]) + '" onchange="var r = rxSetSetting(\'' + k + '\', this.value); toast(r.ok ? \'Saved\' : r.reason)">'); }).join('')); } });
+  }
+
+  /* ---- toggles in the prototype tools ---- */
+  window.addEventListener('load', function(){
+    const base = window.bosDevLoginsHTML; if(typeof base !== 'function') return;
+    window.bosDevLoginsHTML = function(){ return base.apply(this, arguments) + '<div class="rx-dev" id="rx-dev"><p class="au-dev__h">Recruiter-app upgrades</p><p class="au-dev__dim">Each upgrade is off until accepted. Off is today’s behaviour.</p><ul class="o2-dev__sw">' + IDS.map(function(id){ return '<li><label class="o-switchrow"><button type="button" role="switch" class="o-switch" data-rx="' + id + '" aria-checked="' + rxOn(id) + '" onclick="rxSetSwitch(\'' + id + '\', !rxOn(\'' + id + '\')); this.setAttribute(\'aria-checked\', String(rxOn(\'' + id + '\')))"><i></i></button><span><b>' + id.toUpperCase() + '</b> ' + oEsc(NAMES[id]) + '</span></label></li>'; }).join('') + '</ul><div class="o2-dev__acts"><button type="button" class="o2-dev__btn" onclick="var r = rxSweep(); toast(r.ran ? \'Sweep ran\' : \'Turn on G1 first\')">Run sweep now</button></div></div>'; };
+  });
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
