@@ -88,7 +88,28 @@ With 1b on, Approvals is open to every active employee (their own requests and d
 
 ## 6. Old code that can be removed
 
-Pending (Step 9).
+Nothing was removed (Step 9 rule: only after you accept a step's switch, one switch per commit, after exporting a demo state). Candidates once the switch is accepted and its default turned on:
+
+| After accepting | Can go | Why it is safe then |
+| --- | --- | --- |
+| 0d | The `inv-N` display paths (internal invoice rows on Subscriptions and in the refund picker) | Every screen shows the linked OON/ number; internal rows stay as data |
+| 1a | `NAV_LAYOUT.oontu` old layout, old ids as menu items, Settings › Platform link sections | The §5 menu and redirects replace them |
+| 2 | `renderOontuDashboardV2` as a screen (keep the function until 9 if other code reads it) | Home replaces it |
+| 3b | Old Tenants list and the standalone Account help screen | Workspaces (All · Requests) and Workspace 360 host every action |
+| 4c | The single Business & finance screen and its tab bar | Invoices & payments, Plans & pricing and Tax & reports reuse its tab bodies |
+| 4d | One-click mark-paid paths (`markInvoicePaid` without allocation) | Allocations settle invoices; the old flag is still written |
+| 5 | Standalone Incomplete sign-ups and Insights screens | Pipeline › Sign-ups and Reports |
+| 6 | Old Notifications screen id | Announcements is the same screen |
+| 7c | Old Employees and access screen | People & access reuses its tab bodies |
+| 8a | Old Feature controls screen | Product controls › Maintenance hosts it |
+| 8b | `renderOontuAgents` as a top-level screen | AI agents › Catalogue hosts it |
+
+## Step 9 checks
+
+- `o2-flows.spec.js` (every step on): lead → won → hand-over → provisioned → Workspace 360, checkout with allocation, renewal → dunning → read-only → paid, bank transfer with TDS, refund, sensitive access, every new screen renders without `inv-N`. 8/8, run twice in a row.
+- Visual and keyboard: new screens use Design 2.0 cards and tables only; host tabs, chart marks and danger-zone buttons are keyboard-reachable; `light`, `design-system`, `a11y-responsive` and `motion` pass with every step on (motion's collapse-pill is the brief's known flake).
+- Docs: `docs/OONTU-PLATFORM-FLOWMAP.md` §13 and `docs/PROTOTYPE-LOGINS.md` (O2 build switches) updated.
+- Full suite: Step 9 changed no product code, so the checkpoint after 8b stands for it (off 1,246/1,247 with one focus flake; all on 1,249/1,249). The final branch suite runs again after Part B.
 
 ## 7. Recommended next
 
