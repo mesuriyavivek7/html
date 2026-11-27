@@ -215,7 +215,8 @@
       bosOpen('onboarding', BOS.onboardings[0].id); await sleep(20); ok(/Milestones/.test(main()) && /Hand-over/.test(main()), 'onboarding page');
       showView('oontu-service'); for(var s = 0; s < 5; s++){ bosTab('oontu-service', s); await sleep(5); }
       showView('oontu-finance'); for(var f = 0; f < 5; f++){ bosTab('oontu-finance', f); await sleep(5); }
-      showView('oontu-platform-users'); for(var e = 0; e < 5; e++){ bosTab('oontu-platform-users', e); await sleep(5); } ok(/Permission catalog|Outbox/.test(main()), 'employees tabs');
+      showView('oontu-platform-users'); for(var e = 0; e < 5; e++){ bosTab('oontu-platform-users', e); await sleep(5); } if(typeof o2On === 'function' && o2On('7c')){ o2PeopleTab('advanced'); await sleep(5); }   /* O2 7c: the catalogue is under Advanced */
+      ok(/Permission catalog|Outbox/.test(main()), 'employees tabs');
       showView('oontu-custops'); for(var c = 0; c < 3; c++){ bosTab('oontu-custops', c); await sleep(5); }
       bosMailDialog(); bosMailSubmit(); await sleep(20); ok(/Received email/.test(main()), 'email intake tab after simulation');
     });

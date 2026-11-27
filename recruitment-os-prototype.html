@@ -72517,6 +72517,194 @@ function cfScopeHTML(){
   });
 })();
 </script>
+<script id="o2-people-script">
+/* ============================================================
+   O2 STEP 7c: PEOPLE & ACCESS, ROLES, SEPARATION OF DUTIES (2026-11-26, permissions step)
+   Switch 7c on:
+   - oontu-people: People (name, roles, team, status, two-step, last sign-in, last access review; Manage opens today's
+     dialog) · Teams (records in BOS.teams) · Roles (12 starter roles first, specialist roles folded) · Temporary access
+     (today's grants) · Access reviews (quarterly campaign: each manager's people) · Advanced (the permission catalogue,
+     read-only except for a Security Administrator).
+   - Separation of duties: holding finance:invoice + finance:verify_payment, or user:assign + audit:export, is refused
+     with a warning unless a Security Administrator overrides it with a reason (audited).
+   - Audit & security (oontu-audit): filters (who, outcome, area, text), tabs All · Refusals · Sign-ins · Changes, and an
+     export that needs the data-export approval (platform-access:approve, another person); the link expires after
+     policy.exportLinkHours.
+   - Policy values change only through policy-change: a Security Administrator and a Finance Manager both sign off.
+   Every old Employees and access action stays available (the old tab bodies are reused).
+============================================================ */
+(function(){
+  const on = function(){ return o2On('7c'); };
+  const E = function(s){ return oEsc(s == null ? '' : s); }, ISO = function(t){ return new Date(t == null ? bosNow() : t).toISOString(); }, UI = window.BOS_UI;
+  const isRole = function(u, r){ try { return bosRolesOf(u || currentPlatformUser()).indexOf(r) > -1; } catch(e){ return false; } };
+  const isSecurity = function(u){ return isRole(u, 'tpl_security_admin') || isRole(u, 'role_oontu_super_admin'); };
+  const isFinanceMgr = function(u){ return isRole(u, 'tpl_fin_mgr') || isRole(u, 'role_oontu_super_admin'); };
+  const TYPES = { 'data-export':{ label:'Data export', perm:['platform-access', 'approve'] } };
+  const reg = function(){ Object.keys(TYPES).forEach(function(k){ if(on()){ if(!BOS_APPROVAL_TYPES[k]) BOS_APPROVAL_TYPES[k] = TYPES[k]; } else if(BOS_APPROVAL_TYPES[k] === TYPES[k]) delete BOS_APPROVAL_TYPES[k]; }); };
+  reg(); o2OnSwitch(function(id){ if(id === '7c'){ reg(); ensureTeams(); } });
+
+  /* ---------- separation of duties ---------- */
+  const SOD = window.O2_SOD = [[['platform-finance', 'invoice'], ['platform-finance', 'verify_payment'], 'Issuing invoices and verifying their payment'], [['platform-user', 'assign'], ['platform-audit', 'export'], 'Assigning access and exporting the audit log']];
+  const permsOf = function(roleIds){ const out = {}; roleIds.forEach(function(rid){ const r = platformRoleById(rid); if(!r) return; Object.keys(r.permissions || {}).forEach(function(m){ (r.permissions[m] || []).forEach(function(a){ out[m + ':' + a] = 1; }); }); }); return out; };
+  window.o2SodConflicts = function(roleIds){ const p = permsOf(roleIds || []); return SOD.filter(function(s){ return p[s[0].join(':')] && p[s[1].join(':')]; }).map(function(s){ return s[2]; }); };
+  const baseSet = window.bosSetRoles;
+  window.bosSetRoles = bosSetRoles = function(id, roles, opts){
+    if(!on()) return baseSet.apply(this, arguments);
+    opts = opts || {};
+    /* a conflict built into one role template is that template's design: warned and audited, not blocked;
+       a conflict created by combining roles needs a Security Administrator's override with a reason */
+    const all = o2SodConflicts(roles), inTemplate = all.filter(function(c){ return (roles || []).some(function(r){ return o2SodConflicts([r]).indexOf(c) > -1; }); });
+    const conflicts = all.filter(function(c){ return inTemplate.indexOf(c) < 0; });
+    if(conflicts.length){
+      if(!opts.override) return { ok:false, sod:conflicts, reason:'Separation of duties: ' + conflicts.join('; ') + ' should not sit with one person. A Security Administrator can override this with a reason.' };
+      if(!isSecurity()) return { ok:false, sod:conflicts, reason:'Only a Security Administrator can override a separation-of-duties conflict.' };
+      if(String(opts.reason || '').trim().length < 10) return { ok:false, field:'reason', reason:'Give the reason for the override.' };
+    }
+    const r = baseSet.apply(this, [id, roles]);
+    if(r && r.ok && conflicts.length) logPlatformAudit('Separation of duties override', (platformUserById(id) || {}).name + ' · ' + conflicts.join('; ') + ' · ' + opts.reason, { entityId:id, entityType:'Employee', command:'employee.roles', outcome:'allowed', reason:opts.reason });
+    if(r && r.ok && inTemplate.length){ r.sodWarning = inTemplate; logPlatformAudit('Separation of duties warning', (platformUserById(id) || {}).name + ' · built into the role template: ' + inTemplate.join('; '), { entityId:id, entityType:'Employee', command:'employee.roles', outcome:'allowed' }); }
+    return r;
+  };
+
+  /* ---------- teams as records ---------- */
+  function ensureTeams(){
+    if(!on()) return; BOS.teams = BOS.teams || [];
+    PLATFORM_USER_ROSTER.filter(function(u){ return !u.system && u.teamId; }).forEach(function(u){
+      let t = BOS.teams.find(function(x){ return x.id === u.teamId; });
+      if(!t){ t = { id:u.teamId, name:u.teamId.replace(/-/g, ' ').replace(/^./, function(c){ return c.toUpperCase(); }), department:u.department || 'Platform', managerId:null, createdAt:ISO() }; BOS.teams.push(t); }
+      if(!t.managerId){ const mgr = platformUserById(u.managerId); if(mgr && mgr.teamId !== u.teamId) t.managerId = mgr.id; }
+    });
+  }
+  ensureTeams();
+
+  /* ---------- access review campaign (quarterly) ---------- */
+  const quarter = function(){ const d = new Date(bosNow()), q = Math.floor(((d.getMonth() + 9) % 12) / 3) + 1; return (typeof bosFyOf === 'function' ? bosFyOf(d.toISOString()) : d.getFullYear()) + ' Q' + q; };
+  window.o2StartAccessReview = function(){
+    return bosRun('access-review.start', null, function(){
+      if(!on()) return { ok:false, reason:'People & access is part of step 7c, which is off.' };
+      if(!canPlatform('platform-user', 'update') && !isSecurity()) return { ok:false, reason:bosWhyNot('platform-user', 'update') };
+      BOS.accessReviews = BOS.accessReviews || []; const q = quarter();
+      if(BOS.accessReviews.some(function(c){ return c.quarter === q && c.status === 'open'; })) return { ok:false, reason:'This quarter’s review is already running.' };
+      const items = PLATFORM_USER_ROSTER.filter(function(u){ return !u.system && u.status === 'Active'; }).map(function(u){ return { userId:u.id, managerId:u.managerId || 'PU-001', done:false }; });
+      const c = { id:bosId('AR', 3), quarter:q, startedAt:ISO(), startedBy:ACTIVE_PLATFORM_USER_ID, status:'open', items:items };
+      BOS.accessReviews.push(c); items.forEach(function(i){ bosNotify(i.managerId, 'Access review ' + q + ': confirm ' + ((platformUserById(i.userId) || {}).name || i.userId) + '’s access', null); });
+      return { ok:true, campaign:c, ref:c.id, audit:['Access review started', q + ' · ' + items.length + ' people', { entityId:c.id, entityType:'Access review' }] };
+    });
+  };
+  const baseReview = window.bosReviewAccess;
+  window.bosReviewAccess = bosReviewAccess = function(id){ const r = baseReview.apply(this, arguments); if(on() && r && r.ok) (BOS.accessReviews || []).forEach(function(c){ if(c.status !== 'open') return; c.items.forEach(function(i){ if(i.userId === id) i.done = true; }); if(c.items.every(function(i){ return i.done; })){ c.status = 'complete'; c.completedAt = ISO(); } }); return r; };
+
+  /* ---------- policy change: Security Administrator + Finance Manager ---------- */
+  window.o2RequestPolicyChange = function(key, value, reason){
+    return bosRun('policy.change-request', null, function(){
+      if(!on()) return { ok:false, reason:'Policy changes are part of step 7c, which is off.' };
+      if(!(key in (PLATFORM_SETTINGS.policy || {}))) return { ok:false, reason:'Unknown policy value.' };
+      if(!isSecurity() && !isFinanceMgr()) return { ok:false, reason:'A Security Administrator or a Finance Manager proposes policy changes.' };
+      if(String(reason || '').trim().length < 10) return { ok:false, field:'reason', reason:'Say why the policy should change.' };
+      BOS.policyChanges = BOS.policyChanges || [];
+      const c = { id:bosId('POL', 3), key:key, from:PLATFORM_SETTINGS.policy[key], to:value, reason:String(reason).trim(), requestedBy:ACTIVE_PLATFORM_USER_ID, at:ISO(), signoffs:{ security:null, finance:null }, status:'pending' };
+      BOS.policyChanges.push(c);
+      return { ok:true, change:c, ref:c.id, audit:['Policy change requested', key + ': ' + JSON.stringify(c.from) + ' → ' + JSON.stringify(value) + ' · ' + c.reason, { entityId:c.id, entityType:'Policy' }] };
+    });
+  };
+  window.o2SignPolicyChange = function(id){
+    const c = (BOS.policyChanges || []).find(function(x){ return x.id === id; });
+    return bosRun('policy.change-signoff', null, function(){
+      if(!on()) return { ok:false, reason:'Policy changes are part of step 7c, which is off.' };
+      if(!c || c.status !== 'pending') return { ok:false, reason:'No pending policy change.' };
+      const u = currentPlatformUser(); if(c.requestedBy === u.id) return { ok:false, reason:'Someone other than the requester signs off.' };
+      let as = null; if(isRole(u, 'tpl_security_admin') && !c.signoffs.security) as = 'security'; else if(isRole(u, 'tpl_fin_mgr') && !c.signoffs.finance) as = 'finance'; else if(isRole(u, 'role_oontu_super_admin')) as = !c.signoffs.security ? 'security' : !c.signoffs.finance ? 'finance' : null;
+      if(!as) return { ok:false, reason:'A Security Administrator and a Finance Manager both sign off; you have already signed or hold neither role.' };
+      if(as === 'security' && c.signoffs.finance === u.id || as === 'finance' && c.signoffs.security === u.id) return { ok:false, reason:'The two sign-offs must come from two people.' };
+      c.signoffs[as] = u.id;
+      if(c.signoffs.security && c.signoffs.finance){ PLATFORM_SETTINGS.policy[c.key] = c.to; c.status = 'applied'; c.appliedAt = ISO(); }
+      return { ok:true, change:c, ref:c.id, audit:['Policy change ' + (c.status === 'applied' ? 'applied' : 'signed'), c.key + ' · ' + as + ' sign-off by ' + u.name, { entityId:c.id, entityType:'Policy' }] };
+    });
+  };
+
+  /* ---------- data export of the audit log (approval) ---------- */
+  window.o2RequestAuditExport = function(filter, reason){
+    return bosRun('export.audit-request', null, function(){
+      if(!on()) return { ok:false, reason:'Audit export is part of step 7c, which is off.' };
+      if(!canPlatform('platform-audit', 'export') && !canPlatform('platform-audit', 'view')) return { ok:false, reason:bosWhyNot('platform-audit', 'export') };
+      if(String(reason || '').trim().length < 10) return { ok:false, field:'reason', reason:'Say what the export is for.' };
+      const a = bosRequestApproval('data-export', 'audit', 'Audit log export · ' + reason, { what:'audit', filter:filter || {}, reason:reason });
+      a.justification = { category:'Compliance or audit', reason:reason, withoutIt:'The export is not made.' };
+      return { ok:true, pending:true, approval:a, ref:a.id };
+    });
+  };
+  bosOnApproval('data-export', function(a, approve){
+    if(!approve || !a.payload || a.payload.what !== 'audit') return null;
+    const hours = o2Policy('exportLinkHours') || 24; BOS.exports = BOS.exports || [];
+    const rows = AUDIT_LOG.filter(function(e){ return e.module === 'Platform'; }).length;
+    const x = { id:bosId('EXP', 3), what:'audit', approvalId:a.id, requestedBy:a.requestedBy, rows:rows, createdAt:ISO(), expiresAt:ISO(bosNow() + hours * 36e5), url:'https://exports.oontu.example/' + a.id + ' (simulated)' };
+    BOS.exports.push(x); bosNotify(a.requestedBy, 'Your audit export is ready (link expires in ' + hours + ' hours)', a.id);
+    logPlatformAudit('Audit export created', x.id + ' · ' + rows + ' rows · expires ' + x.expiresAt, { entityId:x.id, entityType:'Export', command:'export.audit', approvalId:a.id });
+    return { export:x };
+  });
+
+  /* ---------- screens ---------- */
+  const ST = window.O2_PEOPLE_UI = { tab:'people', audit:'all', f:{ who:'', outcome:'', area:'', q:'' } };
+  const tabsNav = function(fn, list, cur){ return '<nav class="o2-host-tabs" aria-label="Sections">' + list.map(function(x){ return '<button type="button" class="o2-host-tab' + (x[0] === cur ? ' is-on' : '') + '" aria-current="' + (x[0] === cur ? 'page' : 'false') + '" onclick="' + fn + '(\'' + x[0] + '\')">' + E(x[1]) + '</button>'; }).join('') + '</nav>'; };
+  const EMP = RENDERERS['oontu-platform-users'];
+  window.o2EmpTabBody = function(i){ const prev = UI.tab['oontu-platform-users']; UI.tab['oontu-platform-users'] = i; let h = ''; try { h = EMP(); } finally { UI.tab['oontu-platform-users'] = prev; } const s = h.indexOf('<div class="seg bos-tabs"'); if(s < 0) return h; const e = h.indexOf('</div>', s) + 6, end = h.lastIndexOf('</div>'); return h.slice(e, end > e ? end : h.length); };
+  window.o2PeopleTab = function(k){ ST.tab = k; bosRedraw(); };
+  const STARTER = window.O2_STARTER_ROLES = ['role_oontu_super_admin', 'tpl_sales_exec', 'tpl_sales_mgr', 'tpl_rev_mgr', 'tpl_agent', 'tpl_support_mgr', 'tpl_impl', 'tpl_trainer', 'tpl_cs_mgr', 'tpl_fin_assoc', 'tpl_fin_mgr', 'tpl_security_admin'];
+  const lastSignIn = function(u){ const e = AUDIT_LOG.filter(function(x){ return x.module === 'Platform' && /Employee signed in|Second sign-in step passed/.test(x.action) && x.detail && x.detail.indexOf(u.name) > -1; })[0]; return e ? new Date(e.at || e.timestamp || Date.now()).toLocaleDateString('en-GB') : 'Not in this session'; };
+  window.o2PeopleTabHTML = function(k){
+    if(k === 'people'){
+      const list = PLATFORM_USER_ROSTER.filter(function(u){ return !u.system; });
+      return oTableCard({ id:'o2-people', title:'People', sub:'One identity and one sign-in per person; Manage opens today’s dialog', cols:[{ label:'Name' }, { label:'Roles' }, { label:'Team' }, { label:'Status' }, { label:'Two-step' }, { label:'Last sign-in' }, { label:'Last access review' }, { label:'' }], rows:list.map(function(u){ const conf = o2SodConflicts(bosRolesOf(u)); return '<tr><td><b>' + E(u.name) + '</b><small>' + E(u.email) + '</small></td><td style="white-space:normal">' + E(bosRolesOf(u).map(function(r){ return (platformRoleById(r) || {}).name || r; }).join(', ')) + (conf.length ? ' ' + oBadge('warn', 'Duty conflict') : '') + '</td><td>' + E(u.teamId || '—') + '</td><td>' + E(u.status) + '</td><td>' + E(o2On('7b') ? 'On' : 'Not enforced yet') + '</td><td>' + E(lastSignIn(u)) + '</td><td>' + E(u.lastReviewedAt ? new Date(u.lastReviewedAt).toLocaleDateString('en-GB') : 'Never') + '</td><td>' + (canPlatform('platform-user', 'view') ? '<button type="button" class="o-btn" onclick="bosEmployeeDialog(\'' + E(u.id) + '\')">Manage</button>' : '') + '</td></tr>'; }).join('') }) + o2EmpTabBody(0).replace(/<section aria-labelledby="bos-emp-h"[\s\S]*?<\/section>/, '');
+    }
+    if(k === 'teams'){ ensureTeams(); const ts = BOS.teams || []; return oTableCard({ id:'o2-teams', title:'Teams', sub:'Teams are records: a manager and members', cols:[{ label:'Team' }, { label:'Department' }, { label:'Manager' }, { label:'Members' }], rows:ts.length ? ts.map(function(t){ const m = PLATFORM_USER_ROSTER.filter(function(u){ return u.teamId === t.id && !u.system; }); return '<tr><td><b>' + E(t.name) + '</b><small>' + E(t.id) + '</small></td><td>' + E(t.department) + '</td><td>' + E(t.managerId ? bosName(t.managerId) : '—') + '</td><td style="white-space:normal">' + E(m.map(function(u){ return u.name; }).join(', ')) + '</td></tr>'; }).join('') : oTableEmptyRow(4, 'No teams yet.') }); }
+    if(k === 'roles'){
+      const row = function(r){ const mods = Object.keys(r.permissions || {}); const approves = Object.keys(BOS_APPROVAL_TYPES).filter(function(t){ const p = BOS_APPROVAL_TYPES[t].perm; return (r.permissions[p[0]] || []).indexOf(p[1]) > -1; }).map(function(t){ return BOS_APPROVAL_TYPES[t].label.toLowerCase(); }); return '<tr><td><b>' + E(r.name) + '</b><small>' + E(r.description || r.id) + '</small></td><td style="white-space:normal">' + E(approves.join(', ') || 'Nothing') + '</td><td><details><summary>' + mods.length + ' areas</summary><small>' + E(mods.map(function(m){ return m + ': ' + r.permissions[m].join(', '); }).join(' · ')) + '</small></details></td></tr>'; };
+      const starters = PLATFORM_ROLES.filter(function(r){ return STARTER.indexOf(r.id) > -1; }), rest = PLATFORM_ROLES.filter(function(r){ return STARTER.indexOf(r.id) < 0; });
+      return oTableCard({ id:'o2-roles', title:'Starter roles', sub:oPlural(starters.length, 'role') + ' most teams need', cols:[{ label:'Role' }, { label:'Can approve' }, { label:'Permissions' }], rows:starters.map(row).join('') }) +
+        '<details class="o2-ws-legacy"><summary>Specialist roles (' + rest.length + ')</summary>' + oTableCard({ id:'o2-roles-sp', title:'Specialist roles', sub:'', cols:[{ label:'Role' }, { label:'Can approve' }, { label:'Permissions' }], rows:rest.map(row).join('') }) + '</details>';
+    }
+    if(k === 'temporary') return o2EmpTabBody(3);
+    if(k === 'reviews'){
+      const cs = (BOS.accessReviews || []).slice().reverse(), cur = cs[0];
+      return '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">Access reviews</h2><span class="o-card__sub">Quarterly: each manager confirms their people’s access</span></div><div class="o2-sub-acts">' + ((canPlatform('platform-user', 'update') || isSecurity()) ? '<button type="button" class="o-btn o-btn--primary" onclick="bosResult(o2StartAccessReview(), \'Access review started.\')">Start this quarter’s review</button>' : '') + '</div></section>' +
+        (cur ? oTableCard({ id:'o2-ar', title:'Review ' + cur.quarter, sub:cur.items.filter(function(i){ return i.done; }).length + ' of ' + cur.items.length + ' done · ' + cur.status, cols:[{ label:'Person' }, { label:'Manager' }, { label:'Status' }, { label:'' }], rows:cur.items.map(function(i){ return '<tr><td>' + E(bosName(i.userId)) + '</td><td>' + E(bosName(i.managerId)) + '</td><td>' + E(i.done ? 'Confirmed' : 'Waiting') + '</td><td>' + (!i.done ? '<button type="button" class="o-btn" onclick="bosResult(bosReviewAccess(\'' + E(i.userId) + '\', true), \'Access confirmed.\')">Confirm access</button>' : '') + '</td></tr>'; }).join('') }) : '<p class="o2-muted">No review yet this quarter.</p>');
+    }
+    if(k === 'advanced'){ const body = o2EmpTabBody(2); return isSecurity() ? body : '<p class="o2-muted" style="margin:0 0 10px">Read-only: only a Security Administrator changes the permission catalogue.</p>' + body.replace(/<button[^>]*>[\s\S]*?<\/button>/g, ''); }
+    return '';
+  };
+  const PEOPLE_TABS = [['people', 'People'], ['teams', 'Teams'], ['roles', 'Roles'], ['temporary', 'Temporary access'], ['reviews', 'Access reviews'], ['advanced', 'Advanced']];
+  window.o2PeopleHTML = function(){ const k = PEOPLE_TABS.some(function(x){ return x[0] === ST.tab; }) ? ST.tab : 'people'; return oDashShell([oPageHead({ ctx:'Admin', title:'People & access', lede:'Who can do what, and why.' }), tabsNav('o2PeopleTab', PEOPLE_TABS, k) + '<div class="o2-bill-stack" style="display:grid;gap:16px">' + o2PeopleTabHTML(k) + '</div>']); };
+  /* Audit & security */
+  window.o2AuditRows = function(){
+    const f = ST.f, k = ST.audit;
+    return AUDIT_LOG.filter(function(e){ if(e.module !== 'Platform') return false; const m = e.meta || e;
+      if(k === 'refusals' && !/refused|failed/.test(m.outcome || '')) return false;
+      if(k === 'signins' && !/Sign-in|signed in|sign-in step/.test(e.action)) return false;
+      if(k === 'changes' && /refused|failed/.test(m.outcome || '')) return false;
+      if(f.who && String(m.actorId || m.actorPlatformUserId || '') !== f.who) return false;
+      if(f.outcome && (m.outcome || 'allowed') !== f.outcome) return false;
+      if(f.area && String(m.command || m.entityType || '').indexOf(f.area) < 0) return false;
+      if(f.q && (e.action + ' ' + e.detail).toLowerCase().indexOf(f.q.toLowerCase()) < 0) return false;
+      return true; });
+  };
+  window.o2AuditSet = function(k, v){ if(k === 'tab') ST.audit = v; else ST.f[k] = v; bosRedraw(); };
+  window.o2AuditHTML = function(){
+    const rows = o2AuditRows(), people = PLATFORM_USER_ROSTER.filter(function(u){ return !u.system; });
+    const tabs = '<nav class="o2-host-tabs" aria-label="Audit">' + [['all', 'All'], ['refusals', 'Refusals'], ['signins', 'Sign-ins'], ['changes', 'Changes']].map(function(x){ return '<button type="button" class="o2-host-tab' + (x[0] === ST.audit ? ' is-on' : '') + '" onclick="o2AuditSet(\'tab\', \'' + x[0] + '\')">' + E(x[1]) + '</button>'; }).join('') + '</nav>';
+    const filters = '<div class="o2-ws-filters"><input type="search" placeholder="Search actions" value="' + E(ST.f.q) + '" oninput="o2AuditSet(\'q\', this.value)" aria-label="Search the audit log"><select aria-label="Who" onchange="o2AuditSet(\'who\', this.value)"><option value="">Who: everyone</option>' + people.map(function(u){ return '<option value="' + E(u.id) + '"' + (ST.f.who === u.id ? ' selected' : '') + '>' + E(u.name) + '</option>'; }).join('') + '</select><select aria-label="Outcome" onchange="o2AuditSet(\'outcome\', this.value)"><option value="">Outcome: all</option>' + ['allowed', 'refused', 'failed'].map(function(o){ return '<option' + (ST.f.outcome === o ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select><input placeholder="Area (command)" value="' + E(ST.f.area) + '" onchange="o2AuditSet(\'area\', this.value)" aria-label="Area"></div>';
+    const ex = (BOS.exports || []).filter(function(x){ return x.what === 'audit'; }).slice(-1)[0];
+    return oDashShell([oPageHead({ ctx:'Admin', title:'Audit & security', lede:oPlural(rows.length, 'row') + ' match', actions:[{ label:'Request export', onclick:"var w = prompt('What is the export for?'); if(w){ bosResult(o2RequestAuditExport(O2_PEOPLE_UI.f, w), 'Sent for approval.'); }" }] }),
+      tabs + filters + (ex ? '<p class="o2-muted">Latest export ' + E(ex.id) + ' · ' + E(ex.rows) + ' rows · link expires ' + E(new Date(ex.expiresAt).toLocaleString('en-GB')) + '</p>' : '') +
+      oTableCard({ id:'o2-audit', title:'Audit log', sub:'Platform actions with who, outcome and reason', cols:[{ label:'When' }, { label:'Action' }, { label:'Who' }, { label:'Outcome' }], rows:rows.slice(0, 200).map(function(e){ const m = e.meta || e; return '<tr><td>' + E(new Date(e.at || e.timestamp || Date.now()).toLocaleString('en-GB')) + '</td><td style="white-space:normal"><b>' + E(e.action) + '</b><small>' + E(e.detail) + '</small></td><td>' + E(bosName(m.actorId || m.actorPlatformUserId) || '—') + '</td><td>' + E(m.outcome || 'allowed') + '</td></tr>'; }).join('') || oTableEmptyRow(4, 'Nothing matches these filters.') })]);
+  };
+  const baseP = RENDERERS['oontu-people'], baseA = RENDERERS['oontu-audit'];
+  RENDERERS['oontu-people'] = function(){ if(!on() || state.role !== 'oontu' || !BOS_VIEW_ACCESS['oontu-people']()) return baseP.apply(this, arguments); return o2PeopleHTML(); };
+  RENDERERS['oontu-audit'] = function(){ if(!on() || state.role !== 'oontu' || !(BOS_VIEW_ACCESS['oontu-audit'] && BOS_VIEW_ACCESS['oontu-audit']())) return baseA.apply(this, arguments); return o2AuditHTML(); };
+  /* the policy card (0b) gets a "Request change" path */
+  const baseSet2 = RENDERERS['oontu-settings'];
+  RENDERERS['oontu-settings'] = function(){ const h = baseSet2.apply(this, arguments); if(!on() || h.indexOf('id="o2-policy"') < 0) return h; const pend = (BOS.policyChanges || []).filter(function(c){ return c.status === 'pending'; }); return h.replace('<div class="o2-policy" id="o2-policy">', '<div class="o2-policy" id="o2-policy"><div class="o2-sub-acts" style="padding:0 0 10px"><button type="button" class="o-btn" onclick="var k = prompt(\'Which policy key?\'); if(k){ var v = prompt(\'New value (JSON, e.g. 10 or true or &quot;text&quot;)\'); var w = prompt(\'Why?\'); var val; try { val = JSON.parse(v); } catch(e){ val = v; } bosResult(o2RequestPolicyChange(k, val, w), \'Sent for sign-off.\'); }">Request a policy change</button>' + pend.map(function(c){ return '<button type="button" class="o-btn" onclick="bosResult(o2SignPolicyChange(\'' + c.id + '\'), \'Signed.\')">Sign off ' + E(c.key) + '</button>'; }).join('') + '</div>'); };
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
