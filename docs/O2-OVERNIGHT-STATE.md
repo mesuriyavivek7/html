@@ -69,3 +69,8 @@ Start only when the overnight build has printed its final "Done. Report: …" li
 - Progress page gets sections "Audit" and "Recruiter-app upgrades G1–G6". End: full suite twice; docs/RX-REPORT.md.
 - Final line: `Done. Audit: docs/O2-AUDIT-REPORT.md · Upgrades: docs/RX-REPORT.md · Progress page: docs/o2-progress.html · Branch: o2/overnight-2026-11-26`
 - Same never-list (no push/merge/force/delete, no packages, never two test passes at once, no uncommitted changes).
+
+## Queued next (from the user, 2026-11-28)
+After the queued audit task is fully finished (Phase 2 final full suites off/on, RX-REPORT and progress page committed, git clean,
+final line printed), start `docs/OONTU-COWORK-AGENTS-PROMPT.md` (Cowork agents v2, CX_SWITCH) from its start gate, without asking.
+Resume rule from the user: if the session stops, continue exactly where it left off (this file is the source of truth).
