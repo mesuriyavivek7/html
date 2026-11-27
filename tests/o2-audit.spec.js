@@ -24,7 +24,7 @@
       var rows = rowsSince(m0).filter(function(e){ return meta(e).outcome === 'refused'; }); eq(rows.length, 1, 'one row'); ok(meta(rows[0]).command === 'tax.export' && meta(rows[0]).reason, JSON.stringify(meta(rows[0])).slice(0, 200)); eq(meta(rows[0]).actorId, 'PU-101'); as('PU-001');
     });
     await t('an older platform command refused outside bosRun writes one row', async function(){
-      as('PU-101'); var m0 = maxId(); var r = changeTenantStatus('org-northstar', 'suspended', 'test'); ok(!r.ok); var rows = rowsSince(m0).filter(function(e){ return meta(e).outcome === 'refused'; }); eq(rows.length, 1); ok(/platform-tenant:suspend/.test(meta(rows[0]).command)); as('PU-001');
+      as('PU-101'); var m0 = maxId(); var r = changeTenantStatus('org-northstar', 'suspended', 'test'); ok(!r.ok); var rows = rowsSince(m0).filter(function(e){ return meta(e).outcome === 'refused'; }); eq(rows.length, 1); ok(/platform-tenant:suspend|workspace.suspend/.test(meta(rows[0]).command), 'command: ' + meta(rows[0]).command);   /* with 3a on the old action runs workspace.suspend */ as('PU-001');
     });
     await t('a failed command writes one row with outcome failed', async function(){
       var m0 = maxId(); var r = bosRun('spec.fail', null, function(){ throw new Error('boom'); }); ok(!r.ok); var rows = rowsSince(m0).filter(function(e){ return meta(e).outcome === 'failed'; }); eq(rows.length, 1); eq(meta(rows[0]).command, 'spec.fail');
