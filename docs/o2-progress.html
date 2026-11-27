@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 17:50 IST",
-    "current":  "Overnight build complete Â· next: audit",
+    "updated":  "2026-11-27 18:54 IST",
+    "current":  "Audit: full suite, every switch on",
     "partA":  [
                   {
                       "id":  "0a",
@@ -256,7 +256,7 @@
                   {
                       "id":  "G2",
                       "name":  "Automation results",
-                      "status":  "done",
+                      "status":  "Done",
                       "tests":  "rx-g2-results 11/11 · regressions on and off green (351/351 off)",
                       "tag":  "rx-g2",
                       "what":  "Each live workflow shows what it influenced: replies, submissions, interviews, offers, joins and fees (estimates labelled).",
@@ -265,8 +265,8 @@
                   {
                       "id":  "G3",
                       "name":  "Money-at-risk board",
-                      "status":  "done",
-                      "tests":  "rx-g3-leaks 10/10 Â· regressions on 580/580, off 550/550",
+                      "status":  "Done",
+                      "tests":  "rx-g3-leaks 10/10 · regressions on 580/580, off 550/550",
                       "tag":  "rx-g3",
                       "what":  "A Money at risk screen: ten rules find money already earned but not collected, each with one fix button; Home card with at-risk and recovered totals.",
                       "see":  "Owner/Accounts: Home or PayTrack card, then Money at risk"
@@ -274,8 +274,8 @@
                   {
                       "id":  "G4",
                       "name":  "Redeployment and contract-end decisions",
-                      "status":  "done",
-                      "tests":  "rx-g4-redeploy 10/10 Â· regressions on 617/617, off 576/577 (motion flake, passes alone)",
+                      "status":  "Done",
+                      "tests":  "rx-g4-redeploy 10/10 · regressions on 617/617, off 576/577 (motion flake, passes alone)",
                       "tag":  "rx-g4",
                       "what":  "Contractors ending soon get ranked next jobs (thin margins flagged), an availability check link and an ask-to-extend; companies get an extend / make permanent / end card and silver medalists.",
                       "see":  "Agency: an assignment panel or the Redeploy board. Company: Contract hiring, a requisition."
@@ -283,8 +283,8 @@
                   {
                       "id":  "G5",
                       "name":  "Own talent first",
-                      "status":  "done",
-                      "tests":  "rx-g5-own-first 6/6 Â· regressions on 575/575, off 529/529",
+                      "status":  "Done",
+                      "tests":  "rx-g5-own-first 6/6 · regressions on 575/575, off 529/529",
                       "tag":  "rx-g5",
                       "what":  "New jobs first look at people already in the database (with clear reasons for who is left out); companies keep new roles for their own pool for 5 working days before vendors.",
                       "see":  "Agency: a job page. Company: a requisition page."
@@ -292,8 +292,8 @@
                   {
                       "id":  "G6",
                       "name":  "Interview self-booking",
-                      "status":  "done",
-                      "tests":  "rx-g6-booking 10/10 Â· regressions on 478/478 Â· full suite off 1311/1311",
+                      "status":  "Done",
+                      "tests":  "rx-g6-booking 10/10 · regressions on 478/478 · full suite off 1311/1311",
                       "tag":  "rx-g6",
                       "what":  "Candidates pick their own interview time from a link; it books exactly as a recruiter would, and can be moved or cancelled until 12 hours before.",
                       "see":  "Recruiter: a profile in the client process â€º Schedule â€º Send a booking link instead"
@@ -417,6 +417,14 @@
     "suite":  {
                   "off":  "1311/1311 (final, after G6)",
                   "on":  "1313/1313 (final, every switch on)"
+              },
+    "audit":  {
+                  "status":  "Phase 1 in progress: full suite runs",
+                  "lines":  [
+                                "Every step has its commit and tag (22 O2 steps, 6 upgrades).",
+                                "Diff from o2-step-0a: no lines removed from the prototype; three problems fixed in f8c04ea (lifecycle run and billing-customer sync as commands; one spec check made exact again).",
+                                "Full suite, all switches off: 1311/1311."
+                            ]
               }
 }
 </script>
@@ -439,6 +447,8 @@
     '<p class="barlbl">' + done + ' of ' + all.length + ' steps done (' + pct + '%) · Blocked: ' + all.filter(function(s){ return s.status === 'Blocked'; }).length + ' · Skipped: ' + all.filter(function(s){ return s.status === 'Skipped'; }).length + '</p>' +
     '<h2>Part A · O2 platform</h2>' + rows(d.partA) +
     '<h2>Part B · Recruiter app</h2>' + rows(d.partB) +
+    (d.audit ? '<h2>Audit</h2><p class="meta">' + esc(d.audit.status || 'Not started') + '</p>' + ((d.audit.lines || []).length ? '<ul class="plain">' + d.audit.lines.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '') : '') +
+    (d.rxAudit && d.rxAudit.length ? '<h2>Recruiter-app upgrades G1–G6</h2><div class="wrap"><table><thead><tr><th>Upgrade</th><th>Switch</th><th>Audit</th><th>Test</th><th>Notes</th></tr></thead><tbody>' + d.rxAudit.map(function(r){ return '<tr><td class="id">' + esc(r.id) + ' ' + esc(r.name) + '</td><td><code>' + esc(r.sw) + '</code></td><td><span class="st st-' + esc(r.verdict).replace(/ /g, '-') + '">' + esc(r.verdict) + '</span></td><td>' + esc(r.test) + '</td><td>' + esc(r.notes) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '') +
     '<h2>Problems</h2>' + (d.problems.length ? '<ul class="plain">' + d.problems.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<p class="empty">No blocked steps.</p>') +
     '<p><b>Flaky tests noted</b></p>' + (d.flaky.length ? '<ul class="plain">' + d.flaky.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<p class="empty">None.</p>') +
     '<h2>Decisions made</h2><div class="wrap"><table><thead><tr><th>Situation</th><th>Decision</th></tr></thead><tbody>' + d.decisions.map(function(r){ return '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
