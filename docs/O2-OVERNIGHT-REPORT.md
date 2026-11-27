@@ -21,6 +21,7 @@ _In progress. Written in full when the build finishes._
 - **4a** Every subscription change is a command with an audit row and an event; subscriptions carry items and a change history. Switches 4a (+4c to see it) · Meera Krishnan · Subscriptions › a subscription › Change history.
 - **4b** Subscription statuses (incomplete … canceled) with cancel at period end, cancel now (approval), downgrade at renewal, manual activation (approval); unpaid makes the workspace read-only and paying clears it. Switches 3a, 4a, 4b (+4c) · Meera Krishnan or Vikram · Subscriptions › a subscription › Cancel at period end.
 - **4c** Billing screens: Invoices & payments, Plans & pricing, Tax & reports, and a Subscription page; no Mark paid outside Invoices & payments. Switches 1a, 4c · Vikram Shah · Billing › Invoices & payments; Billing › Subscriptions › a subscription.
+- **4d** Payments and allocations: one bank credit across invoices, several payments to one invoice, partial payments, TDS with certificates, customer credit, reversals; suggestions are never applied without Finance. Switches 1a, 4c, 4d · Vikram Shah · Billing › Invoices & payments › Reconciliation.
 
 ## 3. Blocked steps
 
@@ -52,6 +53,8 @@ None yet.
 | 4a checkout hook | The checkout-completion function is private to the billing script, so the verified payment event (BOS_PAY.receive) is wrapped instead; the same fix applies to 0c's billing-customer link after checkout. |
 | 4b dunning | The renewal job keeps today's reminder schedule, which equals the policy defaults (1, 3, 7 days; read-only after 7). Reading the days from policy is left for when the owner changes them. |
 | 4b enforcement points | Access level is enforced only where read-only is enforced today: the support tier and the workspace's own plan record. |
+| 4d allocate permission | §7.2 adds platform-finance allocate and record_tds for Finance templates that hold verify_payment; the prototype checks verify_payment (or allocate), which is the same set of people, without editing role templates. |
+| 4d ambiguous amounts | An amount-only suggestion is made only when exactly one open invoice of a matching payer has that outstanding amount; otherwise nothing is suggested. |
 
 ## 5. Step 1a screen lists
 
