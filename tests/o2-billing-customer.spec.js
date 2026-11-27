@@ -50,7 +50,7 @@
 
     await t('dual-write: tax details edited on the account reach the billing customer (and back)', async function(){
       as('PU-106');
-      var r = bosSetCustomerTax(south.id, { country:'India', gstin:'29AABCS5678L1Z3' }); ok(r.ok, r.reason);
+      var e0 = BOS.events.filter(function(e){ return e.name === 'billing-customer.sync'; }).length; var r = bosSetCustomerTax(south.id, { country:'India', gstin:'29AABCS5678L1Z3' }); ok(r.ok, r.reason); ok(BOS.events.filter(function(e){ return e.name === 'billing-customer.sync'; }).length === e0 + 1, 'the sync is its own command (O2 audit)');
       var b = o2BillingCustomerOfAccount(south.id); eq(b.gstin, '29AABCS5678L1Z3'); eq(b.stateCode, '29');
       r = o2BillingCustomerUpdate(b.id, { gstin:'07AABCS5678L1Z3' }); ok(r.ok, r.reason); eq(south.gstin, '07AABCS5678L1Z3', 'account kept current'); eq(b.stateCode, '07');
       as('PU-001');

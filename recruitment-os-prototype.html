@@ -70333,11 +70333,20 @@ function cfScopeHTML(){
     return { name:b.legalName || p.name, country:b.country, gstin:b.gstin, stateCode:b.country === 'India' ? b.stateCode : '', state:b.country === 'India' ? b.state : '', billingCustomerId:b.id };
   };
 
+  /* O2 audit: follow-on writes after another command run as their own command, billing-customer.sync — as the person
+     when there is one, otherwise as the billing system (a customer's own checkout) */
+  const syncCmd = function(fn){
+    let ran = false; const body = function(){ ran = true; fn(); return { ok:true, ref:null }; };
+    const r = bosRun('billing-customer.sync', null, body);
+    if(!ran && !(r && r.ok)) bosAsScheduler(function(){ return bosRun('billing-customer.sync', null, body); });
+  };
+  if(BOS_SYSTEM_COMMANDS.indexOf('billing-customer.sync') < 0 && o2On('0c')) BOS_SYSTEM_COMMANDS.push('billing-customer.sync');
+  o2OnSwitch(function(id, v){ if(id === '0c'){ const i = BOS_SYSTEM_COMMANDS.indexOf('billing-customer.sync'); if(v && i < 0) BOS_SYSTEM_COMMANDS.push('billing-customer.sync'); if(!v && i > -1) BOS_SYSTEM_COMMANDS.splice(i, 1); } });
   /* ---- dual-write: account tax edits reach the billing customer ---- */
   const baseSetTax = window.bosSetCustomerTax;
   window.bosSetCustomerTax = bosSetCustomerTax = function(accId, input){
     const res = baseSetTax.apply(this, arguments);
-    if(res && res.ok && o2On('0c')){ const a = accOf(accId), b = a && o2BillingCustomerOfAccount(a.id); if(b) copyFacts(b, factsOfAccount(a), 'Tax details changed on the account'); }
+    if(res && res.ok && o2On('0c')){ const a = accOf(accId), b = a && o2BillingCustomerOfAccount(a.id); if(b) syncCmd(function(){ copyFacts(b, factsOfAccount(a), 'Tax details changed on the account'); }); }
     return res;
   };
   function copyFacts(b, f, why){
@@ -70434,7 +70443,7 @@ function cfScopeHTML(){
     const baseStart = window.bosCheckoutStart;
     window.bosCheckoutStart = bosCheckoutStart = function(input){
       const res = baseStart.apply(this, arguments);
-      if(res && res.ok && o2On('0c') && res.link){ const b = o2EnsureBillingCustomer(res.link.accountId, 'Created at checkout'); if(b && res.link.checkout) res.link.checkout.billingCustomerId = b.id; }
+      if(res && res.ok && o2On('0c') && res.link) syncCmd(function(){ const b = o2EnsureBillingCustomer(res.link.accountId, 'Created at checkout'); if(b && res.link.checkout) res.link.checkout.billingCustomerId = b.id; });
       return res;
     };
   }
@@ -70443,7 +70452,7 @@ function cfScopeHTML(){
     const baseRecv = BOS_PAY.receive;
     BOS_PAY.receive = function(raw){
       const out = baseRecv.apply(this, arguments);
-      if(o2On('0c')) try { const e = JSON.parse(raw), l = e && e.object && BOS.payLinks.find(function(x){ return x.id === e.object.id; }), c = l && l.checkout, sub = c && c.done && subscriptionById(c.done.subscriptionId); if(sub && !sub.billingCustomerId){ const b = c.billingCustomerId ? o2BillingCustomer(c.billingCustomerId) : o2EnsureBillingCustomer(l.accountId); if(b) sub.billingCustomerId = b.id; } } catch(x){}
+      if(o2On('0c')) try { const e = JSON.parse(raw), l = e && e.object && BOS.payLinks.find(function(x){ return x.id === e.object.id; }), c = l && l.checkout, sub = c && c.done && subscriptionById(c.done.subscriptionId); if(sub && !sub.billingCustomerId) syncCmd(function(){ const b = c.billingCustomerId ? o2BillingCustomer(c.billingCustomerId) : o2EnsureBillingCustomer(l.accountId); if(b) sub.billingCustomerId = b.id; }); } catch(x){}
       return out;
     };
   }
@@ -71313,14 +71322,19 @@ function cfScopeHTML(){
     const now = nowMs || bosNow(), done = [];
     if(!on()) return done;
     const sys = function(t, to, reason){ const prev = ACTIVE_PLATFORM_USER_ID; try { const bad = check(t, to, { actorType:'system' }); if(bad) return; move(t, to, { reason:reason, actorType:'system', by:'SYS-BILLING' }); logPlatformAudit('Workspace ' + to, t.name + ' · ' + reason, { entityId:t.id, entityType:'Workspace', actorType:'system', command:COMMAND[to] }); try { BOS.events.push({ id:bosId('EV'), name:COMMAND[to], at:ISO(now), actor:'SYS-BILLING', ref:t.id }); } catch(e){} done.push([t.id, to]); } finally { ACTIVE_PLATFORM_USER_ID = prev; } };
+    const due = [];
     PLATFORM_TENANTS.forEach(function(t){
       const life = lifeOf(t), s = subscriptionForTenant(t.id), st = s ? o2SubStatus(s) : null;
-      if(life === 'trial' && st === 'active') sys(t, 'active', 'Paid subscription started');
-      else if(life === 'trial' && s && st === 'trialing' && s.renewalDate && now > new Date(s.renewalDate + 'T23:59:59').getTime() + o2Policy('trialGraceDays') * DAY) sys(t, 'closed', 'Trial ended ' + o2Policy('trialGraceDays') + ' days ago without a paid subscription');
-      else if(life === 'closed' && t.closedAt && now > new Date(t.closedAt).getTime() + o2Policy('closedRetentionDays') * DAY) sys(t, 'archived', 'Retention period of ' + o2Policy('closedRetentionDays') + ' days ended');
+      if(life === 'trial' && st === 'active') due.push([t, 'active', 'Paid subscription started']);
+      else if(life === 'trial' && s && st === 'trialing' && s.renewalDate && now > new Date(s.renewalDate + 'T23:59:59').getTime() + o2Policy('trialGraceDays') * DAY) due.push([t, 'closed', 'Trial ended ' + o2Policy('trialGraceDays') + ' days ago without a paid subscription']);
+      else if(life === 'closed' && t.closedAt && now > new Date(t.closedAt).getTime() + o2Policy('closedRetentionDays') * DAY) due.push([t, 'archived', 'Retention period of ' + o2Policy('closedRetentionDays') + ' days ended']);
     });
+    /* O2 audit: the scheduled run is one system command (as the 4b renewal run), so every change it makes is inside a command */
+    if(due.length) bosAsScheduler(function(){ return bosRun('workspace.lifecycle-run', null, function(){ due.forEach(function(x){ sys(x[0], x[1], x[2]); }); return { ok:true, ref:null }; }); });
     return done;
   };
+  if(BOS_SYSTEM_COMMANDS.indexOf('workspace.lifecycle-run') < 0 && on()) BOS_SYSTEM_COMMANDS.push('workspace.lifecycle-run');
+  o2OnSwitch(function(id, v){ if(id === '3a'){ const i = BOS_SYSTEM_COMMANDS.indexOf('workspace.lifecycle-run'); if(v && i < 0) BOS_SYSTEM_COMMANDS.push('workspace.lifecycle-run'); if(!v && i > -1) BOS_SYSTEM_COMMANDS.splice(i, 1); } });
   if(typeof window.bosRenewalRun === 'function'){ const baseRun = window.bosRenewalRun; window.bosRenewalRun = bosRenewalRun = function(){ const out = baseRun.apply(this, arguments); if(on()) try { o2LifecycleRun(); } catch(e){ console.error(e); } return out; }; }
 
   /* the old tenant page's actions use the commands */
