@@ -72378,6 +72378,81 @@ function cfScopeHTML(){
   PAGE_TITLES['oontu-incident'] = 'Incident';
 })();
 </script>
+<script id="o2-audit-script">
+/* ============================================================
+   O2 STEP 7a: AUDIT COMPLETENESS (2026-11-26, permissions step; no behaviour change)
+   Switch 7a on:
+   - Every refused or failed bosRun command writes exactly one audit row (outcome refused | failed, the reason), at the
+     outermost command only, so a refusal that travels up through wrappers is logged once.
+   - Older platform commands that refuse on canPerformPlatformAction outside bosRun write one row too.
+   - Failed sign-ins of Oontu employees are logged (email, method, reason) — never passwords or codes.
+   - Every platform audit row carries the §7.3 fields: actorType, actorId, onBehalfOf, command, resourceType,
+     resourceId, workspaceId, outcome, reason, approvalId, mfaAt.
+   Nothing is refused or allowed differently: every wrapper returns exactly what it wrapped returned.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('7a'); };
+  let depth = 0;
+  const actor = function(){ try { return bosActor(); } catch(e){ return { type:'employee', id:ACTIVE_PLATFORM_USER_ID }; } };
+  const SECRET = /\b(password|passcode|otp|code|token|card|cvv)\b\s*[:=]?\s*\S+/gi;
+  const clean = function(s){ return String(s == null ? '' : s).replace(SECRET, function(m){ return m.split(/[:= ]/)[0] + ' [removed]'; }); };
+  window.o2AuditFields = function(meta){
+    const a = actor(), m = Object.assign({}, meta || {});
+    if(!m.actorType) m.actorType = a.type || 'employee';
+    if(!m.actorId) m.actorId = a.type === 'employee' ? ACTIVE_PLATFORM_USER_ID : (a.id || null);
+    if(m.onBehalfOf === undefined) m.onBehalfOf = a.onBehalfOf || null;
+    if(!m.outcome) m.outcome = 'allowed';
+    if(m.resourceType === undefined) m.resourceType = m.entityType || null;
+    if(m.resourceId === undefined) m.resourceId = m.entityId || null;
+    if(m.workspaceId === undefined) m.workspaceId = m.tenantId || null;
+    if(m.approvalId === undefined) m.approvalId = null;
+    if(m.mfaAt === undefined){ try { m.mfaAt = (window.O2_SESSION && O2_SESSION.mfaAt) || null; } catch(e){ m.mfaAt = null; } }
+    if(m.command === undefined) m.command = null;
+    if(m.reason === undefined) m.reason = null;
+    return m;
+  };
+  /* every platform row gets the fields */
+  const baseLog = window.logPlatformAudit;
+  window.logPlatformAudit = logPlatformAudit = function(action, detail, meta){ if(!on()) return baseLog.apply(this, arguments); return baseLog.call(this, action, clean(detail), o2AuditFields(meta)); };
+  /* refused and failed commands */
+  const baseRun = window.bosRun;
+  const wrapped = function(name, input, fn){
+    if(!on()) return baseRun.apply(this, arguments);
+    depth++; let res;
+    try { res = baseRun.apply(this, arguments); } finally { depth--; }
+    if(depth === 0 && res && res.ok === false && !res.replayed){
+      const failed = /^Something went wrong/.test(String(res.reason || ''));
+      try { logPlatformAudit(failed ? 'Command failed' : 'Command refused', name + ' · ' + clean(res.reason || 'Refused'), { command:name, outcome:failed ? 'failed' : 'refused', reason:clean(res.reason || ''), entityType:'Command' }); } catch(e){ console.error(e); }
+    }
+    return res;
+  };
+  Object.keys(baseRun).forEach(function(k){ wrapped[k] = baseRun[k]; });
+  Object.defineProperty(wrapped, 'quiet', { get:function(){ return baseRun.quiet; }, set:function(v){ baseRun.quiet = v; }, configurable:true });
+  window.bosRun = wrapped;
+  window.o2AuditDepth = function(){ return depth; };
+  /* older platform commands refuse through canPerformPlatformAction */
+  const baseCan = window.canPerformPlatformAction;
+  window.canPerformPlatformAction = canPerformPlatformAction = function(action, moduleId){
+    const r = baseCan.apply(this, arguments);
+    if(on() && r && !r.allowed && depth === 0 && state.role === 'oontu'){ try { logPlatformAudit('Command refused', moduleId + ':' + action + ' · ' + r.reason, { command:moduleId + ':' + action, outcome:'refused', reason:r.reason, entityType:'Command' }); } catch(e){} }
+    return r;
+  };
+  /* failed sign-ins of Oontu employees: email, method and reason only */
+  const isEmployee = function(email){ const e = String(email || '').toLowerCase(); return /@oontu\.internal$/.test(e) || (typeof PLATFORM_USER_ROSTER !== 'undefined' && PLATFORM_USER_ROSTER.some(function(u){ return String(u.email).toLowerCase() === e; })); };
+  const logFail = function(method, email, r){ if(!on() || !isEmployee(email)) return; const prev = ACTIVE_PLATFORM_USER_ID; try { logPlatformAudit('Sign-in failed', String(email).toLowerCase() + ' · ' + method + ' · ' + clean((r && (r.reason || r.error)) || 'refused'), { command:'auth.' + method, outcome:'refused', reason:clean((r && (r.reason || r.error)) || 'refused'), actorType:'employee', actorId:null, entityType:'Sign-in' }); } finally { ACTIVE_PLATFORM_USER_ID = prev; } };
+  const wrapAuth = function(name, method){
+    if(typeof authApi === 'undefined' || typeof authApi[name] !== 'function') return;
+    const base = authApi[name];
+    authApi[name] = function(input){
+      const out = base.apply(this, arguments), email = input && (input.email || input.to);
+      if(out && typeof out.then === 'function') return out.then(function(r){ if(r && r.ok === false) logFail(method, email, r); return r; });
+      if(out && out.ok === false) logFail(method, email, out);
+      return out;
+    };
+  };
+  wrapAuth('passwordSignIn', 'password'); wrapAuth('verifyCode', 'email-code');
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
