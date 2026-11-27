@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 13:59 IST",
-    "current":  "G3 Money at risk",
+    "updated":  "2026-11-27 14:39 IST",
+    "current":  "G4 Redeployment and contract-end decisions",
     "partA":  [
                   {
                       "id":  "0a",
@@ -265,11 +265,11 @@
                   {
                       "id":  "G3",
                       "name":  "Money-at-risk board",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "done",
+                      "tests":  "rx-g3-leaks 10/10 Â· regressions on 580/580, off 550/550",
+                      "tag":  "rx-g3",
+                      "what":  "A Money at risk screen: ten rules find money already earned but not collected, each with one fix button; Home card with at-risk and recovered totals.",
+                      "see":  "Owner/Accounts: Home or PayTrack card, then Money at risk"
                   },
                   {
                       "id":  "G4",
@@ -407,6 +407,10 @@
                       [
                           "G2 wording",
                           "Agency Cowork never says “workflow” (cowork-simple bans it), so Results copy says “automation”. Results live in Cowork (Workflow Studio routes there)."
+                      ],
+                      [
+                          "G3 fixes",
+                          "Fixes call existing flows; where the target is a later upgrade (G4 decision card, G5 direct sourcing) the button opens the current screen for that record."
                       ]
                   ],
     "suite":  {
