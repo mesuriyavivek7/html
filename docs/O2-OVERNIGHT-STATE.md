@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-4a (checkpoint after 3b running)
+4b
 
 ## Steps
 
@@ -24,6 +24,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 | 2 | Done | o2-step-2 | o2-home 5/5; crawl, light, auth-flow, bos-login green off/on | status line in the body (a later design layer hides page-head ledes); chart colours avoid red/green (light.spec rule) |
 | 3a | Done | o2-step-3a | o2-workspace-lifecycle 8/8; regressions 238/238 off, 239/239 on | workspace-close approval type added (suspended→closed needs a second person); spec grants Ishaan Platform Manager as second person |
 | 3b | Done | o2-step-3b | o2-workspace-360 7/7; regressions 142/142 off, 143/143 on | old tenant page inside Overview; Account help inside Requests |
+| 4a | Done | o2-step-4a | o2-subscription-gateway 5/5; regressions 242/242 off and on | checkout hooked at BOS_PAY.receive (CHECKOUT_DONE is private); 0c checkout link fixed the same way |
 
 ## How to run tests (this machine)
 

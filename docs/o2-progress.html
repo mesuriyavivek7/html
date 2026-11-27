@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 05:44 IST",
-    "current":  "4a",
+    "updated":  "2026-11-27 05:53 IST",
+    "current":  "4b",
     "partA":  [
                   {
                       "id":  "0a",
@@ -137,11 +137,11 @@
                   {
                       "id":  "4a",
                       "name":  "Subscriptions on the gateway",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "5/5 (o2-subscription-gateway); regressions 242/242 off and on",
+                      "tag":  "o2-step-4a",
+                      "what":  "Every subscription change is a command (audit row + event); items and change history on each subscription.",
+                      "see":  "Switches 4a and 4c · Meera Krishnan · Billing › Subscriptions › a subscription › Change history"
                   },
                   {
                       "id":  "4b",
@@ -379,6 +379,10 @@
                       [
                           "3a second approver in seeds",
                           "Only the Super Admin holds platform-tenant:activate in the seeds; a workspace-close approval type was added for suspended→closed. Recommended: a seeded Platform Manager login."
+                      ],
+                      [
+                          "4a checkout hook",
+                          "Checkout completion is private to the billing script, so the verified payment event is wrapped; 0c\u0027s checkout link was fixed the same way."
                       ]
                   ],
     "suite":  {
