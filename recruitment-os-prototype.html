@@ -73124,7 +73124,7 @@ function cfScopeHTML(){
   function stageAt(s, re){ const h = (s.stageHistory || []).find(function(x){ return re.test(x.stage || ''); }); return h ? ms(h.at) : null; }
   function vendorFeePct(){
     const pcts = [];
-    try { (((window.CO || {}).rateCards) || []).concat(((window.CO || {}).fees) || []).forEach(function(r){ const p = Number(r && (r.feePct != null ? r.feePct : r.pct != null ? r.pct : r.percent)); if(isFinite(p) && p > 0) pcts.push(p); }); } catch(e){}
+    try { (((typeof CO !== 'undefined' ? CO : {}).rateCards) || []).concat(((typeof CO !== 'undefined' ? CO : {}).fees) || []).forEach(function(r){ const p = Number(r && (r.feePct != null ? r.feePct : r.pct != null ? r.pct : r.percent)); if(isFinite(p) && p > 0) pcts.push(p); }); } catch(e){}
     if(pcts.length) return { pct:pcts.reduce(function(a, b){ return a + b; }, 0) / pcts.length, assumed:false };
     return { pct:Number(WSX.rx.defaultAgencyFeePct) || 8.33, assumed:true };
   }
@@ -73301,6 +73301,215 @@ function cfScopeHTML(){
       const i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + rxHomeCardHTML() + h.slice(i);
     };
     wrapped.__rx = true; RENDERERS['admin-dashboard'] = wrapped;
+  }
+  hookHome(); window.addEventListener('load', hookHome);
+})();
+</script>
+<script id="rx-g3-script">
+/* RX G3 — Money at risk (switch g3, off by default; off = no screen, no card, no findings, no trigger).
+   RX_LEAK_RULES are evaluated by rxLeakSweep(), which rxSweep() also runs (RX_SWEEPERS) and the screen/Home card run
+   on open. A finding is { id, rule, recordRef, amount, currency, ownerId, detectedAt, status:'open'|'fixed'|'dismissed',
+   dismissReason, ... }. It closes itself when its condition clears (status 'fixed', recovered when money was involved).
+   Dismissing needs a reason and never reopens for the same rule + record.
+   Fix buttons call the existing flows: ptRaiseInvoice, ptSendReminder (+ a task), asBuildInvoice, the worker-time and
+   approver reminders the contracts sweep already writes, ptOpenReplacementJob, the "Release to vendors early" dialog,
+   coWoOpen-style work-order view and coDupReviewOpen. Where the brief names something that does not exist yet (G4
+   decision card, G5 direct sourcing) the fix opens today's screen for that record instead.
+   Amounts: PayTrack fees via clRecFee (rupees), contract values from asMonthLines / asCurrentRate (rupees), corporate
+   CTC in lakhs (× 1,00,000). Estimates are labelled "estimate". All in INR. */
+(function(){
+  const D = 86400000;
+  const NOW = function(){ return typeof fmNow === 'function' ? fmNow() : Date.now(); };
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const inr = function(n){ return '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN'); };
+  const corp = function(){ try { return typeof jsCorp === 'function' && jsCorp(); } catch(e){ return false; } };
+  const ownerByName = function(n){ const r = (typeof RECRUITER_ROSTER !== 'undefined' ? RECRUITER_ROSTER : []).find(function(x){ return x.name === n; }); return r ? r.id : null; };
+  const ownerName = function(id){ const r = id && typeof tmById === 'function' ? tmById(id) : null; return r ? r.name : (id || '—'); };
+  const workdaysSince = function(t, now){ let n = 0; for(let d = t + D; d <= now; d += D){ const w = new Date(d).getDay(); if(w !== 0 && w !== 6) n++; } return n; };
+  const weeklyUnits = function(unit, hpd){ return /hour/.test(String(unit)) ? (Number(hpd) || 8) * 5 : 5; };
+  const RX = window.RX = window.RX || { touches:[], replies:[], runs:[], seen:{}, skips:[] };
+  RX.leaks = RX.leaks || []; RX.leakRuns = RX.leakRuns || [];
+  let seq = 1;
+
+  const pj = function(){ return typeof PAYTRACK_JOINED !== 'undefined' ? PAYTRACK_JOINED : []; };
+  const raised = function(r){ return typeof ptInvoiceRaised === 'function' ? ptInvoiceRaised(r) : (r.invoiceStatus === 'Raised' || r.invoiceStatus === 'Paid'); };
+  const dojOf = function(r){ try { const d = typeof ptRecDate === 'function' ? ptRecDate(r, 'doj') : null; return d ? d.getTime() : null; } catch(e){ return null; } };
+
+  /* ---- the rules: check() lists the records that match now; fix(ref) calls the existing flow ---- */
+  const RULES = window.RX_LEAK_RULES = [
+    { id:'perm-not-invoiced', side:'agency', label:'Joined, not invoiced', fixLabel:'Raise invoice',
+      check:function(now){ return pj().filter(function(r){ const d = dojOf(r); return !r.left && r.invoiceStatus === 'Not Raised' && !raised(r) && d != null && now - d > (Number(WSX.rx.invoiceGraceDays) || 3) * D; })
+        .map(function(r){ return { ref:'pt:' + r.id, amount:clRecFee(r), ownerId:ownerByName(r.recruiter), since:dojOf(r), title:r.name + ' · ' + (r.client || r.company), detail:'Joined ' + r.doj + ', no invoice yet' }; }); },
+      fix:function(ref){ const id = Number(ref.split(':')[1]); ptRaiseInvoice(id); return true; } },
+    { id:'invoice-overdue', side:'agency', label:'Invoice overdue', fixLabel:'Remind client',
+      check:function(now){ return pj().filter(function(r){ return raised(r) && r.paymentStatus !== 'Received' && (typeof ptOverdue === 'function' ? ptOverdue(r) : false); })
+        .map(function(r){ const due = r.invoice && r.invoice.dueAt ? Date.parse(r.invoice.dueAt) : null; return { ref:'pt:' + r.id, amount:typeof ptAmountDue === 'function' ? ptAmountDue(r) : clRecFee(r), ownerId:ownerByName(r.recruiter), since:due, title:r.name + ' · ' + (r.client || r.company), detail:(r.invoiceNo || 'Invoice') + ' unpaid past the client’s terms' }; }); },
+      fix:function(ref){ const id = Number(ref.split(':')[1]), r = pj().find(function(x){ return x.id === id; }); if(r && r.invoice && typeof ptSendReminder === 'function') ptSendReminder(id); if(typeof addPersonalTask === 'function') addPersonalTask('Follow up payment: ' + (r ? r.name + ' · ' + (r.client || '') : ref), 'call'); return true; } },
+    { id:'approved-time-not-invoiced', side:'agency', label:'Approved time not invoiced', fixLabel:'Build invoice',
+      check:function(now){ if(typeof asLastMonth !== 'function' || new Date(now).getDate() <= (Number(WSX.rx.contractInvoiceDay) || 3)) return []; const m = asLastMonth();
+        return (typeof ASSIGNMENTS !== 'undefined' ? ASSIGNMENTS : []).map(function(a){ let L = null; try { L = asMonthLines(a, m); } catch(e){} return L && L.days.length ? { ref:'as:' + a.id + ':' + m, amount:L.bill, ownerId:a.closerId, since:null, title:a.workerName + ' · ' + a.client, detail:L.days.length + ' approved day(s) in ' + (typeof asMonthLabel === 'function' ? asMonthLabel(m) : m) + ' not invoiced' } : null; }).filter(Boolean); },
+      fix:function(ref){ const p = ref.split(':'); const r = asBuildInvoice(p[1], p[2]); if(r && r.ok === false){ toast(r.reason); return false; } return true; } },
+    { id:'timesheet-missing', side:'agency', label:'Timesheet missing', fixLabel:'Resend time link', estimate:true,
+      check:function(now){ if(typeof coMonday !== 'function') return []; const lastWeek = coMonday(now) - 7 * D;
+        return (typeof ASSIGNMENTS !== 'undefined' ? ASSIGNMENTS : []).filter(function(a){ return asRunning(a) && a.tracking !== 'attendance' && lastWeek >= coMonday(a.start) && now - (lastWeek + 7 * D) > 2 * D && !asSheetFor(a, lastWeek); })
+          .map(function(a){ const r = asCurrentRate(a) || {}; return { ref:'as:' + a.id + ':w' + lastWeek, amount:weeklyUnits(a.unit, a.hoursPerDay) * (Number(r.bill) || 0), estimate:true, ownerId:a.closerId, since:lastWeek + 7 * D, title:a.workerName + ' · ' + a.client, detail:'No time for the week of ' + asFmt(lastWeek) }; }); },
+      fix:function(ref){ const a = asById(ref.split(':')[1]); if(!a) return false; asAudit(a, 'Time reminder sent to the worker', 'resent the time link · by WhatsApp to ' + (a.workerPhone || a.workerName)); return true; } },
+    { id:'timesheet-awaiting-client', side:'agency', label:'Time waiting for client approval', fixLabel:'Remind approver',
+      check:function(now){ return (typeof ASSIGNMENT_SHEETS !== 'undefined' ? ASSIGNMENT_SHEETS : []).filter(function(sh){ return sh.status === 'Submitted' && sh.submittedAt && workdaysSince(sh.submittedAt, now) > 3; })
+        .map(function(sh){ const a = asById(sh.asId); if(!a) return null; let v = 0; sh.dates.forEach(function(d, i){ const q = Number(sh.hours[i]) || 0, r = asRateOn(a, asMs(d)) || asCurrentRate(a) || {}; if(q > 0) v += asUnits(a, q) * (Number(r.bill) || 0); });
+          return { ref:'ts:' + sh.id, amount:Math.round(v), ownerId:a.closerId, since:sh.submittedAt, title:a.workerName + ' · ' + a.client, detail:'Week of ' + asFmt(sh.week) + ' waiting for ' + (a.approver ? a.approver.name : 'the client') }; }).filter(Boolean); },
+      fix:function(ref){ const sh = ASSIGNMENT_SHEETS.find(function(x){ return x.id === ref.slice(3); }); const a = sh && asById(sh.asId); if(!a) return false; sh.remindedAt = NOW(); asAudit(a, 'Approval reminder sent to the client', (a.approver ? a.approver.name : 'Client') + ' · week of ' + asFmt(sh.week)); return true; } },
+    { id:'guarantee-left-no-replacement', side:'agency', label:'Left in guarantee, no replacement', fixLabel:'Open replacement job',
+      check:function(now){ return (typeof ptAllRecords === 'function' ? ptAllRecords() : pj()).filter(function(r){ return r.left && r.left.inWindow && r.leftOutcome !== 'credit' && !(r.replacementJobId && jobById(r.replacementJobId)); })
+        .map(function(r){ return { ref:'pt:' + r.id, amount:clRecFee(r), ownerId:ownerByName(r.recruiter), since:Date.parse(r.left.at) || null, title:r.name + ' · ' + (r.client || r.company), detail:'Left on ' + r.left.at + ' inside the guarantee' }; }); },
+      fix:function(ref){ const id = Number(ref.split(':')[1]), r = (typeof ptAllRecords === 'function' ? ptAllRecords() : pj()).find(function(x){ return x.id === id; }); if(!r) return false; const nj = ptOpenReplacementJob(r); r.leftOutcome = 'replacement'; r.replacementJobId = nj ? nj.id : null; return !!nj; } },
+    /* corporate */
+    { id:'req-idle', side:'corporate', label:'Approved role idle', fixLabel:'Release to vendors', estimate:true,
+      check:function(now){ const idle = Number(WSX.rx.reqIdleDays) || 7; return ((typeof CO !== 'undefined' ? CO : {}).reqs || []).filter(function(rq){ return /Approved|Job open/.test(rq.status || ''); }).map(function(rq){
+          const h = (rq.history || []).filter(function(x){ return /Approved/.test(x.what || ''); }).pop(), from = rq.approvedAt || (h && h.at) || rq.createdAt; if(!from) return null;
+          const subs = rq.jobId ? SUBMISSIONS.filter(function(s){ return s.jobId === rq.jobId; }).length + ((CO.vsubs || []).filter(function(v){ return v.jobId === rq.jobId; }).length) : 0;
+          const days = Math.floor((now - from) / D); if(subs || days < idle) return null;
+          return { ref:'rq:' + rq.id, amount:days * (Number(rq.ctcMax) || 0) * 100000 / 260, estimate:true, ownerId:rq.ownerId || null, ownerLabel:rq.raisedBy, since:from, title:rq.title, detail:days + ' days approved with no candidates' }; }).filter(Boolean); },
+      fix:function(ref){ const rq = CO.reqs.find(function(x){ return x.id === ref.slice(3); }); if(!rq) return false; if(!rq.jobId && typeof coReqOpenJob === 'function') coReqOpenJob(rq); if(rq.jobId && typeof coVendorEarlyOpen === 'function') coVendorEarlyOpen(rq.jobId); return true; } },
+    { id:'joining-at-risk', side:'corporate', label:'Joining at risk', fixLabel:'Remind and call',
+      check:function(now){ return SUBMISSIONS.filter(function(s){ const o = s.offer, j = jobById(s.jobId); if(!o || o.status !== 'Accepted' || !j || !j.corp) return false; const doj = Date.parse(o.doj); if(isNaN(doj) || doj < now - D || doj - now > 7 * D) return false;
+          const last = Math.max(Date.parse(s.updatedAt) || 0, Date.parse(o.acceptedAt) || 0, ((s.stageHistory || []).slice(-1)[0] || {}).at ? Date.parse(s.stageHistory.slice(-1)[0].at) : 0, RX.touches.filter(function(t){ return t.candidateId === s.candidateId; }).reduce(function(m, t){ return Math.max(m, Date.parse(t.at) || 0); }, 0));
+          return s.onboardingDone !== true || now - last > 5 * D; })
+        .map(function(s){ const c = byId(s.candidateId), j = jobById(s.jobId), backups = SUBMISSIONS.filter(function(x){ return x.jobId === s.jobId && x.id !== s.id && !/Rejected|Withdrawn|Joined/.test(x.stage || ''); }).map(function(x){ const bc = byId(x.candidateId); return bc ? bc.name : ''; }).filter(Boolean);
+          return { ref:'sub:' + s.id, amount:0, ownerId:s.recruiterId || null, since:Date.parse(s.offer.acceptedAt) || null, title:(c ? c.name : 'Candidate') + ' · ' + (j ? j.title : ''), detail:'Joining ' + s.offer.doj + (backups.length ? ' · backups: ' + backups.slice(0, 3).join(', ') : ' · no backups') }; }); },
+      fix:function(ref){ const s = SUBMISSIONS.find(function(x){ return x.id === ref.slice(4); }); if(!s) return false; const c = byId(s.candidateId); if(typeof addPersonalTask === 'function') addPersonalTask('Call ' + (c ? c.name : 'the joiner') + ' before joining on ' + s.offer.doj, 'call'); s.updatedAt = new Date(NOW()).toISOString(); if(typeof logAudit === 'function') logAudit('Money at risk', 'Joining reminder sent', (c ? c.name : '') + ' · joining ' + s.offer.doj); return true; } },
+    { id:'work-order-ending', side:'corporate', label:'Work order ending, no decision', fixLabel:'Open work order',
+      check:function(now){ return ((typeof CO !== 'undefined' ? CO : {}).contracts || []).filter(function(w){ return ['Active', 'Extended'].indexOf(w.status) > -1 && w.end > now && w.end - now <= 14 * D && !w.converted && !w.endDecision; })
+        .map(function(w){ return { ref:'wo:' + w.id, amount:(Number(w.rate) || 0) * weeklyUnits(w.unit, w.hoursPerDay), perWeek:true, ownerId:null, ownerLabel:w.createdBy, since:w.end - 14 * D, title:w.ref + ' · ' + w.contractor, detail:'Ends ' + (typeof coDate === 'function' ? coDate(w.end) : new Date(w.end).toDateString()) + ' · extend, convert or end' }; }); },
+      fix:function(ref){ RXL.focus = ref; if(typeof CO !== 'undefined' && CO.ui) CO.ui.ctab = 'orders'; return 'open'; } },
+    { id:'duplicate-dispute-open', side:'corporate', label:'Duplicate dispute open', fixLabel:'Open resolver',
+      check:function(now){ return (((typeof CO !== 'undefined' ? CO : {}).dupAttempts) || []).filter(function(a){ return a.status === 'Open' && now - a.at > 3 * D; })
+        .map(function(a){ const v = typeof coVendorBy === 'function' ? coVendorBy(a.vendorId) : null; return { ref:'da:' + a.id, amount:0, ownerId:null, since:a.at, title:((a.cand || {}).name || 'Candidate') + ' · ' + (v ? v.name : 'vendor'), detail:'Open ' + Math.floor((now - a.at) / D) + ' days' }; }); },
+      fix:function(ref){ if(typeof coDupReviewOpen === 'function') coDupReviewOpen(ref.slice(3)); return 'open'; } }
+  ];
+
+  /* ---- sweep: open new findings, close cleared ones, never reopen dismissed ones ---- */
+  window.rxLeakSweep = function(){
+    if(!rxOn('g3')) return { ran:false };
+    const now = NOW(), side = corp() ? 'corporate' : 'agency', seen = {}, opened = [];
+    RULES.filter(function(r){ return r.side === side; }).forEach(function(rule){
+      let hits = []; try { hits = rule.check(now) || []; } catch(e){ console.error('leak rule ' + rule.id, e); return; }
+      hits.forEach(function(h){
+        const key = rule.id + '|' + h.ref; seen[key] = true;
+        if(RX.leaks.some(function(f){ return f.key === key && f.status === 'dismissed'; })) return;
+        let f = RX.leaks.find(function(x){ return x.key === key && x.status === 'open'; });
+        if(f){ f.amount = Math.round(h.amount || 0); f.detail = h.detail; return; }
+        f = { id:'LK-' + (seq++), key:key, rule:rule.id, side:side, recordRef:h.ref, amount:Math.round(h.amount || 0), currency:'INR', estimate:!!(h.estimate || rule.estimate), perWeek:!!h.perWeek, ownerId:h.ownerId || null, ownerLabel:h.ownerLabel || null,
+          detectedAt:now, since:h.since || now, title:h.title, detail:h.detail, status:'open', dismissReason:null, actions:[] };
+        RX.leaks.push(f); opened.push(f);
+      });
+    });
+    RX.leaks.forEach(function(f){ if(f.status === 'open' && f.side === side && !seen[f.key]){ f.status = 'fixed'; f.closedAt = now; f.recovered = f.amount > 0 && !f.perWeek; } });
+    opened.forEach(rxLeakTrigger);
+    RX.lastLeakSweepAt = now;
+    return { ran:true, opened:opened.length };
+  };
+  (window.RX_SWEEPERS = window.RX_SWEEPERS || []).push(function(){ rxLeakSweep(); });
+
+  window.rxLeakFix = function(id){
+    const f = RX.leaks.find(function(x){ return x.id === id; }); if(!f || f.status !== 'open') return { ok:false, reason:'Nothing to fix.' };
+    const rule = RULES.find(function(r){ return r.id === f.rule; }); let r;
+    try { r = rule.fix(f.recordRef); } catch(e){ console.error(e); return { ok:false, reason:'That did not work. Try from the record itself.' }; }
+    if(r === false) return { ok:false, reason:'That did not work. Try from the record itself.' };
+    f.actions.push({ at:NOW(), by:(typeof fmMe === 'function' ? fmMe() : 'You'), what:rule.fixLabel });
+    if(typeof logAudit === 'function') logAudit('Money at risk', rule.fixLabel, f.title);
+    if(r !== 'open') rxLeakSweep();
+    return { ok:true, open:r === 'open', status:f.status };
+  };
+  window.rxLeakDismiss = function(id, reason){
+    const f = RX.leaks.find(function(x){ return x.id === id; }); if(!f || f.status !== 'open') return { ok:false, reason:'Nothing to dismiss.' };
+    if(String(reason || '').trim().length < 3) return { ok:false, reason:'Say why you are dismissing this.' };
+    f.status = 'dismissed'; f.dismissReason = String(reason).trim(); f.closedAt = NOW(); f.dismissedBy = typeof fmMe === 'function' ? fmMe() : 'You';
+    if(typeof logAudit === 'function') logAudit('Money at risk', 'Dismissed', f.title + ' · ' + f.dismissReason);
+    return { ok:true };
+  };
+  window.rxLeakTotals = function(){
+    const now = NOW(), d = new Date(now), m0 = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+    const open = RX.leaks.filter(function(f){ return f.status === 'open' && f.side === (corp() ? 'corporate' : 'agency'); });
+    return { atRisk:open.reduce(function(s, f){ return s + (f.amount || 0); }, 0), open:open.length,
+      recovered:RX.leaks.filter(function(f){ return f.status === 'fixed' && f.recovered && f.closedAt >= m0; }).reduce(function(s, f){ return s + f.amount; }, 0) };
+  };
+
+  /* ---- Workflow Studio trigger "Revenue Leak Detected" (conditions: rule, amount, age) ---- */
+  const TRIG = 'Revenue Leak Detected';
+  function syncTrigger(){
+    if(typeof WF_TRIGGERS === 'undefined') return; const i = WF_TRIGGERS.indexOf(TRIG);
+    if(rxOn('g3') && i < 0){ WF_TRIGGERS.push(TRIG); if(typeof WF_TRIGGER_AGENT !== 'undefined' && !WF_TRIGGER_AGENT[TRIG]) WF_TRIGGER_AGENT[TRIG] = 'offers-joining'; }
+    if(!rxOn('g3') && i > -1) WF_TRIGGERS.splice(i, 1);
+  }
+  syncTrigger(); if(typeof rxOnSwitch === 'function') rxOnSwitch(function(id){ if(id === 'g3') syncTrigger(); });
+  /* a leak workflow's conditions: { field:'rule'|'amount'|'age', op, value } on the finding */
+  window.rxLeakConditionsMet = function(wf, f){
+    return (wf.leakConditions || []).every(function(c){ const age = Math.floor((NOW() - (f.since || f.detectedAt)) / D), v = c.field === 'rule' ? f.rule : c.field === 'amount' ? f.amount : c.field === 'age' ? age : null;
+      if(c.field === 'rule') return !c.value || v === c.value; const t = Number(c.value); if(!isFinite(t)) return true; return c.op === '<' ? v < t : c.op === '=' ? v === t : v >= t; });
+  };
+  function rxLeakTrigger(f){
+    (typeof WORKFLOWS !== 'undefined' ? WORKFLOWS : []).filter(function(w){ return w.trigger === TRIG && (w.status === 'Published' || w.status === 'Live'); }).forEach(function(w){
+      const key = w.id + '|' + f.key; if(RX.leakRuns.some(function(x){ return x.key === key; })) return;
+      if(!rxLeakConditionsMet(w, f)) return;
+      RX.leakRuns.push({ key:key, workflowId:w.id, findingId:f.id, at:new Date(NOW()).toISOString() });
+      if(f.ownerId && typeof fmNotify === 'function') fmNotify(f.ownerId, ownerName(f.ownerId), 'Money at risk: ' + f.title + ' · ' + f.detail, null);
+      if(typeof logAudit === 'function') logAudit('Kairo', 'Automation ran', w.name + ' · ' + TRIG + ' · ' + f.title);
+    });
+  }
+  window.rxLeakTrigger = rxLeakTrigger;
+
+  /* ---- who sees it: agency Owner, Admin, Accounts; corporate Owner, HR head, Finance ---- */
+  window.rxLeakCanSee = function(){
+    try { if(state.role === 'admin' && !previewAsRoleId) return true; if(typeof canI === 'function' && canI('billing', 'View')) return true;
+      if(corp() && typeof canI === 'function' && canI('approvals', 'Approve') && canI('jobs', 'Create')) return true; } catch(e){}
+    return false;
+  };
+
+  /* ---- the screen ---- */
+  const RXL = window.RXL = window.RXL || { focus:null, dismiss:null };
+  window.rxLeakUI = function(kind, id){
+    if(kind === 'fix'){ const r = rxLeakFix(id); if(!r.ok){ toast(r.reason); return; } if(r.open){ const f = RX.leaks.find(function(x){ return x.id === id; }); if(f && f.rule === 'work-order-ending'){ showView('contract-hiring'); return; } return; } toast(r.status === 'fixed' ? 'Done. Marked recovered.' : 'Done.'); }
+    if(kind === 'dismiss'){ RXL.dismiss = id; }
+    if(kind === 'dismiss-do'){ const el = document.getElementById('rx-dismiss-why'), r = rxLeakDismiss(id, el ? el.value : ''); if(!r.ok){ toast(r.reason); return; } RXL.dismiss = null; toast('Dismissed.'); }
+    if(kind === 'cancel') RXL.dismiss = null;
+    if(state.activeNav === 'rx-money-at-risk') showView('rx-money-at-risk');
+  };
+  window.rxMoneyAtRiskHTML = function(){
+    if(!rxLeakCanSee()) return '<div class="content-shell o-page">' + (typeof oPageHead === 'function' ? oPageHead({ title:'Money at risk' }) : '<h1>Money at risk</h1>') + '<div class="o-card">' + (typeof oEmpty === 'function' ? oEmpty('lock', 'Money at risk isn’t part of your role.') : 'Money at risk isn’t part of your role.') + '</div></div>';
+    rxLeakSweep();
+    const side = corp() ? 'corporate' : 'agency', tot = rxLeakTotals(), now = NOW();
+    const open = RX.leaks.filter(function(f){ return f.status === 'open' && f.side === side; });
+    const groups = RULES.filter(function(r){ return r.side === side; }).map(function(rule){
+      const list = open.filter(function(f){ return f.rule === rule.id; }); if(!list.length) return '';
+      const sum = list.reduce(function(s, f){ return s + f.amount; }, 0);
+      return '<section class="o-card rx-leak-group" data-rule="' + rule.id + '"><div class="o-card__head"><div><h2 class="o-card__title">' + esc(rule.label) + '</h2><p class="o-card__sub">' + list.length + (list.length === 1 ? ' record' : ' records') + (sum ? ' · ' + inr(sum) + ' INR' + (rule.estimate ? ' (estimate)' : '') : '') + '</p></div></div>' +
+        '<div class="o-table-wrap"><table class="o-table"><thead><tr><th>Record</th><th>Amount</th><th>Owner</th><th>Age</th><th></th></tr></thead><tbody>' + list.map(function(f){
+          const age = Math.max(0, Math.floor((now - (f.since || f.detectedAt)) / D));
+          const dis = RXL.dismiss === f.id ? '<div class="rx-dismiss"><label class="cl-field"><span>Why dismiss?</span><input id="rx-dismiss-why" class="app-input" aria-label="Why dismiss"></label>' + sBtn('Dismiss', "rxLeakUI('dismiss-do','" + f.id + "')", 'primary') + sBtn('Cancel', "rxLeakUI('cancel')", 'ghost') + '</div>' : '';
+          return '<tr data-leak="' + esc(f.id) + '"><td><b>' + esc(f.title) + '</b><small>' + esc(f.detail) + '</small>' + dis + '</td><td>' + (f.amount ? inr(f.amount) + (f.perWeek ? ' a week' : '') + (f.estimate ? ' <small>estimate</small>' : '') : '—') + '</td><td>' + esc(f.ownerId ? ownerName(f.ownerId) : (f.ownerLabel || '—')) + '</td><td>' + age + (age === 1 ? ' day' : ' days') + '</td>' +
+            '<td style="text-align:right;white-space:nowrap">' + sBtn(rule.fixLabel, "rxLeakUI('fix','" + f.id + "')", 'primary') + ' ' + sBtn('Dismiss', "rxLeakUI('dismiss','" + f.id + "')", 'ghost') + '</td></tr>'; }).join('') + '</tbody></table></div></section>';
+    }).join('');
+    const head = typeof oPageHead === 'function' ? oPageHead({ title:'Money at risk', sub:'Money already earned that has not come in yet, and the one step that brings it in.' }) : '<h1>Money at risk</h1>';
+    const numbers = '<div class="o-cols rx-leak-totals" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="o-card o-num"><p class="o-num__label">At risk now</p><p class="o-num__value" id="rx-at-risk">' + inr(tot.atRisk) + '</p><p class="o-num__note">INR · ' + tot.open + ' open</p></div><div class="o-card o-num"><p class="o-num__label">Recovered this month</p><p class="o-num__value" id="rx-recovered">' + inr(tot.recovered) + '</p><p class="o-num__note">INR · closed when the condition cleared</p></div><div class="o-card o-num"><p class="o-num__label">Dismissed</p><p class="o-num__value">' + RX.leaks.filter(function(f){ return f.status === 'dismissed' && f.side === side; }).length + '</p><p class="o-num__note">each with a reason</p></div></div>';
+    return '<div class="content-shell o-page" id="rx-leaks">' + head + numbers + (groups || '<div class="o-card">' + (typeof oEmpty === 'function' ? oEmpty('check', 'Nothing at risk right now.') : 'Nothing at risk right now.') + '</div>') + '</div>';
+  };
+  if(typeof RENDERERS !== 'undefined') RENDERERS['rx-money-at-risk'] = function(){ return rxOn('g3') ? rxMoneyAtRiskHTML() : (RENDERERS[typeof homeForMe === 'function' ? homeForMe() : 'dashboard'] || function(){ return ''; })(); };
+
+  /* ---- Home card: "₹X at risk · ₹Y recovered this month" ---- */
+  window.rxLeakHomeCardHTML = function(){
+    rxLeakSweep(); const t = rxLeakTotals();
+    return '<section class="o-card rx-leak-home" id="rx-leak-card"><div class="o-card__head"><div><p class="o-num__label">Money at risk</p><h2 class="o-card__title">' + inr(t.atRisk) + ' at risk · ' + inr(t.recovered) + ' recovered this month</h2><p class="o-card__sub">' + t.open + (t.open === 1 ? ' item needs' : ' items need') + ' one step each.</p></div><button type="button" class="o-link" onclick="showView(\'rx-money-at-risk\')">Open →</button></div></section>';
+  };
+  /* on the Owner/Admin Home and on PayTrack (where Accounts lands) */
+  function hookHome(){
+    if(typeof RENDERERS === 'undefined') return;
+    ['admin-dashboard', 'admin-paytrack'].forEach(function(k){
+      if(typeof RENDERERS[k] !== 'function' || RENDERERS[k].__rx3) return;
+      const base = RENDERERS[k];
+      const wrapped = function(){ const h = base.apply(this, arguments); if(!rxOn('g3') || typeof h !== 'string' || !rxLeakCanSee()) return h; const i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + rxLeakHomeCardHTML() + h.slice(i); };
+      wrapped.__rx3 = true; wrapped.__rx = base.__rx; RENDERERS[k] = wrapped;
+    });
   }
   hookHome(); window.addEventListener('load', hookHome);
 })();
