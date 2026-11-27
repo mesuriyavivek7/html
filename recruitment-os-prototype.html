@@ -73919,6 +73919,193 @@ function cfScopeHTML(){
   hookReq(); window.addEventListener('load', hookReq);
 })();
 </script>
+<script id="rx-g6-script">
+/* RX G6 — Interview self-booking. Switch g6, off by default; off = today.
+   - Interviewer availability: none existed, so RX.g6.avail[name] = { days:[1..5], from:'10:00', to:'18:00', tz } is
+     added (default Mon–Fri 10:00–18:00 Asia/Kolkata). Agency: the recruiter fills the client interviewer's weekly free
+     hours on the link dialog (simple grid). Corporate: the hiring manager's name (job.hmName) is used the same way.
+     Existing interviews (hmInterviews, not cancelled) count as busy; open booking holds too.
+   - rxBookLink(subId, interviewer): token page #/book/<token>. Up to WSX.rx.bookingSlots (6) free 60-minute slots over
+     the next 5 working days, shown in the candidate's time zone (candidate.timezone, else the workspace's).
+   - Booking saves through the existing hand path: pipeOpenSchedule(subId[, ivId]) sets ivState, the slot goes into
+     ivState.date / time / interviewer, then ivSave() — so the interview record, the stage move to "Interview
+     Scheduled" (which G1 turns into the Interview Scheduled event), the audit line and the candidate message are the
+     ones a recruiter gets by hand. Confirmations to the recruiter and interviewer are simulated (RX.g6.sent).
+     Submissions not yet in the client's process use the earlier hand path (scheduleInterviewState +
+     confirmScheduleInterview).
+   - Reschedule or cancel (ivCancel) from the same link until WSX.rx.rescheduleCutoffHours (12) before the slot;
+     after that the page says to contact the recruiter and nothing changes.
+   - Workflow action "Send booking link" (step rxBookingLink) and a "Send a booking link instead" button on the
+     schedule dialog. Metric rxBookingMedianDays(jobId): median days from shortlist to interview booked.
+   Time zones: fixed offsets (no daylight saving) for the zones the prototype offers; noted as a simplification. */
+(function(){
+  const D = 86400000, H = 3600000;
+  const NOW = function(){ return Date.now(); };
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const corp = function(){ try { return typeof jsCorp === 'function' && jsCorp(); } catch(e){ return false; } };
+  const RX = window.RX = window.RX || { touches:[], replies:[], runs:[], seen:{}, skips:[] };
+  RX.g6 = RX.g6 || { avail:{}, links:{}, sent:[] };
+  const G = RX.g6;
+  const OFF = window.RX_TZ_OFFSETS = { 'Asia/Kolkata':330, 'UTC':0, 'Europe/London':0, 'Asia/Dubai':240, 'Asia/Singapore':480, 'America/New_York':-300, 'Europe/Berlin':60, 'Australia/Sydney':600 };
+  const wsTz = function(){ try { return (ORG_STRUCTURE.profile && ORG_STRUCTURE.profile.timezone) || 'Asia/Kolkata'; } catch(e){ return 'Asia/Kolkata'; } };
+  const tok = function(){ let s = ''; while(s.length < 24) s += Math.random().toString(36).slice(2); return s.slice(0, 24); };
+
+  /* ---- availability ---- */
+  window.rxAvailabilityOf = function(name){ return G.avail[name] || { days:[1, 2, 3, 4, 5], from:'10:00', to:'18:00', tz:wsTz(), assumed:true }; };
+  window.rxSetAvailability = function(name, a){
+    if(!name) return { ok:false, reason:'Who is the interviewer?' };
+    const days = (a.days || []).map(Number).filter(function(d){ return d >= 0 && d <= 6; }), re = /^([01]\d|2[0-3]):[0-5]\d$/;
+    if(!days.length) return { ok:false, reason:'Pick at least one day.' }; if(!re.test(a.from || '') || !re.test(a.to || '') || a.from >= a.to) return { ok:false, reason:'Pick a start time before the end time.' };
+    G.avail[name] = { days:days, from:a.from, to:a.to, tz:a.tz && OFF[a.tz] != null ? a.tz : wsTz() };
+    if(typeof logAudit === 'function') logAudit('Interviews', 'Interviewer free hours set', name + ' · ' + a.from + '–' + a.to); return { ok:true };
+  };
+  /* wall-clock time in a zone → epoch ms */
+  const zoned = function(y, m, d, hh, mm, tz){ return Date.UTC(y, m, d, hh, mm) - (OFF[tz] || 0) * 60000; };
+  const partsIn = function(ms, tz){ const x = new Date(ms + (OFF[tz] || 0) * 60000); return { y:x.getUTCFullYear(), m:x.getUTCMonth(), d:x.getUTCDate(), dow:x.getUTCDay() }; };
+  const ivMs = function(iv){ if(iv.at) return Date.parse(iv.at); return null; };
+  function busy(name, from, to, exceptToken){
+    const hit = hmInterviews.some(function(iv){ if(iv.status === 'Cancelled' || iv.interviewerName !== name) return false; const s = ivMs(iv); if(s == null) return false; const e = s + (Number(iv.duration) || 60) * 60000; return s < to && e > from; });
+    if(hit) return true;
+    return Object.keys(G.links).some(function(k){ const l = G.links[k]; return k !== exceptToken && l.interviewer === name && l.status === 'booked' && l.slot < to && l.slot + 60 * 60000 > from; });
+  }
+  window.rxFreeSlots = function(name, exceptToken){
+    const a = rxAvailabilityOf(name), tz = a.tz, out = [], max = Number(WSX.rx.bookingSlots) || 6, fh = a.from.split(':').map(Number), th = a.to.split(':').map(Number);
+    let p = partsIn(NOW(), tz), worked = 0;
+    for(let i = 1; i <= 14 && worked < 5 && out.length < max; i++){
+      const day = partsIn(zoned(p.y, p.m, p.d, 12, 0, tz) + i * D, tz); if(day.dow === 0 || day.dow === 6) continue; worked++;
+      if(a.days.indexOf(day.dow) < 0) continue;
+      for(let t = zoned(day.y, day.m, day.d, fh[0], fh[1], tz); t + 60 * 60000 <= zoned(day.y, day.m, day.d, th[0], th[1], tz) && out.length < max; t += 60 * 60000){
+        if(t - NOW() < 2 * H) continue; if(!busy(name, t, t + 60 * 60000, exceptToken)) out.push(t);
+      }
+    }
+    return out;
+  };
+  const fmtIn = function(ms, tz){ try { return new Date(ms).toLocaleString('en-GB', { timeZone:tz, weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hour12:false }); } catch(e){ return new Date(ms).toUTCString(); } };
+
+  /* ---- links ---- */
+  const interviewerFor = function(sb){ const j = jobById(sb.jobId); if(j && j.corp) return j.hmName || 'Hiring manager'; try { const cc = clientContacts(j.client); return cc && cc[0] ? cc[0].name : 'Interviewer'; } catch(e){ return 'Interviewer'; } };
+  window.rxBookLink = function(subId, interviewer, by){
+    const sb = subById(subId); if(!sb) return { ok:false, reason:'No such submission.' };
+    const open = Object.keys(G.links).map(function(k){ return G.links[k]; }).find(function(l){ return l.subId === subId && (l.status === 'open' || l.status === 'booked'); });
+    if(open) return { ok:true, token:open.token, existing:true };
+    const t = tok(), c = byId(sb.candidateId);
+    G.links[t] = { token:t, subId:subId, interviewer:interviewer || interviewerFor(sb), status:'open', slot:null, ivId:null, createdAt:NOW(), by:by || (typeof fmMe === 'function' ? fmMe() : 'You'), recruiter:(typeof fmMe === 'function' ? fmMe() : 'your recruiter') };
+    G.sent.push({ to:c ? c.name : '', kind:'booking link', token:t, at:NOW() });
+    if(typeof logAudit === 'function') logAudit('Interviews', 'Booking link sent', (c ? c.name : '') + ' · ' + G.links[t].interviewer);
+    return { ok:true, token:t };
+  };
+  const scheduleBy = function(sb, slot, interviewer, ivId){
+    const d = new Date(slot), date = fuLocalDateValue(d), time = fuLocalTimeValue(d);
+    if(typeof subPhase === 'function' && subPhase(sb) === 'process'){
+      pipeOpenSchedule(sb.id, ivId || undefined); if(!ivState) return { ok:false, reason:'Scheduling is not open for this profile.' };
+      ivState.date = date; ivState.time = time; ivState.interviewer = interviewer;
+      const before = hmInterviews.length; ivSave();
+      const iv = ivId ? hmInterviews.find(function(x){ return x.id === ivId; }) : (hmInterviews.length > before ? hmInterviews[0] : null);
+      return iv ? { ok:true, iv:iv } : { ok:false, reason:'That time could not be saved.' };
+    }
+    scheduleInterviewState = { candidateId:sb.candidateId, submissionId:sb.id, date:date, time:time, mode:'Video' };
+    const before = hmInterviews.length; confirmScheduleInterview();
+    const iv = hmInterviews.length > before ? hmInterviews[0] : null; if(iv && !iv.at){ iv.at = d.toISOString(); iv.interviewerName = iv.interviewerName || interviewer; }
+    return iv ? { ok:true, iv:iv } : { ok:false, reason:'That time could not be saved.' };
+  };
+  window.rxBook = function(token, slot){
+    const l = G.links[token]; if(!l || l.status === 'cancelled') return { ok:false, reason:'This link does not work any more.' };
+    const sb = subById(l.subId); if(!sb) return { ok:false, reason:'This link does not work any more.' };
+    slot = Number(slot);
+    if(rxFreeSlots(l.interviewer, token).indexOf(slot) < 0) return { ok:false, reason:'That time was just taken. Pick another.' };
+    if(l.status === 'booked'){
+      if(l.slot - NOW() < (Number(WSX.rx.rescheduleCutoffHours) || 12) * H) return { ok:false, reason:'It is too close to your interview to change it here. Please contact ' + l.recruiter + '.' };
+      const r = scheduleBy(sb, slot, l.interviewer, l.ivId); if(!r.ok) return r; l.slot = slot; l.rescheduledAt = NOW();
+      G.sent.push({ to:l.interviewer, kind:'reschedule confirmation', token:token, at:NOW() }); return { ok:true, iv:r.iv, rescheduled:true };
+    }
+    const r = scheduleBy(sb, slot, l.interviewer, null); if(!r.ok) return r;
+    l.status = 'booked'; l.slot = slot; l.ivId = r.iv.id; l.bookedAt = NOW();
+    G.sent.push({ to:l.interviewer, kind:'booking confirmation', token:token, at:NOW() }, { to:l.recruiter, kind:'booking confirmation', token:token, at:NOW() });
+    return { ok:true, iv:r.iv };
+  };
+  window.rxBookCancel = function(token, reason){
+    const l = G.links[token]; if(!l || l.status !== 'booked') return { ok:false, reason:'Nothing to cancel.' };
+    if(l.slot - NOW() < (Number(WSX.rx.rescheduleCutoffHours) || 12) * H) return { ok:false, reason:'It is too close to your interview to change it here. Please contact ' + l.recruiter + '.' };
+    const r = ivCancel(l.ivId, reason || 'Cancelled by the candidate from the booking link'); if(r && r.ok === false) return { ok:false, reason:r.err || 'Could not cancel.' };
+    l.status = 'cancelled'; l.cancelledAt = NOW(); G.sent.push({ to:l.interviewer, kind:'cancellation', token:token, at:NOW() }); return { ok:true };
+  };
+
+  /* ---- the candidate's page ---- */
+  function root(){ let r = document.getElementById('rx-book-root'); if(!r){ r = document.createElement('div'); r.id = 'rx-book-root'; document.body.appendChild(r); } return r; }
+  window.rxBookDraw = function(msg){
+    const m = /^#\/book\/([a-z0-9]{12,40})$/.exec(String(location.hash || '')), el = root();
+    if(!m || !rxOn('g6')){ el.innerHTML = ''; el.removeAttribute('style'); return; }
+    const l = G.links[m[1]], sb = l && subById(l.subId), c = sb && byId(sb.candidateId), j = sb && jobById(sb.jobId), tz = (c && c.timezone && OFF[c.timezone] != null) ? c.timezone : wsTz();
+    let body;
+    if(!l || !sb || l.status === 'cancelled') body = '<h1 class="o-card__title">This link does not work any more</h1><p class="o-card__sub">Ask your recruiter for a new one.</p>';
+    else {
+      const late = l.status === 'booked' && l.slot - NOW() < (Number(WSX.rx.rescheduleCutoffHours) || 12) * H;
+      const slots = late ? [] : rxFreeSlots(l.interviewer, m[1]);
+      body = '<h1 class="o-card__title">' + (l.status === 'booked' ? 'Your interview' : 'Pick a time for your interview') + '</h1><p class="o-card__sub">' + esc(j ? j.title + ' · ' + (j.corp ? '' : j.client) : '') + ' · times in ' + esc(tz) + '</p>' +
+        (l.status === 'booked' ? '<p class="o-card__sub" id="rx-book-when">Booked for <b>' + esc(fmtIn(l.slot, tz)) + '</b>.</p>' : '') +
+        (late ? '<p class="o-card__sub" role="alert">It is too close to your interview to change it here. Please contact ' + esc(l.recruiter) + '.</p>'
+          : '<div class="rx-book__slots" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' + (slots.length ? slots.map(function(s){ return '<button type="button" class="o-btn" data-slot="' + s + '" onclick="rxBookUI(' + s + ')">' + esc(fmtIn(s, tz)) + '</button>'; }).join('') : '<p class="o-card__sub">No free times in the next five working days. Your recruiter will get in touch.</p>') + '</div>' +
+            (l.status === 'booked' ? '<p style="margin-top:12px"><button type="button" class="o-btn o-btn--ghost" data-book-cancel onclick="rxBookCancelUI()">Cancel the interview</button></p>' : '')) +
+        (msg ? '<p class="o-card__sub" role="alert" id="rx-book-msg">' + esc(msg) + '</p>' : '');
+    }
+    el.setAttribute('style', 'position:fixed;inset:0;z-index:80;background:var(--bg, #f7f7f5);overflow:auto;padding:48px 16px');
+    el.innerHTML = '<main class="o-card" style="max-width:560px;margin:0 auto" aria-label="Book an interview">' + body + '</main>';
+  };
+  const cur = function(){ const m = /^#\/book\/([a-z0-9]{12,40})$/.exec(String(location.hash || '')); return m ? m[1] : null; };
+  window.rxBookUI = function(slot){ const t = cur(); if(!t) return; const r = rxBook(t, slot); rxBookDraw(r.ok ? (r.rescheduled ? 'Moved. A new confirmation is on its way.' : 'Booked. A confirmation is on its way.') : r.reason); };
+  window.rxBookCancelUI = function(){ const t = cur(); if(!t) return; const r = rxBookCancel(t); rxBookDraw(r.ok ? 'Cancelled. Your recruiter is told.' : r.reason); };
+  window.addEventListener('hashchange', function(){ try { rxBookDraw(); } catch(e){ console.error(e); } });
+  window.addEventListener('load', function(){ try { rxBookDraw(); } catch(e){} });
+
+  /* ---- recruiter side: "Send a booking link instead" on the schedule dialog, with the interviewer's free hours ---- */
+  window.rxBookPanelHTML = function(subId, name){
+    const a = rxAvailabilityOf(name), dn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return '<section class="rx-book-panel" id="rx-book-panel" style="margin-top:12px;border-top:1px solid var(--line, #e5e5e5);padding-top:12px"><p class="text-sm font-semibold">Or let the candidate pick</p><p class="text-xs text-zinc-500">' + esc(name) + '’s free hours' + (a.assumed ? ' (not set yet: Mon–Fri 10:00–18:00 assumed)' : '') + '</p>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0" role="group" aria-label="Free days">' + [1, 2, 3, 4, 5, 6, 0].map(function(d){ return '<label class="text-xs"><input type="checkbox" data-rx-day="' + d + '"' + (a.days.indexOf(d) > -1 ? ' checked' : '') + '> ' + dn[d] + '</label>'; }).join('') + '</div>' +
+      '<label class="text-xs">From <input type="time" id="rx-book-from" value="' + a.from + '"></label> <label class="text-xs">to <input type="time" id="rx-book-to" value="' + a.to + '"></label>' +
+      '<p style="margin-top:8px"><button type="button" class="o-btn" onclick="rxBookSendUI(\'' + esc(subId) + '\',' + JSON.stringify(name).replace(/"/g, '&quot;') + ')">Send a booking link instead</button></p></section>';
+  };
+  window.rxBookSendUI = function(subId, name){
+    const days = [].map.call(document.querySelectorAll('#rx-book-panel [data-rx-day]:checked'), function(x){ return Number(x.getAttribute('data-rx-day')); });
+    const f = (document.getElementById('rx-book-from') || {}).value, to = (document.getElementById('rx-book-to') || {}).value;
+    const s = rxSetAvailability(name, { days:days, from:f, to:to }); if(!s.ok){ toast(s.reason); return; }
+    const r = rxBookLink(subId, name); if(!r.ok){ toast(r.reason); return; }
+    if(typeof ivScheduleClose === 'function') ivScheduleClose(); toast('Booking link sent. The candidate picks a time.');
+  };
+  if(typeof window.ivRender === 'function' && !window.ivRender.__g6){
+    const base = window.ivRender;
+    const w = function(){ const r = base.apply(this, arguments); try { if(rxOn('g6') && ivState && !ivState.ivId){ const el = document.getElementById('iv-root'), box = el && (el.querySelector('form') || el.querySelector('[role=dialog]') || el.firstElementChild); if(box && !document.getElementById('rx-book-panel')) box.insertAdjacentHTML('beforeend', rxBookPanelHTML(ivState.subId, ivState.interviewer)); } } catch(e){ console.error(e); } return r; };
+    w.__g6 = true; window.ivRender = w; try { ivRender = w; } catch(e){}
+  }
+
+  /* ---- workflow action ---- */
+  if(typeof window.wfPerform === 'function' && !window.wfPerform.__g6){
+    const bp = window.wfPerform;
+    const wp = function(wf, c, ctx){
+      const out = bp.apply(this, arguments); if(!rxOn('g6')) return out;
+      out.actions.forEach(function(t){ if(t.channel !== 'internal' || t.action !== 'rxBookingLink') return;
+        const sb = (ctx && ctx.submissionId && subById(ctx.submissionId)) || SUBMISSIONS.filter(function(s){ return s.candidateId === c.id && !/Rejected|Withdrawn|Joined/.test(s.stage || ''); })[0];
+        if(!sb){ t.outcome = 'skipped: no open submission'; return; } const r = rxBookLink(sb.id, null, 'Workflow: ' + wf.name); t.channel = 'email'; t.outcome = r.ok ? 'booking link sent (simulated)' : 'skipped: ' + r.reason; });
+      return out;
+    };
+    wp.__g6 = true; wp.__g4 = bp.__g4; window.wfPerform = wp; try { wfPerform = wp; } catch(e){}
+  }
+  window.RX_G6_STEPS = [['rxBookingLink', 'Send booking link']];
+
+  /* ---- metric ---- */
+  window.rxBookingMedianDays = function(jobId){
+    const v = SUBMISSIONS.filter(function(s){ return s.jobId === jobId; }).map(function(s){ const h = s.stageHistory || [], sl = h.find(function(x){ return /Shortlist/i.test(x.stage || ''); }), iv = h.find(function(x){ return /Interview Scheduled/i.test(x.stage || ''); }); return sl && iv ? (Date.parse(iv.at) - Date.parse(sl.at)) / D : null; })
+      .filter(function(x){ return x != null && x >= 0; }).sort(function(a, b){ return a - b; });
+    if(!v.length) return null; const m = Math.floor(v.length / 2); return Math.round((v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2) * 10) / 10;
+  };
+  function hookJob(){
+    const d = window.renderJobDetail; if(typeof d !== 'function' || d.__g6) return;
+    const w = function(id){ const h = d.apply(this, arguments); if(!rxOn('g6') || typeof h !== 'string') return h; const m = rxBookingMedianDays(id); const card = '<section class="o-card rx-book-metric" id="rx-book-metric"><p class="o-num__label">Shortlist to interview booked</p><p class="o-num__value">' + (m == null ? '—' : m + (m === 1 ? ' day' : ' days')) + '</p><p class="o-card__sub">Median for this job.</p></section>'; const i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + card + h.slice(i); };
+    w.__g6 = true; w.__g5 = d.__g5; window.renderJobDetail = w; try { renderJobDetail = w; } catch(e){}
+  }
+  hookJob(); window.addEventListener('load', hookJob);
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
