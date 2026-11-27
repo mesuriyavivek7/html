@@ -885,3 +885,25 @@ Number cards: approvals pending, open links, refunds waiting, reconciliation.
 | eFIRC | Bank proof of foreign inward remittance. |
 | Vault | The frozen copies of sent invoices. |
 | Dunning | Reminders after a failed renewal charge. |
+
+---
+
+## 13. O2 build (switch-guarded, 27 Nov 2026)
+
+Everything below is added by `docs/O2-BUILD-BRIEF.md` steps 0a–8b. Each step is a named block placed just before `o2-persist-script` (which stays the last script), behind its switch in `O2_SWITCH` (all **off** by default; `o2On(id)`, `o2SetSwitch(id, on)`). With every switch off the platform behaves exactly as sections 0–12 describe.
+
+**Blocks, in file order:** `o2-switch-script` (0a), `o2-metrics-script` (0b), `o2-billing-customer-script` (0c), `o2-invoice-view-script` (0d), `o2-nav-script` (1a), `o2-approvals-script` (1b), `o2-search-script` (1c), `o2-home-script` (2), `o2-lifecycle-script` (3a), `o2-workspace-script` (3b), `o2-subscription-gateway-script` (4a), `o2-subscription-status-script` (4b), `o2-billing-screens-script` (4c), `o2-allocation-script` (4d), `o2-customers-script` (5), `o2-service-script` (6), `o2-audit-script` (7a), `o2-mfa-script` (7b), `o2-people-script` (7c), `o2-controls-script` + `o2-controls-workspace-script` (8a), `o2-ai-script` (8b), `o2-persist-script` (0a, last).
+
+**New view ids (1a, §5 of the brief):** `oontu-home`, `oontu-approvals`, `oontu-reports`, `oontu-workspaces`, `oontu-workspace`, `oontu-incidents`, `oontu-incident`, `oontu-announcements`, `oontu-invoices`, `oontu-tax`, `oontu-people`, `oontu-ai`, `oontu-controls`. Old ids redirect (`o2NavTarget`). Until a step builds its screen, a new id renders the screen it replaces.
+
+**New records:** `PLATFORM_SETTINGS.policy` (0b), `tenant.internal` (0b), `BOS.billingCustomers` and invoice `buyer` snapshots (0c), `tenant.lifecycle[]` / `lifecycleState` / `statusLegacy` / `tombstone` (3a), subscription `items[]` / `history[]` / `cancelAt` / `pendingChange` / `o2Status` (4a, 4b), `BOS.payments`, `BOS.allocations`, `BOS.customerCredits` (4d), incident `affectedWorkspaces` / `review` / `announcements` (6), `BOS.teams`, `BOS.accessReviews`, `BOS.policyChanges`, `BOS.exports` (7c), `BOS.flags`, `BOS.entitlementOverrides` (8a), `BOS.agentRuns` (8b). All additive; old fields are still written.
+
+**New commands (bosRun):** `billing-customer.update`, `billing-customer.change-market`, `workspace.start-trial|activate|suspend|restore|close|archive`, `workspace.create`, `workspace-request.*`, `subscription.create|change-plan|extend-trial|set-renewal-date|change-status|invoice|checkout|payment|status|cancel|downgrade|manual-activation|renewal-run`, `payment.record-bank-credit|allocate|unallocate|record-tds|confirm-credit`, `tds.update-certificate`, `customer-credit.apply`, `incident.update|publish-update`, `access-review.start`, `policy.change-request|change-signoff`, `export.audit-request`, `flag.set`, `entitlement.override`, `ai.configure`.
+
+**New approval types (registered only while their switch is on):** `workspace-suspend`, `workspace-close`, `workspace-archive-early` (3a), `subscription-cancel-now`, `manual-activation` (4b), `data-export` (7c).
+
+**New integrity rules:** `emergency-suspension-review` (3a), `unmatched-credit`, `tds-certificate-overdue` (4d).
+
+**Specs:** `tests/o2-*.spec.js` (one or two per step, plus `o2-flows.spec.js` for the end-to-end flows with every step on). Older specs that assert the old Oontu menu read the §5 menu only while 1a is on.
+
+Details per step, decisions and the "See it" paths: `docs/O2-OVERNIGHT-REPORT.md` and `docs/o2-progress.html`.
