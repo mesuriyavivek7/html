@@ -75,3 +75,6 @@ Start only when the overnight build has printed its final "Done. Report: …" li
 After the queued audit task is fully finished (Phase 2 final full suites off/on, RX-REPORT and progress page committed, git clean,
 final line printed), start `docs/OONTU-COWORK-AGENTS-PROMPT.md` (Cowork agents v2, CX_SWITCH) from its start gate, without asking.
 Resume rule from the user: if the session stops, continue exactly where it left off (this file is the source of truth).
+
+## CX (Cowork agents v2) progress
+- C0 done 2026-11-28: CX-AUDIT.md, cx-progress.html, backup recruitment-os-prototype.before-cx.html (local, git-excluded). Next: C1 credits (block cx-credits).

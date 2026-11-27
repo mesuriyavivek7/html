@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cowork v2 progress</title>
+<style>
+  :root { --bg:#f7f7f5; --card:#fff; --ink:#1b1b1b; --dim:#6b6b6b; --line:#e6e6e3; --accent:#2f5d50; --warn:#8a5a00; }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) { --bg:#141414; --card:#1d1d1d; --ink:#ececec; --dim:#a0a0a0; --line:#2c2c2c; --accent:#8fc1b0; --warn:#e0b05a; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:22px; margin:0 0 4px; } h2 { font-size:16px; margin:28px 0 8px; }
+  .meta { color:var(--dim); margin:0 0 16px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .card b { display:block; font-size:20px; } .card span { color:var(--dim); font-size:13px; }
+  .wrap { overflow-x:auto; background:var(--card); border:1px solid var(--line); border-radius:12px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; } th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--dim); font-weight:500; } tr:last-child td { border-bottom:0; }
+  .st { padding:2px 8px; border-radius:999px; border:1px solid var(--line); font-size:12px; white-space:nowrap; }
+  .st-done { color:var(--accent); border-color:var(--accent); } .st-isolated { color:var(--warn); border-color:var(--warn); }
+  ul { margin:0; padding-left:18px; } .thumbs { display:flex; flex-wrap:wrap; gap:8px; } .thumbs img { width:180px; border:1px solid var(--line); border-radius:8px; }
+</style>
+</head>
+<body>
+<main id="root"></main>
+<script id="cx-data" type="application/json">
+{
+  "updated": "2026-11-28",
+  "phases": [
+    { "id":"C0", "name":"Map the code (audit)", "status":"done", "start":"2026-11-28", "end":"2026-11-28", "specs":"—", "note":"CX-AUDIT.md; baseline 1310/1311 off, 1312/1313 on (demo-data date-dependent, pre-existing)" },
+    { "id":"C1", "name":"One common credit wallet", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
+    { "id":"C1b", "name":"Channel setup (Set up Cowork)", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
+    { "id":"C2", "name":"Talent Discovery: intake and evidence matching", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
+    { "id":"C3", "name":"Outreach playbook and Simple Campaign Builder", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
+    { "id":"C4", "name":"LinkedIn Outreach (recruiter-assisted)", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
+    { "id":"C5", "name":"Screening: replies to prospects", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
+    { "id":"C6", "name":"Delivery Guardian", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
+    { "id":"C7", "name":"Revenue & Redeploy, Kairo as manager", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
+    { "id":"C8", "name":"Retire Engagement's name, migration", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
+    { "id":"C9", "name":"UX polish pass", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
+    { "id":"C10", "name":"Final audit and report", "status":"not started", "start":"", "end":"", "specs":"", "note":"" }
+  ],
+  "counters": { "tests":"baseline 1310/1311 (off)", "precision":"—", "clicks":"—", "seed":"—" },
+  "decisions": [
+    "C0: demo-data Vistaar fails from 2026-11-28 on old and new code alike (date-dependent seed); treated as pre-existing, outside CX.",
+    "C0: AX_SWITCH / A0–A9 not present; nothing in CX depends on them.",
+    "C0: phase commits on o2/overnight-2026-11-26 (where the queue has been committing), local only."
+  ],
+  "isolated": [],
+  "screens": []
+}
+</script>
+<script>
+(function(){
+  var d = JSON.parse(document.getElementById('cx-data').textContent);
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  var done = d.phases.filter(function(p){ return p.status === 'done'; }).length;
+  var html = '<h1>Cowork v2 progress</h1><p class="meta">Updated ' + esc(d.updated) + ' · ' + done + ' of ' + d.phases.length + ' phases done · switch <code>CX_SWITCH</code> (off by default)</p>' +
+    '<div class="cards"><div class="card"><b>' + esc(d.counters.tests) + '</b><span>Tests</span></div><div class="card"><b>' + esc(d.counters.precision) + '</b><span>Precision@10 per fixture job</span></div><div class="card"><b>' + esc(d.counters.clicks) + '</b><span>Campaign builder clicks</span></div><div class="card"><b>' + esc(d.counters.seed) + '</b><span>Seed ledger check (466 / 19,534)</span></div></div>' +
+    '<h2>Phases</h2><div class="wrap"><table><thead><tr><th>Phase</th><th>Name</th><th>Status</th><th>Start</th><th>End</th><th>Specs</th><th>Notes</th></tr></thead><tbody>' +
+    d.phases.map(function(p){ return '<tr><td>' + esc(p.id) + '</td><td>' + esc(p.name) + '</td><td><span class="st st-' + esc(p.status).replace(/ /g, '-') + '">' + esc(p.status) + '</span></td><td>' + esc(p.start) + '</td><td>' + esc(p.end) + '</td><td>' + esc(p.specs) + '</td><td>' + esc(p.note) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+    '<h2>Decision log (latest first)</h2><ul>' + d.decisions.slice().reverse().map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
+    '<h2>Isolated behind sub-switches</h2>' + (d.isolated.length ? '<ul>' + d.isolated.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '<p class="meta">None.</p>') +
+    '<h2>Screens</h2>' + (d.screens.length ? '<div class="thumbs">' + d.screens.map(function(s){ return '<a href="' + esc(s) + '"><img src="' + esc(s) + '" alt="' + esc(s) + '"></a>'; }).join('') + '</div>' : '<p class="meta">Screenshots come with C9.</p>');
+  document.getElementById('root').innerHTML = html;
+})();
+</script>
+</body>
+</html>
