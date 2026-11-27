@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 14:39 IST",
-    "current":  "G4 Redeployment and contract-end decisions",
+    "updated":  "2026-11-27 15:19 IST",
+    "current":  "G5 Own talent first",
     "partA":  [
                   {
                       "id":  "0a",
@@ -274,11 +274,11 @@
                   {
                       "id":  "G4",
                       "name":  "Redeployment and contract-end decisions",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "done",
+                      "tests":  "rx-g4-redeploy 10/10 Â· regressions on 617/617, off 576/577 (motion flake, passes alone)",
+                      "tag":  "rx-g4",
+                      "what":  "Contractors ending soon get ranked next jobs (thin margins flagged), an availability check link and an ask-to-extend; companies get an extend / make permanent / end card and silver medalists.",
+                      "see":  "Agency: an assignment panel or the Redeploy board. Company: Contract hiring, a requisition."
                   },
                   {
                       "id":  "G5",
@@ -305,7 +305,8 @@
     "flaky":  [
                   "Headless Chrome occasionally hangs at launch (seen once on bos-tax before the build); a rerun alone passes.",
                   "cowork-visual gives no result when two test passes run at once; passes 15/15 alone. Passes are now always run one at a time.",
-                  "Dialog-focus checks (submission-flow K4, intake-flow G6) and jd-reader occasionally fail in long runs and pass alone; motion collapse-pill is the brief\u0027s known flake."
+                  "Dialog-focus checks (submission-flow K4, intake-flow G6) and jd-reader occasionally fail in long runs and pass alone; motion collapse-pill is the brief\u0027s known flake.",
+                  "motion collapse-pill (G4 off pass): passed alone"
               ],
     "decisions":  [
                       [
