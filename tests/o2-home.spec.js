@@ -27,6 +27,7 @@
     PLATFORM_TENANTS.push(tTrial); var sTrial = { id:'sub-o2t', tenantId:tTrial.id, planId:'plan-floor', status:'trial', startDate:day(now - 10 * DAY), renewalDate:day(now + 3 * DAY), billingInterval:'monthly', price:2999, currency:'INR', seats:2, createdAt:iso(now) };
     PLATFORM_SUBSCRIPTIONS.push(sTrial); tTrial.subscriptionId = sTrial.id;
     var south = subscriptionForTenant('org-southline'); south.planId = 'plan-floor'; south.seats = 3; south.status = 'past_due'; south.dunning = { since:day(now - 5 * DAY), step:1, reason:'The automatic charge failed' };
+    if(typeof o2SubItems === 'function' && south.items) south.items = o2SubItems(south);   /* with 4a on, items follow the plan set directly above */
     as('PU-103'); var tk = bosCreateTicket({ subject:'Everything is down for our team', body:'Outage', contactEmail:'priya@harborpartners.example', source:'In-app', priority:'P1' }).ticket; tk.priority = 'P1'; tk.sla.resolveBy = iso(now - DAY); tk.sla.respondBy = iso(now - 2 * DAY);
     as('PU-001'); var inc = bosCreateIncident({ title:'Login failures for some workspaces', severity:'SEV1' }); inc = inc.incident;
     BOS.exceptions.push({ id:'EX-O2HOME', rule:'access-control', key:'ac:o2home', domain:'Platform', status:'confirmed', title:'Access granted without approval', detectedAt:iso(now - 2 * DAY), evidence:[], history:[], severity:'high' });
