@@ -28,6 +28,7 @@ _In progress. Written in full when the build finishes._
 - **7b** Second sign-in step for Oontu employees and step-up for high-risk actions after 15 minutes. Switch 7b · sign in as any Oontu employee; the code 246810 is shown in Prototype · simulated sign-in.
 - **7c** People & access with teams, roles, access reviews; separation-of-duties checks; Audit & security with an approved export; policy changes signed by Security and Finance. Switches 1a, 7a, 7c · Dev Patel or Meera · Admin › People & access; Admin › Audit & security.
 - **8a** Ops flags and plan entitlements with workspace overrides that end on their date; one availability check. Switches 1a, 3b, 8a · Meera · Admin › Product controls; Workspaces › a workspace › Entitlements.
+- **8b** AI agents governance: allow-listed tools, daily limits, run log without content. Switches 1a, 8b · Meera · Admin › AI agents › Tools & policies / Activity.
 
 ## 3. Blocked steps
 
