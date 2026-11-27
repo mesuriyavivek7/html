@@ -114,7 +114,8 @@
     await t('the customer’s Plan & billing shows checkout and their invoices; Finance has the billing desk', async function(){
       state.role = 'admin'; renderSidebar(); var html = sec_billing(true); ok(/Choose a plan/.test(html) && /Invoices and receipts/.test(html) && /OON\//.test(html), 'customer view');
       state.role = 'oontu'; as('PU-106'); bosActAs('PU-106'); renderSidebar(); showView('oontu-finance'); bosTab('oontu-finance', 6); await sleep(20);
-      var m = document.getElementById('main-content').textContent; ok(/Drafts/.test(m) && /Payment links/.test(m) && /Promo codes/.test(m) && /Renewals and reminders/.test(m), m.slice(0, 200));
+      var m = document.getElementById('main-content').textContent;
+      if(typeof o2On === 'function' && o2On('4c')){ var d4 = document.createElement('div'); d4.innerHTML = o2InvoicesTabHTML('invoices') + o2InvoicesTabHTML('links') + o2PlansTabHTML('promos') + o2InvoicesTabHTML('payments'); m = d4.textContent; }   /* O2 4c splits the billing desk across Invoices & payments and Plans & pricing */ ok(/Drafts/.test(m) && /Payment links/.test(m) && /Promo codes/.test(m) && /Renewals and reminders/.test(m), m.slice(0, 200));
       bosDraftDialog(); ok(document.querySelector('#bos-dialog-root [role=dialog]'), 'new invoice dialog'); bosDialogClose(); bosActAs('PU-001');
     });
     pub();

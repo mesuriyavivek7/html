@@ -70532,7 +70532,8 @@ function cfScopeHTML(){
   function labelPlans(html){
     PLATFORM_PLANS.forEach(function(p){
       if(!isLegacy(p)) return;
-      html = html.replace('<span class="text-zinc-400 text-xs block">' + p.id + '</span>', '<span class="text-zinc-400 text-xs block">' + p.id + '</span><span class="o2-gf">' + oBadge('neutral', 'Grandfathered — not for sale') + '</span>');
+      const at = '<span class="text-zinc-400 text-xs block">' + p.id + '</span>'; if(html.indexOf(at + '<span class="o2-gf">') > -1) return;   /* already labelled by another wrapper */
+      html = html.replace(at, at + '<span class="o2-gf">' + oBadge('neutral', 'Grandfathered — not for sale') + '</span>');
     });
     return html;
   }
@@ -71793,6 +71794,152 @@ function cfScopeHTML(){
       const tn = tenantById(tenantId || CURRENT_ORGANIZATION_ID); if(!tn) return t;
       const a = o2AccessLevel(tn); return Object.assign({}, t, { readOnly:a.level !== 'full', accessLevel:a.level, paymentBanner:a.banner });
     };
+  }
+})();
+</script>
+<style id="o2-billing-screens-style">
+.o2-bill-stack{ display:grid; gap:16px; }
+.o2-sub-head{ display:flex; flex-wrap:wrap; gap:6px 14px; margin:-6px 0 16px; font-size:13px; color:var(--n-700, #4B5563); }
+.o2-sub-head b{ color:var(--n-900, #111827); font-weight:600; }
+.o2-sub-acts{ display:flex; flex-wrap:wrap; gap:8px; padding:0 20px 16px; }
+.o2-timeline{ list-style:none; margin:0; padding:0 20px 14px; }
+.o2-timeline li{ display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-top:1px solid var(--n-100, #F3F4F6); font-size:13px; }
+.o2-timeline li small{ color:var(--n-500, #6B7280); white-space:nowrap; }
+</style>
+<script id="o2-billing-screens-script">
+/* ============================================================
+   O2 STEP 4c: BILLING SCREENS (2026-11-26, billing step; layout only)
+   Switch 4c on, the old Business & finance screen is split (its tab renderers are reused as they are):
+   - oontu-invoices: Invoices · Payments · Payment links · Refunds · Reconciliation · Vault · Billing customers
+   - oontu-plans: Plans · Add-ons · Promo codes · Discount policy (read-only)
+   - oontu-tax: today's Tax and CA reports tab, unchanged
+   - oontu-subscription-detail: the Subscription page (head, items and price, discount, payment method, OON invoices,
+     dunning timeline, change history; change plan or licences with a preview, extend trial, pause, cancel at period
+     end, cancel now). No "Mark paid" there: payments are verified only in Invoices & payments.
+   No logic changes: every button calls the same function as before.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('4c'); };
+  const UI = window.BOS_UI, E = function(s){ return oEsc(s == null ? '' : s); };
+  const FIN = RENDERERS['oontu-finance'];
+  /* the body of one old finance tab, rendered by the old renderer */
+  window.o2FinanceTabBody = function(i){
+    const prev = UI.tab['oontu-finance']; UI.tab['oontu-finance'] = i; let html = '';
+    try { html = FIN(); } finally { UI.tab['oontu-finance'] = prev; }
+    const s = html.indexOf('<div class="seg bos-tabs"'); if(s < 0) return '';
+    const e = html.indexOf('</div>', s) + 6, end = html.lastIndexOf('</div>');
+    return html.slice(e, end > e ? end : html.length);
+  };
+  const section = function(html, id){ const s = html.indexOf('<section aria-labelledby="' + id + '-h"'); if(s < 0) return ''; const e = html.indexOf('</section>', s); return e < 0 ? '' : html.slice(s, e + 10); };
+  /* the billing desk's action bar (New invoice, Run renewals, New promo code…), wherever wrappers placed it */
+  const lead = function(html){ const m = html.match(/<div class="bos-actions" style="margin:0 0 12px">[\s\S]*?<\/div>/); return m ? m[0] : ''; };
+  const billing = function(){ return typeof bosBillingTabHTML === 'function' ? bosBillingTabHTML() : ''; };
+  const can = function(m, a){ return canPlatform(m, a); };
+  const ST = window.O2_BILL_UI = { inv:'invoices', plans:'plans' };
+  const tabsNav = function(key, list, cur){ return '<nav class="o2-host-tabs" aria-label="Sections">' + list.map(function(x){ return '<button type="button" class="o2-host-tab' + (x[0] === cur ? ' is-on' : '') + '" aria-current="' + (x[0] === cur ? 'page' : 'false') + '" onclick="o2BillTab(\'' + key + '\', \'' + x[0] + '\')">' + E(x[1]) + '</button>'; }).join('') + '</nav>'; };
+  window.o2BillTab = function(key, v){ ST[key] = v; bosRedraw(); };
+
+  window.o2InvoicesTabHTML = function(k){
+    if(k === 'invoices'){ const b = billing(); return lead(b) + section(b, 'bos-drafts') + section(b, 'bos-docs') + section(o2FinanceTabBody(2), 'bos-inv'); }
+    if(k === 'payments'){ const b = billing(); return lead(b) + section(o2FinanceTabBody(1), 'bos-pe') + section(b, 'bos-ren') + o2FinanceTabBody(4); }
+    if(k === 'links') return section(o2FinanceTabBody(1), 'bos-pl') + section(billing(), 'bos-links');
+    if(k === 'refunds') return section(o2FinanceTabBody(2), 'bos-rf');
+    if(k === 'reconciliation') return o2FinanceTabBody(3);
+    if(k === 'vault') return section(billing(), 'bos-vault');
+    if(k === 'customers'){
+      const list = BOS.billingCustomers || [];
+      return oTableCard({ id:'o2-bc-list', title:'Billing customers', sub:'Who invoices are issued to (step 0c)', cols:[{ label:'Billing customer' }, { label:'Account' }, { label:'GSTIN' }, { label:'Market' }, { label:'Currency' }], rows:list.length ? list.map(function(b){ const a = BOS.accounts.find(function(x){ return x.id === b.accountId; }); return '<tr onclick="bosOpen(\'account\', \'' + E(b.accountId) + '\')" style="cursor:pointer"><td><b>' + E(b.legalName) + '</b><small>' + E(b.id) + '</small></td><td>' + E(a ? a.name : b.accountId) + '</td><td>' + E(b.gstin || '—') + '</td><td>' + E(b.market) + (b.marketLockedAt ? ' · locked' : '') + '</td><td>' + E(b.currency) + '</td></tr>'; }).join('') : oTableEmptyRow(5, 'No billing customers yet. One is created with the first subscription, checkout or invoice.') });
+    }
+    return '';
+  };
+  const INV_TABS = [['invoices', 'Invoices'], ['payments', 'Payments'], ['links', 'Payment links'], ['refunds', 'Refunds'], ['reconciliation', 'Reconciliation'], ['vault', 'Vault'], ['customers', 'Billing customers']];
+  window.o2InvoicesHTML = function(){
+    const an = typeof bosAnalytics === 'function' ? bosAnalytics().finance : {};
+    const k = INV_TABS.some(function(x){ return x[0] === ST.inv; }) ? ST.inv : 'invoices';
+    return oDashShell([
+      oPageHead({ ctx:'Billing', title:'Invoices & payments', lede:'Invoices, payments, links, refunds and reconciliation. Payments are verified only here.' }),
+      oNumbers([{ label:'Open payment links', value:String(an.openLinks || 0), note:(an.events || 0) + ' provider events', onclick:"o2BillTab('inv', 'links')" }, { label:'Refunds waiting', value:String(an.pendingRefunds || 0), note:'need a Finance manager', onclick:"o2BillTab('inv', 'refunds')" }, { label:'Reconciliation', value:String((typeof bosReconcile === 'function' ? bosReconcile() : []).length), note:'mismatches to review', onclick:"o2BillTab('inv', 'reconciliation')" }]),
+      tabsNav('inv', INV_TABS, k) + '<div class="o2-bill-stack">' + o2InvoicesTabHTML(k) + '</div>'
+    ]);
+  };
+  const PLAN_TABS = [['plans', 'Plans'], ['addons', 'Add-ons'], ['promos', 'Promo codes'], ['policy', 'Discount policy']];
+  window.o2PlansTabHTML = function(k){
+    if(k === 'plans') return BASE_PLANS ? BASE_PLANS() : '';
+    if(k === 'addons') return oTableCard({ id:'o2-addons', title:'Add-ons', sub:'Prices per month; sold with a plan at checkout or in a proposal', cols:[{ label:'Add-on' }, { label:'Unit' }, { label:'INR', right:true }, { label:'USD', right:true }], rows:(typeof BOOSTS !== 'undefined' ? BOOSTS : []).map(function(b){ return '<tr><td><b>' + E(b.name) + '</b><small>' + E(b.id) + '</small></td><td>' + E(b.unit) + '</td><td class="num">' + E(b.prices.INR != null ? b.prices.INR.toLocaleString() : '—') + '</td><td class="num">' + E(b.prices.USD != null ? b.prices.USD : '—') + '</td></tr>'; }).join('') || oTableEmptyRow(4, 'No add-ons.') });
+    if(k === 'promos'){ const b = billing(); return lead(b) + section(b, 'bos-promos'); }
+    if(k === 'policy'){ const p = typeof BOS_POLICY !== 'undefined' ? BOS_POLICY : {}; return oTableCard({ id:'o2-dpol', title:'Discount policy', sub:'Read-only. Changing it needs the policy-change approval (step 7c).', cols:[{ label:'Rule' }, { label:'Value' }], rows:[['Sales may give on their own', p.selfDiscountPct + '%'], ['A sales manager may approve up to', p.managerDiscountPct + '%'], ['Never above', p.maxDiscountPct + '%'], ['Standard trial', p.trialDays + ' days'], ['A manager may extend a trial to', p.managerTrialDays + ' days'], ['Licences per proposal', p.minSeats + '–' + p.maxSeats]].map(function(r){ return '<tr><td>' + E(r[0]) + '</td><td>' + E(r[1]) + '</td></tr>'; }).join('') }); }
+    return '';
+  };
+  window.o2PlansHTML = function(){
+    const showPromos = can('platform-finance', 'view') || can('platform-commercial', 'approve_discount') || can('platform-commercial', 'approve_restricted');
+    const tabs = PLAN_TABS.filter(function(x){ return x[0] !== 'promos' || showPromos; });
+    const k = tabs.some(function(x){ return x[0] === ST.plans; }) ? ST.plans : 'plans';
+    return oDashShell([oPageHead({ ctx:'Billing', title:'Plans & pricing', lede:'Plans, add-ons, promo codes and the discount policy.' }), tabsNav('plans', tabs, k) + '<div class="o2-bill-stack">' + o2PlansTabHTML(k) + '</div>']);
+  };
+  window.o2TaxHTML = function(){ return oDashShell([oPageHead({ ctx:'Billing', title:'Tax & reports', lede:'Tax profile, checks, CA exports and filed periods.' }), o2FinanceTabBody(5)]); };
+
+  /* ---------- Subscription page ---------- */
+  const money = function(cur, n){ return (cur || '') + ' ' + Number(n || 0).toLocaleString(undefined, { maximumFractionDigits:2 }); };
+  window.o2SubscriptionHTML = function(subId){
+    const s = subscriptionById(subId); if(!s) return oDashShell([oPageHead({ title:'Subscription not found', lede:'Open Subscriptions to find it.' })]);
+    const t = tenantById(s.tenantId), p = planById(s.planId), st = typeof o2SubStatus === 'function' ? o2SubStatus(s) : s.status;
+    const items = Array.isArray(s.items) && s.items.length ? s.items : (typeof o2SubItems === 'function' ? o2SubItems(s) : []);
+    const unit = items[0] ? items[0].unitPrice : s.price;
+    const inr = (s.price || 0) * ((window.BOS_TAX && BOS_TAX.rates[s.currency]) || 1);
+    const next = st === 'past_due' && s.dunning && /15,000/.test(s.dunning.reason || '') ? { label:'Approve charge above ₹15,000', on:"o2BillTab('inv', 'links'); showView('oontu-invoices')" } : (st === 'past_due' || st === 'unpaid') ? { label:'Retry payment', on:"o2BillTab('inv', 'links'); showView('oontu-invoices')" } : { label:'Renew', on:"bosRenewalRun(); bosRedraw()" };
+    const prop = BOS.proposals.filter(function(x){ return x.status === 'accepted' && (BOS.accounts.find(function(a){ return a.id === x.accountId; }) || { tenantIds:[] }).tenantIds.indexOf(s.tenantId) > -1; }).slice(-1)[0];
+    const docs = BOS.taxInvoices.filter(function(x){ return x.tenantId === s.tenantId && !x.sample; }).slice(-8).reverse();
+    const dun = BOS.outbox.filter(function(m){ return /Payment reminder/.test(m.subject || '') && t && (m.to === t.ownerEmail || m.to === 'owner'); }).slice(-6);
+    const hist = (s.history || []).slice().reverse();
+    const canU = canPlatform('platform-subscription', 'update');
+    const acts = [];
+    if(canU) acts.push('<button type="button" class="o-btn" onclick="o2SubChangeDialog(\'' + E(s.id) + '\')">Change plan or licences</button>');
+    if(canU && st === 'trialing') acts.push('<button type="button" class="o-btn" onclick="var d = prompt(\'Extend the trial by how many days?\', \'7\'); if(d){ var r = extendSubscriptionTrial(\'' + E(s.id) + '\', Number(d)); toast(r.ok ? \'Trial extended.\' : r.reason); bosRedraw(); }">Extend trial</button>');
+    if(canPlatform('platform-subscription', 'suspend') && st === 'active') acts.push('<button type="button" class="o-btn" onclick="var r = (typeof o2SubSetStatus === \'function\' && o2On(\'4b\')) ? o2SubSetStatus(\'' + E(s.id) + '\', \'paused\', \'Paused from the subscription page\') : changeSubscriptionStatus(\'' + E(s.id) + '\', \'paused\', \'Paused from the subscription page\'); toast(r.ok ? \'Paused.\' : r.reason); bosRedraw()">Pause</button>');
+    if(canU && o2On('4b') && ['active', 'past_due', 'unpaid', 'paused', 'trialing'].indexOf(st) > -1){ acts.push('<button type="button" class="o-btn" onclick="var w = prompt(\'Why is the customer cancelling?\'); if(w){ var r = o2SubCancel(\'' + E(s.id) + '\', { reason:w }); toast(r.ok ? \'Cancels at period end (\' + r.cancelAt + \').\' : r.reason); bosRedraw(); }">Cancel at period end</button>'); acts.push('<button type="button" class="o-btn o2-dz-btn" onclick="var w = prompt(\'Why cancel now? A Finance manager approves this.\'); if(w){ var r = o2SubCancel(\'' + E(s.id) + '\', { now:true, reason:w }); toast(r.ok ? \'Sent for approval (\' + r.approval.id + \').\' : r.reason); bosRedraw(); }">Cancel now</button>'); }
+    return oDashShell([
+      oPageHead({ ctx:'Subscriptions', title:(t ? t.name : s.tenantId) + ' · ' + (p ? p.name : s.planId), lede:'', actions:[{ label:next.label, primary:true, onclick:next.on }] }),
+      '<div class="o2-sub-head"><span><b>' + E(p ? p.name : '—') + '</b></span><span>' + E((s.seats || 1) + ' licence' + ((s.seats || 1) === 1 ? '' : 's')) + '</span><span>' + E(money(s.currency, unit)) + ' per licence</span><span>' + E(s.billingInterval) + '</span><span>' + oBadge(st === 'active' ? 'success' : st === 'past_due' || st === 'unpaid' ? 'danger' : 'neutral', st) + '</span><span>Next renewal ' + E(s.renewalDate || '—') + (s.cancelAt ? ' · cancels ' + E(String(s.cancelAt).slice(0, 10)) : '') + '</span></div>' +
+      (acts.length ? '<div class="o2-sub-acts" style="padding:0 0 16px">' + acts.join('') + '</div>' : '') +
+      '<div class="o2-bill-stack">' +
+      oTableCard({ id:'o2-sub-items', title:'Items and price', sub:'Before tax · MRR ' + money(s.currency, o2Mrr(s)), cols:[{ label:'Item' }, { label:'Quantity', right:true }, { label:'Unit price', right:true }, { label:'Interval' }], rows:items.map(function(i){ return '<tr><td>' + E(i.priceRef) + '</td><td class="num">' + E(i.quantity) + '</td><td class="num">' + E(money(s.currency, i.unitPrice)) + '</td><td>' + E(i.interval) + '</td></tr>'; }).join('') || oTableEmptyRow(4, 'No items.') }) +
+      '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">Discount, payment method</h2></div><dl class="o2-kv"><dt>Discount</dt><dd>' + E(prop && prop.discountPct ? prop.discountPct + '% from ' + prop.id + (prop.approval ? ' · approval ' + prop.approval.id + ' ' + prop.approval.status : '') : 'None') + '</dd><dt>Payment method</dt><dd>' + E(s.mandate ? (s.mandate.method || 'card') + ' mandate · ' + (s.mandate.status || '') + (s.currency === 'INR' && inr > 15000 ? ' · charges above ₹15,000 need the customer’s approval' : '') : 'Pays by link') + '</dd></dl></section>' +
+      oTableCard({ id:'o2-sub-docs', title:'Invoices', sub:'Tax invoices only; payments are verified in Invoices & payments', cols:[{ label:'Number' }, { label:'Date' }, { label:'Total', right:true }, { label:'Status' }], rows:docs.length ? docs.map(function(d){ return '<tr><td>' + E(d.no) + '</td><td>' + E(String(d.date).slice(0, 10)) + '</td><td class="num">' + E(money(d.currency, d.total)) + '</td><td>' + E(d.status) + '</td></tr>'; }).join('') : oTableEmptyRow(4, 'No invoices yet.') }) +
+      '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">Dunning</h2><span class="o-card__sub">' + E(s.dunning ? (s.dunning.reason || '') + ' · since ' + s.dunning.since + ' · step ' + s.dunning.step : 'Nothing overdue') + '</span></div>' + (dun.length ? '<ul class="o2-timeline">' + dun.map(function(m){ return '<li><span>' + E(m.subject) + '</span><small>' + E(new Date(m.at).toLocaleDateString('en-GB')) + '</small></li>'; }).join('') + '</ul>' : '') + '</section>' +
+      '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">Change history</h2></div>' + (hist.length ? '<ul class="o2-timeline">' + hist.map(function(h){ return '<li><span>' + E(h.command) + (h.changed ? ' · ' + E(Object.keys(h.changed).join(', ')) : '') + '</span><small>' + E(bosName(h.by) || h.by) + ' · ' + E(new Date(h.at).toLocaleString('en-GB')) + '</small></li>'; }).join('') + '</ul>' : '<p class="o2-muted" style="padding:0 20px 14px">No changes recorded yet (history starts with step 4a).</p>') + '</section>' +
+      '</div>'
+    ]);
+  };
+  /* change plan or licences: a preview with proration and tax, then the existing command */
+  window.o2SubChangeDialog = function(subId){
+    const s = subscriptionById(subId); if(!s) return;
+    const plans = PLATFORM_PLANS.filter(function(p){ return p.status === 'active' && !p.legacy && !p.talkToUs; });
+    bosDialog('Change plan or licences', bosField('o2-sc-plan', 'Plan', { options:plans.map(function(p){ return [p.id, p.name]; }), value:s.planId }) + bosField('o2-sc-seats', 'Licences', { type:'number', value:s.seats || 1 }) + '<div id="o2-sc-prev" class="bos-note">Preview: choose and press Preview.</div><div class="bos-actions"><button type="button" class="o-btn" onclick="o2SubChangePreview(\'' + s.id + '\')">Preview</button></div>', 'Confirm', "o2SubChangeConfirm('" + s.id + "')");
+  };
+  window.o2SubChangePreview = function(subId){
+    const s = subscriptionById(subId), acc = BOS.accounts.find(function(a){ return (a.tenantIds || []).indexOf(s.tenantId) > -1; });
+    const q = bosCheckoutQuote({ planId:bosV('o2-sc-plan'), seats:bosV('o2-sc-seats'), interval:s.billingInterval, currency:s.currency, account:acc, accountId:acc && acc.id, current:{ paidFrom:s.paidFrom, paidThrough:s.paidThrough, amount:s.paidAmount } });
+    const el = document.getElementById('o2-sc-prev'); if(!el) return q;
+    el.textContent = q.ok ? 'Subtotal ' + money(q.currency, q.subtotal) + (q.credit ? ' · unused time credited ' + money(q.currency, q.credit) : '') + ' · tax ' + money(q.currency, q.tax.taxForeign) + ' (' + q.tax.segment.label + ') · total ' + money(q.currency, q.total) : q.reason;
+    return q;
+  };
+  window.o2SubChangeConfirm = function(subId){
+    const r = changeSubscriptionPlan(subId, bosV('o2-sc-plan'));
+    if(r && r.ok){ const s = subscriptionById(subId), n = Math.max(1, Number(bosV('o2-sc-seats')) || 1); if(n !== s.seats){ bosRun('subscription.change-plan', null, function(){ s.seats = n; if(typeof o2SubItems === 'function') s.items = o2SubItems(s); return { ok:true, ref:s.id, audit:['Subscription licences changed', s.id + ' · ' + n, { entityId:s.id, entityType:'Subscription' }] }; }); } }
+    bosDlgDone(r, 'Plan changed.'); bosRedraw();
+  };
+
+  /* ---------- wiring ---------- */
+  const BASE_PLANS = RENDERERS['oontu-plans'];
+  const wire = function(id, fn){ const base = RENDERERS[id]; RENDERERS[id] = function(){ if(!on() || state.role !== 'oontu') return base.apply(this, arguments); const f = BOS_VIEW_ACCESS[id]; if(f && !f()) return base.apply(this, arguments); return fn(); }; };
+  wire('oontu-invoices', function(){ return o2InvoicesHTML(); });
+  wire('oontu-plans', function(){ return o2PlansHTML(); });
+  wire('oontu-tax', function(){ return o2TaxHTML(); });
+  wire('oontu-subscription-detail', function(){ return o2SubscriptionHTML(oontuSubDetailId); });
+  /* the old Subscriptions screen: no "Mark paid"; a link to Invoices & payments instead */
+  if(typeof window.oontuInvoicesSectionHTML === 'function'){
+    const baseSec = window.oontuInvoicesSectionHTML;
+    window.oontuInvoicesSectionHTML = oontuInvoicesSectionHTML = function(){ const h = baseSec.apply(this, arguments); if(!on()) return h; return h.replace(/<button onclick="submitMarkInvoicePaid\('[^']+'\)"[^>]*>Mark Paid<\/button>/g, '<button onclick="showView(\'oontu-invoices\')" class="text-xs font-semibold text-accent-700">Verify in Invoices &amp; payments</button>'); };
   }
 })();
 </script>

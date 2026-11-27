@@ -65,7 +65,10 @@
       as('PU-102'); bosProposalDialog(BOS.opps[0].id); var pr = document.getElementById('bos-pr-plan'); var po = Array.prototype.map.call(pr.options, function(o){ return o.value; }); bosDialogClose(); as('PU-001');
       ok(legacy.every(function(id){ return po.indexOf(id) < 0; }), 'no legacy plan in New proposal: ' + po.join(','));
       oontuSubDetailId = subscriptionForTenant('org-northstar').id; showView('oontu-subscription-detail'); var sp = Array.prototype.slice.call(document.querySelectorAll('#main-content select option')).map(function(o){ return o.value + (o.selected ? '*' : ''); });
-      ok(sp.indexOf('plan-growth*') > -1, 'the current legacy plan stays shown as selected: ' + sp.join(',')); ok(sp.indexOf('plan-starter') < 0 && sp.indexOf('plan-enterprise') < 0, 'other legacy plans not offered');
+      if(o2On('4c')){   /* O2 4c: the subscription page changes plans in a dialog that offers plans for sale only */
+        o2SubChangeDialog(subscriptionForTenant('org-northstar').id); var dp = Array.prototype.map.call(document.querySelectorAll('#o2-sc-plan option'), function(o){ return o.value; }); bosDialogClose();
+        ok(dp.length && legacy.every(function(id){ return dp.indexOf(id) < 0; }), 'no legacy plan in Change plan: ' + dp.join(','));
+      } else { ok(sp.indexOf('plan-growth*') > -1, 'the current legacy plan stays shown as selected: ' + sp.join(',')); ok(sp.indexOf('plan-starter') < 0 && sp.indexOf('plan-enterprise') < 0, 'other legacy plans not offered'); }
       eq(subscriptionForTenant('org-northstar').planId, 'plan-growth', 'the demo tenant is not moved');
     });
 
