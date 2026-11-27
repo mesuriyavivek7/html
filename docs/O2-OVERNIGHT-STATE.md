@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-G2
+G3 Money at risk (in progress)
 
 ## Steps
 
@@ -37,6 +37,7 @@ G2
 | 8b | Done | o2-step-8b | o2-agents 6/6; regressions 151/151 off, 152/152 on | allow-list enforced at bosRun for agent actors |
 | 9 | Done | o2-step-9 | o2-flows 8/8 twice; 8b checkpoint stands (no code change) | nothing removed; candidates listed |
 | G1 | Done | rx-g1 | rx-g1-live 9/9; regressions 292/292 off, green on | wfRunTest untouched (wfPerform reimplements its checks per candidate); consent = candidate consent or M7 representation consent |
+| G2 | Done | rx-g2 | rx-g2-results 11/11; regressions on 61/61 + 18 specs, off 351/351 | Results tab + Home card; agency Cowork forbids the word workflow, copy says automation |
 
 ## How to run tests (this machine)
 

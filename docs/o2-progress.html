@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 12:43 IST",
-    "current":  "Part B: G1",
+    "updated":  "2026-11-27 13:59 IST",
+    "current":  "G3 Money at risk",
     "partA":  [
                   {
                       "id":  "0a",
@@ -247,20 +247,20 @@
                   {
                       "id":  "G1",
                       "name":  "Live workflow triggers",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "9/9 (rx-g1-live); regressions 292/292 off, green on",
+                      "tag":  "rx-g1",
+                      "what":  "Published workflows run on real events for that one candidate, once, with consent and a daily limit; cards show live runs and skips.",
+                      "see":  "Switch G1 (Prototype tools › Recruiter-app upgrades) · Alex (agency admin) · Cowork › a workflow › Publish; accept an offer; the card shows Actions today"
                   },
                   {
                       "id":  "G2",
                       "name":  "Automation results",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "done",
+                      "tests":  "rx-g2-results 11/11 · regressions on and off green (351/351 off)",
+                      "tag":  "rx-g2",
+                      "what":  "Each live workflow shows what it influenced: replies, submissions, interviews, offers, joins and fees (estimates labelled).",
+                      "see":  "Owner: Cowork › Results, or the Home card “Automation influenced …”"
                   },
                   {
                       "id":  "G3",
@@ -399,6 +399,14 @@
                       [
                           "7c duty conflicts in templates",
                           "Seeded Finance templates already hold invoice + verify payment; a conflict inside one template is warned and audited, a conflict from combining roles needs the Security Administrator override."
+                      ],
+                      [
+                          "G1 Run Test",
+                          "wfRunTest is not refactored; wfPerform applies the same checks per candidate so Run Test output cannot change. Consent = candidate consent or a given right-to-represent consent."
+                      ],
+                      [
+                          "G2 wording",
+                          "Agency Cowork never says “workflow” (cowork-simple bans it), so Results copy says “automation”. Results live in Cowork (Workflow Studio routes there)."
                       ]
                   ],
     "suite":  {
