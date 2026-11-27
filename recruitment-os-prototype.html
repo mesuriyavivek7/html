@@ -72453,6 +72453,70 @@ function cfScopeHTML(){
   wrapAuth('passwordSignIn', 'password'); wrapAuth('verifyCode', 'email-code');
 })();
 </script>
+<script id="o2-mfa-script">
+/* ============================================================
+   O2 STEP 7b: MFA AND STEP-UP (2026-11-26, permissions step)
+   Switch 7b on:
+   - An Oontu employee who signs in (password, or the email code) gets a second step: the simulated code from
+     policy.mfaMethod (246810, shown in the "Prototype · simulated sign-in" tools). The first step alone no longer
+     enters the platform. O2_SESSION.mfaAt records when the second step was passed.
+   - Step-up: high-risk commands (today's HIGH_RISK list) plus workspace.suspend, workspace.close, export.*,
+     payment.verify and payment.allocate ask for the code again when mfaAt is older than policy.stepUpMinutes.
+     Agents stay refused outright (unchanged). Prototype note: step-up applies to sessions that signed in through the
+     two-step sign-in; the developer shortcuts that switch the acting employee directly have no session to age.
+   Nothing else in sign-in, bosActAs or the role checks changes.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('7b'); };
+  const S = window.O2_SESSION = window.O2_SESSION || { mfaAt:null, userId:null, pending:null, signedIn:false };
+  const code = function(){ const m = String(o2Policy('mfaMethod') || '').match(/(\d{6})/); return m ? m[1] : '246810'; };
+  window.o2MfaCode = code;
+  const STEP_UP = ['refund.approve', 'account.merge.approve', 'access.approve', 'tenant.suspend', 'employee.roles', 'employee.offboard', 'payment.verify', 'approval.decide', 'grant.role', 'workspace.suspend', 'workspace.close', 'payment.allocate'];
+  window.O2_STEP_UP = STEP_UP;
+  window.o2NeedsStepUp = function(name){ if(!on() || !S.signedIn || !S.mfaAt) return false; if(STEP_UP.indexOf(name) < 0 && !/^export\./.test(name)) return false; return bosNow() - new Date(S.mfaAt).getTime() > (o2Policy('stepUpMinutes') || 15) * 6e4; };
+
+  /* sign-in: the second step */
+  const baseEnter = window.authEnter;
+  window.authEnter = authEnter = function(res, kind){
+    if(!on() || !res || res.role !== 'oontu' || (S.pending && S.pending.passed)) return baseEnter.apply(this, arguments);
+    S.pending = { res:res, kind:kind, at:bosNow(), email:(res.user && res.user.email) || '' };
+    bosDialog('Confirm it’s you', '<p class="bos-note">Enter the code from your authenticator. In this prototype the code is shown in the “Prototype · simulated sign-in” tools.</p>' + bosField('o2-mfa-code', 'Six-digit code', { value:'' }), 'Verify', "o2MfaSubmit(bosV('o2-mfa-code'))");
+    return { pendingMfa:true };
+  };
+  window.o2MfaPending = function(){ return !!(S.pending && !S.pending.passed); };
+  window.o2MfaSubmit = function(entered){
+    const p = S.pending; if(!p) return { ok:false, reason:'Start by signing in.' };
+    if(String(entered || '').trim() !== code()){
+      try { logPlatformAudit('Sign-in failed', String(p.email).toLowerCase() + ' · second step · wrong code', { command:'auth.mfa', outcome:'refused', reason:'Wrong second-step code', actorType:'employee', actorId:null, entityType:'Sign-in' }); } catch(e){}
+      const err = document.getElementById('bos-dlg-err'); if(err) err.textContent = 'That code isn’t right. Try again.';
+      return { ok:false, reason:'That code isn’t right.' };
+    }
+    p.passed = true; S.mfaAt = new Date(bosNow()).toISOString(); S.signedIn = true;
+    try { bosDialogClose(); } catch(e){}
+    const out = baseEnter.call(this, p.res, p.kind); S.userId = ACTIVE_PLATFORM_USER_ID; S.pending = null;
+    try { logPlatformAudit('Second sign-in step passed', bosName(ACTIVE_PLATFORM_USER_ID), { command:'auth.mfa', outcome:'allowed', entityType:'Sign-in' }); } catch(e){}
+    return { ok:true, entered:out };
+  };
+  /* step-up on high-risk commands */
+  const baseRun = window.bosRun;
+  const wrapped = function(name){
+    if(o2NeedsStepUp(name)){ try { bosDialog('Confirm it’s you', '<p class="bos-note">This is a sensitive action. Enter your second-step code again.</p>' + bosField('o2-su-code', 'Six-digit code', { value:'' }), 'Confirm', "var r = o2StepUp(bosV('o2-su-code')); if(r.ok){ bosDialogClose(); toast('Confirmed. Do the action again.'); } else { var e = document.getElementById('bos-dlg-err'); if(e) e.textContent = r.reason; }"); } catch(e){}
+      return { ok:false, needsStepUp:true, reason:'Confirm it’s you: this action needs your second-step code again (last confirmed more than ' + (o2Policy('stepUpMinutes') || 15) + ' minutes ago).' }; }
+    return baseRun.apply(this, arguments);
+  };
+  Object.keys(baseRun).forEach(function(k){ wrapped[k] = baseRun[k]; });
+  Object.defineProperty(wrapped, 'quiet', { get:function(){ return baseRun.quiet; }, set:function(v){ baseRun.quiet = v; }, configurable:true });
+  window.bosRun = wrapped;
+  window.o2StepUp = function(entered){ if(String(entered || '').trim() !== code()) return { ok:false, reason:'That code isn’t right.' }; S.mfaAt = new Date(bosNow()).toISOString(); try { logPlatformAudit('Step-up confirmed', bosName(ACTIVE_PLATFORM_USER_ID), { command:'auth.step-up', outcome:'allowed', entityType:'Sign-in' }); } catch(e){} return { ok:true }; };
+  /* signing out ends the session */
+  if(typeof window.authSignOut === 'function'){ const baseOut = window.authSignOut; window.authSignOut = function(){ S.mfaAt = null; S.signedIn = false; S.pending = null; return baseOut.apply(this, arguments); }; }
+  /* the prototype tools show the code */
+  window.addEventListener('load', function(){
+    const base = window.bosDevLoginsHTML; if(typeof base !== 'function') return;
+    window.bosDevLoginsHTML = function(){ const h = base.apply(this, arguments); return on() ? h.replace('<div class="bos-dl">', '<div class="bos-dl"><p class="au-dev__dim" id="o2-mfa-hint">Second sign-in step (simulated): code <b>' + code() + '</b></p>') : h; };
+  });
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
