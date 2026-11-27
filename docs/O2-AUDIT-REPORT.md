@@ -7,7 +7,7 @@ _Branch `o2/overnight-2026-11-26`. Audit of everything since tag `o2-step-0a`, r
 - Every step has its commit and tag: `o2-step-0a` … `o2-step-9` (22 steps) and `rx-g1` … `rx-g6`. Table in §2.
 - Three problems found and fixed in one commit, `f8c04ea` "O2 audit: …" (§4). Nothing else needed changing.
 - No step was blocked, so there was nothing to retry.
-- Full suite at the audited commit: **all switches off — FULL_OFF**; **every switch on — FULL_ON**; **saving on (0a acceptance 4) — FULL_PERSIST**.
+- Full suite at the audited commit: **all switches off — 1,311 / 1,311**; **every switch on — 1,215 / 1,216 plus one hung spec: `motion` collapse-pill (the known flake) and `screens-crawl` (browser hung ~3 h, stopped by the watchdog, no result); both rerun alone with every switch on: 8 / 8 and 97 / 97**; **saving on (0a acceptance 4) — 1,311 / 1,311, identical to saving off**.
 - Tagged `o2-audited`.
 
 ## 2. Commits and tags
@@ -52,7 +52,7 @@ Each item of the brief's acceptance lists, and the test that proves it. Every li
 | 0a | 1 deal, ticket, invoice survive a reload | o2-persistence "after a reload: the deal, ticket, invoice, setting and audit rows are back" |
 | 0a | 2 Reset restores seed state exactly | o2-persistence "Reset gives exactly the seed records and ids" |
 | 0a | 3 Export/Import round trip; wrong schemaVersion refused | o2-persistence "Import refuses bad files…", "Import restores exactly the exported state" |
-| 0a | 4 full suite identical with saving on and off | full suite with saving on (FULL_PERSIST) vs off (FULL_OFF) |
+| 0a | 4 full suite identical with saving on and off | full suite with saving on 1,311 / 1,311 = off 1,311 / 1,311 |
 | 0a | 5 switch panel lists 0a and later steps, off | o2-persistence "switches: 22 steps, every default off…", "the existing sign-in tools show the 22 switches…" |
 | 0b | 1 MRR equals a hand calculation, three cases | o2-metrics "MRR case 1/2/3" |
 | 0b | 2 INR and USD separate; internal excluded | o2-metrics "totals: INR and USD separately, never summed; internal workspaces left out" |
