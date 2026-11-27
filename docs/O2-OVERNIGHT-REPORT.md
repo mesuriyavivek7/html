@@ -26,6 +26,7 @@ _In progress. Written in full when the build finishes._
 - **6** Six visible ticket states; Incidents with severity, flow, cadence reminder and review; Publish update makes an announcement. Switches 1a, 6 · Nisha Pillai or Meera · Service › Incidents › an incident › Publish update.
 - **7a** Refused and failed commands and failed sign-ins are audited once, with who, outcome and reason. Switches 7a (+7c to browse) · log in as Arjun and try a Finance export; then Meera › Admin › Audit & security › Refusals.
 - **7b** Second sign-in step for Oontu employees and step-up for high-risk actions after 15 minutes. Switch 7b · sign in as any Oontu employee; the code 246810 is shown in Prototype · simulated sign-in.
+- **7c** People & access with teams, roles, access reviews; separation-of-duties checks; Audit & security with an approved export; policy changes signed by Security and Finance. Switches 1a, 7a, 7c · Dev Patel or Meera · Admin › People & access; Admin › Audit & security.
 
 ## 3. Blocked steps
 
@@ -61,6 +62,8 @@ None yet.
 | 4d ambiguous amounts | An amount-only suggestion is made only when exactly one open invoice of a matching payer has that outstanding amount; otherwise nothing is suggested. |
 | 6 visible states | §6 says six visible states; the support diagram has seven including Closed. Tickets show New, Open, In progress, Waiting on customer, Waiting on us (with the detail), Resolved; Closed stays the end state. |
 | 7b step-up scope | Step-up applies to sessions that came through the two-step sign-in; the developer shortcuts that switch the acting employee directly have no session to age. |
+| 7c duty conflicts in templates | Every seeded Finance template already holds both invoice and verify payment. Blocking that would block normal Finance work, so a conflict built into one template is warned and audited; a conflict created by combining roles needs the Security Administrator override. Recommended next: split the Finance templates. |
+| 7c policy sign-off | The two sign-offs (Security Administrator and Finance Manager) are kept as policy-change records (BOS.policyChanges) rather than two approvals, because one approval type can name only one approving permission. |
 
 ## 5. Step 1a screen lists
 

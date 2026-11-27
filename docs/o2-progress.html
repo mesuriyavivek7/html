@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 09:21 IST",
-    "current":  "7b",
+    "updated":  "2026-11-27 09:27 IST",
+    "current":  "7c",
     "partA":  [
                   {
                       "id":  "0a",
@@ -200,11 +200,11 @@
                   {
                       "id":  "7b",
                       "name":  "MFA and step-up",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "5/5 (o2-mfa); sign-in specs 220/220 off, 221/221 on",
+                      "tag":  "o2-step-7b",
+                      "what":  "Second sign-in step for Oontu employees; step-up for high-risk actions after 15 minutes.",
+                      "see":  "Switch 7b · sign in as any Oontu employee · enter 246810 (shown in Prototype · simulated sign-in)"
                   },
                   {
                       "id":  "7c",
@@ -391,6 +391,10 @@
                       [
                           "4d ambiguous amounts",
                           "An amount-only match is suggested only when exactly one open invoice of a matching payer has that outstanding amount."
+                      ],
+                      [
+                          "7b step-up scope",
+                          "Step-up applies to sessions that signed in through the two steps; developer shortcuts that switch the acting employee have no session to age."
                       ]
                   ],
     "suite":  {
