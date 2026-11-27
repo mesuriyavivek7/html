@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-9 (checkpoint after 8b running)
+Part B: G1
 
 ## Steps
 
@@ -35,6 +35,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 | 7c | Done | o2-step-7c | o2-people 7/7, o2-sod 6/6; regressions green off/on | template-internal conflicts warn, combined conflicts need override; policy sign-off kept in BOS.policyChanges |
 | 8a | Done | o2-step-8a | o2-entitlements 5/5; regressions 214/214 off, 215/215 on | derived split (old rows unchanged); availability matrix identical on/off |
 | 8b | Done | o2-step-8b | o2-agents 6/6; regressions 151/151 off, 152/152 on | allow-list enforced at bosRun for agent actors |
+| 9 | Done | o2-step-9 | o2-flows 8/8 twice; 8b checkpoint stands (no code change) | nothing removed; candidates listed |
 
 ## How to run tests (this machine)
 
