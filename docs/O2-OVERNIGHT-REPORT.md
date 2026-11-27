@@ -23,6 +23,7 @@ _In progress. Written in full when the build finishes._
 - **4c** Billing screens: Invoices & payments, Plans & pricing, Tax & reports, and a Subscription page; no Mark paid outside Invoices & payments. Switches 1a, 4c · Vikram Shah · Billing › Invoices & payments; Billing › Subscriptions › a subscription.
 - **4d** Payments and allocations: one bank credit across invoices, several payments to one invoice, partial payments, TDS with certificates, customer credit, reversals; suggestions are never applied without Finance. Switches 1a, 4c, 4d · Vikram Shah · Billing › Invoices & payments › Reconciliation.
 - **5** Account 360 (rail, seven tabs, both renewals side by side), Pipeline tabs including Sign-ups, Reports with pipeline analytics. Switches 1a, 5 · Kavya Iyer or Meera · Customers › Accounts › Northstar; Customers › Pipeline › Sign-ups.
+- **6** Six visible ticket states; Incidents with severity, flow, cadence reminder and review; Publish update makes an announcement. Switches 1a, 6 · Nisha Pillai or Meera · Service › Incidents › an incident › Publish update.
 
 ## 3. Blocked steps
 
@@ -56,6 +57,7 @@ None yet.
 | 4b enforcement points | Access level is enforced only where read-only is enforced today: the support tier and the workspace's own plan record. |
 | 4d allocate permission | §7.2 adds platform-finance allocate and record_tds for Finance templates that hold verify_payment; the prototype checks verify_payment (or allocate), which is the same set of people, without editing role templates. |
 | 4d ambiguous amounts | An amount-only suggestion is made only when exactly one open invoice of a matching payer has that outstanding amount; otherwise nothing is suggested. |
+| 6 visible states | §6 says six visible states; the support diagram has seven including Closed. Tickets show New, Open, In progress, Waiting on customer, Waiting on us (with the detail), Resolved; Closed stays the end state. |
 
 ## 5. Step 1a screen lists
 
