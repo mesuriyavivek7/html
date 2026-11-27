@@ -73082,6 +73082,229 @@ function cfScopeHTML(){
   });
 })();
 </script>
+<script id="rx-g2-script">
+/* RX G2 — Automation results (switch g2, off by default; off = today's screens unchanged).
+   - rxAttribute(outcome): a workflow influenced an outcome when one of its live touches (RX.touches, G1) reached the
+     candidate within WSX.rx.attributionDays before the outcome's first step (the first submission to that job, or the
+     first reply). The most recent touch gets the credit; other workflows that touched are listed as "also touched".
+   - rxResults({ days, workflowIds }): per workflow, messages, replies, submissions, interviews, offers and joins, plus
+     money. Units found in the data: PLACEMENTS.feeAmount is in rupees; PayTrack placementFee and offer CTC are in
+     rupee lakhs (× 1,00,000). Contract margin (estimate) = (bill − pay) × expected weekly units × weeks booked, from
+     asCurrentRate. Corporate: hires, and agency fees avoided (estimate) = offered CTC × average vendor fee % from
+     CO.rateCards / CO.fees, else WSX.rx.defaultAgencyFeePct (stated as an assumption).
+   - Results tab on every Cowork agent page (each workflow row filters to that workflow), 30/90/365-day filter, every
+     number opens its records. Home card for the Owner/Admin home. Amounts only for people who already see money
+     (canI('billing','View')); everyone else sees counts. Everything is labelled "influenced" or "estimate".
+   Read-only: nothing here writes data. */
+(function(){
+  const DAY = 86400000;
+  const ms = function(v){ if(v == null || v === '') return null; if(typeof v === 'number') return v; const n = Date.parse(v); return isNaN(n) ? null : n; };
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const MSG = ['whatsapp', 'email', 'sms', 'inbox', 'linkedin', 'message'];
+  window.rxSeesMoney = function(){ try { return typeof canI === 'function' && canI('billing', 'View'); } catch(e){ return false; } };
+  const inr = function(n){ return typeof formatINR === 'function' ? formatINR(n) : '₹' + Math.round(n); };
+  const corp = function(){ try { return typeof sIsCorporate === 'function' && sIsCorporate(); } catch(e){ return false; } };
+  const wfName = function(id){ const w = (typeof WORKFLOWS !== 'undefined' ? WORKFLOWS : []).find(function(x){ return x.id === id; }); return w ? w.name : id; };
+  const cand = function(id){ try { return byId(id); } catch(e){ return null; } };
+
+  /* ---- attribution ---- */
+  window.rxAttribute = function(outcome){
+    if(!outcome || outcome.candidateId == null) return null;
+    const at = ms(outcome.at); if(at == null) return null;
+    const win = Math.max(0, Number(WSX.rx.attributionDays) || 0) * DAY;
+    const ts = ((window.RX && RX.touches) || []).filter(function(t){ const x = ms(t.at); return t.candidateId === outcome.candidateId && x != null && x <= at && x >= at - win; })
+      .sort(function(a, b){ return ms(b.at) - ms(a.at); });
+    if(!ts.length) return null;
+    const also = []; ts.slice(1).forEach(function(t){ if(t.workflowId !== ts[0].workflowId && also.indexOf(t.workflowId) < 0) also.push(t.workflowId); });
+    return { workflowId:ts[0].workflowId, touch:ts[0], also:also, daysBefore:Math.floor((at - ms(ts[0].at)) / DAY) };
+  };
+
+  /* ---- money ---- */
+  function subFirstAt(s){ const h = (s.stageHistory || []).find(function(x){ return /Submitted/i.test(x.stage); }); return ms(h ? h.at : s.createdAt); }
+  function stageAt(s, re){ const h = (s.stageHistory || []).find(function(x){ return re.test(x.stage || ''); }); return h ? ms(h.at) : null; }
+  function vendorFeePct(){
+    const pcts = [];
+    try { (((window.CO || {}).rateCards) || []).concat(((window.CO || {}).fees) || []).forEach(function(r){ const p = Number(r && (r.feePct != null ? r.feePct : r.pct != null ? r.pct : r.percent)); if(isFinite(p) && p > 0) pcts.push(p); }); } catch(e){}
+    if(pcts.length) return { pct:pcts.reduce(function(a, b){ return a + b; }, 0) / pcts.length, assumed:false };
+    return { pct:Number(WSX.rx.defaultAgencyFeePct) || 8.33, assumed:true };
+  }
+  window.rxVendorFeePct = vendorFeePct;
+  function weeklyUnits(a){ const u = String(a.unit || '').toLowerCase(); if(/hour/.test(u)) return (Number(a.hoursPerDay) || 8) * 5; if(/month/.test(u)) return 12 / 52; return 5; }
+  function contractMargin(a){
+    let r = null; try { r = typeof asCurrentRate === 'function' ? asCurrentRate(a) : null; } catch(e){}
+    if(!r || r.bill == null || r.pay == null) return null;
+    const s = ms(a.start), e = ms(a.end), weeks = s != null && e != null && e > s ? (e - s) / (7 * DAY) : 13;
+    return { amount:Math.max(0, (Number(r.bill) - Number(r.pay)) * weeklyUnits(a) * weeks), weeks:Math.round(weeks), estimate:true };
+  }
+  /* what a hire was worth: agency perm fee, contract margin (estimate) or, for a corporate, agency fees avoided (estimate) */
+  window.rxOutcomeMoney = function(s){
+    if(corp()){
+      if(s.vendorId || /vendor/i.test(String(s.source || ''))) return { kind:'vendor', amount:0, label:'Sourced through a vendor' };
+      const ctc = s.offer && Number(s.offer.ctc); if(!ctc) return null;
+      const f = vendorFeePct(); return { kind:'avoided', amount:ctc * 100000 * f.pct / 100, estimate:true, pct:f.pct, assumed:f.assumed };
+    }
+    const asg = (typeof ASSIGNMENTS !== 'undefined' ? ASSIGNMENTS : []).find(function(a){ return a.candidateId === s.candidateId && (!a.jobId || a.jobId === s.jobId); });
+    if(asg){ const m = contractMargin(asg); if(m) return { kind:'margin', amount:m.amount, estimate:true, weeks:m.weeks }; }
+    const pl = (typeof PLACEMENTS !== 'undefined' ? PLACEMENTS : []).find(function(p){ return p.candidateId === s.candidateId && (!p.jobId || p.jobId === s.jobId); });
+    if(pl && pl.feeAmount != null) return { kind:'fee', amount:Number(pl.feeAmount) };
+    const c = cand(s.candidateId);
+    const pj = (typeof PAYTRACK_JOINED !== 'undefined' ? PAYTRACK_JOINED : []).find(function(p){ return (p.candidateId != null && p.candidateId === s.candidateId) || (c && p.name === c.name && (!p.jobId || p.jobId === s.jobId)); });
+    if(pj && pj.placementFee != null) return { kind:'fee', amount:Number(pj.placementFee) * 100000 };
+    return null;
+  };
+
+  /* ---- results ---- */
+  const KINDS = [['messages', 'Messages'], ['replies', 'Replies'], ['submissions', 'Submissions'], ['interviews', 'Interviews'], ['offers', 'Offers'], ['joins', 'Joins']];
+  window.RX_RESULT_KINDS = KINDS;
+  window.rxResults = function(opts){
+    opts = opts || {};
+    const days = Number(opts.days) || 90, now = opts.now != null ? ms(opts.now) : Date.now(), from = now - days * DAY;
+    const only = opts.workflowIds ? opts.workflowIds.slice() : null;
+    const by = {};
+    const row = function(id){ return by[id] || (by[id] = { workflowId:id, name:wfName(id), counts:{ messages:0, replies:0, submissions:0, interviews:0, offers:0, joins:0 }, records:{ messages:[], replies:[], submissions:[], interviews:[], offers:[], joins:[] }, money:0, moneyKind:null, estimate:false }); };
+    const want = function(id){ return !only || only.indexOf(id) > -1; };
+    const inP = function(t){ return t != null && t >= from && t <= now; };
+    const add = function(r, k, rec){ r.counts[k]++; r.records[k].push(rec); };
+    ((window.RX && RX.touches) || []).forEach(function(t){ if(!want(t.workflowId) || MSG.indexOf(String(t.channel || '').toLowerCase()) < 0 || !inP(ms(t.at))) return; add(row(t.workflowId), 'messages', { candidateId:t.candidateId, at:t.at, what:t.action || t.channel }); });
+    const firstReply = {};
+    ((window.RX && RX.replies) || []).forEach(function(r){ const x = ms(r.at); if(x != null && (!firstReply[r.candidateId] || x < ms(firstReply[r.candidateId].at))) firstReply[r.candidateId] = r; });
+    Object.keys(firstReply).forEach(function(k){ const r = firstReply[k], a = rxAttribute({ candidateId:r.candidateId, at:r.at }); if(!a || !want(a.workflowId) || !inP(ms(r.at))) return; add(row(a.workflowId), 'replies', { candidateId:r.candidateId, at:r.at, what:r.preview || 'Reply', also:a.also }); });
+    (typeof SUBMISSIONS !== 'undefined' ? SUBMISSIONS : []).forEach(function(s){
+      const first = subFirstAt(s); if(first == null) return;
+      const a = rxAttribute({ candidateId:s.candidateId, jobId:s.jobId, at:first }); if(!a || !want(a.workflowId)) return;
+      const r = row(a.workflowId), base = { candidateId:s.candidateId, jobId:s.jobId, submissionId:s.id, also:a.also, daysBefore:a.daysBefore };
+      if(inP(first)) add(r, 'submissions', Object.assign({ at:new Date(first).toISOString(), what:'Submitted' }, base));
+      const iv = stageAt(s, /Interview/i); if(inP(iv)) add(r, 'interviews', Object.assign({ at:new Date(iv).toISOString(), what:'Interview' }, base));
+      const of = s.offer && s.offer.status !== 'Withdrawn' ? (ms(s.offer.at) || stageAt(s, /Offer/i) || first) : stageAt(s, /Offer/i); if(inP(of)) add(r, 'offers', Object.assign({ at:new Date(of).toISOString(), what:'Offer' }, base));
+      const pl = (typeof PLACEMENTS !== 'undefined' ? PLACEMENTS : []).find(function(p){ return p.candidateId === s.candidateId && (!p.jobId || p.jobId === s.jobId); });
+      const joined = stageAt(s, /Joined|Placed/i) || (s.offer && /Joined/i.test(s.offer.status || '') ? (ms(s.offer.acceptedAt) || ms(s.offer.at)) : null) || (pl ? (ms(pl.joinDate || pl.startDate || pl.at || pl.createdAt) || first) : null);
+      if(inP(joined)){
+        const m = rxOutcomeMoney(s);
+        add(r, 'joins', Object.assign({ at:new Date(joined).toISOString(), what:'Joined', money:m }, base));
+        if(m && m.amount){ r.money += m.amount; r.moneyKind = r.moneyKind && r.moneyKind !== m.kind ? 'mixed' : m.kind; r.estimate = r.estimate || !!m.estimate; }
+      }
+    });
+    const rows = Object.keys(by).map(function(k){ return by[k]; }).sort(function(a, b){ return b.money - a.money || b.counts.joins - a.counts.joins || a.name.localeCompare(b.name); });
+    const tot = { counts:{ messages:0, replies:0, submissions:0, interviews:0, offers:0, joins:0 }, money:0 };
+    rows.forEach(function(r){ KINDS.forEach(function(k){ tot.counts[k[0]] += r.counts[k[0]]; }); tot.money += r.money; });
+    return { days:days, from:from, now:now, corporate:corp(), fee:vendorFeePct(), rows:rows, totals:tot };
+  };
+
+  /* ---- Results screen ---- */
+  const RXR = window.RXR = window.RXR || { days:90, wf:null, drill:null };
+  window.rxResultsSet = function(k, v){ RXR[k] = v; if(k !== 'drill') RXR.drill = null; try { if(typeof cwRefresh === 'function' && state.activeNav === 'kairo-team') cwRefresh(); else if(typeof o2Rerender === 'function') o2Rerender(); } catch(e){} };
+  const moneyWord = function(res){ return res.corporate ? 'Agency fees avoided (estimate)' : 'Fees influenced'; };
+  window.rxResultsHTML = function(agentId){
+    const ids = agentId && typeof cwWorkflowsFor === 'function' ? cwWorkflowsFor(agentId).map(function(w){ return w.id; }) : null;
+    const scope = RXR.wf && (!ids || ids.indexOf(RXR.wf) > -1) ? [RXR.wf] : ids;
+    const res = rxResults({ days:RXR.days, workflowIds:scope }), money = rxSeesMoney();
+    const filt = '<div role="group" class="seg" id="rx-days" aria-label="Period">' + [30, 90, 365].map(function(d){ return '<button type="button" class="seg__btn' + (RXR.days === d ? ' is-on' : '') + '" aria-pressed="' + (RXR.days === d) + '" onclick="rxResultsSet(\'days\',' + d + ')">' + d + ' days</button>'; }).join('') + '</div>';
+    const cell = function(wid, k, n){ return '<td>' + (n ? '<button type="button" class="o-link" data-rx-drill="' + esc(wid + ':' + k) + '" onclick="rxResultsSet(\'drill\',\'' + esc(wid) + ':' + k + '\')">' + n + '</button>' : '0') + '</td>'; };
+    const funnel = '<div class="o-numbers rx-funnel" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:14px">' + KINDS.map(function(k){ return '<div class="o-card o-num"><p class="o-num__label">' + k[1] + ' influenced</p><p class="o-num__value">' + res.totals.counts[k[0]] + '</p></div>'; }).join('') + '</div>';
+    const head = '<tr><th>Automation</th>' + KINDS.map(function(k){ return '<th>' + k[1] + '</th>'; }).join('') + (money ? '<th>' + moneyWord(res) + '</th>' : '') + '</tr>';
+    const body = res.rows.map(function(r){ return '<tr data-rx-wf="' + esc(r.workflowId) + '"><td><button type="button" class="o-link" onclick="rxResultsSet(\'wf\',\'' + esc(r.workflowId) + '\')"><b>' + esc(r.name) + '</b></button></td>' + KINDS.map(function(k){ return cell(r.workflowId, k[0], r.counts[k[0]]); }).join('') + (money ? '<td>' + (r.money ? inr(r.money) + (r.estimate ? ' <small>estimate</small>' : '') : '—') + '</td>' : '') + '</tr>'; }).join('');
+    const table = res.rows.length ? '<div class="o-table-wrap"><table class="o-table" id="rx-results-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>'
+      : '<p class="o-card__sub" style="margin-top:14px">No outcome in the last ' + res.days + ' days followed an automation touch within ' + WSX.rx.attributionDays + ' days.</p>';
+    let drill = '';
+    if(RXR.drill){
+      const p = RXR.drill.split(':'), wid = p[0], k = p[1], r = res.rows.find(function(x){ return x.workflowId === wid; });
+      const recs = r ? r.records[k] || [] : [];
+      drill = '<section class="o-card" id="rx-drill" style="margin-top:14px"><div class="o-card__head"><div><h3 class="o-card__title">' + esc(r ? r.name : wfName(wid)) + ' · ' + esc((KINDS.find(function(x){ return x[0] === k; }) || [k, k])[1]) + '</h3><p class="o-card__sub">The records behind the number.</p></div><button type="button" class="o-link" onclick="rxResultsSet(\'drill\', null)">Close</button></div>' +
+        '<ul class="rx-recs">' + recs.map(function(x){ const c = cand(x.candidateId), j = x.jobId && typeof jobById === 'function' ? jobById(x.jobId) : null;
+          return '<li><button type="button" class="o-link" onclick="openCandidate(' + JSON.stringify(x.candidateId).replace(/"/g, '&quot;') + ')">' + esc(c ? c.name : 'Candidate ' + x.candidateId) + '</button> · ' + esc(x.what) + (j ? ' · ' + esc(j.title) : '') + ' · ' + esc(String(x.at).slice(0, 10)) +
+            (x.daysBefore != null ? ' · touched ' + x.daysBefore + ' days before' : '') + (x.also && x.also.length ? ' · also touched: ' + esc(x.also.map(wfName).join(', ')) : '') +
+            (money && x.money && x.money.amount ? ' · ' + inr(x.money.amount) + (x.money.estimate ? ' (estimate)' : '') : '') + '</li>'; }).join('') + '</ul></section>';
+    }
+    const scopeNote = RXR.wf && scope && scope.length === 1 ? '<p class="o-card__sub">Showing <b>' + esc(wfName(RXR.wf)) + '</b> only. <button type="button" class="o-link" onclick="rxResultsSet(\'wf\', null)">Show all</button></p>' : '';
+    const moneyLine = money ? '<p class="o-card__sub" id="rx-money">' + moneyWord(res) + ': <b>' + inr(res.totals.money) + '</b>' + (res.corporate ? ' · uses ' + (Math.round(res.fee.pct * 100) / 100) + '% ' + (res.fee.assumed ? 'as an assumed agency fee (Settings › automation defaults)' : 'average vendor fee from your rate cards') : ' · perm fees from placements, contract margin is an estimate') + '</p>' : '';
+    return '<section class="o-card rx-results" id="rx-results"><div class="o-card__head"><div><h2 class="o-card__title">Results</h2><p class="o-card__sub">Outcomes influenced by automation: Kairo reached the person within ' + esc(WSX.rx.attributionDays) + ' days before the first step. The most recent touch gets the credit.</p></div>' + filt + '</div>' +
+      scopeNote + moneyLine + funnel + table + drill + '</section>';
+  };
+
+  /* Results: a third Cowork tab (all workflows) and a Results section on each agent page (that agent's workflows) */
+  function hookCowork(){
+    if(typeof window.caRender === 'function' && !window.caRender.__rx){
+      const base = window.caRender;
+      const wrapped = function(){
+        if(!rxOn('g2')) return base.apply(this, arguments);
+        const want = !CA.agent && CA.tab === 'results';
+        if(want) CA.tab = 'agents';
+        let h; try { h = base.apply(this, arguments); } finally { if(want) CA.tab = 'results'; }
+        const at = h.indexOf('<div role="tablist" id="ca-tabs"'); if(at < 0) return h;
+        const close = h.indexOf('</div>', at);
+        let tabs = h.slice(at, close); if(want) tabs = tabs.replace(/aria-selected="true"/g, 'aria-selected="false"');
+        tabs += '<button type="button" role="tab" id="ca-tab-results" aria-selected="' + want + '" onclick="CA.tab=\'results\'; caRefresh()">Results</button>';
+        h = h.slice(0, at) + tabs + h.slice(close);
+        if(!want) return h;
+        const bodyAt = h.indexOf('</div></div>', at) + '</div></div>'.length;
+        return h.slice(0, bodyAt) + rxResultsHTML(null) + '</div>';
+      };
+      wrapped.__rx = true; window.caRender = caRender = wrapped;
+      if(typeof RENDERERS !== 'undefined' && RENDERERS['kairo-team'] === base) RENDERERS['kairo-team'] = wrapped;
+      if(window.renderCowork === base){ window.renderCowork = wrapped; try { renderCowork = wrapped; } catch(e){} }
+    }
+    if(typeof window.caAgentPage === 'function' && !window.caAgentPage.__rx){
+      const baseA = window.caAgentPage;
+      const wrappedA = function(id){
+        const h = baseA.apply(this, arguments);
+        if(!rxOn('g2') || typeof h !== 'string') return h;
+        const i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + rxResultsHTML(id) + h.slice(i);
+      };
+      wrappedA.__rx = true; window.caAgentPage = caAgentPage = wrappedA;
+    }
+  }
+  hookCowork(); window.addEventListener('load', hookCowork);
+  /* the company workspace keeps the older Cowork (agent tabs with sections): a Results section tab there */
+  function hookAgentPage(){
+    if(typeof window.cwAgentPage !== 'function' || window.cwAgentPage.__rx) return;
+    const base = window.cwAgentPage;
+    const wrapped = function(id){
+      if(!rxOn('g2')) return base.apply(this, arguments);
+      const wantResults = typeof cwSub !== 'undefined' && cwSub === 'results';
+      if(wantResults) cwSub = 'overview';
+      let h = base.apply(this, arguments);
+      if(wantResults) cwSub = 'results';
+      const segAt = h.indexOf('<div role="group" id="cw-seg"'); if(segAt < 0) return h;
+      const segEnd = h.indexOf('</div>', segAt);
+      const btn = '<button type="button" class="seg__btn' + (wantResults ? ' is-on' : '') + '" style="min-width:96px" aria-pressed="' + wantResults + '" onclick="cwOpenSub(\'results\')">Results</button>';
+      if(wantResults) h = h.slice(0, segAt) + h.slice(segAt, segEnd).replace(/ is-on/g, '').replace(/aria-pressed="true"/g, 'aria-pressed="false"') + h.slice(segEnd);
+      const segEnd2 = h.indexOf('</div>', segAt);
+      h = h.slice(0, segEnd2) + btn + h.slice(segEnd2);
+      if(!wantResults) return h;
+      const bodyAt = h.indexOf('</div></div>', segAt) + '</div></div>'.length;
+      return h.slice(0, bodyAt) + rxResultsHTML(id) + '</div>';
+    };
+    wrapped.__rx = true;
+    window.cwAgentPage = cwAgentPage = wrapped;
+  }
+  hookAgentPage(); window.addEventListener('load', hookAgentPage);
+
+  /* opens Results at 90 days: the agency Cowork's Results tab, or the company Cowork's first agent › Results */
+  window.rxOpenResults = function(){
+    RXR.days = 90; RXR.wf = null; RXR.drill = null;
+    try { CA.tab = 'results'; CA.agent = null; } catch(e){}
+    try { cwSub = 'results'; if(typeof CP !== 'undefined') CP.top = 'agents'; } catch(e){}
+    showView('kairo-team');
+  };
+  /* Home card for the Owner/Admin home */
+  window.rxHomeCardHTML = function(){
+    const res = rxResults({ days:90 }), money = rxSeesMoney(), n = res.totals.counts.joins;
+    const what = res.corporate ? n + (n === 1 ? ' hire' : ' hires') + (money ? ' · ' + inr(res.totals.money) + ' agency fees avoided (estimate)' : '') : (money ? inr(res.totals.money) + ' fees / ' : '') + n + (n === 1 ? ' hire' : ' hires');
+    return '<section class="o-card rx-home" id="rx-home-card"><div class="o-card__head"><div><p class="o-num__label">Automation influenced (90 days)</p><h2 class="o-card__title">Automation influenced ' + esc(what) + '</h2><p class="o-card__sub">' + res.totals.counts.submissions + ' submissions and ' + res.totals.counts.replies + ' replies followed an automation touch.</p></div><button type="button" class="o-link" onclick="rxOpenResults()">See results →</button></div></section>';
+  };
+  function hookHome(){
+    if(typeof RENDERERS === 'undefined' || typeof RENDERERS['admin-dashboard'] !== 'function' || RENDERERS['admin-dashboard'].__rx) return;
+    const base = RENDERERS['admin-dashboard'];
+    const wrapped = function(){
+      const h = base.apply(this, arguments);
+      if(!rxOn('g2') || typeof h !== 'string') return h;
+      const i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + rxHomeCardHTML() + h.slice(i);
+    };
+    wrapped.__rx = true; RENDERERS['admin-dashboard'] = wrapped;
+  }
+  hookHome(); window.addEventListener('load', hookHome);
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)

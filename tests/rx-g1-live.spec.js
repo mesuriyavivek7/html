@@ -29,7 +29,7 @@
     sb.offer = sb.offer || { id:'OF-RX1', status:'Made' }; sb.offer.status = 'Made';
 
     await t('switches: six upgrades, all off by default; the runner turned G1 on; settings defaults in WSX.rx', async function(){
-      eq(Object.keys(RX_SWITCH).join(), 'g1,g2,g3,g4,g5,g6'); ok(rxOn('g1') && !rxOn('g2'), 'only g1 on');
+      eq(Object.keys(RX_SWITCH).join(), 'g1,g2,g3,g4,g5,g6'); var forced = window.__RX_SWITCHES__ || {}; ok(rxOn('g1') && Object.keys(RX_SWITCH).every(function(id){ return rxOn(id) === !!forced[id]; }), 'only the switches the runner forced are on');
       eq(WSX.rx.maxActionsPerDay, 200); eq(WSX.rx.attributionDays, 30); eq(WSX.rx.defaultAgencyFeePct, 8.33); eq(WSX.rx.bookingSlots, 6);
     });
     await t('accepting an offer runs the published workflow: exactly one action for that candidate', async function(){
