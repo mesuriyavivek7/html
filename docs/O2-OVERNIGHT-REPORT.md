@@ -27,6 +27,7 @@ _In progress. Written in full when the build finishes._
 - **7a** Refused and failed commands and failed sign-ins are audited once, with who, outcome and reason. Switches 7a (+7c to browse) · log in as Arjun and try a Finance export; then Meera › Admin › Audit & security › Refusals.
 - **7b** Second sign-in step for Oontu employees and step-up for high-risk actions after 15 minutes. Switch 7b · sign in as any Oontu employee; the code 246810 is shown in Prototype · simulated sign-in.
 - **7c** People & access with teams, roles, access reviews; separation-of-duties checks; Audit & security with an approved export; policy changes signed by Security and Finance. Switches 1a, 7a, 7c · Dev Patel or Meera · Admin › People & access; Admin › Audit & security.
+- **8a** Ops flags and plan entitlements with workspace overrides that end on their date; one availability check. Switches 1a, 3b, 8a · Meera · Admin › Product controls; Workspaces › a workspace › Entitlements.
 
 ## 3. Blocked steps
 

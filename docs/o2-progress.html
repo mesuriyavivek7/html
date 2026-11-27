@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 09:27 IST",
-    "current":  "7c",
+    "updated":  "2026-11-27 11:00 IST",
+    "current":  "8a",
     "partA":  [
                   {
                       "id":  "0a",
@@ -209,11 +209,11 @@
                   {
                       "id":  "7c",
                       "name":  "People and access",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "13/13 (o2-people, o2-sod); regressions green off and on",
+                      "tag":  "o2-step-7c",
+                      "what":  "People \u0026 access with teams, roles and access reviews; duty-conflict checks; Audit \u0026 security with an approved export; policy changes need Security and Finance.",
+                      "see":  "Switches 1a, 7a, 7c · Dev Patel or Meera Krishnan · Admin › People \u0026 access; Admin › Audit \u0026 security › Request export"
                   },
                   {
                       "id":  "8a",
@@ -395,11 +395,15 @@
                       [
                           "7b step-up scope",
                           "Step-up applies to sessions that signed in through the two steps; developer shortcuts that switch the acting employee have no session to age."
+                      ],
+                      [
+                          "7c duty conflicts in templates",
+                          "Seeded Finance templates already hold invoice + verify payment; a conflict inside one template is warned and audited, a conflict from combining roles needs the Security Administrator override."
                       ]
                   ],
     "suite":  {
-                  "off":  "After Step 6 (o2-step-6): 1,211/1,211 across 89 specs.",
-                  "on":  "After Step 6, switches 0a–6 on with saving: 1,212/1,213; the one failure was the 1a spec expecting the old Pipeline tab name (fixed; green on and off)."
+                  "off":  "After 7c (o2-step-7c): 1,235/1,236 across 92 specs; the one failure was intake-flow G6 (dialog focus), intermittent: it passes alone on this tag and before 0a.",
+                  "on":  "After 7c, switches 0a–7c on with saving: 1,237/1,238; the one failure was the audit spec expecting the old command name (fixed; green on and off)."
               }
 }
 </script>

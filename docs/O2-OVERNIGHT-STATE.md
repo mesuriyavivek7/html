@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-8a (checkpoint after 7c running)
+8b
 
 ## Steps
 
@@ -33,6 +33,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 | 7a | Done | o2-step-7a | o2-audit 7/7; BOS + shell specs 316/316 off and on (full suite at the 7c checkpoint) | logged once at the outermost command |
 | 7b | Done | o2-step-7b | o2-mfa 5/5; sign-in specs 220/220 off, 221/221 on | step-up applies to sessions that signed in through the two steps |
 | 7c | Done | o2-step-7c | o2-people 7/7, o2-sod 6/6; regressions green off/on | template-internal conflicts warn, combined conflicts need override; policy sign-off kept in BOS.policyChanges |
+| 8a | Done | o2-step-8a | o2-entitlements 5/5; regressions 214/214 off, 215/215 on | derived split (old rows unchanged); availability matrix identical on/off |
 
 ## How to run tests (this machine)
 
