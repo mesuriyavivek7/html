@@ -75035,7 +75035,7 @@ function cfScopeHTML(){
   };
   /* the weekly cap across Outreach and LinkedIn Outreach */
   window.cxWeekCount = function(cid, at){ at = at == null ? now() : at; const OUT = window.CX_OUTBOX || [], LI = window.LI_TASKS || [];
-    return OUT.filter(function(m){ return m.candidateId === cid && (m.agent === 'outreach' || m.agent === 'linkedin') && at - m.at < 7 * D && m.at <= at; }).length + LI.filter(function(t){ return t.candidateId === cid && t.status === 'sent' && at - (t.sentAt || 0) < 7 * D; }).length; };
+    return OUT.filter(function(m){ return m.candidateId === cid && (m.agent === 'outreach' || m.agent === 'linkedin') && at - m.at < 7 * D && m.at <= at; }).length; };   // a LinkedIn send a person marks is in CX_OUTBOX too (counted once)
   window.cxNextAllowed = function(cid, at){ at = at == null ? now() : at; const OUT = (window.CX_OUTBOX || []).filter(function(m){ return m.candidateId === cid && (m.agent === 'outreach' || m.agent === 'linkedin'); }).map(function(m){ return m.at; }).sort(function(a, b){ return a - b; });
     let t = at; for(let i = 0; i < 30 && cxWeekCount(cid, t) >= CX_WEEKLY_CAP; i++){ const oldest = OUT.filter(function(x){ return t - x < 7 * D && x <= t; })[0]; t = oldest != null ? oldest + 7 * D + 60000 : t + D; } return t; };
   window.cxInHours = function(t, win){ try { return typeof cwInWindow === 'function' ? cwInWindow(t, win || '09:00-19:00') : true; } catch(e){ return true; } };
@@ -75298,6 +75298,121 @@ function cfScopeHTML(){
       return h.slice(0, i) + cxbHTML() + '</div>';
     };
     w.__cx3 = true; w.__cx = base.__cx; w.__cx1b = base.__cx1b; w.__rx = base.__rx; window.caRender = w; try { caRender = w; } catch(e){}
+  }
+  hook(); window.addEventListener('load', hook);
+})();
+</script>
+<script id="cx-linkedin">
+/* CX C4 — LinkedIn Outreach as a recruiter-assisted queue. CX_SWITCH (sub 'linkedin').
+   With CX on, the automation is retired (not deleted): liSendConnectionRequests refuses, the engine's LinkedIn tick and
+   checks do nothing, the GoLogin / proxy / warm-up / pacing settings (LI_PLATFORM) are hidden and not read (every read
+   is counted in CX_LI_PLATFORM_READS so a test can prove it), the "visit" and "invite" steps become person tasks, and
+   the agent says what it does now. A person sends every message from their own LinkedIn account in their own browser;
+   the helper extension only opens a profile and copies text. Oontu never stores LinkedIn passwords, cookies or
+   sessions and never routes LinkedIn traffic through proxies.
+   Data: LI_CAPACITY { recruiterId: { weekly, used, weekStart } }, LI_OWNER { candidateId: { recruiterId, since,
+   firstContactAt } }, LI_TASKS [ { id, candidateId, jobId, recruiterId, type, note, message, dueDate, status } ].
+   cxLiAssign: the first sender owns the person (follow-ups always go to the owner; hand-over moves LI_OWNER);
+   otherwise score recruiters with capacity left (own client +3, skill overlap with their last 20 placements +0–2,
+   lower utilisation first); never over weekly capacity — overflow waits ("waiting-capacity") until the week resets.
+   The weekly contact cap is shared with Outreach (cxWeekCount). Preparing a task costs li-task (2 credits).
+   UNI Box: under CX a thread is candidateId-jobId (one conversation per job across channels); old keys still read. */
+(function(){
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const now = function(){ return typeof cwNow === 'function' ? cwNow() : Date.now(); };
+  const D = 86400000;
+  const on = function(){ return typeof cxOn === 'function' && cxOn('linkedin'); };
+  const weekStart = function(t){ const d = new Date(t); const day = (d.getDay() + 6) % 7; d.setHours(0, 0, 0, 0); return d.getTime() - day * D; };
+
+  /* ---- retire the automation under CX ---- */
+  window.CX_LI_PLATFORM_READS = 0;
+  if(typeof LI_PLATFORM !== 'undefined'){
+    ['gologin', 'proxy', 'warmup', 'pacing'].forEach(function(k){ if(!(k in LI_PLATFORM)) return; let v = LI_PLATFORM[k]; try { Object.defineProperty(LI_PLATFORM, k, { configurable:true, enumerable:true, get:function(){ if(on()) window.CX_LI_PLATFORM_READS++; return v; }, set:function(x){ v = x; } }); } catch(e){} });
+  }
+  const refuse = function(name, value){ const b = window[name]; if(typeof b !== 'function' || b.__cx4) return; const w = function(){ if(on()) return typeof value === 'function' ? value.apply(this, arguments) : value; return b.apply(this, arguments); }; w.__cx4 = true; window[name] = w; try { eval(name + ' = w'); } catch(e){} };
+  refuse('liSendConnectionRequests', function(){ return { sent:0, refused:'LinkedIn automation is off in Cowork v2. A person sends from their own account.' }; });
+  refuse('cwLiTick', undefined);
+  refuse('cwLiCheck', function(){ return { blocked:'LinkedIn steps are person tasks in Cowork v2', stop:true }; });
+  refuse('cwLiAccountsHTML', function(){ return '<p class="o-card__sub">LinkedIn is a daily queue for each recruiter. Set the team up in <button type="button" class="o-link" onclick="cxOpenChannel(\'linkedin\')">LinkedIn Outreach team</button>.</p>'; });
+  function hideSettings(){ if(typeof sSectionById !== 'function') return; const s = sSectionById('p-linkedin'); if(s && !s.__cx4){ const c0 = s.can; s.can = function(){ return on() ? false : (c0 ? c0.apply(this, arguments) : true); }; s.__cx4 = true; } }
+  hideSettings(); window.addEventListener('load', hideSettings);
+  /* the agent's words and steps under CX (getters, so CX off reads the original values) */
+  if(typeof CA_DOES !== 'undefined'){ const d0 = CA_DOES.linkedin; try { Object.defineProperty(CA_DOES, 'linkedin', { configurable:true, enumerable:true, get:function(){ return on() ? 'Prepares a daily LinkedIn queue for each recruiter: who to contact, why, and the note to send.' : d0; } }); } catch(e){} }
+  if(typeof CA_ACTIONS !== 'undefined'){ const a0 = CA_ACTIONS.linkedin; try { Object.defineProperty(CA_ACTIONS, 'linkedin', { configurable:true, enumerable:true, get:function(){ return on() ? a0.map(function(s){ return s.id === 'visit' || s.id === 'invite' ? Object.assign({}, s, { level:'person', label:s.id === 'visit' ? 'Open the profile (a person does it)' : 'Send a connection request (a person sends it)' }) : s.id === 'withdraw' ? Object.assign({}, s, { level:'person' }) : s; }) : a0; } }); } catch(e){} }
+
+  /* ---- team, capacity, ownership ---- */
+  const CAP = window.LI_CAPACITY = window.LI_CAPACITY || {};
+  const OWN = window.LI_OWNER = window.LI_OWNER || {};
+  const TASKS = window.LI_TASKS = window.LI_TASKS || [];
+  const SEED = [['LI-JAYDEEP', 'Jaydeep', 50, 'Sales Navigator', 'Fintech Corp'], ['LI-SURESH', 'Suresh', 60, 'Sales Navigator', 'HealthAI'], ['LI-PRAKASH', 'Prakash', 30, 'Free', 'RetailX']];
+  window.CX_LI_CLIENTS = window.CX_LI_CLIENTS || {};
+  SEED.forEach(function(s){ if(!CAP[s[0]]) CAP[s[0]] = { weekly:s[2], used:0, weekStart:weekStart(now()) }; CX_LI_CLIENTS[s[0]] = CX_LI_CLIENTS[s[0]] || [s[4]];
+    if(typeof CX_SETUP !== 'undefined' && !CX_SETUP.linkedin.team[s[0]]) CX_SETUP.linkedin.team[s[0]] = { name:s[1], url:'https://www.linkedin.com/in/' + s[1].toLowerCase() + '-recruiter', type:s[3], weekly:s[2], ext:true, active:true, verified:true }; });
+  const capOf = function(rid){ const c = CAP[rid] || (CAP[rid] = { weekly:(CX_SETUP.linkedin.team[rid] || {}).weekly || 30, used:0, weekStart:weekStart(now()) }); if(weekStart(now()) > c.weekStart){ c.used = 0; c.weekStart = weekStart(now()); } const t = CX_SETUP.linkedin.team[rid]; if(t) c.weekly = Number(t.weekly); return c; };
+  window.cxLiCapacity = capOf;
+  window.cxLiSetCapacity = function(rid, n){ n = Number(n); if(!(n >= 0 && n <= 200)) return { ok:false, reason:'Between 0 and 200 a week.' }; if(CX_SETUP.linkedin.team[rid]) CX_SETUP.linkedin.team[rid].weekly = n; capOf(rid).weekly = n; return { ok:true }; };
+  const active = function(){ return Object.keys(CX_SETUP.linkedin.team).filter(function(id){ const t = CX_SETUP.linkedin.team[id]; return t.active && Number(t.weekly) > 0 && t.url; }); };
+  window.cxLiAssign = function(cid, job){
+    if(OWN[cid]){ const rid = OWN[cid].recruiterId, c = capOf(rid); return c.used < c.weekly ? { recruiterId:rid, owner:true } : { recruiterId:rid, owner:true, waiting:true, until:c.weekStart + 7 * D }; }
+    const cand = typeof byId === 'function' ? byId(cid) : null, skills = ((cand && cand.skills) || []).map(function(s){ return String(s).toLowerCase(); });
+    const scored = active().map(function(rid){ const c = capOf(rid); let s = 0; if(job && (CX_LI_CLIENTS[rid] || []).indexOf(job.client) > -1) s += 3;
+      const placed = (window.CX_LI_PLACEMENTS || {})[rid] || []; const overlap = placed.slice(-20).filter(function(p){ return (p.skills || []).some(function(k){ return skills.indexOf(String(k).toLowerCase()) > -1; }); }).length; s += Math.min(2, overlap / 5);
+      return { rid:rid, score:s, util:c.weekly ? c.used / c.weekly : 1, left:c.weekly - c.used }; }).filter(function(x){ return x.left > 0; });
+    if(!scored.length){ const soon = active().map(function(rid){ return capOf(rid).weekStart + 7 * D; }).sort()[0] || weekStart(now()) + 7 * D; return { waiting:true, until:soon }; }
+    scored.sort(function(a, b){ return b.score - a.score || a.util - b.util; }); return { recruiterId:scored[0].rid };
+  };
+  window.cxLiHandOver = function(cid, toRid){ if(!OWN[cid]) return { ok:false, reason:'Nobody owns this person on LinkedIn yet.' }; OWN[cid] = Object.assign({}, OWN[cid], { recruiterId:toRid, since:now() }); TASKS.forEach(function(t){ if(t.candidateId === cid && /queued|waiting/.test(t.status)) t.recruiterId = toRid; }); return { ok:true }; };
+
+  /* ---- preparing tasks (li-task, 2 credits each) ---- */
+  const note300 = function(c, job, why){ const s = 'Hi ' + (c.name || '').split(' ')[0] + ', ' + why + '. I recruit for ' + (job ? job.title : 'a role') + (job && job.client ? ' at ' + job.client : '') + ' and would like to connect.'; return s.length > 299 ? s.slice(0, 296) + '…' : s; };
+  window.cxLiPrepare = function(cid, jobId, type){
+    type = type || 'connect'; const job = jobId && typeof jobById === 'function' ? jobById(jobId) : null, c = typeof byId === 'function' ? byId(cid) : null; if(!c) return { ok:false, reason:'No such person.' };
+    if(TASKS.some(function(t){ return t.candidateId === cid && t.jobId === jobId && t.type === type && /queued|waiting|sent/.test(t.status); })) return { ok:false, reason:'Already in a queue (duplicate).' };
+    if(typeof cxOptedOut === 'function' && cxOptedOut(cid)) return { ok:false, reason:'Opted out.' };
+    let fit = null, why = 'your experience matches the role';
+    if(job && typeof cxFit === 'function'){ const crit = (typeof cxCriteria === 'function' && cxCriteria(job.id)) || cxIntakeRules(job), f = cxFit(c, crit, job.client); fit = f.fit; if(type === 'connect' && (f.fit < 70 || f.mustNotMet.length)) return { ok:false, reason:'Below the 70% fit gate.' }; const top = f.rows.filter(function(r){ return r.status === 'met' && r.kind !== 'info'; })[0]; if(top) why = 'your ' + top.label.replace(/ \(.*$/, '') + ' background stood out'; }
+    if(typeof cxWeekCount === 'function' && cxWeekCount(cid) >= CX_WEEKLY_CAP) return { ok:false, reason:'Already contacted twice this week (shared cap with Outreach).' };
+    const a = cxLiAssign(cid, job);
+    const ch = cxCharge({ agent:'linkedin', rateClass:'li-task', qty:1, jobId:jobId, candidateId:cid, action:'Prepare a LinkedIn ' + type + ' task' }); if(ch.blocked) return { ok:false, reason:ch.blocked };
+    const t = { id:'LIT-' + (TASKS.length + 1), candidateId:cid, jobId:jobId || null, recruiterId:a.recruiterId || null, type:type, fit:fit, why:'Why they fit: ' + why, note:note300(c, job, why), message:'Thanks for connecting, ' + (c.name || '').split(' ')[0] + '. ' + (job ? 'The ' + job.title + ' role' + (job.salary ? ' (' + job.salary + ')' : '') + ' looks like a good fit. Open to a quick chat?' : 'Open to a quick chat?'), followUpDay:3, dueDate:a.waiting ? a.until : now(), status:a.waiting ? 'waiting-capacity' : 'queued', url:c.linkedin || ('https://www.linkedin.com/in/' + (c.name || 'profile').toLowerCase().replace(/[^a-z]+/g, '-')) };
+    if(!a.waiting && a.recruiterId) capOf(a.recruiterId).used++;
+    TASKS.push(t); return { ok:true, task:t };
+  };
+  /* called from Outreach's LinkedIn step (C3a) */
+  window.cxLiQueueFor = function(cid, jobId){ return cxLiPrepare(cid, jobId, OWN[cid] ? 'follow-up' : 'connect'); };
+  window.cxLiMark = function(id, what, text){
+    const t = TASKS.find(function(x){ return x.id === id; }); if(!t) return { ok:false };
+    if(what === 'sent'){ t.status = 'sent'; t.sentAt = now(); if(!OWN[t.candidateId]) OWN[t.candidateId] = { recruiterId:t.recruiterId, since:now(), firstContactAt:now() }; (window.CX_OUTBOX = window.CX_OUTBOX || []).push({ id:'OUT-LI-' + t.id, at:now(), agent:'linkedin', channel:'linkedin', candidateId:t.candidateId, jobId:t.jobId, text:t.note, sentByPerson:true }); return { ok:true }; }
+    if(what === 'skipped'){ t.status = 'skipped'; if(t.recruiterId) capOf(t.recruiterId).used = Math.max(0, capOf(t.recruiterId).used - 1); return { ok:true }; }
+    if(what === 'accepted'){ t.status = 'accepted'; return { ok:true }; }
+    if(what === 'replied'){ t.status = 'replied'; const key = cxThreadKey({ candidateId:t.candidateId, jobId:t.jobId }); (window.CX_THREADS = window.CX_THREADS || {})[key] = (CX_THREADS[key] || []).concat([{ at:now(), from:'candidate', channel:'linkedin', text:String(text || '') }]);
+      if(typeof cxOnInbound === 'function') try { cxOnInbound({ candidateId:t.candidateId, jobId:t.jobId, channel:'linkedin', text:String(text || ''), id:'li-reply-' + t.id }); } catch(e){ console.error(e); }
+      return { ok:true, thread:key }; }
+    return { ok:false };
+  };
+  /* one conversation per candidate and job across channels; the old key (candidate-workflow) still resolves */
+  window.cxThreadKey = function(c){ return c.candidateId + '-' + (c.jobId || 'nojob'); };
+  if(typeof window.uniBoxThreadKey === 'function' && !window.uniBoxThreadKey.__cx4){ const bk = window.uniBoxThreadKey; const wk = function(c){ return on() && c && c.jobId ? cxThreadKey(c) : bk.apply(this, arguments); }; wk.__cx4 = true; window.uniBoxThreadKey = wk; try { uniBoxThreadKey = wk; } catch(e){} }
+
+  /* ---- "Today's LinkedIn" queue in each recruiter's Cowork home ---- */
+  const LQ = window.CXLQ = window.CXLQ || { rid:null, reply:null };
+  window.cxLiQueueHTML = function(rid){
+    rid = rid || LQ.rid || active()[0]; if(!rid) return '<section class="o-card" id="cx-li-queue"><h2 class="o-card__title">Today’s LinkedIn</h2><p class="o-card__sub">No LinkedIn team yet. <button type="button" class="o-link" onclick="cxOpenChannel(\'linkedin\')">Set it up</button></p></section>';
+    const c = capOf(rid), mine = TASKS.filter(function(t){ return t.recruiterId === rid && (t.status === 'queued' || t.status === 'sent' || t.status === 'waiting-capacity') && t.dueDate <= now() + D; }), todo = mine.filter(function(t){ return t.status === 'queued'; });
+    const who = (CX_SETUP.linkedin.team[rid] || {}).name || rid;
+    return '<section class="o-card" id="cx-li-queue" data-recruiter="' + esc(rid) + '"><div class="o-card__head"><div><h2 class="o-card__title">Today’s LinkedIn · ' + esc(who) + '</h2><p class="o-card__sub" id="cx-li-head">' + todo.length + ' to do today · ' + c.used + ' of ' + c.weekly + ' used this week</p></div><select class="app-input" aria-label="Recruiter" onchange="CXLQ.rid = this.value; caRefresh()">' + active().map(function(r){ return '<option value="' + esc(r) + '"' + (r === rid ? ' selected' : '') + '>' + esc((CX_SETUP.linkedin.team[r] || {}).name || r) + '</option>'; }).join('') + '</select></div>' +
+      (mine.length ? mine.map(function(t){ const cand = byId(t.candidateId);
+        return '<article class="o-card cx-li-task" data-li-task="' + esc(t.id) + '" data-status="' + t.status + '"><b>' + esc(cand ? cand.name : t.candidateId) + '</b>' + (t.fit != null ? ' <span class="cx-chip">' + t.fit + '% fit</span>' : '') + '<p class="o-card__sub">' + esc(t.why) + '</p><p class="o-card__sub">Note (' + t.note.length + ' characters): ' + esc(t.note) + '</p>' +
+          (t.status === 'queued' ? '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="o-btn" href="' + esc(t.url) + '" target="_blank" rel="noopener" data-open-profile>Open profile</a><button type="button" class="o-btn" data-copy-note onclick="try{navigator.clipboard.writeText(' + JSON.stringify(t.note).replace(/"/g, '&quot;') + ')}catch(e){}; toast(\'Note copied\')">Copy note</button><button type="button" class="o-btn o-btn--primary" data-mark-sent onclick="cxLiMark(\'' + t.id + '\', \'sent\'); caRefresh()">Mark sent</button><button type="button" class="o-btn o-btn--ghost" data-skip onclick="cxLiMark(\'' + t.id + '\', \'skipped\'); caRefresh()">Skip</button></div>'
+          : t.status === 'sent' ? '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="o-btn" data-accepted onclick="cxLiMark(\'' + t.id + '\', \'accepted\'); caRefresh()">Accepted?</button><button type="button" class="o-btn" data-replied onclick="CXLQ.reply = \'' + t.id + '\'; caRefresh()">Replied?</button></div>' + (LQ.reply === t.id ? '<label class="cl-field"><span>Paste their reply</span><textarea class="app-input" id="cx-li-paste" rows="3" aria-label="Their reply"></textarea></label><button type="button" class="o-btn o-btn--primary" onclick="cxLiMark(\'' + t.id + '\', \'replied\', document.getElementById(\'cx-li-paste\').value); CXLQ.reply = null; caRefresh()">Add to the conversation</button>' : '')
+          : '<p class="o-card__sub">Waits for capacity until ' + esc(new Date(t.dueDate).toISOString().slice(0, 10)) + '</p>') + '</article>'; }).join('') : '<p class="o-card__sub">Nothing to do today.</p>') + '</section>';
+  };
+  function hook(){
+    if(typeof window.caRender !== 'function' || window.caRender.__cx4) return;
+    const b = window.caRender;
+    const w = function(){ const h = b.apply(this, arguments); if(!on() || typeof h !== 'string' || CA.agent || CA.tab !== 'agents') return h; const i = h.indexOf('<div class="ca-grid"'); return i < 0 ? h : h.slice(0, i) + cxLiQueueHTML() + h.slice(i); };
+    w.__cx4 = true; w.__cx = b.__cx; w.__cx1b = b.__cx1b; w.__cx3 = b.__cx3; w.__rx = b.__rx; window.caRender = w; try { caRender = w; } catch(e){}
+    if(typeof sSectionById === 'function'){ const s = sSectionById('cowork'), t = s && s.tabs && s.tabs.find(function(x){ return x.id === 'cx'; }); if(t && !t.__cx4){ const r0 = t.render; t.render = function(){ return r0.apply(this, arguments) + (on() ? sCard('LinkedIn weekly capacity', 'Set what this person can do by hand in a week.', active().concat(Object.keys(CX_SETUP.linkedin.team).filter(function(k){ return active().indexOf(k) < 0; })).map(function(rid){ return sRow((CX_SETUP.linkedin.team[rid] || {}).name || rid, 'Set what this person can do by hand in a week', '<input class="app-input" type="number" min="0" max="200" value="' + capOf(rid).weekly + '" style="width:90px" aria-label="Weekly capacity for ' + esc((CX_SETUP.linkedin.team[rid] || {}).name || rid) + '" onchange="var r = cxLiSetCapacity(\'' + esc(rid) + '\', this.value); toast(r.ok ? \'Saved\' : r.reason)">'); }).join('')) : ''); }; t.__cx4 = true; } }
   }
   hook(); window.addEventListener('load', hook);
 })();

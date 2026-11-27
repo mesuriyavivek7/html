@@ -9,6 +9,8 @@
   var ce = console.error; console.error = function(){ errs.push('console.error ' + Array.prototype.slice.call(arguments).map(function(a){ return (a && a.message) || String(a); }).join(' ').slice(0, 160)); };
   async function t(name, fn){ var before = errs.length; try { await fn(); if(errs.length>before) throw new Error(errs.slice(before).join(' | ')); results.push({ name:name, pass:true }); } catch(e){ results.push({ name:name, pass:false, error:e.message }); } }
   function ok(c, m){ if(!c) throw new Error(m || 'assertion failed'); }
+  /* Cowork v2 (CX_SWITCH) retires LinkedIn automation (rotation, checkpoints, GoLogin, proxies); tests of it run with CX off */
+  function offCx(fn){ return async function(){ var was = typeof cxOn === 'function' && cxOn(); if(was) cxSetSwitch(false); try { return await fn.apply(this, arguments); } finally { if(was) cxSetSwitch(true); } }; }
   function ids(){ return sVisible().map(function(s){ return s.id; }); }
   function as(role, preview){ state.role = role; previewAsRoleId = preview || null; settingsSection = 'account'; settingsTabs = {}; renderSidebar(); }
   function has(list){ list.forEach(function(i){ ok(ids().indexOf(i)>-1, 'should see ' + i + ' but sees ' + ids().join(',')); }); }
@@ -67,12 +69,12 @@
       ok(tabIds('cand-account').join()==='contact,consent,signin', 'tabs ' + tabIds('cand-account'));
       ok(anyAgentOn()===false, 'no agents for a candidate'); await everySection('candidate');
     });
-    await t('Oontu Super Admin: platform group with Cowork agents, LinkedIn infrastructure and AI models, never mixed with tenant settings', async function(){
+    await t('Oontu Super Admin: platform group with Cowork agents, LinkedIn infrastructure and AI models, never mixed with tenant settings', offCx(async function(){
       as('oontu'); if(typeof o2On === 'function' && o2On('1a')){ has(['account','p-linkedin','p-ai']); hasNot(['p-tenants','p-plans','p-agents','p-audit','people','billing','workspace','cowork']); }   /* O2 step 1a: the menu holds those links */
       else { has(['account','p-tenants','p-plans','p-agents','p-linkedin','p-ai','p-audit']); hasNot(['people','billing','workspace','cowork']); } await everySection('oontu');
       settingsSection = 'p-linkedin'; showView('settings'); ok(/GoLogin/.test(q('#settings-content').textContent) && /••••/.test(q('#settings-content').textContent), 'GoLogin token shown masked');
       showView('oontu-agents'); await sleep(30); ok(/Talent Discovery/.test(q('#main-content').textContent) && /LinkedIn Outreach/.test(q('#main-content').textContent), 'agents catalog page'); showView('oontu-settings'); ok(/AI models/.test(q('#main-content').textContent), 'AI models only in platform settings');
-    });
+    }));
     await t('owner starts a trial; surfaces appear, both audit logs record it; cancelling is recorded', async function(){
       /* Cowork v2 (CX_SWITCH) retires agent trials and add-ons; this test proves today's behaviour, so it runs with CX off */
       var cxWas = typeof cxOn === 'function' && cxOn(); if(cxWas) cxSetSwitch(false);

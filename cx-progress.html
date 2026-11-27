@@ -26,7 +26,7 @@
 <main id="root"></main>
 <script id="cx-data" type="application/json">
 {
-    "updated":  "2026-11-28 03:57 IST",
+    "updated":  "2026-11-28 04:45 IST",
     "phases":  [
                    {
                        "id":  "C0",
@@ -76,11 +76,11 @@
                    {
                        "id":  "C4",
                        "name":  "LinkedIn Outreach (recruiter-assisted)",
-                       "status":  "not started",
-                       "start":  "",
-                       "end":  "",
-                       "specs":  "",
-                       "note":  ""
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-linkedin 9/9",
+                       "note":  "Assisted queue per recruiter (Jaydeep 50, Suresh 60, Prakash 30), first-sender ownership, capacity with waiting-capacity, shared weekly cap, 2 credits a task; automation refused and LI_PLATFORM unread with CX on; UNI Box key per job"
                    },
                    {
                        "id":  "C5",
@@ -138,9 +138,9 @@
                    }
                ],
     "counters":  {
-                     "tests":  "cx-credits 14 · cx-setup 12 · cx-match 11 · cx-campaign-builder 13",
+                     "tests":  "cx specs 72/72 (credits 14, setup 12, match 11, builder 13, linkedin 9)",
                      "precision":  "Java 1.0 · Sales 1.0 · Nurse 1.0 (old: 1.0 · 1.0 · 0.9)",
-                     "clicks":  "7 clicks (limit 12)",
+                     "clicks":  "≤ 12 (asserted; exact count measured in C10)",
                      "seed":  "466 / 19,534 — matches"
                  },
     "decisions":  [
@@ -156,7 +156,8 @@
                       "C2: runner // @fixture \u003cpath\u003e inlines evaluation fixtures before a spec.",
                       "C3: the agency has no Campaigns screen today, so under CX the builder is Cowork \u003e Campaigns (reusing the job audience and Talent Discovery picks); Workflow Studio stays behind Advanced.",
                       "C3: a team is the recruiter department (the roster has no team field); the honesty check reads the message as written, before names are filled in (a candidate sharing a recruiter first name is not a wrong-sender warning).",
-                      "C3: a step skipped for its condition keeps the next step own wait instead of sending it at once."
+                      "C3: a step skipped for its condition keeps the next step own wait instead of sending it at once.",
+                      "C4: the LinkedIn automation tests in cowork.spec (rotation, checkpoints, masked GoLogin token) and the LinkedIn infrastructure settings test run with CX off inside the test; their assertions are unchanged. cxWeekCount counts a person-sent LinkedIn message once (it is in CX_OUTBOX)."
                   ],
     "isolated":  [
 

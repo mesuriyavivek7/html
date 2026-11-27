@@ -9,6 +9,8 @@
   var ce = console.error; console.error = function(){ errs.push('console.error ' + Array.prototype.slice.call(arguments).map(function(a){ return (a && a.stack) || (a && a.message) || String(a); }).join(' ').slice(0, 300)); };
   async function t(name, fn){ var before = errs.length; try { await fn(); if(errs.length>before) throw new Error(errs.slice(before).join(' | ')); results.push({ name:name, pass:true }); } catch(e){ results.push({ name:name, pass:false, error:String(e.stack||e.message).slice(0, 500) }); } }
   function ok(c, m){ if(!c) throw new Error(m || 'assertion failed'); }
+  /* Cowork v2 (CX_SWITCH) retires LinkedIn automation (rotation, checkpoints, GoLogin, proxies); tests of it run with CX off */
+  function offCx(fn){ return async function(){ var was = typeof cxOn === 'function' && cxOn(); if(was) cxSetSwitch(false); try { return await fn.apply(this, arguments); } finally { if(was) cxSetSwitch(true); } }; }
   function as(role){ state.role = role; previewAsRoleId = null; renderSidebar(); }
   function wsAt(day, h, m){ var a = day.split('-'); return wsWallMs(+a[0], +a[1], +a[2], h, m || 0); }   // a wall time in the workspace zone (not the browser's)
   function tue10(){ var day = wsDay(CW.clock); while(wsDow(day) !== 2) day = wsAddDays(day, -1); var t = wsAt(day, 10); cwSetClock(t); return t; }
@@ -135,7 +137,7 @@
       var p = freshPerson(); var before = SUPPRESSION_LIST.length; cwSuppress(personKeyOf(p), 'Replied STOP'); ok(SUPPRESSION_LIST.length === before + 1 && cwSuppression(personKeyOf(p)), 'STOP adds to the list'); cwSuppressRemove(SUPPRESSION_LIST.length - 1);
     });
 
-    await t('LinkedIn: add an account (no password anywhere), limits only go down, warm-up day 1; rotation stays inside every limit and never lets two accounts approach one person', async function(){
+    await t('LinkedIn: add an account (no password anywhere), limits only go down, warm-up day 1; rotation stays inside every limit and never lets two accounts approach one person', offCx(async function(){
       as('admin'); tue10(); var n0 = LI_SENDER_PROFILES.length;
       cwLiOpenAdd('RP-104'); await sleep(20); ok(LI_ADD.step === 1, 'owner step first when adding for a member');
       var seen = []; for(var k = 0; k < 5; k++){ ok(!q('#cw-modal-root input[type=password]'), 'no password field at step ' + LI_ADD.step + '.' + LI_ADD.signing); seen.push(LI_ADD.step); if(LI_ADD.step === 4){ LI_ADD.inv = 99; LI_ADD.msg = 999; } cwLiAddNext(); await sleep(10); }
@@ -155,9 +157,9 @@
       accs.forEach(function(id){ var sp = LI_SENDER_PROFILES.find(function(x){ return x.id === id; }); var perDay = {}; SEND_LEDGER.filter(function(l){ return l.channel === 'linkedin' && l.senderId === id && l.status === 'sent' && l.action === 'invite'; }).forEach(function(l){ var k = cwDayKey(l.at); perDay[k] = (perDay[k] || 0) + 1; });
         Object.keys(perDay).forEach(function(k){ ok(perDay[k] <= sp.limits.dailyInvites, id + ' sent ' + perDay[k] + ' invites on one day, limit ' + sp.limits.dailyInvites); }); var wk = SEND_LEDGER.filter(function(l){ return l.channel === 'linkedin' && l.senderId === id && l.status === 'sent' && l.action === 'invite' && cwNow() - l.at < 7 * CW_DAY; }).length; ok(wk <= LI_WEEKLY_INVITE_HARD_CAP, id + ' weekly ' + wk); });
       CW_LI_POLICY.allowRotation = false; quiet();
-    });
+    }));
 
-    await t('LinkedIn: a checkpoint pauses that account with "Sign in again"; a restriction pauses only it for 7 days then 50%; the others keep going; proxy down pauses, never switches country', async function(){
+    await t('LinkedIn: a checkpoint pauses that account with "Sign in again"; a restriction pauses only it for 7 days then 50%; the others keep going; proxy down pauses, never switches country', offCx(async function(){
       as('admin'); tue10(); var s2 = LI_SENDER_PROFILES.find(function(x){ return x.id === 'sp2'; }), s1 = LI_SENDER_PROFILES.find(function(x){ return x.id === 'sp1'; });
       cwLiEvent('sp2', 'checkpoint'); ok(s2.session === 'checkpoint' && cwLiState(s2)[1] === 'Needs sign-in', 'checkpoint state'); showView('kairo-team'); caOpenAgent('linkedin', 'settings'); ok(/Sign in again/.test(main().textContent), '"Sign in again" shown');
       var wfK = newWf('linkedin', [cwStep('li', { action:'visit' })], { name:'T-K', owner:'RP-092' }); wfK.__t = 1; wfK.limits.senders = ['sp2']; wfK.limits.sender = 'mine'; wfK.limits.window = '00:00-23:59';
@@ -167,7 +169,7 @@
       cwSetClock(cwNow() + 8 * CW_DAY); cwLiTick(); ok(s2.session === 'connected' && s2.reducedUntil > cwNow(), 'resumes at reduced limits'); ok(cwLiCaps(s2).reduced, 'limits at 50% for 14 days');
       cwLiEvent('sp3', 'proxy'); var s3 = LI_SENDER_PROFILES.find(function(x){ return x.id === 'sp3'; }); var country = s3.proxy.country; ok(cwLiState(s3)[1] === 'Proxy down' && s3.proxy.country === country, 'proxy down pauses, same country'); cwLiEvent('sp3', 'proxy-up');
       quiet();
-    });
+    }));
 
     await t('kill switches: Oontu pauses an agent for every workspace, the Owner pauses all Cowork; both instant, logged and shown', async function(){
       as('oontu'); tue10(); var wfO = newWf('engagement', [emailStep()], { name:'T-O' }); wfO.__t = 1; var c = freshPerson(); var rO = cwStartRun(wfO, c);
@@ -178,12 +180,12 @@
       var wfp = newWf('engagement', [emailStep()], { name:'T-P' }); wfp.__t = 1; cwWorkflowToggle(wfp.id, 'Paused'); ok(wfp.status === 'Paused', 'a workflow can be paused alone'); quiet();
     });
 
-    await t('security: secrets only ever masked, nothing sensitive in localStorage, every Cowork change is audited with old → new', async function(){
+    await t('security: secrets only ever masked, nothing sensitive in localStorage, every Cowork change is audited with old → new', offCx(async function(){
       as('oontu'); settingsSection = 'p-linkedin'; showView('settings'); var txt = main().textContent; ok(/••••/.test(txt), 'masked'); ok(!/glp_[0-9a-f]{6}.*token|sk-ant|password/i.test(txt) || true, ''); ok(!/<input[^>]*type="password"/.test(main().innerHTML), 'no password input'); ok(LI_PLATFORM.gologin.tokenMask.indexOf('••••') === 0 && LI_PLATFORM.gologin.tokenMask.length <= 8, 'token mask is last four only');
       var all = ''; try { for(var i = 0; i < localStorage.length; i++) all += localStorage.key(i) + '=' + localStorage.getItem(localStorage.key(i)); } catch(e){} ok(!/token|password|secret|gologin|4f2a/i.test(all), 'localStorage holds no secret: ' + all.slice(0, 120));
       as('admin'); var a0 = AUDIT_LOG.length; cwSetWeekly('2'); ok(AUDIT_LOG.length > a0 && /→/.test(AUDIT_LOG[0].detail), 'weekly limit change audited: ' + AUDIT_LOG[0].detail); cwSetWeekly('3');
       cwLiPolicy('allowPersonal'); ok(/→/.test(AUDIT_LOG[0].detail), 'policy change audited'); cwLiPolicy('allowPersonal');
-    });
+    }));
 
     await t('permissions decide visibility: a recruiter cannot see another recruiter\'s workflows or change them; owners and admins see all; viewing is read-only', async function(){
       as('recruiter'); var mine = WORKFLOWS.filter(function(w){ return cwWfVisible(w); }); var others = WORKFLOWS.filter(function(w){ return w.ownerId !== currentUserId() && !w.shared; });
