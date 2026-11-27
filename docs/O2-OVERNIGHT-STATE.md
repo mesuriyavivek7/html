@@ -78,4 +78,4 @@ Resume rule from the user: if the session stops, continue exactly where it left 
 
 ## CX (Cowork agents v2) progress
 - C0 done 2026-11-28: CX-AUDIT.md, cx-progress.html, backup recruitment-os-prototype.before-cx.html (local, git-excluded). Next: C1 credits (block cx-credits).
-- C1 done (08f79c7), C1b done (999ab65), C2 done. Next: C3 Outreach playbook + Simple Campaign Builder (blocks cx-outreach, cx-campaign-builder; spec tests/cx-campaign-builder.spec.js).
+- C1 08f79c7, C1b 999ab65, C2 7005821, C3 done. Next: C4 LinkedIn Outreach assisted queue (block cx-linkedin; spec tests/cx-linkedin.spec.js); then full-suite checkpoint after C5.

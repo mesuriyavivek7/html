@@ -75006,6 +75006,302 @@ function cfScopeHTML(){
   window.CX_MATCH_MODEL = 'evidence';
 })();
 </script>
+<script id="cx-outreach">
+/* CX C3a — Outreach playbook (default behaviour). CX_SWITCH (sub 'outreach').
+   Segments come from the record (cxSegment, C2). CX_PLAYBOOK holds the default steps per segment; touches 2 and 3 go
+   only if there is no reply. Guards on every step: weekly cap 2 per candidate across Outreach and LinkedIn Outreach
+   (a step that would break it moves to the next allowed day and says so — never dropped), quiet hours (09:00–19:00
+   workspace time), suppression / opt-out, WhatsApp consent, the honesty check (cwHonestyCheck plus the fake-urgency
+   rule), real sender name and an opt-out line. A/B: up to 2 variants per step; the winner is promoted after ≥ 50 sends
+   per variant on the interested rate, the loser retired with a log line. Reply outcomes: interested → screening (C5),
+   not now → ask when and set a nurture date, no → stop, opt-out → suppression at once, no reply after the last touch →
+   stop and re-eligible in 90 days. All sends go through cxSend (ledger, caps, channel readiness). */
+(function(){
+  const now = function(){ return typeof cwNow === 'function' ? cwNow() : Date.now(); };
+  const D = 86400000;
+  const PB = window.CX_PLAYBOOK = {
+    'Active':[ { channel:'whatsapp', after:0, within:'1h of publish, in working hours; WhatsApp only with consent, else email', fallback:'email' }, { channel:'email', after:2, noreply:true }, { channel:'whatsapp', after:7, noreply:true } ],
+    'Passive known':[ { channel:'email', after:0, days:'Tue–Thu morning' }, { channel:'whatsapp', after:3, noreply:true, consentOnly:true }, { channel:'linkedin', after:7, noreply:true, needsUrl:true } ],
+    'Past placement':[ { channel:'whatsapp', after:0, sender:'placer' }, { channel:'call', after:2, noreply:true, sender:'placer' } ],
+    'Silver medalist':[ { channel:'email', after:0, sender:'original' }, { channel:'whatsapp', after:3, noreply:true } ],
+    'New':[ { channel:'email', after:0, consentRequest:true }, { channel:'email', after:4, noreply:true } ] };
+  window.CX_WEEKLY_CAP = 2;
+  const URGENCY = window.CX_URGENCY = /\bonly \d+ (hours?|days?|seats?|spots?) (left|remaining)\b|\b(today only|closing (today|tonight)|last few (hours|seats))\b/i;
+  window.cxMessageIssues = function(text, job, ctx){
+    const out = []; let base = []; try { base = typeof cwHonestyCheck === 'function' ? cwHonestyCheck(text, job, Object.assign({ first:false }, ctx || {})) : []; } catch(e){}
+    base.forEach(function(x){ if(x.code !== 'nopay') out.push(x); });
+    const m = String(text || '').match(URGENCY); if(m) out.push({ code:'urgency', text:'Remove “' + m[0] + '”. We don’t use pressure lines.' });
+    return out;
+  };
+  /* the weekly cap across Outreach and LinkedIn Outreach */
+  window.cxWeekCount = function(cid, at){ at = at == null ? now() : at; const OUT = window.CX_OUTBOX || [], LI = window.LI_TASKS || [];
+    return OUT.filter(function(m){ return m.candidateId === cid && (m.agent === 'outreach' || m.agent === 'linkedin') && at - m.at < 7 * D && m.at <= at; }).length + LI.filter(function(t){ return t.candidateId === cid && t.status === 'sent' && at - (t.sentAt || 0) < 7 * D; }).length; };
+  window.cxNextAllowed = function(cid, at){ at = at == null ? now() : at; const OUT = (window.CX_OUTBOX || []).filter(function(m){ return m.candidateId === cid && (m.agent === 'outreach' || m.agent === 'linkedin'); }).map(function(m){ return m.at; }).sort(function(a, b){ return a - b; });
+    let t = at; for(let i = 0; i < 30 && cxWeekCount(cid, t) >= CX_WEEKLY_CAP; i++){ const oldest = OUT.filter(function(x){ return t - x < 7 * D && x <= t; })[0]; t = oldest != null ? oldest + 7 * D + 60000 : t + D; } return t; };
+  window.cxInHours = function(t, win){ try { return typeof cwInWindow === 'function' ? cwInWindow(t, win || '09:00-19:00') : true; } catch(e){ return true; } };
+  window.cxNextHours = function(t, win){ try { return typeof cwNextWindow === 'function' ? cwNextWindow(t, win || '09:00-19:00') : t; } catch(e){ return t; } };
+  /* one outreach step for one person: guards, then cxSend. Returns { sent | moved | stopped | task } */
+  window.cxOutreachStep = function(o){
+    const cid = o.candidateId, at = o.at == null ? now() : o.at;
+    if(typeof cxOptedOut === 'function' && cxOptedOut(cid)) return { stopped:'Opted out' };
+    /* the honesty check reads the message as written (before names are filled in), as the composer does */
+    const issues = cxMessageIssues(o.checkText != null ? o.checkText : o.text, o.job, { senderName:o.senderName }); if(issues.length) return { blocked:issues[0].text };
+    if(cxWeekCount(cid, at) >= CX_WEEKLY_CAP){ const t = cxNextAllowed(cid, at); cxLog('outreach', 'Moved to ' + new Date(t).toISOString().slice(0, 10) + ' to keep to ' + CX_WEEKLY_CAP + ' messages a week', { candidateId:cid }); return { moved:t, reason:'Moved to keep to ' + CX_WEEKLY_CAP + ' messages a week' }; }
+    if(o.workingHours !== false && !cxInHours(at, o.hours)){ const t = cxNextHours(at, o.hours); return { moved:t, reason:'Outside working hours; sent at the next window' }; }
+    if(o.channel === 'call' || o.channel === 'linkedin'){ const task = { id:'CXT-' + Date.now() + '-' + cid, at:at, agent:o.channel === 'linkedin' ? 'linkedin' : 'outreach', candidateId:cid, jobId:o.jobId, text:(o.channel === 'call' ? 'Call ' : 'LinkedIn: contact ') + (o.name || 'the candidate'), status:'open' }; (window.CX_TASKS = window.CX_TASKS || []).push(task); if(o.channel === 'linkedin' && typeof cxLiQueueFor === 'function') try { cxLiQueueFor(cid, o.jobId, o); } catch(e){} return { task:task }; }
+    const text = String(o.text || '') + (o.optOutLine === false ? '' : '\n— ' + (o.senderName || 'Your recruiter') + '. Reply STOP to opt out.');
+    const r = cxSend({ agent:'outreach', channel:o.channel, candidateId:cid, jobId:o.jobId, text:text, template:o.template || (o.channel === 'whatsapp' ? 'First touch · Active' : null), action:o.action || 'Outreach message', runId:o.runId });
+    return r.ok ? { sent:r } : r.task ? { task:r.task } : { blocked:r.reason || r.skipped || 'Not sent' };
+  };
+  /* A/B: two variants per step; winner on interested rate after 50 sends each */
+  const AB = window.CX_AB = window.CX_AB || {};
+  window.cxAbRecord = function(stepKey, variant, outcome){ const s = AB[stepKey] || (AB[stepKey] = { a:{ sent:0, interested:0 }, b:{ sent:0, interested:0 }, winner:null, log:[] }); if(s.winner) return s; s[variant].sent++; if(outcome === 'interested') s[variant].interested++;
+    if(s.a.sent >= 50 && s.b.sent >= 50){ const ra = s.a.interested / s.a.sent, rb = s.b.interested / s.b.sent; s.winner = ra >= rb ? 'a' : 'b'; s.log.push('Variant ' + s.winner.toUpperCase() + ' kept (' + Math.round(Math.max(ra, rb) * 100) + '% interested); variant ' + (s.winner === 'a' ? 'B' : 'A') + ' retired (' + Math.round(Math.min(ra, rb) * 100) + '%).'); }
+    return s; };
+  /* reply outcomes */
+  const NURTURE = window.CX_NURTURE = window.CX_NURTURE || {};
+  window.cxReplyOutcome = function(cid, label, o){
+    o = o || {};
+    if(label === 'opt-out'){ try { if(typeof cwSuppress === 'function') cwSuppress('c' + cid, 'Asked us to stop'); else (SUPPRESSION_LIST || []).push({ key:'c' + cid, reason:'Asked us to stop' }); } catch(e){} cxLog('outreach', 'Opted out: added to suppression', { candidateId:cid }); return { stop:true, suppressed:true }; }
+    if(label === 'interested'){ if(typeof cxScreenStart === 'function') try { cxScreenStart(cid, o.jobId, o.channel); } catch(e){} return { screening:true }; }
+    if(label === 'not-now'){ NURTURE[cid] = { at:now() + (o.days || 60) * D, jobId:o.jobId }; return { nurture:NURTURE[cid].at }; }
+    if(label === 'no') return { stop:true };
+    if(label === 'no-reply'){ NURTURE[cid] = { at:now() + 90 * D, reEligible:true }; return { stop:true, reEligible:NURTURE[cid].at }; }
+    return {};
+  };
+})();
+</script>
+<script id="cx-campaign-builder">
+/* CX C3b — the Simple Campaign Builder (default way to create a campaign under CX; Workflow Studio stays behind
+   "Advanced"). Cowork › Campaigns. Three steps on one page: 1 Who → 2 Steps → 3 Review & start.
+   Every campaign is fully editable (audience, steps, channel, wait, message, language, stop rules, hours, sender) and
+   can start from recommended steps, blank, or a saved campaign (mine / my team's / the workspace's). Save as a template
+   for Just me / My team / Everyone. Optional "Start automatically when…" (job published, someone applies, added to a
+   list, interview booked, offer released, assignment ends in 30 days). Conditions in plain words. One optional branch
+   card ("If they say Not now, ask again in 30 days"). Per-user defaults (sender, hours, language, signature).
+   Guardrails are automatic and cannot be switched off: caps, quiet hours, consent, opt-outs, honesty, LinkedIn rules.
+   Words never shown here: sequence, cadence, node, trigger, webhook, payload, regex. */
+(function(){
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const now = function(){ return typeof cwNow === 'function' ? cwNow() : Date.now(); };
+  const D = 86400000;
+  const me = function(){ try { return (currentActingUser() || {}).id || 'RP-088'; } catch(e){ return 'RP-088'; } };
+  const myName = function(){ try { return (currentActingUser() || {}).name || 'Priya Sharma'; } catch(e){ return 'Priya Sharma'; } };
+  /* a team is the recruiter's department (the roster has no team field) */
+  const teamOf = window.cxTeamOf = function(uid){ const r = (typeof RECRUITER_ROSTER !== 'undefined' ? RECRUITER_ROSTER : []).find(function(x){ return x.id === uid; }); return r ? (r.teamId || r.team || r.dept || 'team-1') : 'team-1'; };
+  const CAMPS = window.CX_CAMPAIGNS = window.CX_CAMPAIGNS || [];
+  const SAVED = window.CX_CAMPAIGN_TEMPLATES = window.CX_CAMPAIGN_TEMPLATES || [];
+  const DEF = window.CX_USER_DEFAULTS = window.CX_USER_DEFAULTS || {};
+  window.cxUserDefaults = function(uid){ uid = uid || me(); const r = (typeof RECRUITER_ROSTER !== 'undefined' ? RECRUITER_ROSTER : []).find(function(x){ return x.id === uid; }); return Object.assign({ sender:r ? r.name : myName(), hours:'09:00-19:00', lang:'English', signature:'' }, DEF[uid] || {}); };
+  window.cxSetUserDefaults = function(uid, d){ DEF[uid] = Object.assign({}, DEF[uid] || {}, d); return { ok:true }; };
+  const STARTS = window.CX_STARTS_WHEN = [['', 'Only when I press Start'], ['job-published', 'A job is published'], ['applied', 'Someone applies'], ['added-to-list', 'A candidate is added to a list'], ['interview-booked', 'An interview is booked'], ['offer-released', 'An offer is released'], ['assignment-ending', 'A contractor’s assignment ends in 30 days']];
+  const CONDS = window.CX_CONDITIONS = [['noreply', 'Only if they haven’t replied'], ['interested', 'Only if they said Interested'], ['wa-consent', 'Only if we have WhatsApp consent'], ['not-applied', 'Only if they haven’t applied'], ['seg:Active', 'Only for Active'], ['seg:Passive known', 'Only for Passive'], ['seg:Past placement', 'Only for Past placement'], ['seg:Silver medalist', 'Only for Silver medalist'], ['seg:New', 'Only for New']];
+  const CH = { whatsapp:'WhatsApp', email:'Email', linkedin:'LinkedIn task', call:'Call task' };
+  let sid = 1; const stepId = function(){ return 'st' + (sid++) + '-' + Math.random().toString(36).slice(2, 6); };
+  const blankStep = function(first){ return { id:stepId(), when:first ? { type:'now' } : { type:'noreply', n:2, unit:'days' }, channel:'email', message:{ text:'', lang:cxUserDefaults().lang, template:null }, conditions:[] }; };
+  const B = window.CXB = window.CXB || { step:1, d:null, undo:null, clicks:0, preview:0, view:'list', open:null };
+
+  /* ---- audience ---- */
+  window.cxbAudience = function(d){
+    d = d || B.d; if(!d) return { people:[], left:[] }; const a = d.audience || {}; let pool = [];
+    if(a.type === 'job' && a.jobId){ const r = typeof cxRank === 'function' ? cxRank(a.jobId) : { picks:[], excluded:[] }; pool = (typeof CANDIDATES !== 'undefined' ? CANDIDATES : []).filter(function(c){ return !(typeof SUBMISSIONS !== 'undefined' && SUBMISSIONS.some(function(s){ return s.candidateId === c.id && s.jobId === a.jobId; })); }); if(a.picksOnly) pool = r.picks.map(function(p){ return p.c; }); }
+    else if(a.type === 'list' && a.ids) pool = (typeof CANDIDATES !== 'undefined' ? CANDIDATES : []).filter(function(c){ return a.ids.indexOf(c.id) > -1; });
+    const people = [], left = [];
+    pool.forEach(function(c){
+      if(typeof cxOptedOut === 'function' && cxOptedOut(c.id)){ left.push({ id:c.id, why:'opted out' }); return; }
+      if(typeof cxWeekCount === 'function' && cxWeekCount(c.id) >= CX_WEEKLY_CAP){ left.push({ id:c.id, why:'contacted recently' }); return; }
+      if(a.type === 'job' && typeof cxFit === 'function' && typeof cxCriteria === 'function' && cxCriteria(a.jobId)){ const f = cxFit(c, cxCriteria(a.jobId), (jobById(a.jobId) || {}).client); if(f.mustNotMet.length){ left.push({ id:c.id, why:'must-have not met' }); return; } }
+      people.push(c);
+    });
+    const waNeed = d.steps.some(function(s){ return s.channel === 'whatsapp'; }) ? people.filter(function(c){ return !cxHasWaConsent(c.id); }).length : 0;
+    return { people:people, left:left, waNoConsent:waNeed };
+  };
+  const leftWhy = function(left){ const w = {}; left.forEach(function(x){ w[x.why] = (w[x.why] || 0) + 1; }); return w; };
+
+  /* ---- drafts ---- */
+  window.cxbNew = function(mode, templateId){
+    const u = cxUserDefaults(); B.step = 1; B.view = 'build'; B.preview = 0;
+    if(mode === 'saved'){ const t = SAVED.find(function(x){ return x.id === templateId; }); if(!t) return { ok:false, reason:'No such saved campaign.' }; B.d = JSON.parse(JSON.stringify(t.campaign)); B.d.id = null; B.d.status = 'draft'; B.d.name = t.name; }
+    else B.d = { id:null, name:'New campaign', owner:me(), team:teamOf(me()), audience:{ type:'job', jobId:'', picksOnly:false }, steps:mode === 'blank' ? [blankStep(true), blankStep(false)] : [], toggles:{ stopOnReply:true, stopOnApply:true, workingHours:true }, startsWhen:'', sender:u.sender, hours:u.hours, lang:u.lang, status:'draft', stats:{}, branch:null };
+    if(mode === 'recommended') cxbUseRecommended();
+    cxbRefresh(); return { ok:true };
+  };
+  window.cxbSet = function(path, v){ const d = B.d; if(!d) return; const p = path.split('.'); let o = d; for(let i = 0; i < p.length - 1; i++) o = o[p[i]]; o[p[p.length - 1]] = v; cxbRefresh(); };
+  window.cxbGo = function(n){ B.step = n; cxbRefresh(); };
+  window.cxbUseRecommended = function(){
+    const d = B.d; if(!d) return; const seg = (function(){ const a = cxbAudience(d), counts = {}; a.people.forEach(function(c){ const s = cxSegment(c); counts[s] = (counts[s] || 0) + 1; }); return Object.keys(counts).sort(function(x, y){ return counts[y] - counts[x]; })[0] || 'Passive known'; })();
+    const job = d.audience.jobId && jobById(d.audience.jobId);
+    d.steps = (CX_PLAYBOOK[seg] || CX_PLAYBOOK['Passive known']).map(function(s, i){ return { id:stepId(), when:i === 0 ? { type:'now' } : { type:'noreply', n:s.after, unit:'days' }, channel:s.channel, message:{ text:cxbDefaultText(s.channel, seg, job, i), lang:d.lang, template:s.channel === 'whatsapp' ? 'First touch · Active' : null }, conditions:s.consentOnly ? ['wa-consent'] : [] }; });
+    d.recommendedFor = seg; cxbRefresh();
+  };
+  window.cxbDefaultText = function(channel, seg, job, i){ const fam = job && typeof cxDetectFamily === 'function' ? cxDetectFamily(job) : 'java-backend', key = { 'Active':'active', 'Passive known':'passive', 'Past placement':'past-placement', 'Silver medalist':'silver', 'New':'new' }[seg] || 'passive'; const t = (((CX_FAMILIES || {})[fam] || {}).templates || {})[key]; return t ? t[Math.min(i, 2)] : 'Hi {{First name}}, a {{Job title}} role may suit you. Interested? Yes / Not now / No'; };
+  window.cxbAddStep = function(at){ const d = B.d; d.steps.splice(at == null ? d.steps.length : at, 0, blankStep(d.steps.length === 0)); cxbRefresh(); };
+  window.cxbDuplicate = function(i){ const d = B.d, s = JSON.parse(JSON.stringify(d.steps[i])); s.id = stepId(); d.steps.splice(i + 1, 0, s); cxbRefresh(); };
+  window.cxbMove = function(i, dir){ const d = B.d, j = i + dir; if(j < 0 || j >= d.steps.length) return; const t = d.steps[i]; d.steps[i] = d.steps[j]; d.steps[j] = t; cxbRefresh(); };
+  window.cxbDelete = function(i){ const d = B.d, s = d.steps.splice(i, 1)[0]; B.undo = { step:s, at:i, until:Date.now() + 8000 }; cxbRefresh(); if(typeof toast === 'function') toast('Step deleted. Undo is on the page for 8 seconds.'); };
+  window.cxbUndo = function(){ const u = B.undo; if(!u || Date.now() > u.until) return { ok:false }; B.d.steps.splice(u.at, 0, u.step); B.undo = null; cxbRefresh(); return { ok:true }; };
+  window.cxbStepSentence = function(s){ return (s.when.type === 'now' ? 'Right away' : 'If no reply after ' + s.when.n + ' ' + (s.when.n === 1 ? s.when.unit.replace(/s$/, '') : s.when.unit)) + ', send ' + (s.channel === 'email' ? 'an Email' : s.channel === 'whatsapp' ? 'a WhatsApp' : s.channel === 'linkedin' ? 'a LinkedIn task' : 'a Call task') + '.'; };
+
+  /* ---- message editor ---- */
+  const CHIPS = window.CX_CHIPS = ['First name', 'Job title', 'Company', 'Pay band', 'Location', 'Recruiter name'];
+  window.cxbFill = function(text, c, job){ const v = { 'First name':(c && c.name || '').split(' ')[0], 'Job title':job ? job.title : 'the role', 'Company':job ? (job.client || '') : '', 'Pay band':job ? (job.salary || '') : '', 'Location':job ? (job.loc || '') : '', 'Recruiter name':B.d ? B.d.sender : myName() }; return String(text || '').replace(/\{\{([^}]+)\}\}/g, function(m, k){ return v[k] != null ? v[k] : ''; }); };
+  window.cxbInsertChip = function(i, chip){ const s = B.d.steps[i]; s.message.text = (s.message.text || '') + (s.message.text && !/\s$/.test(s.message.text) ? ' ' : '') + '{{' + chip + '}}'; cxbRefresh(); };
+  const AI = { shorter:function(t){ return t.split(/(?<=[.!?])\s+/).slice(0, 2).join(' '); }, friendlier:function(t){ return /^hi\b/i.test(t) ? t.replace(/^hi\b/i, 'Hi there,').replace('there, {{', '{{') : 'Hi! ' + t; }, formal:function(t){ return t.replace(/^hi\b/i, 'Dear').replace(/!/g, '.'); },
+    translate:function(t, lang){ return lang === 'Hindi' ? '[हिंदी] ' + t : lang === 'Gujarati' ? '[ગુજરાતી] ' + t : t; } };
+  window.cxbAI = function(i, kind){ const s = B.d.steps[i]; const ch = cxCharge({ agent:'outreach', rateClass:'ai-small', qty:1, action:'Rewrite: ' + kind }); if(ch.blocked){ if(typeof toast === 'function') toast(ch.blocked); return ch; } s.message.text = AI[kind](s.message.text || '', s.message.lang); cxbRefresh(); return { ok:true }; };
+
+  /* ---- review: automatic fixes, previews, credit estimate ---- */
+  window.cxbReview = function(){
+    const d = B.d, a = cxbAudience(d), fixes = [];
+    let day = 0, weekSends = 0; d.steps.forEach(function(s, i){
+      day += s.when.type === 'now' ? 0 : (s.when.unit === 'hours' ? s.when.n / 24 : s.when.n);
+      const msgStep = s.channel === 'email' || s.channel === 'whatsapp' || s.channel === 'linkedin';
+      if(msgStep){ weekSends++; if(weekSends > CX_WEEKLY_CAP && day < 7){ const old = day; day = 7; s.when = { type:'noreply', n:Math.max(1, Math.ceil(7 - (old - (s.when.type === 'now' ? 0 : s.when.n)))), unit:'days' }; fixes.push('Step ' + (i + 1) + ' moved to day 7 to keep to ' + CX_WEEKLY_CAP + ' messages a week.'); weekSends = 1; } }
+      const iss = cxMessageIssues(s.message.text, d.audience.jobId && jobById(d.audience.jobId)); if(iss.length) fixes.push('Step ' + (i + 1) + ': ' + iss[0].text);
+      if(s.channel === 'whatsapp' && a.waNoConsent) fixes.push('Step ' + (i + 1) + ': ' + a.waNoConsent + ' of ' + a.people.length + ' people have not agreed to WhatsApp. They get email instead.');
+    });
+    const rate = function(ch){ return ch === 'email' ? cxRate('email') : ch === 'whatsapp' ? cxRate('wa-template') : ch === 'linkedin' ? cxRate('li-task') : 0; };
+    const credits = d.steps.reduce(function(s, st, i){ const share = i === 0 ? 1 : 0.6; return s + Math.round(a.people.length * share * rate(st.channel)); }, 0);
+    return { people:a.people.length, left:a.left.length, why:leftWhy(a.left), fixes:fixes, credits:credits, previews:a.people.slice(0, 3) };
+  };
+
+  /* ---- start, run, pause ---- */
+  window.cxbSaveDraft = function(){ const d = B.d; if(!d.id){ d.id = 'CMP-' + (CAMPS.length + 1); CAMPS.push(d); } d.status = d.status === 'running' ? 'running' : 'draft'; return { ok:true, id:d.id }; };
+  window.cxbStart = function(){
+    const d = B.d; if(!d.steps.length) return { ok:false, reason:'Add at least one step.' }; if(d.audience.type === 'job' && !d.audience.jobId) return { ok:false, reason:'Pick a job.' };
+    cxbReview(); cxbSaveDraft(); d.status = 'running'; d.startedAt = now(); d.runs = {}; d.stats = d.steps.map(function(){ return { sent:0, replied:0, interested:0 }; });
+    if(!d.startsWhen) cxbAudience(d).people.forEach(function(c){ cxbEnrol(d, c); });
+    B.view = 'campaign'; B.open = d.id; cxbRefresh(); return { ok:true, id:d.id };
+  };
+  window.cxbEnrol = function(d, c){ if(d.runs[c.id]) return; d.runs[c.id] = { pc:0, nextAt:now(), state:'waiting', replied:false, applied:false }; cxbTick(d); };
+  const condOk = function(d, s, c, run){ return (s.conditions || []).every(function(k){
+    if(k === 'noreply') return !run.replied; if(k === 'interested') return run.interested === true; if(k === 'wa-consent') return cxHasWaConsent(c.id);
+    if(k === 'not-applied') return !(typeof SUBMISSIONS !== 'undefined' && SUBMISSIONS.some(function(x){ return x.candidateId === c.id && x.jobId === d.audience.jobId; }));
+    if(k.indexOf('seg:') === 0) return cxSegment(c) === k.slice(4); return true; }); };
+  window.cxbTick = function(d, at){
+    at = at == null ? now() : at; if(!d || d.status !== 'running') return;
+    Object.keys(d.runs).forEach(function(cid){
+      const run = d.runs[cid], c = byId(isNaN(+cid) ? cid : +cid); if(!c || run.state === 'done' || run.nextAt > at) return;
+      if((d.toggles.stopOnReply && run.replied) || (d.toggles.stopOnApply && run.applied)){ run.state = 'done'; return; }
+      const s = d.steps[run.pc]; if(!s){ run.state = 'done'; return; }
+      if(run.sentStep === s.id){ return; }
+      if(!condOk(d, s, c, run)){ run.pc++; const nx0 = d.steps[run.pc]; run.nextAt = nx0 ? at + (nx0.when.type === 'now' ? 0 : nx0.when.n * (nx0.when.unit === 'hours' ? 3600000 : D)) : Infinity; if(!nx0) run.state = 'done'; return; }   // skipped for its condition; the next step keeps its own wait
+      const job = d.audience.jobId && jobById(d.audience.jobId), text = cxbFill(s.message.text, c, job);
+      let ch = s.channel; if(ch === 'whatsapp' && !cxHasWaConsent(c.id)) ch = 'email';
+      const r = cxOutreachStep({ candidateId:c.id, jobId:d.audience.jobId, channel:ch, text:text, checkText:s.message.text, template:s.message.template, senderName:d.sender, hours:d.hours, workingHours:d.toggles.workingHours, name:c.name, at:at, action:d.name + ' · step ' + (run.pc + 1), runId:d.id });
+      if(r.moved){ run.nextAt = r.moved; run.note = r.reason; return; }
+      if(r.sent || r.task){ d.stats[run.pc].sent++; run.sentStep = s.id; run.pc++; const nx = d.steps[run.pc]; run.nextAt = nx ? at + (nx.when.type === 'now' ? 0 : nx.when.n * (nx.when.unit === 'hours' ? 3600000 : D)) : Infinity; run.sentStep = null; if(!nx) run.state = 'done'; return; }
+      run.state = 'blocked'; run.note = r.blocked || r.stopped;
+    });
+  };
+  window.cxbPause = function(id){ const d = CAMPS.find(function(x){ return x.id === id; }); if(d && d.status === 'running'){ d.status = 'paused'; cxbRefresh(); } return { ok:!!d }; };
+  window.cxbResume = function(id){ const d = CAMPS.find(function(x){ return x.id === id; }); if(d && d.status === 'paused'){ d.status = 'running'; cxbTick(d); cxbRefresh(); } return { ok:!!d }; };
+  window.cxbReply = function(id, cid, label){ const d = CAMPS.find(function(x){ return x.id === id; }); const run = d && d.runs[cid]; if(!run) return; run.replied = true; const at = Math.max(0, run.pc - 1); d.stats[at].replied++; if(label === 'interested'){ run.interested = true; d.stats[at].interested++; } if(label === 'not-now' && d.branch === 'not-now-30'){ run.state = 'waiting'; run.nextAt = now() + 30 * D; run.replied = false; } cxReplyOutcome(cid, label, { jobId:d.audience.jobId }); };
+  /* "Start automatically when…": the sweep enrols people the event applies to */
+  window.cxbSweep = function(at){
+    CAMPS.filter(function(d){ return d.status === 'running' && d.startsWhen; }).forEach(function(d){
+      if(d.startsWhen === 'applied') (typeof SUBMISSIONS !== 'undefined' ? SUBMISSIONS : []).forEach(function(s){ if(s.jobId === d.audience.jobId && /appl|career|portal|website/i.test(String(s.source || '')) && (Date.parse(s.createdAt) || 0) >= d.startedAt){ const c = byId(s.candidateId); if(c) cxbEnrol(d, c); } });
+      cxbTick(d, at);
+    });
+    CAMPS.filter(function(d){ return d.status === 'running'; }).forEach(function(d){ cxbTick(d, at); });
+  };
+  window.cxbSaveTemplate = function(name, scope, ownerId){ if(['me', 'team', 'workspace'].indexOf(scope) < 0) return { ok:false, reason:'Pick who can use it.' }; const own = ownerId || me(); const t = { id:'TPL-' + (SAVED.length + 1), name:name || B.d.name, scope:scope, owner:own, team:teamOf(own), campaign:JSON.parse(JSON.stringify(B.d)), isDefault:false }; t.campaign.status = 'draft'; SAVED.push(t); return { ok:true, id:t.id }; };
+  window.cxbSavedFor = function(uid){ uid = uid || me(); return SAVED.filter(function(t){ return t.scope === 'workspace' || (t.scope === 'me' && t.owner === uid) || (t.scope === 'team' && t.team === teamOf(uid)); }); };
+  window.cxbSetDefault = function(id){ const t = SAVED.find(function(x){ return x.id === id; }); if(!t || t.scope !== 'workspace') return { ok:false }; SAVED.forEach(function(x){ x.isDefault = x === t; }); return { ok:true }; };
+
+  /* ---- UI ---- */
+  window.cxbRefresh = function(){ try { if(typeof caRefresh === 'function' && state.activeNav === 'kairo-team') caRefresh(); } catch(e){} };
+  const btn = function(label, on, primary, extra){ return '<button type="button" class="o-btn' + (primary ? ' o-btn--primary' : '') + '" onclick="CXB.clicks++; ' + on + '"' + (extra || '') + '>' + esc(label) + '</button>'; };
+  const lnk = function(label, on, extra){ return '<button type="button" class="o-link" onclick="CXB.clicks++; ' + on + '"' + (extra || '') + '>' + esc(label) + '</button>'; };
+  function listView(){
+    const mine = CAMPS.filter(function(d){ return d.owner === me() || cxOn(); }), saved = cxbSavedFor();
+    return '<section class="o-card" id="cxb-list"><div class="o-card__head"><div><h2 class="o-card__title">Campaigns</h2><p class="o-card__sub">Reach the right people with a few steps. Most take under 2 minutes.</p></div>' + btn('New campaign', "cxbNew('recommended')", true, ' id="cxb-new"') + '</div>' +
+      (mine.length ? '<ul class="o-list">' + mine.map(function(d){ const s = (d.stats || []).reduce(function(a, x){ return { sent:a.sent + x.sent, replied:a.replied + x.replied }; }, { sent:0, replied:0 }); return '<li data-cmp="' + esc(d.id) + '"><button type="button" class="o-link" onclick="CXB.view=\'campaign\'; CXB.open=\'' + esc(d.id) + '\'; cxbRefresh()"><b>' + esc(d.name) + '</b></button> · ' + esc(d.status) + ' · ' + s.sent + ' sent · ' + s.replied + ' replied</li>'; }).join('') + '</ul>' : '<p class="o-card__sub">No campaigns yet. Start one in 2 minutes.</p>') +
+      '<p class="o-card__sub" style="margin-top:12px">Other ways to start: ' + lnk('Start blank', "cxbNew('blank')") + (saved.length ? ' · ' + saved.map(function(t){ return lnk('Use “' + t.name + '”' + (t.isDefault ? ' (default)' : ''), "cxbNew('saved', '" + t.id + "')", ' data-saved="' + t.id + '"'); }).join(' · ') : '') + ' · <button type="button" class="o-link" onclick="showView(\'workflow-studio\')">Advanced</button></p></section>';
+  }
+  function whoStep(d){
+    const jobs = (typeof JOBS !== 'undefined' ? JOBS : []).filter(function(j){ return j.status === 'Active'; }), a = cxbAudience(d), why = leftWhy(a.left);
+    return '<section class="o-card" data-cxb-step="1"><h2 class="o-card__title">Who</h2><label class="cl-field"><span>Job</span><select class="app-input" id="cxb-job" aria-label="Job" onchange="CXB.clicks++; cxbSet(\'audience.jobId\', this.value)"><option value="">Pick a job</option>' + jobs.map(function(j){ return '<option value="' + esc(j.id) + '"' + (d.audience.jobId === j.id ? ' selected' : '') + '>' + esc(j.title + ' · ' + (j.client || '')) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="text-sm"><input type="checkbox"' + (d.audience.picksOnly ? ' checked' : '') + ' onchange="cxbSet(\'audience.picksOnly\', this.checked)"> Only Talent Discovery’s picks for this job</label>' +
+      (d.audience.jobId ? '<p class="o-card__sub" id="cxb-count">' + a.people.length + (a.people.length === 1 ? ' person' : ' people') + ' will get this. ' + a.left.length + ' are left out <details style="display:inline"><summary>(why?)</summary><ul class="o-list">' + Object.keys(why).map(function(k){ return '<li>' + why[k] + ' · ' + esc(k) + '</li>'; }).join('') + '</ul></details></p>' : '') +
+      '<label class="cl-field"><span>Start automatically when…</span><select class="app-input" aria-label="Start automatically when" onchange="cxbSet(\'startsWhen\', this.value)">' + STARTS.map(function(s){ return '<option value="' + s[0] + '"' + (d.startsWhen === s[0] ? ' selected' : '') + '>' + esc(s[1]) + '</option>'; }).join('') + '</select></label>' +
+      '<p style="margin-top:12px">' + btn('Next', 'cxbGo(2)', true, ' id="cxb-next1"' + (d.audience.jobId ? '' : ' disabled')) + '</p></section>';
+  }
+  function stepCard(d, s, i){
+    const a = cxbAudience(d), waOff = a.waNoConsent > 0 && a.waNoConsent === a.people.length, liOff = !(typeof cxChannelReady === 'function' && cxChannelReady('linkedin'));
+    const chipBtn = function(ch){ const off = (ch === 'whatsapp' && waOff) || (ch === 'linkedin' && liOff); return '<button type="button" class="cx-chip" data-ch="' + ch + '" aria-pressed="' + (s.channel === ch) + '"' + (off ? ' disabled title="' + (ch === 'whatsapp' ? 'Nobody here has agreed to WhatsApp' : 'No LinkedIn team set up') + '"' : '') + ' onclick="CXB.clicks++; CXB.d.steps[' + i + '].channel=\'' + ch + '\'; cxbRefresh()">' + CH[ch] + '</button>'; };
+    const waNote = s.channel === 'whatsapp' && a.waNoConsent ? '<p class="o-card__sub" data-wa-note>WhatsApp needs consent from ' + a.waNoConsent + ' of ' + a.people.length + ' people. They’ll get email instead.</p>' : '';
+    const issues = cxMessageIssues(s.message.text, d.audience.jobId && jobById(d.audience.jobId));
+    const pc = a.people[B.preview % Math.max(1, a.people.length)], job = d.audience.jobId && jobById(d.audience.jobId);
+    const tplMode = s.channel === 'whatsapp' && pc && !(typeof cxInWaWindow === 'function' && cxInWaWindow(pc.id));
+    return '<article class="o-card cxb-card" data-step-card="' + i + '"><p class="cxb-sentence"><b>' + esc(cxbStepSentence(s)) + '</b></p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><label class="text-xs">When <select class="app-input" aria-label="When" onchange="var v=this.value; CXB.d.steps[' + i + '].when = v===\'now\' ? { type:\'now\' } : { type:\'noreply\', n:CXB.d.steps[' + i + '].when.n || 2, unit:\'days\' }; cxbRefresh()"><option value="now"' + (s.when.type === 'now' ? ' selected' : '') + '>Right away</option><option value="noreply"' + (s.when.type === 'noreply' ? ' selected' : '') + '>If no reply after</option></select></label>' +
+      (s.when.type === 'noreply' ? '<input class="app-input" type="number" min="1" max="60" value="' + s.when.n + '" style="width:70px" aria-label="Wait" onchange="CXB.d.steps[' + i + '].when.n = Math.max(1, +this.value || 1); cxbRefresh()"><select class="app-input" aria-label="Unit" onchange="CXB.d.steps[' + i + '].when.unit = this.value; cxbRefresh()"><option' + (s.when.unit === 'days' ? ' selected' : '') + '>days</option><option' + (s.when.unit === 'hours' ? ' selected' : '') + '>hours</option></select>' : '') +
+      '<span role="group" aria-label="Channel" style="display:flex;gap:6px">' + ['whatsapp', 'email', 'linkedin', 'call'].map(chipBtn).join('') + '</span></div>' + waNote +
+      (s.channel === 'email' || s.channel === 'whatsapp' ? '<div class="cxb-editor" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">' +
+        (tplMode ? '<div><p class="o-card__sub">WhatsApp only allows approved templates for first messages.</p><select class="app-input" aria-label="Approved template" onchange="CXB.d.steps[' + i + '].message.template = this.value; cxbRefresh()">' + (CX_SETUP.whatsapp.templates || []).filter(function(t){ return t.status === 'Approved' && t.lang === s.message.lang; }).map(function(t){ return '<option' + (s.message.template === t.name ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '</select></div>' :
+        '<div><textarea class="app-input" rows="5" aria-label="Message" oninput="CXB.d.steps[' + i + '].message.text = this.value" onchange="cxbRefresh()">' + esc(s.message.text) + '</textarea>') +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + CHIPS.map(function(c){ return '<button type="button" class="cx-chip" data-chip="' + esc(c) + '" onclick="CXB.clicks++; cxbInsertChip(' + i + ', \'' + esc(c) + '\')">+ ' + esc(c) + '</button>'; }).join('') + '</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><select class="app-input" aria-label="Language" onchange="CXB.d.steps[' + i + '].message.lang = this.value; cxbRefresh()">' + ['English', 'Hindi', 'Gujarati'].map(function(l){ return '<option' + (s.message.lang === l ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select>' +
+        [['shorter', 'Shorter'], ['friendlier', 'Friendlier'], ['formal', 'More formal'], ['translate', 'Translate']].map(function(x){ return '<button type="button" class="o-btn o-btn--ghost" data-ai="' + x[0] + '" onclick="CXB.clicks++; cxbAI(' + i + ', \'' + x[0] + '\')">' + x[1] + ' <small>≈ 1 credit</small></button>'; }).join('') + '</div>' +
+        (issues.length ? '<p class="o-card__sub" role="alert" data-honesty>' + esc(issues[0].text) + '</p>' : '') + (tplMode ? '' : '</div>') +
+        '<div class="cxb-preview" aria-label="Preview"><p class="o-card__sub">Preview for ' + esc(pc ? pc.name : 'a person in the audience') + ' <button type="button" class="o-link" aria-label="Previous person" onclick="CXB.preview = Math.max(0, CXB.preview - 1); cxbRefresh()">‹</button> <button type="button" class="o-link" aria-label="Next person" onclick="CXB.preview++; cxbRefresh()">›</button></p><div class="o-card" data-preview>' + esc(cxbFill(tplMode ? (s.message.template || '') : s.message.text, pc, job)) + '</div></div></div>' : '') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center"><select class="app-input" aria-label="Condition" onchange="if(this.value){ CXB.d.steps[' + i + '].conditions = [this.value]; } else { CXB.d.steps[' + i + '].conditions = []; } cxbRefresh()"><option value="">Everyone</option>' + CONDS.map(function(c){ return '<option value="' + esc(c[0]) + '"' + ((s.conditions || []).indexOf(c[0]) > -1 ? ' selected' : '') + '>' + esc(c[1]) + '</option>'; }).join('') + '</select>' +
+      '<span style="flex:1"></span>' + lnk('↑', 'cxbMove(' + i + ', -1)', ' aria-label="Move up"') + lnk('↓', 'cxbMove(' + i + ', 1)', ' aria-label="Move down"') + lnk('Duplicate', 'cxbDuplicate(' + i + ')') + lnk('Delete', 'cxbDelete(' + i + ')', ' data-delete="' + i + '"') + '</div></article>';
+  }
+  function stepsStep(d){
+    return '<section class="o-card" data-cxb-step="2"><div class="o-card__head"><div><h2 class="o-card__title">Steps</h2><p class="o-card__sub">Read top to bottom. Each step goes only to people who match it.</p></div>' + btn('Use recommended steps', 'cxbUseRecommended()', false, ' id="cxb-recommended"') + '</div>' +
+      (B.undo && Date.now() < B.undo.until ? '<div class="o-note" role="status" id="cxb-undo">Step deleted. ' + lnk('Undo', 'cxbUndo()') + '</div>' : '') +
+      '<div style="display:grid;gap:8px">' + d.steps.map(function(s, i){ return stepCard(d, s, i) + '<p style="text-align:center">' + lnk('+ Add step', 'cxbAddStep(' + (i + 1) + ')') + '</p>'; }).join('') + (d.steps.length ? '' : '<p class="o-card__sub">No steps yet. ' + lnk('+ Add step', 'cxbAddStep()') + '</p>') + '</div>' +
+      '<div class="o-card" style="margin-top:8px"><label class="text-sm"><input type="checkbox"' + (d.toggles.stopOnReply ? ' checked' : '') + ' onchange="CXB.d.toggles.stopOnReply = this.checked"> Stop for anyone who replies</label><br><label class="text-sm"><input type="checkbox"' + (d.toggles.stopOnApply ? ' checked' : '') + ' onchange="CXB.d.toggles.stopOnApply = this.checked"> Stop for anyone who applies</label><br><label class="text-sm"><input type="checkbox"' + (d.toggles.workingHours ? ' checked' : '') + ' onchange="CXB.d.toggles.workingHours = this.checked"> Only send in working hours (' + esc(d.hours.replace('-', '–')) + ')</label><br><label class="text-sm"><input type="checkbox"' + (d.branch === 'not-now-30' ? ' checked' : '') + ' onchange="CXB.d.branch = this.checked ? \'not-now-30\' : null"> If they say Not now, ask again in 30 days</label></div>' +
+      '<p style="margin-top:12px">' + lnk('Back', 'cxbGo(1)') + ' ' + btn('Next', 'cxbGo(3)', true, ' id="cxb-next2"' + (d.steps.length ? '' : ' disabled')) + '</p></section>';
+  }
+  function reviewStep(d){
+    const r = cxbReview(), job = d.audience.jobId && jobById(d.audience.jobId);
+    return '<section class="o-card" data-cxb-step="3"><h2 class="o-card__title">Review &amp; start</h2><p class="o-card__sub">' + r.people + ' people · ' + d.steps.length + ' steps · sender ' + esc(d.sender) + '</p>' +
+      '<div style="display:grid;gap:8px">' + r.previews.map(function(c){ return '<div class="o-card" data-review-preview><b>' + esc(c.name) + '</b><p>' + esc(cxbFill(d.steps[0] && d.steps[0].message.text, c, job)) + '</p></div>'; }).join('') + '</div>' +
+      '<p id="cxb-estimate">About ' + r.credits.toLocaleString('en-IN') + ' credits' + (typeof cxMoney === 'function' && cxMoney() ? ' (₹' + r.credits.toLocaleString('en-IN') + ')' : '') + '. Your balance: ' + cxBalance().toLocaleString('en-IN') + '</p>' +
+      (r.fixes.length ? '<ul class="o-list" id="cxb-fixes">' + r.fixes.map(function(f){ return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
+      '<p style="margin-top:12px">' + lnk('Back', 'cxbGo(2)') + ' ' + lnk('Save as draft', 'cxbSaveDraft(); CXB.view=\'list\'; cxbRefresh()') + ' ' + btn('Start campaign', 'var r = cxbStart(); if(!r.ok) toast(r.reason)', true, ' id="cxb-start"') + '</p>' +
+      '<details style="margin-top:8px"><summary>Save as a template</summary><input class="app-input" id="cxb-tpl-name" placeholder="Name" aria-label="Template name"> <select class="app-input" id="cxb-tpl-scope" aria-label="Who can use it"><option value="me">Just me</option><option value="team">My team</option><option value="workspace">Everyone in the workspace</option></select> ' + btn('Save', "var r = cxbSaveTemplate(document.getElementById('cxb-tpl-name').value, document.getElementById('cxb-tpl-scope').value); toast(r.ok ? 'Saved.' : r.reason)") + '</details></section>';
+  }
+  function campaignView(){
+    const d = CAMPS.find(function(x){ return x.id === B.open; }); if(!d) return listView();
+    return '<section class="o-card" id="cxb-campaign" data-status="' + d.status + '"><div class="o-card__head"><div><h2 class="o-card__title">' + esc(d.name) + '</h2><p class="o-card__sub">' + esc(d.status === 'running' ? 'Running' : d.status === 'paused' ? 'Paused' : 'Draft') + '. Changes affect only messages not yet sent.</p></div>' + (d.status === 'running' ? btn('Pause', "cxbPause('" + d.id + "')", true, ' id="cxb-pause"') : d.status === 'paused' ? btn('Resume', "cxbResume('" + d.id + "')", true, ' id="cxb-resume"') : '') + '</div>' +
+      d.steps.map(function(s, i){ const st = (d.stats || [])[i] || { sent:0, replied:0, interested:0 }; return '<div class="o-card" data-run-step="' + i + '"><b>' + esc(cxbStepSentence(s)) + '</b><p class="o-card__sub">' + st.sent + ' sent · ' + st.replied + ' replied · ' + st.interested + ' interested</p></div>'; }).join('') +
+      '<p>' + lnk('All campaigns', "CXB.view='list'; cxbRefresh()") + '</p></section>';
+  }
+  window.cxbHTML = function(){
+    const ind = function(n, label){ return '<li aria-current="' + (B.step === n ? 'step' : 'false') + '"' + (B.step === n ? ' style="font-weight:600"' : '') + '>' + n + ' ' + label + '</li>'; };
+    if(B.view === 'campaign') return '<div class="s-content" id="cxb">' + campaignView() + '</div>';
+    if(B.view !== 'build' || !B.d) return '<div class="s-content" id="cxb">' + listView() + '</div>';
+    const d = B.d;
+    return '<div class="s-content" id="cxb"><div class="o-card"><input class="app-input" value="' + esc(d.name) + '" aria-label="Campaign name" onchange="cxbSet(\'name\', this.value)"><ol class="cxb-ind" style="display:flex;gap:16px;list-style:none;padding:0;margin:8px 0 0">' + ind(1, 'Who') + ind(2, 'Steps') + ind(3, 'Review & start') + '</ol></div>' + (B.step === 1 ? whoStep(d) : B.step === 2 ? stepsStep(d) : reviewStep(d)) + '</div>';
+  };
+  /* Cowork › Campaigns tab (agency), next to Agents, Activity and Credits */
+  function hook(){
+    if(typeof window.caRender !== 'function' || window.caRender.__cx3) return;
+    const base = window.caRender;
+    const w = function(){
+      if(!(typeof cxOn === 'function' && cxOn('campaigns'))) return base.apply(this, arguments);
+      const want = !CA.agent && CA.tab === 'campaigns';
+      if(want) CA.tab = 'agents';
+      let h; try { h = base.apply(this, arguments); } finally { if(want) CA.tab = 'campaigns'; }
+      if(typeof h !== 'string') return h;
+      const at = h.indexOf('<div role="tablist" id="ca-tabs"'); if(at < 0) return h;
+      const close = h.indexOf('</div>', at); let tabs = h.slice(at, close); if(want) tabs = tabs.replace(/aria-selected="true"/g, 'aria-selected="false"');
+      tabs += '<button type="button" role="tab" id="ca-tab-campaigns" aria-selected="' + want + '" onclick="CA.tab=\'campaigns\'; CXB.view = CXB.view === \'build\' ? \'build\' : \'list\'; caRefresh()">Campaigns</button>';
+      h = h.slice(0, at) + tabs + h.slice(close);
+      if(!want) return h;
+      let i = h.indexOf('</div></div>', at) + '</div></div>'.length;
+      const end = h.lastIndexOf('</div>'); const setup = h.indexOf('id="cx-setup-card"');
+      return h.slice(0, i) + cxbHTML() + '</div>';
+    };
+    w.__cx3 = true; w.__cx = base.__cx; w.__cx1b = base.__cx1b; w.__rx = base.__rx; window.caRender = w; try { caRender = w; } catch(e){}
+  }
+  hook(); window.addEventListener('load', hook);
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)

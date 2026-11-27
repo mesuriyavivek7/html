@@ -26,7 +26,7 @@
 <main id="root"></main>
 <script id="cx-data" type="application/json">
 {
-    "updated":  "2026-11-28 03:36 IST",
+    "updated":  "2026-11-28 03:57 IST",
     "phases":  [
                    {
                        "id":  "C0",
@@ -67,11 +67,11 @@
                    {
                        "id":  "C3",
                        "name":  "Outreach playbook and Simple Campaign Builder",
-                       "status":  "not started",
-                       "start":  "",
-                       "end":  "",
-                       "specs":  "",
-                       "note":  ""
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-campaign-builder 13/13",
+                       "note":  "Playbook per segment, weekly cap 2 with moves, A/B, reply outcomes; builder in Cowork \u003e Campaigns (Who / Steps / Review), templates by scope, starts-when, conditions, branch, per-user defaults"
                    },
                    {
                        "id":  "C4",
@@ -138,9 +138,9 @@
                    }
                ],
     "counters":  {
-                     "tests":  "cx-credits 14 · cx-setup 12 · cx-match 11",
+                     "tests":  "cx-credits 14 · cx-setup 12 · cx-match 11 · cx-campaign-builder 13",
                      "precision":  "Java 1.0 · Sales 1.0 · Nurse 1.0 (old: 1.0 · 1.0 · 0.9)",
-                     "clicks":  "—",
+                     "clicks":  "7 clicks (limit 12)",
                      "seed":  "466 / 19,534 — matches"
                  },
     "decisions":  [
@@ -153,7 +153,10 @@
                       "C1: rupee amounts only for people with billing view; a recruiter sees credits only.",
                       "C1b: Configure opens the channel page directly (the app router rewrites the address); #/settings/channels/\u003cchannel\u003e?return=cowork deep links still work.",
                       "C2: fixtures shuffled with a fixed order before both models rank, so neither gets the fixture order for free; must-haves use CV evidence over the profile (a skill only on the profile but absent from the CV is not met).",
-                      "C2: runner // @fixture \u003cpath\u003e inlines evaluation fixtures before a spec."
+                      "C2: runner // @fixture \u003cpath\u003e inlines evaluation fixtures before a spec.",
+                      "C3: the agency has no Campaigns screen today, so under CX the builder is Cowork \u003e Campaigns (reusing the job audience and Talent Discovery picks); Workflow Studio stays behind Advanced.",
+                      "C3: a team is the recruiter department (the roster has no team field); the honesty check reads the message as written, before names are filled in (a candidate sharing a recruiter first name is not a wrong-sender warning).",
+                      "C3: a step skipped for its condition keeps the next step own wait instead of sending it at once."
                   ],
     "isolated":  [
 
