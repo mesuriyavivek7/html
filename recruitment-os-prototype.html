@@ -71943,6 +71943,222 @@ function cfScopeHTML(){
   }
 })();
 </script>
+<script id="o2-allocation-script">
+/* ============================================================
+   O2 STEP 4d: PAYMENT ALLOCATIONS, BANK RECONCILIATION, TDS (2026-11-26, billing step) — §3.4
+   Records: BOS.payments (source provider | bank | customer-credit, status unallocated | partly_allocated | allocated |
+   refunded), BOS.allocations ({ paymentId|null, invoiceNo, kind cash|tds|credit, amount, at, by, confirmedBy, note };
+   TDS rows add section, financialYear, quarter, certificateStatus, certificateRef), BOS.customerCredits.
+   Settlement of a tax invoice: outstanding = total − Σ allocations − credit notes; open → partly_paid → paid (+ cancelled).
+   Commands: payment.record-bank-credit, payment.allocate, payment.unallocate (a reversing row, never an edit),
+   payment.record-tds, tds.update-certificate, customer-credit.apply, payment.confirm-credit.
+   - Bank credits are never assigned on their own: o2SuggestMatches proposes (a) reference = an open invoice number of a
+     billing customer whose name matches the payer, amount ≤ outstanding (+ TDS tolerance), else (b) amount = one open
+     invoice's outstanding and payer name matches. Finance confirms each allocation.
+   - Provider payments (links, checkout, mandates) allocate to their own invoice automatically (bosTaxMarkPaid); a
+     repeated event changes nothing; a mismatch keeps today's Finance exception. bosAutoInvoice still creates at most one
+     invoice per payment.
+   - Manual verification (markInvoicePaid with a reference) = record bank credit + allocate in full, in one step.
+   - An invoice settled by allocations is marked paid the old way too (dual-write), and its subscription is renewed /
+     activated as a paid link would; partly_paid leaves the old flag unpaid and the subscription as it is.
+   - Integrity rules unmatched-credit (policy.unmatchedCreditDays) and tds-certificate-overdue (policy.tdsCertificateDueDays
+     after the quarter); Reconciliation gains Unmatched · Partly paid · TDS receivable.
+   - Permission: allocate and record_tds belong to Finance templates that hold verify_payment (§7.2).
+============================================================ */
+(function(){
+  const on = function(){ return o2On('4d'); };
+  const DAY = 864e5, ISO = function(t){ return new Date(t == null ? bosNow() : t).toISOString(); }, r2 = function(n){ return Math.round(n * 100) / 100; };
+  BOS.payments = BOS.payments || []; BOS.allocations = BOS.allocations || []; BOS.customerCredits = BOS.customerCredits || [];
+  const E = function(s){ return oEsc(s == null ? '' : s); };
+  const canAllocate = function(){ return canPlatform('platform-finance', 'allocate') || canPlatform('platform-finance', 'verify_payment'); };
+  const whyNot = function(){ return 'Only Finance (people who verify payments) can allocate money or record TDS.'; };
+  const inv = function(no){ return typeof bosTaxInvoice === 'function' ? bosTaxInvoice(no) : null; };
+  const pay = function(id){ return BOS.payments.find(function(p){ return p.id === id; }) || null; };
+  const allocsOf = function(no){ return BOS.allocations.filter(function(a){ return a.invoiceNo === no; }); };
+  const creditNotes = function(no){ return BOS.taxInvoices.filter(function(x){ return x.kind === 'credit_note' && x.originalNo === no; }).reduce(function(s, x){ return s + Math.abs(Number(x.total) || 0); }, 0); };
+  window.o2Settlement = function(t){
+    if(typeof t === 'string') t = inv(t); if(!t) return null;
+    const allocated = r2(allocsOf(t.no).reduce(function(s, a){ return s + a.amount; }, 0)), cn = r2(creditNotes(t.no)), total = Number(t.total) || 0;
+    const outstanding = r2(total - allocated - cn);
+    const status = t.status === 'cancelled' ? 'cancelled' : outstanding <= 0.009 ? 'paid' : allocated > 0 || cn > 0 ? 'partly_paid' : (t.status === 'paid' && !allocsOf(t.no).length ? 'paid' : 'open');   // paid before step 4d: no allocations at all
+    return { total:total, allocated:allocated, creditNotes:cn, outstanding:Math.max(0, outstanding), status:status, overpaid:outstanding < -0.009 ? r2(-outstanding) : 0 };
+  };
+  const payStatus = function(p){ const used = r2(BOS.allocations.filter(function(a){ return a.paymentId === p.id; }).reduce(function(s, a){ return s + a.amount; }, 0)) + r2((p.creditIssued || 0)); return used <= 0.009 ? 'unallocated' : used + 0.009 < p.amount ? 'partly_allocated' : 'allocated'; };
+  window.o2PaymentLeft = function(p){ if(typeof p === 'string') p = pay(p); if(!p) return 0; return r2(p.amount - BOS.allocations.filter(function(a){ return a.paymentId === p.id; }).reduce(function(s, a){ return s + a.amount; }, 0) - (p.creditIssued || 0)); };
+  const refresh = function(p){ if(p && p.status !== 'refunded') p.status = payStatus(p); };
+  /* the invoice is settled: old flag, internal row, subscription — as a paid link would do */
+  function settle(t, how){
+    const s = o2Settlement(t); if(!s || s.status !== 'paid') return false;
+    if(t.status !== 'paid'){ t.status = 'paid'; t.paidAt = ISO(); t.paymentRef = t.paymentRef || how || 'Allocations'; t.settlement = 'paid'; }
+    const internal = t.sourceRef && typeof invoiceById === 'function' ? invoiceById(t.sourceRef) : null;
+    if(internal && internal.status === 'issued'){ internal.status = 'paid'; internal.paidAt = ISO(); internal.verifiedBy = internal.verifiedBy || 'allocations'; }
+    const sub = internal && subscriptionById(internal.subscriptionId);
+    if(sub && (sub.dunning || sub.readOnly || sub.status === 'past_due' || sub.o2Status === 'incomplete' || sub.status === 'trial')){ sub.status = 'active'; sub.statusLegacy = 'active'; sub.readOnly = false; delete sub.o2Status; sub.dunning = null; }
+    return true;
+  }
+  const quarterOf = function(iso){ const d = new Date(iso), m = d.getMonth(); return m >= 3 && m <= 5 ? 'Q1' : m >= 6 && m <= 8 ? 'Q2' : m >= 9 && m <= 11 ? 'Q3' : 'Q4'; };
+  const quarterEnd = function(fy, q){ const y = 2000 + Number(String(fy).slice(0, 2)); return { Q1:new Date(y, 5, 30), Q2:new Date(y, 8, 30), Q3:new Date(y, 11, 31), Q4:new Date(y + 1, 2, 31) }[q]; };
+  const billingNameOf = function(t){ const b = t.billingCustomerId && typeof o2BillingCustomer === 'function' ? o2BillingCustomer(t.billingCustomerId) : null; return (b && b.legalName) || (t.buyer && t.buyer.legalName) || t.customer || ''; };
+  const sameName = function(a, b){ const n = function(x){ return String(x || '').toLowerCase().replace(/\b(pvt|private|ltd|limited|llp|inc|the)\b/g, '').replace(/[^a-z0-9]/g, ''); }; const x = n(a), y = n(b); return !!x && !!y && (x === y || x.indexOf(y) === 0 || y.indexOf(x) === 0); };
+  const openInvoices = function(cur){ return BOS.taxInvoices.filter(function(t){ return t.kind === 'invoice' && !t.sample && t.status !== 'cancelled' && (!cur || t.currency === cur) && o2Settlement(t).outstanding > 0; }); };
+
+  /* ---------- commands ---------- */
+  window.o2RecordBankCredit = function(input){
+    input = input || {};
+    return bosRun('payment.record-bank-credit', input.idempotencyKey ? { idempotencyKey:input.idempotencyKey } : null, function(){
+      if(!on()) return { ok:false, reason:'Allocations are part of step 4d, which is off.' };
+      if(!canAllocate()) return { ok:false, reason:whyNot() };
+      const amt = r2(Number(input.amount)); if(!(amt > 0)) return { ok:false, field:'amount', reason:'Enter the amount received.' };
+      if(!String(input.reference || '').trim()) return { ok:false, field:'reference', reason:'Enter the bank reference (UTR).' };
+      if(!String(input.payerName || '').trim()) return { ok:false, field:'payerName', reason:'Enter the payer’s name as the bank shows it.' };
+      const p = { id:bosId('PAY', 4), source:'bank', providerEventId:null, bank:{ date:input.date || ISO().slice(0, 10), amount:amt, reference:String(input.reference).trim(), payerName:String(input.payerName).trim() }, currency:input.currency || 'INR', amount:amt, status:'unallocated', allocations:[], receivedAt:input.receivedAt || ISO(), recordedBy:ACTIVE_PLATFORM_USER_ID };
+      BOS.payments.push(p);
+      return { ok:true, payment:p, suggestions:o2SuggestMatches(p.id), ref:p.id, audit:['Bank credit recorded', p.currency + ' ' + amt + ' · ' + p.bank.reference + ' · ' + p.bank.payerName, { entityId:p.id, entityType:'Payment' }] };
+    });
+  };
+  window.o2SuggestMatches = function(paymentId){
+    const p = pay(paymentId); if(!p || p.source !== 'bank') return [];
+    const left = o2PaymentLeft(p), tolPct = Number(o2Policy('tdsExpectedPercent')) || 10, ref = String(p.bank.reference || '').toUpperCase();
+    const list = openInvoices(p.currency);
+    const a = list.filter(function(t){ return ref.indexOf(String(t.no).toUpperCase()) > -1 && sameName(p.bank.payerName, billingNameOf(t)) && left <= o2Settlement(t).outstanding * (1 + tolPct / 100) + 0.009; }).map(function(t){ return { invoiceNo:t.no, amount:Math.min(left, o2Settlement(t).outstanding), rule:'reference', why:'The reference names ' + t.no + ' and the payer matches ' + billingNameOf(t) + '.' }; });
+    if(a.length) return a;
+    const b = list.filter(function(t){ return Math.abs(o2Settlement(t).outstanding - left) < 0.01 && sameName(p.bank.payerName, billingNameOf(t)); });
+    return b.length === 1 ? [{ invoiceNo:b[0].no, amount:left, rule:'amount', why:'Same amount as the outstanding on ' + b[0].no + ' and the payer matches ' + billingNameOf(b[0]) + '.' }] : [];
+  };
+  function addAlloc(o){ const a = Object.assign({ id:bosId('ALC', 4), at:ISO(), by:ACTIVE_PLATFORM_USER_ID, confirmedBy:ACTIVE_PLATFORM_USER_ID, note:'' }, o); BOS.allocations.push(a); const p = a.paymentId && pay(a.paymentId); if(p){ p.allocations.push(a.id); refresh(p); } return a; }
+  window.o2Allocate = function(paymentId, invoiceNo, amount, note){
+    const p = pay(paymentId), t = inv(invoiceNo);
+    return bosRun('payment.allocate', null, function(){
+      if(!on()) return { ok:false, reason:'Allocations are part of step 4d, which is off.' };
+      if(!canAllocate()) return { ok:false, reason:whyNot() };
+      if(!p) return { ok:false, reason:'Payment not found.' }; if(!t || t.kind !== 'invoice') return { ok:false, reason:'Pick an issued invoice.' };
+      if(t.currency !== p.currency) return { ok:false, reason:'The payment is in ' + p.currency + ' and the invoice in ' + t.currency + '.' };
+      const others = BOS.allocations.filter(function(a){ return a.paymentId === p.id && a.amount > 0; }).map(function(a){ return inv(a.invoiceNo); }).filter(Boolean);
+      if(others.length && others.some(function(o){ return o.accountId !== t.accountId; })) return { ok:false, reason:'One payment is allocated within one billing customer only.' };
+      const st = o2Settlement(t), left = o2PaymentLeft(p), amt = r2(amount == null ? Math.min(left, st.outstanding) : Number(amount));
+      if(!(amt > 0)) return { ok:false, field:'amount', reason:'Nothing to allocate.' };
+      if(amt > left + 0.009) return { ok:false, field:'amount', reason:'Only ' + p.currency + ' ' + left + ' of this payment is left.' };
+      if(amt > st.outstanding + 0.009) return { ok:false, field:'amount', reason:t.no + ' has ' + t.currency + ' ' + st.outstanding + ' outstanding. The rest can become customer credit.' };
+      const a = addAlloc({ paymentId:p.id, invoiceNo:t.no, kind:'cash', amount:amt, note:String(note || '') });
+      settle(t, p.source === 'bank' ? 'Bank ' + p.bank.reference : 'Allocations');
+      return { ok:true, allocation:a, settlement:o2Settlement(t), payment:p, ref:a.id, audit:['Payment allocated', p.id + ' → ' + t.no + ' · ' + p.currency + ' ' + amt + (note ? ' · ' + note : ''), { entityId:a.id, entityType:'Allocation' }] };
+    });
+  };
+  window.o2Unallocate = function(allocationId, reason){
+    const a = BOS.allocations.find(function(x){ return x.id === allocationId; });
+    return bosRun('payment.unallocate', null, function(){
+      if(!on()) return { ok:false, reason:'Allocations are part of step 4d, which is off.' };
+      if(!canAllocate()) return { ok:false, reason:whyNot() };
+      if(!a || a.amount <= 0) return { ok:false, reason:'Pick an allocation to reverse.' };
+      if(BOS.allocations.some(function(x){ return x.reversalOf === a.id; })) return { ok:false, reason:'This allocation is already reversed.' };
+      if(String(reason || '').trim().length < 8) return { ok:false, field:'reason', reason:'Say why it is being reversed.' };
+      const r = addAlloc({ paymentId:a.paymentId, invoiceNo:a.invoiceNo, kind:a.kind, amount:-a.amount, reversalOf:a.id, note:String(reason).trim() });
+      const t = inv(a.invoiceNo); if(t && o2Settlement(t).status !== 'paid' && t.status === 'paid' && t.settlement === 'paid'){ t.status = 'issued'; t.settlement = o2Settlement(t).status; const internal = t.sourceRef && invoiceById(t.sourceRef); if(internal && internal.verifiedBy === 'allocations'){ internal.status = 'issued'; internal.paidAt = null; } }
+      return { ok:true, allocation:r, settlement:t ? o2Settlement(t) : null, ref:r.id, audit:['Allocation reversed', a.id + ' · ' + a.invoiceNo + ' · ' + reason, { entityId:r.id, entityType:'Allocation' }] };
+    });
+  };
+  window.o2RecordTds = function(invoiceNo, input){
+    input = input || {}; const t = inv(invoiceNo);
+    return bosRun('payment.record-tds', null, function(){
+      if(!on()) return { ok:false, reason:'Allocations are part of step 4d, which is off.' };
+      if(!canAllocate()) return { ok:false, reason:whyNot() };
+      if(!t || t.kind !== 'invoice') return { ok:false, reason:'Pick an issued invoice.' };
+      const amt = r2(Number(input.amount)); if(!(amt > 0)) return { ok:false, field:'amount', reason:'Enter the TDS amount.' };
+      if(!String(input.section || '').trim()) return { ok:false, field:'section', reason:'Enter the TDS section from the customer’s deduction (no section is assumed).' };
+      const st = o2Settlement(t); if(amt > st.outstanding + 0.009) return { ok:false, field:'amount', reason:'TDS can’t exceed the outstanding ' + t.currency + ' ' + st.outstanding + '.' };
+      const at = input.date || ISO(), fy = input.financialYear || (typeof bosFyOf === 'function' ? bosFyOf(at) : ''), q = input.quarter || quarterOf(at);
+      const a = addAlloc({ paymentId:null, invoiceNo:t.no, kind:'tds', amount:amt, section:String(input.section).trim(), financialYear:fy, quarter:q, certificateStatus:'expected', certificateRef:'', note:input.note || '' });
+      const exp = o2Policy('tdsExpectedPercent'), warn = exp != null && Math.abs(amt / (Number(t.amount) || 1) * 100 - exp) > 0.5 ? 'TDS is ' + r2(amt / (Number(t.amount) || 1) * 100) + '% of the taxable value; policy expects ' + exp + '%. Check the deduction.' : null;
+      settle(t, 'Cash + TDS');
+      return { ok:true, allocation:a, warning:warn, settlement:o2Settlement(t), ref:a.id, audit:['TDS recorded', t.no + ' · ' + t.currency + ' ' + amt + ' · ' + a.section + ' · ' + fy + ' ' + q, { entityId:a.id, entityType:'Allocation' }] };
+    });
+  };
+  window.o2UpdateTdsCertificate = function(allocationId, status, ref){
+    const a = BOS.allocations.find(function(x){ return x.id === allocationId && x.kind === 'tds'; });
+    return bosRun('tds.update-certificate', null, function(){
+      if(!on()) return { ok:false, reason:'Allocations are part of step 4d, which is off.' };
+      if(!canAllocate()) return { ok:false, reason:whyNot() };
+      if(!a) return { ok:false, reason:'TDS record not found.' }; if(['expected', 'received', 'verified'].indexOf(status) < 0) return { ok:false, reason:'Status is expected, received or verified.' };
+      if(status !== 'expected' && !String(ref || '').trim()) return { ok:false, field:'ref', reason:'Enter the certificate number.' };
+      const from = a.certificateStatus; a.certificateStatus = status; if(ref) a.certificateRef = String(ref).trim();
+      return { ok:true, allocation:a, ref:a.id, audit:['TDS certificate ' + status, a.invoiceNo + ' · ' + from + ' → ' + status + (ref ? ' · ' + ref : ''), { entityId:a.id, entityType:'Allocation' }] };
+    });
+  };
+  /* an overpayment remainder becomes customer credit only when Finance confirms */
+  window.o2ConfirmCredit = function(paymentId, note){
+    const p = pay(paymentId);
+    return bosRun('payment.confirm-credit', null, function(){
+      if(!on()) return { ok:false, reason:'Allocations are part of step 4d, which is off.' };
+      if(!canAllocate()) return { ok:false, reason:whyNot() };
+      if(!p) return { ok:false, reason:'Payment not found.' }; const left = o2PaymentLeft(p); if(!(left > 0)) return { ok:false, reason:'Nothing is left on this payment.' };
+      const target = BOS.allocations.filter(function(a){ return a.paymentId === p.id && a.amount > 0; }).map(function(a){ return inv(a.invoiceNo); }).filter(Boolean)[0];
+      if(!target) return { ok:false, reason:'Allocate the payment to the customer’s invoice first, so the credit belongs to the right customer.' };
+      const c = { id:bosId('CRD', 4), accountId:target.accountId, billingCustomerId:target.billingCustomerId || null, currency:p.currency, amount:left, applied:0, sourcePaymentId:p.id, at:ISO(), by:ACTIVE_PLATFORM_USER_ID, note:String(note || '') };
+      BOS.customerCredits.push(c); p.creditIssued = r2((p.creditIssued || 0) + left); refresh(p);
+      return { ok:true, credit:c, ref:c.id, audit:['Customer credit confirmed', p.id + ' · ' + p.currency + ' ' + left + ' for ' + (target.customer || target.accountId), { entityId:c.id, entityType:'Customer credit' }] };
+    });
+  };
+  window.o2ApplyCredit = function(creditId, invoiceNo, amount){
+    const c = BOS.customerCredits.find(function(x){ return x.id === creditId; }), t = inv(invoiceNo);
+    return bosRun('customer-credit.apply', null, function(){
+      if(!on()) return { ok:false, reason:'Allocations are part of step 4d, which is off.' };
+      if(!canAllocate()) return { ok:false, reason:whyNot() };
+      if(!c || !t) return { ok:false, reason:'Credit or invoice not found.' }; if(t.accountId !== c.accountId) return { ok:false, reason:'Credit can only pay the same customer’s invoices.' }; if(t.currency !== c.currency) return { ok:false, reason:'Different currency.' };
+      const left = r2(c.amount - c.applied), st = o2Settlement(t), amt = r2(amount == null ? Math.min(left, st.outstanding) : Number(amount));
+      if(!(amt > 0) || amt > left + 0.009 || amt > st.outstanding + 0.009) return { ok:false, field:'amount', reason:'Up to ' + Math.min(left, st.outstanding) + ' can be applied.' };
+      const a = addAlloc({ paymentId:null, creditId:c.id, invoiceNo:t.no, kind:'credit', amount:amt });
+      c.applied = r2(c.applied + amt); settle(t, 'Customer credit');
+      return { ok:true, allocation:a, settlement:o2Settlement(t), ref:a.id, audit:['Customer credit applied', c.id + ' → ' + t.no + ' · ' + c.currency + ' ' + amt, { entityId:a.id, entityType:'Allocation' }] };
+    });
+  };
+
+  /* ---------- provider payments allocate to their own invoice ---------- */
+  const baseMark = window.bosTaxMarkPaid;
+  window.bosTaxMarkPaid = bosTaxMarkPaid = function(t, paymentId, ref){
+    const wasPaid = t && t.status === 'paid'; const out = baseMark.apply(this, arguments);
+    if(!on() || !t || wasPaid || !paymentId) return out;
+    if(BOS.payments.some(function(p){ return p.providerEventId === paymentId; })) return out;   // the same event never allocates twice
+    const st = o2Settlement(t), amt = r2((Number(t.total) || 0) - st.allocated - st.creditNotes);
+    if(amt > 0){ const prev = ACTIVE_PLATFORM_USER_ID; const p = { id:bosId('PAY', 4), source:'provider', providerEventId:paymentId, bank:null, currency:t.currency, amount:amt, status:'unallocated', allocations:[], receivedAt:ISO(), recordedBy:'provider', reference:ref || '' }; BOS.payments.push(p); addAlloc({ paymentId:p.id, invoiceNo:t.no, kind:'cash', amount:amt, by:'provider', confirmedBy:'provider (verified event)', note:ref || '' }); ACTIVE_PLATFORM_USER_ID = prev; }
+    return out;
+  };
+  /* manual verification: record the bank credit and allocate it in full, in one confirmation */
+  const baseManual = window.markInvoicePaid;
+  window.markInvoicePaid = markInvoicePaid = function(invId, opts){
+    const out = baseManual.apply(this, arguments);
+    if(!on() || !out || !out.ok) return out;
+    const t = BOS.taxInvoices.find(function(x){ return x.sourceRef === invId && x.kind === 'invoice'; }); if(!t) return out;
+    const st = o2Settlement(t), left = r2((Number(t.total) || 0) - st.allocated - st.creditNotes); if(!(left > 0)) return out;
+    const p = { id:bosId('PAY', 4), source:'bank', providerEventId:null, bank:{ date:ISO().slice(0, 10), amount:left, reference:String((opts || {}).reference || '').trim(), payerName:billingNameOf(t) }, currency:t.currency, amount:left, status:'unallocated', allocations:[], receivedAt:ISO(), recordedBy:ACTIVE_PLATFORM_USER_ID };
+    BOS.payments.push(p); addAlloc({ paymentId:p.id, invoiceNo:t.no, kind:'cash', amount:left, note:'Verified by hand · ' + p.bank.reference });
+    BOS.events.push({ id:bosId('EV'), name:'payment.allocate', at:ISO(), actor:ACTIVE_PLATFORM_USER_ID, ref:t.no });
+    return out;
+  };
+
+  /* ---------- integrity rules ---------- */
+  window.o2AllocationFindings = function(nowMs){
+    const now = nowMs || bosNow(), out = [];
+    BOS.payments.filter(function(p){ return p.source === 'bank' && p.status === 'unallocated' && now - new Date(p.receivedAt).getTime() > o2Policy('unmatchedCreditDays') * DAY; }).forEach(function(p){ out.push({ rule:'unmatched-credit', key:'unmatched:' + p.id, domain:'Finance', severity:'high', title:'Unmatched bank credit: ' + p.currency + ' ' + p.amount + ' from ' + p.bank.payerName, ref:{ type:'payment', id:p.id }, evidence:['Received ' + p.bank.date + ' · reference ' + p.bank.reference + ' · not allocated for ' + Math.floor((now - new Date(p.receivedAt).getTime()) / DAY) + ' days'] }); });
+    BOS.allocations.filter(function(a){ return a.kind === 'tds' && a.amount > 0 && a.certificateStatus === 'expected' && !BOS.allocations.some(function(x){ return x.reversalOf === a.id; }); }).forEach(function(a){ const end = quarterEnd(a.financialYear, a.quarter); if(end && now > end.getTime() + o2Policy('tdsCertificateDueDays') * DAY) out.push({ rule:'tds-certificate-overdue', key:'tds:' + a.id, domain:'Finance', severity:'medium', title:'TDS certificate overdue: ' + a.invoiceNo, ref:{ type:'allocation', id:a.id }, evidence:[a.section + ' · ' + a.financialYear + ' ' + a.quarter + ' · ' + a.amount + ' · certificate still expected'] }); });
+    return out;
+  };
+  const baseScan = window.bosIntegrityScan;
+  window.bosIntegrityScan = bosIntegrityScan = function(){ const out = baseScan.apply(this, arguments); if(on()) try { o2AllocationFindings().forEach(function(x){ bosRaiseException(x); }); } catch(e){ console.error(e); } return on() ? BOS.exceptions.filter(function(e){ return ['detected', 'assigned', 'review', 'confirmed'].indexOf(e.status) > -1; }) : out; };
+
+  /* ---------- Reconciliation: Unmatched · Partly paid · TDS receivable (with 4c's screen, or the old finance tab) ---------- */
+  window.o2ReconciliationHTML = function(){
+    const unmatched = BOS.payments.filter(function(p){ return p.source === 'bank' && p.status !== 'allocated' && p.status !== 'refunded'; });
+    const partly = BOS.taxInvoices.filter(function(t){ return t.kind === 'invoice' && !t.sample && o2Settlement(t).status === 'partly_paid'; });
+    const tds = BOS.allocations.filter(function(a){ return a.kind === 'tds' && a.amount > 0 && !BOS.allocations.some(function(x){ return x.reversalOf === a.id; }); });
+    return oTableCard({ id:'o2-unmatched', title:'Unmatched', sub:'Bank credits waiting for Finance; suggestions are never applied on their own', cols:[{ label:'Credit' }, { label:'Payer' }, { label:'Amount', right:true }, { label:'Left', right:true }, { label:'Suggestion' }, { label:'' }], rows:unmatched.length ? unmatched.map(function(p){ const sg = o2SuggestMatches(p.id)[0]; return '<tr><td><b>' + E(p.id) + '</b><small>' + E(p.bank.reference + ' · ' + p.bank.date) + '</small></td><td>' + E(p.bank.payerName) + '</td><td class="num">' + E(p.currency + ' ' + p.amount) + '</td><td class="num">' + E(o2PaymentLeft(p)) + '</td><td style="white-space:normal">' + E(sg ? sg.invoiceNo + ' · ' + sg.why : 'No match: allocate by hand') + '</td><td>' + (sg && canAllocate() ? '<button type="button" class="o-btn" onclick="bosResult(o2Allocate(\'' + E(p.id) + '\', \'' + E(sg.invoiceNo) + '\', ' + sg.amount + ', \'Confirmed suggestion\'), \'Allocated.\')">Confirm</button>' : '') + '</td></tr>'; }).join('') : oTableEmptyRow(6, 'No unmatched bank credits.') }) +
+      oTableCard({ id:'o2-partly', title:'Partly paid', sub:'Outstanding after cash, TDS and credit', cols:[{ label:'Invoice' }, { label:'Customer' }, { label:'Total', right:true }, { label:'Outstanding', right:true }], rows:partly.length ? partly.map(function(t){ const s = o2Settlement(t); return '<tr><td>' + E(t.no) + '</td><td>' + E(t.customer) + '</td><td class="num">' + E(t.currency + ' ' + s.total) + '</td><td class="num">' + E(t.currency + ' ' + s.outstanding) + '</td></tr>'; }).join('') : oTableEmptyRow(4, 'No partly paid invoices.') }) +
+      oTableCard({ id:'o2-tds', title:'TDS receivable', sub:'Certificates the customer owes us', cols:[{ label:'Invoice' }, { label:'Section' }, { label:'Amount', right:true }, { label:'Quarter' }, { label:'Certificate' }], rows:tds.length ? tds.map(function(a){ return '<tr><td>' + E(a.invoiceNo) + '</td><td>' + E(a.section) + '</td><td class="num">' + E(a.amount) + '</td><td>' + E(a.financialYear + ' ' + a.quarter) + '</td><td>' + E(a.certificateStatus + (a.certificateRef ? ' · ' + a.certificateRef : '')) + '</td></tr>'; }).join('') : oTableEmptyRow(5, 'No TDS recorded.') });
+  };
+  if(typeof window.o2InvoicesTabHTML === 'function'){ const baseTab = window.o2InvoicesTabHTML; window.o2InvoicesTabHTML = function(k){ const h = baseTab.apply(this, arguments); return on() && k === 'reconciliation' ? o2ReconciliationHTML() + h : h; }; }
+  const baseFin = RENDERERS['oontu-finance'];
+  RENDERERS['oontu-finance'] = function(){ const h = baseFin.apply(this, arguments); if(!on() || ((BOS_UI.tab || {})['oontu-finance'] || 0) !== 3) return h; const s = h.indexOf('<div class="seg bos-tabs"'); if(s < 0) return h; const e = h.indexOf('</div>', s) + 6; return h.slice(0, e) + o2ReconciliationHTML() + h.slice(e); };
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
