@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 05:53 IST",
-    "current":  "4b",
+    "updated":  "2026-11-27 06:01 IST",
+    "current":  "4c",
     "partA":  [
                   {
                       "id":  "0a",
@@ -146,11 +146,11 @@
                   {
                       "id":  "4b",
                       "name":  "Subscription statuses",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "11/11 (o2-subscription-lifecycle, o2-access-level); regressions green off and on",
+                      "tag":  "o2-step-4b",
+                      "what":  "Subscription statuses with cancel at period end, cancel now (approval), downgrade at renewal, manual activation; unpaid = read-only.",
+                      "see":  "Switches 3a, 4a, 4b, 4c · Meera Krishnan · Billing › Subscriptions › a subscription › Cancel at period end"
                   },
                   {
                       "id":  "4c",
@@ -383,6 +383,10 @@
                       [
                           "4a checkout hook",
                           "Checkout completion is private to the billing script, so the verified payment event is wrapped; 0c\u0027s checkout link was fixed the same way."
+                      ],
+                      [
+                          "4b dunning",
+                          "Today\u0027s reminder schedule is kept; it equals the policy defaults (1, 3, 7 days; read-only after 7)."
                       ]
                   ],
     "suite":  {

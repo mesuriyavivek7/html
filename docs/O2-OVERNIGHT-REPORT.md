@@ -19,6 +19,7 @@ _In progress. Written in full when the build finishes._
 - **3a** Workspace lifecycle commands with a second person for suspension, closing a suspended workspace and early archive; emergency path for Security; archive keeps a tombstone. Switches 1a, 3a · Meera Krishnan · Workspaces › a workspace › suspend (asks for approval).
 - **3b** Workspaces list (cards, tabs, filters, ten columns) and Workspace 360 (eight tabs, danger zone); Account help actions run as commands. Switches 0b, 1a, 3a, 3b · Meera Krishnan · Workspaces › a row; Requests tab.
 - **4a** Every subscription change is a command with an audit row and an event; subscriptions carry items and a change history. Switches 4a (+4c to see it) · Meera Krishnan · Subscriptions › a subscription › Change history.
+- **4b** Subscription statuses (incomplete … canceled) with cancel at period end, cancel now (approval), downgrade at renewal, manual activation (approval); unpaid makes the workspace read-only and paying clears it. Switches 3a, 4a, 4b (+4c) · Meera Krishnan or Vikram · Subscriptions › a subscription › Cancel at period end.
 
 ## 3. Blocked steps
 
@@ -48,6 +49,8 @@ None yet.
 | 3a close approval | §3.1 asks for a second person to close a suspended workspace but §7.1 lists no type; a workspace-close approval type (approver platform-tenant:activate) was added. |
 | 3a second approver in seeds | Only the Super Admin holds platform-tenant:activate among seeded employees, so in the demo suspensions wait for Meera; the spec gives Ishaan the Platform Manager role. Recommended next: a seeded Platform Manager login. |
 | 4a checkout hook | The checkout-completion function is private to the billing script, so the verified payment event (BOS_PAY.receive) is wrapped instead; the same fix applies to 0c's billing-customer link after checkout. |
+| 4b dunning | The renewal job keeps today's reminder schedule, which equals the policy defaults (1, 3, 7 days; read-only after 7). Reading the days from policy is left for when the owner changes them. |
+| 4b enforcement points | Access level is enforced only where read-only is enforced today: the support tier and the workspace's own plan record. |
 
 ## 5. Step 1a screen lists
 
