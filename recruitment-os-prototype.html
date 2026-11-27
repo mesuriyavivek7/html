@@ -73514,6 +73514,268 @@ function cfScopeHTML(){
   hookHome(); window.addEventListener('load', hookHome);
 })();
 </script>
+<script id="rx-g4-script">
+/* RX G4 — Redeployment (agency) and contract-end decisions (corporate). Switch g4, off by default; off = today.
+   Agency:
+   - rxRedeploySweep(): "Assignment Ending" once at WSX.rx.redeployLeadDays (21) and once at 7 days before a.end for
+     running assignments, "Assignment Ended" once after it ends. Events go through rxEmit (G1 runs the workflows; with G1
+     off the event is still recorded in RX.g4.fired so the board shows it).
+   - rxRedeployJobs(a): open Contract/Temporary jobs (asIsContractJob) ranked by the existing match score
+     (computeJobMatchPct), filtered by location and pay within ±15% of the last pay rate (jobs with no pay on record
+     stay in, marked "pay not set"); projected margin against the client minimum (asMinMargin / asMarginPct); below the
+     minimum is flagged, never hidden.
+   - Availability check: rxAvailSend(a) makes a token; #/avail/<token> answers Yes / Not yet / No and writes
+     candidate.availableFrom (new field). "Ask client to extend" opens the existing extend action (asActionOpen 'extend'
+     → asExtend). Redeploy panel on the assignment (asPanelHTML) and a Redeploy board (rx-redeploy).
+   - Workflow steps rxAvailCheck, createTask (existing), rxShortlistDraft (a draft only; a person submits),
+     rxAskExtend (records the ask in the assignment's audit). New step types run only with G4 on.
+   - rxRedeployMetrics(days): redeployment rate = workers starting a new assignment within WSX.rx.redeployWindowDays
+     (14) of the last one ending ÷ assignments ended; margin retained (estimate) = (bill − pay) × weekly units × weeks of
+     the new assignment.
+   Corporate:
+   - "Work Order Ending" at 21 and 7 days. Decision card on Contract hiring: Extend (coWoExtend: work orders extend
+     there; coAssignExtend is the vendor job assignment), Convert to permanent (the existing coWoConvertOpen dialog,
+     which shows the vendor conversion fee from the vendor's terms), End (reason required; recorded as
+     wo.endDecision + coAudit; the existing sweep ends it on its date). Any decision sets wo.endDecision.
+   - Silver medalists: when a requisition is approved, candidates who reached final interview or offer for a similar
+     role in the last WSX.rx.silverMonths (12) months and were not hired; "Invite to apply" records the invitation. */
+(function(){
+  const D = 86400000;
+  const NOW = function(){ return typeof fmNow === 'function' ? fmNow() : Date.now(); };
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const corp = function(){ try { return typeof jsCorp === 'function' && jsCorp(); } catch(e){ return false; } };
+  const RX = window.RX = window.RX || { touches:[], replies:[], runs:[], seen:{}, skips:[] };
+  RX.g4 = RX.g4 || { fired:{}, avail:{}, drafts:[], asks:[], invites:[] };
+  const G = RX.g4;
+  let seq = 1; const tok = function(){ let s = ''; while(s.length < 24) s += Math.random().toString(36).slice(2); return s.slice(0, 24); };
+
+  /* ---- triggers in Workflow Studio ---- */
+  const TRIGS = ['Assignment Ending', 'Assignment Ended', 'Work Order Ending'];
+  const STEPS = [['rxAvailCheck', 'Send availability check'], ['rxShortlistDraft', 'Shortlist to a job (draft)'], ['rxAskExtend', 'Ask client to extend']];
+  function sync(){
+    if(typeof WF_TRIGGERS === 'undefined') return;
+    TRIGS.forEach(function(t){ const i = WF_TRIGGERS.indexOf(t); if(rxOn('g4') && i < 0){ WF_TRIGGERS.push(t); if(typeof WF_TRIGGER_AGENT !== 'undefined' && !WF_TRIGGER_AGENT[t]) WF_TRIGGER_AGENT[t] = 'offers-joining'; } if(!rxOn('g4') && i > -1) WF_TRIGGERS.splice(i, 1); });
+  }
+  sync(); if(typeof rxOnSwitch === 'function') rxOnSwitch(function(id){ if(id === 'g4') sync(); });
+  window.RX_G4_STEPS = STEPS;
+
+  /* ---- agency: the sweep ---- */
+  const running = function(a){ return typeof asRunning === 'function' ? asRunning(a) : /Active|Extended/.test(a.status); };
+  function fire(event, a, key, extra){
+    if(G.fired[key]) return false; G.fired[key] = NOW();
+    const ev = Object.assign({ candidateId:a.candidateId, jobId:a.jobId, assignmentId:a.id, eventId:key }, extra || {});
+    (G.events = G.events || []).push(Object.assign({ event:event, at:NOW() }, ev));
+    if(typeof rxEmit === 'function') rxEmit(event, ev);
+    return true;
+  }
+  window.rxRedeploySweep = function(){
+    if(!rxOn('g4')) return { ran:false };
+    const now = NOW(), lead = Number(WSX.rx.redeployLeadDays) || 21; let n = 0;
+    if(!corp()) (typeof ASSIGNMENTS !== 'undefined' ? ASSIGNMENTS : []).forEach(function(a){
+      const left = Math.ceil((a.end - now) / D);
+      if(running(a)){
+        if(left <= lead && left > 7 && fire('Assignment Ending', a, 'asend:' + a.id + ':' + lead, { daysLeft:left, threshold:lead })) n++;
+        if(left <= 7 && left >= 0 && fire('Assignment Ending', a, 'asend:' + a.id + ':7', { daysLeft:left, threshold:7 })) n++;
+      } else if(/Ended|Terminated/.test(a.status || '')){ if(fire('Assignment Ended', a, 'asended:' + a.id)) n++; }
+    });
+    if(corp() && typeof CO !== 'undefined') (CO.contracts || []).forEach(function(w){
+      if(['Active', 'Extended'].indexOf(w.status) < 0) return; const left = Math.ceil((w.end - now) / D);
+      [21, 7].forEach(function(th){ if(left <= th && left >= 0 && (th === 7 || left > 7)){ const key = 'woend:' + w.id + ':' + th + ':' + w.end; if(!G.fired[key]){ G.fired[key] = now; (G.events = G.events || []).push({ event:'Work Order Ending', at:now, workOrderId:w.id, threshold:th, daysLeft:left, eventId:key }); if(typeof rxEmit === 'function') rxEmit('Work Order Ending', { workOrderId:w.id, eventId:key, threshold:th }); n++; } } });
+    });
+    return { ran:true, fired:n };
+  };
+  (window.RX_SWEEPERS = window.RX_SWEEPERS || []).push(function(){ rxRedeploySweep(); });
+
+  /* ---- agency: ranked jobs ---- */
+  const jobPay = function(j){ const x = j.contractRates || j.rates || {}; const v = [j.payRate, x.pay, j.pay].find(function(n){ return n != null && isFinite(Number(n)) && Number(n) > 0; }); return v == null ? null : Number(v); };
+  const jobBill = function(j){ const x = j.contractRates || j.rates || {}; const v = [j.billRate, x.bill, j.bill].find(function(n){ return n != null && isFinite(Number(n)) && Number(n) > 0; }); return v == null ? null : Number(v); };
+  const locOk = function(c, a, j){ const jl = String(j.loc || j.location || '').toLowerCase(); if(!jl || /remote/.test(jl)) return true; const places = [c && c.location, c && c.loc, a.client && null].concat((c && c.prefs) || []).filter(Boolean).map(function(x){ return String(x).toLowerCase(); }); if(!places.length) return true; return places.some(function(p){ return jl.indexOf(p.split(',')[0].trim()) > -1 || p.indexOf(jl.split(',')[0].trim()) > -1; }); };
+  window.rxRedeployJobs = function(a){
+    const c = byId(a.candidateId), r = (typeof asCurrentRate === 'function' ? asCurrentRate(a) : null) || {}, last = Number(r.pay) || null;
+    let min = 10; try { min = asMinMargin(asTerms(a)); } catch(e){}
+    return JOBS.filter(function(j){ return j.id !== a.jobId && /Active|Open/i.test(j.status || 'Active') && asIsContractJob(j); }).map(function(j){
+      const pay = jobPay(j), bill = jobBill(j), score = c ? computeJobMatchPct(c, j) : 0;
+      const payOk = pay == null || last == null || Math.abs(pay - last) <= last * 0.15;
+      const usePay = pay != null ? pay : last, margin = bill != null && usePay != null ? asMarginPct(usePay, bill) : null;
+      let jmin = min; try { const cl = j.clientId ? clientById(j.clientId) : null; if(cl){ clientEnsure(cl); jmin = asMinMargin(clCommercial(cl)); } } catch(e){}
+      return { job:j, score:score, pay:pay, bill:bill, payOk:payOk, locOk:locOk(c, a, j), margin:margin == null ? null : Math.round(margin * 10) / 10, minMargin:jmin, belowMin:margin != null && margin < jmin, payNotSet:pay == null };
+    }).filter(function(x){ return x.payOk && x.locOk; }).sort(function(x, y){ return y.score - x.score || String(x.job.title).localeCompare(String(y.job.title)); });
+  };
+
+  /* ---- availability check ---- */
+  window.rxAvailSend = function(a, by){
+    const t = tok(); G.avail[t] = { token:t, assignmentId:a.id, candidateId:a.candidateId, sentAt:NOW(), by:by || (typeof fmMe === 'function' ? fmMe() : 'You'), answer:null };
+    if(typeof asAudit === 'function') asAudit(a, 'Availability check sent', 'to ' + a.workerName + ' · ' + location.href.split('#')[0] + '#/avail/' + t);
+    return t;
+  };
+  window.rxAvailAnswer = function(t, answer, when){
+    const r = G.avail[t]; if(!r) return { ok:false, reason:'This link does not work.' };
+    if(['yes', 'notyet', 'no'].indexOf(answer) < 0) return { ok:false, reason:'Pick an answer.' };
+    const a = asById(r.assignmentId), c = byId(r.candidateId); if(!c) return { ok:false, reason:'This link does not work.' };
+    r.answer = answer; r.answeredAt = NOW();
+    if(answer === 'yes') c.availableFrom = new Date((a ? a.end : NOW()) + D).toISOString().slice(0, 10);
+    else if(answer === 'notyet') c.availableFrom = when && /^\d{4}-\d{2}-\d{2}$/.test(when) ? when : null;
+    else c.availableFrom = null;
+    c.availability = answer === 'yes' ? 'Available' : answer === 'notyet' ? 'Not yet' : 'Not available';
+    if(a && typeof asAudit === 'function') asAudit(a, 'Availability answered', c.name + ': ' + c.availability + (c.availableFrom ? ' from ' + c.availableFrom : ''));
+    return { ok:true, availableFrom:c.availableFrom };
+  };
+  function availRoot(){ let r = document.getElementById('rx-avail-root'); if(!r){ r = document.createElement('div'); r.id = 'rx-avail-root'; document.body.appendChild(r); } return r; }
+  window.rxAvailDraw = function(msg){
+    const m = /^#\/avail\/([a-z0-9]{12,40})$/.exec(String(location.hash || '')), root = availRoot();
+    if(!m || !rxOn('g4')){ root.innerHTML = ''; root.className = ''; return; }
+    const r = G.avail[m[1]], c = r && byId(r.candidateId), a = r && asById(r.assignmentId);
+    const body = !r || !c ? '<h1 class="o-card__title">This link does not work</h1><p class="o-card__sub">Ask your recruiter for a new one.</p>'
+      : r.answer ? '<h1 class="o-card__title">Thank you, ' + esc(c.name.split(' ')[0]) + '</h1><p class="o-card__sub">We have your answer: <b>' + esc(c.availability) + '</b>' + (c.availableFrom ? ' from ' + esc(c.availableFrom) : '') + '. Your recruiter will be in touch.</p>'
+      : '<h1 class="o-card__title">Are you free for your next assignment?</h1><p class="o-card__sub">Hi ' + esc(c.name.split(' ')[0]) + ', your assignment at ' + esc(a ? a.client : 'the client') + ' ends on ' + esc(a && typeof asFmt === 'function' ? asFmt(a.end) : '') + '.</p>' +
+        '<div class="rx-avail__acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="o-btn o-btn--primary" data-avail="yes" onclick="rxAvailUI(\'yes\')">Yes</button><button type="button" class="o-btn" data-avail="notyet" onclick="rxAvailUI(\'notyet\')">Not yet</button><button type="button" class="o-btn o-btn--ghost" data-avail="no" onclick="rxAvailUI(\'no\')">No</button></div>' +
+        '<label class="cl-field" style="margin-top:12px"><span>If not yet, free from (optional)</span><input class="app-input" type="date" id="rx-avail-when"></label>' + (msg ? '<p class="o-card__sub" role="alert">' + esc(msg) + '</p>' : '');
+    root.className = 'rx-avail'; root.setAttribute('style', 'position:fixed;inset:0;z-index:80;background:var(--bg, #f7f7f5);overflow:auto;padding:48px 16px');
+    root.innerHTML = '<main class="o-card" style="max-width:520px;margin:0 auto" aria-label="Availability check">' + body + '</main>';
+  };
+  window.rxAvailUI = function(answer){ const m = /^#\/avail\/([a-z0-9]{12,40})$/.exec(String(location.hash || '')); if(!m) return; const w = document.getElementById('rx-avail-when'); const r = rxAvailAnswer(m[1], answer, w ? w.value : ''); rxAvailDraw(r.ok ? '' : r.reason); };
+  window.addEventListener('hashchange', function(){ try { rxAvailDraw(); } catch(e){ console.error(e); } });
+  window.addEventListener('load', function(){ try { rxAvailDraw(); } catch(e){} });
+
+  /* ---- shortlist draft and ask-to-extend ---- */
+  window.rxShortlistDraft = function(a, jobId, by){
+    if(G.drafts.some(function(d){ return d.assignmentId === a.id && d.jobId === jobId && d.status === 'Draft'; })) return { ok:false, reason:'Already drafted.' };
+    const d = { id:'RD-' + (seq++), assignmentId:a.id, candidateId:a.candidateId, jobId:jobId, status:'Draft', at:NOW(), by:by || (typeof fmMe === 'function' ? fmMe() : 'You') };
+    G.drafts.push(d); if(typeof asAudit === 'function') asAudit(a, 'Shortlisted for redeployment (draft)', (jobById(jobId) || {}).title + ' · a person submits'); return { ok:true, draft:d };
+  };
+  window.rxAskExtend = function(a, by){ const x = { assignmentId:a.id, at:NOW(), by:by || (typeof fmMe === 'function' ? fmMe() : 'You') }; G.asks.push(x); if(typeof asAudit === 'function') asAudit(a, 'Client asked to extend', (a.approver ? a.approver.name : a.client) + ' · ends ' + asFmt(a.end)); return { ok:true }; };
+
+  /* ---- workflow steps (run after the base step runner, which records unknown steps as "internal") ---- */
+  if(typeof window.wfPerform === 'function' && !window.wfPerform.__g4){
+    const base = window.wfPerform;
+    const w = function(wf, c, ctx){
+      const out = base.apply(this, arguments); if(!rxOn('g4')) return out;
+      const a = (typeof ASSIGNMENTS !== 'undefined' ? ASSIGNMENTS : []).filter(function(x){ return x.candidateId === c.id; }).sort(function(x, y){ return y.end - x.end; })[0];
+      out.actions.forEach(function(t){
+        if(t.channel !== 'internal' || STEPS.map(function(s){ return s[0]; }).indexOf(t.action) < 0) return;
+        if(!a){ t.outcome = 'skipped: no assignment'; return; }
+        if(t.action === 'rxAvailCheck'){ rxAvailSend(a, 'Workflow: ' + wf.name); t.channel = 'whatsapp'; t.outcome = 'availability check sent (simulated)'; }
+        if(t.action === 'rxShortlistDraft'){ const top = rxRedeployJobs(a)[0]; if(top){ rxShortlistDraft(a, top.job.id, 'Workflow: ' + wf.name); t.outcome = 'draft for ' + top.job.title; } else t.outcome = 'skipped: no open contract job'; }
+        if(t.action === 'rxAskExtend'){ rxAskExtend(a, 'Workflow: ' + wf.name); t.outcome = 'asked'; }
+      });
+      return out;
+    };
+    w.__g4 = true; window.wfPerform = w; try { wfPerform = w; } catch(e){}
+  }
+
+  /* ---- metrics ---- */
+  window.rxRedeployMetrics = function(days){
+    days = Number(days) || 90; const now = NOW(), from = now - days * D, win = (Number(WSX.rx.redeployWindowDays) || 14) * D;
+    const all = typeof ASSIGNMENTS !== 'undefined' ? ASSIGNMENTS : [];
+    const who = function(a){ return a.candidateId != null ? 'c' + a.candidateId : 'n' + String(a.workerName || '').toLowerCase(); };
+    const ended = all.filter(function(a){ const e = a.endedAt || a.end; return /Ended|Terminated/.test(a.status || '') && e >= from && e <= now; });
+    let redeployed = 0, retained = 0; const rows = [];
+    ended.forEach(function(a){ const e = a.endedAt || a.end; const next = all.find(function(b){ return b !== a && who(b) === who(a) && b.start >= e - D && b.start <= e + win; });
+      if(next){ redeployed++; const r = asCurrentRate(next) || {}; const units = /hour/.test(String(next.unit)) ? (Number(next.hoursPerDay) || 8) * 5 : 5; retained += Math.max(0, (Number(r.bill) - Number(r.pay)) * units * Math.max(1, (next.end - next.start) / (7 * D))); }
+      rows.push({ assignmentId:a.id, worker:a.workerName, endedAt:e, nextId:next ? next.id : null }); });
+    return { days:days, ended:ended.length, redeployed:redeployed, rate:ended.length ? Math.round(redeployed / ended.length * 1000) / 10 : 0, marginRetained:Math.round(retained), rows:rows };
+  };
+
+  /* ---- agency UI: Redeploy panel on the assignment, and the board ---- */
+  window.rxRedeployHTML = function(a, limit){
+    const money = typeof asSeesMoney === 'function' && asSeesMoney(), jobs = rxRedeployJobs(a).slice(0, limit || 5), c = byId(a.candidateId);
+    const av = c && c.availability ? c.availability + (c.availableFrom ? ' from ' + c.availableFrom : '') : 'Not asked';
+    return '<section class="o-card rx-redeploy" data-redeploy="' + esc(a.id) + '"><div class="o-card__head"><div><h3 class="o-card__title">Redeploy ' + esc(a.workerName) + '</h3><p class="o-card__sub">Ends ' + esc(asFmt(a.end)) + ' · availability: <b data-avail-state>' + esc(av) + '</b></p></div>' +
+      '<span style="display:flex;gap:8px;flex-wrap:wrap">' + sBtn('Send availability check', "rxRedeployUI('avail','" + a.id + "')") + (asCan('Manage') ? sBtn('Ask client to extend', "rxRedeployUI('extend','" + a.id + "')") : '') + '</span></div>' +
+      (jobs.length ? '<ul class="o-list rx-redeploy__jobs">' + jobs.map(function(x){ return '<li data-job="' + esc(x.job.id) + '"' + (x.belowMin ? ' data-below-min="true"' : '') + '><b>' + esc(x.job.title) + '</b> · ' + esc(x.job.client || '') + ' · ' + x.score + '% match' +
+          (money ? (x.margin != null ? ' · margin ' + x.margin + '% (minimum ' + x.minMargin + '%)' : ' · margin unknown') : '') + (x.belowMin ? ' · <b class="rx-flag">Below minimum margin</b>' : '') + (x.payNotSet ? ' · pay not set' : '') +
+          ' ' + sBtn('Shortlist (draft)', "rxRedeployUI('draft','" + a.id + "','" + x.job.id + "')", 'ghost') + '</li>'; }).join('') + '</ul>' : '<p class="o-card__sub">No open contract job fits on location and pay right now.</p>') + '</section>';
+  };
+  window.rxRedeployUI = function(kind, id, jobId){
+    const a = asById(id); if(!a) return;
+    if(kind === 'avail'){ const t = rxAvailSend(a); toast('Availability check sent to ' + a.workerName + '.'); G.lastToken = t; }
+    if(kind === 'extend'){ rxAskExtend(a); if(typeof asActionOpen === 'function') asActionOpen(a.id, 'extend'); return; }
+    if(kind === 'draft'){ const r = rxShortlistDraft(a, jobId); toast(r.ok ? 'Draft added. A person submits.' : r.reason); }
+    if(state.activeNav === 'rx-redeploy') showView('rx-redeploy');
+  };
+  if(typeof window.asPanelHTML === 'function' && !window.asPanelHTML.__g4){
+    const baseP = window.asPanelHTML;
+    const wp = function(a){ const h = baseP.apply(this, arguments); if(!rxOn('g4') || !a || !running(a) || typeof h !== 'string') return h; try { return h + rxRedeployHTML(a, 3); } catch(e){ console.error(e); return h; } };
+    wp.__g4 = true; window.asPanelHTML = wp; try { asPanelHTML = wp; } catch(e){}
+  }
+  window.rxRedeployBoardHTML = function(){
+    rxRedeploySweep();
+    const now = NOW(), lead = (Number(WSX.rx.redeployLeadDays) || 21) * D, win = (Number(WSX.rx.redeployWindowDays) || 14) * D, met = rxRedeployMetrics(90), money = typeof asSeesMoney === 'function' && asSeesMoney();
+    const list = (typeof ASSIGNMENTS !== 'undefined' ? ASSIGNMENTS : []).filter(function(a){ return (running(a) && a.end - now <= lead) || (/Ended|Terminated/.test(a.status || '') && now - (a.endedAt || a.end) <= win); }).sort(function(x, y){ return x.end - y.end; });
+    const head = typeof oPageHead === 'function' ? oPageHead({ title:'Redeploy', sub:'Contractors whose assignment ends soon, and the next job that fits.' }) : '<h1>Redeploy</h1>';
+    const nums = '<div class="o-cols" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="o-card o-num"><p class="o-num__label">Redeployment rate (90 days)</p><p class="o-num__value" id="rx-redeploy-rate">' + met.rate + '%</p><p class="o-num__note">' + met.redeployed + ' of ' + met.ended + ' ended assignments</p></div><div class="o-card o-num"><p class="o-num__label">Ending in ' + (Number(WSX.rx.redeployLeadDays) || 21) + ' days</p><p class="o-num__value">' + list.filter(running).length + '</p></div>' +
+      (money ? '<div class="o-card o-num"><p class="o-num__label">Margin retained (estimate)</p><p class="o-num__value">₹' + met.marginRetained.toLocaleString('en-IN') + '</p></div>' : '') + '</div>';
+    return '<div class="content-shell o-page" id="rx-redeploy">' + head + nums + (list.length ? list.map(function(a){ return rxRedeployHTML(a, 5); }).join('') : '<div class="o-card">' + (typeof oEmpty === 'function' ? oEmpty('check', 'No assignment ends in the next three weeks.') : 'Nothing ending soon.') + '</div>') + '</div>';
+  };
+  if(typeof RENDERERS !== 'undefined') RENDERERS['rx-redeploy'] = function(){ return rxOn('g4') && !corp() ? rxRedeployBoardHTML() : (RENDERERS[typeof homeForMe === 'function' ? homeForMe() : 'dashboard'] || function(){ return ''; })(); };
+
+  /* ---- corporate: decision card for work orders ending ---- */
+  window.rxWoDecide = function(id, decision, arg, why){
+    const w = typeof coWoBy === 'function' ? coWoBy(id) : null; if(!w) return { ok:false, reason:'No such work order.' };
+    if(decision === 'extend'){ const r = coWoExtend(id, arg, why); if(r && r.ok === false) return r; w.endDecision = { decision:'extend', at:NOW(), by:coRaiser() }; return { ok:true }; }
+    if(decision === 'convert'){ const r = coWoConvert(id, arg); if(r && r.ok === false) return r; w.endDecision = { decision:'convert', at:NOW(), by:coRaiser() }; return r; }
+    if(decision === 'end'){ if(String(why || '').trim().length < 5) return { ok:false, reason:'Say why it ends (a few words).' }; w.endDecision = { decision:'end', reason:String(why).trim(), at:NOW(), by:coRaiser() }; coAudit('Work order will end', w.ref + ' · ' + w.contractor + ' on ' + coDate(w.end) + ' · ' + String(why).trim(), { entityType:'WorkOrder', entityId:w.id }); return { ok:true }; }
+    return { ok:false, reason:'Pick extend, convert or end.' };
+  };
+  window.rxWoUI = function(kind, id){
+    const w = coWoBy(id); if(!w) return;
+    if(kind === 'extend' && typeof coWoExtendOpen === 'function'){ coWoExtendOpen(id); return; }
+    if(kind === 'convert' && typeof coWoConvertOpen === 'function'){ coWoConvertOpen(id); return; }
+    if(kind === 'end'){ const why = window.prompt('Why does ' + w.contractor + '’s work order end on ' + coDate(w.end) + '?'); if(why == null) return; const r = rxWoDecide(id, 'end', null, why); toast(r.ok ? 'Recorded. It ends on ' + coDate(w.end) + '.' : r.reason); if(typeof coRedraw === 'function') coRedraw(); }
+  };
+  /* the existing extend and convert dialogs record the decision too */
+  ['coWoExtend', 'coWoConvert'].forEach(function(fn){ const o = window[fn]; if(typeof o !== 'function' || o.__g4) return; const x = function(id){ const r = o.apply(this, arguments); try { if(rxOn('g4') && r && r.ok !== false){ const w = coWoBy(id); if(w && !w.endDecision) w.endDecision = { decision:fn === 'coWoExtend' ? 'extend' : 'convert', at:NOW(), by:coRaiser() }; } } catch(e){} return r; }; x.__g4 = true; window[fn] = x; try { if(fn === 'coWoExtend') coWoExtend = x; else coWoConvert = x; } catch(e){} });
+  window.rxWoDecisionCardsHTML = function(){
+    const now = NOW(), list = (CO.contracts || []).filter(function(w){ return ['Active', 'Extended'].indexOf(w.status) > -1 && w.end > now && w.end - now <= 21 * D && !w.endDecision && !w.converted; }).sort(function(x, y){ return x.end - y.end; });
+    if(!list.length) return '';
+    return '<section class="o-card rx-wo-decide" id="rx-wo-decide"><h2 class="o-card__title">Work orders ending: decide</h2><p class="o-card__sub">Extend, make permanent or let it end. Nothing is decided for you.</p><ul class="o-list">' + list.map(function(w){
+      const v = w.vendorId && typeof coVendorBy === 'function' ? coVendorBy(w.vendorId) : null, days = Math.ceil((w.end - now) / D);
+      return '<li data-wo="' + esc(w.id) + '"><b>' + esc(w.contractor) + '</b> · ' + esc(w.role) + ' · ' + esc(w.ref) + ' · ends ' + esc(coDate(w.end)) + ' (' + days + (days === 1 ? ' day' : ' days') + ')' + (v ? ' · via ' + esc(v.name) + (v.feePct != null ? ' (conversion fee from their terms)' : '') : '') +
+        ' <span style="display:inline-flex;gap:6px;flex-wrap:wrap">' + sBtn('Extend', "rxWoUI('extend','" + w.id + "')") + sBtn('Make permanent', "rxWoUI('convert','" + w.id + "')") + sBtn('End', "rxWoUI('end','" + w.id + "')", 'ghost') + '</span></li>'; }).join('') + '</ul></section>';
+  };
+  function hookCorp(){
+    if(typeof RENDERERS === 'undefined') return;
+    const ch = RENDERERS['contract-hiring'];
+    if(typeof ch === 'function' && !ch.__g4){ const w = function(){ const h = ch.apply(this, arguments); if(!rxOn('g4') || !corp() || typeof h !== 'string') return h; rxRedeploySweep(); const cards = rxWoDecisionCardsHTML(); if(!cards) return h; const i = h.indexOf('</header>'); return i < 0 ? cards + h : h.slice(0, i + 9) + cards + h.slice(i + 9); }; w.__g4 = true; RENDERERS['contract-hiring'] = w; }
+    const rd = RENDERERS['requisition-detail'];
+    if(typeof rd === 'function' && !rd.__g4){ const w2 = function(){ const h = rd.apply(this, arguments); if(!rxOn('g4') || !corp() || typeof h !== 'string') return h; const rq = CO.reqs.find(function(r){ return r.id === CO.ui.sel; }); if(!rq || !/Approved|Job open/.test(rq.status || '')) return h; const i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + rxSilverHTML(rq) + h.slice(i); }; w2.__g4 = true; RENDERERS['requisition-detail'] = w2; }
+  }
+  hookCorp(); window.addEventListener('load', hookCorp);
+
+  /* ---- corporate: silver medalists ---- */
+  const words = function(s){ return String(s || '').toLowerCase().split(/[^a-z0-9+#.]+/).filter(function(w){ return w.length > 2 && ['and', 'the', 'for', 'senior', 'junior', 'lead'].indexOf(w) < 0; }); };
+  window.rxSilverFor = function(rq){
+    const now = NOW(), since = now - (Number(WSX.rx.silverMonths) || 12) * 30.44 * D, want = words(rq.title), skills = (rq.skills || []).map(function(s){ return String(s).toLowerCase(); }), seen = {};
+    return SUBMISSIONS.filter(function(s){
+      const j = jobById(s.jobId); if(!j || (rq.jobId && s.jobId === rq.jobId)) return false;
+      const hist = s.stageHistory || [], reached = hist.filter(function(h){ return /Final|Offer/i.test(h.stage || ''); }).pop() || (s.offer ? { at:s.offer.at || s.updatedAt } : null);
+      if(!reached) return false; const at = Date.parse(reached.at) || 0; if(at < since) return false;
+      if(/Joined|Placed|Hired/i.test(s.stage || '') || (s.offer && /Joined/.test(s.offer.status || ''))) return false;
+      const tw = words(j.title), sameRole = want.some(function(w){ return tw.indexOf(w) > -1; }), skillHit = skills.length && (j.skills || []).some(function(k){ return skills.indexOf(String(k).toLowerCase()) > -1; });
+      if(!sameRole && !skillHit) return false;
+      if(seen[s.candidateId]) return false; seen[s.candidateId] = true; return true;
+    }).map(function(s){ const j = jobById(s.jobId); return { candidateId:s.candidateId, submissionId:s.id, jobTitle:j.title, reached:/Offer/i.test(s.stage || '') || s.offer ? 'Offer' : 'Final interview' }; });
+  };
+  window.rxSilverInvite = function(rqId, candidateId){
+    const rq = CO.reqs.find(function(r){ return r.id === rqId; }), c = byId(candidateId); if(!rq || !c) return { ok:false, reason:'Not found.' };
+    if(G.invites.some(function(x){ return x.rqId === rqId && x.candidateId === candidateId; })) return { ok:false, reason:'Already invited.' };
+    G.invites.push({ rqId:rqId, candidateId:candidateId, at:NOW(), by:coRaiser() }); coAudit('Silver medalist invited to apply', c.name + ' · ' + rq.title, { entityType:'Requisition', entityId:rq.id });
+    return { ok:true };
+  };
+  window.rxSilverHTML = function(rq){
+    const list = rq.silver || rxSilverFor(rq);
+    return '<section class="o-card rx-silver" id="rx-silver"><h2 class="o-card__title">Silver medalists</h2><p class="o-card__sub">People who reached final interview or offer for a similar role in the last ' + (Number(WSX.rx.silverMonths) || 12) + ' months and were not hired.</p>' +
+      (list.length ? '<ul class="o-list">' + list.map(function(x){ const c = byId(x.candidateId), inv = G.invites.some(function(i){ return i.rqId === rq.id && i.candidateId === x.candidateId; });
+        return '<li data-silver="' + esc(x.candidateId) + '"><b>' + esc(c ? c.name : 'Candidate') + '</b> · ' + esc(x.reached) + ' for ' + esc(x.jobTitle) + ' ' + (inv ? '<span class="o-card__sub">Invited</span>' : sBtn('Invite to apply', "rxSilverUI('" + rq.id + "'," + JSON.stringify(x.candidateId).replace(/"/g, '&quot;') + ')')) + '</li>'; }).join('') + '</ul>' : '<p class="o-card__sub">No one yet.</p>') + '</section>';
+  };
+  window.rxSilverUI = function(rqId, cid){ const r = rxSilverInvite(rqId, cid); toast(r.ok ? 'Invitation sent.' : r.reason); if(state.activeNav === 'requisition-detail') showView('requisition-detail', 'requisitions'); };
+  if(typeof window.coReqApproved === 'function' && !window.coReqApproved.__g4){
+    const ba = window.coReqApproved;
+    const wa = function(rq){ const r = ba.apply(this, arguments); try { if(rxOn('g4') && rq) rq.silver = rxSilverFor(rq); } catch(e){ console.error(e); } return r; };
+    wa.__g4 = true; window.coReqApproved = wa; try { coReqApproved = wa; } catch(e){}
+  }
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)

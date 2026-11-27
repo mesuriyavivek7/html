@@ -39,9 +39,10 @@
     await t('a workflow on Assignment Ending sends the availability check and drafts a shortlist (a person submits)', async function(){
       var wf = { id:'wf-rx-redeploy', name:'Redeploy', status:'Published', templateStatus:'Approved', trigger:'Assignment Ending', agentKey:'offers-joining', conditions:[], conditionLogic:'AND', steps:[{ kind:'do', type:'rxAvailCheck' }, { kind:'do', type:'rxShortlistDraft' }, { kind:'do', type:'rxAskExtend' }] };
       WORKFLOWS.push(wf); c.consent = { given:true };
-      var b = ASSIGNMENTS.find(function(x){ return x !== a && asRunning(x); }) || a; var cb = byId(b.candidateId); cb.consent = { given:true };
-      b.end = now() + 19 * D; rxRedeploySweep();
-      var t1 = RX.touches.filter(function(x){ return x.workflowId === wf.id; }); ok(t1.length === 3, JSON.stringify(t1.map(function(x){ return x.action + ':' + x.outcome; })));
+      /* a second running assignment of its own, ending in 19 days */
+      var b = JSON.parse(JSON.stringify(a)); b.id = 'as-rx-wf'; b.end = now() + 19 * D; b.alerts = {}; ASSIGNMENTS.push(b); var cb = byId(b.candidateId); cb.consent = { given:true };
+      rxRedeploySweep();
+      var t1 = RX.touches.filter(function(x){ return x.workflowId === wf.id; }); ok(t1.length === 3, JSON.stringify(t1.map(function(x){ return x.action + ':' + x.outcome; })) + ' skips ' + JSON.stringify(RX.skips.filter(function(s){ return s.workflowId === wf.id; })) + ' ev ' + JSON.stringify(evs('Assignment Ending', b.id)));
       ok(Object.keys(RX.g4.avail).some(function(k){ return RX.g4.avail[k].assignmentId === b.id; }), 'availability check');
       ok(RX.g4.asks.some(function(x){ return x.assignmentId === b.id; }), 'extend asked');
       ok(!SUBMISSIONS.some(function(s){ return s.candidateId === b.candidateId && s.createdAt && Date.parse(s.createdAt) > now() - 60000 && s.source === 'Redeploy'; }), 'nothing submitted');
@@ -104,10 +105,10 @@
       var j = JOBS.find(function(x){ return x.corp; }) || JOBS[0], cand = CANDIDATES.find(function(x){ return !SUBMISSIONS.some(function(s){ return s.candidateId === x.id && s.jobId === j.id; }); });
       SUBMISSIONS.push({ id:'sub-rx-silver', jobId:j.id, candidateId:cand.id, stage:'Rejected', status:'Closed', createdAt:new Date(now() - 90 * D).toISOString(), stageHistory:[{ stage:'Submitted', at:new Date(now() - 90 * D).toISOString() }, { stage:'Final Interview', at:new Date(now() - 80 * D).toISOString() }, { stage:'Rejected', at:new Date(now() - 75 * D).toISOString() }] });
       SUBMISSIONS.push({ id:'sub-rx-old', jobId:j.id, candidateId:CANDIDATES[1].id === cand.id ? CANDIDATES[2].id : CANDIDATES[1].id, stage:'Rejected', status:'Closed', createdAt:new Date(now() - 500 * D).toISOString(), stageHistory:[{ stage:'Final Interview', at:new Date(now() - 480 * D).toISOString() }] });
-      var rq = { id:'rq-rx-silver', title:j.title, status:'Pending', headcount:1, ctcMax:12, skills:(j.skills || []).slice(), history:[], createdAt:now() };
+      var rq = JSON.parse(JSON.stringify(CO.reqs[0])); Object.assign(rq, { id:'rq-rx-silver', title:j.title, status:'Pending', jobId:null, skills:(j.skills || []).slice(), history:[], createdAt:now() }); delete rq.silver;
       CO.reqs.push(rq); coReqApproved(rq);
       ok(rq.silver && rq.silver.some(function(x){ return x.candidateId === cand.id; }), 'listed'); ok(!rq.silver.some(function(x){ return x.submissionId === 'sub-rx-old'; }), 'older than 12 months left out');
-      CO.ui.sel = rq.id; showView('requisition-detail', 'requisitions'); var s = document.getElementById('rx-silver'); ok(s && s.querySelector('[data-silver]'), 'shown on the requisition');
+      CO.ui.sel = rq.id; showView('requisition-detail', 'requisitions'); var s = document.getElementById('rx-silver'); ok(s && s.querySelector('[data-silver]'), 'shown on the requisition: nav=' + state.activeNav + ' st=' + rq.status + ' wrapped=' + !!RENDERERS['requisition-detail'].__g4 + ' ' + document.getElementById('main-content').textContent.slice(0, 200));
       ok(rxSilverInvite(rq.id, cand.id).ok); ok(!rxSilverInvite(rq.id, cand.id).ok, 'once');
       coDemoOff();
     });
