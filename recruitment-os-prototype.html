@@ -72798,6 +72798,90 @@ function cfScopeHTML(){
   };
 })();
 </script>
+<script id="o2-ai-script">
+/* ============================================================
+   O2 STEP 8b: AI AGENTS GOVERNANCE (2026-11-26)
+   Switch 8b on:
+   - Tool policy per agent (O2_AGENT_POLICY): read, draft and act tool lists. Act tools can never include a high-risk
+     command (refused when configured). Limits: actions per user per day and a monthly budget per workspace (budget
+     shown as illustrative).
+   - Enforcement: a command run by an agent (bosAsAgent) must be in that agent's draft or act list and within the daily
+     limit, otherwise it is refused and logged. Kairo's read actions (classify, account summary, next step) and draft
+     replies are logged too. High-risk commands stay refused for agents (unchanged).
+   - BOS.agentRuns: agent, tool, on behalf of, workspace, outcome, time — never prompts or output content.
+   - oontu-ai: Catalogue (today's catalogue with its kill switch) · Tools & policies · Activity · Usage (illustrative).
+     AI models stay in Platform settings, where keys are never displayed.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('8b'); };
+  const E = function(s){ return oEsc(s == null ? '' : s); }, ISO = function(t){ return new Date(t == null ? bosNow() : t).toISOString(); };
+  BOS.agentRuns = BOS.agentRuns || [];
+  const HIGH = ['refund.approve', 'account.merge.approve', 'access.approve', 'tenant.suspend', 'employee.roles', 'employee.offboard', 'payment.verify', 'approval.decide', 'grant.role', 'workspace.suspend', 'workspace.close', 'payment.allocate'];
+  const P = window.O2_AGENT_POLICY = {
+    kairo:{ name:'Kairo for operations', read:['ticket.classify', 'account.summary', 'opp.next-action'], draft:['ticket.reply'], act:[], perUserPerDay:50, monthlyBudgetINR:5000 }
+  };
+  (typeof AGENT_CATALOG !== 'undefined' ? AGENT_CATALOG : []).forEach(function(a){ if(!P[a.id]) P[a.id] = { name:a.name, read:['workspace.read'], draft:['message.draft'], act:[], perUserPerDay:a.dailyCap || 100, monthlyBudgetINR:a.price && a.price.amount ? a.price.amount * 10 : 3000 }; });
+  const today = function(){ return ISO().slice(0, 10); };
+  const runsToday = function(agentId, userId){ return BOS.agentRuns.filter(function(r){ return r.agentId === agentId && r.onBehalfOf === userId && r.at.slice(0, 10) === today() && r.outcome !== 'refused'; }).length; };
+  function logRun(agentId, tool, outcome, reason, workspaceId){
+    const r = { id:bosId('AGR', 4), agentId:agentId, tool:tool, onBehalfOf:ACTIVE_PLATFORM_USER_ID, workspaceId:workspaceId || null, outcome:outcome, reason:reason || null, at:ISO() };
+    BOS.agentRuns.push(r);
+    if(outcome === 'refused') try { logPlatformAudit('Agent action refused', agentId + ' · ' + tool + ' · ' + (reason || ''), { actorType:'agent', onBehalfOf:ACTIVE_PLATFORM_USER_ID, command:tool, outcome:'refused', reason:reason || '', entityType:'Agent run' }); } catch(e){}
+    return r;
+  }
+  window.o2AgentAllowed = function(agentId, tool){
+    const p = P[agentId]; if(!p) return { ok:false, reason:'Unknown agent.' };
+    if(HIGH.indexOf(tool) > -1) return { ok:false, reason:'High-risk: a person has to do this.' };
+    if(p.read.concat(p.draft, p.act).indexOf(tool) < 0) return { ok:false, reason:'“' + tool + '” is not on ' + p.name + '’s tool list.' };
+    if(runsToday(agentId, ACTIVE_PLATFORM_USER_ID) >= p.perUserPerDay) return { ok:false, reason:'Daily limit of ' + p.perUserPerDay + ' actions for you reached.' };
+    return { ok:true };
+  };
+  /* enforcement at the gateway for agent actors */
+  const baseRun = window.bosRun;
+  const wrapped = function(name){
+    if(on()){ let a = null; try { a = bosActor(); } catch(e){}
+      if(a && a.type === 'agent'){ const chk = o2AgentAllowed('kairo', name); if(!chk.ok){ logRun('kairo', name, 'refused', chk.reason); return { ok:false, needsPerson:/High-risk/.test(chk.reason), reason:chk.reason }; } const res = baseRun.apply(this, arguments); logRun('kairo', name, res && res.ok ? 'done' : 'failed', res && !res.ok ? res.reason : null); return res; } }
+    return baseRun.apply(this, arguments);
+  };
+  Object.keys(baseRun).forEach(function(k){ wrapped[k] = baseRun[k]; });
+  Object.defineProperty(wrapped, 'quiet', { get:function(){ return baseRun.quiet; }, set:function(v){ baseRun.quiet = v; }, configurable:true });
+  window.bosRun = wrapped;
+  /* Kairo's read actions are logged and limited */
+  if(typeof bosKairo === 'object') [['classify', 'ticket.classify'], ['accountSummary', 'account.summary'], ['nextAction', 'opp.next-action']].forEach(function(x){
+    const base = bosKairo[x[0]]; if(typeof base !== 'function') return;
+    bosKairo[x[0]] = function(){ if(!on()) return base.apply(this, arguments); const chk = o2AgentAllowed('kairo', x[1]); if(!chk.ok){ logRun('kairo', x[1], 'refused', chk.reason); return { ok:false, reason:chk.reason }; } const r = base.apply(this, arguments); logRun('kairo', x[1], r && r.ok ? 'done' : 'failed'); return r; };
+  });
+  /* configuring tools: act tools never include a high-risk command */
+  window.o2SetAgentTools = function(agentId, kind, tools){
+    return bosRun('ai.configure', null, function(){
+      if(!on()) return { ok:false, reason:'AI governance is part of step 8b, which is off.' };
+      if(!canPlatform('platform-feature', 'update') && !canPlatform('platform-ai', 'configure')) return { ok:false, reason:bosWhyNot('platform-feature', 'update') };
+      const p = P[agentId]; if(!p) return { ok:false, reason:'Unknown agent.' }; if(['read', 'draft', 'act'].indexOf(kind) < 0) return { ok:false, reason:'Pick read, draft or act.' };
+      const list = (tools || []).map(String); const bad = list.filter(function(t){ return HIGH.indexOf(t) > -1; });
+      if(kind === 'act' && bad.length) return { ok:false, reason:'Act tools can’t include high-risk commands: ' + bad.join(', ') + '.' };
+      const from = p[kind].slice(); p[kind] = list;
+      return { ok:true, ref:agentId, audit:['Agent tools changed', agentId + ' · ' + kind + ': ' + from.join(', ') + ' → ' + list.join(', '), { entityId:agentId, entityType:'Agent' }] };
+    });
+  };
+  window.o2SetAgentLimit = function(agentId, perUserPerDay){
+    return bosRun('ai.configure', null, function(){ if(!on()) return { ok:false, reason:'AI governance is part of step 8b, which is off.' }; if(!canPlatform('platform-feature', 'update')) return { ok:false, reason:bosWhyNot('platform-feature', 'update') }; const p = P[agentId]; if(!p) return { ok:false, reason:'Unknown agent.' }; const n = Math.round(Number(perUserPerDay)); if(!(n >= 0)) return { ok:false, reason:'Enter a number.' }; const from = p.perUserPerDay; p.perUserPerDay = n; return { ok:true, ref:agentId, audit:['Agent limit changed', agentId + ' · per user per day ' + from + ' → ' + n, { entityId:agentId, entityType:'Agent' }] }; });
+  };
+  /* screen */
+  const ST = window.O2_AI_UI = { tab:'catalogue' };
+  window.o2AiTab = function(k){ ST.tab = k; bosRedraw(); };
+  const BASE = RENDERERS['oontu-ai'];
+  window.o2AiHTML = function(){
+    const k = ST.tab, nav = '<nav class="o2-host-tabs" aria-label="AI agents">' + [['catalogue', 'Catalogue'], ['tools', 'Tools & policies'], ['activity', 'Activity'], ['usage', 'Usage']].map(function(x){ return '<button type="button" class="o2-host-tab' + (x[0] === k ? ' is-on' : '') + '" onclick="o2AiTab(\'' + x[0] + '\')">' + x[1] + '</button>'; }).join('') + '</nav>';
+    let body = '';
+    if(k === 'catalogue') body = BASE ? BASE.apply(this, arguments) : '';
+    if(k === 'tools') body = oTableCard({ id:'o2-ai-tools', title:'Tools & policies', sub:'Act tools never include high-risk commands', cols:[{ label:'Agent' }, { label:'Read' }, { label:'Draft' }, { label:'Act' }, { label:'Per user a day' }, { label:'Monthly budget' }], rows:Object.keys(P).map(function(id){ const p = P[id]; return '<tr><td><b>' + E(p.name) + '</b><small>' + E(id) + '</small></td><td style="white-space:normal">' + E(p.read.join(', ') || '—') + '</td><td style="white-space:normal">' + E(p.draft.join(', ') || '—') + '</td><td style="white-space:normal">' + E(p.act.join(', ') || 'None') + '</td><td>' + E(p.perUserPerDay) + '</td><td>₹' + E(Number(p.monthlyBudgetINR).toLocaleString()) + ' <span class="o2-illus">Illustrative data</span></td></tr>'; }).join('') });
+    if(k === 'activity') body = oTableCard({ id:'o2-ai-runs', title:'Activity', sub:'Who, which tool, outcome. No prompt or output content is kept.', cols:[{ label:'When' }, { label:'Agent' }, { label:'Tool' }, { label:'On behalf of' }, { label:'Outcome' }], rows:BOS.agentRuns.length ? BOS.agentRuns.slice(-100).reverse().map(function(r){ return '<tr><td>' + E(new Date(r.at).toLocaleString('en-GB')) + '</td><td>' + E(r.agentId) + '</td><td>' + E(r.tool) + '</td><td>' + E(bosName(r.onBehalfOf)) + '</td><td>' + E(r.outcome + (r.reason ? ' · ' + r.reason : '')) + '</td></tr>'; }).join('') : oTableEmptyRow(5, 'No agent runs yet.') });
+    if(k === 'usage') body = '<section class="o-card o2-chart"><h2>Usage <span class="o2-illus">Illustrative data</span></h2><p class="o2-chart__sub">Runs recorded in this session: ' + BOS.agentRuns.length + '. Cost and token figures are not held in this prototype.</p></section>';
+    return oDashShell([oPageHead({ ctx:'Admin', title:'AI agents', lede:'Catalogue, tools and limits, and what agents did.' }), nav + body]);
+  };
+  RENDERERS['oontu-ai'] = function(){ if(!on() || state.role !== 'oontu' || !BOS_VIEW_ACCESS['oontu-ai']()) return BASE.apply(this, arguments); return o2AiHTML(); };
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
