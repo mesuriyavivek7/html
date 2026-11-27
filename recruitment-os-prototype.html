@@ -71645,6 +71645,157 @@ function cfScopeHTML(){
   }
 })();
 </script>
+<script id="o2-subscription-status-script">
+/* ============================================================
+   O2 STEP 4b: SUBSCRIPTION STATUSES AND ENFORCED ACCESS (2026-11-26, billing step)
+   Statuses (§3.5): incomplete, trialing, active (+ cancelAt), past_due, unpaid, paused, canceled.
+   Dual-write: the old fields stay the source the older code reads — status trial/active/past_due/paused/cancelled,
+   readOnly:true for unpaid — and statusLegacy records the old value. Only "incomplete", which has no old value, is
+   kept in o2Status. o2SubStatus() reads the new status from these.
+   Switch 4b on:
+   - o2SubSetStatus (subscription.status) enforces the §3.5 transitions.
+   - Cancel: o2SubCancel — at period end by default (cancelAt, full access until then); cancel now needs the
+     subscription-cancel-now approval (Finance, approve_refund).
+   - Downgrade: o2SubDowngrade — from the next renewal; refused when licences in use exceed the new count.
+   - manual-activation approval (approve_correction): activates with the invoice still due; dunning applies normally.
+   - The renewal job applies due downgrades and period-end cancellations (and, with 3a on, closes the workspace at the
+     paid-through date). Dunning keeps today's schedule, which equals the policy defaults (1, 3, 7; read-only after 7).
+   - Access: o2AccessLevel is enforced where read-only is enforced today (the support tier); nothing else changes.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('4b'); };
+  const DAY = 864e5, ISO = function(){ return new Date(bosNow()).toISOString(); }, today = function(){ return ISO().slice(0, 10); };
+  const T = window.O2_SUB_TRANSITIONS = { incomplete:['trialing', 'active', 'canceled'], trialing:['active', 'canceled'], active:['past_due', 'paused', 'canceled'], past_due:['active', 'unpaid'], unpaid:['active', 'canceled'], paused:['active', 'canceled'], canceled:[] };
+  const OLD = { incomplete:'trial', trialing:'trial', active:'active', past_due:'past_due', unpaid:'past_due', paused:'paused', canceled:'cancelled' };
+  const TYPES = { 'subscription-cancel-now':{ label:'Cancel a subscription now', perm:['platform-finance', 'approve_refund'] }, 'manual-activation':{ label:'Activate before payment', perm:['platform-finance', 'approve_correction'] } };
+  const registerTypes = function(){ Object.keys(TYPES).forEach(function(k){ if(on()){ if(!BOS_APPROVAL_TYPES[k]) BOS_APPROVAL_TYPES[k] = TYPES[k]; } else if(BOS_APPROVAL_TYPES[k] === TYPES[k]) delete BOS_APPROVAL_TYPES[k]; }); };
+  const SYS = ['subscription.status', 'subscription.cancel', 'subscription.downgrade'];
+  const allowSystem = function(){ SYS.forEach(function(c){ const i = BOS_SYSTEM_COMMANDS.indexOf(c); if(on() && i < 0) BOS_SYSTEM_COMMANDS.push(c); if(!on() && i > -1) BOS_SYSTEM_COMMANDS.splice(i, 1); }); };
+  registerTypes(); allowSystem(); o2OnSwitch(function(id){ if(id === '4b'){ registerTypes(); allowSystem(); } });
+
+  /* the one place a status is written (inside a command) */
+  function write(s, to){
+    const from = o2SubStatus(s);
+    s.status = OLD[to]; s.statusLegacy = OLD[to]; s.readOnly = to === 'unpaid';
+    if(to === 'incomplete') s.o2Status = 'incomplete'; else delete s.o2Status;
+    if(to === 'active'){ s.dunning = null; }
+    if(to === 'canceled'){ s.canceledAt = ISO(); }
+    if(!Array.isArray(s.history)) s.history = []; s.history.push({ at:ISO(), command:'subscription.status', by:ACTIVE_PLATFORM_USER_ID, changed:{ status:[from, to] } });
+    syncWorkspace(s);
+    return from;
+  }
+  /* the customer workspace's own plan record follows read-only (today's enforcement point) */
+  function syncWorkspace(s){
+    try { const wid = (typeof authAppSession !== 'undefined' && authAppSession.workspaceId) || null; if(wid && WS_PLANS[wid] && s.tenantId === CURRENT_ORGANIZATION_ID){ const ro = o2AccessLevel(tenantById(s.tenantId), s).level !== 'full'; if(ro) WS_PLANS[wid].status = 'readonly'; else if(WS_PLANS[wid].status === 'readonly') WS_PLANS[wid].status = 'active'; } } catch(e){}
+  }
+  const canSub = function(act){ return canPlatform('platform-subscription', act) || canPlatform('platform-finance', 'reconcile'); };
+  window.o2SubSetStatus = function(subId, to, reason, opts){
+    opts = opts || {}; const s = subscriptionById(subId);
+    return bosRun('subscription.status', null, function(){
+      if(!on()) return { ok:false, reason:'Subscription statuses are part of step 4b, which is off.' };
+      if(!s) return { ok:false, reason:'Subscription not found.' };
+      const from = o2SubStatus(s);
+      if((T[from] || []).indexOf(to) < 0) return { ok:false, reason:'A subscription can’t move from ' + from + ' to ' + to + '.' + ((T[from] || []).length ? ' From ' + from + ': ' + T[from].join(', ') + '.' : '') };
+      if(!opts.system && !canSub(to === 'paused' ? 'suspend' : 'update')) return { ok:false, reason:bosWhyNot('platform-subscription', 'update') };
+      if(to === 'canceled' && from === 'active' && !opts.approvalId && !opts.system) return { ok:false, reason:'Cancelling an active subscription now needs approval; use Cancel (period end by default).' };
+      write(s, to);
+      return { ok:true, subscription:s, ref:s.id, audit:['Subscription ' + to, (tenantById(s.tenantId) || {}).name + ' · ' + from + ' → ' + to + (reason ? ' · ' + reason : '') + (opts.approvalId ? ' · ' + opts.approvalId : ''), { entityId:s.id, entityType:'Subscription', previousState:from, newState:to }] };
+    });
+  };
+  /* cancel: period end by default; now only with approval */
+  window.o2SubCancel = function(subId, o){
+    o = o || {}; const s = subscriptionById(subId), now = o.now === true || (o.now == null && o2Policy('cancelDefault') === 'now');
+    return bosRun('subscription.cancel', null, function(){
+      if(!on()) return { ok:false, reason:'Subscription statuses are part of step 4b, which is off.' };
+      if(!s) return { ok:false, reason:'Subscription not found.' };
+      if(!canSub('update')) return { ok:false, reason:bosWhyNot('platform-subscription', 'update') };
+      if(String(o.reason || '').trim().length < 8) return { ok:false, field:'reason', reason:'Give the reason for cancelling.' };
+      const st = o2SubStatus(s); if(['active', 'past_due', 'unpaid', 'paused', 'trialing'].indexOf(st) < 0) return { ok:false, reason:'This subscription is ' + st + '.' };
+      if(now){
+        const a = bosRequestApproval('subscription-cancel-now', s.id, 'Cancel now · ' + ((tenantById(s.tenantId) || {}).name || s.tenantId) + ' · ' + o.reason, { subscriptionId:s.id, reason:o.reason });
+        a.justification = { category:'Customer request', reason:o.reason, withoutIt:'The subscription runs to the end of its period.' };
+        return { ok:true, pending:true, approval:a, ref:a.id };
+      }
+      s.cancelAt = s.paidThrough || s.renewalDate || today();
+      s.history = s.history || []; s.history.push({ at:ISO(), command:'subscription.cancel', by:ACTIVE_PLATFORM_USER_ID, changed:{ cancelAt:[null, s.cancelAt] } });
+      return { ok:true, subscription:s, cancelAt:s.cancelAt, ref:s.id, audit:['Subscription cancels at period end', ((tenantById(s.tenantId) || {}).name || s.tenantId) + ' · ' + s.cancelAt + ' · ' + o.reason, { entityId:s.id, entityType:'Subscription' }] };
+    });
+  };
+  bosOnApproval('subscription-cancel-now', function(a, approve){ if(!approve) return null; const s = subscriptionById(a.payload.subscriptionId); if(!s) return null; const from = write(s, 'canceled'); logPlatformAudit('Subscription canceled now', s.id + ' · ' + from + ' → canceled · ' + a.id, { entityId:s.id, entityType:'Subscription', approvalId:a.id, command:'subscription.status' }); if(o2On('3a') && typeof o2WorkspaceMove === 'function') o2WorkspaceMove(s.tenantId, 'closed', { actorType:'system', reason:'Subscription canceled now (' + a.id + ')' }); return { canceled:true }; });
+  /* manual activation: a signed purchase order, invoice still due */
+  window.o2SubManualActivate = function(subId, reason){
+    const s = subscriptionById(subId);
+    return bosRun('subscription.manual-activation', null, function(){
+      if(!on()) return { ok:false, reason:'Subscription statuses are part of step 4b, which is off.' };
+      if(!s) return { ok:false, reason:'Subscription not found.' };
+      if(String(reason || '').trim().length < 8) return { ok:false, field:'reason', reason:'Say why (for example the signed purchase order).' };
+      const st = o2SubStatus(s); if(['incomplete', 'trialing', 'past_due', 'unpaid'].indexOf(st) < 0) return { ok:false, reason:'Only an unpaid, incomplete or trial subscription can be activated before payment.' };
+      const a = bosRequestApproval('manual-activation', s.id, 'Activate before payment · ' + ((tenantById(s.tenantId) || {}).name || s.tenantId) + ' · ' + reason, { subscriptionId:s.id, reason:reason, from:st });
+      a.justification = { category:'Customer commitment', reason:reason, withoutIt:'The customer waits for the payment to clear.' };
+      return { ok:true, pending:true, approval:a, ref:a.id };
+    });
+  };
+  bosOnApproval('manual-activation', function(a, approve){ if(!approve) return null; const s = subscriptionById(a.payload.subscriptionId); if(!s) return null; const from = o2SubStatus(s); s.status = 'active'; s.statusLegacy = 'active'; s.readOnly = false; delete s.o2Status; s.manualActivation = { approvalId:a.id, at:ISO(), invoiceStillDue:true }; if(!s.dunning && (from === 'past_due' || from === 'unpaid')) s.dunning = { since:today(), step:0, reason:'Activated before payment; the invoice is still due' }; syncWorkspace(s); logPlatformAudit('Subscription activated before payment', s.id + ' · ' + from + ' → active · ' + a.id, { entityId:s.id, entityType:'Subscription', approvalId:a.id }); return { activated:true }; });
+  /* downgrade: from the next renewal; licence check */
+  window.o2SubDowngrade = function(subId, planId, seats, reason){
+    const s = subscriptionById(subId), p = planById(planId);
+    return bosRun('subscription.downgrade', null, function(){
+      if(!on()) return { ok:false, reason:'Subscription statuses are part of step 4b, which is off.' };
+      if(!s || !p) return { ok:false, reason:'Subscription or plan not found.' };
+      if(!canSub('update')) return { ok:false, reason:bosWhyNot('platform-subscription', 'update') };
+      const inUse = typeof tenantUserCount === 'function' ? tenantUserCount(s.tenantId) : 0, n = Math.max(1, Number(seats) || 1);
+      if(inUse > n) return { ok:false, field:'seats', reason:inUse + ' licences are in use; the new plan would have ' + n + '. Remove users first.' };
+      if(p.userLimit && n > p.userLimit) return { ok:false, field:'seats', reason:p.name + ' allows up to ' + p.userLimit + ' licences.' };
+      const at = o2Policy('downgradeTiming') === 'now' ? today() : (s.renewalDate || today());
+      s.pendingChange = { planId:planId, seats:n, at:at, reason:reason || '', by:ACTIVE_PLATFORM_USER_ID };
+      s.history = s.history || []; s.history.push({ at:ISO(), command:'subscription.downgrade', by:ACTIVE_PLATFORM_USER_ID, changed:{ pendingChange:[null, planId + ' × ' + n + ' from ' + at] } });
+      return { ok:true, subscription:s, from:at, ref:s.id, audit:['Downgrade scheduled', s.id + ' · ' + planId + ' × ' + n + ' from ' + at, { entityId:s.id, entityType:'Subscription' }] };
+    });
+  };
+  /* the renewal job: due downgrades first, then today's renewals and dunning, then period-end cancellations */
+  window.o2SubscriptionRun = function(dayIso){
+    const d = dayIso || today(), out = { downgraded:[], canceled:[] };
+    if(!on()) return out;
+    PLATFORM_SUBSCRIPTIONS.forEach(function(s){
+      if(s.pendingChange && s.pendingChange.at <= d){ const pc = s.pendingChange, p = planById(pc.planId); s.planId = pc.planId; s.seats = pc.seats; if(p){ s.billingInterval = p.billingInterval; s.currency = s.currency || p.currency; s.price = p.prices ? (bosPlanUnit(p, s.currency) || 0) * pc.seats * (p.billingInterval === 'annual' ? 12 : 1) : p.price; } const tn = tenantById(s.tenantId); if(tn) tn.planId = pc.planId; s.pendingChange = null; if(typeof o2SubItems === 'function') s.items = o2SubItems(s); (s.history = s.history || []).push({ at:ISO(), command:'subscription.downgrade', by:'SYS-BILLING', changed:{ planId:[null, pc.planId] } }); logPlatformAudit('Downgrade applied at renewal', s.id + ' · ' + pc.planId + ' × ' + pc.seats, { entityId:s.id, actorType:'system', command:'subscription.downgrade' }); out.downgraded.push(s.id); }
+      if(s.cancelAt && String(s.cancelAt).slice(0, 10) <= d && o2SubStatus(s) !== 'canceled'){ const from = o2SubStatus(s); s.status = 'cancelled'; s.statusLegacy = 'cancelled'; s.readOnly = false; s.canceledAt = ISO(); delete s.o2Status; (s.history = s.history || []).push({ at:ISO(), command:'subscription.status', by:'SYS-BILLING', changed:{ status:[from, 'canceled'] } }); logPlatformAudit('Subscription canceled at period end', s.id, { entityId:s.id, actorType:'system', command:'subscription.status' }); out.canceled.push(s.id); if(o2On('3a') && typeof o2WorkspaceMove === 'function') o2WorkspaceMove(s.tenantId, 'closed', { actorType:'system', reason:'Subscription ended at its paid-through date' }); }
+    });
+    return out;
+  };
+  if(typeof window.bosRenewalRun === 'function'){
+    const baseRun = window.bosRenewalRun;
+    window.bosRenewalRun = bosRenewalRun = function(){
+      if(!on()) return baseRun.apply(this, arguments);
+      /* the whole renewal job is one system command, so every subscription change it makes is inside a command */
+      const self = this, args = arguments; let out = null, pre = { downgraded:[], canceled:[] };
+      bosAsScheduler(function(){ return bosRun('subscription.renewal-run', null, function(){
+        pre = o2SubscriptionRun();
+        out = baseRun.apply(self, args);
+        PLATFORM_SUBSCRIPTIONS.forEach(function(s){ if(s.statusLegacy !== s.status) s.statusLegacy = s.status; syncWorkspace(s); });
+        return { ok:true, ref:null };
+      }); });
+      if(!out) out = baseRun.apply(this, arguments);
+      out.downgraded = pre.downgraded; out.canceled = pre.canceled; return out;
+    };
+  }
+  if(BOS_SYSTEM_COMMANDS.indexOf('subscription.renewal-run') < 0 && on()) BOS_SYSTEM_COMMANDS.push('subscription.renewal-run');
+  o2OnSwitch(function(id, v){ if(id === '4b'){ const i = BOS_SYSTEM_COMMANDS.indexOf('subscription.renewal-run'); if(v && i < 0) BOS_SYSTEM_COMMANDS.push('subscription.renewal-run'); if(!v && i > -1) BOS_SYSTEM_COMMANDS.splice(i, 1); } });
+  /* paying clears read-only (today's rule), and the customer workspace's own plan record follows (no subscription field is written here) */
+  if(typeof BOS_PAY === 'object' && typeof BOS_PAY.receive === 'function'){
+    const baseRecv = BOS_PAY.receive;
+    BOS_PAY.receive = function(){ const out = baseRecv.apply(this, arguments); if(on()) PLATFORM_SUBSCRIPTIONS.forEach(function(s){ syncWorkspace(s); }); return out; };
+  }
+  /* enforcement in the customer workspace, at today's point: the support tier knows read-only */
+  if(typeof window.supportTierFor === 'function'){
+    const baseTier = window.supportTierFor;
+    window.supportTierFor = supportTierFor = function(tenantId){
+      const t = baseTier.apply(this, arguments); if(!on() || !t) return t;
+      const tn = tenantById(tenantId || CURRENT_ORGANIZATION_ID); if(!tn) return t;
+      const a = o2AccessLevel(tn); return Object.assign({}, t, { readOnly:a.level !== 'full', accessLevel:a.level, paymentBanner:a.banner });
+    };
+  }
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
