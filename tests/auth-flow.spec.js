@@ -1035,7 +1035,7 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       const start = PLATFORM_TENANTS.length;
       state.role = 'oontu'; const app = document.getElementById('app'); app.classList.remove('hidden'); app.classList.add('flex'); document.getElementById('onboarding').classList.add('hidden');
       showView('oontu-tenants'); await idle();
-      const btn = Array.from(document.querySelectorAll('#main-content button')).find(function(b){ return b.textContent.trim()==='Create tenant'; });
+      const btn = Array.from(document.querySelectorAll('#main-content button')).find(function(b){ return b.textContent.trim()==='Create tenant' || b.textContent.trim()==='Create workspace'; });   /* O2 3b names it Create workspace */
       btn.click();
       ctSheet.company = 'Kite Hiring'; ctSheet.name = 'Ravi Menon'; ctSheet.email = 'ravi@gmail.com'; ctSheet.mobile = '98250 41207'; ctPickType('Corporate');
       ctSubmit(); eq(document.getElementById('ct-email-err').textContent, AUTH_MESSAGES.personal_email, 'corporate work-email rule'); eq(PLATFORM_TENANTS.length, start);

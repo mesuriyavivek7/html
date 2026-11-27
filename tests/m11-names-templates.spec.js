@@ -46,7 +46,7 @@
       as('admin'); ok(!bad(jobPolicyPanelHTML().replace(/<[^>]+>/g, ' ')), 'job approval settings: reviewer option is Owner'); ok(/>Owner</.test(jobPolicyPanelHTML()), 'the reviewer list says Owner');
       var made = AUDIT_LOG.slice(0, AUDIT_LOG.length - auditStart); made.forEach(function(a){ ok(!bad(a.action + ' ' + a.detail), 'audit: ' + a.action + ' · ' + a.detail); });
       toasts.forEach(function(m){ ok(!bad(m), 'toast: ' + m); });
-      switchRole('oontu'); showView('oontu-tenants'); ok(/Oontu Super Admin/.test(main()), 'the platform role keeps its name on Oontu’s screens');
+      switchRole('oontu'); showView(typeof o2On === 'function' && o2On('3b') ? 'oontu-settings' : 'oontu-tenants'); ok(/Oontu Super Admin/.test(main()), 'the platform role keeps its name on Oontu’s screens');   /* O2 3b's Workspaces page has no breadcrumb */
     });
 
     await t('records saved with the old label are not rewritten; they are shown as Owner', async function(){
