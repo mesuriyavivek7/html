@@ -26,7 +26,7 @@
 <main id="root"></main>
 <script id="cx-data" type="application/json">
 {
-    "updated":  "2026-11-28 03:24 IST",
+    "updated":  "2026-11-28 03:36 IST",
     "phases":  [
                    {
                        "id":  "C0",
@@ -58,11 +58,11 @@
                    {
                        "id":  "C2",
                        "name":  "Talent Discovery: intake and evidence matching",
-                       "status":  "not started",
-                       "start":  "",
-                       "end":  "",
-                       "specs":  "",
-                       "note":  ""
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-match 11/11",
+                       "note":  "Evidence model p@10 1.0 / 1.0 / 1.0, 0 must-have violations; old model 1.0 / 1.0 / 0.9 with 1 violation (nurse); 1,000 ranked \u003c 300 ms"
                    },
                    {
                        "id":  "C3",
@@ -138,10 +138,10 @@
                    }
                ],
     "counters":  {
-                     "tests":  "cx-credits 14/14 Â· cx-setup 12/12",
-                     "precision":  "—",
+                     "tests":  "cx-credits 14 · cx-setup 12 · cx-match 11",
+                     "precision":  "Java 1.0 · Sales 1.0 · Nurse 1.0 (old: 1.0 · 1.0 · 0.9)",
                      "clicks":  "—",
-                     "seed":  "466 / 19,534 âœ“"
+                     "seed":  "466 / 19,534 — matches"
                  },
     "decisions":  [
                       "C0: demo-data Vistaar fails from 2026-11-28 on old and new code alike (date-dependent seed); treated as pre-existing, outside CX.",
@@ -151,7 +151,9 @@
                       "C1: cowork-agents pinned to CX off (// @cx-runner off): it tests per-agent plans, trials and Add, which CX retires; settings\u0027 trial test runs with CX off inside the test.",
                       "C1: seeded Cowork history (CW.seeding) is never charged; the wallet seed is the example day.",
                       "C1: rupee amounts only for people with billing view; a recruiter sees credits only.",
-                      "C1b: Configure opens the channel page directly (the app router rewrites the address); #/settings/channels/\u003cchannel\u003e?return=cowork deep links still work."
+                      "C1b: Configure opens the channel page directly (the app router rewrites the address); #/settings/channels/\u003cchannel\u003e?return=cowork deep links still work.",
+                      "C2: fixtures shuffled with a fixed order before both models rank, so neither gets the fixture order for free; must-haves use CV evidence over the profile (a skill only on the profile but absent from the CV is not met).",
+                      "C2: runner // @fixture \u003cpath\u003e inlines evaluation fixtures before a spec."
                   ],
     "isolated":  [
 

@@ -74763,6 +74763,249 @@ function cfScopeHTML(){
   hook(); window.addEventListener('load', hook);
 })();
 </script>
+<script id="cx-match">
+/* CX C2 — Talent Discovery: intake and evidence-based matching. CX_SWITCH (sub 'match').
+   - Intake (wraps jdParseText when given JD text, else reads the job record): a versioned JOB_CRITERIA[jobId]
+     { version, mustHave, required, preferred, expMin, expMax, location, workMode, payBand, noticeMaxDays, questions,
+       clientQuestions, family }. The recruiter edits chips and confirms (autonomy "suggest"); ranking always uses the
+       confirmed version ("Criteria v3"). One intake = one ai-strong charge.
+   - CX_FAMILIES: 6 job families (skills dictionary with synonyms and close skills, must-have patterns, 6–8 screening
+     questions, 3 message templates per segment). Intake picks the family; the recruiter can change it.
+   - MATCH_MODEL 'evidence' (only under CX; the old computeJobMatchPct / computeJobFit are untouched):
+       per criterion: met | partly | not-met | unknown, an evidence line and its source (answer 1.0, cv 0.9,
+       history 0.7, profile 0.5); fit 0–100 with FIT_WEIGHTS (required 60, preferred 15, experience 25); must-haves
+       are a gate, not a weight; confidence High ≥70% of weighted criteria backed by cv or answer, Medium 40–69%,
+       Low below; likelihood to respond (0–100) from activity, reply rate, notice and recent contacts — it only orders.
+       Gate: fit ≥ threshold (Talent Discovery setting, default 70), no must-have not-met, confidence ≥ Medium.
+       Unknown must-haves become screening questions ("will ask"). Every excluded person has a reason.
+   - Per-client learning: shortlist accepts / rejects and client rejection reasons move that client's criterion
+     weights by at most ±10 points, shown in words.
+   cxAI is the one adapter for AI-looking steps; here it is simulated and rule-based (deterministic).
+   Production notes: cxAI routes rules → small → medium → strong; prompt caching for the job criteria; batch API for
+   overnight re-ranking; a per-tenant budget check (cxCanSpend) before every call. Evidence extraction from CVs runs
+   once per CV version and is cached. */
+(function(){
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const now = function(){ return typeof cwNow === 'function' ? cwNow() : Date.now(); };
+  const on = function(){ return typeof cxOn === 'function' && cxOn('match'); };
+
+  /* ---- the AI adapter (simulated, deterministic) ---- */
+  window.cxAI = function(tier, task, input){
+    const credits = { rules:0, small:1, medium:3, strong:10 }[tier];
+    if(credits == null) return { output:null, confidence:0, credits:0, error:'Unknown tier' };
+    let output = null, confidence = 0.9;
+    if(task === 'intake') output = cxIntakeRules(input);
+    else if(task === 'family') output = cxDetectFamily(input);
+    else if(typeof window.CX_AI_TASKS === 'object' && typeof CX_AI_TASKS[task] === 'function'){ const r = CX_AI_TASKS[task](input); output = r.output; confidence = r.confidence; }
+    return { output:output, confidence:confidence, credits:credits, simulated:true };
+  };
+  window.CX_AI_TASKS = window.CX_AI_TASKS || {};
+
+  /* ---- job families ---- */
+  const T3 = function(a, b, c){ return [a, b, c]; };
+  const tpls = function(role){ return {
+    active:T3('Hi {{First name}}, {{Recruiter name}} here. A {{Job title}} role at {{Company}} ({{Pay band}}, {{Location}}) fits what you are looking for. Interested? Yes / Not now / No', 'Hi {{First name}}, you applied recently, so a quick one: {{Job title}}, {{Location}}, {{Pay band}}. Shall I share details? Yes / Not now / No', 'Hi {{First name}}, still looking? {{Company}} has a ' + role + ' opening. Reply Yes and I will call.'),
+    'passive':T3('Hi {{First name}}, not sure if you are open to a move, but {{Company}} is hiring a {{Job title}} in {{Location}} ({{Pay band}}). Worth a chat? Yes / Not now / No', 'Hi {{First name}}, your ' + role + ' experience stood out. Open to hearing about {{Job title}}?', 'Hi {{First name}}, one last note on the {{Job title}} role. If now is not the time, reply Not now and I will check back later.'),
+    'past-placement':T3('Hi {{First name}}, {{Recruiter name}} here again. I have a {{Job title}} role you may like. Free for a quick call?', 'Hi {{First name}}, hope the last role went well. {{Company}} needs a {{Job title}}. Interested?', 'Hi {{First name}}, a new ' + role + ' opening came up. Shall I tell you more?'),
+    'silver':T3('Hi {{First name}}, you were very close last time. A {{Job title}} role at {{Company}} is open now. Interested?', 'Hi {{First name}}, {{Recruiter name}} here. Another ' + role + ' role just opened. Shall I put your name forward?', 'Hi {{First name}}, quick one: {{Job title}}, {{Location}}, {{Pay band}}. Yes / Not now / No'),
+    'new':T3('Hi {{First name}}, I am {{Recruiter name}} from {{Company}}. We have a {{Job title}} role ({{Pay band}}, {{Location}}). May we contact you about it? Yes / No', 'Hi {{First name}}, a short follow-up on the {{Job title}} role. Reply Yes if you would like details.', 'Hi {{First name}}, last note: reply No and we will not contact you again.') }; };
+  const F = window.CX_FAMILIES = {
+    'java-backend':{ label:'Java backend', match:/java|spring|backend|j2ee/i,
+      dict:{ java:['java', 'core java', 'j2ee', 'java 8', 'java 17'], 'spring boot':['spring boot', 'springboot', 'spring'], rest:['rest', 'rest api', 'restful', 'rest apis'], sql:['sql', 'mysql', 'postgresql', 'postgres', 'oracle'], kafka:['kafka', 'apache kafka'], aws:['aws', 'amazon web services'], microservices:['microservices', 'micro services'], kotlin:['kotlin'], scala:['scala'] },
+      close:{ java:['kotlin', 'scala'] }, mustHave:[/^java$/, /^spring boot$/],
+      questions:['How many years have you worked with Java?', 'Have you built REST APIs with Spring Boot?', 'Which databases have you used?', 'Have you worked with Kafka or another message queue?', 'What is your notice period?', 'What pay are you expecting?', 'Are you open to hybrid work in the job’s city?', 'May we share your CV with the client?'], templates:tpls('Java') },
+    'frontend':{ label:'Frontend', match:/react|angular|frontend|front-end|vue|javascript/i,
+      dict:{ react:['react', 'react.js', 'reactjs'], typescript:['typescript', 'ts'], javascript:['javascript', 'js', 'es6'], css:['css', 'scss', 'tailwind'], 'next.js':['next.js', 'nextjs'], angular:['angular'], vue:['vue', 'vue.js'] },
+      close:{ react:['react native', 'next.js'], angular:['react'] }, mustHave:[/^react$|^angular$|^vue$/],
+      questions:['Which framework do you use most: React, Angular or Vue?', 'How many years of frontend work?', 'Have you used TypeScript in production?', 'What is your notice period?', 'What pay are you expecting?', 'Are you open to the job’s work mode?', 'May we share your CV with the client?'], templates:tpls('frontend') },
+    'inside-sales':{ label:'Inside sales', match:/sales|business development|bde|telesales/i,
+      dict:{ 'b2b sales':['b2b sales', 'b2b', 'business sales'], 'inside sales':['inside sales', 'telesales'], 'cold calling':['cold calling', 'outbound calling', 'calling'], crm:['crm', 'zoho crm', 'hubspot'], salesforce:['salesforce', 'sfdc'], saas:['saas', 'software sales'] },
+      close:{ 'b2b sales':['inside sales'] }, mustHave:[/^b2b sales$/],
+      questions:['How many years have you sold to businesses?', 'Do you make outbound calls every day?', 'Which CRM have you used?', 'What monthly target did you last carry?', 'What is your notice period?', 'What pay are you expecting?', 'Can you work from the office?', 'May we share your CV with the client?'], templates:tpls('sales') },
+    'accounts-finance':{ label:'Accounts / finance', match:/account|finance|tally|gst|ca inter|bookkeep/i,
+      dict:{ accounting:['accounting', 'accounts', 'bookkeeping'], tally:['tally', 'tally erp', 'tally prime'], gst:['gst', 'gst returns'], tds:['tds'], excel:['excel', 'ms excel'], reconciliation:['reconciliation', 'bank reconciliation'] },
+      close:{ tally:['zoho books', 'busy'] }, mustHave:[/^accounting$|^tally$/],
+      questions:['How many years in accounts?', 'Which accounting software do you use?', 'Have you filed GST returns?', 'Do you handle TDS?', 'What is your notice period?', 'What pay are you expecting?', 'May we share your CV with the client?'], templates:tpls('accounts') },
+    'staff-nurse':{ label:'Staff nurse', match:/nurse|nursing|gnm|icu|ward/i,
+      dict:{ gnm:['gnm', 'general nursing'], 'b.sc nursing':['b.sc nursing', 'bsc nursing'], 'patient care':['patient care', 'ward care'], icu:['icu', 'intensive care'], 'critical care':['critical care'], ventilator:['ventilator', 'ventilator care'], bls:['bls', 'basic life support'] },
+      close:{ gnm:['b.sc nursing'], icu:['critical care'] }, mustHave:[/^gnm$/],
+      questions:['Are you a registered nurse (GNM or B.Sc Nursing)?', 'How many years of hospital experience?', 'Have you worked in an ICU?', 'Can you do night shifts?', 'Do you have a BLS certificate?', 'What is your notice period?', 'What pay are you expecting?', 'May we share your CV with the hospital?'], templates:tpls('nursing') },
+    'customer-support':{ label:'Customer support', match:/support|customer service|call centre|call center|helpdesk|bpo/i,
+      dict:{ 'customer support':['customer support', 'customer service', 'support'], ticketing:['ticketing', 'zendesk', 'freshdesk'], 'voice process':['voice process', 'voice'], 'chat support':['chat support', 'chat process'], english:['english'], hindi:['hindi'] },
+      close:{ 'customer support':['voice process', 'chat support'] }, mustHave:[/^customer support$/],
+      questions:['How many years in customer support?', 'Voice, chat or email support?', 'Which languages can you speak with customers?', 'Can you work rotational shifts?', 'What is your notice period?', 'What pay are you expecting?', 'May we share your CV with the client?'], templates:tpls('support') } };
+  window.cxDetectFamily = function(job){ const text = [job.title, (job.skills || []).join(' ')].join(' '); const k = Object.keys(F).find(function(id){ return F[id].match.test(text); }); return k || 'java-backend'; };
+  window.cxCanon = function(skill, fam){ const s = String(skill || '').toLowerCase().trim(), d = (F[fam] || {}).dict || {}; const k = Object.keys(d).find(function(key){ return key === s || d[key].indexOf(s) > -1; }); if(k) return k; const any = Object.keys(F).map(function(f){ const dd = F[f].dict; return Object.keys(dd).find(function(key){ return key === s || dd[key].indexOf(s) > -1; }); }).find(Boolean); return any || s; };
+
+  /* ---- intake ---- */
+  const years = function(v){ const m = /(\d+(\.\d+)?)/.exec(String(v || '')); return m ? Number(m[1]) : null; };
+  const noticeDays = function(v){ const s = String(v || '').toLowerCase(); if(/immediate/.test(s)) return 0; const n = years(s); if(n == null) return null; return /month/.test(s) ? n * 30 : n; };
+  const payBand = function(v){ const m = /([\d.]+)\s*[–-]\s*([\d.]+)\s*lpa/i.exec(String(v || '')); return m ? { min:Number(m[1]), max:Number(m[2]), currency:'INR', unit:'LPA' } : null; };
+  window.cxIntakeRules = function(job){
+    const fam = job.family || cxDetectFamily(job), fd = F[fam];
+    let must = (job.mustHave || []).map(function(m){ return { skill:cxCanon(m.skill, fam), minYears:m.minYears || null }; });
+    const req = (job.skills || []).map(function(s){ return cxCanon(s, fam); });
+    if(!must.length){ const e = years(job.minExp); req.forEach(function(s){ if(fd.mustHave.some(function(re){ return re.test(s); })) must.push({ skill:s, minYears:must.length ? null : (e ? Math.min(e, 3) : null) }); }); }
+    const pref = (job.preferredSkills || []).map(function(s){ return cxCanon(s, fam); });
+    const e = years(job.minExp);
+    const questions = fd.questions.map(function(q, i){ return { id:'q' + (i + 1), text:q, criterionId:i === 0 && must[0] ? 'must:' + must[0].skill : null, type:/how many|years/i.test(q) ? 'number' : /pay|expect/i.test(q) ? 'number' : /^(are|have|do|can|may)/i.test(q) ? 'yesno' : 'text' }; });
+    return { mustHave:must, required:req, preferred:pref, expMin:e, expMax:e != null ? e + 5 : null, location:job.loc || '', workMode:job.workMode || '', payBand:payBand(job.salary), noticeMaxDays:noticeDays(job.notice), questions:questions,
+      clientQuestions:pref.map(function(p){ return 'Is ' + p + ' a must-have or a nice-to-have?'; }), family:fam };
+  };
+  const JC = window.JOB_CRITERIA = window.JOB_CRITERIA || {};
+  window.cxIntake = function(jobOrId, opts){
+    opts = opts || {}; let job = typeof jobOrId === 'string' ? (typeof jobById === 'function' ? jobById(jobOrId) : null) : jobOrId;
+    if(!job) return { ok:false, reason:'No such job.' };
+    if(opts.text && typeof jdParseText === 'function'){ try { const p = jdParseText(opts.text) || {}; const f = p.fields || p; job = Object.assign({}, job, { skills:f.skills || job.skills, preferredSkills:f.preferredSkills || job.preferredSkills, minExp:f.minExp || f.experience || job.minExp, loc:f.loc || f.location || job.loc, salary:f.salary || job.salary, notice:f.notice || job.notice, title:f.title || job.title }); } catch(e){} }
+    const ch = typeof cxCharge === 'function' ? cxCharge({ agent:'talent-discovery', rateClass:'ai-strong', qty:1, jobId:job.id, action:'Read the job into criteria and questions' }) : {};
+    if(ch && ch.blocked) return { ok:false, reason:ch.blocked };
+    const draft = cxAI('strong', 'intake', job).output;
+    const rec = JC[job.id] || (JC[job.id] = { versions:[], current:null, draft:null });
+    rec.draft = draft; return { ok:true, draft:draft };
+  };
+  window.cxConfirmCriteria = function(jobId, edits){
+    const rec = JC[jobId]; if(!rec || !rec.draft) return { ok:false, reason:'Read the job first.' };
+    const c = Object.assign({}, rec.draft, edits || {}); c.version = rec.versions.length + 1; c.confirmedAt = now(); c.confirmedBy = typeof fmMe === 'function' ? fmMe() : 'You';
+    rec.versions.push(c); rec.current = c; rec.draft = null; return { ok:true, version:c.version };
+  };
+  window.cxCriteria = function(jobId){ const rec = JC[jobId]; return rec && rec.current ? rec.current : null; };
+  window.cxEditDraft = function(jobId, list, action, value){ const rec = JC[jobId]; if(!rec) return; if(!rec.draft) rec.draft = JSON.parse(JSON.stringify(rec.current)); const d = rec.draft;
+    if(list === 'mustHave'){ if(action === 'remove') d.mustHave = d.mustHave.filter(function(m){ return m.skill !== value; }); else if(value && !d.mustHave.some(function(m){ return m.skill === value; })) d.mustHave.push({ skill:cxCanon(value, d.family), minYears:null }); }
+    else { if(action === 'remove') d[list] = d[list].filter(function(s){ return s !== value; }); else if(value && d[list].indexOf(value) < 0) d[list].push(cxCanon(value, d.family)); }
+    if(list === 'family') d.family = value; };
+
+  /* ---- evidence ---- */
+  const SRC_W = window.CX_SOURCE_WEIGHT = { answer:1.0, cv:0.9, history:0.7, profile:0.5 };
+  const SCORE = { met:1, partly:0.7, unknown:0.3, 'not-met':0 };
+  function cvOf(c, fam){
+    if(c.cv){ const out = {}; Object.keys(c.cv).forEach(function(k){ out[cxCanon(k, fam)] = c.cv[k]; }); return out; }
+    const out = {}; (c.experiences || []).forEach(function(x){ const t = String(x.title || x.role || '') + ' ' + (x.skills || []).join(' '); const from = Date.parse(x.from || x.start) || null, to = Date.parse(x.to || x.end) || now(); const y = from ? Math.max(0, (to - from) / (365.25 * 86400000)) : 1;
+      Object.keys((F[fam] || {}).dict || {}).forEach(function(k){ if(F[fam].dict[k].some(function(syn){ return new RegExp('\\b' + syn.replace(/[.+]/g, '\\$&') + '\\b', 'i').test(t); })) out[k] = (out[k] || 0) + Math.round(y * 10) / 10; }); });
+    return Object.keys(out).length ? out : null;
+  }
+  function skillRow(c, fam, skill, kind, minYears){
+    const cv = cvOf(c, fam), ans = c.answers && (c.answers[skill] != null ? c.answers[skill] : null), prof = (c.skills || []).map(function(s){ return cxCanon(s, fam); });
+    const close = ((F[fam] || {}).close || {})[skill] || [];
+    if(ans != null){ const yes = ans === true || /^y/i.test(String(ans)) || Number(ans) > 0; const ok = yes && (!minYears || Number(ans) >= minYears || ans === true); return { status:ok ? 'met' : yes ? 'partly' : 'not-met', source:'answer', evidence:'Said: ' + ans }; }
+    if(cv && cv[skill] != null){ const y = Number(cv[skill]); if(y <= 0) return { status:'not-met', source:'cv', evidence:'CV: no ' + skill + ' experience' }; if(minYears && y < minYears) return { status:'partly', source:'cv', evidence:'CV: ' + y + ' yrs of ' + skill + ' (wants ' + minYears + '+)' }; return { status:'met', source:'cv', evidence:'CV: ' + y + ' yrs of ' + skill }; }
+    const cl = cv ? close.find(function(k){ return cv[k] != null && cv[k] > 0 && (!minYears || cv[k] >= minYears); }) : null;
+    if(cl) return { status:'partly', source:'cv', evidence:'CV: ' + cv[cl] + ' yrs of ' + cl + ' (close to ' + skill + ')' };
+    const hist = (typeof SUBMISSIONS !== 'undefined' ? SUBMISSIONS : []).some(function(s){ if(s.candidateId !== c.id) return false; const j = typeof jobById === 'function' ? jobById(s.jobId) : null; return j && (j.skills || []).some(function(x){ return cxCanon(x, fam) === skill; }) && /Interview|Offer|Joined|Shortlist/i.test(s.stage || ''); });
+    if(hist) return { status:'met', source:'history', evidence:'Got past screening for a ' + skill + ' role before' };
+    if(prof.indexOf(skill) > -1){ if(cv) return { status:kind === 'must' ? 'not-met' : 'unknown', source:'cv', evidence:'Listed on the profile, but not in the CV' }; return { status:minYears ? 'unknown' : 'met', source:'profile', evidence:'Listed on the profile' + (minYears ? '; years not shown' : '') }; }
+    const pc = close.find(function(k){ return prof.indexOf(k) > -1; }); if(pc) return { status:'unknown', source:'profile', evidence:pc + ' on the profile (close to ' + skill + ')' };
+    return { status:cv ? 'not-met' : 'unknown', source:cv ? 'cv' : 'profile', evidence:cv ? 'Not in the CV' : 'Not on the profile' };
+  }
+  window.cxEvidence = function(c, crit, client){
+    const fam = crit.family, rows = [];
+    crit.mustHave.forEach(function(m){ rows.push(Object.assign({ id:'must:' + m.skill, kind:'must', label:m.skill + (m.minYears ? ' (' + m.minYears + '+ yrs)' : '') }, skillRow(c, fam, m.skill, 'must', m.minYears))); });
+    crit.required.forEach(function(s){ rows.push(Object.assign({ id:'req:' + s, kind:'required', label:s }, skillRow(c, fam, s, 'required', null))); });
+    crit.preferred.forEach(function(s){ rows.push(Object.assign({ id:'pref:' + s, kind:'preferred', label:s }, skillRow(c, fam, s, 'preferred', null))); });
+    const cv = cvOf(c, fam), totalCv = cv ? Math.max.apply(null, Object.keys(cv).map(function(k){ return Number(cv[k]) || 0; }).concat([0])) : null, y = years(c.exp);
+    const ey = totalCv != null ? Math.max(totalCv, y || 0) : y;
+    if(crit.expMin != null) rows.push({ id:'exp', kind:'exp', label:crit.expMin + '+ yrs experience', status:ey == null ? 'unknown' : ey >= crit.expMin ? 'met' : ey >= crit.expMin * 0.5 ? 'partly' : 'not-met', source:totalCv != null ? 'cv' : 'profile', evidence:ey == null ? 'Not shown' : ey + ' yrs' });
+    if(crit.location){ const city = String(crit.location).split(',')[0].trim().toLowerCase(); const where = [c.loc, c.location].concat(c.prefLocations || []).filter(Boolean).join(' ').toLowerCase(); rows.push({ id:'loc', kind:'info', label:'Location ' + crit.location, status:!where ? 'unknown' : where.indexOf(city) > -1 || /remote/.test(crit.workMode || '') ? 'met' : 'partly', source:'profile', evidence:where || 'Not shown' }); }
+    if(crit.noticeMaxDays != null){ const nd = noticeDays(c.notice); rows.push({ id:'notice', kind:'info', label:'Notice ≤ ' + crit.noticeMaxDays + ' days', status:nd == null ? 'unknown' : nd <= crit.noticeMaxDays ? 'met' : 'partly', source:c.answers && c.answers.notice != null ? 'answer' : 'profile', evidence:c.notice || 'Not shown' }); }
+    return rows;
+  };
+  const LEARN = window.CX_CLIENT_LEARN = window.CX_CLIENT_LEARN || {};
+  window.cxFit = function(c, crit, client){
+    const rows = cxEvidence(c, crit), adj = (client && LEARN[client] && LEARN[client].adjust) || {};
+    const W = typeof FIT_WEIGHTS !== 'undefined' ? FIT_WEIGHTS : { required:60, preferred:15, experience:25 };
+    const req = rows.filter(function(r){ return r.kind === 'must' || r.kind === 'required'; }), pref = rows.filter(function(r){ return r.kind === 'preferred'; }), exp = rows.filter(function(r){ return r.kind === 'exp'; });
+    const part = function(list, total){ if(!list.length) return { got:0, max:0 }; const base = total / list.length; let got = 0, max = 0; list.forEach(function(r){ const w = Math.max(0, base + (adj[r.label.replace(/ \(.*$/, '')] || 0)); max += w; got += w * SCORE[r.status]; }); return { got:got, max:max }; };
+    const a = part(req, W.required), b = part(pref, W.preferred), e = part(exp, W.experience), max = a.max + b.max + e.max;
+    const fit = max ? Math.round((a.got + b.got + e.got) / max * 100) : 0;
+    const weighted = req.concat(pref).concat(exp); let wt = 0, backed = 0; weighted.forEach(function(r){ const w = r.kind === 'must' ? 2 : r.kind === 'preferred' ? 0.5 : 1; wt += w; if(r.source === 'cv' || r.source === 'answer') backed += w; });
+    const share = wt ? backed / wt : 0, confidence = share >= 0.7 ? 'High' : share >= 0.4 ? 'Medium' : 'Low';
+    const mustBad = rows.filter(function(r){ return r.kind === 'must' && r.status === 'not-met'; }), willAsk = rows.filter(function(r){ return r.kind === 'must' && r.status === 'unknown'; });
+    return { fit:fit, confidence:confidence, share:Math.round(share * 100), rows:rows, mustNotMet:mustBad.map(function(r){ return r.label; }), willAsk:willAsk.map(function(r){ return r.label; }) };
+  };
+  window.cxLikelihood = function(c){
+    let s = 50; const d = c.lastActiveDays != null ? c.lastActiveDays : (c.addedOn ? Math.round((now() - Date.parse(c.addedOn)) / 86400000) : 60);
+    s += d <= 14 ? 25 : d <= 60 ? 10 : d <= 365 ? -10 : -35;
+    const rr = c.replyRate != null ? c.replyRate : (c.respProb != null ? Number(c.respProb) / (c.respProb > 1 ? 100 : 1) : 0.3); s += Math.round((rr - 0.3) * 60);
+    const nd = noticeDays(c.notice); if(nd != null) s += nd <= 30 ? 5 : nd > 60 ? -10 : 0;
+    const k = c.contacts30 != null ? c.contacts30 : ((typeof CX_LEDGER !== 'undefined' ? CX_LEDGER : []).filter(function(r){ return r.candidateId === c.id && now() - r.ts < 30 * 86400000 && r.status === 'reserved'; }).length); if(k >= 2) s -= 15;
+    s = Math.max(0, Math.min(100, s)); return { score:s, label:s >= 60 ? 'Likely' : s >= 35 ? 'Maybe' : 'Unlikely' };
+  };
+  window.cxSegment = function(c){
+    const subs = (typeof SUBMISSIONS !== 'undefined' ? SUBMISSIONS : []).filter(function(s){ return s.candidateId === c.id; });
+    if(subs.some(function(s){ return /Joined|Placed/i.test(s.stage || ''); })) return 'Past placement';
+    if(subs.some(function(s){ return (s.stageHistory || []).some(function(h){ return /Final|Offer/i.test(h.stage || ''); }) && !/Joined/i.test(s.stage || ''); })) return 'Silver medalist';
+    const d = c.lastActiveDays != null ? c.lastActiveDays : null; if(c.looking === true || (d != null && d <= 30) || subs.some(function(s){ return Date.now() - (Date.parse(s.createdAt) || 0) < 30 * 86400000; })) return 'Active';
+    if(subs.length || c.addedOn) return 'Passive known';
+    return 'New';
+  };
+  const threshold = function(){ try { return Number(TENANT_AGENT_CONFIG['talent-discovery'].settings.threshold) || 70; } catch(e){ return 70; } };
+  window.cxRank = function(jobOrId, pool, opts){
+    opts = opts || {}; const job = typeof jobOrId === 'string' ? (typeof jobById === 'function' ? jobById(jobOrId) : null) : jobOrId; if(!job) return { picks:[], excluded:[] };
+    const crit = opts.criteria || cxCriteria(job.id) || cxIntakeRules(job), th = opts.threshold != null ? opts.threshold : threshold(), client = job.client;
+    const picks = [], excluded = [], t = now();
+    (pool || (typeof CANDIDATES !== 'undefined' ? CANDIDATES : [])).forEach(function(c){
+      const why = cxExclusion(c, job, t); if(why){ excluded.push({ id:c.id, reason:why }); return; }
+      const f = cxFit(c, crit, client), l = cxLikelihood(c);
+      if(f.mustNotMet.length){ excluded.push({ id:c.id, reason:'must-have not met: ' + f.mustNotMet.join(', '), fit:f.fit }); return; }
+      if(f.fit < th){ excluded.push({ id:c.id, reason:'fit ' + f.fit + ' is below ' + th, fit:f.fit }); return; }
+      if(f.confidence === 'Low'){ excluded.push({ id:c.id, reason:'confidence low: too little evidence', fit:f.fit }); return; }
+      picks.push({ id:c.id, c:c, fit:f.fit, confidence:f.confidence, likelihood:l.score, likelihoodLabel:l.label, rows:f.rows, willAsk:f.willAsk, segment:cxSegment(c) });
+    });
+    picks.sort(function(a, b){ return Math.round(b.fit / 5) - Math.round(a.fit / 5) || b.likelihood - a.likelihood || b.fit - a.fit; });
+    return { picks:picks, excluded:excluded, version:crit.version || null, criteria:crit };
+  };
+  window.cxExclusion = function(c, job, t){
+    t = t || now();
+    try { if((typeof PAYTRACK_JOINED !== 'undefined' ? PAYTRACK_JOINED : []).some(function(p){ return p.name === c.name && p.doj && t - Date.parse(p.dojIso || p.doj) < 90 * 86400000; })) return 'placed in the last 90 days'; } catch(e){}
+    if((typeof CX_LEDGER !== 'undefined' ? CX_LEDGER : []).some(function(r){ return r.candidateId === c.id && r.jobId && r.jobId !== job.id && r.status === 'reserved' && t - r.ts < 14 * 86400000; })) return 'contacted for another job in the last 14 days';
+    if(typeof cxOptedOut === 'function' && cxOptedOut(c.id)) return 'opted out';
+    return null;
+  };
+
+  /* ---- per-client learning ---- */
+  window.cxClientFeedback = function(client, f){
+    const L = LEARN[client] || (LEARN[client] = { events:[], adjust:{}, notes:{} });
+    L.events.push(Object.assign({ at:now() }, f));
+    if(f.verdict === 'reject' && f.criterion){ L.adjust[f.criterion] = Math.min(10, (L.adjust[f.criterion] || 0) + 3); L.notes[f.criterion] = L.events.filter(function(e){ return e.verdict === 'reject' && e.criterion === f.criterion; }).length + ' rejections said “' + (f.reason || 'not enough ' + f.criterion) + '”'; }
+    if(f.verdict === 'accept' && f.criterion){ L.adjust[f.criterion] = Math.max(-10, (L.adjust[f.criterion] || 0) - 1); }
+    return { ok:true, adjust:L.adjust };
+  };
+  window.cxClientAdjustText = function(client){ const L = LEARN[client]; if(!L) return ''; return Object.keys(L.adjust).filter(function(k){ return L.adjust[k] > 0; }).map(function(k){ return 'Adjusted for ' + client + ': more weight on ' + k + ' (' + L.notes[k] + ')'; }).join(' · '); };
+
+  /* ---- UI: criteria chips and pick cards on the job page ---- */
+  const chip = function(text, onRemove){ return '<span class="cx-chip">' + esc(text) + (onRemove ? ' <button type="button" class="o-link" aria-label="Remove ' + esc(text) + '" onclick="' + onRemove + '">×</button>' : '') + '</span>'; };
+  window.cxCriteriaHTML = function(jobId){
+    const rec = JC[jobId], d = rec && (rec.draft || rec.current); if(!d) return '<p class="o-card__sub">Talent Discovery has not read this job yet.</p><button type="button" class="o-btn o-btn--primary" onclick="var r = cxIntake(\'' + esc(jobId) + '\'); if(!r.ok) toast(r.reason); openJob(\'' + esc(jobId) + '\')">Read the job (≈ 10 credits)</button>';
+    const ed = !!rec.draft, rm = function(list, v){ return ed ? 'cxEditDraft(\'' + esc(jobId) + '\', \'' + list + '\', \'remove\', \'' + esc(v) + '\'); openJob(\'' + esc(jobId) + '\')' : null; };
+    const row = function(label, list, items){ return '<p><b>' + label + ':</b> ' + (items.length ? items.map(function(x){ return chip(x, rm(list, x)); }).join(' ') : '<span class="o-card__sub">none</span>') + (ed ? ' <input class="app-input" style="width:140px" placeholder="+ Add" aria-label="Add to ' + label + '" onchange="cxEditDraft(\'' + esc(jobId) + '\', \'' + list + '\', \'add\', this.value); openJob(\'' + esc(jobId) + '\')">' : '') + '</p>'; };
+    return '<div class="cx-criteria" data-criteria-version="' + (rec.current ? rec.current.version : 0) + '">' + (rec.current && !ed ? '<p class="o-card__sub">Criteria v' + rec.current.version + ' · confirmed by ' + esc(rec.current.confirmedBy) + ' <button type="button" class="o-link" onclick="cxEditDraft(\'' + esc(jobId) + '\', \'required\', \'noop\'); openJob(\'' + esc(jobId) + '\')">Edit</button></p>' : '<p class="o-card__sub">Draft · check the chips and confirm. Family: ' + esc((F[d.family] || {}).label || d.family) + '</p>') +
+      row('Must-have', 'mustHave', d.mustHave.map(function(m){ return m.skill; })) + row('Required', 'required', d.required) + row('Preferred', 'preferred', d.preferred) +
+      '<p class="o-card__sub">' + (d.expMin != null ? d.expMin + '–' + d.expMax + ' yrs · ' : '') + esc(d.location) + (d.workMode ? ' · ' + esc(d.workMode) : '') + (d.payBand ? ' · ₹' + d.payBand.min + '–' + d.payBand.max + ' LPA' : '') + (d.noticeMaxDays != null ? ' · notice ≤ ' + d.noticeMaxDays + ' days' : '') + '</p>' +
+      (d.clientQuestions.length ? '<p class="o-card__sub">Ask the client: ' + d.clientQuestions.map(esc).join(' · ') + '</p>' : '') +
+      (ed ? '<button type="button" class="o-btn o-btn--primary" id="cx-confirm-criteria" onclick="cxConfirmCriteria(\'' + esc(jobId) + '\'); openJob(\'' + esc(jobId) + '\')">Confirm criteria</button>' : '') + '</div>';
+  };
+  window.cxPickCardHTML = function(p){
+    const strong = p.rows.filter(function(r){ return r.status === 'met' && r.kind !== 'info'; }).sort(function(a, b){ return SRC_W[b.source] - SRC_W[a.source]; }).slice(0, 3);
+    return '<article class="o-card cx-pick" data-pick="' + esc(p.id) + '"><div class="o-card__head"><div><h3 class="o-card__title">' + esc(p.c.name) + '</h3><p class="o-card__sub">' + esc(p.segment) + '</p></div><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="cx-chip" data-fit="' + p.fit + '">' + p.fit + '% fit</span><span class="cx-chip" data-confidence="' + p.confidence + '">' + p.confidence + ' confidence</span><span class="cx-chip" data-likelihood="' + p.likelihoodLabel + '">' + p.likelihoodLabel + '</span></span></div>' +
+      '<p class="o-card__sub"><b>Why:</b> ' + strong.map(function(r){ return esc(r.evidence); }).join(' · ') + '</p>' + (p.willAsk.length ? '<p class="o-card__sub"><b>Missing:</b> ' + p.willAsk.map(function(x){ return esc(x) + ' (will ask)'; }).join(' · ') + '</p>' : '') +
+      '<details><summary>All criteria</summary><table class="o-table"><thead><tr><th>Criterion</th><th>Status</th><th>Evidence</th><th>Source</th></tr></thead><tbody>' + p.rows.map(function(r){ return '<tr><td>' + esc(r.label) + '</td><td>' + esc(r.status) + '</td><td>' + esc(r.evidence) + '</td><td>' + esc(r.source) + '</td></tr>'; }).join('') + '</tbody></table></details></article>';
+  };
+  window.cxPicksHTML = function(jobId){
+    const job = jobById(jobId), crit = cxCriteria(jobId);
+    const head = '<section class="o-card" id="cx-td"><div class="o-card__head"><div><h2 class="o-card__title">Talent Discovery</h2><p class="o-card__sub">' + (crit ? 'Ranking uses Criteria v' + crit.version + '.' : 'Confirm the criteria to rank.') + (job && cxClientAdjustText(job.client) ? ' ' + esc(cxClientAdjustText(job.client)) : '') + '</p></div></div>' + cxCriteriaHTML(jobId);
+    if(!crit) return head + '</section>';
+    const r = cxRank(jobId), picks = r.picks.slice(0, 10);
+    return head + '<div class="cx-picks" style="display:grid;gap:12px;margin-top:12px">' + (picks.length ? picks.map(cxPickCardHTML).join('') : '<p class="o-card__sub">No one passes the gate yet.</p>') + '</div><details style="margin-top:8px"><summary>' + r.excluded.length + ' left out (why?)</summary><ul class="o-list">' + r.excluded.slice(0, 50).map(function(x){ const c = byId(x.id); return '<li>' + esc(c ? c.name : x.id) + ' · ' + esc(x.reason) + '</li>'; }).join('') + '</ul></details></section>';
+  };
+  function hookJob(){
+    const d = window.renderJobDetail; if(typeof d !== 'function' || d.__cx2) return;
+    const w = function(id){ const h = d.apply(this, arguments); if(!on() || typeof h !== 'string') return h; let x = ''; try { x = cxPicksHTML(id); } catch(e){ console.error('cx picks', e); } const i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + x + h.slice(i); };
+    w.__cx2 = true; w.__cx = d.__cx; w.__g5 = d.__g5; w.__g6 = d.__g6; window.renderJobDetail = w; try { renderJobDetail = w; } catch(e){}
+  }
+  hookJob(); window.addEventListener('load', hookJob);
+  /* the MATCH_MODEL value under CX (the old let binding is not changed; this is CX's own) */
+  window.CX_MATCH_MODEL = 'evidence';
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)

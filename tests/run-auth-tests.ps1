@@ -33,6 +33,8 @@ try {
   $idx = $html.LastIndexOf('</body>')
   if($idx -lt 0){ Write-Host 'Could not find </body> in the prototype.'; exit 2 }
   $specText = [IO.File]::ReadAllText($spec, $utf8)
+  # "// @fixture tests/fixtures/<file>.js" inlines that script before the spec (evaluation fixtures)
+  foreach($fx in [regex]::Matches($specText, '//\s*@fixture\s+(\S+)')){ $fp = Join-Path $root $fx.Groups[1].Value; if(Test-Path $fp){ $specText = [IO.File]::ReadAllText($fp, $utf8) + "`n" + $specText } else { Write-Host "Fixture not found: $fp"; exit 2 } }
   $html = $html.Substring(0, $idx) + "<script>`n" + $specText + "`n</script>`n" + $html.Substring($idx)
   # O2 test setup, placed before every page script
   $dir = [regex]::Match($specText, '//\s*@o2-runner(\s+persist)?(?:\s+switches=([\w,]+))?')
