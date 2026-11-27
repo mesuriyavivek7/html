@@ -74,6 +74,9 @@
       showView('oontu-agents'); await sleep(30); ok(/Talent Discovery/.test(q('#main-content').textContent) && /LinkedIn Outreach/.test(q('#main-content').textContent), 'agents catalog page'); showView('oontu-settings'); ok(/AI models/.test(q('#main-content').textContent), 'AI models only in platform settings');
     });
     await t('owner starts a trial; surfaces appear, both audit logs record it; cancelling is recorded', async function(){
+      /* Cowork v2 (CX_SWITCH) retires agent trials and add-ons; this test proves today's behaviour, so it runs with CX off */
+      var cxWas = typeof cxOn === 'function' && cxOn(); if(cxWas) cxSetSwitch(false);
+      try {
       as('admin'); TENANT_AGENT_SUBSCRIPTIONS[CURRENT_ORGANIZATION_ID].linkedin = { state:'none', usedThisMonth:0 }; ok(!agentAccess('linkedin').on, 'the LinkedIn add-on is off');
       var auditBefore = AUDIT_LOG.length; ok(agentSubscribe('linkedin','trial'), 'trial started');
       ok(agentSub('linkedin').state==='trial' && /Trial · 7 days left/.test(agentStateLabel('linkedin')[1]), 'label ' + agentStateLabel('linkedin')[1]);
@@ -83,6 +86,7 @@
       agentSubscribe('linkedin','subscribe');
       agentSubscribe('linkedin','cancel'); ok(agentSub('linkedin').state==='cancelling', 'cancel at period end'); agentSubscribe('linkedin','resume');
       as('recruiter'); ok(!agentSubscribe('talent-discovery','cancel'), 'a recruiter cannot cancel an agent');
+      } finally { if(cxWas) cxSetSwitch(true); }
     });
     await t('an agent step switched off in the workspace cannot be raised by a person; "always a person" is never loosened', async function(){
       as('admin'); TENANT_AGENT_CONFIG['engagement'].steps['followup'] = 'off';

@@ -1,3 +1,4 @@
+// @cx-runner off   (Cowork v2 retires per-agent plans, trials and Add; this spec keeps proving today's Cowork with CX off. CX behaviour: tests/cx-*.spec.js)
 /* Step 2b (23 November 2026): Today is numbers, waiting cards, a panel and a feed; the header has one status control with a menu; Settings use segmented
    controls and steppers; there is no Turn-off card. These checks reach the same rules through the new controls.
    Step 2 (Cowork made simple, 22 November 2026): the agent page is three tabs (Today, Settings, Activity) and Settings are cards that save as you go.

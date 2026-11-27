@@ -7,7 +7,7 @@
   A spec can ask for the same with a line "// @o2-runner persist switches=0a" (used by o2-persistence.spec.js);
   "// @o2-runner switches=0b,1a" turns switches on with saving still off.
 #>
-param([string]$Browser, [string]$Spec, [int]$Width = 1440, [int]$Height = 900, [int]$Budget = 200000, [switch]$Persist, [string]$Switches, [string]$RxSwitches)
+param([string]$Browser, [string]$Spec, [int]$Width = 1440, [int]$Height = 900, [int]$Budget = 200000, [switch]$Persist, [string]$Switches, [string]$RxSwitches, [switch]$Cx)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $src  = Join-Path $root 'recruitment-os-prototype.html'
@@ -43,6 +43,10 @@ try {
   # Recruiter-app upgrade switches (Part B): -RxSwitches g1,g2 or a spec line "// @rx-runner switches=g1"
   $rxd = [regex]::Match($specText, '//\s*@rx-runner\s+switches=([\w,]+)'); $rx = @(); if($RxSwitches){ $rx += $RxSwitches -split ',' }; if($rxd.Success){ $rx += $rxd.Groups[1].Value -split ',' }
   if($rx.Count){ $o2 = $o2.Replace('</script>', 'window.__RX_SWITCHES__={' + (($rx | Where-Object { $_ } | ForEach-Object { "'" + $_.Trim() + "':true" }) -join ',') + '};</script>') }
+  # Cowork v2 (CX): -Cx or a spec line "// @cx-runner on" turns CX_SWITCH on for the run
+  # "// @cx-runner off" pins a spec to CX off: it tests a behaviour CX retires by design (e.g. per-agent plans and trials)
+  if([regex]::IsMatch($specText, '//\s*@cx-runner\s+off')){ $o2 = $o2.Replace('</script>', 'window.__CX_SWITCH__=false;</script>') }
+  elseif($Cx -or [regex]::IsMatch($specText, '//\s*@cx-runner\s+on')){ $o2 = $o2.Replace('</script>', 'window.__CX_SWITCH__=true;</script>') }
   $h = $html.IndexOf('<head>'); if($h -lt 0){ Write-Host 'Could not find <head> in the prototype.'; exit 2 }
   $html = $html.Substring(0, $h + 6) + $o2 + $html.Substring($h + 6)
   $page = Join-Path $tmp 'test.html'

@@ -74120,6 +74120,393 @@ function cfScopeHTML(){
   hookJob(); window.addEventListener('load', hookJob);
 })();
 </script>
+<style id="cx-style">
+.cx-chip { display:inline-flex; align-items:center; gap:6px; padding:2px 10px; border:1px solid var(--line, #e5e5e5); border-radius:999px; font-size:13px; white-space:nowrap; }
+.cx-row-new { animation:cx-flash 2000ms var(--ease-standard, ease); }
+@keyframes cx-flash { from { background:var(--surface-2, #f3f3ef); } to { background:transparent; } }
+@media (prefers-reduced-motion: reduce){ .cx-row-new { animation:none; } }
+.cx-bars { display:grid; gap:8px; }
+.cx-bar { display:grid; grid-template-columns:160px 1fr 110px; gap:8px; align-items:center; font-size:14px; background:none; border:0; padding:0; text-align:left; cursor:pointer; color:inherit; }
+.cx-bar__t { height:10px; border-radius:999px; background:var(--surface-2, #f0f0ec); overflow:hidden; }
+.cx-bar__t i { display:block; height:100%; background:var(--ink-2, #4a4a4a); }
+.cx-pending { color:var(--ink-3, #8a8a8a); }
+.cx-banner { display:flex; gap:12px; align-items:center; justify-content:space-between; }
+@media (max-width:640px){ .cx-bar { grid-template-columns:110px 1fr 80px; } }
+</style>
+<script id="cx-credits">
+/* CX C1 — Cowork v2: the switch and one common credit wallet (live ledger).
+   Switch: window.CX_SWITCH { on, sub:{} } — off by default (like O2_SWITCH / RX_SWITCH). On by the test runner
+   (window.__CX_SWITCH__), by ?cx=1 in the URL (?cx=0 turns it off), or by the toggle in Settings › Cowork › Cowork v2.
+   Sub-switches (CX_SWITCH.sub[id] === false) isolate a phase that could not be finished.
+   Wallet: CX_WALLET, CX_LEDGER (append-only), CX_RATES (old rows kept), CX_BUDGETS. Balance = sum of CX_LEDGER.
+   A reservation is a row { status:'reserved', credits:−N }; settling appends { status:'charged', credits:0 } or
+   { status:'released', credits:+N } with the same reservationId — never edits a row. cxSettle is idempotent.
+   Wraps (only while CX is on; the original runs first and unchanged when off):
+     cwLedger            — a 'sent' row reserves and charges at the step's rate (WhatsApp templates are charged on the
+                           simulated delivery receipt, released when undelivered).
+     cwSendEmail / cwSendWhatsapp — a step that cannot reserve does not run: "Paused: credits", and its owner gets a task.
+     agentEntitled, caStatus — every agent is open on every plan (no agent subscriptions, no per-LinkedIn-account fee).
+     sec_kairoAgents, sec_billing, sUsage — prices and action allowances hidden; "Included"; plan shows monthly credits.
+     caRender, renderJobDetail — Credits tab, migration banner, balance in the header, job Credits section, impact view.
+   Production notes: Postgres tables cx_wallet, cx_ledger (append-only, insert-only grants, a balance view summing
+   credits per workspace), cx_rates (effective_from, never updated), cx_budgets. Reservations expire after 24 h with a
+   sweeper that releases them. Delivery receipts (Meta WhatsApp Cloud API webhooks, X-Hub-Signature-256 verified) call
+   cxSettle with the provider event id as the idempotency key. 1 credit = ₹1 in market IN. */
+(function(){
+  const KEY = 'oontu.cx.switch';
+  let chosen = null; try { const v = localStorage.getItem(KEY); chosen = v === null ? null : v === '1'; } catch(e){}
+  let url = null; try { const m = /[?&]cx=([01])/.exec(location.search || ''); if(m) url = m[1] === '1'; } catch(e){}
+  const forced = typeof window.__CX_SWITCH__ === 'boolean' ? window.__CX_SWITCH__ : null;
+  const SW = window.CX_SWITCH = { on: forced != null ? forced : url != null ? url : chosen === true, sub:{} };
+  window.cxOn = function(sub){ return SW.on === true && (!sub || SW.sub[sub] !== false); };
+  const listeners = []; window.cxOnSwitch = function(fn){ listeners.push(fn); };
+  window.cxSetSwitch = function(on){ SW.on = !!on; try { localStorage.setItem(KEY, on ? '1' : '0'); } catch(e){} listeners.forEach(function(f){ try { f(!!on); } catch(e){ console.error(e); } }); try { if(typeof o2Rerender === 'function') o2Rerender(); } catch(e){} return { ok:true }; };
+
+  /* ---- agents: the six, and old ids as aliases ---- */
+  const AGENTS = window.CX_AGENTS = [
+    ['talent-discovery', 'Talent Discovery'], ['outreach', 'Outreach'], ['linkedin', 'LinkedIn Outreach'],
+    ['interviews', 'Interviews'], ['delivery-guardian', 'Delivery Guardian'], ['revenue-redeploy', 'Revenue & Redeploy'] ];
+  const ALIAS = window.CX_ALIAS = { engagement:'outreach', 'offers-joining':'delivery-guardian' };
+  window.cxAgentId = function(id){ return ALIAS[id] || id; };
+  window.cxAgentName = function(id){ id = cxAgentId(id); const a = AGENTS.find(function(x){ return x[0] === id; }); return a ? a[1] : id; };
+
+  /* ---- data ---- */
+  const now = function(){ return typeof cwNow === 'function' ? cwNow() : Date.now(); };
+  const ws = function(){ return typeof CURRENT_ORGANIZATION_ID !== 'undefined' ? CURRENT_ORGANIZATION_ID : 'ws'; };
+  const RATES = window.CX_RATES = [
+    { market:'IN', rateClass:'rules', credits:0, effectiveFrom:'2026-11-01' }, { market:'IN', rateClass:'ai-small', credits:1, effectiveFrom:'2026-11-01' },
+    { market:'IN', rateClass:'ai-medium', credits:3, effectiveFrom:'2026-11-01' }, { market:'IN', rateClass:'ai-strong', credits:10, effectiveFrom:'2026-11-01' },
+    { market:'IN', rateClass:'email', credits:1, effectiveFrom:'2026-11-01' }, { market:'IN', rateClass:'wa-window', credits:1, effectiveFrom:'2026-11-01' },
+    { market:'IN', rateClass:'wa-template', credits:2, effectiveFrom:'2026-11-01' }, { market:'IN', rateClass:'li-task', credits:2, effectiveFrom:'2026-11-01' },
+    { market:'IN', rateClass:'voice-min', credits:null, effectiveFrom:'2026-11-01', disabled:true } ];
+  /* who pays Meta: 'meta-direct' (default for new tenants; the template costs Oontu's handling only, 1 credit) or
+     'oontu-resell' (Oontu pays Meta and resells; Meta's rate plus margin = 2). The demo workspace resells, so the
+     example day stays exact. */
+  window.CX_WA_BILLING = window.CX_WA_BILLING || { mode:'oontu-resell', metaDirectTemplateCredits:1 };
+  window.cxRate = function(rateClass, at){
+    at = at == null ? now() : at;
+    if(rateClass === 'wa-template' && CX_WA_BILLING.mode === 'meta-direct') return CX_WA_BILLING.metaDirectTemplateCredits;
+    const rows = RATES.filter(function(r){ return r.rateClass === rateClass && Date.parse(r.effectiveFrom) <= at; }).sort(function(a, b){ return Date.parse(b.effectiveFrom) - Date.parse(a.effectiveFrom); });
+    const r = rows[0] || RATES.find(function(x){ return x.rateClass === rateClass; });
+    return !r || r.disabled ? null : r.credits;
+  };
+  window.cxSetRate = function(rateClass, credits, from){ RATES.push({ market:'IN', rateClass:rateClass, credits:Number(credits), effectiveFrom:from || new Date(now()).toISOString() }); };   // old rows kept
+  const WALLET = window.CX_WALLET = window.CX_WALLET || { workspaceId:ws(), balance:0, reserved:0, planAllowance:15000, rolloverExpires:null, topups:[] };
+  const LEDGER = window.CX_LEDGER = window.CX_LEDGER || [];
+  const BUDGETS = window.CX_BUDGETS = window.CX_BUDGETS || [];
+  const ALERTS = window.CX_ALERTS = window.CX_ALERTS || [];
+  const SEEN = {};
+  let seq = 1, rseq = 1;
+  const safetyReserve = function(){ return Math.max(200, Math.round((WALLET.planAllowance || 0) * 0.02)); };
+  window.cxSafetyReserve = safetyReserve;
+
+  function sum(rows){ return rows.reduce(function(s, r){ return s + (r.credits || 0); }, 0); }
+  /* running totals and indexes (rebuilt whenever rows arrived some other way), so a long ledger stays fast */
+  const IX = { n:0, bal:0, settled:{}, pending:{} };
+  function index(){
+    if(IX.n === LEDGER.length) return IX;
+    IX.n = 0; IX.bal = 0; IX.settled = {}; IX.pending = {};
+    LEDGER.forEach(track); return IX;
+  }
+  function track(r){ IX.n++; IX.bal += r.credits || 0; if(!r.reservationId) return; if(r.status === 'reserved'){ if(!IX.settled[r.reservationId]) IX.pending[r.reservationId] = -r.credits; } else if(r.status === 'charged' || r.status === 'released'){ IX.settled[r.reservationId] = r; delete IX.pending[r.reservationId]; } }
+  window.cxBalance = function(){ return index().bal; };
+  const settlementOf = function(rid){ return index().settled[rid] || null; };
+  window.cxReservedNow = function(){ const p = index().pending; return Object.keys(p).reduce(function(s, k){ return s + p[k]; }, 0); };
+  function append(row){
+    row.id = 'CXL-' + (seq++); row.ts = row.ts || now(); row.workspaceId = ws();
+    index(); row.balanceAfter = IX.bal + (row.credits || 0); LEDGER.push(row); track(row);
+    WALLET.balance = row.balanceAfter; WALLET.reserved = cxReservedNow();
+    (window.CX_LEDGER_NEW = window.CX_LEDGER_NEW || {})[row.id] = Date.now();
+    return row;
+  }
+  window.cxAppend = append;
+  /* spent = charged reservations + direct charges (pending reservations are not spent; released ones never are) */
+  window.cxSpentRows = function(f){
+    f = f || {};
+    const ok = function(r){ return (!f.agent || cxAgentId(r.agent) === cxAgentId(f.agent)) && (!f.jobId || r.jobId === f.jobId) && (f.from == null || r.ts >= f.from) && (f.to == null || r.ts <= f.to); };
+    return LEDGER.filter(function(r){
+      if(!ok(r) || r.status === 'added' || r.status === 'refunded') return false;
+      if(r.status === 'charged' && !r.reservationId) return true;
+      if(r.status === 'reserved'){ const s = settlementOf(r.reservationId); return !!s && s.status === 'charged'; }
+      return false;
+    });
+  };
+  window.cxSpent = function(f){ return cxSpentRows(f).reduce(function(s, r){ return s - r.credits; }, 0); };
+  const monthStart = function(t){ const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), 1).getTime(); };
+
+  /* ---- spending checks: balance, budgets, the safety reserve ---- */
+  window.cxCanSpend = function(agent, rateClass, qty, opts){
+    opts = opts || {}; const rate = cxRate(rateClass); if(rate == null) return { ok:false, reason:'This action is not available.' };
+    const cost = rate * (qty || 1); if(cost === 0) return { ok:true, cost:0 };
+    const avail = cxBalance() - (opts.safetyCritical ? 0 : safetyReserve());
+    if(cost > avail) return { ok:false, reason:opts.safetyCritical ? 'Credits are used up, including the safety reserve.' : 'Not enough credits (the last ' + safetyReserve() + ' are kept for interview reminders and joining checks).', cost:cost };
+    if(!opts.safetyCritical){
+      const b = cxBudgetHit(agent, opts.jobId, cost); if(b && b.stop) return { ok:false, reason:'Budget reached for ' + b.label + '.', cost:cost, budget:b };
+    }
+    return { ok:true, cost:cost };
+  };
+  window.cxBudgetHit = function(agent, jobId, extra){
+    const m0 = monthStart(now()); let worst = null;
+    BUDGETS.forEach(function(b){
+      if(!(b.scope === 'agent' && cxAgentId(b.scopeId) === cxAgentId(agent)) && !(b.scope === 'job' && b.scopeId === jobId)) return;
+      const spent = cxSpent(b.scope === 'agent' ? { agent:b.scopeId, from:m0 } : { jobId:b.scopeId, from:m0 }) + (extra || 0), share = b.limit ? spent / b.limit : 0;
+      const label = b.scope === 'agent' ? cxAgentName(b.scopeId) : 'job ' + cxJobName(b.scopeId);
+      if(share >= (b.alertAt || 0.8)){ const k = b.scope + ':' + b.scopeId + ':' + new Date(m0).toISOString().slice(0, 7); if(!ALERTS.some(function(a){ return a.key === k; })) ALERTS.push({ key:k, at:now(), text:label + ' has used ' + Math.round(spent / b.limit * 100) + '% of its ' + b.limit.toLocaleString('en-IN') + '-credit budget.' }); }
+      if(share > (b.stopAt || 1)){ worst = { stop:true, label:label, budget:b }; }
+    });
+    return worst;
+  };
+  window.cxSetBudget = function(scope, scopeId, limit){
+    limit = Number(limit); if(!(limit > 0)) return { ok:false, reason:'Enter a budget above 0.' }; if(scope !== 'agent' && scope !== 'job') return { ok:false, reason:'Pick an agent or a job.' };
+    const b = BUDGETS.find(function(x){ return x.scope === scope && x.scopeId === scopeId; });
+    if(b) b.limit = limit; else BUDGETS.push({ scope:scope, scopeId:scopeId, limit:limit, period:'month', alertAt:0.8, stopAt:1.0 });
+    return { ok:true };
+  };
+
+  /* ---- reserve and settle ---- */
+  window.cxReserve = function(o){
+    o = o || {}; const chk = cxCanSpend(o.agent, o.rateClass, o.qty || 1, { safetyCritical:!!o.safetyCritical, jobId:o.jobId });
+    if(!chk.ok) return { blocked:chk.reason };
+    const rid = 'CXR-' + (rseq++);
+    append({ agent:cxAgentId(o.agent), jobId:o.jobId || null, candidateId:o.candidateId == null ? null : o.candidateId, runId:o.runId || null, action:o.action || o.rateClass, rateClass:o.rateClass,
+      credits:-chk.cost, status:'reserved', reservationId:rid, triggeredBy:o.triggeredBy || cxAgentId(o.agent), note:o.note || (o.qty > 1 ? o.qty + ' × ' + o.rateClass : ''), safetyCritical:!!o.safetyCritical, qty:o.qty || 1 });
+    return { reservationId:rid, credits:chk.cost };
+  };
+  window.cxSettle = function(rid, outcome){
+    const r = LEDGER.find(function(x){ return x.reservationId === rid && x.status === 'reserved'; });
+    if(!r || settlementOf(rid)) return { ok:false, noop:true };
+    if(outcome !== 'charged' && outcome !== 'released') return { ok:false, reason:'Outcome must be charged or released.' };
+    append({ agent:r.agent, jobId:r.jobId, candidateId:r.candidateId, runId:r.runId, action:r.action, rateClass:r.rateClass, credits:outcome === 'charged' ? 0 : -r.credits, status:outcome, reservationId:rid, triggeredBy:r.triggeredBy, note:outcome === 'charged' ? 'Charged' : 'Released' });
+    return { ok:true };
+  };
+  /* a delivery receipt (simulated provider event) settles a WhatsApp template; the same event id twice changes nothing */
+  window.cxDeliveryReceipt = function(eventId, rid, delivered){ if(SEEN[eventId]) return { ok:false, duplicate:true }; SEEN[eventId] = true; return cxSettle(rid, delivered ? 'charged' : 'released'); };
+  /* one-step charge for actions that are done the moment they run (AI, tasks) */
+  window.cxCharge = function(o){ const r = cxReserve(o); if(r.blocked) return r; cxSettle(r.reservationId, 'charged'); return r; };
+
+  /* ---- the demo workspace's example day (job 42) ---- */
+  const DEMO_JOBS = window.CX_DEMO_JOBS = { j42:'Java Backend Developer (job 42)' };
+  window.cxJobName = function(id){ if(!id) return '—'; try { const j = jobById(id); if(j) return j.title; } catch(e){} return DEMO_JOBS[id] || id; };
+  function seed(){
+    if(LEDGER.length) return;
+    const d = new Date(now()); const t = function(h, m){ const x = new Date(d); x.setHours(h, m, 0, 0); return x.getTime(); };
+    WALLET.planAllowance = 15000; WALLET.topups = [{ credits:5000, expires:new Date(d.getFullYear(), d.getMonth() + 3, 1).toISOString().slice(0, 10) }];
+    const add = function(o){ return append(Object.assign({ jobId:'j42', candidateId:null, runId:null, triggeredBy:o.agent || 'system' }, o)); };
+    add({ ts:t(8, 0), agent:'system', jobId:null, action:'Plan credits for the month', rateClass:null, credits:15000, status:'added', triggeredBy:'Plan' });
+    add({ ts:t(8, 1), agent:'system', jobId:null, action:'Top-up', rateClass:null, credits:5000, status:'added', triggeredBy:'Meera Krishnan' });
+    add({ ts:t(9, 2), agent:'talent-discovery', action:'Read the JD into criteria and questions', rateClass:'ai-strong', credits:-10, status:'charged' });
+    add({ ts:t(9, 5), agent:'talent-discovery', action:'Rank 300 people in the pool', rateClass:'ai-small', credits:-300, status:'reserved', reservationId:'CXR-D1', note:'300 × ai-small' });
+    add({ ts:t(9, 9), agent:'talent-discovery', action:'Rank 300 people in the pool', rateClass:'ai-small', credits:0, status:'charged', reservationId:'CXR-D1' });
+    add({ ts:t(9, 12), agent:'talent-discovery', action:'Check evidence for the top 25', rateClass:'ai-medium', credits:-75, status:'charged', note:'25 × ai-medium' });
+    add({ ts:t(10, 0), agent:'outreach', action:'First email to 30 people', rateClass:'email', credits:-30, status:'charged', note:'30 × email' });
+    add({ ts:t(10, 2), agent:'outreach', action:'First WhatsApp to 12 people (template)', rateClass:'wa-template', credits:-24, status:'charged', note:'12 delivered' });
+    add({ ts:t(10, 3), agent:'outreach', action:'WhatsApp template to 1 person', rateClass:'wa-template', credits:-2, status:'reserved', reservationId:'CXR-D2' });
+    add({ ts:t(10, 40), agent:'outreach', action:'WhatsApp template to 1 person', rateClass:'wa-template', credits:2, status:'released', reservationId:'CXR-D2', note:'Not delivered' });
+    add({ ts:t(12, 15), agent:'talent-discovery', action:'Read 8 replies (screening)', rateClass:'ai-small', credits:-8, status:'charged', note:'8 × ai-small' });
+    add({ ts:t(12, 20), agent:'outreach', action:'8 answers inside the 24-hour window', rateClass:'wa-window', credits:-8, status:'charged', note:'8 × wa-window' });
+    add({ ts:t(13, 0), agent:'linkedin', action:'Prepare 4 LinkedIn tasks', rateClass:'li-task', credits:-8, status:'charged', triggeredBy:'linkedin', note:'4 × li-task' });
+    add({ ts:t(14, 30), agent:'interviews', action:'Interview reminder (template)', rateClass:'wa-template', credits:-2, status:'reserved', reservationId:'CXR-D3', safetyCritical:true });
+    add({ ts:t(14, 31), agent:'interviews', action:'Interview reminder (template)', rateClass:'wa-template', credits:0, status:'charged', reservationId:'CXR-D3', note:'Delivered' });
+    add({ ts:t(16, 0), agent:'delivery-guardian', action:'Offer check-in inside the window', rateClass:'wa-window', credits:-1, status:'charged' });
+    add({ ts:t(17, 30), agent:'revenue-redeploy', action:'Money-at-risk check', rateClass:'rules', credits:0, status:'charged' });
+    window.CX_LEDGER_NEW = {};
+  }
+  window.cxSeedDemo = seed;
+  seed();
+
+  /* ---- hooks into the Cowork send path ---- */
+  const stepAgent = function(run, wf){ return cxAgentId((wf && wf.agentId) || (run && run.agentId) || 'outreach'); };
+  const rateForEntry = function(e){ if(e.channel === 'email') return 'email'; if(e.channel === 'whatsapp') return (e.tpl || e.template || e.templateId) ? 'wa-template' : 'wa-window'; if(e.channel === 'linkedin') return 'li-task'; return 'rules'; };
+  window.cxRateForEntry = rateForEntry;
+  const SAFETY = /remind|confirm|joining|offer-?risk|twoHour/i;
+  function wrapChannel(name){
+    const base = window[name]; if(typeof base !== 'function' || base.__cx) return;
+    const w = function(run, wf, c, s){
+      const r = base.apply(this, arguments);
+      if(!cxOn() || !r || !r.ok) return r;
+      const rc = name === 'cwSendEmail' ? 'email' : (s && (s.tpl || s.template)) ? 'wa-template' : 'wa-window';
+      const safety = !!(s && (s.safetyCritical || s.twoHourReminder || SAFETY.test(String(s.action || s.kind || ''))));
+      const chk = cxCanSpend(stepAgent(run, wf), rc, 1, { safetyCritical:safety, jobId:run && run.jobId });
+      if(!chk.ok){ cxPausedTask(run, wf, chk.reason); return { blocked:'Paused: credits · ' + chk.reason, hold:60 }; }
+      return r;
+    };
+    w.__cx = true; window[name] = w; try { if(name === 'cwSendEmail') cwSendEmail = w; else cwSendWhatsapp = w; } catch(e){}
+  }
+  window.cxPausedTask = function(run, wf, why){
+    const k = 'cxpause:' + (run ? run.id : '') ; if(SEEN[k]) return; SEEN[k] = true;
+    if(typeof addPersonalTask === 'function') addPersonalTask('Cowork paused a step for lack of credits' + (wf ? ' (' + wf.name + ')' : '') + ': ' + why + ' Add credits or raise the budget.', 'task');
+  };
+  function wrapLedger(){
+    const base = window.cwLedger; if(typeof base !== 'function' || base.__cx) return;
+    const w = function(entry){
+      const out = base.apply(this, arguments);
+      try {
+        if(cxOn() && !(typeof CW !== 'undefined' && CW.seeding) && out && out.status === 'sent' && !out.cxReservationId){   // seeded history is not charged
+          const wf = out.workflowId && typeof wfFindById === 'function' ? wfFindById(out.workflowId) : null, rc = rateForEntry(out), agent = cxAgentId(out.agentId || (wf && wf.agentId) || 'outreach');
+          const safety = !!(out.logistics || SAFETY.test(String(out.action || '')));
+          const r = cxReserve({ agent:agent, action:out.action || ('Send ' + out.channel), rateClass:rc, qty:1, jobId:out.jobId || null, candidateId:out.personKey ? +String(out.personKey).slice(1) : null, runId:out.runId, safetyCritical:safety, triggeredBy:agent });
+          if(r.reservationId){ out.cxReservationId = r.reservationId; if(rc === 'wa-template') cxDeliveryReceipt('dlv:' + out.id, r.reservationId, !window.CX_FAIL_DELIVERY); else cxSettle(r.reservationId, 'charged'); }
+        }
+      } catch(e){ console.error('cx ledger', e); }
+      return out;
+    };
+    w.__cx = true; window.cwLedger = w; try { cwLedger = w; } catch(e){}
+  }
+  wrapChannel('cwSendEmail'); wrapChannel('cwSendWhatsapp'); wrapLedger();
+
+  /* ---- every agent is open on every plan ---- */
+  if(typeof window.agentEntitled === 'function' && !window.agentEntitled.__cx){ const be = window.agentEntitled; const we = function(id){ return cxOn() ? true : be.apply(this, arguments); }; we.__cx = true; window.agentEntitled = we; try { agentEntitled = we; } catch(e){} }
+  if(typeof window.caStatus === 'function' && !window.caStatus.__cx){ const bs = window.caStatus; const ws2 = function(id){ const r = bs.apply(this, arguments); if(cxOn() && r && r.key === 'trial') return { key:'on', label:'On' }; return r; }; ws2.__cx = true; window.caStatus = ws2; try { caStatus = ws2; } catch(e){} }
+
+  /* ---- prices hidden; "Included"; plans show monthly credits ---- */
+  const PRICE_RE = /₹[\d,]+(\.\d+)?\s*(per|\/)\s*(workspace|account|month)[^<]*/g;
+  ['sec_kairoAgents', 'sec_billing'].forEach(function(n){
+    const b = window[n]; if(typeof b !== 'function' || b.__cx) return;
+    const w = function(){ let h = b.apply(this, arguments); if(!cxOn() || typeof h !== 'string') return h; h = h.replace(PRICE_RE, 'Included');
+      if(n === 'sec_billing') h = cxPlanCardHTML() + h; return h; };
+    w.__cx = true; window[n] = w; try { if(n === 'sec_kairoAgents') sec_kairoAgents = w; else sec_billing = w; } catch(e){}
+  });
+  if(typeof window.sUsage === 'function' && !window.sUsage.__cx){ const bu = window.sUsage; const wu = function(){ return cxOn() ? '<span class="s-val">Uses credits from your wallet</span>' : bu.apply(this, arguments); }; wu.__cx = true; window.sUsage = wu; try { sUsage = wu; } catch(e){} }
+  const fmt = function(n){ return Math.round(n).toLocaleString('en-IN'); };
+  /* ₹ amounts only for people who already see money (a recruiter sees credits, never ₹) */
+  window.cxMoney = function(){ try { return typeof canI === 'function' ? canI('billing', 'View') : true; } catch(e){ return false; } };
+  window.cxPlanCardHTML = function(){
+    const seats = (typeof RECRUITER_ROSTER !== 'undefined' ? RECRUITER_ROSTER.length : 0);
+    return (typeof sCard === 'function' ? sCard('Plan', 'Every Cowork agent is included. Agents share one credit wallet.', sRow('Monthly credits', '1 credit = ₹1', '<span class="s-val" id="cx-plan-credits">' + fmt(WALLET.planAllowance) + ' credits</span>') + sRow('Seats', '', '<span class="s-val">' + seats + '</span>') + sRow('Balance', '', '<span class="s-val">' + fmt(cxBalance()) + ' credits (₹' + fmt(cxBalance()) + ')</span>')) : '');
+  };
+
+  /* ---- migration (decision E2): monthly agent prices become monthly credits at ₹1 a credit ---- */
+  window.cxMigrationCredits = function(){
+    let x = 0; (typeof AGENT_CATALOG !== 'undefined' ? AGENT_CATALOG : []).forEach(function(a){ const s = typeof agentSub === 'function' ? agentSub(a.id) : null; if(!s || ['active', 'cancelling', 'trial'].indexOf(s.state) < 0 || !a.price) return; x += a.price.amount * (a.id === 'linkedin' ? Math.max(1, s.accounts || 1) : 1); });
+    return x;
+  };
+  window.cxDismissBanner = function(){ try { localStorage.setItem('oontu.cx.banner', '1'); } catch(e){} window.CX_BANNER_OFF = true; if(typeof caRefresh === 'function') caRefresh(); };
+  const bannerOff = function(){ if(window.CX_BANNER_OFF) return true; try { return localStorage.getItem('oontu.cx.banner') === '1'; } catch(e){ return false; } };
+
+  /* ---- the Credits tab ---- */
+  const CXU = window.CXU = window.CXU || { f:{ agent:'', job:'', status:'', from:'', to:'' }, show:200 };
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const when = function(t){ try { return typeof cwFmtTime === 'function' ? cwFmtTime(t) : new Date(t).toLocaleString(); } catch(e){ return ''; } };
+  window.cxLedgerRows = function(f){
+    f = f || CXU.f; const from = f.from ? Date.parse(f.from) : null, to = f.to ? Date.parse(f.to) + 86400000 : null;
+    return LEDGER.filter(function(r){ return (!f.agent || cxAgentId(r.agent) === f.agent) && (!f.job || r.jobId === f.job) && (!f.status || r.status === f.status) && (from == null || r.ts >= from) && (to == null || r.ts < to); }).slice().reverse();
+  };
+  const rowState = function(r){ if(r.status !== 'reserved') return r.status; const s = settlementOf(r.reservationId); return s ? 'reserved → ' + s.status : 'reserved'; };
+  window.cxLedgerTableHTML = function(rows, limit){
+    const n = limit || CXU.show, list = rows.slice(0, n);
+    return '<div class="o-table-wrap"><table class="o-table" id="cx-ledger"><thead><tr><th>Time</th><th>Agent</th><th>Job</th><th>Who</th><th>Action</th><th>Rate</th><th>Credits</th><th>Status</th><th>Balance</th></tr></thead><tbody>' +
+      list.map(function(r){ const pend = r.status === 'reserved' && !settlementOf(r.reservationId), fresh = (window.CX_LEDGER_NEW || {})[r.id] && Date.now() - CX_LEDGER_NEW[r.id] < 2000;
+        return '<tr data-cxl="' + esc(r.id) + '" class="' + (pend ? 'cx-pending' : '') + (fresh ? ' cx-row-new' : '') + '"><td>' + esc(when(r.ts)) + '</td><td>' + esc(r.agent === 'system' ? 'Wallet' : cxAgentName(r.agent)) + '</td><td>' + esc(cxJobName(r.jobId)) + '</td><td>' + esc(r.triggeredBy === r.agent ? cxAgentName(r.agent) : r.triggeredBy) + '</td><td>' + esc(r.action) + (r.note ? '<small> · ' + esc(r.note) + '</small>' : '') + '</td><td>' + esc(r.rateClass || '—') + '</td><td>' + (r.credits > 0 ? '+' : '') + fmt(r.credits) + '</td><td>' + esc(rowState(r)) + (r.safetyCritical ? ' <small>safety</small>' : '') + '</td><td>' + fmt(r.balanceAfter) + '</td></tr>'; }).join('') +
+      '</tbody></table></div>' + (rows.length > n ? '<p style="margin-top:8px"><button type="button" class="o-link" onclick="CXU.show += 200; caRefresh()">Show ' + Math.min(200, rows.length - n) + ' more of ' + fmt(rows.length - n) + '</button></p>' : '');
+  };
+  window.cxSet = function(k, v){ CXU.f[k] = v; CXU.show = 200; if(typeof caRefresh === 'function') caRefresh(); };
+  window.cxExportCsv = function(){
+    const rows = cxLedgerRows(), head = ['id', 'time', 'agent', 'job', 'who', 'action', 'rateClass', 'credits', 'status', 'reservationId', 'balanceAfter'];
+    const q = function(v){ v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    const csv = [head.join(',')].concat(rows.map(function(r){ return [r.id, new Date(r.ts).toISOString(), r.agent, r.jobId, r.triggeredBy, r.action, r.rateClass, r.credits, r.status, r.reservationId, r.balanceAfter].map(q).join(','); })).join('\n');
+    window.CX_LAST_CSV = csv;
+    try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv' })); a.download = 'cowork-credits.csv'; document.body.appendChild(a); a.click(); a.remove(); } catch(e){}
+    return csv;
+  };
+  window.cxByAgent = function(from){ return AGENTS.map(function(a){ return { id:a[0], name:a[1], credits:cxSpent({ agent:a[0], from:from }) }; }); };
+  window.cxDaysLeft = function(){ const m0 = monthStart(now()), days = Math.max(1, (now() - m0) / 86400000), rate = cxSpent({ from:m0 }) / days; return rate > 0 ? Math.floor(cxBalance() / rate) : null; };
+  /* impact: per agent, outcomes the agent influenced (it touched the candidate before the outcome) */
+  window.cxImpact = function(f){
+    f = f || {}; const touched = {}; LEDGER.forEach(function(r){ if(r.candidateId == null || r.credits === 0 && r.status !== 'charged') return; const a = cxAgentId(r.agent); (touched[a] = touched[a] || []).push(r); });
+    const before = function(a, cid, t){ return (touched[a] || []).some(function(r){ return r.candidateId === cid && r.ts <= t; }); };
+    return AGENTS.map(function(a){
+      const id = a[0], subs = (typeof SUBMISSIONS !== 'undefined' ? SUBMISSIONS : []).filter(function(s){ return (!f.jobId || s.jobId === f.jobId) && before(id, s.candidateId, Date.parse(s.createdAt) || 0); });
+      const ivs = (typeof hmInterviews !== 'undefined' ? hmInterviews : []).filter(function(iv){ return (!f.jobId || iv.jobId === f.jobId) && iv.status !== 'Cancelled' && before(id, iv.candidateId, Date.parse(iv.at) || 0); });
+      const joins = subs.filter(function(s){ return /Joined|Placed/i.test(s.stage || ''); });
+      let fees = 0; joins.forEach(function(s){ try { const m = typeof rxOutcomeMoney === 'function' ? rxOutcomeMoney(s) : null; if(m && m.amount) fees += m.amount; } catch(e){} });
+      let recovered = 0; if(id === 'revenue-redeploy'){ try { if(typeof rxLeakTotals === 'function' && typeof rxOn === 'function' && rxOn('g3')) recovered = rxLeakTotals().recovered; } catch(e){} }
+      const credits = cxSpent({ agent:id, jobId:f.jobId });
+      return { id:id, name:a[1], credits:credits, rupees:credits, prospects:subs.length, interviews:ivs.length, placements:joins.length, fees:fees, recovered:recovered };
+    });
+  };
+  const IMPACT_TIP = 'Influenced: the agent touched the candidate before the outcome.';
+  window.cxImpactHTML = function(f){
+    const rows = cxImpact(f), money = typeof canI === 'function' ? canI('billing', 'View') : true;
+    return '<section class="o-card" id="cx-impact"><h2 class="o-card__title">Impact <span class="cx-chip" title="' + esc(IMPACT_TIP) + '" aria-label="' + esc(IMPACT_TIP) + '">influenced ⓘ</span></h2><p class="o-card__sub">' + esc(IMPACT_TIP) + '</p><div class="o-table-wrap"><table class="o-table"><thead><tr><th>Agent</th><th>Credits</th><th>Prospects</th><th>Interviews</th><th>Placements</th>' + (money ? '<th>Fees influenced</th><th>Money recovered</th>' : '') + '</tr></thead><tbody>' +
+      rows.map(function(r){ return '<tr data-cx-impact="' + r.id + '"><td>' + esc(r.name) + '</td><td>' + fmt(r.credits) + (cxMoney() ? ' (₹' + fmt(r.rupees) + ')' : '') + '</td><td>' + r.prospects + '</td><td>' + r.interviews + '</td><td>' + r.placements + '</td>' + (money ? '<td>₹' + fmt(r.fees) + '</td><td>₹' + fmt(r.recovered) + '</td>' : '') + '</tr>'; }).join('') + '</tbody></table></div></section>';
+  };
+  window.cxCreditsHTML = function(){
+    const m0 = monthStart(now()), bal = cxBalance(), spent = cxSpent({ from:m0 }), days = cxDaysLeft(), by = cxByAgent(m0), max = Math.max(1, by.reduce(function(s, a){ return s + a.credits; }, 0));
+    const num = function(label, value, note, id){ return '<div class="o-card o-num"><p class="o-num__label">' + label + '</p><p class="o-num__value"' + (id ? ' id="' + id + '"' : '') + '>' + value + '</p><p class="o-num__note">' + note + '</p></div>'; };
+    const top = '<div class="o-cols" style="grid-template-columns:repeat(4,minmax(0,1fr))">' + num('Balance', fmt(bal) + ' credits', cxMoney() ? '₹' + fmt(bal) : 'shared by every agent', 'cx-balance') + num('Reserved', fmt(cxReservedNow()) + ' credits', 'held for steps in flight', 'cx-reserved') + num('Spent this month', fmt(spent) + ' credits', cxMoney() ? '₹' + fmt(spent) : 'all agents', 'cx-spent') + num('Lasts', days == null ? '—' : days + (days === 1 ? ' day' : ' days'), 'at this month’s rate') + '</div>';
+    const bars = '<section class="o-card"><h2 class="o-card__title">By agent this month</h2><div class="cx-bars">' + by.map(function(a){ const pct = Math.round(a.credits / max * 100); return '<button type="button" class="cx-bar" data-cx-agent="' + a.id + '" aria-pressed="' + (CXU.f.agent === a.id) + '" onclick="cxSet(\'agent\', CXU.f.agent === \'' + a.id + '\' ? \'\' : \'' + a.id + '\')"><span>' + esc(a.name) + '</span><span class="cx-bar__t" aria-hidden="true"><i style="width:' + pct + '%"></i></span><span>' + fmt(a.credits) + ' · ' + pct + '%</span></button>'; }).join('') + '</div></section>';
+    const opt = function(v, l, cur){ return '<option value="' + esc(v) + '"' + (cur === v ? ' selected' : '') + '>' + esc(l) + '</option>'; };
+    const jobs = []; LEDGER.forEach(function(r){ if(r.jobId && jobs.indexOf(r.jobId) < 0) jobs.push(r.jobId); });
+    const filters = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0">' +
+      '<select class="app-input" aria-label="Agent" onchange="cxSet(\'agent\', this.value)">' + opt('', 'All agents', CXU.f.agent) + AGENTS.map(function(a){ return opt(a[0], a[1], CXU.f.agent); }).join('') + '</select>' +
+      '<select class="app-input" aria-label="Job" onchange="cxSet(\'job\', this.value)">' + opt('', 'All jobs', CXU.f.job) + jobs.map(function(j){ return opt(j, cxJobName(j), CXU.f.job); }).join('') + '</select>' +
+      '<select class="app-input" aria-label="Status" onchange="cxSet(\'status\', this.value)">' + opt('', 'Any status', CXU.f.status) + ['added', 'reserved', 'charged', 'released', 'refunded'].map(function(s){ return opt(s, s, CXU.f.status); }).join('') + '</select>' +
+      '<label class="text-xs">From <input class="app-input" type="date" aria-label="From" value="' + esc(CXU.f.from) + '" onchange="cxSet(\'from\', this.value)"></label><label class="text-xs">To <input class="app-input" type="date" aria-label="To" value="' + esc(CXU.f.to) + '" onchange="cxSet(\'to\', this.value)"></label>' +
+      '<span style="flex:1"></span><button type="button" class="o-btn o-btn--ghost" onclick="cxExportCsv()">Export CSV</button></div>';
+    const ledger = '<section class="o-card"><h2 class="o-card__title">Live ledger</h2><p class="o-card__sub">Newest first. Grey rows are reserved and turn into charged or released.</p>' + filters + cxLedgerTableHTML(cxLedgerRows()) + '</section>';
+    const budgets = '<section class="o-card" id="cx-budgets"><h2 class="o-card__title">Budgets</h2><p class="o-card__sub">Optional. At 80% the owner gets an alert; at 100% everything but safety steps pauses in that scope.</p>' +
+      (BUDGETS.length ? '<div class="o-table-wrap"><table class="o-table"><thead><tr><th>Scope</th><th>Limit a month</th><th>Used</th><th></th></tr></thead><tbody>' + BUDGETS.map(function(b, i){ const used = cxSpent(b.scope === 'agent' ? { agent:b.scopeId, from:m0 } : { jobId:b.scopeId, from:m0 }); return '<tr><td>' + esc(b.scope === 'agent' ? cxAgentName(b.scopeId) : cxJobName(b.scopeId)) + '</td><td><input class="app-input" type="number" min="1" value="' + b.limit + '" aria-label="Limit" style="width:110px" onchange="var r = cxSetBudget(\'' + b.scope + '\', \'' + esc(b.scopeId) + '\', this.value); if(!r.ok) toast(r.reason); caRefresh()"></td><td>' + fmt(used) + ' (' + Math.round(used / b.limit * 100) + '%)</td><td></td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="o-card__sub">No budgets yet.</p>') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><select class="app-input" id="cx-b-scope" aria-label="Budget for">' + AGENTS.map(function(a){ return '<option value="agent:' + a[0] + '">' + esc(a[1]) + '</option>'; }).join('') + jobs.map(function(j){ return '<option value="job:' + esc(j) + '">' + esc(cxJobName(j)) + '</option>'; }).join('') + '</select><input class="app-input" id="cx-b-limit" type="number" min="1" placeholder="Credits a month" aria-label="Credits a month" style="width:150px"><button type="button" class="o-btn" onclick="var s = document.getElementById(\'cx-b-scope\').value.split(\':\'); var r = cxSetBudget(s[0], s.slice(1).join(\':\'), document.getElementById(\'cx-b-limit\').value); if(!r.ok) toast(r.reason); caRefresh()">Add budget</button></div>' +
+      (ALERTS.length ? '<ul class="o-list" style="margin-top:8px">' + ALERTS.slice(-3).map(function(a){ return '<li>⚠ ' + esc(a.text) + '</li>'; }).join('') + '</ul>' : '') + '</section>';
+    return '<div class="s-content" id="cx-credits-view">' + top + bars + cxImpactHTML() + ledger + budgets + '</div>';
+  };
+
+  /* ---- Cowork page: Credits tab, balance in the header, migration banner ---- */
+  function hookCowork(){
+    if(typeof window.caRender !== 'function' || window.caRender.__cx) return;
+    const base = window.caRender;
+    const w = function(){
+      if(!cxOn()) return base.apply(this, arguments);
+      const want = !CA.agent && CA.tab === 'credits';
+      if(want) CA.tab = 'agents';
+      let h; try { h = base.apply(this, arguments); } finally { if(want) CA.tab = 'credits'; }
+      if(typeof h !== 'string') return h;
+      const bal = '<span class="cx-chip" id="cx-head-balance" title="Credits in the shared wallet">' + fmt(cxBalance()) + ' credits' + (cxMoney() ? ' · ₹' + fmt(cxBalance()) : '') + '</span>';
+      h = h.replace(/(<p class="ca-lede">[\s\S]*?<\/p>)/, '$1' + bal);
+      const mig = cxMigrationCredits();
+      if(mig > 0 && !bannerOff() && cxMoney()) h = h.replace(/(<\/header>)/, '$1<div class="o-note cx-banner" role="status" id="cx-banner"><span>Your agents now share one credit wallet. Your monthly price is unchanged and is now ' + fmt(mig) + ' credits.</span><button type="button" class="o-link" onclick="cxDismissBanner()">Dismiss</button></div>');
+      const at = h.indexOf('<div role="tablist" id="ca-tabs"'); if(at < 0) return h;
+      const close = h.indexOf('</div>', at);
+      let tabs = h.slice(at, close); if(want) tabs = tabs.replace(/aria-selected="true"/g, 'aria-selected="false"');
+      tabs += '<button type="button" role="tab" id="ca-tab-credits" aria-selected="' + want + '" onclick="CA.tab=\'credits\'; caRefresh()">Credits</button>';
+      h = h.slice(0, at) + tabs + h.slice(close);
+      if(!want) return h;
+      const bodyAt = h.indexOf('</div></div>', at) + '</div></div>'.length;
+      return h.slice(0, bodyAt) + cxCreditsHTML() + '</div>';
+    };
+    w.__cx = true; w.__rx = base.__rx; window.caRender = w; try { caRender = w; } catch(e){}
+  }
+  hookCowork(); window.addEventListener('load', hookCowork);
+
+  /* ---- job page: Credits section ---- */
+  window.cxJobCreditsHTML = function(jobId){
+    const spent = cxSpent({ jobId:jobId }), subs = (typeof SUBMISSIONS !== 'undefined' ? SUBMISSIONS : []).filter(function(s){ return s.jobId === jobId; }), ivs = (typeof hmInterviews !== 'undefined' ? hmInterviews : []).filter(function(iv){ return iv.jobId === jobId && iv.status !== 'Cancelled'; }), joins = subs.filter(function(s){ return /Joined|Placed/i.test(s.stage || ''); });
+    const per = function(n){ return n ? fmt(spent / n) + ' credits' : '—'; };
+    return '<section class="o-card" id="cx-job-credits"><h2 class="o-card__title">Credits</h2><p class="o-card__sub">' + fmt(spent) + ' credits' + (cxMoney() ? ' (₹' + fmt(spent) + ')' : '') + ' on this job · per prospect ' + per(subs.length) + ' · per interview ' + per(ivs.length) + ' · per placement ' + per(joins.length) + '</p>' + cxLedgerTableHTML(cxLedgerRows({ job:jobId }), 50) + '</section>';
+  };
+  function hookJob(){
+    const d = window.renderJobDetail; if(typeof d !== 'function' || d.__cx) return;
+    const w = function(id){ const h = d.apply(this, arguments); if(!cxOn() || typeof h !== 'string') return h; const i = h.lastIndexOf('</div>'); return i < 0 ? h : h.slice(0, i) + cxJobCreditsHTML(id) + h.slice(i); };
+    w.__cx = true; w.__g5 = d.__g5; w.__g6 = d.__g6; window.renderJobDetail = w; try { renderJobDetail = w; } catch(e){}
+  }
+  hookJob(); window.addEventListener('load', hookJob);
+
+  /* agent cards say "Included" (no price, no allowance) */
+  if(typeof window.caCardHTML === 'function' && !window.caCardHTML.__cx){
+    const bc = window.caCardHTML;
+    const wc = function(id){ const h = bc.apply(this, arguments); if(!cxOn() || typeof h !== 'string') return h; return h.replace('<div class="ca-card__f">', '<div class="ca-card__f"><span class="cx-chip" data-cx-included>Included · uses credits</span>'); };
+    wc.__cx = true; window.caCardHTML = wc; try { caCardHTML = wc; } catch(e){}
+  }
+
+  /* ---- the toggle in Settings › Cowork ---- */
+  function addToggle(){
+    if(typeof sSectionById !== 'function') return; const s = sSectionById('cowork'); if(!s || !s.tabs || s.tabs.some(function(t){ return t.id === 'cx'; })) return;
+    s.tabs.push({ id:'cx', label:'Cowork v2', can:function(){ return typeof sCan !== 'function' || sCan('kairo', 'Configure'); },
+      render:function(){ return sCard('Cowork v2', 'One credit wallet for all agents, six agents, simple campaigns and assisted LinkedIn. Off keeps today’s Cowork exactly. You can also add ?cx=1 to the address.', sRow('Use Cowork v2', cxOn() ? 'On' : 'Off', '<button type="button" role="switch" class="app-switch' + (cxOn() ? ' is-on' : '') + '" id="cx-toggle" aria-checked="' + cxOn() + '" aria-label="Use Cowork v2" onclick="cxSetSwitch(!cxOn()); if(typeof settingsRefresh === \'function\') settingsRefresh()"><span></span></button>')); } });
+  }
+  addToggle(); window.addEventListener('load', addToggle);
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
