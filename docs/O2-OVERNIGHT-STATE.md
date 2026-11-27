@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-7b
+7c
 
 ## Steps
 
@@ -31,6 +31,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 | 5 | Done | o2-step-5 | o2-customers 6/6; regressions 155/155 off, 156/156 on | old account page kept inside Overview; 1a's Pipeline/Sign-ups strip steps aside when 5 is on |
 | 6 | Done | o2-step-6 | o2-incident 5/5; regressions 141/141 off, 142/142 on | visible states on ticket rows and ticket head only; 'att' badge variant handled |
 | 7a | Done | o2-step-7a | o2-audit 7/7; BOS + shell specs 316/316 off and on (full suite at the 7c checkpoint) | logged once at the outermost command |
+| 7b | Done | o2-step-7b | o2-mfa 5/5; sign-in specs 220/220 off, 221/221 on | step-up applies to sessions that signed in through the two steps |
 
 ## How to run tests (this machine)
 

@@ -25,6 +25,7 @@ _In progress. Written in full when the build finishes._
 - **5** Account 360 (rail, seven tabs, both renewals side by side), Pipeline tabs including Sign-ups, Reports with pipeline analytics. Switches 1a, 5 · Kavya Iyer or Meera · Customers › Accounts › Northstar; Customers › Pipeline › Sign-ups.
 - **6** Six visible ticket states; Incidents with severity, flow, cadence reminder and review; Publish update makes an announcement. Switches 1a, 6 · Nisha Pillai or Meera · Service › Incidents › an incident › Publish update.
 - **7a** Refused and failed commands and failed sign-ins are audited once, with who, outcome and reason. Switches 7a (+7c to browse) · log in as Arjun and try a Finance export; then Meera › Admin › Audit & security › Refusals.
+- **7b** Second sign-in step for Oontu employees and step-up for high-risk actions after 15 minutes. Switch 7b · sign in as any Oontu employee; the code 246810 is shown in Prototype · simulated sign-in.
 
 ## 3. Blocked steps
 
@@ -59,6 +60,7 @@ None yet.
 | 4d allocate permission | §7.2 adds platform-finance allocate and record_tds for Finance templates that hold verify_payment; the prototype checks verify_payment (or allocate), which is the same set of people, without editing role templates. |
 | 4d ambiguous amounts | An amount-only suggestion is made only when exactly one open invoice of a matching payer has that outstanding amount; otherwise nothing is suggested. |
 | 6 visible states | §6 says six visible states; the support diagram has seven including Closed. Tickets show New, Open, In progress, Waiting on customer, Waiting on us (with the detail), Resolved; Closed stays the end state. |
+| 7b step-up scope | Step-up applies to sessions that came through the two-step sign-in; the developer shortcuts that switch the acting employee directly have no session to age. |
 
 ## 5. Step 1a screen lists
 
