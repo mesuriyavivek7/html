@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-4c
+4d
 
 ## Steps
 
@@ -26,6 +26,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 | 3b | Done | o2-step-3b | o2-workspace-360 7/7; regressions 142/142 off, 143/143 on | old tenant page inside Overview; Account help inside Requests |
 | 4a | Done | o2-step-4a | o2-subscription-gateway 5/5; regressions 242/242 off and on | checkout hooked at BOS_PAY.receive (CHECKOUT_DONE is private); 0c checkout link fixed the same way |
 | 4b | Done | o2-step-4b | o2-subscription-lifecycle 6/6, o2-access-level 5/5; regressions green off/on | renewal job = one command as SYS-BILLING; dunning schedule kept (equals policy defaults) |
+| 4c | Done | o2-step-4c | o2-billing-screens 6/6; regressions green off/on | old tab bodies reused; billing desk action bar on Invoices, Payments, Promo codes |
 
 ## How to run tests (this machine)
 

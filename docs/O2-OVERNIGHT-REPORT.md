@@ -20,6 +20,7 @@ _In progress. Written in full when the build finishes._
 - **3b** Workspaces list (cards, tabs, filters, ten columns) and Workspace 360 (eight tabs, danger zone); Account help actions run as commands. Switches 0b, 1a, 3a, 3b · Meera Krishnan · Workspaces › a row; Requests tab.
 - **4a** Every subscription change is a command with an audit row and an event; subscriptions carry items and a change history. Switches 4a (+4c to see it) · Meera Krishnan · Subscriptions › a subscription › Change history.
 - **4b** Subscription statuses (incomplete … canceled) with cancel at period end, cancel now (approval), downgrade at renewal, manual activation (approval); unpaid makes the workspace read-only and paying clears it. Switches 3a, 4a, 4b (+4c) · Meera Krishnan or Vikram · Subscriptions › a subscription › Cancel at period end.
+- **4c** Billing screens: Invoices & payments, Plans & pricing, Tax & reports, and a Subscription page; no Mark paid outside Invoices & payments. Switches 1a, 4c · Vikram Shah · Billing › Invoices & payments; Billing › Subscriptions › a subscription.
 
 ## 3. Blocked steps
 
