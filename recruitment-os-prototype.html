@@ -72705,6 +72705,99 @@ function cfScopeHTML(){
   RENDERERS['oontu-settings'] = function(){ const h = baseSet2.apply(this, arguments); if(!on() || h.indexOf('id="o2-policy"') < 0) return h; const pend = (BOS.policyChanges || []).filter(function(c){ return c.status === 'pending'; }); return h.replace('<div class="o2-policy" id="o2-policy">', '<div class="o2-policy" id="o2-policy"><div class="o2-sub-acts" style="padding:0 0 10px"><button type="button" class="o-btn" onclick="var k = prompt(\'Which policy key?\'); if(k){ var v = prompt(\'New value (JSON, e.g. 10 or true or &quot;text&quot;)\'); var w = prompt(\'Why?\'); var val; try { val = JSON.parse(v); } catch(e){ val = v; } bosResult(o2RequestPolicyChange(k, val, w), \'Sent for sign-off.\'); }">Request a policy change</button>' + pend.map(function(c){ return '<button type="button" class="o-btn" onclick="bosResult(o2SignPolicyChange(\'' + c.id + '\'), \'Signed.\')">Sign off ' + E(c.key) + '</button>'; }).join('') + '</div>'); };
 })();
 </script>
+<script id="o2-controls-script">
+/* ============================================================
+   O2 STEP 8a: FEATURE FLAGS AND ENTITLEMENTS (2026-11-26)
+   Switch 8a on:
+   - PLATFORM_FEATURE_CONTROLS is read as two things: plan-gated rows become plan entitlements (o2PlanEntitlements),
+     temporarily-disabled and unavailable rows become ops flags (BOS.flags, with reason). The old rows stay as they are.
+   - Overrides per workspace (BOS.entitlementOverrides): on or off, with a reason and an expiry; an expired override
+     stops applying by itself.
+   - o2Entitlements(tenantId) and one availability check o2FeatureAvailable(tenantId, key) = ops flag ∧ entitlement
+     (plan or override) ∧ the workspace's own setting. isFeaturePlatformAvailable answers from the same parts, so every
+     existing gate gives the same answer for every seed; the customer UI is unchanged.
+   - oontu-controls: Flags (kill switch with a reason) · Entitlements (plans × features, overrides) · Maintenance.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('8a'); };
+  const E = function(s){ return oEsc(s == null ? '' : s); }, ISO = function(t){ return new Date(t == null ? bosNow() : t).toISOString(); };
+  BOS.flags = BOS.flags || []; BOS.entitlementOverrides = BOS.entitlementOverrides || [];
+  /* the split, derived from the controls each time (old rows remain the source of truth for old code) */
+  window.o2OpsFlag = function(key){ const fc = featureControlByKey(key); const own = BOS.flags.find(function(f){ return f.key === key; }); if(own) return { key:key, on:own.on, reason:own.reason }; return { key:key, on:!(fc && (fc.status === 'unavailable' || fc.status === 'disabled-temporarily')), reason:fc && fc.updatedByNote || '' }; };
+  window.o2PlanEntitlements = function(key){ const fc = featureControlByKey(key); if(!fc) return null; return fc.status === 'plan-gated' ? fc.availablePlans.slice() : null; };   // null = every plan
+  const overrideFor = function(tenantId, key){ const now = bosNow(); return BOS.entitlementOverrides.filter(function(o){ return o.tenantId === tenantId && o.key === key && !o.revokedAt && (!o.expiresAt || new Date(o.expiresAt).getTime() > now); }).slice(-1)[0] || null; };
+  window.o2Entitlements = function(tenantId){
+    const t = tenantById(tenantId), s = t ? subscriptionForTenant(t.id) : null, planId = (s && s.planId) || (t && t.planId) || null, out = {};
+    PLATFORM_FEATURE_CONTROLS.forEach(function(fc){ const plans = o2PlanEntitlements(fc.key), ov = overrideFor(tenantId, fc.key); out[fc.key] = ov ? !!ov.value : (plans === null ? true : !!planId && plans.indexOf(planId) > -1); });
+    return out;
+  };
+  window.o2FeatureAvailable = function(tenantId, key){
+    const fl = o2OpsFlag(key); if(!fl.on) return false;
+    const ent = o2Entitlements(tenantId); if(key in ent && !ent[key]) return false;
+    if(tenantId === CURRENT_ORGANIZATION_ID && TENANT_FEATURE_FLAGS[key] && !TENANT_FEATURE_FLAGS[key].enabled) return false;
+    return true;
+  };
+  const baseAvail = window.isFeaturePlatformAvailable;
+  window.isFeaturePlatformAvailable = isFeaturePlatformAvailable = function(key, planId){
+    if(!on()) return baseAvail.apply(this, arguments);
+    if(!featureControlByKey(key)) return true;
+    if(!o2OpsFlag(key).on) return false;
+    const plans = o2PlanEntitlements(key); if(plans === null) return true; if(!planId) return false; return plans.indexOf(planId) > -1;
+  };
+  /* commands */
+  window.o2SetFlag = function(key, isOn, reason){
+    return bosRun('flag.set', null, function(){
+      if(!on()) return { ok:false, reason:'Flags are part of step 8a, which is off.' };
+      if(!canPlatform('platform-feature', 'update')) return { ok:false, reason:bosWhyNot('platform-feature', 'update') };
+      if(!featureControlByKey(key)) return { ok:false, reason:'Unknown feature.' };
+      if(String(reason || '').trim().length < 8) return { ok:false, field:'reason', reason:'Say why (it is shown to the team and kept in the log).' };
+      let f = BOS.flags.find(function(x){ return x.key === key; }); if(!f){ f = { key:key, on:true, history:[] }; BOS.flags.push(f); }
+      const from = f.on; f.on = !!isOn; f.reason = String(reason).trim(); f.at = ISO(); f.by = ACTIVE_PLATFORM_USER_ID; f.history.push({ at:f.at, by:f.by, on:f.on, reason:f.reason });
+      return { ok:true, flag:f, ref:key, audit:['Ops flag ' + (f.on ? 'on' : 'off'), key + ' · ' + f.reason, { entityId:key, entityType:'Flag', previousState:String(from), newState:String(f.on) }] };
+    });
+  };
+  window.o2SetOverride = function(tenantId, key, value, reason, expiresAt){
+    return bosRun('entitlement.override', null, function(){
+      if(!on()) return { ok:false, reason:'Entitlements are part of step 8a, which is off.' };
+      if(!canPlatform('platform-feature', 'update')) return { ok:false, reason:bosWhyNot('platform-feature', 'update') };
+      if(!tenantById(tenantId) || !featureControlByKey(key)) return { ok:false, reason:'Pick a workspace and a feature.' };
+      if(String(reason || '').trim().length < 8) return { ok:false, field:'reason', reason:'Say why.' };
+      if(!expiresAt || isNaN(new Date(expiresAt).getTime())) return { ok:false, field:'expiresAt', reason:'An override needs an end date.' };
+      const o = { id:bosId('OVR', 3), tenantId:tenantId, key:key, value:!!value, reason:String(reason).trim(), expiresAt:new Date(expiresAt).toISOString(), at:ISO(), by:ACTIVE_PLATFORM_USER_ID };
+      BOS.entitlementOverrides.push(o);
+      return { ok:true, override:o, ref:o.id, audit:['Entitlement override', tenantId + ' · ' + key + ' ' + (o.value ? 'on' : 'off') + ' until ' + o.expiresAt.slice(0, 10) + ' · ' + o.reason, { entityId:o.id, entityType:'Entitlement', tenantId:tenantId }] };
+    });
+  };
+  /* screen */
+  const ST = window.O2_CTRL_UI = { tab:'flags' };
+  window.o2CtrlTab = function(k){ ST.tab = k; bosRedraw(); };
+  const BASE = RENDERERS['oontu-controls'];
+  window.o2ControlsHTML = function(){
+    const k = ST.tab, can = canPlatform('platform-feature', 'update');
+    const nav = '<nav class="o2-host-tabs" aria-label="Product controls">' + [['flags', 'Flags'], ['entitlements', 'Entitlements'], ['maintenance', 'Maintenance']].map(function(x){ return '<button type="button" class="o2-host-tab' + (x[0] === k ? ' is-on' : '') + '" onclick="o2CtrlTab(\'' + x[0] + '\')">' + x[1] + '</button>'; }).join('') + '</nav>';
+    let body = '';
+    if(k === 'flags') body = oTableCard({ id:'o2-flags', title:'Ops flags', sub:'Kill switches: off for everyone, with a reason', cols:[{ label:'Feature' }, { label:'State' }, { label:'Reason' }, { label:'' }], rows:PLATFORM_FEATURE_CONTROLS.map(function(fc){ const f = o2OpsFlag(fc.key); return '<tr><td><b>' + E(fc.label) + '</b><small>' + E(fc.key) + '</small></td><td>' + oBadge(f.on ? 'success' : 'danger', f.on ? 'On' : 'Off') + '</td><td>' + E(f.reason || '—') + '</td><td>' + (can ? '<button type="button" class="o-btn" onclick="var w = prompt(\'Why turn ' + (f.on ? 'off' : 'on') + ' ' + E(fc.label) + '?\'); if(w) bosResult(o2SetFlag(\'' + fc.key + '\', ' + !f.on + ', w), \'Saved.\')">' + (f.on ? 'Turn off' : 'Turn on') + '</button>' : '') + '</td></tr>'; }).join('') });
+    if(k === 'entitlements'){ const plans = PLATFORM_PLANS.filter(function(p){ return p.status === 'active'; }); body = oTableCard({ id:'o2-ent', title:'Entitlements by plan', sub:'From the plan-gated controls; every plan where not gated', cols:[{ label:'Feature' }].concat(plans.map(function(p){ return { label:p.name }; })), rows:PLATFORM_FEATURE_CONTROLS.map(function(fc){ const pl = o2PlanEntitlements(fc.key); return '<tr><td><b>' + E(fc.label) + '</b></td>' + plans.map(function(p){ return '<td>' + (pl === null || pl.indexOf(p.id) > -1 ? '✓ Included' : '— Not included') + '</td>'; }).join('') + '</tr>'; }).join('') }) + oTableCard({ id:'o2-ovr', title:'Workspace overrides', sub:'Each with a reason and an end date', cols:[{ label:'Workspace' }, { label:'Feature' }, { label:'Value' }, { label:'Until' }, { label:'Reason' }], rows:BOS.entitlementOverrides.length ? BOS.entitlementOverrides.map(function(o){ const live = !o.expiresAt || new Date(o.expiresAt).getTime() > bosNow(); return '<tr><td>' + E((tenantById(o.tenantId) || {}).name || o.tenantId) + '</td><td>' + E(o.key) + '</td><td>' + E(o.value ? 'On' : 'Off') + '</td><td>' + E(o.expiresAt.slice(0, 10) + (live ? '' : ' (ended)')) + '</td><td>' + E(o.reason) + '</td></tr>'; }).join('') : oTableEmptyRow(5, 'No overrides.') }); }
+    if(k === 'maintenance') body = BASE ? BASE.apply(this, arguments) : '';
+    return oDashShell([oPageHead({ ctx:'Admin', title:'Product controls', lede:'Ops flags, plan entitlements and maintenance.' }), nav + body]);
+  };
+  RENDERERS['oontu-controls'] = function(){ if(!on() || state.role !== 'oontu' || !BOS_VIEW_ACCESS['oontu-controls']()) return BASE.apply(this, arguments); return o2ControlsHTML(); };
+})();
+</script>
+<script id="o2-controls-workspace-script">
+/* O2 Step 8a, Workspace 360 › Entitlements (switch 8a): availability through the one check (flag ∧ entitlement ∧ the
+   workspace's own setting) and the workspace's overrides with reason and end date. Read-only here. */
+(function(){
+  if(typeof window.o2WorkspaceTabHTML !== 'function') return;
+  const base = window.o2WorkspaceTabHTML, E = function(s){ return oEsc(s == null ? '' : s); };
+  window.o2WorkspaceTabHTML = function(t, k){
+    if(!o2On('8a') || k !== 'entitlements' || !t) return base.apply(this, arguments);
+    const ovs = (BOS.entitlementOverrides || []).filter(function(o){ return o.tenantId === t.id; });
+    return oTableCard({ id:'o2-ws-ent8', title:'Entitlements', sub:'Read-only. Available = ops flag on, plan or override includes it, and the workspace has it switched on', cols:[{ label:'Feature' }, { label:'Available' }], rows:PLATFORM_FEATURE_CONTROLS.map(function(fc){ const on = o2FeatureAvailable(t.id, fc.key); return '<tr><td>' + E(fc.label) + '</td><td>' + oBadge(on ? 'success' : 'neutral', on ? 'Available' : 'Not available') + '</td></tr>'; }).join('') }) +
+      oTableCard({ id:'o2-ws-ovr', title:'Overrides', sub:'Each ends on its date', cols:[{ label:'Feature' }, { label:'Value' }, { label:'Until' }, { label:'Reason' }], rows:ovs.length ? ovs.map(function(o){ return '<tr><td>' + E(o.key) + '</td><td>' + E(o.value ? 'On' : 'Off') + '</td><td>' + E(String(o.expiresAt).slice(0, 10)) + '</td><td>' + E(o.reason) + '</td></tr>'; }).join('') : oTableEmptyRow(4, 'No overrides for this workspace.') });
+  };
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
