@@ -115,3 +115,9 @@ Nothing was removed (Step 9 rule: only after you accept a step's switch, one swi
 ## 7. Recommended next
 
 Pending.
+
+## Part B · Recruiter-app upgrades (RX_SWITCH)
+
+- **G1** Live workflow triggers: published workflows run on real events (stage moves, interviews, offers, joins, job publish, new candidates) for that one candidate, once per event, with consent and a daily limit; cards show the last live run and skips. Switch G1 (prototype tools › Recruiter-app upgrades) · any recruiter · Cowork › a workflow: Publish, then accept an offer.
+
+Part B decisions: `wfRunTest` is not refactored; `wfPerform` applies the same checks per candidate with the same helpers, so Run Test output cannot change. Consent counts the prompt's `candidate.consent.given` or a given right-to-represent consent on any of the candidate's submissions (no seed has the former). The settings section is named "Workflow automation" (an older spec treats the word "Auto…" in Settings as an autonomy-level picker).

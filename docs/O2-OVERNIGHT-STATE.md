@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-Part B: G1
+G2
 
 ## Steps
 
@@ -36,6 +36,7 @@ Part B: G1
 | 8a | Done | o2-step-8a | o2-entitlements 5/5; regressions 214/214 off, 215/215 on | derived split (old rows unchanged); availability matrix identical on/off |
 | 8b | Done | o2-step-8b | o2-agents 6/6; regressions 151/151 off, 152/152 on | allow-list enforced at bosRun for agent actors |
 | 9 | Done | o2-step-9 | o2-flows 8/8 twice; 8b checkpoint stands (no code change) | nothing removed; candidates listed |
+| G1 | Done | rx-g1 | rx-g1-live 9/9; regressions 292/292 off, green on | wfRunTest untouched (wfPerform reimplements its checks per candidate); consent = candidate consent or M7 representation consent |
 
 ## How to run tests (this machine)
 
