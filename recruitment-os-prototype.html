@@ -72159,6 +72159,115 @@ function cfScopeHTML(){
   RENDERERS['oontu-finance'] = function(){ const h = baseFin.apply(this, arguments); if(!on() || ((BOS_UI.tab || {})['oontu-finance'] || 0) !== 3) return h; const s = h.indexOf('<div class="seg bos-tabs"'); if(s < 0) return h; const e = h.indexOf('</div>', s) + 6; return h.slice(0, e) + o2ReconciliationHTML() + h.slice(e); };
 })();
 </script>
+<style id="o2-customers-style">
+.o2-acc{ display:grid; grid-template-columns:minmax(0, 1fr) 280px; gap:16px; align-items:start; }
+@media (max-width:1000px){ .o2-acc{ grid-template-columns:minmax(0, 1fr); } }
+.o2-rail{ padding:14px 16px; }
+.o2-rail h2{ margin:0 0 8px; font-size:14px; font-weight:600; }
+.o2-rail dl{ display:grid; grid-template-columns:96px 1fr; gap:6px 10px; margin:0; font-size:13px; }
+.o2-rail dt{ color:var(--n-700, #4B5563); }
+.o2-rail dd{ margin:0; overflow-wrap:anywhere; }
+.o2-renewals{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; padding:0 20px 16px; }
+@media (max-width:700px){ .o2-renewals{ grid-template-columns:minmax(0, 1fr); } }
+.o2-renewals > div{ border:1px solid var(--n-200, #E6E5E0); border-radius:10px; padding:10px 12px; font-size:13px; }
+.o2-renewals h3{ margin:0 0 4px; font-size:12px; font-weight:600; color:var(--n-700, #4B5563); }
+</style>
+<script id="o2-customers-script">
+/* ============================================================
+   O2 STEP 5: CUSTOMERS (2026-11-26)
+   Switch 5 on:
+   - Account 360: rail (owner, stage, health, parent and subsidiaries, domains) and tabs Overview (next step, open
+     items, plan and billing status, both renewals side by side), Contacts, Deals, Workspaces, Billing (billing
+     customers, subscriptions, invoices with settlement), Service, Activity. Today's account page, with every action on
+     it (duplicate review, merge and undo, tax details, contacts…), stays inside Overview.
+   - Pipeline: tabs Deals · Leads · Sign-ups · Demos · Proposals. Sign-ups is today's Incomplete sign-ups screen (stop
+     step, lead sheet, call logging, outcomes, drop reasons, Follow up), unchanged.
+   - Reports replaces Insights and absorbs Pipeline analytics.
+   No data is written by this step.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('5'); };
+  const UI = window.BOS_UI, E = function(s){ return oEsc(s == null ? '' : s); };
+  const ST = window.O2_CUST_UI = { acc:'overview', pipe:'deals' };
+  const fmtD = function(iso){ return iso ? new Date(iso).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '—'; };
+  const money = function(cur, n){ return (cur || '') + ' ' + Number(n || 0).toLocaleString(undefined, { maximumFractionDigits:2 }); };
+  const tabsNav = function(fn, list, cur){ return '<nav class="o2-host-tabs" aria-label="Sections">' + list.map(function(x){ return '<button type="button" class="o2-host-tab' + (x[0] === cur ? ' is-on' : '') + '" aria-current="' + (x[0] === cur ? 'page' : 'false') + '" onclick="' + fn + '(\'' + x[0] + '\')">' + E(x[1]) + '</button>'; }).join('') + '</nav>'; };
+  const card = function(title, sub, inner){ return '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">' + E(title) + '</h2>' + (sub ? '<span class="o-card__sub">' + E(sub) + '</span>' : '') + '</div>' + inner + '</section>'; };
+  const barBody = function(html){ const s = html.indexOf('<div class="seg bos-tabs"'); if(s < 0) return html; const e = html.indexOf('</div>', s) + 6; return { head:html.slice(0, s), body:html.slice(e) }; };
+
+  /* ---------- Account 360 ---------- */
+  window.o2AccTab = function(k){ ST.acc = k; bosRedraw(); };
+  const ACC_TABS = [['overview', 'Overview'], ['contacts', 'Contacts'], ['deals', 'Deals'], ['workspaces', 'Workspaces'], ['billing', 'Billing'], ['service', 'Service'], ['activity', 'Activity']];
+  const subsOf = function(a){ return (a.tenantIds || []).map(function(tid){ return subscriptionForTenant(tid); }).filter(Boolean); };
+  const settlementOf = function(t){ return typeof o2Settlement === 'function' && o2On('4d') ? o2Settlement(t).status : t.status; };
+  window.o2AccountTabHTML = function(a, k, oldHtml){
+    if(k === 'overview'){
+      const subs = subsOf(a), tix = BOS.tickets.filter(function(x){ return x.accountId === a.id && !/resolved|closed/.test(x.status); });
+      const opps = BOS.opps.filter(function(o){ return o.accountId === a.id && typeof bosOppOpen === 'function' && bosOppOpen(o); });
+      const apr = BOS.approvals.filter(function(x){ return x.status === 'pending' && ((x.payload && x.payload.accountId === a.id) || opps.some(function(o){ return BOS.proposals.some(function(p){ return p.oppId === o.id && p.approval && p.approval.id === x.id; }); })); });
+      const unpaid = BOS.taxInvoices.filter(function(t){ return t.accountId === a.id && t.kind === 'invoice' && !t.sample && ['paid', 'cancelled'].indexOf(settlementOf(t)) < 0; });
+      const ren = (typeof bosRenewals === 'function' ? bosRenewals() : []).filter(function(r){ return r.account.id === a.id; })[0];
+      const nextOpp = opps[0], next = nextOpp && typeof bosDealNext === 'function' ? bosDealNext(nextOpp) : null;
+      const plan = subs.map(function(s){ const p = planById(s.planId); return (p ? p.name : s.planId) + ' · ' + (typeof o2SubStatus === 'function' ? o2SubStatus(s) : s.status); }).join('; ') || 'No subscription';
+      const billingStatus = unpaid.length ? unpaid.length + ' unpaid invoice' + (unpaid.length === 1 ? '' : 's') : 'Nothing outstanding';
+      const renewals = '<div class="o2-renewals"><div><h3>Subscription renewal</h3>' + (subs.length ? subs.map(function(s){ return E((s.renewalDate || '—') + ' · ' + money(s.currency, o2Mrr(s)) + ' MRR' + (s.cancelAt ? ' · cancels ' + String(s.cancelAt).slice(0, 10) : '')); }).join('<br>') : 'None') + '</div><div><h3>Renewal deal</h3>' + (ren && ren.opp ? E(ren.opp.title + ' · ' + (ren.opp.stage || '') + ' · owner ' + bosName(ren.opp.ownerId)) : ren ? E('No renewal deal yet · renews in ' + ren.days + ' days · ' + ren.readiness) : 'Not due within 90 days') + '</div></div>';
+      return card('Overview', next ? 'Next step: ' + next.label : 'No open deal', '<dl class="o2-kv"><dt>Plan</dt><dd>' + E(plan) + '</dd><dt>Billing status</dt><dd>' + E(billingStatus) + '</dd><dt>Workspaces</dt><dd>' + E((a.tenantIds || []).map(function(tid){ const t = tenantById(tid); return t ? t.name + ' (' + o2Lifecycle(t) + ')' : tid; }).join(', ') || 'None') + '</dd><dt>Open tickets</dt><dd>' + E(String(tix.length)) + '</dd><dt>Open items</dt><dd>' + E(opps.length + ' open deal' + (opps.length === 1 ? '' : 's') + ' · ' + apr.length + ' approval' + (apr.length === 1 ? '' : 's') + ' waiting') + '</dd></dl>' + renewals) +
+        (oldHtml ? '<details class="o2-ws-legacy"><summary>Everything on the earlier account page (duplicates, merge, contacts, tax details)</summary>' + oldHtml + '</details>' : '');
+    }
+    if(k === 'contacts'){ const list = (BOS.contacts || []).filter(function(c){ return c.accountId === a.id; }); return oTableCard({ id:'o2-acc-con', title:'Contacts', sub:oPlural(list.length, 'contact'), cols:[{ label:'Name' }, { label:'Email' }, { label:'Role' }], rows:list.length ? list.map(function(c){ return '<tr><td>' + E(c.name) + '</td><td>' + E(c.email) + '</td><td>' + E(c.role || c.title || '—') + '</td></tr>'; }).join('') : oTableEmptyRow(3, 'No contacts yet.') }); }
+    if(k === 'deals'){ const list = BOS.opps.filter(function(o){ return o.accountId === a.id; }); return oTableCard({ id:'o2-acc-deals', title:'Deals', sub:oPlural(list.length, 'deal'), cols:[{ label:'Deal' }, { label:'Stage' }, { label:'Owner' }], rows:list.length ? list.map(function(o){ return '<tr onclick="bosOpen(\'opp\', \'' + E(o.id) + '\')" style="cursor:pointer"><td><b>' + E(o.title) + '</b><small>' + E(o.id) + '</small></td><td>' + E(o.stage || '—') + '</td><td>' + E(bosName(o.ownerId)) + '</td></tr>'; }).join('') : oTableEmptyRow(3, 'No deals yet.') }); }
+    if(k === 'workspaces'){ const list = (a.tenantIds || []).map(tenantById).filter(Boolean); return oTableCard({ id:'o2-acc-ws', title:'Workspaces', sub:oPlural(list.length, 'workspace'), cols:[{ label:'Workspace' }, { label:'Lifecycle' }, { label:'Access' }, { label:'Plan' }], rows:list.length ? list.map(function(t){ const s = subscriptionForTenant(t.id), p = s ? planById(s.planId) : null, al = o2AccessLevel(t); return '<tr onclick="openOontuTenantDetail(\'' + E(t.id) + '\')" style="cursor:pointer"><td><b>' + E(t.name) + '</b><small>' + E(t.id) + '</small></td><td>' + E(o2Lifecycle(t)) + '</td><td data-o2-access="' + al.level + '">' + E(al.level) + '</td><td>' + E(p ? p.name : '—') + '</td></tr>'; }).join('') : oTableEmptyRow(4, 'No workspace yet.') }); }
+    if(k === 'billing'){
+      const bcs = (BOS.billingCustomers || []).filter(function(b){ return b.accountId === a.id; }), subs = subsOf(a), docs = BOS.taxInvoices.filter(function(t){ return t.accountId === a.id && !t.sample; }).slice(-10).reverse();
+      return oTableCard({ id:'o2-acc-bc', title:'Billing customers', sub:'Tax details live here', cols:[{ label:'Billing customer' }, { label:'GSTIN' }, { label:'Market' }], rows:bcs.length ? bcs.map(function(b){ return '<tr><td><b>' + E(b.legalName) + '</b><small>' + E(b.id) + '</small></td><td>' + E(b.gstin || '—') + '</td><td>' + E(b.market + ' · ' + b.currency) + '</td></tr>'; }).join('') : oTableEmptyRow(3, 'No billing customer yet.') }) +
+        oTableCard({ id:'o2-acc-subs', title:'Subscriptions', sub:'', cols:[{ label:'Subscription' }, { label:'Plan' }, { label:'Status' }, { label:'Renews' }], rows:subs.length ? subs.map(function(s){ const p = planById(s.planId); return '<tr onclick="openOontuSubDetail(\'' + E(s.id) + '\')" style="cursor:pointer"><td>' + E(s.id) + '</td><td>' + E(p ? p.name : s.planId) + '</td><td>' + E(typeof o2SubStatus === 'function' ? o2SubStatus(s) : s.status) + '</td><td>' + E(s.renewalDate || '—') + '</td></tr>'; }).join('') : oTableEmptyRow(4, 'No subscription.') }) +
+        oTableCard({ id:'o2-acc-docs', title:'Invoices', sub:'Tax invoices and notes', cols:[{ label:'Number' }, { label:'Date' }, { label:'Total', right:true }, { label:'Status' }], rows:docs.length ? docs.map(function(t){ return '<tr><td>' + E(t.no) + '</td><td>' + E(fmtD(t.date)) + '</td><td class="num">' + E(money(t.currency, t.total)) + '</td><td>' + E(settlementOf(t)) + '</td></tr>'; }).join('') : oTableEmptyRow(4, 'No invoices yet.') });
+    }
+    if(k === 'service'){ const list = BOS.tickets.filter(function(x){ return x.accountId === a.id; }); return oTableCard({ id:'o2-acc-tk', title:'Tickets', sub:oPlural(list.length, 'ticket'), cols:[{ label:'Ticket' }, { label:'Priority' }, { label:'Status' }], rows:list.length ? list.map(function(x){ return '<tr onclick="bosOpen(\'ticket\', \'' + E(x.id) + '\')" style="cursor:pointer"><td><b>' + E(x.subject) + '</b><small>' + E(x.id) + '</small></td><td>' + E(x.priority) + '</td><td>' + E(x.status) + '</td></tr>'; }).join('') : oTableEmptyRow(3, 'No tickets.') }); }
+    if(k === 'activity'){ const rows = (a.history || []).map(function(h){ return { at:h.at, text:h.text }; }).concat((BOS.events || []).filter(function(e){ return e.ref === a.id; }).map(function(e){ return { at:e.at, text:e.name }; })).sort(function(x, y){ return new Date(y.at) - new Date(x.at); }); return oTableCard({ id:'o2-acc-act', title:'Activity', sub:'', cols:[{ label:'When' }, { label:'What' }], rows:rows.length ? rows.map(function(r){ return '<tr><td>' + E(fmtD(r.at)) + '</td><td style="white-space:normal">' + E(r.text) + '</td></tr>'; }).join('') : oTableEmptyRow(2, 'Nothing recorded yet.') }); }
+    return '';
+  };
+  const baseAcc = RENDERERS['oontu-account'];
+  RENDERERS['oontu-account'] = function(){
+    const old = baseAcc.apply(this, arguments); if(!on()) return old;
+    const a = typeof bosLiveAccount === 'function' ? bosLiveAccount(UI.sel.account) : null; if(!a || old.indexOf('Not available') > -1) return old;
+    const k = ACC_TABS.some(function(x){ return x[0] === ST.acc; }) ? ST.acc : 'overview';
+    const stage = typeof bosCustomerStage === 'function' ? bosCustomerStage(a.id) : null, h = typeof bosHealth === 'function' ? bosHealth(a.id) : {}, parent = a.parentId && BOS.accounts.find(function(x){ return x.id === a.parentId; }), kids = BOS.accounts.filter(function(x){ return x.parentId === a.id && !x.mergedInto; });
+    const rail = '<aside class="o-card o2-rail" aria-label="Account summary"><h2>About this account</h2><dl><dt>Owner</dt><dd>' + E(bosName(a.ownerId)) + '</dd><dt>Stage</dt><dd>' + E(stage && (stage.label || stage.stage || stage) || a.status || '—') + '</dd><dt>Health</dt><dd>' + E(h.band || 'Not held in this prototype') + '</dd><dt>Parent</dt><dd>' + E(parent ? parent.name : '—') + '</dd><dt>Subsidiaries</dt><dd>' + E(kids.map(function(x){ return x.name; }).join(', ') || '—') + '</dd><dt>Domains</dt><dd>' + E((a.domains || []).join(', ') || '—') + '</dd></dl></aside>';
+    return oDashShell([oPageHead({ ctx:'Accounts', title:a.name, lede:a.id + (a.kind ? ' · ' + a.kind : '') }), tabsNav('o2AccTab', ACC_TABS, k) + '<div class="o2-acc"><div class="o2-bill-stack" style="display:grid;gap:16px;min-width:0">' + o2AccountTabHTML(a, k, k === 'overview' ? old : '') + '</div>' + rail + '</div>']);
+  };
+
+  /* ---------- Pipeline ---------- */
+  const PIPE = [['deals', 'Deals', 0], ['leads', 'Leads', 1], ['signups', 'Sign-ups', null], ['demos', 'Demos', 2], ['proposals', 'Proposals', 3]];
+  window.o2PipeTab = function(k){ ST.pipe = k; bosRedraw(); };
+  const baseRev = RENDERERS['oontu-revenue'];
+  window.o2PipelineHTML = function(){
+    const canSign = BOS_VIEW_ACCESS['oontu-signups'] && BOS_VIEW_ACCESS['oontu-signups'](), canPipe = canPlatform('platform-lead', 'view');
+    const tabs = PIPE.filter(function(x){ return x[0] === 'signups' ? canSign : canPipe; });
+    if(!tabs.length) return oDashShell([oPageHead({ title:'Not available', lede:'Your roles don’t include the pipeline.' })]);
+    const cur = tabs.find(function(x){ return x[0] === ST.pipe; }) || tabs[0];
+    if(cur[0] === 'signups'){ const html = RENDERERS['oontu-signups'](); return oDashShell([oPageHead({ ctx:'Customers', title:'Pipeline', lede:'Deals, leads, sign-ups, demos and proposals.' }), tabsNav('o2PipeTab', tabs, cur[0]) + html]); }
+    const prev = UI.tab['oontu-revenue']; UI.tab['oontu-revenue'] = cur[2]; let html; try { html = baseRev(); } finally { UI.tab['oontu-revenue'] = prev; }
+    const parts = barBody(html); if(typeof parts === 'string') return parts;
+    return parts.head + tabsNav('o2PipeTab', tabs, cur[0]) + parts.body;
+  };
+  RENDERERS['oontu-revenue'] = function(){ if(!on() || state.role !== 'oontu') return baseRev.apply(this, arguments); return o2PipelineHTML(); };
+  /* the old sign-ups id opens Pipeline › Sign-ups */
+  const baseShow = window.showView;
+  window.showView = function(id){ if(on() && state.role === 'oontu' && id === 'oontu-signups' && o2On('1a')){ ST.pipe = 'signups'; } return baseShow.apply(this, arguments); };
+  try { showView = window.showView; } catch(e){}
+
+  /* ---------- Reports: Insights + Pipeline analytics ---------- */
+  const baseIns = RENDERERS['oontu-insights'];
+  window.o2ReportsHTML = function(){
+    let ins = baseIns.apply(this, arguments);
+    if(canPlatform('platform-lead', 'view')){ const prev = UI.tab['oontu-revenue']; UI.tab['oontu-revenue'] = 4; let r; try { r = baseRev(); } finally { UI.tab['oontu-revenue'] = prev; } const p = barBody(r); if(typeof p !== 'string') ins = ins.replace(/<\/div>\s*$/, '<section class="o2-pipe-analytics" aria-label="Pipeline analytics"><h2 class="o-card__title" style="margin:24px 0 12px">Pipeline analytics</h2>' + p.body.replace(/<\/div>\s*$/, '') + '</section></div>'); }
+    return ins.replace(/<h1 class="o-page-head__title">[^<]*<\/h1>/, '<h1 class="o-page-head__title">Reports</h1>');
+  };
+  const baseReports = RENDERERS['oontu-reports'];
+  RENDERERS['oontu-reports'] = function(){ if(!on() || state.role !== 'oontu') return baseReports.apply(this, arguments); if(!BOS_VIEW_ACCESS['oontu-reports']()) return baseReports.apply(this, arguments); return o2ReportsHTML(); };
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
