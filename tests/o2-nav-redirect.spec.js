@@ -67,7 +67,7 @@
     });
     await t('host tabs switch between the screens a new id holds', async function(){
       showView('oontu-workspaces'); o2NavTab('oontu-workspaces', 'requests'); await sleep(10); ok(/Requests/.test(document.querySelector('.o2-host-tab.is-on').textContent));
-      o2NavTab('oontu-revenue', 'pipeline'); await sleep(10); eq(state.activeNav, 'oontu-revenue'); ok(/Pipeline/.test(document.querySelector('.o2-host-tab.is-on').textContent));
+      o2NavTab('oontu-revenue', 'pipeline'); if(o2On('5')) o2PipeTab('deals'); await sleep(10); eq(state.activeNav, 'oontu-revenue'); ok((o2On('5') ? /Deals/ : /Pipeline/).test(document.querySelector('.o2-host-tab.is-on').textContent), 'pipeline tab');   /* step 5 names the tabs */
     });
 
     await t('acceptance 1: each seeded login sees exactly its §5 screens; home per role', async function(){
