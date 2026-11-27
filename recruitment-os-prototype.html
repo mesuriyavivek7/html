@@ -72268,6 +72268,116 @@ function cfScopeHTML(){
   RENDERERS['oontu-reports'] = function(){ if(!on() || state.role !== 'oontu') return baseReports.apply(this, arguments); if(!BOS_VIEW_ACCESS['oontu-reports']()) return baseReports.apply(this, arguments); return o2ReportsHTML(); };
 })();
 </script>
+<style id="o2-service-style">
+.o2-inc-banner{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px 14px; border-radius:10px; border:1px solid #F0C2BD; background:#FFF6F5; margin:0 0 16px; font-size:13px; }
+.o2-due{ color:#A3352C; font-weight:600; }
+</style>
+<script id="o2-service-script">
+/* ============================================================
+   O2 STEP 6: SERVICE AND INCIDENTS (2026-11-26)
+   Switch 6 on:
+   - Tickets show six visible states mapped from the internal ones (data unchanged): New (received) · Open (classified,
+     routed) · In progress (assigned, investigating) · Waiting on customer · Waiting on us (with the detail: internal team
+     or engineering) · Resolved; Closed stays the end state.
+   - Incidents (oontu-incidents, oontu-incident): SEV 1–3; Investigating → Identified → Monitoring → Resolved → Reviewed;
+     lead, affected workspaces, linked tickets, an updates timeline, the update-cadence reminder (every 30 min for SEV 1,
+     60 for SEV 2) and a required review for SEV 1–2 within 5 working days. Each change is a bosRun command.
+   - Announcements is the old Notifications screen; an incident can "Publish update" as an announcement (existing
+     createAnnouncement / publishAnnouncement, audited).
+   SLA maths, routing, email intake, tiers, customer tickets and the outage auto-link are not touched.
+============================================================ */
+(function(){
+  const on = function(){ return o2On('6'); };
+  const E = function(s){ return oEsc(s == null ? '' : s); }, DAY = 864e5, MIN = 6e4, ISO = function(t){ return new Date(t == null ? bosNow() : t).toISOString(); };
+  const VISIBLE = window.O2_TICKET_STATES = { received:'New', classified:'Open', routed:'Open', assigned:'In progress', investigating:'In progress', waiting_customer:'Waiting on customer', waiting_internal:'Waiting on us', waiting_engineering:'Waiting on us', resolved:'Resolved', closed:'Closed' };
+  const DETAIL = { waiting_internal:'another team', waiting_engineering:'engineering' };
+  window.o2TicketState = function(t){ const s = t && t.status; return { label:VISIBLE[s] || s, detail:DETAIL[s] || '' }; };
+  const BADGE = { 'Received':'New', 'Classified':'Open', 'Routed':'Open', 'Assigned':'In progress', 'Investigating':'In progress', 'Waiting customer':'Waiting on customer', 'Waiting internal':'Waiting on us · another team', 'Waiting engineering':'Waiting on us · engineering' };
+  const mapBadges = function(html){ return html.replace(/(<span class="(?:o-badge|att)[^"]*">)(Received|Classified|Routed|Assigned|Investigating|Waiting customer|Waiting internal|Waiting engineering)(<\/span>)/g, function(m, a, w, b){ return a + BADGE[w] + b; }); };
+  /* ticket rows only (never the incidents table) and the ticket page head */
+  const baseService = RENDERERS['oontu-service'];
+  RENDERERS['oontu-service'] = function(){ const h = baseService.apply(this, arguments); if(!on()) return h; return h.replace(/<tr[^>]*>[\s\S]*?<\/tr>/g, function(row){ return /TCK-/.test(row) && !/INC-/.test(row) ? mapBadges(row) : row; }); };
+  const baseTicket = RENDERERS['oontu-ticket'];
+  RENDERERS['oontu-ticket'] = function(){
+    let h = baseTicket.apply(this, arguments); if(!on()) return h;
+    const t = BOS.tickets.find(function(x){ return x.id === (BOS_UI.sel || {}).ticket; }); if(!t) return h;
+    let done = false; h = h.replace(/(<span class="(?:o-badge|att)[^"]*">)(Received|Classified|Routed|Assigned|Investigating|Waiting customer|Waiting internal|Waiting engineering)(<\/span>)/, function(m, a, w, b){ done = true; return a + BADGE[w] + b; });
+    const inc = (BOS.incidents || []).find(function(i){ return (i.ticketIds || []).indexOf(t.id) > -1 && !/reviewed/.test(i.status); });
+    if(inc) h = h.replace(/^(\s*<div[^>]*>)/, '$1<div class="o2-inc-banner" role="status">' + oBadge('danger', inc.severity) + ' Linked incident <b>' + E(inc.id + ' · ' + inc.title) + '</b> · ' + E(inc.status) + ' <button type="button" class="o-btn" onclick="o2OpenIncident(\'' + E(inc.id) + '\')">Open incident</button></div>');
+    return h;
+  };
+
+  /* ---------- incidents ---------- */
+  const FLOW = ['investigating', 'identified', 'monitoring', 'resolved', 'reviewed'];
+  const sevNum = function(i){ const m = String(i.severity || '').match(/(\d)/); return m ? Number(m[1]) : 3; };
+  const workdaysAfter = function(iso, n){ const d = new Date(iso); let k = 0; while(k < n){ d.setDate(d.getDate() + 1); if(d.getDay() !== 0 && d.getDay() !== 6) k++; } return d.toISOString(); };
+  window.o2IncidentCadence = function(i){ const sev = sevNum(i); if(sev > 2 || /resolved|reviewed/.test(i.status)) return null; const last = (i.updates || []).length ? i.updates[i.updates.length - 1].at : i.startedAt, every = sev === 1 ? 30 : 60, due = new Date(last).getTime() + every * MIN; return { every:every, dueAt:ISO(due), overdue:bosNow() > due }; };
+  window.o2IncidentReview = function(i){ if(sevNum(i) > 2) return { required:false }; return { required:true, dueAt:i.resolvedAt ? workdaysAfter(i.resolvedAt, 5) : null, done:!!(i.review && i.review.doneAt) }; };
+  const canInc = function(act){ return canPlatform('platform-incident', act) || canPlatform('platform-ticket', 'edit'); };
+  window.o2IncidentUpdate = function(id, o){
+    o = o || {}; const i = (BOS.incidents || []).find(function(x){ return x.id === id; });
+    return bosRun('incident.update', null, function(){
+      if(!on()) return { ok:false, reason:'Incidents are part of step 6, which is off.' };
+      if(!i) return { ok:false, reason:'Incident not found.' };
+      if(!canInc('update')) return { ok:false, reason:bosWhyNot('platform-incident', 'update') };
+      const text = String(o.text || '').trim(); if(text.length < 5) return { ok:false, field:'text', reason:'Write the update people will read.' };
+      const from = i.status;
+      if(o.status && o.status !== from){
+        const a = FLOW.indexOf(from), b = FLOW.indexOf(o.status);
+        if(b < 0 || b <= a) return { ok:false, reason:'An incident moves forward: ' + FLOW.join(' → ') + '.' };
+        if(o.status === 'reviewed'){ const rv = o2IncidentReview(i); if(!String(o.review || '').trim() || String(o.review).trim().length < 20) return { ok:false, field:'review', reason:'Write the post-incident review (what happened, why, what changes).' }; i.review = { doneAt:ISO(), by:ACTIVE_PLATFORM_USER_ID, summary:String(o.review).trim(), dueAt:rv.dueAt || null }; }
+        if(o.status === 'resolved'){ i.resolvedAt = ISO(); const rv = o2IncidentReview(i); if(rv.required) i.review = Object.assign(i.review || {}, { dueAt:rv.dueAt, doneAt:null }); }
+        i.status = o.status;
+      }
+      if(o.affected) i.affectedWorkspaces = (Array.isArray(o.affected) ? o.affected : String(o.affected).split(',')).map(function(x){ return String(x).trim(); }).filter(Boolean);
+      if(o.lead) i.ownerId = o.lead;
+      (i.updates = i.updates || []).push({ at:ISO(), by:ACTIVE_PLATFORM_USER_ID, status:i.status, text:text });
+      return { ok:true, incident:i, ref:i.id, audit:['Incident update', i.id + ' · ' + from + (i.status !== from ? ' → ' + i.status : '') + ' · ' + text, { entityId:i.id, entityType:'Incident', previousState:from, newState:i.status }] };
+    });
+  };
+  window.o2IncidentPublish = function(id, text){
+    const i = (BOS.incidents || []).find(function(x){ return x.id === id; });
+    return bosRun('incident.publish-update', null, function(){
+      if(!on()) return { ok:false, reason:'Incidents are part of step 6, which is off.' };
+      if(!i) return { ok:false, reason:'Incident not found.' };
+      const msg = String(text || (i.updates || []).slice(-1).map(function(u){ return u.text; })[0] || '').trim(); if(msg.length < 5) return { ok:false, reason:'Write the update first.' };
+      const aud = (i.affectedWorkspaces || []).filter(function(w){ return !!tenantById(w); });
+      const c = createAnnouncement({ title:i.severity + ' · ' + i.title + ' · ' + i.status, message:msg, type:'Maintenance', audienceType:aud.length ? 'tenants' : 'all', audienceTenantIds:aud }); if(!c.ok) return c;
+      const p = publishAnnouncement(c.announcement.id); if(!p.ok) return p;
+      (i.announcements = i.announcements || []).push(c.announcement.id);
+      return { ok:true, announcement:c.announcement, ref:i.id, audit:['Incident update published', i.id + ' → ' + c.announcement.id, { entityId:i.id, entityType:'Incident' }] };
+    });
+  };
+  window.o2OpenIncident = function(id){ O2_INC.sel = id; showView('oontu-incident'); };
+  const O2_INC = window.O2_INC = { sel:null };
+  window.o2IncidentsHTML = function(){
+    const list = (BOS.incidents || []).slice().sort(function(a, b){ return new Date(b.startedAt) - new Date(a.startedAt); });
+    const open = list.filter(function(i){ return !/resolved|reviewed/.test(i.status); }), reviewDue = list.filter(function(i){ const r = o2IncidentReview(i); return r.required && i.status === 'resolved' && !r.done; });
+    return oDashShell([
+      oPageHead({ ctx:'Service', title:'Incidents', lede:open.length ? oPlural(open.length, 'open incident') : 'No open incident.', actions:canInc('create') ? [{ label:'Declare incident', icon:'plus', primary:true, onclick:"var t = prompt('What is broken?'); if(t){ var s = prompt('Severity: SEV1, SEV2 or SEV3', 'SEV2'); var r = bosCreateIncident({ title:t, severity:s || 'SEV2' }); toast(r.ok ? 'Incident ' + r.incident.id + ' opened.' : r.reason); bosRedraw(); }" }] : [] }),
+      oNumbers([{ label:'Open', value:String(open.length), note:open.filter(function(i){ return sevNum(i) <= 2; }).length + ' SEV 1–2' }, { label:'Update overdue', value:String(open.filter(function(i){ const c = o2IncidentCadence(i); return c && c.overdue; }).length), note:'every 30 min SEV 1, 60 min SEV 2' }, { label:'Review due', value:String(reviewDue.length), note:'SEV 1–2 within 5 working days' }]),
+      oTableCard({ id:'o2-inc', title:'All incidents', sub:'Rows open the incident', cols:[{ label:'Incident' }, { label:'Severity' }, { label:'Status' }, { label:'Lead' }, { label:'Linked tickets' }, { label:'Started' }], rows:list.length ? list.map(function(i){ const c = o2IncidentCadence(i); return '<tr onclick="o2OpenIncident(\'' + E(i.id) + '\')" style="cursor:pointer"><td><b>' + E(i.title) + '</b><small>' + E(i.id) + (c && c.overdue ? ' · <span class="o2-due">update overdue</span>' : '') + '</small></td><td>' + E(i.severity) + '</td><td>' + E(i.status) + '</td><td>' + E(bosName(i.ownerId)) + '</td><td>' + E((i.ticketIds || []).length) + '</td><td>' + E(new Date(i.startedAt).toLocaleString('en-GB')) + '</td></tr>'; }).join('') : oTableEmptyRow(6, 'No incidents. Outage tickets open one automatically.') })
+    ]);
+  };
+  window.o2IncidentHTML = function(id){
+    const i = (BOS.incidents || []).find(function(x){ return x.id === id; }); if(!i) return oDashShell([oPageHead({ title:'Incident not found', lede:'Open Incidents to find it.' })]);
+    const c = o2IncidentCadence(i), rv = o2IncidentReview(i), next = FLOW[FLOW.indexOf(i.status) + 1];
+    const tix = (i.ticketIds || []).map(function(t){ return BOS.tickets.find(function(x){ return x.id === t; }); }).filter(Boolean);
+    return oDashShell([
+      oPageHead({ ctx:'Incidents', title:i.title, lede:i.id + ' · ' + i.severity + ' · ' + i.status, actions:next && canInc('update') ? [{ label:'Move to ' + next, primary:true, onclick:"var t = prompt('Update for this step'); if(t){ var o = { status:'" + next + "', text:t }; if('" + next + "' === 'reviewed') o.review = prompt('Post-incident review: what happened, why, what changes'); var r = o2IncidentUpdate('" + E(i.id) + "', o); toast(r.ok ? 'Updated.' : r.reason); bosRedraw(); }" }] : [] }),
+      (c ? '<div class="o2-inc-banner" role="status">Next customer update ' + (c.overdue ? '<span class="o2-due">overdue</span>' : 'due') + ' by ' + E(new Date(c.dueAt).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' })) + ' (every ' + c.every + ' minutes for ' + E(i.severity) + ')</div>' : '') +
+      '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">Details</h2></div><dl class="o2-kv"><dt>Lead</dt><dd>' + E(bosName(i.ownerId)) + '</dd><dt>Affected workspaces</dt><dd>' + E((i.affectedWorkspaces || []).map(function(w){ const t = tenantById(w); return t ? t.name : w; }).join(', ') || i.affected || '—') + '</dd><dt>Review</dt><dd>' + E(rv.required ? (rv.done ? 'Done ' + new Date(i.review.doneAt).toLocaleDateString('en-GB') : 'Required' + (rv.dueAt ? ' by ' + new Date(rv.dueAt).toLocaleDateString('en-GB') : ' after resolving')) : 'Not required for SEV 3') + '</dd></dl>' +
+      '<div class="o2-sub-acts"><button type="button" class="o-btn" onclick="var t = prompt(\'Update\'); if(t){ var r = o2IncidentUpdate(\'' + E(i.id) + '\', { text:t }); toast(r.ok ? \'Update added.\' : r.reason); bosRedraw(); }">Add update</button><button type="button" class="o-btn" onclick="var r = o2IncidentPublish(\'' + E(i.id) + '\'); toast(r.ok ? \'Published as \' + r.announcement.id + \'.\' : r.reason); bosRedraw()">Publish update</button></div></section>' +
+      oTableCard({ id:'o2-inc-tk', title:'Linked tickets', sub:oPlural(tix.length, 'ticket'), cols:[{ label:'Ticket' }, { label:'Status' }], rows:tix.length ? tix.map(function(t){ return '<tr onclick="bosOpen(\'ticket\', \'' + E(t.id) + '\')" style="cursor:pointer"><td><b>' + E(t.subject) + '</b><small>' + E(t.id) + '</small></td><td>' + E(o2TicketState(t).label) + '</td></tr>'; }).join('') : oTableEmptyRow(2, 'No linked tickets.') }) +
+      '<section class="o-card"><div class="o-card__head"><h2 class="o-card__title">Updates</h2></div>' + ((i.updates || []).length ? '<ul class="o2-timeline">' + i.updates.slice().reverse().map(function(u){ return '<li><span>' + E((u.status ? u.status + ' · ' : '') + u.text) + '</span><small>' + E(bosName(u.by)) + ' · ' + E(new Date(u.at).toLocaleString('en-GB')) + '</small></li>'; }).join('') + '</ul>' : '<p class="o2-muted" style="padding:0 20px 14px">No updates yet.</p>') + '</section>'
+    ]);
+  };
+  const baseIncs = RENDERERS['oontu-incidents'], baseInc = RENDERERS['oontu-incident'];
+  RENDERERS['oontu-incidents'] = function(){ if(!on() || state.role !== 'oontu' || !BOS_VIEW_ACCESS['oontu-incidents']()) return baseIncs.apply(this, arguments); return o2IncidentsHTML(); };
+  RENDERERS['oontu-incident'] = function(){ if(!on() || state.role !== 'oontu' || !BOS_VIEW_ACCESS['oontu-incident']()) return baseInc.apply(this, arguments); return o2IncidentHTML(O2_INC.sel || ((BOS.incidents || [])[0] || {}).id); };
+  PAGE_TITLES['oontu-incident'] = 'Incident';
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
