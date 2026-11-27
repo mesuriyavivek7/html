@@ -22,6 +22,7 @@ _In progress. Written in full when the build finishes._
 - **4b** Subscription statuses (incomplete … canceled) with cancel at period end, cancel now (approval), downgrade at renewal, manual activation (approval); unpaid makes the workspace read-only and paying clears it. Switches 3a, 4a, 4b (+4c) · Meera Krishnan or Vikram · Subscriptions › a subscription › Cancel at period end.
 - **4c** Billing screens: Invoices & payments, Plans & pricing, Tax & reports, and a Subscription page; no Mark paid outside Invoices & payments. Switches 1a, 4c · Vikram Shah · Billing › Invoices & payments; Billing › Subscriptions › a subscription.
 - **4d** Payments and allocations: one bank credit across invoices, several payments to one invoice, partial payments, TDS with certificates, customer credit, reversals; suggestions are never applied without Finance. Switches 1a, 4c, 4d · Vikram Shah · Billing › Invoices & payments › Reconciliation.
+- **5** Account 360 (rail, seven tabs, both renewals side by side), Pipeline tabs including Sign-ups, Reports with pipeline analytics. Switches 1a, 5 · Kavya Iyer or Meera · Customers › Accounts › Northstar; Customers › Pipeline › Sign-ups.
 
 ## 3. Blocked steps
 

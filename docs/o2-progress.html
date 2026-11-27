@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 06:12 IST",
-    "current":  "4d",
+    "updated":  "2026-11-27 07:40 IST",
+    "current":  "5",
     "partA":  [
                   {
                       "id":  "0a",
@@ -164,11 +164,11 @@
                   {
                       "id":  "4d",
                       "name":  "Payment allocations and TDS",
-                      "status":  "Waiting",
-                      "tests":  "",
-                      "tag":  "",
-                      "what":  "",
-                      "see":  ""
+                      "status":  "Done",
+                      "tests":  "10/10 (o2-allocation); regressions 181/181 off, 182/182 on",
+                      "tag":  "o2-step-4d",
+                      "what":  "Payments and allocations: split and combined payments, partial, TDS with certificates, credit, reversals; suggestions only on Finance confirmation.",
+                      "see":  "Switches 1a, 4c, 4d · Vikram Shah · Billing › Invoices \u0026 payments › Reconciliation (Unmatched, Partly paid, TDS receivable)"
                   },
                   {
                       "id":  "5",
@@ -387,11 +387,15 @@
                       [
                           "4b dunning",
                           "Today\u0027s reminder schedule is kept; it equals the policy defaults (1, 3, 7 days; read-only after 7)."
+                      ],
+                      [
+                          "4d ambiguous amounts",
+                          "An amount-only match is suggested only when exactly one open invoice of a matching payer has that outstanding amount."
                       ]
                   ],
     "suite":  {
-                  "off":  "After 3b (o2-step-3b): 1,167/1,168 across 82 specs; the one failure was motion collapse-pill (known flake).",
-                  "on":  "After 3b, switches 0a–3b on with saving: 1,168/1,170; both were selector changes (button label Create workspace; breadcrumb) and pass on rerun, on and off."
+                  "off":  "After 4d (o2-step-4d): 1,200/1,200 across 87 specs.",
+                  "on":  "After 4d, switches 0a–4d on with saving: 1,201/1,202; the one failure was the Home spec editing a subscription without its items (spec setup fixed; green on and off)."
               }
 }
 </script>
