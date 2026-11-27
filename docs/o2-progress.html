@@ -41,8 +41,8 @@
 <main id="root"><p>Loading…</p></main>
 <script id="o2-data" type="application/json">
 {
-    "updated":  "2026-11-27 18:54 IST",
-    "current":  "Audit: full suite, every switch on",
+    "updated":  "2026-11-28 01:56 IST",
+    "current":  "Audit task done · next: Cowork agents v2 (CX)",
     "partA":  [
                   {
                       "id":  "0a",
@@ -415,17 +415,73 @@
                       ]
                   ],
     "suite":  {
-                  "off":  "1311/1311 (final, after G6)",
-                  "on":  "1313/1313 (final, every switch on)"
+                  "off":  "1310/1311 (final; demo-data date-dependent, pre-existing)",
+                  "on":  "1312/1313 (final; same demo-data check)"
               },
     "audit":  {
-                  "status":  "Phase 1 in progress: full suite runs",
+                  "status":  "Done · Phase 1 tagged o2-audited · Phase 2 audited G1–G6 (nothing to build)",
                   "lines":  [
                                 "Every step has its commit and tag (22 O2 steps, 6 upgrades).",
                                 "Diff from o2-step-0a: no lines removed from the prototype; three problems fixed in f8c04ea (lifecycle run and billing-customer sync as commands; one spec check made exact again).",
-                                "Full suite, all switches off: 1311/1311."
+                                "Full suite, all switches off: 1311/1311.",
+                                "Full suite, every switch on: 1215/1216 + screens-crawl hung (watchdog); motion flake and screens-crawl pass alone (8/8, 97/97).",
+                                "Full suite with demo saving on (0a acceptance 4): 1311/1311, identical to saving off.",
+                                "Final full suite: off 1310/1311, all on 1312/1313. The only failure is demo-data Vistaar (date-dependent seed, fails the same on pre-O2 code since 2026-11-28)."
                             ]
-              }
+              },
+    "rxAudit":  {
+                    "value":  [
+                                  {
+                                      "id":  "G1",
+                                      "name":  "Live workflow triggers",
+                                      "sw":  "g1",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g1-live 9/9",
+                                      "notes":  "Exactly one action per event; paused never runs; Run Test unchanged."
+                                  },
+                                  {
+                                      "id":  "G2",
+                                      "name":  "Automation results",
+                                      "sw":  "g2",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g2-results 11/11",
+                                      "notes":  "30-day attribution; amounts only for billing viewers; estimates labelled."
+                                  },
+                                  {
+                                      "id":  "G3",
+                                      "name":  "Money at risk",
+                                      "sw":  "g3",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g3-leaks 10/10",
+                                      "notes":  "Ten rules, fix / dismiss / self-close; commit 915386d from your account."
+                                  },
+                                  {
+                                      "id":  "G4",
+                                      "name":  "Redeployment and contract-end decisions",
+                                      "sw":  "g4",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g4-redeploy 10/10",
+                                      "notes":  "Triggers once per threshold; thin margins flagged; decisions via existing functions."
+                                  },
+                                  {
+                                      "id":  "G5",
+                                      "name":  "Own talent first",
+                                      "sw":  "g5",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g5-own-first 6/6",
+                                      "notes":  "Exclusions with reasons; direct sourcing window on the existing hold."
+                                  },
+                                  {
+                                      "id":  "G6",
+                                      "name":  "Interview self-booking",
+                                      "sw":  "g6",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g6-booking 10/10",
+                                      "notes":  "Books through the hand path; taken slots vanish; cutoff respected."
+                                  }
+                              ],
+                    "Count":  6
+                }
 }
 </script>
 <script>
@@ -448,7 +504,7 @@
     '<h2>Part A · O2 platform</h2>' + rows(d.partA) +
     '<h2>Part B · Recruiter app</h2>' + rows(d.partB) +
     (d.audit ? '<h2>Audit</h2><p class="meta">' + esc(d.audit.status || 'Not started') + '</p>' + ((d.audit.lines || []).length ? '<ul class="plain">' + d.audit.lines.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '') : '') +
-    (d.rxAudit && d.rxAudit.length ? '<h2>Recruiter-app upgrades G1–G6</h2><div class="wrap"><table><thead><tr><th>Upgrade</th><th>Switch</th><th>Audit</th><th>Test</th><th>Notes</th></tr></thead><tbody>' + d.rxAudit.map(function(r){ return '<tr><td class="id">' + esc(r.id) + ' ' + esc(r.name) + '</td><td><code>' + esc(r.sw) + '</code></td><td><span class="st st-' + esc(r.verdict).replace(/ /g, '-') + '">' + esc(r.verdict) + '</span></td><td>' + esc(r.test) + '</td><td>' + esc(r.notes) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '') +
+    ((d.rxAudit = d.rxAudit && (d.rxAudit.value || d.rxAudit)) && d.rxAudit.length ?'<h2>Recruiter-app upgrades G1–G6</h2><div class="wrap"><table><thead><tr><th>Upgrade</th><th>Switch</th><th>Audit</th><th>Test</th><th>Notes</th></tr></thead><tbody>' + d.rxAudit.map(function(r){ return '<tr><td class="id">' + esc(r.id) + ' ' + esc(r.name) + '</td><td><code>' + esc(r.sw) + '</code></td><td><span class="st st-' + esc(r.verdict).replace(/ /g, '-') + '">' + esc(r.verdict) + '</span></td><td>' + esc(r.test) + '</td><td>' + esc(r.notes) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '') +
     '<h2>Problems</h2>' + (d.problems.length ? '<ul class="plain">' + d.problems.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<p class="empty">No blocked steps.</p>') +
     '<p><b>Flaky tests noted</b></p>' + (d.flaky.length ? '<ul class="plain">' + d.flaky.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<p class="empty">None.</p>') +
     '<h2>Decisions made</h2><div class="wrap"><table><thead><tr><th>Situation</th><th>Decision</th></tr></thead><tbody>' + d.decisions.map(function(r){ return '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('') + '</tbody></table></div>' +

@@ -8,7 +8,7 @@ _Branch `o2/overnight-2026-11-26`. Brief: `docs/OONTU-GAME-CHANGERS-PROMPT.md`. 
 - Each upgrade sits behind its own switch in `RX_SWITCH` (`g1` … `g6`), **off by default**. Off is today's product. Toggles: sign-in screen › Prototype tools › Recruiter-app upgrades.
 - No `bos-*` script and no O2 screen is touched. The only shared hook is the prototype tools panel, which the brief names for the toggles.
 - No pre-existing line of the prototype was removed or edited. Every upgrade is a new block (`rx-g1-style`, `rx-g1-script` … `rx-g6-script`) that wraps existing functions. The old function always runs first, and the switch decides whether anything is added.
-- Full suite at the end: every switch off **FULL_OFF**; every O2 step and every upgrade on **FULL_ON**.
+- Full suite at the end: every switch off **1,310 / 1,311**; every O2 step and every upgrade on **1,312 / 1,313**. The one failure in both is `demo-data` › Vistaar "30 assignments, 8 approved weeks each": it started when the date turned to 2026-11-28 and fails the same way on the code from before any of this work (`ea8919d`), so it is a date-dependent demo seed, not a regression (see Recommended next).
 - Settings for all six live in `WSX.rx` (Settings › Workflow automation): `maxActionsPerDay` 200, `attributionDays` 30, `defaultAgencyFeePct` 8.33, `invoiceGraceDays` 3, `contractInvoiceDay` 3, `reqIdleDays` 7, `redeployLeadDays` 21, `redeployWindowDays` 14, `silverMonths` 12, `dbFirstCount` 25, `directWindowDays` 5, `bookingSlots` 6, `rescheduleCutoffHours` 12.
 
 | Upgrade | Switch | Tag | Spec | Audit |
@@ -206,6 +206,7 @@ The audit checked, for each upgrade:
 
 ## Recommended next
 
+- Fix the Vistaar demo seed so its 8 approved weeks per assignment do not depend on the calendar (`demo-data` fails from 2026-11-28 on old and new code alike).
 - Menu items for Money at risk and Redeploy.
 - The Interviews agent sends the booking link.
 - Daylight-saving-aware zones.

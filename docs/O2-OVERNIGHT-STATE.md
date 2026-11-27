@@ -8,7 +8,7 @@ Resume with: read this file, `git log --oneline -5`, `git tag -l "o2-step-*" "rx
 
 ## Current step
 
-Overnight build COMPLETE. Next: queued task Phase 1 (audit)
+Audit task COMPLETE. Next: docs/OONTU-COWORK-AGENTS-PROMPT.md (CX) from its start gate
 
 ## Steps
 
@@ -43,6 +43,7 @@ Overnight build COMPLETE. Next: queued task Phase 1 (audit)
 | G5 | Done | rx-g5 | rx-g5-own-first 6/6; regressions on 575/575, off 529/529 | window = existing internalUntil hold, extended only |
 | G6 | Done | rx-g6 | rx-g6-booking 10/10; regressions on 478/478; full suite off 1311/1311 | availability added (none existed); fixed tz offsets |
 | G6 checkpoint | Done | rx-g6 | full suite off 1311/1311, all on 1313/1313 | overnight build complete |
+| Audit task | Done | o2-audited | final suite off 1310/1311, on 1312/1313 (demo-data date-dependent, pre-existing) | Phase 2: G1-G6 audited, nothing to build |
 
 ## How to run tests (this machine)
 
