@@ -74507,6 +74507,262 @@ function cfScopeHTML(){
   addToggle(); window.addEventListener('load', addToggle);
 })();
 </script>
+<script id="cx-setup">
+/* CX C1b — "Set up Cowork": channel setup for new tenants, agent readiness and the one CX send path. CX_SWITCH only.
+   CX_SETUP holds each channel's state (simulated, with fixtures). The demo workspace starts from what it already has
+   (connected mailboxes, WhatsApp, calendar); cxSetupNewTenant() resets to a fresh tenant (WhatsApp billing meta-direct).
+   Pages: #/settings/channels/<email|whatsapp|linkedin|calendar|credits|test>?return=cowork (RENDERERS['cx-channel']).
+   CX_AGENT_NEEDS: what each agent needs and how it works without it. cxSend() is the only way CX agents contact anyone:
+   channel ready? (else fallback, logged; else a task) → suppression / opt-out → WhatsApp consent → cxReserve → the
+   simulated adapter (CX_OUTBOX) → settle (email on sent; WhatsApp template on the delivery receipt).
+   cxWebhook(body, signature) refuses a bad signature; delivery receipts settle credits; inbound messages open the
+   24-hour window and go to the inbox.
+   Production notes:
+   - Email: Google (Gmail API send; replies via Pub/Sub users.watch, history.list fallback, watch renewed before 7 days)
+     or Microsoft 365 (Graph sendMail; change-notification subscriptions renewed before expiry; delta query fallback).
+     Bulk domain on a subdomain through one transactional provider (e.g. Amazon SES) behind an adapter; SPF, DKIM,
+     DMARC (p=none first), return-path; List-Unsubscribe + List-Unsubscribe-Post on every bulk email; bounces and
+     complaints into suppression.
+   - WhatsApp: Oontu is a Meta Tech Provider (Oontu's own business verification, an app with
+     whatsapp_business_messaging + whatsapp_business_management, Tech Provider onboarding — done once by Oontu).
+     Embedded Signup popup; the returned code is exchanged server to server for a business token (stored encrypted,
+     never shown), the app is subscribed to the WABA's webhooks, the phone number registered, WABA id and phone number
+     id stored. Webhooks verify X-Hub-Signature-256 (HMAC-SHA256 of the raw body with the app secret); the prototype
+     uses a deterministic stand-in hash. The tenant pays Meta directly (meta-direct).
+   - LinkedIn: only "Sign In with LinkedIn" (OpenID Connect) to verify a recruiter's own profile. No other LinkedIn API;
+     no passwords, cookies, sessions or proxies, ever.
+   - Calendar: Google Calendar / Microsoft 365 OAuth (free/busy + create events). */
+(function(){
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const now = function(){ return typeof cwNow === 'function' ? cwNow() : Date.now(); };
+  const fmt = function(n){ return Math.round(n).toLocaleString('en-IN'); };
+  const roster = function(){ return typeof RECRUITER_ROSTER !== 'undefined' ? RECRUITER_ROSTER : []; };
+  const ACCOUNT_CAP = window.CX_LI_SUGGESTED = { Free:30, Premium:50, 'Sales Navigator':60, Recruiter:80 };
+  const STARTER = [['First touch · Active', 'Utility'], ['First touch · Passive known', 'Marketing'], ['Consent request', 'Utility'], ['Interview confirmation', 'Utility'], ['Interview reminder', 'Utility'], ['Joining-day check', 'Utility'], ['Document request', 'Utility']];
+  const LANGS = ['English', 'Hindi', 'Gujarati'];
+
+  function fresh(){
+    return { email:{ mailboxes:{}, bulk:{ subdomain:'', checked:null }, testSent:false, testReply:false },
+      whatsapp:{ state:'none', phone:'', wabaId:'', phoneId:'', displayName:'', paymentAdded:false, templates:[], quality:'green', limit:250, testDelivered:false },
+      linkedin:{ team:{} }, calendar:{ connected:{} }, testDone:false, dismissed:false };
+  }
+  /* the demo workspace keeps what it already has */
+  function fromDemo(){
+    const s = fresh();
+    try { Object.keys(CW_MAILBOXES || {}).forEach(function(uid){ s.email.mailboxes[uid] = { provider:'google', address:CW_MAILBOXES[uid].address, limit:150 }; }); } catch(e){}
+    if(Object.keys(s.email.mailboxes).length){ s.email.testSent = true; s.email.testReply = true; }
+    let wa = false; try { wa = typeof cwConn === 'function' && cwConn('whatsapp'); } catch(e){}
+    if(wa){ s.whatsapp = Object.assign(s.whatsapp, { state:'ready', phone:'+91 98200 00000', wabaId:'WABA-DEMO', phoneId:'PN-DEMO', displayName:'Northstar Talent', paymentAdded:true, testDelivered:true,
+      templates:STARTER.map(function(t, i){ return { id:'tpl-' + i, name:t[0], category:t[1], lang:'English', status:'Approved' }; }) }); }
+    let cal = false; try { cal = typeof cwChannelConnected === 'function' && cwChannelConnected('calendar'); } catch(e){}
+    if(cal) roster().slice(0, 3).forEach(function(r){ s.calendar.connected[r.id] = 'google'; });
+    s.testDone = Object.keys(s.email.mailboxes).length > 0;
+    return s;
+  }
+  window.CX_SETUP = window.CX_SETUP || fromDemo();
+  window.cxSetupNewTenant = function(){ window.CX_SETUP = fresh(); CX_WA_BILLING.mode = 'meta-direct'; return CX_SETUP; };
+  window.cxSetupDemo = function(){ window.CX_SETUP = fromDemo(); CX_WA_BILLING.mode = 'oontu-resell'; return CX_SETUP; };
+
+  /* ---- readiness ---- */
+  window.cxEmailReady = function(){ const e = CX_SETUP.email; return Object.keys(e.mailboxes).length > 0 && e.testSent && e.testReply; };
+  window.cxWaReady = function(){ const w = CX_SETUP.whatsapp; return w.state === 'ready' && w.paymentAdded && w.templates.some(function(t){ return t.status === 'Approved'; }) && w.testDelivered; };
+  window.cxWaStatus = function(){ const w = CX_SETUP.whatsapp; if(cxWaReady()) return 'Ready'; if(w.state === 'none') return 'Not set up'; if(w.state === 'meta') return 'Waiting for Meta'; if(!w.paymentAdded) return 'Waiting for payment method'; if(w.quality === 'red') return 'Needs attention'; return 'Needs attention'; };
+  window.cxLiActive = function(){ const t = CX_SETUP.linkedin.team; return Object.keys(t).filter(function(k){ return t[k].active && Number(t[k].weekly) > 0 && t[k].url; }); };
+  window.cxCalendarReady = function(){ return Object.keys(CX_SETUP.calendar.connected).length > 0; };
+  window.cxChannelReady = function(ch){ return ch === 'email' ? cxEmailReady() : ch === 'whatsapp' ? cxWaReady() : ch === 'linkedin' ? cxLiActive().length > 0 : ch === 'calendar' ? cxCalendarReady() : true; };
+  window.cxChecklist = function(){
+    const e = CX_SETUP.email, w = CX_SETUP.whatsapp;
+    return [
+      { id:'email', label:'Connect email', need:'Required', status:cxEmailReady() ? 'Ready' : Object.keys(e.mailboxes).length ? 'Needs attention' : 'Not set up' },
+      { id:'whatsapp', label:'Connect WhatsApp', need:'Recommended', status:cxWaStatus() },
+      { id:'linkedin', label:'LinkedIn Outreach team', need:'Optional', status:cxLiActive().length ? 'Ready (' + cxLiActive().length + (cxLiActive().length === 1 ? ' recruiter)' : ' recruiters)') : 'Not set up' },
+      { id:'calendar', label:'Calendar for interviews', need:'Recommended', status:cxCalendarReady() ? 'Ready' : 'Not set up' },
+      { id:'credits', label:'Credits and budget', need:'Pre-filled', status:'Ready (' + fmt(cxBalance()) + ' credits)' },
+      { id:'test', label:'Send a test to yourself', need:'Required', status:CX_SETUP.testDone ? 'Done' : 'Not done' } ];
+  };
+  window.cxSetupDoneRequired = function(){ return cxChecklist().filter(function(r){ return r.need === 'Required'; }).every(function(r){ return /^(Ready|Done)/.test(r.status); }); };
+
+  const NEEDS = window.CX_AGENT_NEEDS = {
+    'talent-discovery':{ needs:[], says:'Nothing for intake and ranking; screening answers on the channel the reply came in.', without:'—' },
+    'outreach':{ needs:['email|whatsapp'], says:'Email or WhatsApp (both is best).', without:'Email only when WhatsApp is missing; the WhatsApp chip is off with the reason.' },
+    'linkedin':{ needs:['linkedin'], says:'At least one active recruiter with a LinkedIn profile and weekly capacity above 0.', without:'Stays off; Talent Discovery’s picks with profile links are listed for manual work.' },
+    'interviews':{ needs:['calendar', 'email|whatsapp'], says:'A calendar, plus email or WhatsApp.', without:'The recruiter enters slots by hand.' },
+    'delivery-guardian':{ needs:['email'], says:'Email for client contacts; email or WhatsApp for candidates.', without:'Tasks for the owner instead of messages.' },
+    'revenue-redeploy':{ needs:[], says:'Nothing inside Oontu; email for client reminders.', without:'Tasks for the owner.' } };
+  const LABEL = { email:'Email', whatsapp:'WhatsApp', linkedin:'LinkedIn team', calendar:'Calendar' };
+  window.cxAgentReadiness = function(agent){
+    agent = cxAgentId(agent); const n = NEEDS[agent] || { needs:[] }, missing = [];
+    n.needs.forEach(function(req){ const any = req.split('|'); if(!any.some(cxChannelReady)) missing.push(any[0]); });
+    return { ready:!missing.length, missing:missing, label:missing.length ? 'Needs: ' + missing.map(function(m){ return LABEL[m] || m; }).join(', ') : 'Ready', without:n.without };
+  };
+
+  /* ---- the one send path for CX agents ---- */
+  const OUT = window.CX_OUTBOX = window.CX_OUTBOX || [];
+  const LOG = window.CX_RUNLOG = window.CX_RUNLOG || [];
+  const WINDOW = window.CX_WA_WINDOW = window.CX_WA_WINDOW || {};   // candidateId → last inbound ms
+  const OPTIN = window.CX_WA_OPTIN = window.CX_WA_OPTIN || {};      // candidateId → { source, by, at }
+  window.cxLog = function(agent, text, o){ const l = Object.assign({ at:now(), agent:cxAgentId(agent), text:text }, o || {}); LOG.push(l); return l; };
+  window.cxHasWaConsent = function(cid){ if(OPTIN[cid]) return true; try { if(typeof CW_OPTINS !== 'undefined' && CW_OPTINS['c' + cid]) return true; } catch(e){} return false; };
+  window.cxSetWaConsent = function(cid, source, by){ if(['form', 'candidate-chat', 'verbal'].indexOf(source) < 0) return { ok:false, reason:'Say how they agreed.' }; if(source === 'verbal' && !by) return { ok:false, reason:'A verbal consent needs the recruiter’s name.' }; OPTIN[cid] = { source:source, by:by || null, at:now() }; return { ok:true }; };
+  window.cxOptedOut = function(cid){ try { return typeof cwSuppression === 'function' && !!cwSuppression('c' + cid); } catch(e){ return false; } };
+  window.cxInWaWindow = function(cid){ return WINDOW[cid] != null && now() - WINDOW[cid] < 24 * 3600000; };
+  window.cxSend = function(o){
+    o = o || {}; const agent = cxAgentId(o.agent), cid = o.candidateId;
+    if(cid != null && cxOptedOut(cid)) return { ok:false, skipped:'Opted out' };
+    let ch = o.channel || 'email';
+    const fallback = function(why){
+      if(ch === 'whatsapp' && cxChannelReady('email')){ cxLog(agent, why + ', sent email', { candidateId:cid }); ch = 'email'; return true; }
+      return false;
+    };
+    if(ch === 'whatsapp' && !cxChannelReady('whatsapp') && !fallback('WhatsApp not connected')){ return cxTask(agent, o, 'WhatsApp not connected and no email to fall back on'); }
+    if(ch === 'whatsapp' && cid != null && !cxHasWaConsent(cid) && !fallback('No WhatsApp consent')){ return cxTask(agent, o, 'No WhatsApp consent and no email to fall back on'); }
+    if(ch === 'email' && !cxChannelReady('email')){ return cxTask(agent, o, 'Email not connected'); }
+    const tplMode = ch === 'whatsapp' && !(cid != null && cxInWaWindow(cid));
+    if(tplMode && !o.template) return cxTask(agent, o, 'Outside WhatsApp’s 24-hour window: an approved template is needed');
+    if(tplMode && !CX_SETUP.whatsapp.templates.some(function(t){ return t.name === o.template && t.status === 'Approved'; })) return cxTask(agent, o, 'Template “' + o.template + '” is not approved');
+    const rc = ch === 'email' ? 'email' : tplMode ? 'wa-template' : 'wa-window';
+    const r = cxReserve({ agent:agent, rateClass:rc, qty:1, jobId:o.jobId, candidateId:cid, action:o.action || ('Send ' + ch), safetyCritical:!!o.safetyCritical, runId:o.runId });
+    if(r.blocked){ cxLog(agent, 'Paused: credits · ' + r.blocked, { candidateId:cid }); return { ok:false, paused:'credits', reason:r.blocked }; }
+    const msg = { id:'OUT-' + (OUT.length + 1), at:now(), agent:agent, channel:ch, template:tplMode ? o.template : null, candidateId:cid, jobId:o.jobId || null, text:o.text || '', reservationId:r.reservationId, simulated:true };
+    OUT.push(msg);
+    if(rc === 'wa-template') cxDeliveryReceipt('dlv:' + msg.id, r.reservationId, !window.CX_FAIL_DELIVERY); else cxSettle(r.reservationId, 'charged');
+    cxLog(agent, 'Sent ' + (ch === 'email' ? 'email' : tplMode ? 'WhatsApp template' : 'WhatsApp') + (o.action ? ': ' + o.action : ''), { candidateId:cid, outId:msg.id });
+    return { ok:true, channel:ch, message:msg, credits:r.credits };
+  };
+  window.cxTask = function(agent, o, why){
+    const t = { id:'CXT-' + (LOG.length + 1), at:now(), agent:cxAgentId(agent), candidateId:o.candidateId, jobId:o.jobId || null, text:(o.action || 'Contact the person') + ' — ' + why, status:'open' };
+    (window.CX_TASKS = window.CX_TASKS || []).push(t); cxLog(agent, 'Task instead of a message: ' + why, { candidateId:o.candidateId });
+    return { ok:false, task:t, reason:why };
+  };
+
+  /* ---- webhooks (simulated signature) ---- */
+  const SECRET = 'cx-demo-app-secret';
+  const hash = function(s){ let h = 2166136261; for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16); };
+  window.cxSign = function(body){ return 'sha256=' + hash(SECRET + body); };
+  window.cxWebhook = function(body, signature){
+    if(signature !== cxSign(body)) return { ok:false, status:401, reason:'Bad signature' };
+    let e; try { e = JSON.parse(body); } catch(x){ return { ok:false, status:400, reason:'Bad body' }; }
+    if(e.type === 'status'){ const m = OUT.find(function(x){ return x.id === e.messageId; }); if(!m) return { ok:false, status:404 }; return Object.assign({ status:200 }, cxDeliveryReceipt(e.id, m.reservationId, e.status === 'delivered')); }
+    if(e.type === 'message'){ WINDOW[e.candidateId] = now(); cxLog('outreach', 'Reply received', { candidateId:e.candidateId, inbound:true }); (window.CX_INBOUND = window.CX_INBOUND || []).push(Object.assign({ at:now() }, e)); if(typeof window.cxOnInbound === 'function') try { cxOnInbound(e); } catch(x){ console.error(x); } return { ok:true, status:200 }; }
+    return { ok:false, status:400 };
+  };
+
+  /* ---- channel actions (simulated with fixtures) ---- */
+  window.cxEmailConnect = function(uid, provider){ const r = roster().find(function(x){ return x.id === uid; }); if(!r) return { ok:false, reason:'Pick a recruiter.' }; if(['google', 'microsoft'].indexOf(provider) < 0) return { ok:false, reason:'Google or Microsoft.' }; CX_SETUP.email.mailboxes[uid] = { provider:provider, address:(r.email || r.name.toLowerCase().replace(/\s+/g, '.') + '@youragency.com'), limit:150 }; return { ok:true }; };
+  window.cxEmailLimit = function(uid, n){ const m = CX_SETUP.email.mailboxes[uid]; n = Number(n); if(!m || !(n >= 1 && n <= 2000)) return { ok:false, reason:'Between 1 and 2,000 a day.' }; m.limit = n; return { ok:true }; };
+  window.cxEmailTest = function(){ if(!Object.keys(CX_SETUP.email.mailboxes).length) return { ok:false, reason:'Connect a mailbox first.' }; CX_SETUP.email.testSent = true; CX_SETUP.email.testReply = true; return { ok:true }; };
+  window.cxBulkRecords = function(sub){ sub = sub || CX_SETUP.email.bulk.subdomain || 'talent.youragency.com'; return [
+    { id:'spf', type:'TXT', host:sub, value:'v=spf1 include:amazonses.com ~all', fix:'Add this TXT record at ' + sub + '.' },
+    { id:'dkim1', type:'CNAME', host:'oontu1._domainkey.' + sub, value:'oontu1.dkim.amazonses.com', fix:'Add this CNAME.' },
+    { id:'dkim2', type:'CNAME', host:'oontu2._domainkey.' + sub, value:'oontu2.dkim.amazonses.com', fix:'Add this CNAME.' },
+    { id:'dmarc', type:'TXT', host:'_dmarc.' + sub, value:'v=DMARC1; p=none; rua=mailto:dmarc@' + sub, fix:'Start with p=none; tighten later.' },
+    { id:'return', type:'MX', host:'bounce.' + sub, value:'10 feedback-smtp.ap-south-1.amazonses.com', fix:'Add this MX for bounces.' } ]; };
+  /* fixture: DMARC missing at first check, SPF published with the wrong include (amber) */
+  window.cxBulkCheck = function(){ const b = CX_SETUP.email.bulk; if(!b.subdomain) return { ok:false, reason:'Add the subdomain first.' }; const second = !!b.checked; b.checked = {}; cxBulkRecords().forEach(function(r){ b.checked[r.id] = second ? 'green' : r.id === 'dmarc' ? 'red' : r.id === 'spf' ? 'amber' : 'green'; }); return { ok:true, checked:b.checked }; };
+  window.cxWaConnect = function(o){ o = o || {}; const w = CX_SETUP.whatsapp; if(!o.phone || !/^\+?\d[\d ]{7,}$/.test(o.phone)) return { ok:false, reason:'Add the phone number with its country code.' }; if(!o.code || !/^\d{6}$/.test(o.code)) return { ok:false, reason:'Enter the 6-digit code from the SMS.' }; Object.assign(w, { state:'meta', phone:o.phone, displayName:o.displayName || 'Your agency', wabaId:'WABA-' + o.phone.replace(/\D/g, '').slice(-4), phoneId:'PN-' + o.phone.replace(/\D/g, '').slice(-6) }); return { ok:true }; };
+  window.cxWaMetaDone = function(){ const w = CX_SETUP.whatsapp; if(w.state !== 'meta') return { ok:false }; w.state = 'registered'; return { ok:true }; };
+  window.cxWaAddPayment = function(){ CX_SETUP.whatsapp.paymentAdded = true; cxWaSettle(); return { ok:true }; };
+  /* fixture: the Gujarati joining-day check is rejected (a variable at the start of the message); every other starter is approved */
+  window.cxWaSubmitStarter = function(){ const w = CX_SETUP.whatsapp; if(w.state === 'none' || w.state === 'meta') return { ok:false, reason:'Finish connecting WhatsApp first.' }; w.templates = []; STARTER.forEach(function(t, i){ LANGS.forEach(function(l){ const rej = t[0] === 'Joining-day check' && l === 'Gujarati'; w.templates.push({ id:'tpl-' + i + '-' + l, name:t[0], category:t[1], lang:l, status:rej ? 'Rejected' : 'Approved', reason:rej ? 'The message starts with a variable. Start with words, then the variable.' : '' }); }); }); cxWaSettle(); return { ok:true, count:w.templates.length }; };
+  window.cxWaResubmit = function(id, text){ const t = CX_SETUP.whatsapp.templates.find(function(x){ return x.id === id; }); if(!t || t.status !== 'Rejected') return { ok:false, reason:'Only rejected templates are resubmitted.' }; if(/^\s*\{\{/.test(text || '')) return { ok:false, reason:'Still starts with a variable.' }; t.status = 'Approved'; t.reason = ''; t.resubmitted = true; return { ok:true }; };
+  window.cxWaTest = function(){ const w = CX_SETUP.whatsapp; if(w.state !== 'registered' && w.state !== 'ready') return { ok:false, reason:'Connect WhatsApp first.' }; if(!w.paymentAdded) return { ok:false, reason:'Add a payment method in Meta first.' }; if(!w.templates.some(function(t){ return t.status === 'Approved'; })) return { ok:false, reason:'Wait for a template to be approved.' }; w.testDelivered = true; cxWaSettle(); return { ok:true }; };
+  function cxWaSettle(){ const w = CX_SETUP.whatsapp; if(w.state === 'registered' && w.paymentAdded && w.templates.some(function(t){ return t.status === 'Approved'; }) && w.testDelivered) w.state = 'ready'; }
+  window.cxLiSet = function(id, f){
+    const t = CX_SETUP.linkedin.team, row = t[id] || (t[id] = { name:f.name || id, url:'', type:'Free', weekly:ACCOUNT_CAP.Free, ext:false, active:false, verified:false });
+    if(f.url != null){ if(f.url && !/^https:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9\-_%]+\/?$/.test(f.url)) return { ok:false, reason:'Use the profile link, like https://www.linkedin.com/in/name' }; row.url = f.url; }
+    if(f.type != null){ if(!(f.type in ACCOUNT_CAP)) return { ok:false, reason:'Pick an account type.' }; row.type = f.type; if(f.weekly == null) row.weekly = ACCOUNT_CAP[f.type]; }
+    if(f.weekly != null){ const n = Number(f.weekly); if(!(n >= 0 && n <= 200)) return { ok:false, reason:'Between 0 and 200 a week.' }; row.weekly = n; }
+    if(f.active != null) row.active = !!f.active; if(f.ext != null) row.ext = !!f.ext; if(f.name) row.name = f.name;
+    return { ok:true, row:row };
+  };
+  window.cxLiVerify = function(id){ const r = CX_SETUP.linkedin.team[id]; if(!r || !r.url) return { ok:false, reason:'Add the profile link first.' }; r.verified = true; return { ok:true }; };   // Sign In with LinkedIn (OpenID Connect), simulated
+  window.cxCalConnect = function(uid, provider){ if(['google', 'microsoft'].indexOf(provider) < 0) return { ok:false }; CX_SETUP.calendar.connected[uid] = provider; return { ok:true }; };
+  window.cxSendTest = function(){ if(!cxEmailReady() && !cxWaReady()) return { ok:false, reason:'Connect email or WhatsApp first.' }; CX_SETUP.testDone = true; return { ok:true }; };
+
+  /* ---- pages ---- */
+  const CXS = window.CXS = window.CXS || { channel:null, ret:null, msg:'' };
+  /* Configure opens the page directly (the app router rewrites the address to #/app/<view>); a deep link to
+     #/settings/channels/<channel>?return=cowork still opens it through the hashchange listener below */
+  window.cxOpenChannel = function(ch){ if(!cxOn()) return; CXS.channel = ch; CXS.ret = 'cowork'; CXS.msg = ''; if(ch === 'credits'){ CA.tab = 'credits'; CA.agent = null; showView('kairo-team'); return; } showView('cx-channel'); };
+  window.cxRoute = function(){
+    const m = /^#\/settings\/channels\/(email|whatsapp|linkedin|calendar|credits|test)(\?return=(\w+))?$/.exec(String(location.hash || ''));
+    if(!m || !cxOn()) return false; CXS.channel = m[1]; CXS.ret = m[3] || null; CXS.msg = '';
+    if(m[1] === 'credits'){ CA.tab = 'credits'; CA.agent = null; history.replaceState(null, '', location.pathname + location.search); showView('kairo-team'); return true; }
+    showView('cx-channel'); return true;
+  };
+  window.addEventListener('hashchange', function(){ try { cxRoute(); } catch(e){ console.error(e); } });
+  window.cxBackToSetup = function(){ CXS.channel = null; history.replaceState(null, '', location.pathname + location.search); CA.tab = 'agents'; CA.agent = null; showView('kairo-team'); };
+  window.cxDo = function(fn){ let r; try { r = fn(); } catch(e){ r = { ok:false, reason:e.message }; } CXS.msg = r && r.ok === false ? (r.reason || 'That did not work.') : ''; showView('cx-channel'); return r; };
+  const st = function(s){ return '<span class="cx-chip" data-status="' + esc(s) + '">' + (/^(Ready|Done)/.test(s) ? '✓ ' : '') + esc(s) + '</span>'; };
+  const sec = function(title, sub, body){ return '<section class="o-card"><h2 class="o-card__title">' + esc(title) + '</h2>' + (sub ? '<p class="o-card__sub">' + sub + '</p>' : '') + body + '</section>'; };
+  const btn = function(label, on, primary, attrs){ return '<button type="button" class="o-btn' + (primary ? ' o-btn--primary' : '') + '" onclick="' + on + '"' + (attrs || '') + '>' + esc(label) + '</button>'; };
+  function emailPage(){
+    const e = CX_SETUP.email, mbs = Object.keys(e.mailboxes);
+    const a = sec('A. Connect your work mailbox', 'Each recruiter sends from their own address. Replies land in the Inbox on the right conversation.', (mbs.length ? '<ul class="o-list">' + mbs.map(function(uid){ const m = e.mailboxes[uid], r = roster().find(function(x){ return x.id === uid; }); return '<li data-mailbox="' + esc(uid) + '"><b>' + esc(r ? r.name : uid) + '</b> · ' + esc(m.address) + ' · ' + esc(m.provider === 'google' ? 'Google' : 'Microsoft') + ' · <label class="text-xs">Sends a day <input class="app-input" type="number" min="1" max="2000" value="' + m.limit + '" style="width:90px" aria-label="Daily send limit" onchange="cxDo(function(){ return cxEmailLimit(\'' + esc(uid) + '\', this.value); }.bind(this))"></label></li>'; }).join('') + '</ul>' : '<p class="o-card__sub">No mailbox yet.</p>') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><select class="app-input" id="cx-mb-who" aria-label="Recruiter">' + roster().map(function(r){ return '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>'; }).join('') + '</select>' + btn('Connect Google', "cxDo(function(){ return cxEmailConnect(document.getElementById('cx-mb-who').value, 'google'); })") + btn('Connect Microsoft 365', "cxDo(function(){ return cxEmailConnect(document.getElementById('cx-mb-who').value, 'microsoft'); })") + '</div>' +
+      '<p style="margin-top:12px">' + btn('Send a test email to yourself', 'cxDo(cxEmailTest)', !e.testSent) + ' ' + (e.testSent ? st('Test arrived') : '') + ' ' + (e.testReply ? st('Reply detected') : '') + '</p>');
+    const rec = e.bulk.subdomain ? cxBulkRecords() : [], chk = e.bulk.checked || {};
+    const b = sec('B. Bulk sending domain (optional)', 'For campaigns bigger than mailbox limits. Use a subdomain so your main domain stays safe. Every bulk email has a one-click unsubscribe.', '<label class="cl-field"><span>Subdomain</span><input class="app-input" id="cx-sub" placeholder="talent.youragency.com" value="' + esc(e.bulk.subdomain) + '" aria-label="Subdomain"></label> ' + btn('Use this subdomain', "cxDo(function(){ var v = document.getElementById('cx-sub').value.trim(); if(!/^[a-z0-9-]+(\\.[a-z0-9-]+){2,}$/i.test(v)) return { ok:false, reason:'Use a subdomain like talent.youragency.com' }; CX_SETUP.email.bulk.subdomain = v; CX_SETUP.email.bulk.checked = null; return { ok:true }; })") +
+      (rec.length ? '<div class="o-table-wrap"><table class="o-table" id="cx-dns"><thead><tr><th>Type</th><th>Host</th><th>Value</th><th></th><th>Check</th></tr></thead><tbody>' + rec.map(function(r){ const c = chk[r.id]; return '<tr data-dns="' + r.id + '"><td>' + r.type + '</td><td><code>' + esc(r.host) + '</code></td><td><code>' + esc(r.value) + '</code></td><td>' + btn('Copy', "try{navigator.clipboard.writeText(" + JSON.stringify(r.value).replace(/"/g, '&quot;') + ")}catch(e){}; toast('Copied')") + '</td><td>' + (c ? '<span class="cx-chip" data-check="' + c + '">' + (c === 'green' ? '✓ Found' : c === 'amber' ? '! Different' : '✕ Missing') + '</span>' + (c !== 'green' ? '<br><small>' + esc(r.fix) + '</small>' : '') : '—') + '</td></tr>'; }).join('') + '</tbody></table></div><p style="margin-top:8px">' + btn('Check DNS', 'cxDo(cxBulkCheck)') + '</p>' : ''));
+    return a + b;
+  }
+  function waPage(){
+    const w = CX_SETUP.whatsapp, s = cxWaStatus();
+    const step = function(n, title, done, body){ return '<li class="cx-step" data-step="' + n + '"><b>' + n + '. ' + esc(title) + '</b> ' + (done ? st('Done') : '') + '<div>' + body + '</div></li>'; };
+    const tpls = w.templates.length ? '<div class="o-table-wrap"><table class="o-table" id="cx-tpls"><thead><tr><th>Template</th><th>Language</th><th>Status</th><th></th></tr></thead><tbody>' + w.templates.map(function(t){ return '<tr data-tpl="' + esc(t.id) + '"><td>' + esc(t.name) + '<small> · ' + esc(t.category) + '</small></td><td>' + esc(t.lang) + '</td><td>' + esc(t.status) + (t.reason ? '<br><small>' + esc(t.reason) + '</small>' : '') + '</td><td>' + (t.status === 'Rejected' ? btn('Fix and resubmit', "cxDo(function(){ return cxWaResubmit('" + t.id + "', 'Hello, a reminder about joining {{1}}'); })") : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '';
+    return sec('Connect WhatsApp', 'Status: ' + st(s) + '. You pay Meta for WhatsApp messages directly; Oontu charges 1 credit for handling each template.', '<ol class="cx-steps">' +
+      step(1, 'Connect WhatsApp', w.state !== 'none', w.state === 'none' ? '<p class="o-card__sub">Sign in with Facebook, pick your business, add your number and verify it by code. (Simulated here.)</p><label class="cl-field"><span>Phone number</span><input class="app-input" id="cx-wa-phone" placeholder="+91 98xxx xxxxx" aria-label="Phone number"></label><label class="cl-field"><span>Code from the SMS</span><input class="app-input" id="cx-wa-code" placeholder="6 digits" aria-label="Code"></label>' + btn('Connect WhatsApp', "cxDo(function(){ return cxWaConnect({ phone:document.getElementById('cx-wa-phone').value, code:document.getElementById('cx-wa-code').value }); })", true) : '<p class="o-card__sub">' + esc(w.phone) + ' · ' + esc(w.displayName) + (w.state === 'meta' ? ' · waiting for Meta to finish setup' : '') + '</p>' + (w.state === 'meta' ? btn('Meta finished (simulate)', 'cxDo(cxWaMetaDone)') : '')) +
+      step(2, 'Add a payment method in Meta', w.paymentAdded, w.paymentAdded ? '' : '<p class="o-card__sub">Meta bills you for messages. Add a card in Meta Business Settings, then come back.</p>' + btn('I added it (simulate)', 'cxDo(cxWaAddPayment)')) +
+      step(3, 'Starter templates', w.templates.some(function(t){ return t.status === 'Approved'; }), (w.templates.length ? '' : btn('Submit the starter pack (English, Hindi, Gujarati)', 'cxDo(cxWaSubmitStarter)')) + tpls) +
+      step(4, 'Health', true, '<p class="o-card__sub">Quality: ' + (w.quality === 'green' ? 'High' : w.quality === 'yellow' ? 'Medium' : 'Low') + '. You can start up to ' + fmt(w.limit) + ' new conversations a day.</p>') +
+      step(5, 'Test', w.testDelivered, w.testDelivered ? '' : btn('Send a test template to your number', 'cxDo(cxWaTest)')) + '</ol>');
+  }
+  function liPage(){
+    const t = CX_SETUP.linkedin.team, ids = Object.keys(t);
+    return sec('LinkedIn Outreach team', 'Each recruiter works from their own LinkedIn account in their own browser. Oontu prepares who to contact and the note; a person sends every message. Oontu never asks for passwords, cookies or sessions.',
+      (ids.length ? '<div class="o-table-wrap"><table class="o-table" id="cx-li-team"><thead><tr><th>Recruiter</th><th>Profile link</th><th>Account</th><th>Weekly capacity</th><th>Helper extension</th><th>Active</th></tr></thead><tbody>' + ids.map(function(id){ const r = t[id];
+        return '<tr data-li="' + esc(id) + '"><td>' + esc(r.name) + (r.verified ? ' <span class="cx-chip">✓ Verified</span>' : ' ' + btn('Verify with LinkedIn', "cxDo(function(){ return cxLiVerify('" + esc(id) + "'); })")) + '</td><td><input class="app-input" value="' + esc(r.url) + '" placeholder="https://www.linkedin.com/in/…" aria-label="Profile link" onchange="cxDo(function(){ return cxLiSet(\'' + esc(id) + '\', { url:this.value }); }.bind(this))"></td>' +
+          '<td><select class="app-input" aria-label="Account type" onchange="cxDo(function(){ return cxLiSet(\'' + esc(id) + '\', { type:this.value }); }.bind(this))">' + Object.keys(ACCOUNT_CAP).map(function(k){ return '<option' + (r.type === k ? ' selected' : '') + '>' + k + '</option>'; }).join('') + '</select></td>' +
+          '<td><input class="app-input" type="number" min="0" max="200" value="' + r.weekly + '" style="width:80px" aria-label="Weekly capacity" title="What this person can do by hand in a week" onchange="cxDo(function(){ return cxLiSet(\'' + esc(id) + '\', { weekly:this.value }); }.bind(this))"><br><small>What this person can do by hand in a week</small></td>' +
+          '<td>' + (r.ext ? 'Installed (opens profiles, copies text)' : 'Not installed') + '</td><td><button type="button" role="switch" class="app-switch' + (r.active ? ' is-on' : '') + '" aria-checked="' + r.active + '" aria-label="Active" onclick="cxDo(function(){ return cxLiSet(\'' + esc(id) + '\', { active:' + !r.active + ' }); })"><span></span></button></td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="o-card__sub">No one yet.</p>') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><select class="app-input" id="cx-li-who" aria-label="Recruiter">' + roster().map(function(r){ return '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>'; }).join('') + '</select>' + btn('Add recruiter', "cxDo(function(){ var s = document.getElementById('cx-li-who'); return cxLiSet(s.value, { name:s.options[s.selectedIndex].text }); })") + '</div>');
+  }
+  function calPage(){
+    const c = CX_SETUP.calendar.connected;
+    return sec('Calendar for interviews', 'Connect Google Calendar or Microsoft 365 for each interviewer or recruiter (free/busy and new events). Without a calendar, Interviews uses slots you enter.', '<ul class="o-list">' + Object.keys(c).map(function(uid){ const r = roster().find(function(x){ return x.id === uid; }); return '<li>' + esc(r ? r.name : uid) + ' · ' + (c[uid] === 'google' ? 'Google Calendar' : 'Microsoft 365') + '</li>'; }).join('') + '</ul><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><select class="app-input" id="cx-cal-who" aria-label="Person">' + roster().map(function(r){ return '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>'; }).join('') + '</select>' + btn('Connect Google Calendar', "cxDo(function(){ return cxCalConnect(document.getElementById('cx-cal-who').value, 'google'); })") + btn('Connect Microsoft 365', "cxDo(function(){ return cxCalConnect(document.getElementById('cx-cal-who').value, 'microsoft'); })") + '</div>');
+  }
+  function testPage(){ return sec('Send a test to yourself', 'One email (and one WhatsApp if connected) to your own address and number.', btn('Send the test', 'cxDo(cxSendTest)', !CX_SETUP.testDone) + ' ' + (CX_SETUP.testDone ? st('Done') : '')); }
+  window.cxChannelPageHTML = function(){
+    const ch = CXS.channel || 'email', ready = ch === 'test' ? CX_SETUP.testDone : cxChannelReady(ch);
+    const body = ch === 'email' ? emailPage() : ch === 'whatsapp' ? waPage() : ch === 'linkedin' ? liPage() : ch === 'calendar' ? calPage() : testPage();
+    const titles = { email:'Connect email', whatsapp:'Connect WhatsApp', linkedin:'LinkedIn Outreach team', calendar:'Calendar for interviews', test:'Send a test to yourself' };
+    return '<div class="content-shell o-page" id="cx-channel" data-channel="' + ch + '">' + (typeof breadcrumbHTML === 'function' ? breadcrumbHTML([{ label:'Set up Cowork', onclick:'cxBackToSetup()' }, { label:titles[ch] }], 'cxBackToSetup()') : '') +
+      '<header class="o-page-head"><div><h1 class="o-page-head__title">' + esc(titles[ch]) + '</h1></div><div class="o-page-head__actions">' + (ready ? btn('Back to Set up Cowork', 'cxBackToSetup()', true, ' id="cx-channel-back"') : btn('Back', 'cxBackToSetup()', false, ' id="cx-channel-back"')) + '</div></header>' +
+      (CXS.msg ? '<div class="o-note" role="alert" id="cx-channel-msg">' + esc(CXS.msg) + '</div>' : '') + '<div class="s-content">' + body + '</div></div>';
+  };
+  if(typeof RENDERERS !== 'undefined') RENDERERS['cx-channel'] = function(){ return cxOn() ? cxChannelPageHTML() : (RENDERERS[typeof homeForMe === 'function' ? homeForMe() : 'dashboard'] || function(){ return ''; })(); };
+
+  /* ---- the checklist card on the Cowork home, readiness on agent cards ---- */
+  window.cxChecklistHTML = function(){
+    return '<section class="o-card" id="cx-setup-card"><div class="o-card__head"><div><h2 class="o-card__title">Set up Cowork</h2><p class="o-card__sub">About 15 minutes. Each step says what it is for.</p></div><button type="button" class="o-link" onclick="CX_SETUP.dismissed = true; caRefresh()">Hide</button></div><ul class="o-list">' +
+      cxChecklist().map(function(r){ return '<li data-setup="' + r.id + '" style="display:flex;gap:12px;align-items:center;justify-content:space-between"><span><b>' + esc(r.label) + '</b> <small>' + esc(r.need) + '</small></span><span style="display:flex;gap:8px;align-items:center">' + st(r.status) + (r.id === 'credits' ? btn('Configure', "cxOpenChannel('credits')") : btn('Configure', "cxOpenChannel('" + r.id + "')")) + '</span></li>'; }).join('') + '</ul></section>';
+  };
+  function hook(){
+    if(typeof window.caRender === 'function' && !window.caRender.__cx1b){
+      const b = window.caRender;
+      const w = function(){ let h = b.apply(this, arguments); if(!cxOn() || typeof h !== 'string' || CA.agent || CA.tab !== 'agents') return h; if(CX_SETUP.dismissed && cxSetupDoneRequired()) return h; if(CX_SETUP.dismissed) return h; const i = h.indexOf('<div class="ca-grid"'); return i < 0 ? h : h.slice(0, i) + cxChecklistHTML() + h.slice(i); };
+      w.__cx1b = true; w.__cx = b.__cx; w.__rx = b.__rx; window.caRender = w; try { caRender = w; } catch(e){}
+    }
+    if(typeof window.caCardHTML === 'function' && !window.caCardHTML.__cx1b){
+      const bc = window.caCardHTML;
+      const wc = function(id){ const h = bc.apply(this, arguments); if(!cxOn() || typeof h !== 'string') return h; const r = cxAgentReadiness(id); const chip = '<span class="cx-chip" data-ready="' + r.ready + '">' + (r.ready ? '✓ Ready' : esc(r.label)) + '</span>' + (r.ready ? '' : '<button type="button" class="o-link" onclick="event.stopPropagation(); cxOpenChannel(\'' + r.missing[0] + '\')">Configure</button>'); return h.replace('<div class="ca-card__f">', '<div class="ca-card__f">' + chip); };
+      wc.__cx1b = true; wc.__cx = bc.__cx; window.caCardHTML = wc; try { caCardHTML = wc; } catch(e){}
+    }
+    if(typeof sSectionById === 'function'){ const s = sSectionById('cowork'), t = s && s.tabs && s.tabs.find(function(x){ return x.id === 'cx'; }); if(t && !t.__cx1b){ const r0 = t.render; t.render = function(){ return r0.apply(this, arguments) + (cxOn() ? sCard('Set up Cowork', 'The checklist on the Cowork page.', sRow('Show the checklist', CX_SETUP.dismissed ? 'Hidden' : 'Shown', sBtn('Show it again', 'CX_SETUP.dismissed = false; toast(\'The checklist is back on Cowork.\')'))) : ''); }; t.__cx1b = true; } }
+  }
+  hook(); window.addEventListener('load', hook);
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)

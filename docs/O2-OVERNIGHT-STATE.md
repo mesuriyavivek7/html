@@ -78,3 +78,4 @@ Resume rule from the user: if the session stops, continue exactly where it left 
 
 ## CX (Cowork agents v2) progress
 - C0 done 2026-11-28: CX-AUDIT.md, cx-progress.html, backup recruitment-os-prototype.before-cx.html (local, git-excluded). Next: C1 credits (block cx-credits).
+- C1 done (08f79c7), C1b done. Next: C2 Talent Discovery intake + evidence matching (block cx-match, spec tests/cx-match.spec.js, fixtures tests/fixtures/cx-match/).

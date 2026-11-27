@@ -26,29 +26,139 @@
 <main id="root"></main>
 <script id="cx-data" type="application/json">
 {
-  "updated": "2026-11-28",
-  "phases": [
-    { "id":"C0", "name":"Map the code (audit)", "status":"done", "start":"2026-11-28", "end":"2026-11-28", "specs":"—", "note":"CX-AUDIT.md; baseline 1310/1311 off, 1312/1313 on (demo-data date-dependent, pre-existing)" },
-    { "id":"C1", "name":"One common credit wallet", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
-    { "id":"C1b", "name":"Channel setup (Set up Cowork)", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
-    { "id":"C2", "name":"Talent Discovery: intake and evidence matching", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
-    { "id":"C3", "name":"Outreach playbook and Simple Campaign Builder", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
-    { "id":"C4", "name":"LinkedIn Outreach (recruiter-assisted)", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
-    { "id":"C5", "name":"Screening: replies to prospects", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
-    { "id":"C6", "name":"Delivery Guardian", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
-    { "id":"C7", "name":"Revenue & Redeploy, Kairo as manager", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
-    { "id":"C8", "name":"Retire Engagement's name, migration", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
-    { "id":"C9", "name":"UX polish pass", "status":"not started", "start":"", "end":"", "specs":"", "note":"" },
-    { "id":"C10", "name":"Final audit and report", "status":"not started", "start":"", "end":"", "specs":"", "note":"" }
-  ],
-  "counters": { "tests":"baseline 1310/1311 (off)", "precision":"—", "clicks":"—", "seed":"—" },
-  "decisions": [
-    "C0: demo-data Vistaar fails from 2026-11-28 on old and new code alike (date-dependent seed); treated as pre-existing, outside CX.",
-    "C0: AX_SWITCH / A0–A9 not present; nothing in CX depends on them.",
-    "C0: phase commits on o2/overnight-2026-11-26 (where the queue has been committing), local only."
-  ],
-  "isolated": [],
-  "screens": []
+    "updated":  "2026-11-28 03:24 IST",
+    "phases":  [
+                   {
+                       "id":  "C0",
+                       "name":  "Map the code (audit)",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "—",
+                       "note":  "CX-AUDIT.md; baseline 1310/1311 off, 1312/1313 on (demo-data date-dependent, pre-existing)"
+                   },
+                   {
+                       "id":  "C1",
+                       "name":  "One common credit wallet",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-credits 14/14",
+                       "note":  "Regressions green with CX on and off (demo-data date-dependent, pre-existing)"
+                   },
+                   {
+                       "id":  "C1b",
+                       "name":  "Channel setup (Set up Cowork)",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-setup 12/12",
+                       "note":  "Checklist, channel pages, readiness, cxSend with fallback, webhooks; regressions green on and off"
+                   },
+                   {
+                       "id":  "C2",
+                       "name":  "Talent Discovery: intake and evidence matching",
+                       "status":  "not started",
+                       "start":  "",
+                       "end":  "",
+                       "specs":  "",
+                       "note":  ""
+                   },
+                   {
+                       "id":  "C3",
+                       "name":  "Outreach playbook and Simple Campaign Builder",
+                       "status":  "not started",
+                       "start":  "",
+                       "end":  "",
+                       "specs":  "",
+                       "note":  ""
+                   },
+                   {
+                       "id":  "C4",
+                       "name":  "LinkedIn Outreach (recruiter-assisted)",
+                       "status":  "not started",
+                       "start":  "",
+                       "end":  "",
+                       "specs":  "",
+                       "note":  ""
+                   },
+                   {
+                       "id":  "C5",
+                       "name":  "Screening: replies to prospects",
+                       "status":  "not started",
+                       "start":  "",
+                       "end":  "",
+                       "specs":  "",
+                       "note":  ""
+                   },
+                   {
+                       "id":  "C6",
+                       "name":  "Delivery Guardian",
+                       "status":  "not started",
+                       "start":  "",
+                       "end":  "",
+                       "specs":  "",
+                       "note":  ""
+                   },
+                   {
+                       "id":  "C7",
+                       "name":  "Revenue \u0026 Redeploy, Kairo as manager",
+                       "status":  "not started",
+                       "start":  "",
+                       "end":  "",
+                       "specs":  "",
+                       "note":  ""
+                   },
+                   {
+                       "id":  "C8",
+                       "name":  "Retire Engagement\u0027s name, migration",
+                       "status":  "not started",
+                       "start":  "",
+                       "end":  "",
+                       "specs":  "",
+                       "note":  ""
+                   },
+                   {
+                       "id":  "C9",
+                       "name":  "UX polish pass",
+                       "status":  "not started",
+                       "start":  "",
+                       "end":  "",
+                       "specs":  "",
+                       "note":  ""
+                   },
+                   {
+                       "id":  "C10",
+                       "name":  "Final audit and report",
+                       "status":  "not started",
+                       "start":  "",
+                       "end":  "",
+                       "specs":  "",
+                       "note":  ""
+                   }
+               ],
+    "counters":  {
+                     "tests":  "cx-credits 14/14 Â· cx-setup 12/12",
+                     "precision":  "—",
+                     "clicks":  "—",
+                     "seed":  "466 / 19,534 âœ“"
+                 },
+    "decisions":  [
+                      "C0: demo-data Vistaar fails from 2026-11-28 on old and new code alike (date-dependent seed); treated as pre-existing, outside CX.",
+                      "C0: AX_SWITCH / A0–A9 not present; nothing in CX depends on them.",
+                      "C0: phase commits on o2/overnight-2026-11-26 (where the queue has been committing), local only.",
+                      "C1: per phase, targeted regressions with CX on and off; full suite at C1, C5 and C10 (a full suite per phase twice would be ~25 h).",
+                      "C1: cowork-agents pinned to CX off (// @cx-runner off): it tests per-agent plans, trials and Add, which CX retires; settings\u0027 trial test runs with CX off inside the test.",
+                      "C1: seeded Cowork history (CW.seeding) is never charged; the wallet seed is the example day.",
+                      "C1: rupee amounts only for people with billing view; a recruiter sees credits only.",
+                      "C1b: Configure opens the channel page directly (the app router rewrites the address); #/settings/channels/\u003cchannel\u003e?return=cowork deep links still work."
+                  ],
+    "isolated":  [
+
+                 ],
+    "screens":  [
+
+                ]
 }
 </script>
 <script>
