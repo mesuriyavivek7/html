@@ -75760,6 +75760,64 @@ function cfScopeHTML(){
   }
 })();
 </script>
+<script id="cx-migration">
+/* CX C8 — retire Engagement's name, migration, the clean six-agent offer. CX_SWITCH (sub 'migration').
+   CX_STEP_MAP: every step of engagement, interviews and offers-joining (CA_ACTIONS) → exactly one new owner + step.
+   No message is dropped and no two agents send the same message for the same event. 'engagement' and
+   'offers-joining' stay aliases (cxAgentId), so existing workflows and data still resolve; existing workflows that
+   reference those agents run on the new owners, with a one-time migration log (CX_MIGRATION_LOG).
+   CX_OWNERSHIP: every hire stage has exactly one owning agent.
+   With CX on, Cowork shows the six agents in this order: Talent Discovery, Outreach, LinkedIn Outreach, Interviews,
+   Delivery Guardian, Revenue & Redeploy; each card says what the agent does and "Uses credits from your wallet";
+   the word "Engagement" does not appear. The interview-details message keeps its content and timing and gains a
+   WhatsApp version (the approved "Interview confirmation" template outside the 24-hour window). */
+(function(){
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const on = function(){ return typeof cxOn === 'function' && cxOn('migration'); };
+  const MAP = window.CX_STEP_MAP = {
+    'engagement.firstTouch':'outreach.firstTouch', 'engagement.ack':'outreach.ack', 'engagement.followup':'outreach.followup',
+    'engagement.waiting':'delivery-guardian.waiting', 'engagement.keepWarm':'delivery-guardian.keepWarm', 'engagement.reengage':'outreach.reengage',
+    'engagement.sendClient':'delivery-guardian.watchFromSent',
+    'interviews.slots':'interviews.slots', 'interviews.bookOutside':'interviews.bookOutside', 'interviews.remind':'interviews.remind', 'interviews.resched':'interviews.resched',
+    'interviews.chase':'interviews.chase', 'interviews.draftOutcome':'interviews.draftOutcome', 'interviews.outcome':'interviews.outcome',
+    'offers-joining.summary':'delivery-guardian.summary', 'offers-joining.risk':'delivery-guardian.risk', 'offers-joining.checkin':'delivery-guardian.checkin',
+    'offers-joining.backup':'delivery-guardian.backup', 'offers-joining.suggestJoined':'delivery-guardian.suggestJoined', 'offers-joining.terms':'delivery-guardian.terms', 'offers-joining.joined':'delivery-guardian.joined' };
+  window.CX_STEP_NOTES = { 'engagement.waiting':'The consent request moved into Talent Discovery’s screening (C5); document reminders stay with Delivery Guardian.', 'engagement.sendClient':'Sending a profile stays a person step; Delivery Guardian starts watching from that moment.', 'interviews.chase':'Interviews chases; Delivery Guardian escalates after the client’s SLA.' };
+  const OWN = window.CX_OWNERSHIP = { 'intake':'talent-discovery', 'sourcing':'talent-discovery', 'first contact · email or WhatsApp':'outreach', 'first contact · LinkedIn':'linkedin', 'reply':'talent-discovery', 'prospect':'talent-discovery', 'interview':'interviews', 'submitted → feedback':'delivery-guardian', 'offer':'delivery-guardian', 'notice':'delivery-guardian', 'joining':'delivery-guardian', 'guarantee':'delivery-guardian', 'assignment / billing':'revenue-redeploy' };
+  window.cxOwnerOf = function(stage){ return OWN[stage] || null; };
+  window.cxMapStep = function(agent, stepId){ const k = agent + '.' + stepId; return MAP[k] ? { agent:MAP[k].split('.')[0], step:MAP[k].split('.').slice(1).join('.') } : { agent:cxAgentId(agent), step:stepId }; };
+  const LOG = window.CX_MIGRATION_LOG = window.CX_MIGRATION_LOG || [];
+  window.cxMigrateWorkflows = function(){
+    if(LOG.done) return LOG; (typeof WORKFLOWS !== 'undefined' ? WORKFLOWS : []).forEach(function(w){ const a = w.agentId || w.agentKey; if(a === 'engagement' || a === 'offers-joining'){ LOG.push({ workflowId:w.id, name:w.name, from:a, to:cxAgentId(a), steps:(w.steps || []).filter(function(s){ return s.kind === 'do'; }).map(function(s){ return s.type; }) }); w.cxOwner = cxAgentId(a); } });
+    LOG.done = true; return LOG;
+  };
+  if(typeof cxOnSwitch === 'function') cxOnSwitch(function(v){ if(v) cxMigrateWorkflows(); });
+  window.addEventListener('load', function(){ if(on()) cxMigrateWorkflows(); });
+
+  const DOES = window.CX_AGENT_DOES = { 'talent-discovery':'Reads the job, finds and ranks people with evidence, and screens their replies.', 'outreach':'First messages and follow-ups on WhatsApp and email, at the right time for each person.', 'linkedin':'Prepares a daily LinkedIn queue for each recruiter: who to contact, why, and the note to send.', 'interviews':'Books interviews, sends reminders, reschedules and chases feedback.', 'delivery-guardian':'Protects every hire from profile sent to the end of the guarantee.', 'revenue-redeploy':'Finds money at risk and the next job for contractors whose assignment is ending.' };
+  const ORDER = ['talent-discovery', 'outreach', 'linkedin', 'interviews', 'delivery-guardian', 'revenue-redeploy'];
+  const RENAME = function(h){ return h.replace(/\bEngagement\b/g, 'Outreach').replace(/Offer &amp; Joining|Offer & Joining|Offers? and Joining/g, 'Delivery Guardian'); };
+  window.cxRename = RENAME;
+  function rrCard(){ return '<article class="o-card cx-rr-card" data-cx-agent="revenue-redeploy" tabindex="0" style="display:flex;flex-direction:column;gap:8px"><div class="ca-card__h"><h3 class="o-card__title">Revenue &amp; Redeploy</h3><span class="ca-card__st"><span class="cx-chip">On</span></span></div><p class="ca-card__does">' + esc(DOES['revenue-redeploy']) + '</p><p class="ca-card__nums"><b>' + (typeof cxRevenueSweep === 'function' ? Object.keys(CX_REVENUE.open).length : 0) + '</b> items · <small>money at risk and redeploys</small></p><div class="ca-card__f"><span class="cx-chip" data-cx-included>Uses credits from your wallet</span><span style="flex:1"></span><button type="button" class="o-btn" onclick="event.stopPropagation(); kairoRespond && toast(kairoRespond(\'what’s stuck today\').text.split(\'\\n\')[0])">This week</button></div></article>'; }
+  function hook(){
+    if(typeof window.caAgentsHTML === 'function' && !window.caAgentsHTML.__cx8){
+      const b = window.caAgentsHTML;
+      const w = function(){ const h = b.apply(this, arguments); if(!on() || typeof h !== 'string') return h;
+        const cards = {}; const re = /<article class="o-card ca-card" data-agent="([^"]+)"[\s\S]*?<\/article>/g; let m; while((m = re.exec(h))){ cards[cxAgentId(m[1])] = m[0].replace('data-agent="' + m[1] + '"', 'data-agent="' + m[1] + '" data-cx-agent="' + cxAgentId(m[1]) + '"'); }   // data-agent keeps the old id (old specs and handlers); data-cx-agent is the new one
+        cards['revenue-redeploy'] = cards['revenue-redeploy'] || rrCard();
+        Object.keys(cards).forEach(function(k){ cards[k] = RENAME(cards[k]).replace('Included · uses credits', 'Uses credits from your wallet'); if(DOES[k] && cards[k].indexOf('ca-card__does') < 0) cards[k] = cards[k].replace(/(<div class="ca-card__h">[\s\S]*?<\/div>)/, '$1<p class="ca-card__does">' + esc(DOES[k]) + '</p>'); });
+        return '<div class="ca-grid" id="ca-cards">' + ORDER.map(function(k){ return cards[k] || ''; }).join('') + '</div>'; };
+      w.__cx8 = true; window.caAgentsHTML = w; try { caAgentsHTML = w; } catch(e){}
+    }
+    if(typeof window.caRender === 'function' && !window.caRender.__cx8){
+      const b2 = window.caRender; const w2 = function(){ const h = b2.apply(this, arguments); return on() && typeof h === 'string' ? RENAME(h) : h; };
+      w2.__cx8 = true; ['__cx', '__cx1b', '__cx3', '__cx4', '__cx5', '__cx6', '__rx'].forEach(function(k){ w2[k] = b2[k]; }); window.caRender = w2; try { caRender = w2; } catch(e){}
+    }
+    ['sec_kairoAgents', 'cwAgentPage'].forEach(function(n){ const f = window[n]; if(typeof f !== 'function' || f.__cx8) return; const w3 = function(){ const h = f.apply(this, arguments); return on() && typeof h === 'string' ? RENAME(h) : h; }; w3.__cx8 = true; ['__cx', '__rx'].forEach(function(k){ w3[k] = f[k]; }); window[n] = w3; try { if(n === 'sec_kairoAgents') sec_kairoAgents = w3; else cwAgentPage = w3; } catch(e){} });
+  }
+  hook(); window.addEventListener('load', hook);
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
