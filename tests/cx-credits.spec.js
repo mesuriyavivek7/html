@@ -100,6 +100,13 @@
       var n = CX_LEDGER.length; cwLedger({ channel:'email', personKey:'c3', agentId:'engagement', status:'sent', action:'x' }); eq(CX_LEDGER.length, n, 'no charge while off');
       cxSetSwitch(true);
     });
+    /* QA fix A9: the rates table carries the placeholder badge */
+    await t('A9 Settings › Cowork › Cowork v2 shows the credit rates with a “Rates (placeholder)” badge; the rates are unchanged', async function(){
+      var tab = sSectionById('cowork').tabs.find(function(x){ return x.id === 'cx'; }); var h = tab.render();
+      ok(/id="cx-rates"/.test(h) && /data-rates-placeholder[^>]*>Rates \(placeholder\)</.test(h), 'badge on the rates table');
+      ['ai-small', 'ai-medium', 'ai-strong', 'email', 'wa-window', 'wa-template', 'li-task'].forEach(function(k){ ok(new RegExp('data-rate="' + k + '"><td>[^<]+</td><td>' + cxRate(k) + '</td>').test(h), k + ' listed at ' + cxRate(k)); });
+      eq(cxRate('ai-strong'), 10); eq(cxRate('li-task'), 2);
+    });
     pub();
   }, 300); });
 })();

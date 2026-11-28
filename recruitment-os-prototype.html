@@ -76338,6 +76338,31 @@ function cfScopeHTML(){
   .ca-card__f > *{ min-width:0; }
 }
 </style>
+<script id="fix-rates-placeholder">
+/* QA fix A9 — the credit rates are placeholders until the real costs are set (Meta per category and market, the email
+   provider, AI tiers). No rates table was on screen before, so this adds a read-only one to Settings › Cowork ›
+   Cowork v2 (people who configure Cowork), listing the current CX_RATES with a "Rates (placeholder)" badge.
+   Nothing about the rates, the wallet or any calculation changes. */
+(function(){
+  const LABEL = { 'rules':'Rules only (no AI)', 'ai-small':'AI · small', 'ai-medium':'AI · medium', 'ai-strong':'AI · strong', 'email':'Email', 'wa-window':'WhatsApp · inside 24 hours', 'wa-template':'WhatsApp · template', 'li-task':'LinkedIn task', 'voice-min':'Voice · per minute' };
+  window.cxRatesTableHTML = function(){
+    const seen = {}, rows = (window.CX_RATES || []).filter(function(r){ if(seen[r.rateClass]) return false; seen[r.rateClass] = true; return true; });
+    const esc = function(s){ return typeof escapeHtml === 'function' ? escapeHtml(String(s)) : String(s); };
+    return '<section class="o-card" id="cx-rates"><div class="o-card__head"><h2 class="o-card__title">Credit rates</h2><span class="cx-chip" data-rates-placeholder title="Final numbers are not set yet">Rates (placeholder)</span></div>' +
+      '<p class="o-card__sub">What one action uses. 1 credit = ₹1. These numbers are placeholders until the real costs are set.</p>' +
+      '<div class="o-table-wrap"><table class="o-table" id="cx-rates-table"><thead><tr><th>Action</th><th>Credits</th></tr></thead><tbody>' +
+      rows.map(function(r){ const n = typeof cxRate === 'function' ? cxRate(r.rateClass) : r.credits; return '<tr data-rate="' + esc(r.rateClass) + '"><td>' + esc(LABEL[r.rateClass] || r.rateClass) + '</td><td>' + (n == null ? 'Not offered' : esc(n)) + '</td></tr>'; }).join('') +
+      '</tbody></table></div></section>';
+  };
+  function add(){
+    if(typeof sSectionById !== 'function') return; const s = sSectionById('cowork'); const tab = s && s.tabs && s.tabs.find(function(t){ return t.id === 'cx'; });
+    if(!tab || tab.render.__fixA9) return; const br = tab.render;
+    const wr = function(){ const h = br.apply(this, arguments); return (typeof cxOn === 'function' && cxOn()) ? h + cxRatesTableHTML() : h; };
+    Object.keys(br).forEach(function(k){ wr[k] = br[k]; }); wr.__fixA9 = true; tab.render = wr;
+  }
+  add(); window.addEventListener('load', add);
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)

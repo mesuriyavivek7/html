@@ -151,7 +151,7 @@ Also on `cx-progress.html`.
   - With CX on, agents never use it: they send through the Cloud API (simulated), and people use click-to-chat.
   - Recommendation: remove the agent path for Lane A entirely when CX becomes the default.
 - **LinkedIn partner programme (E7):** a business task (Talent Solutions partnership); not code.
-- **Real costs.** The credit rates are placeholders in `CX_RATES` and need final numbers:
+- **Real costs.** The credit rates are placeholders in `CX_RATES` and need final numbers. Since QA fix A9 they are shown read-only in Settings › Cowork › Cowork v2 under a "Rates (placeholder)" badge. Still needed:
   - Meta conversation prices per category and market;
   - email provider cost;
   - AI tier costs.
