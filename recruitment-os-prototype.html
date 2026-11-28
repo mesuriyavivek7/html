@@ -75885,6 +75885,21 @@ function cfScopeHTML(){
   window.cxLiAutomationReachable = function(){ return CX_LI_AUTOMATION.filter(function(n){ const f = window[n]; return typeof f === 'function' && !(f.__cx4 || f.__cx10); }); };
 })();
 </script>
+<script id="fix-demo-dates">
+/* QA fix A1 — the Vistaar demo seed never expires. Each contract assignment gets up to 8 weekly timesheets, the last
+   one submitted 7 days + 10 h after its Monday and approved up to 30 h later. A start 60–63 days back left the 8th week
+   (or its approval) in the future on some weekdays, so the seed's "8 approved weeks each" depended on today's date.
+   Every contract now starts at least 66 days before today (the seed's own clock, DEMO_REAL_DATE.now()), which always
+   leaves 8 finished, approved weeks. The seed's random draws are unchanged (the original value is still drawn first). */
+(function(){
+  const MIN_DAYS = 66;
+  if(typeof window.demoContract === 'function' && !window.demoContract.__fixA1){
+    const base = window.demoContract;
+    const w = function(job, p, o){ if(o && typeof o.daysAgo === 'number' && o.daysAgo < MIN_DAYS) o = Object.assign({}, o, { daysAgo:MIN_DAYS + (o.daysAgo % 3) }); return base.call(this, job, p, o); };
+    w.__fixA1 = true; window.demoContract = w; try { demoContract = w; } catch(e){}
+  }
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
