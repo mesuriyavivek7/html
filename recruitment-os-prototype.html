@@ -75900,6 +75900,56 @@ function cfScopeHTML(){
   }
 })();
 </script>
+<script id="fix-credit-estimates">
+/* QA fix A3 — under CX every button that spends credits shows "≈ N credits" before it is used, with the rupee amount
+   on hover for people who already see money (a recruiter sees credits only, never ₹; 1 credit = ₹1).
+   CX_SPEND_CLICKS: what a click spends, keyed by what its onclick calls. CX_FREE_CLICKS: clicks that call a spending
+   function but cannot spend on that path (each with its reason; tests/cx-estimates.spec.js proves both lists).
+   The rendered HTML of Cowork (caRender) and of the job page's criteria card (cxCriteriaHTML) is decorated: a button
+   whose text already has an estimate gets data-cx-cost and the hover only; any other spending button gets the label.
+   CX off: nothing changes. */
+(function(){
+  const rate = function(k){ const n = typeof cxRate === 'function' ? cxRate(k) : 0; return n == null ? 0 : n; };
+  window.CX_SPEND_CLICKS = [
+    { re:/\bcxIntake\(/, what:'Read the job into criteria', cost:function(){ return rate('ai-strong'); } },
+    { re:/\bcxbAI\(/, what:'Rewrite a message', cost:function(){ return rate('ai-small'); } },
+    { re:/\bcxbStart\(/, what:'Start the campaign', cost:function(){ try { return cxbReview().credits || 0; } catch(e){ return 0; } } },
+    { re:/\bcxLiMark\([^)]*'replied'/, what:'Read the pasted reply and ask the first screening question', cost:function(){ return rate('ai-small') + rate('wa-window'); } },
+    { re:/\bcxNeedsYouResolve\(/, what:'Send the next message after your answer', cost:function(){ return rate('wa-window'); } },
+    { re:/\bcxLi(QueueFor|Prepare)\(/, what:'Prepare a LinkedIn task', cost:function(){ return rate('li-task'); } } ];
+  window.CX_FREE_CLICKS = [
+    { re:/\bcxLiMark\([^)]*'(sent|skipped|accepted)'/, why:'A person sends on LinkedIn; the task was paid for when it was prepared.' } ];
+  window.cxClickCost = function(onclick){
+    onclick = String(onclick || ''); if(CX_FREE_CLICKS.some(function(f){ return f.re.test(onclick); })) return null;
+    const r = CX_SPEND_CLICKS.find(function(x){ return x.re.test(onclick); }); return r ? { what:r.what, credits:Math.max(0, Math.round(r.cost() || 0)) } : null;
+  };
+  const fmt = function(n){ return Number(n || 0).toLocaleString('en-IN'); };
+  const money = function(){ return typeof cxMoney === 'function' ? cxMoney() : false; };
+  window.cxCostTitle = function(n){ return money() ? '≈ ₹' + fmt(n) + ' (1 credit = ₹1)' : 'Credits come from the shared wallet'; };
+  window.cxCostTag = function(n){ return '<small class="cx-cost" data-cx-cost-label>≈ ' + fmt(n) + ' credit' + (n === 1 ? '' : 's') + '</small>'; };
+  window.cxCostDecorate = function(html){
+    if(typeof html !== 'string' || html.indexOf('onclick=') < 0) return html;
+    return html.replace(/<button\b([^>]*?)\bonclick="([^"]*)"([^>]*)>([\s\S]*?)<\/button>/g, function(all, pre, on, post, inner){
+      if(/data-cx-cost=/.test(pre + post)) return all;
+      const c = cxClickCost(on.replace(/&#39;/g, "'").replace(/&quot;/g, '"')); if(!c) return all;
+      const attrs = ' data-cx-cost="' + c.credits + '" title="' + cxCostTitle(c.credits) + ' · ' + c.what + '"';
+      const has = /≈\s*[\d,]+\s*credits?/.test(inner.replace(/<[^>]+>/g, ''));
+      return '<button' + pre + attrs + ' onclick="' + on + '"' + post + '>' + inner + (has ? '' : ' ' + cxCostTag(c.credits)) + '</button>';
+    });
+  };
+  const on = function(){ return typeof cxOn === 'function' && cxOn(); };
+  if(typeof window.caRender === 'function' && !window.caRender.__fixA3){
+    const b = window.caRender;
+    const w = function(){ const h = b.apply(this, arguments); return on() ? cxCostDecorate(h) : h; };
+    Object.keys(b).forEach(function(k){ w[k] = b[k]; }); w.__fixA3 = true; window.caRender = w; try { caRender = w; } catch(e){}
+  }
+  if(typeof window.cxCriteriaHTML === 'function' && !window.cxCriteriaHTML.__fixA3){
+    const b = window.cxCriteriaHTML;
+    const w = function(){ const h = b.apply(this, arguments); return on() ? cxCostDecorate(h) : h; };
+    w.__fixA3 = true; window.cxCriteriaHTML = w; try { cxCriteriaHTML = w; } catch(e){}
+  }
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
