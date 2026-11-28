@@ -74299,14 +74299,14 @@ function cfScopeHTML(){
     add({ ts:t(9, 9), agent:'talent-discovery', action:'Rank 300 people in the pool', rateClass:'ai-small', credits:0, status:'charged', reservationId:'CXR-D1' });
     add({ ts:t(9, 12), agent:'talent-discovery', action:'Check evidence for the top 25', rateClass:'ai-medium', credits:-75, status:'charged', note:'25 × ai-medium' });
     add({ ts:t(10, 0), agent:'outreach', action:'First email to 30 people', rateClass:'email', credits:-30, status:'charged', note:'30 × email' });
-    add({ ts:t(10, 2), agent:'outreach', action:'First WhatsApp to 12 people (template)', rateClass:'wa-template', credits:-24, status:'charged', note:'12 delivered' });
+    add({ ts:t(10, 2), agent:'outreach', action:'First WhatsApp to 12 people · template', rateClass:'wa-template', credits:-24, status:'charged', note:'12 delivered' });
     add({ ts:t(10, 3), agent:'outreach', action:'WhatsApp template to 1 person', rateClass:'wa-template', credits:-2, status:'reserved', reservationId:'CXR-D2' });
     add({ ts:t(10, 40), agent:'outreach', action:'WhatsApp template to 1 person', rateClass:'wa-template', credits:2, status:'released', reservationId:'CXR-D2', note:'Not delivered' });
-    add({ ts:t(12, 15), agent:'talent-discovery', action:'Read 8 replies (screening)', rateClass:'ai-small', credits:-8, status:'charged', note:'8 × ai-small' });
+    add({ ts:t(12, 15), agent:'talent-discovery', action:'Read 8 replies · screening', rateClass:'ai-small', credits:-8, status:'charged', note:'8 × ai-small' });
     add({ ts:t(12, 20), agent:'outreach', action:'8 answers inside the 24-hour window', rateClass:'wa-window', credits:-8, status:'charged', note:'8 × wa-window' });
     add({ ts:t(13, 0), agent:'linkedin', action:'Prepare 4 LinkedIn tasks', rateClass:'li-task', credits:-8, status:'charged', triggeredBy:'linkedin', note:'4 × li-task' });
-    add({ ts:t(14, 30), agent:'interviews', action:'Interview reminder (template)', rateClass:'wa-template', credits:-2, status:'reserved', reservationId:'CXR-D3', safetyCritical:true });
-    add({ ts:t(14, 31), agent:'interviews', action:'Interview reminder (template)', rateClass:'wa-template', credits:0, status:'charged', reservationId:'CXR-D3', note:'Delivered' });
+    add({ ts:t(14, 30), agent:'interviews', action:'Interview reminder · template', rateClass:'wa-template', credits:-2, status:'reserved', reservationId:'CXR-D3', safetyCritical:true });
+    add({ ts:t(14, 31), agent:'interviews', action:'Interview reminder · template', rateClass:'wa-template', credits:0, status:'charged', reservationId:'CXR-D3', note:'Delivered' });
     add({ ts:t(16, 0), agent:'delivery-guardian', action:'Offer check-in inside the window', rateClass:'wa-window', credits:-1, status:'charged' });
     add({ ts:t(17, 30), agent:'revenue-redeploy', action:'Money-at-risk check', rateClass:'rules', credits:0, status:'charged' });
     window.CX_LEDGER_NEW = {};
@@ -75413,6 +75413,136 @@ function cfScopeHTML(){
     const w = function(){ const h = b.apply(this, arguments); if(!on() || typeof h !== 'string' || CA.agent || CA.tab !== 'agents') return h; const i = h.indexOf('<div class="ca-grid"'); return i < 0 ? h : h.slice(0, i) + cxLiQueueHTML() + h.slice(i); };
     w.__cx4 = true; w.__cx = b.__cx; w.__cx1b = b.__cx1b; w.__cx3 = b.__cx3; w.__rx = b.__rx; window.caRender = w; try { caRender = w; } catch(e){}
     if(typeof sSectionById === 'function'){ const s = sSectionById('cowork'), t = s && s.tabs && s.tabs.find(function(x){ return x.id === 'cx'; }); if(t && !t.__cx4){ const r0 = t.render; t.render = function(){ return r0.apply(this, arguments) + (on() ? sCard('LinkedIn weekly capacity', 'Set what this person can do by hand in a week.', active().concat(Object.keys(CX_SETUP.linkedin.team).filter(function(k){ return active().indexOf(k) < 0; })).map(function(rid){ return sRow((CX_SETUP.linkedin.team[rid] || {}).name || rid, 'Set what this person can do by hand in a week', '<input class="app-input" type="number" min="0" max="200" value="' + capOf(rid).weekly + '" style="width:90px" aria-label="Weekly capacity for ' + esc((CX_SETUP.linkedin.team[rid] || {}).name || rid) + '" onchange="var r = cxLiSetCapacity(\'' + esc(rid) + '\', this.value); toast(r.ok ? \'Saved\' : r.reason)">'); }).join('')) : ''); }; t.__cx4 = true; } }
+  }
+  hook(); window.addEventListener('load', hook);
+})();
+</script>
+<script id="cx-screening">
+/* CX C5 — Talent Discovery screening: replies → prospects. CX_SWITCH (sub 'screening').
+   Any inbound reply on a job thread (simulated WhatsApp, email, or a LinkedIn reply pasted in UNI Box) arrives at
+   cxOnInbound(event). Opt-out is checked first and suppresses at once, before anything else. Intent: rules first
+   (English, Hindi, Gujarati keywords and button replies), then cxAI('small','intent') with a confidence. Labels:
+   interested, not-now, no, opt-out, question, unclear. The conversation asks one question per message, on the channel
+   and in the language the person used, in this order: interest (if unclear), unknown must-haves (from C2), notice and
+   availability, expected pay (if the workspace allows), location and work mode, consent to share the CV. Inside the
+   WhatsApp 24-hour window a free-form question costs wa-window; outside it the agent stops and creates a task (never a
+   template mid-screening). Answers are parsed by rules first; free text goes to cxAI('small','extract'); confidence
+   below 0.7 or anything ambiguous goes to "Needs you" with the suggested reading filled in. Qualified and interested
+   → a prospect on the job with a summary (ai-medium), the answers, the evidence table and the consent flag, and the
+   job owner is told. Not a fit → a suggestion to the recruiter, who decides; the agent never sends anything negative.
+   Each inbound event id is processed once. */
+(function(){
+  const now = function(){ return typeof cwNow === 'function' ? cwNow() : Date.now(); };
+  const on = function(){ return typeof cxOn === 'function' && cxOn('screening'); };
+  const SCR = window.CX_SCREEN = window.CX_SCREEN || {};
+  const NEEDS = window.CX_NEEDS_YOU = window.CX_NEEDS_YOU || [];
+  const PROS = window.CX_PROSPECTS = window.CX_PROSPECTS || [];
+  const SUGG = window.CX_SUGGESTIONS = window.CX_SUGGESTIONS || [];
+  const SEEN = {};
+  window.CX_SCREEN_ASK_PAY = window.CX_SCREEN_ASK_PAY !== false;
+  const RX = window.CX_INTENT_RULES = [
+    ['opt-out', /\b(stop|unsubscribe|don'?t (contact|message)|remove me|band karo|mat bhejo)\b|बंद करो|मत भेजो|બંધ કરો|મોકલશો નહીં/i],
+    ['not-now', /\b(not now|later|next month|abhi nahi|baad mein)\b|अभी नहीं|बाद में|હમણાં નહીં|પછી/i],
+    ['interested', /^(yes|y|interested|i'?m interested|sure|ok(ay)?|haan|ha|ji|yes please)\b|\binterested\b|हाँ|हां|જી|હા/i],
+    ['no', /^(no|nope|nahi|not interested)\b|नहीं|ના/i],
+    ['question', /\?\s*$|^(what|which|how|when|where|kya|kaun|kitna)\b/i] ];
+  window.cxLang = function(text){ return /[઀-૿]/.test(text) ? 'Gujarati' : /[ऀ-ॿ]/.test(text) ? 'Hindi' : 'English'; };
+  /* the simulated AI tasks (deterministic) */
+  CX_AI_TASKS.intent = function(text){ const t = String(text || '').toLowerCase(); if(/(maybe|depends|let me think|not sure)/.test(t)) return { output:'unclear', confidence:0.55 }; if(/(sounds good|tell me more|share details|go ahead)/.test(t)) return { output:'interested', confidence:0.82 }; return { output:'unclear', confidence:0.4 }; };
+  const WORDS = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12, fifteen:15, thirty:30, sixty:60, ninety:90 };
+  CX_AI_TASKS.extract = function(inp){ const t = String(inp.text || '').replace(/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|thirty|sixty|ninety)\b/gi, function(w){ return WORDS[w.toLowerCase()]; }), n = /(\d+(\.\d+)?)/.exec(t); if(inp.type === 'number' && n) return { output:Number(n[1]), confidence:/about|around|approx|maybe/i.test(t) ? 0.6 : 0.85 }; return { output:t.trim(), confidence:0.5 }; };
+  CX_AI_TASKS.summary = function(inp){ const a = inp.answers || {}; return { output:inp.name + ': ' + Object.keys(a).map(function(k){ return k + ' — ' + a[k]; }).join('; ') + '.', confidence:0.9 }; };
+  window.cxIntent = function(text){
+    const t = String(text || '').trim(); for(let i = 0; i < RX.length; i++){ if(RX[i][1].test(t)) return { label:RX[i][0], confidence:1, by:'rules' }; }
+    const r = cxAI('small', 'intent', t); return { label:r.output, confidence:r.confidence, by:'ai', credits:r.credits };
+  };
+  /* questions for one person and job */
+  function questionsFor(cid, jobId){
+    const job = typeof jobById === 'function' ? jobById(jobId) : null, c = typeof byId === 'function' ? byId(cid) : null, out = [];
+    const crit = job ? ((typeof cxCriteria === 'function' && cxCriteria(jobId)) || cxIntakeRules(job)) : null;
+    if(crit && c){ const f = cxFit(c, crit, job.client); f.rows.filter(function(r){ return r.kind === 'must' && (r.status === 'unknown' || r.status === 'partly'); }).forEach(function(r){ const skill = r.label.replace(/ \(.*$/, ''); out.push({ id:'must:' + skill, key:skill, text:'How many years have you worked with ' + skill + '?', type:'number', must:true }); }); }
+    out.push({ id:'notice', key:'notice', text:'What is your notice period, in days?', type:'number' });
+    if(window.CX_SCREEN_ASK_PAY) out.push({ id:'pay', key:'pay', text:'What pay are you expecting (in LPA)?', type:'number' });
+    out.push({ id:'location', key:'location', text:'The role is ' + (job ? (job.workMode || 'on-site') + ' in ' + (job.loc || 'the job’s city') : 'in the job’s city') + '. Does that work for you? Yes / No', type:'yesno' });
+    out.push({ id:'consent', key:'consent', text:'May we share your CV with ' + (job && job.client ? job.client : 'the client') + ' for this role? Yes / No', type:'yesno' });
+    return out;
+  }
+  const keyOf = function(cid, jobId){ return cid + '|' + (jobId || ''); };
+  window.cxScreenState = function(cid, jobId){ return SCR[keyOf(cid, jobId)] || null; };
+  window.cxScreenStart = function(cid, jobId, channel, lang){
+    const k = keyOf(cid, jobId); if(SCR[k] && SCR[k].status !== 'stopped') return SCR[k];
+    SCR[k] = { candidateId:cid, jobId:jobId, channel:channel || 'whatsapp', lang:lang || 'English', qs:questionsFor(cid, jobId), i:0, answers:{}, status:'asking', asked:[], interest:'yes' };
+    askNext(SCR[k]); return SCR[k];
+  };
+  const TR = { Hindi:function(q){ return '[हिंदी] ' + q; }, Gujarati:function(q){ return '[ગુજરાતી] ' + q; }, English:function(q){ return q; } };
+  function askNext(s){
+    if(s.status !== 'asking') return;
+    const q = s.qs[s.i]; if(!q){ finish(s); return; }
+    const text = TR[s.lang](q.text);
+    if(s.channel === 'linkedin'){ const t = { id:'CXT-LI-Q-' + s.candidateId + '-' + q.id, at:now(), agent:'talent-discovery', candidateId:s.candidateId, jobId:s.jobId, text:'Send on LinkedIn: ' + text, status:'open' }; (window.CX_TASKS = window.CX_TASKS || []).push(t); s.asked.push({ q:q.id, at:now(), via:'task' }); return; }
+    if(s.channel === 'whatsapp' && !(typeof cxInWaWindow === 'function' && cxInWaWindow(s.candidateId))){ const t = cxTask('talent-discovery', { candidateId:s.candidateId, jobId:s.jobId, action:'Ask: ' + q.text }, 'Outside WhatsApp’s 24-hour window: a person continues the screening'); s.status = 'waiting-person'; s.asked.push({ q:q.id, at:now(), via:'task' }); return t; }
+    const r = cxSend({ agent:'talent-discovery', channel:s.channel, candidateId:s.candidateId, jobId:s.jobId, text:text, action:'Screening question: ' + q.id });
+    s.asked.push({ q:q.id, at:now(), via:r.ok ? 'message' : 'task', outId:r.message ? r.message.id : null });
+  }
+  function parse(q, text){
+    const t = String(text || '').trim();
+    if(q.type === 'yesno'){ if(RX[2][1].test(t) || /^(yes|haan|ha|ji)\b|हाँ|હા/i.test(t)) return { value:'yes', confidence:1 }; if(/^(no|nahi)\b|नहीं|ના/i.test(t)) return { value:'no', confidence:1 }; const r = cxAI('small', 'extract', { text:t, type:'yesno' }); cxCharge({ agent:'talent-discovery', rateClass:'ai-small', qty:1, action:'Read an answer' }); return { value:r.output, confidence:r.confidence }; }
+    if(q.type === 'number'){ if(q.key === 'notice' && /immediate|right away|turant/i.test(t)) return { value:0, confidence:1 }; const m = /^\s*(\d+(\.\d+)?)\s*(days?|months?|yrs?|years?|lpa|l)?\s*$/i.exec(t); if(m){ let v = Number(m[1]); if(q.key === 'notice' && /month/i.test(m[3] || '')) v *= 30; return { value:v, confidence:1 }; }
+      const r = cxAI('small', 'extract', { text:t, type:'number' }); cxCharge({ agent:'talent-discovery', rateClass:'ai-small', qty:1, action:'Read an answer' }); let v = r.output; if(q.key === 'notice' && /month/i.test(t) && typeof v === 'number') v *= 30; return { value:v, confidence:typeof v === 'number' ? r.confidence : 0.3 }; }
+    return { value:t, confidence:0.8 };
+  }
+  window.cxNeedsYouResolve = function(id, value){ const n = NEEDS.find(function(x){ return x.id === id; }); if(!n || n.status !== 'open') return { ok:false }; n.status = 'done'; const s = SCR[n.key]; if(s){ s.answers[n.q] = value; s.status = 'asking'; s.i++; askNext(s); } return { ok:true }; };
+  function finish(s){
+    const job = jobById(s.jobId), c = byId(s.candidateId), crit = (typeof cxCriteria === 'function' && cxCriteria(s.jobId)) || cxIntakeRules(job);
+    const cc = Object.assign({}, c, { answers:Object.assign({}, c.answers || {}) }); s.qs.filter(function(q){ return q.must; }).forEach(function(q){ cc.answers[q.key] = s.answers[q.id]; });
+    const f = cxFit(cc, crit, job.client), consent = s.answers.consent === 'yes';
+    const fits = !f.mustNotMet.length && f.fit >= 70 && s.answers.location !== 'no' && (crit.noticeMaxDays == null || s.answers.notice == null || s.answers.notice <= crit.noticeMaxDays * 1.5);
+    if(fits && s.interest === 'yes'){
+      const sum = cxAI('medium', 'summary', { name:c.name, answers:s.answers }); cxCharge({ agent:'talent-discovery', rateClass:'ai-medium', qty:1, jobId:s.jobId, candidateId:s.candidateId, action:'Write the prospect summary' });
+      const p = { id:'PRO-' + (PROS.length + 1), candidateId:s.candidateId, jobId:s.jobId, at:now(), summary:sum.output, answers:Object.assign({}, s.answers), evidence:f.rows, fit:f.fit, consent:consent, by:'talent-discovery' };
+      PROS.push(p); s.status = 'prospect'; s.prospectId = p.id;
+      if(typeof fmNotify === 'function') try { fmNotify(job.recruiterId, job.recruiter, 'New prospect for ' + job.title + ': ' + c.name + (consent ? ' (consented to share the CV)' : ' (no consent to share the CV yet)'), null); } catch(e){}
+      (window.CX_NOTICES = window.CX_NOTICES || []).push({ at:now(), to:job.recruiterId || job.recruiter, text:'New prospect: ' + c.name + ' for ' + job.title });
+      return;
+    }
+    SUGG.push({ id:'SUG-' + (SUGG.length + 1), candidateId:s.candidateId, jobId:s.jobId, at:now(), text:c.name + ' may not fit ' + job.title + (f.mustNotMet.length ? ' (' + f.mustNotMet.join(', ') + ')' : s.answers.location === 'no' ? ' (location)' : ' (notice or fit)') + '. Your call: keep in the pool or close politely yourself.', status:'open' });
+    s.status = 'suggested';
+  }
+  /* the entry point for every inbound reply */
+  window.cxOnInbound = function(e){
+    if(!on() || !e || e.candidateId == null) return { ok:false };
+    if(e.id){ if(SEEN[e.id]) return { ok:false, duplicate:true }; SEEN[e.id] = true; }
+    const cid = e.candidateId, text = String(e.text || ''), lang = cxLang(text);
+    if(RX[0][1].test(text)){ cxReplyOutcome(cid, 'opt-out'); Object.keys(SCR).forEach(function(k){ if(SCR[k].candidateId === cid) SCR[k].status = 'stopped'; }); return { ok:true, label:'opt-out' }; }
+    if(e.channel === 'whatsapp' && typeof CX_WA_WINDOW !== 'undefined') CX_WA_WINDOW[cid] = now();
+    const jobId = e.jobId || (Object.keys(SCR).map(function(k){ return SCR[k]; }).find(function(s){ return s.candidateId === cid && s.status === 'asking'; }) || {}).jobId;
+    const s = jobId ? SCR[keyOf(cid, jobId)] : null;
+    if(s && s.status === 'asking'){ const q = s.qs[s.i]; const p = parse(q, text);
+      if(p.confidence < 0.7 || p.value == null || p.value === ''){ NEEDS.push({ id:'NY-' + (NEEDS.length + 1), key:keyOf(cid, jobId), q:q.id, candidateId:cid, jobId:jobId, text:text, suggested:p.value, confidence:p.confidence, status:'open' }); s.status = 'needs-you'; return { ok:true, needsYou:true }; }
+      s.answers[q.id] = p.value; s.i++; askNext(s); return { ok:true, answered:q.id };
+    }
+    const it = cxIntent(text); if(it.by === 'ai') cxCharge({ agent:'talent-discovery', rateClass:'ai-small', qty:1, candidateId:cid, jobId:jobId, action:'Read a reply' });
+    if(it.confidence < 0.7){ NEEDS.push({ id:'NY-' + (NEEDS.length + 1), key:keyOf(cid, jobId), q:'intent', candidateId:cid, jobId:jobId, text:text, suggested:it.label, confidence:it.confidence, status:'open' }); return { ok:true, needsYou:true, label:it.label }; }
+    if(it.label === 'interested' && jobId){ cxScreenStart(cid, jobId, e.channel, lang); return { ok:true, label:'interested' }; }
+    if(it.label === 'not-now' || it.label === 'no'){ cxReplyOutcome(cid, it.label, { jobId:jobId }); return { ok:true, label:it.label }; }
+    if(it.label === 'question'){ NEEDS.push({ id:'NY-' + (NEEDS.length + 1), key:keyOf(cid, jobId), q:'question', candidateId:cid, jobId:jobId, text:text, suggested:'Answer their question', confidence:1, status:'open' }); return { ok:true, label:'question', needsYou:true }; }
+    return { ok:true, label:it.label };
+  };
+
+  /* "Needs you" in Cowork (agency home, CX on) */
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  window.cxNeedsYouHTML = function(){
+    const open = NEEDS.filter(function(n){ return n.status === 'open'; }), sug = SUGG.filter(function(s){ return s.status === 'open'; });
+    if(!open.length && !sug.length) return '';
+    return '<section class="o-card" id="cx-needs-you"><h2 class="o-card__title">Needs you</h2><p class="o-card__sub">Replies Talent Discovery could not read with confidence, and suggestions only you decide.</p><ul class="o-list">' +
+      open.map(function(n){ const c = byId(n.candidateId); return '<li data-needs="' + esc(n.id) + '"><b>' + esc(c ? c.name : n.candidateId) + '</b> said “' + esc(n.text) + '”. Suggested reading: <input class="app-input" style="width:140px" value="' + esc(n.suggested == null ? '' : n.suggested) + '" aria-label="Reading" id="ny-' + esc(n.id) + '"> <button type="button" class="o-btn" onclick="cxNeedsYouResolve(\'' + esc(n.id) + '\', document.getElementById(\'ny-' + esc(n.id) + '\').value); caRefresh()">Use this</button></li>'; }).join('') +
+      sug.map(function(s){ return '<li data-suggestion="' + esc(s.id) + '">' + esc(s.text) + ' <button type="button" class="o-link" onclick="CX_SUGGESTIONS.find(function(x){ return x.id === \'' + esc(s.id) + '\'; }).status = \'kept\'; caRefresh()">Keep in pool</button></li>'; }).join('') + '</ul></section>';
+  };
+  function hook(){
+    if(typeof window.caRender !== 'function' || window.caRender.__cx5) return;
+    const b = window.caRender;
+    const w = function(){ const h = b.apply(this, arguments); if(!on() || typeof h !== 'string' || CA.agent || CA.tab !== 'agents') return h; const x = cxNeedsYouHTML(); if(!x) return h; const i = h.indexOf('<div class="ca-grid"'); return i < 0 ? h : h.slice(0, i) + x + h.slice(i); };
+    w.__cx5 = true; ['__cx', '__cx1b', '__cx3', '__cx4', '__rx'].forEach(function(k){ w[k] = b[k]; }); window.caRender = w; try { caRender = w; } catch(e){}
   }
   hook(); window.addEventListener('load', hook);
 })();
