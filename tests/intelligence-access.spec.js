@@ -64,7 +64,8 @@
       settingsAsOwner(); ok(/asked to turn it on/.test(q('#main-content').textContent), 'the Owner sees the ask');
       sw('role_recruiter').click(); ok(!iqOffFor('role_recruiter') && !iqAccess().asks.length, 'on again, ask cleared');
       as('recruiter'); ok(!q('.iq-lock') && q('#iq-input') && !navItem().classList.contains('is-iq-locked'), 'Ask Kairo is back');
-      renderAiFab(); ok(q('#ai-fab-container button'), 'pill back for the recruiter');
+      /* merge (27 Nov 2026): the floating pill became the Kairo button in the top bar (Step 3); turning Ask Kairo back on unlocks it and the side panel */
+      renderAiFab(); iqAskSync(); var tb3 = q('#topbar-kairo'); ok(tb3 && !tb3.classList.contains('is-locked') && kaHas(), 'the Kairo button is back for the recruiter');
     });
 
     await t('Owner and Admin can never be locked; the Hiring Manager can', async function(){

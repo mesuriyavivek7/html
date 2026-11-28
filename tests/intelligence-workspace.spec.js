@@ -103,7 +103,8 @@
       as('admin'); IQ.convs = null; showView('intelligence'); await sleep(20);
     });
     await t('actions go to Kairo: Intelligence hands over, Kairo answers with its own rules', async function(){
-      var m = await ask('Show my interviews');
+      /* One Kairo (27 Nov 2026): a read such as "Show my interviews" is answered by Kairo here, the same as in the side panel; an action that would act at once (a call) is still handed over first */
+      var m = await ask('Call ' + (CANDIDATES.find(function(c){ return /^[A-Z][a-z]+ [A-Z][a-z]+$/.test(c.name); }) || CANDIDATES[0]).name);
       var bi = m.blocks.findIndex(function(b){ return b.type === 'kairo'; }); ok(bi > -1 && /Kairo/.test(q('.iq-kairo').textContent), 'hand-off offered');
       var n = kairoChatMessages.length; iqKairoRun(m.id, bi); ok(iqMsg(m.id).blocks[bi].result && kairoChatMessages.length === n + 2, 'Kairo answered and its chat has the exchange');
       ok(typeof toggleKairoChat === 'function', 'Kairo chat intact');
