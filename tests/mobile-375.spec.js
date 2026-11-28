@@ -58,10 +58,12 @@
       }
       for(var x = 0; x < (EXTRA[role] || []).length; x++){ try { w.eval(EXTRA[role][x][1]); } catch(e){ page.push(role + '/' + EXTRA[role][x][0] + ' could not open: ' + e.message); continue; } await check(role + '/' + EXTRA[role][x][0]); try { if(w.closeMessages) w.closeMessages(); } catch(e){} }
     }
+    var tiles = 'n/a'; if(CXON){ try { w.eval("state.role = 'admin'; enterApp(); showView('kairo-team'); CA.agent = null; CA.tab = 'credits'; caRefresh();"); await sleep(60); var g = d.querySelector('#cx-credits-view .o-cols'); tiles = g ? w.getComputedStyle(g).gridTemplateColumns.split(' ').length : 'missing'; } catch(e){ tiles = 'error ' + e.message; } }
     fr.remove();
     results.push({ name:'RESULT width ' + W + ' · CX ' + (CXON ? 'on' : 'off') + ' · ' + seen + ' screens checked', pass:true });
     await t('at 375 px no main screen scrolls the page sideways (CX ' + (CXON ? 'on' : 'off') + ')', async function(){ ok(seen >= 20, 'screens ' + seen); ok(!page.length, page.join(' | ')); });
     await t('every element ends inside the screen or inside its own scrolling box (CX ' + (CXON ? 'on' : 'off') + ')', async function(){ ok(!els.length, els.length + ' screens: ' + els.slice(0, 30).join(' || ')); });
+    if(CXON) await t('Cowork › Credits number tiles are two across on a phone, so big numbers are not cut', async function(){ ok(tiles === 2, 'columns: ' + tiles); });
     pub();
   }, 300); });
 })();
