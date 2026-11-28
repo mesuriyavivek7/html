@@ -76146,6 +76146,61 @@ function cfScopeHTML(){
   }
 })();
 </script>
+<style id="fix-ledger-vscroll-style">
+.cx-vscroll{max-height:520px;overflow:auto;position:relative;-webkit-overflow-scrolling:touch}
+.cx-vscroll thead th{position:sticky;top:0;z-index:1;background:var(--o-surface,#fff)}
+.cx-vscroll tbody tr{height:41px}
+.cx-vscroll td{white-space:nowrap}
+</style>
+<script id="fix-ledger-vscroll">
+/* QA fix A6 — real virtual scrolling in Cowork › Credits › Live ledger (it paged 200 rows at a time with "Show more").
+   Only the rows in view (plus a small margin) are in the DOM: at most CX_VSCROLL.win rows, whatever the ledger's size.
+   The table sits in its own scrolling box; padding above and below stands in for the rows not drawn, so the scroll bar
+   matches the full list. The row HTML still comes from cxLedgerTableHTML (the base renders the slice in view).
+   Filters and the CSV export work on all rows (cxLedgerRows / cxExportCsv are unchanged). A re-render (live update)
+   keeps the reader's scroll position. The job page's short list (an explicit limit) is unchanged. */
+(function(){
+  const V = window.CX_VSCROLL = window.CX_VSCROLL || { win:60, over:10, rowH:41, start:0, rows:[], top:0 };
+  const fmt = function(n){ return Number(n || 0).toLocaleString('en-IN'); };
+  let base = null;
+  const tbody = function(html){ const m = /<tbody>([\s\S]*)<\/tbody>/.exec(html); return m ? m[1] : ''; };
+  const thead = function(html){ const m = /<thead>([\s\S]*?)<\/thead>/.exec(html); return m ? m[1] : ''; };
+  const pads = function(start, n, total){ return { top:start * V.rowH, bottom:Math.max(0, total - start - n) * V.rowH }; };
+  window.cxLedgerSlice = function(start){
+    const total = V.rows.length; start = Math.max(0, Math.min(start, Math.max(0, total - V.win))); const list = V.rows.slice(start, start + V.win);
+    return { start:start, n:list.length, total:total, body:tbody(base(list, V.win)) };
+  };
+  window.cxLedgerScroll = function(el){
+    el = el || document.getElementById('cx-ledger-scroll'); if(!el) return null;
+    const first = el.querySelector('#cx-ledger tbody tr'); if(first && first.offsetHeight > 0) V.rowH = first.offsetHeight;
+    V.top = el.scrollTop; const want = Math.max(0, Math.floor(el.scrollTop / V.rowH) - V.over);
+    if(want === V.start && el.getAttribute('data-start') === String(want)) return V.start;
+    const s = cxLedgerSlice(want), p = pads(s.start, s.n, s.total); V.start = s.start;
+    const tb = el.querySelector('#cx-ledger tbody'), pad = el.querySelector('#cx-ledger-pad'); if(tb) tb.innerHTML = s.body; if(pad){ pad.style.paddingTop = p.top + 'px'; pad.style.paddingBottom = p.bottom + 'px'; }
+    el.setAttribute('data-start', String(s.start)); return s.start;
+  };
+  if(typeof window.cxLedgerTableHTML === 'function' && !window.cxLedgerTableHTML.__fixA6){
+    base = window.cxLedgerTableHTML;
+    const w = function(rows, limit){
+      if(limit) return base.apply(this, arguments);   // the job page's short list
+      rows = rows || []; V.rows = rows;
+      const old = document.getElementById('cx-ledger-scroll'); const keep = old ? old.scrollTop : 0; if(!old) V.start = 0;
+      const s = cxLedgerSlice(old ? Math.max(0, Math.floor(keep / V.rowH) - V.over) : 0), p = pads(s.start, s.n, s.total); V.start = s.start;
+      const head = thead(base([], 1));
+      if(keep) setTimeout(function(){ const el = document.getElementById('cx-ledger-scroll'); if(el){ el.scrollTop = keep; cxLedgerScroll(el); } }, 0);
+      return '<div class="o-table-wrap cx-vscroll" id="cx-ledger-scroll" data-total="' + s.total + '" data-start="' + s.start + '" role="region" aria-label="Ledger rows, scroll for more" tabindex="0" onscroll="cxLedgerScroll(this)">' +
+        '<div id="cx-ledger-pad" style="padding-top:' + p.top + 'px;padding-bottom:' + p.bottom + 'px"><table class="o-table" id="cx-ledger"><thead>' + head + '</thead><tbody>' + s.body + '</tbody></table></div></div>' +
+        '<p class="o-card__sub" id="cx-ledger-count" style="margin-top:6px">' + fmt(s.total) + ' row' + (s.total === 1 ? '' : 's') + (s.total > s.n ? ' · scroll the table to see them all' : '') + '</p>';
+    };
+    w.__fixA6 = true; w.__base = base; window.cxLedgerTableHTML = w; try { cxLedgerTableHTML = w; } catch(e){}
+  }
+  if(typeof window.cxSet === 'function' && !window.cxSet.__fixA6){
+    const bs = window.cxSet;
+    const ws = function(){ V.start = 0; const el = document.getElementById('cx-ledger-scroll'); if(el) el.scrollTop = 0; return bs.apply(this, arguments); };
+    ws.__fixA6 = true; ws.__base = bs; window.cxSet = ws; try { cxSet = ws; } catch(e){}
+  }
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
