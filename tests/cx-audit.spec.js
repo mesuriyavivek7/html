@@ -35,6 +35,38 @@
     await t('CX off: guarded functions run as before', async function(){
       cxSetSwitch(false); ok(!/Not used in Cowork v2/.test(String(liSenderProfilesSettingsHTML())), 'old settings'); var r = liSendConnectionRequests(WORKFLOWS[0], [], true, false); ok(!(r && r.refused), 'old send path'); cxSetSwitch(true);
     });
+    /* QA fix A4: company Campaign plays and vendor-submitted screening go through the credit path */
+    function wsAt(day, h, m){ var a = day.split('-'); return wsWallMs(+a[0], +a[1], +a[2], h, m || 0); }
+    function tue10(){ var day = wsDay(CW.clock); while(wsDow(day) !== 2) day = wsAddDays(day, -1); var t = wsAt(day, 11); cwSetClock(t); return t; }
+    function mkCand(id, name){ var c = { id:id, name:name, role:'Python Developer', exp:'4 yrs', loc:'Pune, IN', avail:'Available', availScore:80, joinProb:80, respProb:80, bestTime:'7 PM', counterRisk:10, trust:90, intent:'High', skills:['Python','Django','PostgreSQL','AWS'], salary:'₹16–20 LPA', notice:'30 Days', preferredRoles:[], goals:'', market:'', comms:'', employmentType:'Full-time', industry:'Technology', domain:'Backend', email:name.toLowerCase().replace(/ /g, '.') + '@test.example', phone:'9' + (800000000 + id), company:'Acme Labs', currentCompany:'Acme Labs' }; CANDIDATES.push(c); CW_OPTINS[personKeyOf(c)] = { source:'test', date:'Oct 2026' }; return c; }
+    function fresh(jobId){ var c = cpNewCampaign(jobId, {}); c.status = 'running'; c.startedAt = CP_NOW() - CP_DAY; c.rules.checkFirst = 0; c.review.approved = 0; return c; }
+    await t('A4 company campaign plays: credits are reserved before each send and settled after; no reservation, no send', async function(){
+      tue10(); var a = mkCand(9411, 'Audit Alpha'), b; var c = fresh('j5');
+      var realReserve = window.cxReserve, at = []; window.cxReserve = function(o){ at.push(SEND_LEDGER.length); return realReserve.apply(this, arguments); };
+      try {
+        var p = cpEnqueue(c, a, 'know'); ok(p, 'enqueued'); var n0 = SEND_LEDGER.length; cwEngineTick(0, { enrol:0 });
+        var sent = SEND_LEDGER.slice(n0).filter(function(l){ return l.campaignId === c.id && l.status === 'sent'; }); ok(sent.some(function(l){ return l.personKey === personKeyOf(a); }), 'sent to the enqueued person: ' + sent.length + ' ' + (p.holdReason || ''));
+        sent.forEach(function(l){
+          var rid = l.cxReservationId; ok(rid, 'the send carries its reservation');
+          ok(CX_LEDGER.some(function(r){ return r.reservationId === rid && (r.status === 'charged' || r.status === 'released'); }), 'reserved, then settled');
+          eq(CX_LEDGER.filter(function(r){ return r.reservationId === rid && r.status === 'reserved'; }).length, 1, 'reserved once (the ledger hook does not reserve again)');
+          ok(at.indexOf(SEND_LEDGER.indexOf(l)) > -1, 'reserved before the send was written');
+        });
+      } finally { window.cxReserve = realReserve; }
+      window.cxReserve = function(){ return { blocked:'Not enough credits (test)' }; };
+      try { b = mkCand(9412, 'Audit Bravo'); var q2 = cpEnqueue(c, b, 'know'); ok(q2, 'second person enqueued'); var n1 = SEND_LEDGER.length; cwEngineTick(CW_HOUR * 3, { enrol:0 }); ok(!SEND_LEDGER.slice(n1).some(function(l){ return l.campaignId === c.id && l.personKey === personKeyOf(b); }), 'nothing sent without credits'); ok(/Paused: credits/.test(q2.holdReason || ''), 'waits, with the reason: ' + q2.holdReason); }
+      finally { window.cxReserve = realReserve; }
+      ok(SEND_LEDGER.filter(function(l){ return l.campaignId === c.id && l.status === 'sent'; }).every(function(l){ return !!l.cxReservationId; }), 'every campaign send in the send ledger has a reservation');
+    });
+    await t('A4 vendor-submitted screening: the profile check reserves and settles ai-medium; no credits → a task, no check', async function(){
+      var sub = SUBMISSIONS.find(function(s){ return jobById(s.jobId) && byId(s.candidateId); }); ok(sub, 'a submission');
+      var b0 = cxBalance(), r = cxVendorScreen(sub, { ref:'VS-TEST' }); ok(r.ok && r.screen && typeof r.screen.fit === 'number', JSON.stringify(r));
+      var rows = CX_LEDGER.filter(function(x){ return x.reservationId === r.screen.reservationId; }); ok(rows.some(function(x){ return x.status === 'reserved' && x.rateClass === 'ai-medium'; }) && rows.some(function(x){ return x.status === 'charged'; }), 'reserve → charge');
+      eq(cxBalance(), b0 - cxRate('ai-medium'), 'charged its rate'); ok(sub.cxScreen && sub.cxScreen.fit === r.screen.fit, 'kept on the submission');
+      var realReserve = window.cxReserve; window.cxReserve = function(){ return { blocked:'Not enough credits (test)' }; };
+      try { var t0 = (window.CX_TASKS || []).length; var r2 = cxVendorScreen(sub, { ref:'VS-TEST2' }); ok(!r2.ok && r2.paused === 'credits', 'paused'); ok((window.CX_TASKS || []).length > t0, 'a task says so'); } finally { window.cxReserve = realReserve; }
+      ok(coConsentGive.__fixA4, 'consent hands the new submission to the check');
+    });
     pub();
   }, 300); });
 })();

@@ -75950,6 +75950,95 @@ function cfScopeHTML(){
   }
 })();
 </script>
+<script id="fix-cp-credit-path">
+/* QA fix A4 — company Campaign plays (CP_PLAYS) and vendor-submitted screening go through the credit path under CX.
+   1. cpSendStep: before a campaign message is sent, Cowork reserves its credits (email, WhatsApp in the 24-hour window,
+      or a WhatsApp template). No credits → the person waits ("Paused: credits") and nothing is sent. After the send
+      the reservation is settled: charged (a template waits for its delivery receipt and is released if undelivered);
+      if nothing was sent the reservation is released. The send-ledger row carries cxReservationId, so the C1 ledger
+      hook does not reserve a second time. Before this fix the hook reserved after the send, so a send could go out
+      with no credits.
+   2. LinkedIn under CX is a person task: a campaign step on LinkedIn is never sent by the engine; the person goes to the
+      LinkedIn queue (cxLiQueueFor, which itself reserves and settles) and the step is marked done for that person.
+   3. coConsentGive: once a vendor-submitted candidate agrees and becomes a submission, Talent Discovery checks the
+      profile against the job's criteria (ai-medium, reserve → settle). No credits → no check, and a task says so.
+   CX off: nothing changes. */
+(function(){
+  const on = function(){ return typeof cxOn === 'function' && cxOn(); };
+  const now = function(){ return typeof cwNow === 'function' ? cwNow() : Date.now(); };
+  let PRE = null;   // the reservation made for the send in progress
+
+  if(typeof window.cwLedger === 'function' && !window.cwLedger.__fixA4){
+    const b = window.cwLedger;
+    const w = function(entry){ if(PRE && entry && entry.status === 'sent' && entry.campaignPersonId === PRE.pid && !entry.cxReservationId){ entry.cxReservationId = PRE.rid; PRE.used = entry; } return b.apply(this, arguments); };
+    Object.keys(b).forEach(function(k){ w[k] = b[k]; }); w.__fixA4 = true; window.cwLedger = w; try { cwLedger = w; } catch(e){}
+  }
+
+  window.cxCpRate = function(cand, channel){
+    if(channel === 'email') return 'email';
+    if(channel === 'whatsapp') return (cand && typeof cxInWaWindow === 'function' && cxInWaWindow(cand.id)) ? 'wa-window' : 'wa-template';
+    return null;
+  };
+  if(typeof window.cpSendStep === 'function' && !window.cpSendStep.__fixA4){
+    const b = window.cpSendStep;
+    const w = function(c, p){
+      if(!on()) return b.apply(this, arguments);
+      const chk = cpSendCheck(c, p, p.step); if(!chk.ok) return b.apply(this, arguments);   // the base keeps its own hold / skip handling
+      if(c.rules.checkFirst > 0 && c.review.approved < c.rules.checkFirst && c.status === 'running' && p.step === 0 && !p.approved) return false;
+      const cand = byId(p.candidateId);
+      if(chk.channel === 'linkedin'){
+        let q = null; try { q = typeof cxLiQueueFor === 'function' ? cxLiQueueFor(cand.id, c.jobId) : null; } catch(e){}
+        p.state = 'done'; p.tag = 'linkedin-task'; p.nextAt = Infinity;
+        cpLog(c, cand.name + ': LinkedIn is a person task in Cowork v2' + (q && q.ok ? ' — added to the LinkedIn queue' : (q && q.reason ? ' — not queued: ' + q.reason : '')), 'skip');
+        return false;
+      }
+      const rc = cxCpRate(cand, chk.channel) || 'email';
+      const r = cxReserve({ agent:'outreach', action:'Company campaign · step ' + (p.step + 1) + ' · ' + chk.channel, rateClass:rc, qty:1, jobId:c.jobId, candidateId:cand.id, runId:c.id, triggeredBy:'outreach' });
+      if(r.blocked || !r.reservationId){ p.nextAt = now() + 3 * 3600000; p.holdReason = 'Paused: credits · ' + (r.blocked || 'no reservation'); return false; }
+      PRE = { rid:r.reservationId, pid:p.id, used:null }; let sent = false;
+      try { sent = b.apply(this, arguments); }
+      finally {
+        const used = PRE.used; PRE = null;
+        if(sent && used){ if(rc === 'wa-template') cxDeliveryReceipt('dlv:' + used.id, r.reservationId, !window.CX_FAIL_DELIVERY); else cxSettle(r.reservationId, 'charged'); }
+        else cxSettle(r.reservationId, 'released');
+      }
+      return sent;
+    };
+    w.__fixA4 = true; window.cpSendStep = w; try { cpSendStep = w; } catch(e){}
+  }
+
+  /* vendor-submitted screening */
+  window.CX_VENDOR_SCREENS = window.CX_VENDOR_SCREENS || [];
+  window.cxVendorScreen = function(sub, vs){
+    if(!sub) return { ok:false };
+    const job = typeof jobById === 'function' ? jobById(sub.jobId) : null, cand = typeof byId === 'function' ? byId(sub.candidateId) : null;
+    if(!job || !cand) return { ok:false, reason:'No job or candidate' };
+    const r = cxReserve({ agent:'talent-discovery', action:'Check a vendor-submitted profile against the job', rateClass:'ai-medium', qty:1, jobId:job.id, candidateId:cand.id, triggeredBy:'talent-discovery' });
+    if(r.blocked || !r.reservationId){
+      const t = { id:'CXV-' + (CX_VENDOR_SCREENS.length + 1), at:now(), subId:sub.id, vsRef:vs && vs.ref, status:'paused', reason:r.blocked || 'no reservation' }; CX_VENDOR_SCREENS.push(t);
+      if(typeof cxTask === 'function') cxTask('talent-discovery', { candidateId:cand.id, jobId:job.id, action:'Check ' + cand.name + '’s vendor profile' }, 'Not enough credits for the profile check');
+      return { ok:false, paused:'credits', reason:t.reason };
+    }
+    let fit = null;
+    try { const crit = (typeof cxCriteria === 'function' && cxCriteria(job.id)) || (typeof cxIntakeRules === 'function' ? cxIntakeRules(job) : null); fit = crit && typeof cxFit === 'function' ? cxFit(cand, crit, job.client) : null; } catch(e){ fit = null; }
+    if(!fit){ cxSettle(r.reservationId, 'released'); return { ok:false, reason:'No criteria to check against' }; }
+    cxSettle(r.reservationId, 'charged');
+    const rec = { id:'CXV-' + (CX_VENDOR_SCREENS.length + 1), at:now(), subId:sub.id, vsRef:vs && vs.ref, candidateId:cand.id, jobId:job.id, fit:fit.fit, mustNotMet:(fit.mustNotMet || []).slice(), reservationId:r.reservationId, status:'checked' };
+    CX_VENDOR_SCREENS.push(rec); sub.cxScreen = { fit:rec.fit, mustNotMet:rec.mustNotMet, at:rec.at, id:rec.id };
+    if(typeof cxLog === 'function') try { cxLog('talent-discovery', 'Checked a vendor profile: ' + cand.name + ' · fit ' + rec.fit + '%', { candidateId:cand.id }); } catch(e){}
+    return { ok:true, screen:rec };
+  };
+  if(typeof window.coConsentGive === 'function' && !window.coConsentGive.__fixA4){
+    const b = window.coConsentGive;
+    const w = function(token, agree){
+      const vs = typeof coConsentFind === 'function' ? coConsentFind(token) : null, r = b.apply(this, arguments);
+      if(on() && r && r.ok && r.submission) try { r.cxScreen = cxVendorScreen(r.submission, vs); } catch(e){ console.error('cx vendor screen', e); }
+      return r;
+    };
+    w.__fixA4 = true; window.coConsentGive = w; try { coConsentGive = w; } catch(e){}
+  }
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
