@@ -76305,6 +76305,39 @@ function cfScopeHTML(){
   addSetting(); window.addEventListener('load', addSetting);
 })();
 </script>
+<style id="fix-mobile-375">
+/* QA fix A8 — nothing runs off the right edge at 375 px (CX off and on). The page itself already never scrolls sideways
+   (html/body clip it), so the real faults were rows that did not wrap and got cut off at the screen edge. Each rule below
+   fixes one measured spot (tests/mobile-375.spec.js reports the element and its parents). Tables keep scrolling inside
+   their own .o-table-wrap box; CX tables already stack into labelled rows on phones. */
+@media (max-width:480px){
+  /* Approvals, phone card: the section tabs scroll inside the card instead of running past it */
+  .ap-pcard .o-tabs-host{ overflow-x:auto; max-width:100%; }
+  .ap-pcard #ap-tabs{ min-width:0; max-width:100%; }
+  /* Cowork v2 setup card: a step's text and its button wrap */
+  #cx-setup-card li{ flex-wrap:wrap; overflow-wrap:anywhere; }
+  #cx-setup-card li > *{ min-width:0; max-width:100%; }
+  /* job page lists: the status chip goes under the text when the row is full */
+  .card ul.divide-y > li.flex{ flex-wrap:wrap; row-gap:4px; }
+  .card ul.divide-y > li.flex > *{ min-width:0; }
+  /* My to-do: the add row (text, time, Add) wraps */
+  .content-shell > .flex.items-center:has(#todo-new-time){ flex-wrap:wrap; row-gap:8px; }
+  #todo-new-time{ min-width:0; }
+  /* candidate profile "Now" rows: the action menu stays inside */
+  .pf-now > li, .pf-now__a{ flex-wrap:wrap; min-width:0; max-width:100%; }
+  /* Team (manager): a person's row wraps its chips */
+  .content-shell .border.border-zinc-200 > .flex.items-center, .content-shell .border.border-zinc-200 > .flex.items-center > .flex.items-center{ flex-wrap:wrap; row-gap:6px; min-width:0; }
+  /* hiring manager Home: a role row's buttons wrap under it */
+  #hm-list [id^="hm-row-"], #hm-list [id^="hm-row-"] .flex.gap-2{ flex-wrap:wrap; row-gap:8px; }
+  #hm-list [id^="hm-row-"] > *{ min-width:0; }
+  /* chips with a person in them shrink and truncate their name instead of pushing the row out */
+  .chip-pop{ max-width:100% !important; flex-shrink:1 !important; min-width:0; }
+  .content-shell .border.border-zinc-200 > .flex.items-center > .flex.items-center.shrink-0{ flex-shrink:1 !important; flex-wrap:wrap; max-width:100%; }
+  /* Cowork agent cards: the footer (Included chip and buttons) wraps */
+  .ca-card__f{ flex-wrap:wrap; row-gap:8px; }
+  .ca-card__f > *{ min-width:0; }
+}
+</style>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
