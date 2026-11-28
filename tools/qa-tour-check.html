@@ -1,0 +1,50 @@
+<!doctype html><html><head><meta charset="utf-8"><title>check</title></head><body>
+<!-- QA tour self-check (B5): open this file in Chrome; it restores any saved tour results when it ends. -->
+<iframe id="f" src="../qa-tour/QA-TOUR.html" width="1280" height="900"></iframe><pre id="out">running</pre>
+<script>
+var out = [], f = document.getElementById('f'), step = 0;
+function ok(c, m){ out.push((c ? 'PASS ' : 'FAIL ') + m); }
+var KEEP = null; try { KEEP = [localStorage.getItem('oontu.qa-tour.v1'), localStorage.getItem('oontu.qa-tour.v1.filters')]; } catch(e){}
+function done(){ try { if(KEEP){ if(KEEP[0] == null) localStorage.removeItem('oontu.qa-tour.v1'); else localStorage.setItem('oontu.qa-tour.v1', KEEP[0]); if(KEEP[1] == null) localStorage.removeItem('oontu.qa-tour.v1.filters'); else localStorage.setItem('oontu.qa-tour.v1.filters', KEEP[1]); } } catch(e){} document.getElementById('out').textContent = out.join('\n'); document.title = 'CHECK ' + (out.some(function(x){ return /^FAIL/.test(x); }) ? 'FAIL' : 'PASS'); }
+f.onload = function(){
+  var w = f.contentWindow, d = w.document;
+  try {
+    if(step === 0){
+      try { w.localStorage.removeItem('oontu.qa-tour.v1'); w.localStorage.removeItem('oontu.qa-tour.v1.filters'); } catch(e){}
+      step = 1; w.location.reload(); return;
+    }
+    if(step === 1){
+      var cards = d.querySelectorAll('.card'); ok(cards.length === 40, 'cards: ' + cards.length);
+      var noimg = [].filter.call(cards, function(c){ return !c.querySelector('img[src]'); }).map(function(c){ return c.id; }); ok(!noimg.length, 'every card has images ' + noimg.join(','));
+      var broken = [].filter.call(d.querySelectorAll('img[data-big]'), function(i){ return i.complete && i.naturalWidth === 0; }).length;
+      var few = [].filter.call(cards, function(c){ return c.querySelectorAll('.checks li').length < 3; }).map(function(c){ return c.id; }); ok(!few.length, 'every card has 3+ checks ' + few.join(','));
+      ok([].every.call(cards, function(c){ return c.querySelectorAll('.seg button').length === 3 && c.querySelector('textarea'); }), 'Pass/Fail/Not checked and a note on every card');
+      var groups = [].map.call(d.querySelectorAll('.group'), function(g){ return g.textContent; }); ok(groups.slice(0, 3).join('|') === 'Super Admin|Recruiter app|Cowork', 'order: ' + groups.join('|'));
+      var cw = [].map.call(cards, function(c){ return c.id; }).filter(function(id){ return /^R3-/.test(id); }); ok(cw.join() === 'R3-C1b,R3-C1,R3-C2,R3-C3,R3-C4,R3-C5,R3-C5b,R3-C6,R3-C7,R3-C7b,R3-C8', 'Cowork path order ' + cw.join());
+      ok(d.querySelectorAll('#runs li').length === 5, 'one line per run'); ok(/did not run/i.test(d.getElementById('runs').textContent), 'run 0 says it did not run');
+      /* filters */
+      var sel = d.getElementById('f-run'); sel.value = '4'; sel.dispatchEvent(new w.Event('change')); var n4 = d.querySelectorAll('.card').length; ok(n4 === 6, 'run filter: ' + n4);
+      sel.value = ''; sel.dispatchEvent(new w.Event('change'));
+      var sc = d.getElementById('f-screen'); sc.value = 'Super Admin'; sc.dispatchEvent(new w.Event('change')); ok([].every.call(d.querySelectorAll('.card'), function(c){ return /^R1-/.test(c.id); }) && d.querySelectorAll('.card').length === 17, 'screen filter: ' + d.querySelectorAll('.card').length); sc.value = ''; sc.dispatchEvent(new w.Event('change'));
+      var q = d.getElementById('f-q'); q.value = 'WhatsApp Web'; q.dispatchEvent(new w.Event('input')); ok(d.querySelectorAll('.card').length >= 1 && d.getElementById('R4-A7'), 'search: ' + d.querySelectorAll('.card').length); q.value = ''; q.dispatchEvent(new w.Event('input'));
+      /* a verdict, a check and a note */
+      var c = d.getElementById('R4-A3'); c.querySelector('.seg button[data-v="pass"]').click(); c.querySelector('.checks input').click();
+      var ta = c.querySelector('textarea'); ta.value = 'looks right'; ta.dispatchEvent(new w.Event('input', { bubbles:true }));
+      d.getElementById('R1-0b').querySelector('.seg button[data-v="fail"]').click();
+      var st = d.getElementById('f-status'); st.value = 'fail'; st.dispatchEvent(new w.Event('change')); ok(d.querySelectorAll('.card').length === 1 && d.getElementById('R1-0b'), 'status filter: fail'); st.value = ''; st.dispatchEvent(new w.Event('change'));
+      ok(/2 of 40 checked · 1 pass · 1 fail/.test(d.getElementById('prog-text').textContent), 'progress: ' + d.getElementById('prog-text').textContent);
+      /* export */
+      var blob = null, real = w.URL.createObjectURL; w.URL.createObjectURL = function(b){ blob = b; return real.call(w.URL, b); };
+      var rc = w.HTMLAnchorElement.prototype.click; w.HTMLAnchorElement.prototype.click = function(){ out.push('PASS download asked for ' + this.download); };
+      d.getElementById('export').click(); w.URL.createObjectURL = real; w.HTMLAnchorElement.prototype.click = rc;
+      if(!blob){ ok(false, 'export made no file'); done(); return; }
+      blob.text().then(function(t){ var lines = t.split('\n'); ok(lines.length === 41 && /^id,run,screen,title,status/.test(lines[0]), 'CSV header + 40 rows'); ok(/R4-A3,[^\n]*Pass,1,3,looks right/.test(t), 'CSV keeps the result and note'); step = 2; w.location.reload(); });
+      return;
+    }
+    if(step === 2){
+      var c2 = d.getElementById('R4-A3'); ok(c2 && c2.getAttribute('data-status') === 'pass' && c2.querySelector('.checks input').checked && c2.querySelector('textarea').value === 'looks right', 'results survive a reload');
+      done();
+    }
+  } catch(e){ ok(false, 'error ' + e.message); done(); }
+};
+</script></body></html>

@@ -79,3 +79,11 @@ Resume rule from the user: if the session stops, continue exactly where it left 
 ## CX (Cowork agents v2) progress
 - C0 done 2026-11-28: CX-AUDIT.md, cx-progress.html, backup recruitment-os-prototype.before-cx.html (local, git-excluded). Next: C1 credits (block cx-credits).
 - CX COMPLETE 2026-11-28: C0–C10 done (last commits 2887a3e C9, 3d5cf05 C10 guard). Final full suite CX off 1407/1408 and CX on 1407/1408 (demo-data date seed only). Report CX-REPORT.md, progress cx-progress.html.
+
+## QA finish-up and tour (2026-11-28) — DONE
+
+- Part A fixes A1–A9: `fix:` commits `02e4fb8` … `c4abf47`. A10: the Agent transformation task did not run.
+- Full suite: CX off 1,440/1,440, CX on 1,441/1,441.
+- Tour: `qa-tour/QA-TOUR.html` (40 cards, 114 pictures), `qa-tour/QA-CHECKLIST.md`.
+- Tour tools: `tools/qa-shots.ps1`, `tools/qa-tour-build.ps1`, `tools/qa-tour-check.html`; the data is in `qa-tour/items.json`.
+- Report: `QA-FINISH-REPORT.md`. Open item: Account 360 shows "Domains [object Object]".
