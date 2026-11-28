@@ -75547,6 +75547,147 @@ function cfScopeHTML(){
   hook(); window.addEventListener('load', hook);
 })();
 </script>
+<script id="cx-guardian">
+/* CX C6 — Delivery Guardian (grows Offer & Joining; 'offers-joining' stays an alias). CX_SWITCH (sub 'guardian').
+   cxGuardianSweep(at) watches every live submission from "profile sent" to the end of the guarantee. Each timer fires
+   once (CX_GUARD_FIRED). Timings are per client (CX_GUARD_CLIENT[client]) with these defaults:
+     profile sent: no client feedback in 48 h → email the client contact (one-click shortlist / reject / hold) and tell
+       the candidate their profile is with the client; 96 h → task for the account owner.
+     interview booked: confirmations; reminders 24 h and 2 h before (safety-critical); not confirmed 4 h before → call task.
+     interview passed: no attendance or feedback → ask the candidate how it went, chase the interviewer; no-show → offer
+       3 new slots once, then a recruiter task.
+     offer released: not accepted in 3 days, or risk signals (notice > 60 days, competing interviews mentioned, low
+       engagement) → risk score; High → recruiter call + 3 backups from the same job.
+     notice period: weekly check-in, resignation confirmation, document checklist; a negative signal → call within 24 h.
+     joining day: day-before and morning messages to candidate and client (safety-critical); not joined by evening →
+       dropout flow (backups, client told).
+     guarantee: check-ins on day 7, 30, 60, 90 (or the guarantee length); exit risk → recruiter call.
+     contract assignment: handed to Revenue & Redeploy.
+   Alerts have one owner (submission owner → job recruiter → team lead) and always say why. Dismiss-with-reason adjusts
+   that client's threshold (3 "client always slow" dismissals turn 48 h into 72 h), shown in settings.
+   Never: offer changes, rejections, or Joined without both sides (only a suggestion when both confirm). */
+(function(){
+  const esc = function(s){ return typeof oEsc === 'function' ? oEsc(s) : String(s == null ? '' : s); };
+  const now = function(){ return typeof cwNow === 'function' ? cwNow() : Date.now(); };
+  const on = function(){ return typeof cxOn === 'function' && cxOn('guardian'); };
+  const H = 3600000, D = 86400000;
+  const FIRED = window.CX_GUARD_FIRED = window.CX_GUARD_FIRED || {};
+  const ALERTS = window.CX_GUARD_ALERTS = window.CX_GUARD_ALERTS || [];
+  const BACKUPS = window.CX_GUARD_BACKUPS = window.CX_GUARD_BACKUPS || [];
+  const CLIENT = window.CX_GUARD_CLIENT = window.CX_GUARD_CLIENT || {};
+  const DEF = window.CX_GUARD_DEFAULTS = { feedbackH:48, escalateH:96, confirmBeforeH:4, offerDays:3, noticeRiskDays:60 };
+  window.cxGuardSetting = function(client, k){ const c = CLIENT[client] || {}; return c[k] != null ? c[k] : DEF[k]; };
+  const ms = function(v){ if(v == null) return null; if(typeof v === 'number') return v; const t = Date.parse(v); return isNaN(t) ? null : t; };
+  const stageAt = function(s, re){ const h = (s.stageHistory || []).filter(function(x){ return re.test(x.stage || ''); }).pop(); return h ? ms(h.at) : null; };
+  const lastAt = function(s){ const h = (s.stageHistory || []).slice(-1)[0]; return h ? ms(h.at) : ms(s.updatedAt) || ms(s.createdAt); };
+  window.cxGuardOwner = function(s){
+    const job = jobById(s.jobId) || {};
+    if(s.recruiterId) return { id:s.recruiterId, why:'submission owner' };
+    if(job.recruiterId) return { id:job.recruiterId, why:'job recruiter' };
+    const r = (typeof RECRUITER_ROSTER !== 'undefined' ? RECRUITER_ROSTER : []).find(function(x){ return x.name === job.recruiter; });
+    const lead = r && r.reportingManagerId ? r.reportingManagerId : ((typeof RECRUITER_ROSTER !== 'undefined' ? RECRUITER_ROSTER : []).find(function(x){ return /founder|manager|lead/i.test(x.assignedRoleId || ''); }) || {}).id;
+    return { id:lead || 'team-lead', why:'team lead' };
+  };
+  function fire(key, fn){ if(FIRED[key]) return false; FIRED[key] = now(); fn(); return true; }
+  function alert(s, kind, why, o){ const own = cxGuardOwner(s); const a = Object.assign({ id:'GA-' + (ALERTS.length + 1), at:now(), submissionId:s.id, candidateId:s.candidateId, jobId:s.jobId, kind:kind, why:why, owner:own.id, ownerWhy:own.why, status:'open' }, o || {}); ALERTS.push(a); return a; }
+  const msg = function(s, text, o){ o = o || {}; const ch = typeof cxHasWaConsent === 'function' && cxHasWaConsent(s.candidateId) && typeof cxChannelReady === 'function' && cxChannelReady('whatsapp') ? 'whatsapp' : 'email';
+    return cxSend({ agent:'delivery-guardian', channel:o.channel || ch, candidateId:s.candidateId, jobId:s.jobId, text:text, template:o.template || (ch === 'whatsapp' ? (o.safetyCritical ? 'Interview reminder' : 'Joining-day check') : null), action:o.action || text.slice(0, 40), safetyCritical:!!o.safetyCritical }); };
+  const task = function(s, text){ return cxTask('delivery-guardian', { candidateId:s.candidateId, jobId:s.jobId, action:text }, 'Delivery Guardian'); };
+  window.cxRiskOf = function(s){
+    const c = byId(s.candidateId) || {}, reasons = []; let score = 0;
+    const nd = /(\d+)/.exec(String(c.notice || '')); if(nd && Number(nd[1]) * (/month/i.test(c.notice) ? 30 : 1) > DEF.noticeRiskDays){ score += 40; reasons.push('notice over ' + DEF.noticeRiskDays + ' days'); }
+    if(/other (interview|offer)|competing|another offer|counter.?offer/i.test([s.notes].concat((s.stageHistory || []).map(function(h){ return h.reason || ''; })).join(' '))){ score += 40; reasons.push('mentioned other interviews or offers'); }
+    const quiet = (now() - (lastAt(s) || now())) / D; if(quiet > 5){ score += 25; reasons.push('no contact for ' + Math.round(quiet) + ' days'); }
+    return { score:score, level:score >= 60 ? 'High' : score >= 30 ? 'Medium' : 'Low', reasons:reasons };
+  };
+  window.cxGuardBackups = function(s){ if(BACKUPS.some(function(b){ return b.submissionId === s.id; })) return BACKUPS.filter(function(b){ return b.submissionId === s.id; });
+    const r = typeof cxRank === 'function' ? cxRank(s.jobId) : { picks:[] }, taken = (typeof SUBMISSIONS !== 'undefined' ? SUBMISSIONS : []).filter(function(x){ return x.jobId === s.jobId; }).map(function(x){ return x.candidateId; });
+    let pool = r.picks.filter(function(p){ return taken.indexOf(p.id) < 0; }).slice(0, 3).map(function(p){ return p.id; });
+    if(pool.length < 3) (typeof SUBMISSIONS !== 'undefined' ? SUBMISSIONS : []).filter(function(x){ return x.jobId === s.jobId && x.id !== s.id && !/Rejected|Withdrawn|Joined/.test(x.stage || ''); }).forEach(function(x){ if(pool.length < 3 && pool.indexOf(x.candidateId) < 0) pool.push(x.candidateId); });
+    pool.forEach(function(cid){ BACKUPS.push({ submissionId:s.id, jobId:s.jobId, candidateId:cid, at:now(), status:'suggested' }); }); return BACKUPS.filter(function(b){ return b.submissionId === s.id; }); };
+
+  /* ---- the stage of one live submission ---- */
+  window.cxGuardStage = function(s){
+    if(/Rejected|Withdrawn|Dropped|Closed/i.test(s.stage || '') || /rejected|withdrawn/i.test(s.status || '')) return null;
+    if(/Joined|Placed/i.test(s.stage || '')) return 'guarantee';
+    const o = s.offer;
+    if(o && o.status === 'Accepted'){ const doj = ms(o.doj); if(doj && Math.abs(now() - doj) < D * 1.5) return 'joining'; return 'notice'; }
+    if(o && (o.status === 'Made' || o.status === 'Released')) return 'offer';
+    const ivs = (typeof hmInterviews !== 'undefined' ? hmInterviews : []).filter(function(iv){ return iv.submissionId === s.id && iv.status !== 'Cancelled'; });
+    if(ivs.some(function(iv){ const t = ms(iv.at); return t && t > now(); })) return 'interview-booked';
+    if(ivs.some(function(iv){ const t = ms(iv.at); return t && t <= now() && !iv.outcome && iv.status !== 'Completed'; })) return 'interview-passed';
+    if(/Submitted|Sent to client|Shortlisted|Client Review/i.test(s.stage || '')) return 'profile-sent';
+    return null;
+  };
+  window.cxGuardianSweep = function(at){
+    if(!on()) return { ran:false }; const t0 = at != null ? at : now(); const saveNow = window.cxGuardNowOverride; window.cxGuardNowOverride = t0; let n = 0;
+    try {
+      (typeof SUBMISSIONS !== 'undefined' ? SUBMISSIONS : []).forEach(function(s){
+        const st = cxGuardStage(s), job = jobById(s.jobId) || {}, client = job.client || '', c = byId(s.candidateId) || {}; if(!st) return;
+        if(st === 'profile-sent'){ const since = stageAt(s, /Submitted|Sent to client/i) || lastAt(s), h = (t0 - since) / H;
+          if(h >= cxGuardSetting(client, 'feedbackH')) n += fire(s.id + ':feedback', function(){ (window.CX_CLIENT_MAIL = window.CX_CLIENT_MAIL || []).push({ at:t0, to:client, submissionId:s.id, text:'Your view on ' + c.name + ' for ' + job.title + ': Shortlist · Reject · Hold (one click)' }); msg(s, 'Hi ' + String(c.name || '').split(' ')[0] + ', your profile is with ' + client + '. We will tell you as soon as they reply.', { action:'Profile is with the client' }); alert(s, 'client-feedback', 'No feedback from ' + client + ' in ' + cxGuardSetting(client, 'feedbackH') + ' h', { threshold:'feedbackH', client:client }); }) ? 1 : 0;
+          if(h >= cxGuardSetting(client, 'escalateH')) n += fire(s.id + ':escalate', function(){ task(s, 'Call ' + client + ' for feedback on ' + c.name + ' (' + Math.round(h) + ' h without a reply)'); }) ? 1 : 0; }
+        if(st === 'interview-booked'){ (typeof hmInterviews !== 'undefined' ? hmInterviews : []).filter(function(iv){ return iv.submissionId === s.id && iv.status !== 'Cancelled'; }).forEach(function(iv){ const t = ms(iv.at); if(!t || t <= t0) return; const left = (t - t0) / H;
+          if(left <= 24) n += fire(iv.id + ':r24', function(){ msg(s, 'Reminder: your interview for ' + job.title + ' is tomorrow.', { safetyCritical:true, action:'Interview reminder 24 h', template:'Interview reminder' }); }) ? 1 : 0;
+          if(left <= 2) n += fire(iv.id + ':r2', function(){ msg(s, 'Reminder: your interview starts in 2 hours.', { safetyCritical:true, action:'Interview reminder 2 h', template:'Interview reminder' }); }) ? 1 : 0;
+          if(left <= cxGuardSetting(client, 'confirmBeforeH') && !iv.candidateConfirmed) n += fire(iv.id + ':unconfirmed', function(){ task(s, 'Call ' + c.name + ': interview not confirmed, starts in ' + Math.round(left) + ' h'); alert(s, 'interview-unconfirmed', 'Interview in ' + Math.round(left) + ' h is not confirmed'); }) ? 1 : 0; }); }
+        if(st === 'interview-passed'){ (typeof hmInterviews !== 'undefined' ? hmInterviews : []).filter(function(iv){ return iv.submissionId === s.id && ms(iv.at) <= t0 && !iv.outcome; }).forEach(function(iv){
+          if(iv.noShow) n += fire(iv.id + ':noshow', function(){ const slots = typeof rxFreeSlots === 'function' ? rxFreeSlots(iv.interviewerName || 'Interviewer').slice(0, 3) : []; msg(s, 'We missed you at the interview. Here are 3 new times: ' + slots.map(function(x){ return new Date(x).toISOString().slice(0, 16).replace('T', ' '); }).join(', ') + '.', { action:'No-show: 3 new slots' }); task(s, 'No-show: follow up with ' + c.name + ' if none of the 3 slots is taken'); }) ? 1 : 0;
+          else n += fire(iv.id + ':howdiditgo', function(){ msg(s, 'How did your interview for ' + job.title + ' go?', { action:'How did it go?' }); (window.CX_CLIENT_MAIL = window.CX_CLIENT_MAIL || []).push({ at:t0, to:iv.interviewerName || client, submissionId:s.id, text:'Feedback on ' + c.name + '?' }); }) ? 1 : 0; }); }
+        if(st === 'offer'){ const since = ms(s.offer.at) || lastAt(s), r = cxRiskOf(s);
+          if((t0 - since) / D >= cxGuardSetting(client, 'offerDays')) n += fire(s.id + ':offer-wait', function(){ alert(s, 'offer-not-accepted', 'Offer not accepted in ' + cxGuardSetting(client, 'offerDays') + ' days'); }) ? 1 : 0;
+          if(r.level === 'High') n += fire(s.id + ':offer-risk', function(){ alert(s, 'offer-risk', 'Offer risk High: ' + r.reasons.join(', '), { risk:r }); task(s, 'Call ' + c.name + ' today about the offer (risk High)'); cxGuardBackups(s); msg(s, 'Hi ' + String(c.name || '').split(' ')[0] + ', any questions on the offer? Happy to help.', { safetyCritical:true, action:'Offer check-in (risk High)' }); }) ? 1 : 0; }
+        if(st === 'notice'){ const acc = ms(s.offer.acceptedAt) || lastAt(s), wk = Math.floor((t0 - acc) / (7 * D));
+          if(wk >= 1) n += fire(s.id + ':notice-w' + wk, function(){ msg(s, 'Weekly check-in: how is your notice period going? Have you resigned and received your relieving date?', { action:'Notice check-in week ' + wk }); }) ? 1 : 0;
+          if(/reluctant|not sure|counter|staying|retained/i.test(String(s.notes || ''))) n += fire(s.id + ':notice-neg', function(){ alert(s, 'notice-risk', 'A negative signal during the notice period'); task(s, 'Call ' + c.name + ' within 24 hours'); }) ? 1 : 0; }
+        if(st === 'joining'){ const doj = ms(s.offer.doj);
+          if(t0 >= doj - D && t0 < doj) n += fire(s.id + ':day-before', function(){ msg(s, 'See you tomorrow! Joining ' + job.title + ' at ' + client + '.', { safetyCritical:true, action:'Joining: day before', template:'Joining-day check' }); (window.CX_CLIENT_MAIL = window.CX_CLIENT_MAIL || []).push({ at:t0, to:client, submissionId:s.id, text:c.name + ' joins tomorrow.' }); }) ? 1 : 0;
+          if(t0 >= doj && t0 < doj + 12 * H) n += fire(s.id + ':morning', function(){ msg(s, 'Good morning! Today is your first day. All the best.', { safetyCritical:true, action:'Joining: morning', template:'Joining-day check' }); }) ? 1 : 0;
+          if(t0 >= doj + 12 * H && !/Joined/i.test(s.stage || '')) n += fire(s.id + ':dropout', function(){ alert(s, 'joining-not-confirmed', 'Joining not confirmed by evening'); cxGuardBackups(s); (window.CX_CLIENT_MAIL = window.CX_CLIENT_MAIL || []).push({ at:t0, to:client, submissionId:s.id, text:'We have not had a joining confirmation for ' + c.name + ' yet; backups are ready.' }); }) ? 1 : 0; }
+        if(st === 'guarantee'){ const j0 = stageAt(s, /Joined|Placed/i) || lastAt(s), len = Number(job.replacementDays) || 90;
+          [7, 30, 60, 90].filter(function(d){ return d <= len; }).forEach(function(d){ if(t0 - j0 >= d * D) n += fire(s.id + ':g' + d, function(){ msg(s, 'Day ' + d + ' check-in: how is the new role going?', { action:'Guarantee check-in day ' + d }); }) ? 1 : 0; });
+          if(/leaving|resign|unhappy|quit/i.test(String(s.notes || ''))) n += fire(s.id + ':exit-risk', function(){ alert(s, 'exit-risk', 'Exit risk inside the guarantee'); task(s, 'Call ' + c.name + ' about the role'); }) ? 1 : 0; }
+      });
+    } finally { window.cxGuardNowOverride = saveNow; }
+    return { ran:true, fired:n };
+  };
+  /* "Suggest marking Joined when both sides confirm" — never Joined by itself */
+  window.cxGuardSuggestJoined = function(subId, candidateConfirmed, clientConfirmed){ const s = (SUBMISSIONS || []).find(function(x){ return x.id === subId; }); if(!s) return { ok:false }; if(!(candidateConfirmed && clientConfirmed)) return { ok:false, reason:'Both the candidate and the client must confirm.' }; const a = alert(s, 'suggest-joined', 'Both sides confirmed joining: mark Joined?', { suggestion:true }); return { ok:true, suggestion:a }; };
+  window.cxGuardDismiss = function(id, reason){ const a = ALERTS.find(function(x){ return x.id === id; }); if(!a || a.status !== 'open') return { ok:false }; if(String(reason || '').trim().length < 3) return { ok:false, reason:'Say why.' }; a.status = 'dismissed'; a.reason = reason;
+    if(a.threshold && /slow/i.test(reason)){ const n = ALERTS.filter(function(x){ return x.client === a.client && x.threshold === a.threshold && x.status === 'dismissed' && /slow/i.test(x.reason || ''); }).length; if(n >= 3){ const c = CLIENT[a.client] || (CLIENT[a.client] = {}); if((c[a.threshold] || DEF[a.threshold]) < 72) c[a.threshold] = 72; c.note = a.client + ': feedback wait raised to 72 h after 3 “client always slow” dismissals'; } }
+    return { ok:true }; };
+
+  /* ---- Live hires board ---- */
+  const DAYS = function(t){ return t ? Math.max(0, Math.floor((now() - t) / D)) : 0; };
+  const NEXT = { 'profile-sent':'Get client feedback', 'interview-booked':'Confirm and remind', 'interview-passed':'Get the outcome', offer:'Get the answer', notice:'Weekly check-in', joining:'Confirm joining', guarantee:'Check-ins' };
+  window.cxLiveHires = function(){ return (typeof SUBMISSIONS !== 'undefined' ? SUBMISSIONS : []).map(function(s){ const st = cxGuardStage(s); if(!st) return null; const open = ALERTS.filter(function(a){ return a.submissionId === s.id && a.status === 'open'; }), r = st === 'offer' || st === 'notice' || st === 'joining' ? cxRiskOf(s) : { level:'Low', reasons:[] };
+    const level = open.length || r.level === 'High' ? 'red' : r.level === 'Medium' ? 'amber' : 'green';
+    return { s:s, stage:st, days:DAYS(lastAt(s)), next:NEXT[st], level:level, why:open.length ? open.map(function(a){ return a.why; }).join('; ') : r.reasons.length ? r.reasons.join(', ') : 'On track', owner:cxGuardOwner(s) }; }).filter(Boolean); };
+  window.cxLiveHiresHTML = function(){
+    const rows = cxLiveHires(), word = { red:'At risk', amber:'Watch', green:'On track' }, icon = { red:'●', amber:'◐', green:'○' };
+    return '<section class="o-card" id="cx-live-hires"><h2 class="o-card__title">Live hires</h2><p class="o-card__sub">Every profile from sent to the end of the guarantee. Colours come only from rules; hover for why.</p>' + (rows.length ? '<div class="o-table-wrap"><table class="o-table"><thead><tr><th>Person</th><th>Stage</th><th>Days in stage</th><th>Next action</th><th>Risk</th><th>Owner</th></tr></thead><tbody>' +
+      rows.map(function(r){ const c = byId(r.s.candidateId), j = jobById(r.s.jobId), o = typeof tmById === 'function' ? tmById(r.owner.id) : null; return '<tr data-live="' + esc(r.s.id) + '" data-level="' + r.level + '"><td>' + esc(c ? c.name : r.s.candidateId) + '<small> · ' + esc(j ? j.title : '') + '</small></td><td>' + esc(r.stage.replace('-', ' ')) + '</td><td>' + r.days + '</td><td>' + esc(r.next) + '</td><td title="' + esc(r.why) + '">' + icon[r.level] + ' ' + word[r.level] + '</td><td>' + esc(o ? o.name : r.owner.id) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="o-card__sub">No live hires right now.</p>') + '</section>';
+  };
+  function hook(){
+    if(typeof window.caRender !== 'function' || window.caRender.__cx6) return;
+    const base = window.caRender;
+    const w = function(){
+      if(!on()) return base.apply(this, arguments);
+      const want = !CA.agent && CA.tab === 'live'; if(want) CA.tab = 'agents';
+      let h; try { h = base.apply(this, arguments); } finally { if(want) CA.tab = 'live'; }
+      if(typeof h !== 'string') return h; const at = h.indexOf('<div role="tablist" id="ca-tabs"'); if(at < 0) return h;
+      const close = h.indexOf('</div>', at); let tabs = h.slice(at, close); if(want) tabs = tabs.replace(/aria-selected="true"/g, 'aria-selected="false"');
+      tabs += '<button type="button" role="tab" id="ca-tab-live" aria-selected="' + want + '" onclick="CA.tab=\'live\'; caRefresh()">Live hires</button>'; h = h.slice(0, at) + tabs + h.slice(close);
+      if(!want) return h; const i = h.indexOf('</div></div>', at) + '</div></div>'.length; return h.slice(0, i) + '<div class="s-content">' + cxLiveHiresHTML() + '</div></div>';
+    };
+    w.__cx6 = true; ['__cx', '__cx1b', '__cx3', '__cx4', '__cx5', '__rx'].forEach(function(k){ w[k] = base[k]; }); window.caRender = w; try { caRender = w; } catch(e){}
+    if(typeof sSectionById === 'function'){ const s = sSectionById('cowork'), t = s && s.tabs && s.tabs.find(function(x){ return x.id === 'cx'; }); if(t && !t.__cx6){ const r0 = t.render; t.render = function(){ return r0.apply(this, arguments) + (on() ? sCard('Delivery Guardian timings', 'Per client. Defaults: feedback 48 h, escalate 96 h, confirm 4 h before, offer answer 3 days.', Object.keys(CLIENT).map(function(k){ return sRow(k, CLIENT[k].note || '', '<span class="s-val">feedback ' + cxGuardSetting(k, 'feedbackH') + ' h</span>'); }).join('') || sRow('All clients', 'Using the defaults', '')) : ''); }; t.__cx6 = true; } }
+  }
+  hook(); window.addEventListener('load', hook);
+  /* the sweep runs with the Cowork engine and with G1's sweep when present */
+  (window.RX_SWEEPERS = window.RX_SWEEPERS || []).push(function(){ cxGuardianSweep(); });
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)

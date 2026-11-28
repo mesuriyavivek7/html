@@ -9,6 +9,8 @@
   async function t(name, fn){ var before = errs.length; try { await fn(); if(errs.length > before) throw new Error(errs.slice(before).join(' | ')); results.push({ name:name, pass:true }); } catch(e){ results.push({ name:name, pass:false, error:String(e && e.message || e) }); } pub(); }
   function pub(){ var pre = document.getElementById('auth-test-results'); if(!pre){ pre = document.createElement('pre'); pre.id = 'auth-test-results'; document.body.appendChild(pre); } pre.textContent = JSON.stringify(results); }
   function ok(c, m){ if(!c) throw new Error(m || 'assertion failed'); }
+  /* Cowork v2 (CX_SWITCH) retires LinkedIn automation (rotation, checkpoints, GoLogin, proxies); tests of it run with CX off */
+  function offCx(fn){ return async function(){ var was = typeof cxOn === 'function' && cxOn(); if(was) cxSetSwitch(false); try { return await fn.apply(this, arguments); } finally { if(was) cxSetSwitch(true); } }; }
   function eq(a, b, m){ if(a !== b) throw new Error((m ? m + ': ' : '') + 'expected ' + JSON.stringify(b) + ', got ' + JSON.stringify(a)); }
   function vis(){ var v = []; filterNavForPermissions(NAV.oontu).forEach(function(g){ (g.items || [g]).forEach(function(i){ v.push(i.id); }); }); return v; }
   function main(){ return document.getElementById('main-content').textContent; }
@@ -97,11 +99,11 @@
       showView('oontu-invoices'); eq(state.activeNav, 'oontu-mywork'); showView('oontu-workspaces'); eq(state.activeNav, 'oontu-mywork');
       ok(/Not available/.test(RENDERERS['oontu-tax']()), 'the renderer refuses too');
     });
-    await t('Settings › Platform keeps LinkedIn infrastructure and AI models only', async function(){
+    await t('Settings › Platform keeps LinkedIn infrastructure and AI models only', offCx(async function(){
       await login('meera@oontu.internal');
       var plat = SETTINGS_SECTIONS.filter(function(s){ return s.group === 'platform' && (!s.can || s.can()); }).map(function(s){ return s.label; });
       ok(plat.indexOf('LinkedIn infrastructure') > -1 && plat.indexOf('AI models') > -1, plat.join(',')); ok(plat.every(function(l){ return l === 'LinkedIn infrastructure' || l === 'AI models'; }), 'no duplicate links: ' + plat.join(','));
-    });
+    }));
     await t('switch 1a off: the old menu, ids and home come back; on again: the new ones', async function(){
       o2SetSwitch('1a', false); ok(vis().indexOf('oontu-dashboard') > -1 && vis().indexOf('oontu-home') < 0, 'old menu'); eq(bosHomeView(), 'oontu-dashboard');
       showView('oontu-tenants'); eq(state.activeNav, 'oontu-tenants', 'no redirect'); ok(SETTINGS_SECTIONS.some(function(s){ return s.group === 'platform' && s.go && (!s.can || s.can()); }), 'old Settings links back');

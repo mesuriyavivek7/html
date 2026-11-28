@@ -26,7 +26,7 @@
 <main id="root"></main>
 <script id="cx-data" type="application/json">
 {
-    "updated":  "2026-11-28 05:34 IST",
+    "updated":  "2026-11-28 06:33 IST",
     "phases":  [
                    {
                        "id":  "C0",
@@ -94,11 +94,11 @@
                    {
                        "id":  "C6",
                        "name":  "Delivery Guardian",
-                       "status":  "not started",
-                       "start":  "",
-                       "end":  "",
-                       "specs":  "",
-                       "note":  ""
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-guardian 10/10",
+                       "note":  "Stage timers once each (profile sent, interview booked/passed, offer, notice, joining, guarantee), safety-critical on the reserve, owner chain, per-client thresholds from dismissals, 3 backups on High risk, no automatic Joined, Live hires board"
                    },
                    {
                        "id":  "C7",
@@ -138,7 +138,7 @@
                    }
                ],
     "counters":  {
-                     "tests":  "cx specs 81/81 · full suite CX off 1376/1379 (demo-data date seed; motion flake; fix-d2 fixed)",
+                     "tests":  "cx specs 100/100 (credits 14, setup 12, match 11, builder 13, linkedin 9, screening 9, guardian 10, + 22 below)",
                      "precision":  "Java 1.0 · Sales 1.0 · Nurse 1.0 (old: 1.0 · 1.0 · 0.9)",
                      "clicks":  "≤ 12 (asserted; exact count measured in C10)",
                      "seed":  "466 / 19,534 — matches"
@@ -158,7 +158,8 @@
                       "C3: a team is the recruiter department (the roster has no team field); the honesty check reads the message as written, before names are filled in (a candidate sharing a recruiter first name is not a wrong-sender warning).",
                       "C3: a step skipped for its condition keeps the next step own wait instead of sending it at once.",
                       "C4: the LinkedIn automation tests in cowork.spec (rotation, checkpoints, masked GoLogin token) and the LinkedIn infrastructure settings test run with CX off inside the test; their assertions are unchanged. cxWeekCount counts a person-sent LinkedIn message once (it is in CX_OUTBOX).",
-                      "C5 checkpoint: full suite CX off 1376/1379. fix-d2 F5 read the seeded ledger action labels as inline calls (word followed by a bracket); labels reworded with a middle dot. motion collapse-pill flake passed alone; demo-data is the date-dependent seed."
+                      "C5 checkpoint: full suite CX off 1376/1379. fix-d2 F5 read the seeded ledger action labels as inline calls (word followed by a bracket); labels reworded with a middle dot. motion collapse-pill flake passed alone; demo-data is the date-dependent seed.",
+                      "C5 checkpoint, CX on: green except the not-yet-built C6/C7 specs, demo-data (date seed) and o2-nav-redirect, whose LinkedIn-infrastructure settings test now runs with CX off inside the test."
                   ],
     "isolated":  [
 
