@@ -78,4 +78,4 @@ Resume rule from the user: if the session stops, continue exactly where it left 
 
 ## CX (Cowork agents v2) progress
 - C0 done 2026-11-28: CX-AUDIT.md, cx-progress.html, backup recruitment-os-prototype.before-cx.html (local, git-excluded). Next: C1 credits (block cx-credits).
-- C1 08f79c7, C1b 999ab65, C2 7005821, C3 d8b6ec3, C4 ebc6163, C5 12e9dfb, C6 done. Checkpoint after C5 done. Next: C7 (insert scratchpad blk-cx7.html; spec tests/cx-kairo-revenue.spec.js), C8 migration, C9 polish + screenshots, C10 audit + CX-REPORT.md.
+- C1 08f79c7, C1b 999ab65, C2 7005821, C3 d8b6ec3, C4 ebc6163, C5 12e9dfb, C6 b0030c2, C7 done. Next: C8 migration (block cx-migration: six agents, CX_STEP_MAP, CX_OWNERSHIP; spec tests/cx-migration.spec.js), C9 polish + screenshots, C10 audit + CX-REPORT.md.

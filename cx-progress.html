@@ -26,7 +26,7 @@
 <main id="root"></main>
 <script id="cx-data" type="application/json">
 {
-    "updated":  "2026-11-28 06:33 IST",
+    "updated":  "2026-11-28 06:40 IST",
     "phases":  [
                    {
                        "id":  "C0",
@@ -103,11 +103,11 @@
                    {
                        "id":  "C7",
                        "name":  "Revenue \u0026 Redeploy, Kairo as manager",
-                       "status":  "not started",
-                       "start":  "",
-                       "end":  "",
-                       "specs":  "",
-                       "note":  ""
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-kairo-revenue 9/9",
+                       "note":  "Revenue \u0026 Redeploy wraps G3 rules and G4 ranking (rupees at risk, recovered on resolve, redeploy to Talent Discovery, extend or convert); Kairo: stuck today, start sourcing (asks first), why flagged, credits by job and agent, pause campaign (asks first)"
                    },
                    {
                        "id":  "C8",
@@ -138,7 +138,7 @@
                    }
                ],
     "counters":  {
-                     "tests":  "cx specs 100/100 (credits 14, setup 12, match 11, builder 13, linkedin 9, screening 9, guardian 10, + 22 below)",
+                     "tests":  "cx specs 109/109",
                      "precision":  "Java 1.0 · Sales 1.0 · Nurse 1.0 (old: 1.0 · 1.0 · 0.9)",
                      "clicks":  "≤ 12 (asserted; exact count measured in C10)",
                      "seed":  "466 / 19,534 — matches"
@@ -159,7 +159,8 @@
                       "C3: a step skipped for its condition keeps the next step own wait instead of sending it at once.",
                       "C4: the LinkedIn automation tests in cowork.spec (rotation, checkpoints, masked GoLogin token) and the LinkedIn infrastructure settings test run with CX off inside the test; their assertions are unchanged. cxWeekCount counts a person-sent LinkedIn message once (it is in CX_OUTBOX).",
                       "C5 checkpoint: full suite CX off 1376/1379. fix-d2 F5 read the seeded ledger action labels as inline calls (word followed by a bracket); labels reworded with a middle dot. motion collapse-pill flake passed alone; demo-data is the date-dependent seed.",
-                      "C5 checkpoint, CX on: green except the not-yet-built C6/C7 specs, demo-data (date seed) and o2-nav-redirect, whose LinkedIn-infrastructure settings test now runs with CX off inside the test."
+                      "C5 checkpoint, CX on: green except the not-yet-built C6/C7 specs, demo-data (date seed) and o2-nav-redirect, whose LinkedIn-infrastructure settings test now runs with CX off inside the test.",
+                      "C7: job 42 (the example day) resolves to the workspace Java backend job through CX_JOB_ALIAS; Revenue \u0026 Redeploy runs the G3 rules directly, whatever the RX switch."
                   ],
     "isolated":  [
 

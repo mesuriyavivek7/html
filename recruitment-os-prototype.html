@@ -75688,6 +75688,78 @@ function cfScopeHTML(){
   (window.RX_SWEEPERS = window.RX_SWEEPERS || []).push(function(){ cxGuardianSweep(); });
 })();
 </script>
+<script id="cx-revenue-kairo">
+/* CX C7 — Revenue & Redeploy, and Kairo as the manager. CX_SWITCH (sub 'revenue').
+   Revenue & Redeploy wraps the G3 money-at-risk rules (RX_LEAK_RULES, agency side; run directly, whatever the RX
+   switch) and the G4 redeploy ranking (rxRedeployJobs) as its steps, so each item shows the ₹ at risk and counts as
+   "money recovered" when its condition clears. Assignments ending within 30 days send the contractor to Talent
+   Discovery as a redeploy candidate for open jobs and suggest extend or convert to the client. If G3/G4 were missing
+   the same items would be built from PayTrack and ASSIGNMENTS (minimum rules in the brief); here they exist.
+   Kairo (kairoRespond, wrapped; old intents unchanged) answers: "what's stuck today", "start sourcing for job 42",
+   "why did Guardian flag <name>", "credits for job 42", "credits this month by agent", "pause campaign <name>".
+   Anything that contacts someone or changes records asks for confirmation in the chat first ("yes, go ahead").
+   Job 42 is the example day's job; it resolves to the workspace's Java backend job (CX_JOB_ALIAS). */
+(function(){
+  const now = function(){ return typeof cwNow === 'function' ? cwNow() : Date.now(); };
+  const on = function(){ return typeof cxOn === 'function' && cxOn('revenue'); };
+  const D = 86400000;
+  const fmt = function(n){ return Math.round(n).toLocaleString('en-IN'); };
+  const REV = window.CX_REVENUE = window.CX_REVENUE || { open:{}, recovered:0, log:[] };
+  window.CX_JOB_ALIAS = window.CX_JOB_ALIAS || {};
+  const alias = function(){ if(!CX_JOB_ALIAS.j42){ const j = (typeof JOBS !== 'undefined' ? JOBS : []).find(function(x){ return /java/i.test(x.title); }); if(j) CX_JOB_ALIAS.j42 = j.id; } return CX_JOB_ALIAS; };
+  window.cxResolveJob = function(ref){ ref = String(ref || '').trim(); alias(); const id = CX_JOB_ALIAS['j' + ref] || CX_JOB_ALIAS[ref] || ref; return (typeof jobById === 'function' && (jobById(id) || jobById('j' + ref))) || (typeof JOBS !== 'undefined' ? JOBS : []).find(function(j){ return j.title.toLowerCase() === ref.toLowerCase(); }) || null; };
+
+  /* ---- Revenue & Redeploy ---- */
+  window.cxRevenueItems = function(at){
+    at = at == null ? now() : at; const items = [];
+    if(typeof RX_LEAK_RULES !== 'undefined') RX_LEAK_RULES.filter(function(r){ return r.side === 'agency'; }).forEach(function(rule){ let hits = []; try { hits = rule.check(at) || []; } catch(e){} hits.forEach(function(h){ items.push({ key:rule.id + '|' + h.ref, kind:rule.id, label:rule.label, title:h.title, detail:h.detail, amount:Math.round(h.amount || 0), estimate:!!(h.estimate || rule.estimate), owner:h.ownerId || null }); }); });
+    (typeof ASSIGNMENTS !== 'undefined' ? ASSIGNMENTS : []).forEach(function(a){ const left = Math.ceil((a.end - at) / D); if(!/Active|Extended/.test(a.status || '') || left < 0 || left > 30) return;
+      const jobs = typeof rxRedeployJobs === 'function' ? rxRedeployJobs(a).slice(0, 3) : []; let r = {}; try { r = asCurrentRate(a) || {}; } catch(e){}
+      items.push({ key:'redeploy|' + a.id, kind:'redeploy', label:'Assignment ends in ' + left + ' days', title:a.workerName + ' · ' + a.client, detail:(jobs.length ? 'Next jobs: ' + jobs.map(function(x){ return x.job.title; }).join(', ') + '. ' : 'No open contract job fits yet. ') + 'Suggest extend or convert to ' + a.client + '.', amount:Math.round(((Number(r.bill) || 0) - (Number(r.pay) || 0)) * 5 * 4), estimate:true, owner:a.closerId, assignmentId:a.id, jobs:jobs.map(function(x){ return x.job.id; }) }); });
+    return items;
+  };
+  window.cxRevenueSweep = function(at){
+    const items = cxRevenueItems(at), seen = {};
+    items.forEach(function(i){ seen[i.key] = true; if(!REV.open[i.key]) REV.open[i.key] = Object.assign({ since:now() }, i); else REV.open[i.key].amount = i.amount;
+      if(i.kind === 'redeploy' && !REV.open[i.key].sentToTD){ REV.open[i.key].sentToTD = true; (window.CX_REDEPLOY_CANDIDATES = window.CX_REDEPLOY_CANDIDATES || []).push({ assignmentId:i.assignmentId, jobs:i.jobs, at:now() }); } });
+    Object.keys(REV.open).forEach(function(k){ if(!seen[k]){ const i = REV.open[k]; delete REV.open[k]; if(i.amount > 0 && i.kind !== 'redeploy'){ REV.recovered += i.amount; REV.log.push({ at:now(), key:k, amount:i.amount, title:i.title }); } } });
+    return { open:Object.keys(REV.open).length, atRisk:Object.keys(REV.open).reduce(function(s, k){ return s + (REV.open[k].kind === 'redeploy' ? 0 : REV.open[k].amount); }, 0), recovered:REV.recovered };
+  };
+  (window.RX_SWEEPERS = window.RX_SWEEPERS || []).push(function(){ if(on()) cxRevenueSweep(); });
+
+  /* ---- Kairo ---- */
+  const PENDING = window.CX_KAIRO_PENDING = window.CX_KAIRO_PENDING || { action:null };
+  window.cxKairo = function(text){
+    const low = String(text || '').toLowerCase().trim(); let m;
+    if(PENDING.action && /^(yes|yes,? go ahead|go ahead|confirm|haan)\b/.test(low)){ const a = PENDING.action; PENDING.action = null; return a.run(); }
+    if(PENDING.action && /^(no|cancel|stop)\b/.test(low)){ PENDING.action = null; return { text:'Okay, I won’t do it.' }; }
+    if(/what['’]?s stuck( today)?|what is stuck/.test(low)){
+      if(typeof cxGuardianSweep === 'function') cxGuardianSweep(); const rev = cxRevenueSweep();
+      const g = (window.CX_GUARD_ALERTS || []).filter(function(a){ return a.status === 'open'; }), byOwner = {};
+      g.forEach(function(a){ (byOwner[a.owner] = byOwner[a.owner] || []).push(a.why); }); Object.keys(REV.open).forEach(function(k){ const i = REV.open[k]; (byOwner[i.owner || 'unassigned'] = byOwner[i.owner || 'unassigned'] || []).push(i.label + ': ' + i.title + (i.amount ? ' (₹' + fmt(i.amount) + (i.estimate ? ', estimate' : '') + ')' : '')); });
+      const owners = Object.keys(byOwner); const name = function(id){ const r = typeof tmById === 'function' ? tmById(id) : null; return r ? r.name : id; };
+      return { text:owners.length ? owners.map(function(o){ return name(o) + ': ' + byOwner[o].slice(0, 4).join('; '); }).join('\n') + '\nMoney at risk: ₹' + fmt(rev.atRisk) + '.' : 'Nothing is stuck right now.', cx:{ intent:'stuck', guardian:g.length, revenue:Object.keys(REV.open).length, atRisk:rev.atRisk } };
+    }
+    if((m = /start sourcing for (?:job\s*)?(.+)$/.exec(low))){ const job = cxResolveJob(m[1].trim()); if(!job) return { text:'I couldn’t find that job.' };
+      PENDING.action = { kind:'source', jobId:job.id, run:function(){ const r = cxIntake(job.id); if(!r.ok) return { text:r.reason }; cxConfirmCriteria(job.id); const k = cxRank(job.id); return { text:'Done. Criteria v' + cxCriteria(job.id).version + ' for ' + job.title + '; ' + k.picks.length + ' picks pass the gate, ' + k.excluded.length + ' left out with reasons.', cx:{ intent:'source', jobId:job.id, picks:k.picks.length } }; } };
+      return { text:'I’ll read “' + job.title + '” into criteria (≈ 10 credits) and rank the pool. Shall I go ahead? (yes / no)', cx:{ intent:'source', needsConfirm:true, jobId:job.id } }; }
+    if((m = /why did (?:the )?guardian flag (.+?)\??$/.exec(low))){ const who = m[1].trim(); const c = (typeof CANDIDATES !== 'undefined' ? CANDIDATES : []).find(function(x){ return x.name.toLowerCase() === who || x.name.toLowerCase().indexOf(who) === 0; });
+      const a = c ? (window.CX_GUARD_ALERTS || []).filter(function(x){ return x.candidateId === c.id; }).slice(-1)[0] : null; return { text:a ? 'Delivery Guardian flagged ' + c.name + ' because: ' + a.why + '. Owner: ' + a.owner + ' (' + a.ownerWhy + ').' : 'Delivery Guardian has not flagged ' + (c ? c.name : who) + '.', cx:{ intent:'why', alert:a || null } }; }
+    if((m = /credits (?:for|on) (?:job\s*)?(\S+)/.exec(low))){ const ref = m[1].replace(/\?$/, ''); const job = cxResolveJob(ref); const ids = [job && job.id, 'j' + ref, ref].filter(Boolean); const spent = ids.reduce(function(s, id, i){ return ids.indexOf(id) === i ? s + cxSpent({ jobId:id }) : s; }, 0);
+      return { text:'Job ' + ref + (job ? ' (' + job.title + ')' : '') + ': ' + fmt(spent) + ' credits' + (typeof cxMoney === 'function' && cxMoney() ? ' (₹' + fmt(spent) + ')' : '') + ' so far.', cx:{ intent:'credits-job', credits:spent } }; }
+    if(/credits (this month )?by agent|credits this month/.test(low)){ const m0 = new Date(now()); const from = new Date(m0.getFullYear(), m0.getMonth(), 1).getTime(); const by = cxByAgent(from); return { text:by.map(function(a){ return a.name + ': ' + fmt(a.credits); }).join(' · ') + '. Total ' + fmt(by.reduce(function(s, a){ return s + a.credits; }, 0)) + ' credits.', cx:{ intent:'credits-agents', byAgent:by } }; }
+    if((m = /pause campaign (.+)$/.exec(low))){ const name = m[1].trim(); const d = (window.CX_CAMPAIGNS || []).find(function(x){ return x.name.toLowerCase() === name || x.name.toLowerCase().indexOf(name) === 0; }); if(!d) return { text:'I couldn’t find a campaign called “' + name + '”.' };
+      PENDING.action = { kind:'pause', id:d.id, run:function(){ cxbPause(d.id); return { text:'Paused “' + d.name + '”. Nothing more is sent until you resume it.', cx:{ intent:'pause', id:d.id, status:d.status } }; } };
+      return { text:'Pause “' + d.name + '”? It stops all pending messages. (yes / no)', cx:{ intent:'pause', needsConfirm:true, id:d.id } }; }
+    return null;
+  };
+  if(typeof window.kairoRespond === 'function' && !window.kairoRespond.__cx7){
+    const bk = window.kairoRespond;
+    const wk = function(text){ if(on()){ try { const r = cxKairo(text); if(r) return r; } catch(e){ console.error('cx kairo', e); } } return bk.apply(this, arguments); };
+    wk.__cx7 = true; window.kairoRespond = wk; try { kairoRespond = wk; } catch(e){}
+  }
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
