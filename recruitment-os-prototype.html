@@ -76201,6 +76201,110 @@ function cfScopeHTML(){
   }
 })();
 </script>
+<script id="fix-wa-web-lane">
+/* QA fix A7 — under CX the WhatsApp Web (linked-device, Lane A) lane is hidden from setup and the Inbox by default.
+   Workspace setting "Allow personal WhatsApp Web inbox" (Settings › Cowork › Cowork v2), off by default, with a
+   one-line warning that it is not the official WhatsApp API. CX_SETUP.allowWaWebInbox holds it.
+   - Off: ibLinked('whatsapp') is false, so personal WhatsApp chats leave the Inbox (campaign replies from the business
+     number stay); My connections, the Inbox's connect card and Kairo's setup say it is off instead of offering the QR;
+     ibLinkStart('whatsapp') refuses.
+   - Agents never use it, whatever the setting: cxSend always sends WhatsApp through the Cloud API (each message is
+     stamped via:'cloud-api'); nothing in the agent path reads the personal link.
+   - A person's own WhatsApp reply with the lane off goes through the Cloud API when the person wrote in the last 24
+     hours and the business number is connected (a wa-window credit, reserved and settled), otherwise through
+     click-to-chat (wa.me) on their own phone.
+   CX off: nothing changes. */
+(function(){
+  const cx = function(){ return typeof cxOn === 'function' && cxOn(); };
+  window.cxWaWebAllowed = function(){ return !cx() || !!(window.CX_SETUP && CX_SETUP.allowWaWebInbox); };
+  window.cxSetWaWebInbox = function(v){
+    if(typeof sCan === 'function' && !sCan('kairo', 'Configure')) return { ok:false, reason:'Only people who configure Cowork can change this.' };
+    window.CX_SETUP = window.CX_SETUP || {}; CX_SETUP.allowWaWebInbox = !!v;
+    try { if(typeof logAudit === 'function') logAudit('Cowork', 'Personal WhatsApp Web inbox', v ? 'allowed' : 'off'); } catch(e){}
+    try { if(typeof ibBadges === 'function') ibBadges(); } catch(e){}
+    return { ok:true, on:!!v };
+  };
+  const OFF_LINE = 'Personal WhatsApp Web inbox is off in this workspace. Reply with click-to-chat on your phone, or through the business number.';
+  const WARN = 'WhatsApp Web (a linked device) is not the official WhatsApp API. Use it only for your own one-to-one chats; agents never use it.';
+  window.CX_WA_WEB_TEXT = { off:OFF_LINE, warn:WARN };
+  const wrap = function(name, make){ const b = window[name]; if(typeof b !== 'function' || b.__fixA7) return; const w = make(b); w.__fixA7 = true; w.__base = b; window[name] = w; try { (0, eval)(name + ' = window.' + name); } catch(e){} };
+
+  wrap('ibLinked', function(b){ return function(ch){ if(ch === 'whatsapp' && !cxWaWebAllowed()) return false; return b.apply(this, arguments); }; });
+  wrap('ibLinkStart', function(b){ return function(ch){ if(ch === 'whatsapp' && !cxWaWebAllowed()){ if(typeof toast === 'function') toast(OFF_LINE); return { refused:true }; } return b.apply(this, arguments); }; });
+  wrap('ibConnectCardHTML', function(b){ return function(ch){ if(ch === 'whatsapp' && !cxWaWebAllowed()) return '<div class="ib-connect" data-wa-web-off><h4>WhatsApp</h4><p>' + OFF_LINE + '</p></div>'; return b.apply(this, arguments); }; });
+  /* the "Link WhatsApp and LinkedIn" hint on All: WhatsApp is not offered while the lane is off */
+  wrap('ibListHTML', function(b){ return function(){
+    if(cxWaWebAllowed() || typeof ibState !== 'function') return b.apply(this, arguments);
+    const P = ibState().policy, was = P.whatsapp; P.whatsapp = false; try { return b.apply(this, arguments); } finally { P.whatsapp = was; }
+  }; });
+  wrap('ibSecLinkit', function(b){ return function(){
+    const h = b.apply(this, arguments); if(cxWaWebAllowed() || typeof h !== 'string') return h;
+    let out = h;
+    try {
+      const uid = ibMeId(), wa = ibLinks(uid).whatsapp, st = ibState(), iso = ibCountryIso(), r = ibRule(iso);
+      if(st.policy.whatsapp && r.waWeb === 'yes'){
+        const rows = [
+          sRow('WhatsApp', 'Scan a QR code like WhatsApp Desktop. One-to-one chats only.', oBadge('neutral','Not linked')+ibRisk('unofficial','Unofficial')+sBtn('Link it', "ibLinkStart('whatsapp')", 'primary')) ];
+        if(wa && wa.status === 'linked') rows.push(sRow(wa.phone, 'WhatsApp Web · linked device “'+wa.device+'” · session region '+wa.region, (wa.paused ? oBadge('warn','Paused') : oBadge('success','Linked'))+ibRisk('unofficial','Unofficial')+sBtn(wa.paused ? 'Resume' : 'Pause sync', "ibPauseSync('whatsapp')")+sBtn('Unlink', "ibUnlink('whatsapp')", 'ghost')));
+        const off = sRow('WhatsApp', OFF_LINE, oBadge('neutral','Off') + '<span data-wa-web-off></span>');
+        rows.forEach(function(x){ out = out.split(x).join(off); });
+      }
+    } catch(e){ console.error('wa web row', e); }
+    return out;
+  }; });
+  /* Kairo: "link my WhatsApp" */
+  wrap('iqPlanChannel', function(b){ return function(raw){
+    const r = b.apply(this, arguments);
+    try { const low = String(raw || '').toLowerCase(), campaign = /campaign|bulk|business api|\bapi\b|cloud api|meta|bsp|sender|mass|domain|dns|warm/.test(low);
+      if(!cxWaWebAllowed() && /whats\s?app|wa\b/.test(low) && !campaign && r && !r.denied) return { title:'WhatsApp', steps:[['Read what you asked', 'your own WhatsApp'], ['Checked the workspace setting', 'Personal WhatsApp Web inbox is off']], blocks:[{ type:'text', md:OFF_LINE + ' An Owner or Admin can allow it in Settings › Cowork.' }] }; } catch(e){}
+    return r;
+  }; });
+  /* agents: always the Cloud API */
+  wrap('cxSend', function(b){ return function(o){ const r = b.apply(this, arguments); if(r && r.message && r.message.channel === 'whatsapp') r.message.via = 'cloud-api'; return r; }; });
+
+  /* a person's own WhatsApp reply while the lane is off */
+  window.CX_PERSON_WA = window.CX_PERSON_WA || [];
+  window.cxPersonWaSend = function(c, text){
+    const phone = String((c && c.peer && (c.peer.phone || c.peer.wa)) || '').replace(/[^\d]/g, ''), cid = c && (c.candidateId || (c.peer && c.peer.candidateId));
+    const cloud = cid != null && typeof cxChannelReady === 'function' && cxChannelReady('whatsapp') && typeof cxInWaWindow === 'function' && cxInWaWindow(cid);
+    if(cloud){
+      const ch = cxCharge({ agent:'outreach', rateClass:'wa-window', qty:1, candidateId:cid, action:'Your WhatsApp reply · business number', triggeredBy:(typeof ibMe === 'function' && ibMe() ? ibMe().name : 'You') });
+      if(ch.blocked) return { ok:false, reason:ch.blocked };
+      const m = { id:'PWA-' + (CX_PERSON_WA.length + 1), at:Date.now(), via:'cloud-api', candidateId:cid, text:text, reservationId:ch.reservationId, sentByPerson:true };
+      CX_PERSON_WA.push(m); (window.CX_OUTBOX = window.CX_OUTBOX || []).push(Object.assign({ channel:'whatsapp', agent:'person' }, m)); return { ok:true, via:'cloud-api', message:m };
+    }
+    const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(text || '');
+    try { if(typeof window.open === 'function') window.open(url, '_blank', 'noopener'); } catch(e){}
+    const m = { id:'PWA-' + (CX_PERSON_WA.length + 1), at:Date.now(), via:'wa.me', url:url, candidateId:cid, text:text, sentByPerson:true }; CX_PERSON_WA.push(m);
+    return { ok:true, via:'wa.me', url:url, message:m };
+  };
+  wrap('ibSend', function(b){ return function(id){
+    const c = typeof ibConv === 'function' ? ibConv(id) : null;
+    if(!c || c.ch !== 'whatsapp' || cxWaWebAllowed()) return b.apply(this, arguments);
+    const text = String((IBV.drafts || {})[id] || '').trim(); if(!text){ const t = document.getElementById('ib-ta'); if(t) t.focus(); return; }
+    const r = cxPersonWaSend(c, text); if(!r.ok){ if(typeof toast === 'function') toast(r.reason || 'Not sent.'); return r; }
+    const m = ibMsg(ibMeId(), text, Date.now(), { st:'sent', fresh:true }); m.via = r.via; c.msgs.push(m);
+    if(r.via === 'wa.me') c.msgs.push(ibMsg(ibMeId(), 'Opened WhatsApp on your phone with this message (click-to-chat). Send it there.', Date.now(), { sys:true }));
+    IBV.drafts[id] = ''; IBV.reply = null; if(c.campaign && !c.campaignStopped){ c.campaignStopped = true; c.msgs.push(ibMsg(ibMeId(), 'You replied, so the campaign has stopped for this person.', Date.now(), { sys:true })); }
+    try { ibSave(); ibRender(); } catch(e){}
+    try { logAudit('Inbox', 'Message sent', 'WhatsApp · ' + (r.via === 'wa.me' ? 'click-to-chat' : 'business number') + ' · ' + ibTitle(c), { entityType:'Conversation', entityId:c.id }); } catch(e){}
+    return r;
+  }; });
+
+  /* the setting, in Settings › Cowork › Cowork v2 */
+  function addSetting(){
+    if(typeof sSectionById !== 'function') return; const s = sSectionById('cowork'); const tab = s && s.tabs && s.tabs.find(function(t){ return t.id === 'cx'; });
+    if(!tab || tab.render.__fixA7) return; const br = tab.render;
+    const wr = function(){
+      const h = br.apply(this, arguments); if(!cx()) return h; const onv = !!(window.CX_SETUP && CX_SETUP.allowWaWebInbox);
+      return h + sCard('Personal WhatsApp Web inbox', 'Off by default. Agents never use it.', sRow('Allow personal WhatsApp Web inbox', '<span data-wa-web-warn>⚠ ' + WARN + '</span>',
+        '<button type="button" role="switch" class="app-switch' + (onv ? ' is-on' : '') + '" id="cx-wa-web" aria-checked="' + onv + '" aria-label="Allow personal WhatsApp Web inbox" onclick="var r = cxSetWaWebInbox(!(window.CX_SETUP && CX_SETUP.allowWaWebInbox)); if(!r.ok) toast(r.reason); if(typeof settingsRefresh === \'function\') settingsRefresh()"><span></span></button>'));
+    };
+    wr.__fixA7 = true; tab.render = wr;
+  }
+  addSetting(); window.addEventListener('load', addSetting);
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
