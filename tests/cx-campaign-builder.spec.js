@@ -33,9 +33,10 @@
       if(CXB.d.steps.length < 3){ click(q('[data-step-card] ~ p .o-link') || [].find.call(document.querySelectorAll('#cxb .o-link'), function(b){ return /Add step/.test(b.textContent); })); }
       click(q('#cxb-next2')); ok(q('#cxb-estimate') && /About [\d,]+ credits/.test(q('#cxb-estimate').textContent) && /Your balance/.test(q('#cxb-estimate').textContent), 'credit estimate');
       ok(document.querySelectorAll('[data-review-preview]').length >= 1, 'previews for real people');
-      click(q('#cxb-start')); ok(CXB.clicks <= 12, 'clicks ' + CXB.clicks); ok(q('#cxb-campaign') && q('#cxb-campaign').getAttribute('data-status') === 'running', 'running');
+      click(q('#cxb-start')); ok(CXB.clicks <= 12, 'clicks ' + CXB.clicks); window.CX_CLICKS = CXB.clicks; ok(q('#cxb-campaign') && q('#cxb-campaign').getAttribute('data-status') === 'running', 'running');
       ok(CXB.d.steps.length >= 3, 'three steps'); ok(/messages not yet sent/.test(q('#cxb-campaign').textContent), 'editing note');
     });
+    results.push({ name:'RESULT clicks to build and start a 3-step campaign: ' + window.CX_CLICKS, pass:true });
     await t('“Use recommended steps” fills the playbook for the audience’s main segment', async function(){
       cxbNew('blank'); CXB.d.audience.jobId = job.id; cxbUseRecommended(); var seg = CXB.d.recommendedFor; ok(CX_PLAYBOOK[seg], seg);
       eq(CXB.d.steps.length, CX_PLAYBOOK[seg].length); eq(CXB.d.steps[0].channel, CX_PLAYBOOK[seg][0].channel); eq(CXB.d.steps[0].when.type, 'now');

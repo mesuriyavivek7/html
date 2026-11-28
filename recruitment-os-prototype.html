@@ -75869,6 +75869,22 @@ function cfScopeHTML(){
   window.addEventListener('load', watch);
 })();
 </script>
+<script id="cx-audit">
+/* CX C10 — final audit guard. With CX on, no LinkedIn automation path is reachable: every function that would send,
+   invite, add automated steps, connect an account through GoLogin / proxies, or show those settings is refused here
+   (the code stays for CX off). cxLiAutomationReachable() lists each one and whether CX refuses it; the audit spec
+   asserts the list is empty. */
+(function(){
+  const on = function(){ return typeof cxOn === 'function' && cxOn('linkedin'); };
+  const MSG = 'Not used in Cowork v2: a person sends every LinkedIn message from their own account. Set the team up in LinkedIn Outreach team.';
+  const GUARD = window.CX_LI_GUARDED = { liListsSendToAutomation:'refuse', cwLiOpenAdd:'refuse', liWizardAddStep:'refuse', liWizardAdvanceFromConnect:'refuse', liConfirmAccountConnected:'refuse', liConnectAccountFormHTML:'html', liSenderProfilesSettingsHTML:'html' };
+  Object.keys(GUARD).forEach(function(n){ const b = window[n]; if(typeof b !== 'function' || b.__cx10) return;
+    const w = function(){ if(on()){ if(GUARD[n] === 'html') return '<p class="o-card__sub" data-cx-li-off>' + MSG + '</p>'; try { if(typeof toast === 'function') toast(MSG); } catch(e){} return { ok:false, refused:MSG }; } return b.apply(this, arguments); };
+    w.__cx10 = true; window[n] = w; try { eval(n + ' = w'); } catch(e){} });
+  window.CX_LI_AUTOMATION = ['liSendConnectionRequests', 'cwLiTick', 'cwLiCheck', 'cwLiAccountsHTML'].concat(Object.keys(GUARD));
+  window.cxLiAutomationReachable = function(){ return CX_LI_AUTOMATION.filter(function(n){ const f = window[n]; return typeof f === 'function' && !(f.__cx4 || f.__cx10); }); };
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)
