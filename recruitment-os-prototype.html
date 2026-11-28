@@ -76039,6 +76039,113 @@ function cfScopeHTML(){
   }
 })();
 </script>
+<script id="fix-builder-ab">
+/* QA fix A5 — the campaign builder offers "Add a second version" on a message step (two versions at most).
+   Data: a step's second version is step.messageB = { text, lang } (version A stays step.message, so saved campaigns,
+   templates and every existing function read as before). The step card shows "2 versions" and edits B under A.
+   Sending: people alternate A / B per step (the version with fewer sends goes next). The C4 engine rule is unchanged:
+   cxAbRecord counts a send per version, and once both versions have 50 sends the one with the higher interested rate
+   is kept and the other retired with a log line; after that every send uses the kept version.
+   Replies: an interested reply is counted for the version that person received (cxbReply).
+   Results: each step on the campaign page shows sent and interested rate per version, and which was kept.
+   CX off: the builder does not exist, nothing changes. */
+(function(){
+  const esc = function(s){ return typeof escapeHtml === 'function' ? escapeHtml(String(s == null ? '' : s)) : String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); };
+  const camps = function(){ return window.CX_CAMPAIGNS || []; };
+  const key = function(d, s){ return 'cxb:' + d.id + ':' + s.id; };
+  window.cxbAbKey = key;
+  window.cxbAddVersion = function(i){
+    const d = CXB.d, s = d && d.steps[i]; if(!s) return { ok:false, reason:'No such step.' };
+    if(s.messageB) return { ok:false, reason:'A step can have two versions at most.' };
+    if(s.channel !== 'email' && s.channel !== 'whatsapp') return { ok:false, reason:'Only message steps (email or WhatsApp) can have two versions.' };
+    s.messageB = { text:s.message.text || '', lang:s.message.lang }; if(typeof cxbRefresh === 'function') cxbRefresh(); return { ok:true };
+  };
+  window.cxbRemoveVersion = function(i){ const s = CXB.d && CXB.d.steps[i]; if(!s || !s.messageB) return { ok:false }; s.messageB = null; if(typeof cxbRefresh === 'function') cxbRefresh(); return { ok:true }; };
+  window.cxbVersionCount = function(s){ return s && s.messageB ? 2 : 1; };
+
+  /* which version a send uses */
+  window.cxbPickVersion = function(d, s){
+    if(!s || !s.messageB) return 'a'; const ab = (window.CX_AB || {})[key(d, s)];
+    if(ab && ab.winner) return ab.winner; const a = ab ? ab.a.sent : 0, b = ab ? ab.b.sent : 0; return b < a ? 'b' : 'a';
+  };
+  let CTX = null;
+  if(typeof window.cxbTick === 'function' && !window.cxbTick.__fixA5){
+    const bt = window.cxbTick;
+    const wt = function(d){ const was = CTX; CTX = d; try { return bt.apply(this, arguments); } finally { CTX = was; } };
+    wt.__fixA5 = true; wt.__base = bt; window.cxbTick = wt; try { cxbTick = wt; } catch(e){}
+  }
+  if(typeof window.cxOutreachStep === 'function' && !window.cxOutreachStep.__fixA5){
+    const bo = window.cxOutreachStep;
+    const wo = function(o){
+      const d = CTX; if(!d || !o || o.runId !== d.id) return bo.apply(this, arguments);
+      const run = d.runs && d.runs[o.candidateId], s = run && d.steps[run.pc]; if(!s || !s.messageB) return bo.apply(this, arguments);
+      const v = cxbPickVersion(d, s);
+      if(v === 'b'){ const c = typeof byId === 'function' ? byId(o.candidateId) : null, job = d.audience.jobId && typeof jobById === 'function' ? jobById(d.audience.jobId) : null; o = Object.assign({}, o, { text:cxbFill(s.messageB.text, c, job), checkText:s.messageB.text, action:(o.action || '') + ' · version B' }); }
+      const r = bo.call(this, o);
+      if(r && r.sent){ (run.versions = run.versions || {})[s.id] = v; cxAbRecord(key(d, s), v); }
+      return r;
+    };
+    wo.__fixA5 = true; wo.__base = bo; window.cxOutreachStep = wo; try { cxOutreachStep = wo; } catch(e){}
+  }
+  if(typeof window.cxbReply === 'function' && !window.cxbReply.__fixA5){
+    const br = window.cxbReply;
+    const wr = function(id, cid, label){
+      const d = camps().find(function(x){ return x.id === id; }), run = d && d.runs && d.runs[cid];
+      const at = run ? Math.max(0, run.pc - 1) : 0, s = d && d.steps[at], v = s && run && run.versions && run.versions[s.id], counted = run && run.interested;
+      const out = br.apply(this, arguments);
+      if(label === 'interested' && v && !counted){
+        const ab = (window.CX_AB || {})[key(d, s)];
+        if(ab && !ab.winner){ ab[v].sent--; cxAbRecord(key(d, s), v, 'interested'); }   // the same C4 rule decides; the send was already counted
+        else if(ab) ab[v].interested++;
+      }
+      return out;
+    };
+    wr.__fixA5 = true; wr.__base = br; window.cxbReply = wr; try { cxbReply = wr; } catch(e){}
+  }
+  window.cxbVersionStats = function(d, s){
+    const ab = (window.CX_AB || {})[key(d, s)] || { a:{ sent:0, interested:0 }, b:{ sent:0, interested:0 }, winner:null, log:[] };
+    const pct = function(x){ return x.sent ? Math.round(x.interested / x.sent * 100) : 0; };
+    return { a:{ sent:ab.a.sent, interested:ab.a.interested, rate:pct(ab.a) }, b:{ sent:ab.b.sent, interested:ab.b.interested, rate:pct(ab.b) }, winner:ab.winner, log:(ab.log || []).slice() };
+  };
+
+  /* UI: the step card and the results */
+  const editorB = function(d, s, i){
+    if(s.channel !== 'email' && s.channel !== 'whatsapp') return '';
+    if(!s.messageB) return '<p style="margin-top:6px"><button type="button" class="o-link" data-add-version="' + i + '" onclick="CXB.clicks++; var r = cxbAddVersion(' + i + '); if(!r.ok) toast(r.reason)">Add a second version</button></p>';
+    const job = d.audience.jobId && typeof jobById === 'function' ? jobById(d.audience.jobId) : null, issues = typeof cxMessageIssues === 'function' ? cxMessageIssues(s.messageB.text, job) : [];
+    return '<div class="cxb-versions" data-versions="' + i + '" style="margin-top:8px"><p class="o-card__sub">Version B goes to every second person. After 50 sends of each, the version with more interested replies is kept.</p>' +
+      '<textarea class="app-input" rows="4" aria-label="Version B message" data-version-b="' + i + '" oninput="CXB.d.steps[' + i + '].messageB.text = this.value" onchange="cxbRefresh()">' + esc(s.messageB.text) + '</textarea>' +
+      (issues.length ? '<p class="o-card__sub" role="alert" data-honesty-b>' + esc(issues[0].text) + '</p>' : '') +
+      '<p><button type="button" class="o-link" data-remove-version="' + i + '" onclick="CXB.clicks++; cxbRemoveVersion(' + i + ')">Remove version B</button></p></div>';
+  };
+  const decorate = function(h){
+    if(typeof h !== 'string' || !window.CXB) return h;
+    if(CXB.view === 'build' && CXB.d && CXB.step === 2){
+      const d = CXB.d;
+      h = h.replace(/(<article class="o-card cxb-card" data-step-card="(\d+)"><p class="cxb-sentence"><b>[\s\S]*?<\/b>)(<\/p>)/g, function(all, head, i, close){
+        const s = d.steps[+i]; if(!s) return all; return head + (s.messageB ? ' <span class="cx-chip" data-version-count="' + i + '">2 versions</span>' : '') + close;
+      });
+      h = h.replace(/(<article class="o-card cxb-card" data-step-card="(\d+)">[\s\S]*?)(<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center"><select class="app-input" aria-label="Condition")/g, function(all, body, i, cond){
+        const s = d.steps[+i]; return s ? body + editorB(d, s, +i) + cond : all;
+      });
+    }
+    if(CXB.view === 'campaign'){
+      const d = camps().find(function(x){ return x.id === CXB.open; });
+      if(d) h = h.replace(/(<div class="o-card" data-run-step="(\d+)">[\s\S]*?<\/p>)(<\/div>)/g, function(all, body, i, close){
+        const s = d.steps[+i]; if(!s || !s.messageB) return all; const st = cxbVersionStats(d, s);
+        const line = function(v, x){ return '<span data-version-result="' + v + '">Version ' + v.toUpperCase() + ': ' + x.sent + ' sent · ' + x.rate + '% interested' + (st.winner === v ? ' · kept' : st.winner ? ' · retired' : '') + '</span>'; };
+        return body + '<p class="o-card__sub" data-version-results="' + i + '">' + line('a', st.a) + ' · ' + line('b', st.b) + (st.winner ? '' : ' · testing until 50 sends each') + '</p>' + close;
+      });
+    }
+    return h;
+  };
+  if(typeof window.cxbHTML === 'function' && !window.cxbHTML.__fixA5){
+    const bh = window.cxbHTML;
+    const wh = function(){ return decorate(bh.apply(this, arguments)); };
+    wh.__fixA5 = true; wh.__base = bh; window.cxbHTML = wh; try { cxbHTML = wh; } catch(e){}
+  }
+})();
+</script>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)

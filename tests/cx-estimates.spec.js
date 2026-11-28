@@ -17,7 +17,7 @@
   /* functions that reach cxReserve: read every window function whose name starts with cx, transitively */
   function spenders(){
     var names = Object.keys(window).filter(function(k){ return /^cx[a-zA-Z]/.test(k) && typeof window[k] === 'function'; });
-    var src = {}; names.forEach(function(n){ try { src[n] = Function.prototype.toString.call(window[n]); } catch(e){ src[n] = ''; } });
+    var src = {}; names.forEach(function(n){ try { var fn = window[n], s = ""; while(fn){ s += Function.prototype.toString.call(fn); fn = fn.__base; } src[n] = s; } catch(e){ src[n] = ""; } });   /* a wrapper exposes what it wraps as __base */
     /* cxScreenStart sends through a helper inside its block (askNext → cxSend), which the source scan cannot see; the first test proves it spends */
     var reach = { cxReserve:true, cxScreenStart:true }, grew = true;
     while(grew){ grew = false; names.forEach(function(n){ if(reach[n]) return; for(var k in reach){ if(new RegExp('\\b' + k + '\\(').test(src[n])){ reach[n] = true; grew = true; return; } } }); }

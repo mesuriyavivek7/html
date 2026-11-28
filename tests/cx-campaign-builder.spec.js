@@ -100,6 +100,29 @@
       eq(CX_AB['step-x'].winner, 'b'); ok(/retired/.test(CX_AB['step-x'].log[0]));
       var c = CANDIDATES[6]; ok(cxReplyOutcome(c.id, 'opt-out').suppressed && cxOptedOut(c.id), 'opt-out suppressed at once'); ok(cxReplyOutcome(CANDIDATES[7].id, 'not-now').nurture, 'nurture date'); ok(cxReplyOutcome(CANDIDATES[8].id, 'no-reply').reEligible, 're-eligible in 90 days');
     });
+    /* QA fix A5: a second version per message step in the builder */
+    await t('A5 “Add a second version”: the card shows 2 versions, at most two; sends alternate; interested rate per version; the 50-send rule keeps the better one', async function(){
+      cxbNew('blank'); CXB.d.name = 'AB check'; CXB.d.audience.jobId = job.id; CXB.d.steps = [CXB.d.steps[0]]; var s = CXB.d.steps[0]; s.channel = 'email'; s.when = { type:'now' }; s.message.text = 'Hi {{First name}}, a {{Job title}} role. Yes / Not now / No';
+      CXB.step = 2; CA.tab = 'campaigns'; caRefresh(); ok(!q('[data-version-count="0"]'), 'one version to start');
+      click(q('[data-add-version="0"]')); ok(q('[data-version-count="0"]') && /2 versions/.test(q('[data-version-count="0"]').textContent), 'the card says 2 versions'); ok(q('[data-version-b="0"]'), 'version B editor');
+      ok(!q('[data-add-version="0"]'), 'no third version offered'); ok(!cxbAddVersion(0).ok, 'two at most');
+      s.messageB.text = 'Hello {{First name}}, version two: a {{Job title}} role. Yes / Not now / No';
+      var ids = CANDIDATES.filter(function(c){ return !cxOptedOut(c.id) && cxWeekCount(c.id) === 0; }).slice(0, 30).map(function(c){ return c.id; }); ok(ids.length >= 10, 'people: ' + ids.length);
+      CXB.d.audience = { type:'list', ids:ids, jobId:job.id }; var n0 = CX_OUTBOX.length; var r = cxbStart(); ok(r.ok, JSON.stringify(r)); var d = CX_CAMPAIGNS.find(function(x){ return x.id === r.id; }); var key = cxbAbKey(d, d.steps[0]);
+      var out = CX_OUTBOX.slice(n0).filter(function(m){ return ids.indexOf(m.candidateId) > -1; }); var nb = out.filter(function(m){ return /version two/.test(m.text); }).length; ok(out.length >= 10, 'sent ' + out.length);
+      var st = cxbVersionStats(d, d.steps[0]); eq(st.a.sent + st.b.sent, out.length, 'every send counted for one version'); eq(st.b.sent, nb, 'B sends carry B’s words'); ok(Math.abs(st.a.sent - st.b.sent) <= 1, 'alternating: ' + st.a.sent + '/' + st.b.sent);
+      /* interested replies: everyone who got B */
+      Object.keys(d.runs).forEach(function(cid){ var run = d.runs[cid]; if(run.versions && run.versions[d.steps[0].id] === 'b') cxbReply(d.id, isNaN(+cid) ? cid : +cid, 'interested'); });
+      st = cxbVersionStats(d, d.steps[0]); eq(st.b.interested, st.b.sent, 'B interested counted'); eq(st.a.interested, 0); eq(st.b.rate, 100);
+      CXB.view = 'campaign'; CXB.open = d.id; caRefresh(); var res = q('[data-version-results="0"]'); ok(res && /Version A: \d+ sent · 0% interested/.test(res.textContent) && /Version B: \d+ sent · 100% interested/.test(res.textContent), 'results per version: ' + (res && res.textContent));
+      ok(!st.winner, 'no winner before 50 sends each');
+      while(CX_AB[key].a.sent < 50) cxAbRecord(key, 'a'); while(CX_AB[key].b.sent < 49) cxAbRecord(key, 'b'); ok(!CX_AB[key].winner, 'still testing at 50 / 49'); cxAbRecord(key, 'b');
+      eq(CX_AB[key].winner, 'b', 'B kept on interested rate'); ok(/retired/.test(CX_AB[key].log[0]), 'the loser is retired with a log line');
+      var late = CANDIDATES.find(function(c){ return !cxOptedOut(c.id) && cxWeekCount(c.id) < CX_WEEKLY_CAP && ids.indexOf(c.id) < 0; }); ok(late, 'a later person'); var n1 = CX_OUTBOX.length; cxbEnrol(d, late);
+      var m = CX_OUTBOX.slice(n1).find(function(x){ return x.candidateId === late.id; }); ok(m && /version two/.test(m.text), 'after the decision every send uses the kept version');
+      caRefresh(); ok(/· kept/.test(q('[data-version-result="b"]').textContent) && /· retired/.test(q('[data-version-result="a"]').textContent), 'kept and retired shown');
+      cxbPause(d.id);
+    });
     await t('CX off: no Campaigns tab', async function(){ cxSetSwitch(false); CA.tab = 'agents'; showView('kairo-team'); ok(!q('#ca-tab-campaigns')); cxSetSwitch(true); });
     pub();
   }, 300); });
