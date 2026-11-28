@@ -76297,8 +76297,8 @@ function cfScopeHTML(){
     if(!tab || tab.render.__fixA7) return; const br = tab.render;
     const wr = function(){
       const h = br.apply(this, arguments); if(!cx()) return h; const onv = !!(window.CX_SETUP && CX_SETUP.allowWaWebInbox);
-      return h + sCard('Personal WhatsApp Web inbox', 'Off by default. Agents never use it.', sRow('Allow personal WhatsApp Web inbox', '<span data-wa-web-warn>⚠ ' + WARN + '</span>',
-        '<button type="button" role="switch" class="app-switch' + (onv ? ' is-on' : '') + '" id="cx-wa-web" aria-checked="' + onv + '" aria-label="Allow personal WhatsApp Web inbox" onclick="var r = cxSetWaWebInbox(!(window.CX_SETUP && CX_SETUP.allowWaWebInbox)); if(!r.ok) toast(r.reason); if(typeof settingsRefresh === \'function\') settingsRefresh()"><span></span></button>'));
+      return h + sCard('Personal WhatsApp Web inbox', 'Off by default. Agents never use it.', sRow('Allow personal WhatsApp Web inbox', '⚠ ' + WARN,
+        '<button type="button" role="switch" class="app-switch' + (onv ? ' is-on' : '') + '" id="cx-wa-web" data-wa-web-warn aria-checked="' + onv + '" aria-label="Allow personal WhatsApp Web inbox" onclick="var r = cxSetWaWebInbox(!(window.CX_SETUP && CX_SETUP.allowWaWebInbox)); if(!r.ok) toast(r.reason); if(typeof settingsRefresh === \'function\') settingsRefresh()"><span></span></button>'));
     };
     wr.__fixA7 = true; tab.render = wr;
   }
@@ -76363,6 +76363,14 @@ function cfScopeHTML(){
   add(); window.addEventListener('load', add);
 })();
 </script>
+<style id="fix-mobile-375-b">
+/* QA fix A8 (follow-up, found by the tour's phone screenshots) — four-across number tiles (Cowork › Credits and the
+   other CX number rows) become two-across on a phone, so big numbers are not cut inside their tiles. */
+@media (max-width:480px){
+  #main-content .o-cols[style*="repeat(4"]{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; }
+  #main-content .o-cols[style*="repeat(4"] > *{ min-width:0; overflow-wrap:anywhere; }
+}
+</style>
 <script id="o2-persist-script">
 /* ============================================================
    O2 STEP 0a: DEMO DATA THAT SURVIVES A RELOAD (prototype only)

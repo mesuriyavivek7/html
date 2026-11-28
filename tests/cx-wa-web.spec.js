@@ -35,7 +35,7 @@
     });
     await t('the setting: Settings › Cowork › Cowork v2 has the switch with the not-official warning', async function(){
       var tab = sSectionById('cowork').tabs.find(function(x){ return x.id === 'cx'; }); var h = tab.render();
-      ok(/Allow personal WhatsApp Web inbox/.test(h) && /not the official WhatsApp API/.test(h) && /id="cx-wa-web"[^>]*aria-checked="false"/.test(h), 'switch, off, with the warning');
+      ok(/Allow personal WhatsApp Web inbox/.test(h) && /not the official WhatsApp API/.test(h) && /id="cx-wa-web"[^>]*aria-checked="false"/.test(h), 'switch, off, with the warning'); ok(!/&lt;span/.test(h), 'the warning is plain text, not escaped markup');
     });
     await t('allowed: the lane comes back for people’s own chats', async function(){
       ok(cxSetWaWebInbox(true).ok); eq(cxWaWebAllowed(), true); eq(ibLinked('whatsapp', uid), true, 'linked again'); ok(!/data-wa-web-off/.test(ibSecLinkit()), 'My connections shows the link');
