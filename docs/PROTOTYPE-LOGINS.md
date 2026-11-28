@@ -51,3 +51,13 @@ In any customer workspace: **Settings › Help & support** has the knowledge cen
 | test@incomplete.com | Prototype#2026 | Owner of a workspace whose setup is unfinished |
 | Any team member's email in the open workspace (Team members) | demo1234 | That person, with their own role |
 | Any other email, signed in with the code 123456 | — | Owner of a new, complete demo workspace |
+
+## O2 build switches (2026-11-27)
+
+The O2 platform rebuild (`docs/O2-BUILD-BRIEF.md`) sits behind one switch per step, all **off** by default. Turn them on in the sign-in screen's **Prototype · simulated sign-in** tools › **O2 build** › Build steps. A switch changes which screens and code paths run, never the data.
+
+- **1a on:** the Oontu menu becomes Home · Work · Customers · Service · Billing · Admin. The per-login lists before and after are in `docs/O2-OVERNIGHT-REPORT.md` §5. Home is for platform operations (Meera); everyone else opens on My work.
+- **1b on:** every employee has **Approvals** (their own requests and decisions; deciding still needs the approving permission).
+- **7b on:** after the password or email code, Oontu employees enter a second-step code: **246810** (shown in the prototype tools). High-risk actions ask for it again after 15 minutes.
+- **3a:** only the Super Admin holds the permission that approves a workspace suspension in the seeds, so suspensions requested by Meera wait for a second person who does not exist yet (see Recommended next in the report).
+- Saved demo data (0a) can be exported, imported and reset from the same tools.

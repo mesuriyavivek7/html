@@ -2001,3 +2001,119 @@ Everything is in one new block, `<script id="cowork-visual-script">`, after `cow
 - They count waiting items relative to the matches already there.
 - They find Today's new sections.
 - The 2,200 px height rule now covers the Agents tab, Settings and Activity. Today is longer by design, because the jobs table shows 20 rows a page.
+
+## Step 3 · Kairo, an assistant in the side panel (23 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-kairo-assistant.html`. Screenshots: `docs/screenshots/kairo-assistant/` (1440 and 390). New spec: `tests/kairo-assistant.spec.js` (11 checks).
+
+There is no live model. Kairo is an intent engine over the app's own records, in one new block, `<script id="kairo-assistant-script">`, loaded last. It replaces the old keyword chat (`kairoRespond`), and keeps the Step 1 panel, its ids and Esc.
+
+- **For every role with Kairo** (Owner, Admin, Recruiter Manager, Recruiter and the custom roles that have it). It opens from the top-bar ring, ⌘J / Ctrl+J, or **Ask Kairo** on the Jobs, Candidates, Interviews, PayTrack, Reports, job and candidate pages.
+  - It is the 400px side panel; the page beside it stays usable and never moves.
+  - New chat, plus Chat history for this session. "See all insights" opens Intelligence.
+  - Three starter questions for the page you're on.
+- **Understanding.**
+  - Normalising: lower case, short forms (tmrw, subs, wa, np, ctc, jd) and Hinglish (kitne, aaj, kal, is week, mera).
+  - Trigger phrases choose one of 14 skills. Fuzzy matching finds candidates, jobs, people, cities, skills and stages in the data this viewer may see.
+  - Time words use the workspace time zone.
+  - A name that fits two people gets one question with chips.
+  - "and last week?", "only Pune" and "what about today?" change the last question.
+  - When nothing fits, Kairo says what it can do, with three suggestions tied to the words it knew.
+- **Skills:** my day · counts and trends · find candidates · job status · candidate summary · follow-ups · draft a message · interviews · money · team · how do I… · actions (assign, move, remind, add to a job). Each reads the same data and scope as its page.
+- **Answers.** A typing indicator, then the words appear (about 400 ms). Stat, chart, list, candidate, job, draft and confirm cards follow. Every answer has a "From: …" line that opens the page behind it.
+- **Safety.**
+  - Recruiters see only their jobs and candidates.
+  - Roles without the money permission get "I can’t share billing figures with your role." and no ₹ anywhere.
+  - Actions show a confirm card and call the app's own functions, so the page's permissions apply. Each is audit-logged as "Kairo for <person>".
+  - Drafts carry the AI disclosure line when that setting is on.
+
+## Step 4 · More than one workspace (25 November 2026)
+
+Backup: `backups/recruitment-os-prototype.pre-workspaces.html`. Screenshots: `docs/screenshots/workspaces/` (1440 and 390). New spec: `tests/workspaces.spec.js` (9 checks).
+
+One new block, `<script id="workspaces-script">`, plus a small change in the auth simulator's `signIn` and `wsList`.
+
+- **Stores.** Each workspace keeps its own records and setup in a store keyed by workspace id.
+  - The active one lives in the app's globals. Switching saves it and swaps the target's in.
+  - Records (the arrays `demoClearWorkspace` empties, plus Kairo and Cowork items) are kept by reference. The setup (company profile, settings, roles, Cowork config, plan, connections) is deep-copied, because a demo build edits the profile in place.
+  - Caches, search, Kairo and open overlays reset on every switch, so nothing from one workspace shows in another.
+- **The switcher.** The sidebar card opens it:
+  - your workspaces, with your role in each, a tick on the current one and a dot where something needs you;
+  - invitations to accept, and closed workspaces to restore;
+  - Add a workspace (Owner or Admin) and Workspace settings;
+  - Prototype tools, folded and only in prototype mode, holding every demo and persona control.
+  - The top-bar avatar's menu shows only Your settings and Sign out.
+- **Add a workspace.** A short guide:
+  - name and type, with the live address;
+  - copy my setup or start fresh;
+  - what to copy: eight choices, with the team off by default and people picked one by one;
+  - the line on what is never copied;
+  - location, currency and plan (Starter, free for 14 days);
+  - done: "Brightpath Pune is ready", with Open or Back.
+  - The new workspace starts empty (Step 1 F1) with the copied setup. GST is blank and the invoice prefix is new. Copied people are Invited with the same roles and reporting lines. The setup checklist ticks what was copied.
+- **People.** The same person can hold a different role in each workspace; the menu, Home and permissions follow the workspace. An invitation is accepted from the switcher.
+- **Demo.** Kesar, Northstar and Vistaar are three workspaces of one demo account (demo.owner@oontu.app, whose Owners are Meera, Priya and Anil). They are built the first time they're opened and kept after that, with no reload; Vistaar loads in the background.
+- **Sign-in.** An account in several workspaces gets "Choose a workspace" after the code, last used first. The last workspace is remembered per browser.
+- **Closing.** Settings › Danger zone (Owner, typing the name) closes a workspace for 30 days, switches you to another, and lists it as closed with Restore.
+- **Fix found while taking screenshots.** With the white shell (`body.ow-white`) the menu was `position:fixed`, so the Design 2.0 `top:calc(100% + 8px)` put it below the screen when opened from the sidebar card. It is now anchored under the card, and long workspace names end in "…" instead of running into the tick.
+- **Checked against the review checklist (Steps 1–4).** Fixes in Kairo:
+  - "show agents", "open inbox" and "jobs kholo" go to that page, if your role can open it (`kaGo`).
+  - More Hinglish: yaad dilana, baje, ke baare mein, likho/bhejo, dikhao, kholo, din.
+  - The "Which Aditya?" chips keep the whole question. Two people with the same name each get their own chip.
+  - "…about his interview" with none booked drafts a follow-up instead of only offering one.
+  - "Which clients owe feedback?" is understood.
+  - Every sidebar page has starters that fit it (Clients, Cowork, Inbox, Approvals, To do, Team, Reports, Settings).
+- Tests: `tests/workspaces.spec.js` (9); 5 more in `tests/kairo-assistant.spec.js`. `tests/fix-d2.spec.js` signs in as Priya, who now has several workspaces, so its helper picks Northstar on the chooser. Full suite 46 specs, 802 / 802.
+
+## Step 4 polish (26 November 2026)
+
+1. **Who sees which workspace.** A person sees only the workspaces they belong to, in the switcher and in "Choose a workspace". Priya sees Northstar, Meera sees Kesar, and Anil sees Vistaar.
+   - `demo.owner@oontu.app` is now a real sign-in. It owns all three companies and acts as each one's Owner.
+   - Prototype tools › Demo company is unchanged and available to everyone. It reloads into a company.
+2. **Kairo wording.**
+   - Future time frames say "have" or "has": "Your jobs have 3 interviews tomorrow", "Your workspace has…".
+   - Comparisons name the right period ("1 fewer than today").
+   - Every answer says "1 yr", "1 person" and "1 day" (`kaPlural`). `nYrs()` writes "1 yr" wherever experience is recorded or shown.
+3. **Kairo search uses the person's own skills.**
+   - A skill matches only the person's own skills or title (`caHasSkill`), and the "Java ✓" chip uses the same rule.
+   - The Northstar demo had given every IT title one shared skill list, so QA and DevOps people "had Java". Each title now has its own list (`CA_TITLE_SKILLS`).
+   - People reused for a second job keep their own title and skills.
+4. **Home numbers.**
+   - "people in guarantee", never "persons".
+   - ₹0 shows as "₹0".
+   - Placements says its change in words ("1 fewer than the week before"), on its own line under the number.
+5. **New workspaces start with nothing linked.** Their Inbox says "0 of 4 channels linked" until something is really connected. Team counts once someone else has joined.
+6. **Toasts and the Kairo panel.** At phone width, toasts sit above the Kairo message box while the panel is open.
+- Tests:
+  - `workspaces` has 2 new checks and 2 rewritten for the membership rule.
+  - `fix-d2` has 3 new checks. The spec skips itself inside the 390 frame.
+  - `kairo-assistant` has 3 new checks.
+  - Full suite: 46 specs, 810 / 810.
+
+## After the merge: one Kairo (27 November 2026)
+
+The merge of agency-prototype-v2 is commit db10490. Then:
+
+1. **Sign-up's last step.** `afterSuStep` read `suTick`, which was never declared, and then called `arriveInto`, which doesn't exist.
+   - `suTick` is now declared and set when the step turns "done", from the code check's bar, as sign-in does.
+   - The automatic entry calls `enterProduct`, the same as "Open now". It waits 3 seconds of reading time, which isn't shortened like animations.
+2. **One Kairo.** Ask Kairo and the side panel give the same answer to the same question.
+   - What Kairo's skills understand is answered by Kairo on both: search, drafts, reminders, confirm cards, going to a page, Hinglish, counts and interviews. The page lays it out with its own blocks plus a block of Kairo's cards.
+   - Kairo's answer wins over one of the page's reports only when it produced something: a card, a "which one?" choice, a page to open, or hello.
+   - A report Ask Kairo has its own plan for stays that report: revenue, team wins, setup playbooks, bottlenecks and the others. Where Kairo has a skill for the question, the report opens with Kairo's sentence. A recruiter asking about money gets Kairo's refusal plus the page's "isn't visible to your role" card, with no figures.
+   - An action that would act at once (call, email) keeps the page's ask-first "Do it" card. "Do it" runs Kairo's real answer and records the exchange in the side panel too.
+   - Weuphire's hand-over test now uses "Call …", because "Show my interviews" is a read that Kairo answers directly.
+   - In the panel, a question Kairo has no skill for but Ask Kairo has a report for (bottlenecks, for example) is answered from that report.
+   - Revenue on Ask Kairo comes from PayTrack's earned revenue, the same records Home and PayTrack add up.
+   - Closure rate in the panel is Home's definition: joined ÷ sent across all journeys, and under 5 sent isn't a rate yet.
+   - "This month vs the previous month" is read as this month.
+   - Thin-pipeline bottleneck cards give Talent Discovery's match count.
+3. **Kairo history per workspace and person.**
+   - Ask Kairo saves conversations under workspace + person, not organisation + role.
+   - The side panel keeps each person's chats per workspace and brings them back. Switching workspace sets them aside rather than deleting them.
+4. **Prospects and "Jobs with enough matches".** A job's coverage is the matches still waiting plus the people already on the job who meet its match threshold (`caCoverN`). Adding a Prospect moves a person from one to the other, so the count never goes down. The jobs table still shows how many matches are waiting.
+- Tests:
+  - `auth-flow` 02T;
+  - `intelligence-workspace`: the hand-over check uses a call;
+  - `kairo-assistant`: 4 new checks (same answers, page cards and actions, revenue/closure/bottlenecks, history per person);
+  - `cowork-visual`: Prospects and "enough".

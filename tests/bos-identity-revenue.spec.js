@@ -41,7 +41,8 @@
       ok(bosCan('platform-ticket', 'edit', { queue:'technical' }, rohan) && !bosCan('platform-ticket', 'edit', { queue:'billing' }, rohan), 'Support Agent: own queues');
     });
     await t('navigation reflects access, and a hidden screen still refuses to render', async function(){
-      as('PU-001'); var sa = navShown(); ok(sa.indexOf('oontu-finance') > -1 && sa.indexOf('oontu-platform-users') > -1, 'super admin sees all');
+      as('PU-001'); var sa = navShown(); var n1a = typeof o2On === 'function' && o2On('1a');   /* O2 step 1a renames the screens (docs/O2-BUILD-BRIEF.md §5) */
+      ok(sa.indexOf(n1a ? 'oontu-invoices' : 'oontu-finance') > -1 && sa.indexOf(n1a ? 'oontu-people' : 'oontu-platform-users') > -1, 'super admin sees all');
       as('PU-101'); var se = navShown();
       ok(se.indexOf('oontu-revenue') > -1 && se.indexOf('oontu-mywork') > -1, 'sales sees revenue and my work: ' + se.join());
       ok(['oontu-finance','oontu-platform-users','oontu-tenants','oontu-service','oontu-dashboard','oontu-subscriptions','oontu-plans','oontu-help'].every(function(v){ return se.indexOf(v) === -1; }), 'strict: only the screens of their own work: ' + se.join());
@@ -65,8 +66,8 @@
     await t('temporary elevated access needs someone else to approve and ends by itself', async function(){
       as('PU-104'); var r = bosRequestTempRole('PU-103', 'tpl_senior_support', 2, 'Cover the queue during the outage'); ok(!r.ok, 'support manager has no platform-user rights: ' + (r.reason || ''));
       as('PU-001'); r = bosRequestTempRole('PU-103', 'tpl_senior_support', 2, 'Cover the queue during the outage'); ok(r.ok, r.reason);
-      var self = bosDecide(r.approval.id, true); ok(!self.ok && /your own request/.test(self.reason), 'no self-approval');
-      as('PU-108'); var d = bosDecide(r.approval.id, true); ok(d.ok, d.reason);
+      var self = bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)'); ok(!self.ok && /your own request/.test(self.reason), 'no self-approval');
+      as('PU-108'); var d = bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)'); ok(d.ok, d.reason);
       as('PU-103'); ok(canPlatform('platform-ticket', 'assign'), 'elevated');
       APS.clockOffsetMs = (APS.clockOffsetMs || 0) + 3 * 3600000; bosExpireGrants(); ok(!canPlatform('platform-ticket', 'assign'), 'expired'); APS.clockOffsetMs -= 3 * 3600000;
       as('PU-001');
@@ -110,9 +111,9 @@
     await t('a merge needs a second person and can be undone', async function(){
       as('PU-101'); var a = BOS.accounts.find(function(x){ return x.name === 'Southline Talent'; }), b = BOS.accounts.find(function(x){ return x.name === 'Southline Talent Group'; });
       var r = bosRequestMerge(a.id, b.id, 'Same company, imported twice'); ok(r.ok, r.reason);
-      var self = bosDecide(r.approval.id, true); ok(!self.ok, 'requester cannot approve');
-      as('PU-102'); ok(!bosDecide(r.approval.id, true).ok, 'a sales manager lacks merge permission');
-      as('PU-109'); var d = bosDecide(r.approval.id, true); ok(d.ok, d.reason); eq(a.mergedInto, b.id, 'merged');
+      var self = bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)'); ok(!self.ok, 'requester cannot approve');
+      as('PU-102'); ok(!bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'a sales manager lacks merge permission');
+      as('PU-109'); var d = bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)'); ok(d.ok, d.reason); eq(a.mergedInto, b.id, 'merged');
       ok(BOS.opps.filter(function(o){ return o.accountId === a.id; }).length === 0, 'records moved');
       var u = bosUndoMerge(a.id); ok(u.ok, u.reason); ok(!a.mergedInto && BOS.opps.some(function(o){ return o.accountId === a.id; }), 'undone and records back');
     });
@@ -149,14 +150,17 @@
     await t('a restricted discount needs approval, and sales can’t approve their own', async function(){
       as('PU-102'); var o = BOS.opps.find(function(x){ return x.title === 'Vistaar HR Services · New business'; });
       var big = bosCreateProposal({ oppId:o.id, planId:'plan-enterprise', seats:20, discountPct:30 }); ok(!big.ok || big.proposal, 'manager can draft it');
-      as('PU-101'); var p = bosCreateProposal({ oppId:o.id, planId:'plan-enterprise', seats:20, discountPct:15 }); ok(p.ok, p.reason);
+      as('PU-101'); var nocase = bosCreateProposal({ oppId:o.id, planId:'plan-enterprise', seats:20, discountPct:15 }); ok(!nocase.ok && /why this customer needs/.test(nocase.reason), 'a business case is required: ' + nocase.reason);
+      ok(!bosCreateProposal({ oppId:o.id, planId:'plan-enterprise', seats:20, discountPct:15, justification:{ category:'Competitor offer', reason:'please approve' } }).ok, 'a stock phrase is not a case');
+      var p = bosCreateProposal({ oppId:o.id, planId:'plan-enterprise', seats:20, discountPct:15, justification:{ category:'Competitor offer', reason:'Vistaar has a written quote from a rival ATS at 15% below our list for 20 seats, valid until month end.', competitor:'Rival ATS quote, 15% below list', withoutIt:'They sign with the rival this month.' } }); ok(p.ok, p.reason);
       eq(p.proposal.status, 'awaiting_approval'); eq(p.approval.type, 'discount');
       ok(!bosSendProposal(p.proposal.id).ok, 'cannot be sent before approval');
-      ok(!bosDecide(p.approval.id, true).ok, 'requester can’t approve');
-      as('PU-102'); var d = bosDecide(p.approval.id, true); ok(d.ok, d.reason); eq(p.proposal.status, 'ready');
-      as('PU-101'); var r = bosCreateProposal({ oppId:o.id, planId:'plan-enterprise', seats:20, discountPct:30 }); ok(r.ok && r.approval.type === 'discount-restricted', 'over 25% is restricted');
-      as('PU-102'); ok(!bosDecide(r.approval.id, true).ok, 'a sales manager can’t approve a restricted discount');
-      as('PU-109'); ok(bosDecide(r.approval.id, false, 'Too deep for a 20-seat deal').ok, 'revenue manager declines with a reason');
+      ok(!bosDecide(p.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'requester can’t approve');
+      as('PU-102'); var d = bosDecide(p.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)'); ok(d.ok, d.reason); eq(p.proposal.status, 'ready');
+      as('PU-101'); var r = bosCreateProposal({ oppId:o.id, planId:'plan-enterprise', seats:20, discountPct:30, justification:{ category:'Competitor offer', reason:'Vistaar has a written quote from a rival ATS at 15% below our list for 20 seats, valid until month end.', competitor:'Rival ATS quote, 15% below list', withoutIt:'They sign with the rival this month.' } }); ok(r.ok && r.approval.type === 'discount-restricted', 'over 25% is restricted');
+      as('PU-102'); ok(!bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'a sales manager can’t approve a restricted discount');
+      as('PU-109'); ok(!bosDecide(r.approval.id, false, 'no').ok, 'a decline needs real reasoning'); ok(bosDecide(r.approval.id, false, 'Too deep for a 20-seat deal; offer 15% which is already approved.', 'Margin too low for this deal').ok, 'revenue manager declines with a reason');
+      var again = bosCreateProposal({ oppId:o.id, planId:'plan-enterprise', seats:20, discountPct:30, justification:{ category:'Competitor offer', reason:'Vistaar has a written quote from a rival ATS at 15% below our list for 20 seats, valid until month end.', competitor:'Rival ATS quote, 15% below list', withoutIt:'They sign with the rival this month.' } }); ok(!again.ok && /declined/.test(again.reason), 'the same case can’t be resubmitted unchanged');
       var tooMuch = bosCreateProposal({ oppId:o.id, planId:'plan-enterprise', seats:20, discountPct:55 }); ok(!tooMuch.ok, 'hard ceiling');
     });
     await t('won needs an accepted proposal, and the win hands over to Customer Operations with context', async function(){
@@ -175,7 +179,7 @@
     });
     await t('AI cannot bypass authorization or approvals', async function(){
       as('PU-101'); var a = BOS.approvals.find(function(x){ return x.status === 'pending'; });
-      var r = bosKairo.attempt(function(){ return bosDecide(a.id, true); }); ok(!r.ok && r.needsPerson, 'agent can’t decide approvals');
+      var r = bosKairo.attempt(function(){ return bosDecide(a.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)'); }); ok(!r.ok && r.needsPerson, 'agent can’t decide approvals');
       var s = bosKairo.attempt(function(){ return bosSetRoles('PU-103', ['role_oontu_super_admin']); }); ok(!s.ok, 'agent can’t change roles');
       as('PU-103'); var n = bosKairo.nextAction(BOS.opps.find(function(o){ return o.ownerId === 'PU-109'; }).id); ok(!n.ok, 'agent sees only what the person can see');
       as('PU-101'); var k = bosKairo.nextAction(BOS.opps.find(function(o){ return o.ownerId === 'PU-101' && bosOppOpen(o); }).id); ok(k.ok && k.state === 'completed' && /simulated/.test(bosKairo.label), 'labelled simulated');

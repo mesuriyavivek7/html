@@ -100,7 +100,8 @@
       ORG_STRUCTURE.profile.orgType = 'Agency';
       as('hm'); ok(shown() === 'hm-dashboard,hm-interviews,hm-feedback,hm-decisions,hm-jobs,intelligence,settings', 'hm: ' + shown());
       as('candidate'); ok(shown() === 'candidate-home,candidate-opportunities,candidate-interviews,candidate-profile-self,settings', 'candidate: ' + shown());
-      as('oontu'); var o = shown(); ok(o.split(',')[0] === 'oontu-dashboard' && /oontu-settings$/.test(o), 'oontu: ' + o);
+      as('oontu'); var o = shown(), o2nav = typeof o2On === 'function' && o2On('1a');   /* O2 step 1a replaces the Oontu menu by design (§5) */
+      ok(o.split(',')[0] === (o2nav ? 'oontu-home' : 'oontu-dashboard') && (o2nav ? /oontu-tax$/ : /oontu-settings$/).test(o), 'oontu: ' + o);   /* with 1a, Admin (ending in Platform settings) is a folding group */
     });
 
     reset();

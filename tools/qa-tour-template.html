@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oontu QA tour</title>
+<style>
+:root{ --font:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",system-ui,sans-serif; --ink:#0B1F3B; --ink-2:#565A66; --ink-3:#6E717C;
+  --line:#E9ECF1; --page:#F8F8F6; --card:#FFFFFF; --subtle:#F4F4F1; --pass:#1F7A4D; --pass-bg:#E8F4EC; --fail:#B42318; --fail-bg:#FDECEA; --mark:#E5484D; --r:14px; }
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:var(--page); color:var(--ink); font:15px/1.5 var(--font); }
+a{ color:var(--ink); }
+.wrap{ max-width:1180px; margin:0 auto; padding:24px 16px 80px; }
+header.top{ display:grid; gap:12px; margin-bottom:18px; }
+h1{ font-size:26px; margin:0; letter-spacing:-.01em; }
+.sub{ color:var(--ink-2); margin:0; }
+.runs{ display:grid; gap:6px; margin:4px 0 0; padding:0; list-style:none; }
+.runs li{ display:flex; flex-wrap:wrap; gap:6px 12px; align-items:baseline; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px 12px; }
+.runs b{ min-width:0; }
+.runs .n{ color:var(--ink-2); font-size:13px; }
+.bar{ height:8px; background:var(--subtle); border-radius:99px; overflow:hidden; display:flex; }
+.bar i{ display:block; height:100%; }
+.bar .p{ background:var(--pass); } .bar .f{ background:var(--fail); }
+.prog{ display:grid; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:12px 14px; }
+.prog p{ margin:0; font-size:14px; color:var(--ink-2); }
+.tools{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; position:sticky; top:0; z-index:5; background:var(--page); padding:10px 0; }
+.tools select, .tools input{ font:inherit; font-size:14px; border:1px solid var(--line); background:var(--card); border-radius:10px; padding:8px 10px; min-width:0; color:var(--ink); }
+.tools input{ flex:1 1 220px; }
+.btn{ font:inherit; font-size:14px; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:10px; padding:8px 12px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+.btn--primary{ background:var(--ink); color:#fff; border-color:var(--ink); }
+.btn:focus-visible, .seg button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+.group{ margin:26px 0 8px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); }
+.card{ background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:16px; margin:12px 0; display:grid; gap:12px; }
+.card[data-status="pass"]{ border-color:#BFE3CC; } .card[data-status="fail"]{ border-color:#F4C2BD; }
+.card h2{ font-size:18px; margin:0; letter-spacing:-.005em; }
+.meta{ display:flex; flex-wrap:wrap; gap:6px; }
+.chip{ font-size:12.5px; background:var(--subtle); border-radius:99px; padding:3px 10px; color:var(--ink-2); }
+.chip--id{ background:var(--ink); color:#fff; }
+dl{ display:grid; grid-template-columns:max-content 1fr; gap:4px 14px; margin:0; font-size:14px; }
+dt{ color:var(--ink-3); } dd{ margin:0; min-width:0; overflow-wrap:anywhere; }
+.checks{ list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+.checks label{ display:flex; gap:10px; align-items:flex-start; cursor:pointer; }
+.checks input{ width:18px; height:18px; margin-top:2px; flex:none; }
+.shots{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.shot{ margin:0; min-width:0; }
+.shot figcaption{ font-size:12.5px; color:var(--ink-3); margin:0 0 4px; display:flex; justify-content:space-between; gap:6px; }
+.shot img{ width:100%; display:block; border:1px solid var(--line); border-radius:10px; background:var(--subtle); cursor:zoom-in; }
+.phone{ display:flex; flex-wrap:wrap; gap:10px; }
+.phone .shot{ width:180px; }
+.cmp{ position:relative; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--subtle); }
+.cmp img{ display:block; width:100%; }
+.cmp .top{ position:absolute; inset:0; overflow:hidden; }
+.cmp .top img{ width:auto; height:100%; max-width:none; }
+.cmp input{ width:100%; margin:6px 0 0; }
+.seg{ display:inline-flex; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+.seg button{ font:inherit; font-size:14px; border:0; background:var(--card); padding:9px 14px; cursor:pointer; color:var(--ink); min-height:40px; }
+.seg button + button{ border-left:1px solid var(--line); }
+.seg button[aria-pressed="true"][data-v="pass"]{ background:var(--pass-bg); color:var(--pass); font-weight:600; }
+.seg button[aria-pressed="true"][data-v="fail"]{ background:var(--fail-bg); color:var(--fail); font-weight:600; }
+.seg button[aria-pressed="true"][data-v="none"]{ background:var(--subtle); font-weight:600; }
+.verdict{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+textarea{ font:inherit; font-size:14px; width:100%; min-height:44px; border:1px solid var(--line); border-radius:10px; padding:8px 10px; resize:vertical; }
+.hood{ background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:14px 16px; }
+.hood ul{ margin:6px 0 0; padding-left:18px; } .hood li{ margin:3px 0; }
+.empty{ color:var(--ink-2); padding:30px 0; text-align:center; }
+.lb{ position:fixed; inset:0; background:rgba(11,31,59,.86); display:none; align-items:center; justify-content:center; z-index:20; padding:16px; }
+.lb.on{ display:flex; } .lb img{ max-width:100%; max-height:100%; border-radius:8px; background:#fff; }
+.lb button{ position:absolute; top:12px; right:12px; }
+.toggle-cmp{ font-size:13px; }
+@media (max-width:720px){ .shots{ grid-template-columns:1fr; } dl{ grid-template-columns:1fr; } dt{ margin-top:4px; } .phone .shot{ width:calc(50% - 5px); } h1{ font-size:22px; } }
+@media print{ .tools, .lb, .btn{ display:none !important; } .card{ break-inside:avoid; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div><h1>Oontu QA tour</h1><p class="sub" id="lede"></p></div>
+    <ul class="runs" id="runs"></ul>
+    <div class="prog" aria-live="polite"><p id="prog-text"></p><div class="bar" aria-hidden="true"><i class="p" id="bar-p"></i><i class="f" id="bar-f"></i></div></div>
+  </header>
+  <div class="tools" role="search">
+    <select id="f-run" aria-label="Run"></select>
+    <select id="f-screen" aria-label="Screen"></select>
+    <select id="f-status" aria-label="Status"><option value="">Any status</option><option value="none">Not checked</option><option value="pass">Pass</option><option value="fail">Fail</option></select>
+    <input id="f-q" type="search" placeholder="Search titles, screens, checks" aria-label="Search">
+    <button type="button" class="btn btn--primary" id="export">Export results</button>
+  </div>
+  <main id="list"></main>
+  <section class="hood" id="hood"></section>
+</div>
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Enlarged screenshot"><button type="button" class="btn" id="lb-close">Close</button><img id="lb-img" alt=""></div>
+<script id="qa-data" type="application/json">/*DATA*/</script>
+<script>
+(function(){
+  var D = JSON.parse(document.getElementById('qa-data').textContent);
+  var KEY = 'oontu.qa-tour.v1', R = {};
+  try { R = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ R = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(R)); } catch(e){} }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function res(id){ return R[id] || (R[id] = { status:'none', note:'', checks:[] }); }
+  var ORDER = { 'Super Admin':0, 'Recruiter app':1, 'Cowork':2 };
+  var items = D.items.slice().sort(function(a, b){ return (ORDER[a.screen] - ORDER[b.screen]) || (a.run - b.run) || (a._i - b._i); });
+  var $ = function(id){ return document.getElementById(id); };
+  $('lede').textContent = 'Branch ' + D.branch + ' · before = ' + D.base + ' (BASE) or ' + D.preA + ' (before the QA fixes) · built ' + D.built + '. One card per user-visible change. Results stay in this browser.';
+  /* filters */
+  var runs = Object.keys(D.runs).sort();
+  $('f-run').innerHTML = '<option value="">All runs</option>' + runs.map(function(r){ return '<option value="' + r + '">' + esc(D.runs[r]) + '</option>'; }).join('');
+  $('f-screen').innerHTML = '<option value="">All screens</option>' + Object.keys(ORDER).map(function(s){ return '<option>' + s + '</option>'; }).join('');
+  var F = { run:'', screen:'', status:'', q:'' };
+  try { var fs = JSON.parse(localStorage.getItem(KEY + '.filters') || 'null'); if(fs) F = fs; } catch(e){}
+  $('f-run').value = F.run; $('f-screen').value = F.screen; $('f-status').value = F.status; $('f-q').value = F.q;
+  function setF(k, v){ F[k] = v; try { localStorage.setItem(KEY + '.filters', JSON.stringify(F)); } catch(e){} draw(); }
+  $('f-run').onchange = function(){ setF('run', this.value); }; $('f-screen').onchange = function(){ setF('screen', this.value); };
+  $('f-status').onchange = function(){ setF('status', this.value); }; $('f-q').oninput = function(){ setF('q', this.value); };
+  function img(p, alt){ return D.shots[p] ? '<img loading="lazy" src="img/' + esc(p) + '.png" alt="' + esc(alt) + '" data-big="img/' + esc(p) + '.png">' : '<div class="empty">No image</div>'; }
+  function openHref(it){ return '../recruitment-os-prototype.html' + (/CX/.test(it.switch) ? '?cx=1' : ''); }
+  function card(it){
+    var r = res(it.id), desk = !it.mobileOnly, ph = it.mobile;
+    var checks = it.checks.map(function(c, i){ return '<li><label><input type="checkbox" data-c="' + i + '"' + (r.checks[i] ? ' checked' : '') + '> <span>' + esc(c) + '</span></label></li>'; }).join('');
+    var shots = desk ? '<div class="shots"><figure class="shot"><figcaption><span>Before</span><span>1440 × 900</span></figcaption>' + img(it.id + '-before', it.title + ' — before') + '</figure>' +
+      '<figure class="shot"><figcaption><span>After · red box = what changed</span><span>1440 × 900</span></figcaption>' + img(it.id + '-after', it.title + ' — after') + '</figure></div>' +
+      '<details class="toggle-cmp"><summary>Compare with a slider</summary><div class="cmp" data-cmp><img src="img/' + esc(it.id) + '-after.png" alt="After"><div class="top" style="width:50%"><img src="img/' + esc(it.id) + '-before.png" alt="Before"></div></div><input type="range" min="0" max="100" value="50" aria-label="Before and after slider" data-slide></details>' : '';
+    var phone = ph ? '<div><p class="sub" style="font-size:13px;margin:0 0 6px">Phone · 375 × 812</p><div class="phone"><figure class="shot"><figcaption><span>Before</span></figcaption>' + img(it.id + '-before-m', it.title + ' — phone before') + '</figure><figure class="shot"><figcaption><span>After</span></figcaption>' + img(it.id + '-after-m', it.title + ' — phone after') + '</figure></div></div>' : '';
+    return '<article class="card" id="' + esc(it.id) + '" data-status="' + r.status + '">' +
+      '<div class="meta"><span class="chip chip--id">' + esc(it.id) + '</span><span class="chip">' + esc(D.runs[it.run]) + '</span><span class="chip">' + esc(it.screen) + '</span></div>' +
+      '<h2>' + esc(it.title) + '</h2>' +
+      '<dl><dt>Where to go</dt><dd>' + esc(it.where) + '</dd><dt>Switch</dt><dd>' + esc(it.switch) + '</dd><dt>Log in as</dt><dd>' + esc(it.roleName) + '</dd><dt>What changed</dt><dd>' + esc(it.changed) + '</dd></dl>' +
+      '<p style="margin:0"><a class="btn" href="' + openHref(it) + '" target="_blank" rel="noopener">Open the prototype</a> <span class="sub" style="font-size:13px">' + (/CX/.test(it.switch) ? 'opens with Cowork v2 on' : /O2|RX/.test(it.switch) ? 'turn the switch on in Prototype · simulated sign-in' : '') + '</span></p>' +
+      shots + phone +
+      '<div><p style="margin:0 0 6px;font-weight:600">Check</p><ul class="checks">' + checks + '</ul></div>' +
+      '<div class="verdict"><span class="seg" role="group" aria-label="Result for ' + esc(it.id) + '">' + [['pass', 'Pass'], ['fail', 'Fail'], ['none', 'Not checked']].map(function(x){ return '<button type="button" data-v="' + x[0] + '" aria-pressed="' + (r.status === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</span></div>' +
+      '<textarea placeholder="Note (what you saw, what is wrong)" aria-label="Note for ' + esc(it.id) + '">' + esc(r.note) + '</textarea></article>';
+  }
+  function match(it){
+    var r = res(it.id); if(F.run && String(it.run) !== F.run) return false; if(F.screen && it.screen !== F.screen) return false; if(F.status && r.status !== F.status) return false;
+    if(F.q){ var q = F.q.toLowerCase(); if((it.id + ' ' + it.title + ' ' + it.where + ' ' + it.changed + ' ' + it.checks.join(' ') + ' ' + it.screen).toLowerCase().indexOf(q) < 0) return false; } return true;
+  }
+  function counts(){
+    var t = items.length, p = 0, f = 0; items.forEach(function(it){ var s = res(it.id).status; if(s === 'pass') p++; if(s === 'fail') f++; });
+    $('prog-text').textContent = (p + f) + ' of ' + t + ' checked · ' + p + ' pass · ' + f + ' fail · ' + (t - p - f) + ' not checked';
+    $('bar-p').style.width = (p / t * 100) + '%'; $('bar-f').style.width = (f / t * 100) + '%';
+    $('runs').innerHTML = runs.map(function(rn){ var list = items.filter(function(it){ return String(it.run) === rn; }), pp = list.filter(function(it){ return res(it.id).status === 'pass'; }).length, ff = list.filter(function(it){ return res(it.id).status === 'fail'; }).length, h = D.hood.filter(function(x){ return String(x.run) === rn; }).length;
+      return '<li><b>' + esc(D.runs[rn]) + '</b><span class="n">' + (rn === '0' ? D.run0 : list.length + ' items · ' + pp + ' pass · ' + ff + ' fail' + (h ? ' · ' + h + ' under the hood' : '')) + '</span></li>'; }).join('');
+  }
+  function draw(){
+    var html = '', last = null, shown = items.filter(match);
+    shown.forEach(function(it){ if(it.screen !== last){ html += '<h3 class="group">' + esc(it.screen) + '</h3>'; last = it.screen; } html += card(it); });
+    $('list').innerHTML = html || '<p class="empty">Nothing matches these filters.</p>'; counts();
+  }
+  $('list').addEventListener('click', function(e){
+    var b = e.target.closest('.seg button'); if(b){ var c = b.closest('.card'), r = res(c.id); r.status = b.getAttribute('data-v'); save(); c.setAttribute('data-status', r.status); [].forEach.call(c.querySelectorAll('.seg button'), function(x){ x.setAttribute('aria-pressed', String(x === b)); }); counts(); if(F.status) draw(); return; }
+    var im = e.target.closest('img[data-big]'); if(im){ $('lb-img').src = im.getAttribute('data-big'); $('lb-img').alt = im.alt; $('lb').classList.add('on'); $('lb-close').focus(); }
+  });
+  $('list').addEventListener('change', function(e){ var x = e.target; if(x.matches('.checks input')){ var c = x.closest('.card'), r = res(c.id); r.checks[+x.getAttribute('data-c')] = x.checked; save(); } });
+  $('list').addEventListener('input', function(e){ var x = e.target; if(x.matches('textarea')){ res(x.closest('.card').id).note = x.value; save(); } if(x.matches('[data-slide]')){ var t = x.previousElementSibling.querySelector('.top'); t.style.width = x.value + '%'; var w = x.previousElementSibling.getBoundingClientRect().width; t.querySelector('img').style.width = w + 'px'; } });
+  $('list').addEventListener('toggle', function(e){ var d = e.target; if(d.tagName === 'DETAILS' && d.open){ var c = d.querySelector('[data-cmp]'); if(c){ var w = c.getBoundingClientRect().width; c.querySelector('.top img').style.width = w + 'px'; } } }, true);
+  $('lb').addEventListener('click', function(e){ if(e.target === $('lb') || e.target === $('lb-close')) $('lb').classList.remove('on'); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') $('lb').classList.remove('on'); });
+  $('export').onclick = function(){
+    var q = function(v){ v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var rows = [['id', 'run', 'screen', 'title', 'status', 'checks done', 'checks total', 'note']].concat(items.map(function(it){ var r = res(it.id); return [it.id, D.runs[it.run], it.screen, it.title, r.status === 'none' ? 'Not checked' : r.status === 'pass' ? 'Pass' : 'Fail', r.checks.filter(Boolean).length, it.checks.length, r.note]; }));
+    var csv = rows.map(function(r){ return r.map(q).join(','); }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv' })); a.download = 'qa-results.csv'; document.body.appendChild(a); a.click(); a.remove();
+  };
+  $('hood').innerHTML = '<h3 class="group" style="margin-top:0">Under the hood (no screen to check)</h3><ul>' + D.hood.map(function(x){ return '<li><b>' + esc(D.runs[x.run]) + '</b> · ' + esc(x.text) + '</li>'; }).join('') + '</ul><p class="sub" style="margin-top:10px">' + esc(D.runs['0']) + ': ' + esc(D.run0) + '</p>';
+  draw();
+})();
+</script>
+</body>
+</html>

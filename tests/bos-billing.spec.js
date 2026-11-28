@@ -33,9 +33,9 @@
       as('PU-101'); ok(!bosCreatePromo({ code:'SALES50', pct:5, validUntil:'2027-01-31' }).ok, 'a sales executive can’t create promos');
       as('PU-109'); ok(!bosCreatePromo({ code:'BIG', pct:5, validUntil:'2027-01-31' }).ok, 'code format');
       ok(!bosCreatePromo({ code:'DEEP40', pct:40, validUntil:'2027-01-31' }).ok, 'promo depth capped');
-      var r = bosCreatePromo({ code:'DIWALI15', pct:15, validUntil:'2027-01-31', maxUses:1, plans:['plan-floor'] }); ok(r.ok, r.reason); eq(r.promo.status, 'pending_approval');
+      ok(!bosCreatePromo({ code:'DIWALI15', pct:15, validUntil:'2027-01-31' }).ok, 'a promo needs a business purpose'); var r = bosCreatePromo({ code:'DIWALI15', pct:15, validUntil:'2027-01-31', maxUses:1, plans:['plan-floor'], reason:'Diwali campaign for agencies on Floor; budgeted in the Q3 marketing plan.' }); ok(r.ok, r.reason); eq(r.promo.status, 'pending_approval');
       ok(!bosPromoCheck('DIWALI15', 'plan-floor').ok, 'not usable before approval');
-      ok(!bosDecide(r.approval.id, true).ok, 'creator can’t approve'); as('PU-106'); ok(bosDecide(r.approval.id, true).ok, 'finance approves');
+      ok(!bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'creator can’t approve'); as('PU-106'); ok(bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'finance approves');
       ok(bosPromoCheck('DIWALI15', 'plan-floor').ok, 'now valid'); ok(!bosPromoCheck('DIWALI15', 'plan-desk').ok, 'plan restriction');
       as('PU-001');
     });
@@ -76,7 +76,7 @@
       as('PU-106'); var r = bosCorrectInvoice(doc.no, { lines:[{ desc:'Training', qty:1, unitPrice:4000 }], reason:'Agreed rate was 4,000' }); ok(r.ok && r.result === 'credit_note', JSON.stringify(r).slice(0, 160));
       ok(/^OON-CN\//.test(r.doc.no) && r.doc.originalNo === doc.no && r.doc.taxableINR === -1000, 'credit note for the difference'); eq(doc.status, 'issued', 'original kept');
       var up = bosCorrectInvoice(doc.no, { lines:[{ desc:'Training', qty:1, unitPrice:25000 }], reason:'Full-day training, not two hours' }); ok(up.ok && up.pending, 'over ₹10,000: approval first');
-      ok(!bosDecide(up.approval.id, true).ok, 'not by the requester'); as('PU-001'); ok(bosDecide(up.approval.id, true).ok, 'approved');
+      ok(!bosDecide(up.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'not by the requester'); as('PU-001'); ok(bosDecide(up.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'approved');
       ok(doc.adjustedBy.some(function(n){ return /^OON-DN\//.test(n); }), 'debit note issued'); var dn = bosTaxInvoice(doc.adjustedBy.filter(function(n){ return /DN/.test(n); })[0]); eq(dn.amount, 20000); ok(BOS.payLinks.some(function(l){ return l.docNo === dn.no; }), 'the debit note has its own payment link');
       var fy = bosFyOf(new Date().toISOString()); var csv = bosTaxReportCSV('credits', fy, 'all'); ok(/debit note/.test(csv) && /OON-CN\//.test(csv), 'both in the CA report');
     });
@@ -114,7 +114,8 @@
     await t('the customer’s Plan & billing shows checkout and their invoices; Finance has the billing desk', async function(){
       state.role = 'admin'; renderSidebar(); var html = sec_billing(true); ok(/Choose a plan/.test(html) && /Invoices and receipts/.test(html) && /OON\//.test(html), 'customer view');
       state.role = 'oontu'; as('PU-106'); bosActAs('PU-106'); renderSidebar(); showView('oontu-finance'); bosTab('oontu-finance', 6); await sleep(20);
-      var m = document.getElementById('main-content').textContent; ok(/Drafts/.test(m) && /Payment links/.test(m) && /Promo codes/.test(m) && /Renewals and reminders/.test(m), m.slice(0, 200));
+      var m = document.getElementById('main-content').textContent;
+      if(typeof o2On === 'function' && o2On('4c')){ var d4 = document.createElement('div'); d4.innerHTML = o2InvoicesTabHTML('invoices') + o2InvoicesTabHTML('links') + o2PlansTabHTML('promos') + o2InvoicesTabHTML('payments'); m = d4.textContent; }   /* O2 4c splits the billing desk across Invoices & payments and Plans & pricing */ ok(/Drafts/.test(m) && /Payment links/.test(m) && /Promo codes/.test(m) && /Renewals and reminders/.test(m), m.slice(0, 200));
       bosDraftDialog(); ok(document.querySelector('#bos-dialog-root [role=dialog]'), 'new invoice dialog'); bosDialogClose(); bosActAs('PU-001');
     });
     pub();

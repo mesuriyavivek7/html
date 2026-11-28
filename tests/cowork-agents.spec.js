@@ -1,3 +1,4 @@
+// @cx-runner off   (Cowork v2 retires per-agent plans, trials and Add; this spec keeps proving today's Cowork with CX off. CX behaviour: tests/cx-*.spec.js)
 /* Step 2b (23 November 2026): Today is numbers, waiting cards, a panel and a feed; the header has one status control with a menu; Settings use segmented
    controls and steppers; there is no Turn-off card. These checks reach the same rules through the new controls.
    Step 2 (Cowork made simple, 22 November 2026): the agent page is three tabs (Today, Settings, Activity) and Settings are cards that save as you go.
@@ -34,7 +35,8 @@
 
     await t('Cowork has exactly two tabs and five agent cards; no Campaigns tab, tiles, New campaign or open-jobs list', async function(){
       as('admin'); cowork(); await sleep(30); var m = main();
-      ok(qa('#ca-tabs [role=tab]', m).map(function(x){ return x.textContent; }).join() === 'Agents,Activity', 'tabs: ' + qa('#ca-tabs [role=tab]', m).map(function(x){ return x.textContent; }).join());
+      /* RX G2 (switch g2, off by default) adds a third tab, Results; off, exactly Agents and Activity as before */
+      ok(qa('#ca-tabs [role=tab]', m).map(function(x){ return x.textContent; }).join() === (typeof rxOn === 'function' && rxOn('g2') ? 'Agents,Activity,Results' : 'Agents,Activity'), 'tabs: ' + qa('#ca-tabs [role=tab]', m).map(function(x){ return x.textContent; }).join());
       ok(qa('.ca-card', m).map(function(c){ return c.querySelector('h3').textContent; }).join() === 'Talent Discovery,Engagement,Interviews,Offer & Joining,LinkedIn Outreach', 'five cards');
       var txt = m.textContent; ok(/Five agents working on your jobs\. Every action is logged and inside your limits\./.test(txt), 'the line'); ['New campaign','Campaigns','Expected revenue','Hours saved','Ready to call','Applicants from campaigns','Open jobs with no campaign','Workflows','Build from a sentence'].forEach(function(w){ ok(txt.indexOf(w) < 0, 'gone: ' + w); });
       ok(!BANNED.test(txt), 'wording'); ok(!q('#ca-needs') && !/Needs you/.test(txt), 'no Needs you strip'); ok(btn(m, /^Pause all Cowork$/), 'Pause all for the Owner');

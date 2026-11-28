@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oontu overnight build</title>
+<style>
+  :root{ --bg:#fff; --text:#16181d; --dim:#5d6370; --line:#e4e6ea; --soft:#f6f7f9;
+    --done:#1f7a3f; --done-bg:#e6f4ea; --prog:#1d5fbf; --prog-bg:#e7effb; --block:#b3261e; --block-bg:#fbe9e7;
+    --skip:#7a5b00; --skip-bg:#fdf3d7; --wait:#5d6370; --wait-bg:#eef0f3; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--text); font:14px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main{ max-width:1180px; margin:0 auto; padding:24px 16px 64px; }
+  h1{ font-size:24px; font-weight:600; margin:0 0 4px; }
+  h2{ font-size:16px; font-weight:600; margin:32px 0 10px; }
+  .meta{ color:var(--dim); margin:0 0 14px; }
+  .bar{ height:12px; background:var(--soft); border:1px solid var(--line); border-radius:999px; overflow:hidden; }
+  .bar i{ display:block; height:100%; background:var(--done); }
+  .barlbl{ font-size:13px; color:var(--dim); margin-top:6px; }
+  .wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:10px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th, td{ text-align:left; vertical-align:top; padding:9px 10px; border-bottom:1px solid var(--line); }
+  th{ background:var(--soft); font-weight:600; font-size:12px; color:var(--dim); white-space:nowrap; }
+  tr:last-child td{ border-bottom:0; }
+  td.id{ font-weight:600; white-space:nowrap; }
+  .st{ display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .st-Done{ color:var(--done); background:var(--done-bg); } .st-Done::before{ content:"✓ "; }
+  .st-In-progress{ color:var(--prog); background:var(--prog-bg); } .st-In-progress::before{ content:"● "; }
+  .st-Blocked{ color:var(--block); background:var(--block-bg); } .st-Blocked::before{ content:"✕ "; }
+  .st-Skipped{ color:var(--skip); background:var(--skip-bg); } .st-Skipped::before{ content:"↷ "; }
+  .st-Waiting{ color:var(--wait); background:var(--wait-bg); } .st-Waiting::before{ content:"○ "; }
+  .see{ color:var(--dim); font-size:12px; }
+  .see b{ color:var(--text); font-weight:600; }
+  code{ font-family:ui-monospace, Consolas, monospace; font-size:12px; background:var(--soft); padding:0 4px; border-radius:4px; }
+  ul.plain{ margin:0; padding-left:18px; } ul.plain li{ margin:4px 0; }
+  .empty{ color:var(--dim); }
+  @media (max-width:700px){ th:nth-child(5), td:nth-child(5){ min-width:220px; } }
+</style>
+</head>
+<body>
+<main id="root"><p>Loading…</p></main>
+<script id="o2-data" type="application/json">
+{
+    "updated":  "2026-11-28 01:56 IST",
+    "current":  "Audit task done · next: Cowork agents v2 (CX)",
+    "partA":  [
+                  {
+                      "id":  "0a",
+                      "name":  "Persistence, switches, reset",
+                      "status":  "Done",
+                      "tests":  "14/14",
+                      "tag":  "o2-step-0a",
+                      "what":  "Demo data survives a reload; Export, Import and Reset demo data.",
+                      "see":  "Switch 0a · any login · Sign-in screen › Prototype · simulated sign-in › O2 build › turn on 0a; make a change, reload"
+                  },
+                  {
+                      "id":  "0b",
+                      "name":  "Policy store, metrics, access level",
+                      "status":  "Done",
+                      "tests":  "10/10 (o2-metrics); regressions 313/313 off, 299/299 on",
+                      "tag":  "o2-step-0b",
+                      "what":  "Policy values in one place; MRR per currency from list prices (no proration, no tax); access level shown on each workspace.",
+                      "see":  "Switch 0b · Meera Krishnan (Super Admin) · Platform overview › MRR card (hover for the old figure); Tenants › a tenant › Access level; Platform Settings › Policy values"
+                  },
+                  {
+                      "id":  "0c",
+                      "name":  "Billing customer",
+                      "status":  "Done",
+                      "tests":  "8/8 (o2-billing-customer); regressions 180/180 off, 156/156 on",
+                      "tag":  "o2-step-0c",
+                      "what":  "A billing customer per paying account: invoices freeze buyer details; market locked by the first invoice; tax unchanged.",
+                      "see":  "Switch 0c · Meera Krishnan or a Finance login · Accounts › Northstar Talent Partners › Billing customer card › Edit billing details or Change market"
+                  },
+                  {
+                      "id":  "0d",
+                      "name":  "One visible invoice model",
+                      "status":  "Done",
+                      "tests":  "6/6 (o2-invoice-view); regressions 240/240 off, 222/222 on",
+                      "tag":  "o2-step-0d",
+                      "what":  "Only tax invoices (OON/…) are visible; overdue follows the tax invoice; legacy plans grandfathered and not offered.",
+                      "see":  "Switch 0d · Meera Krishnan · Business \u0026 finance › Invoices and refunds (OON numbers); Plans (Grandfathered labels); Tenants › Create workspace (no legacy plans)"
+                  },
+                  {
+                      "id":  "1a",
+                      "name":  "Navigation and redirects",
+                      "status":  "Done",
+                      "tests":  "9/9 (o2-nav-redirect); bos-login 8/8 on and off; crawl, light, motion green",
+                      "tag":  "o2-step-1a",
+                      "what":  "The new menu (Home · Work · Customers · Service · Billing · Admin); old links redirect; one access table.",
+                      "see":  "Switch 1a · any login (try Arjun, then Vikram) · the sidebar; open Tenants or Billing and payments from an old link and land on Workspaces or Invoices \u0026 payments"
+                  },
+                  {
+                      "id":  "1b",
+                      "name":  "Approvals inbox and bell",
+                      "status":  "Done",
+                      "tests":  "11/11 (o2-approvals, o2-bell); regressions green off and on",
+                      "tag":  "o2-step-1b",
+                      "what":  "One approvals inbox and a platform bell that opens each record.",
+                      "see":  "Switches 1a, 1b · Arjun raises a 15% discount on his deal, then sign in as Kavya · Work › Approvals; the bell"
+                  },
+                  {
+                      "id":  "1c",
+                      "name":  "Platform search",
+                      "status":  "Done",
+                      "tests":  "6/6 (o2-search); crawl, bos-login, a11y green off and on",
+                      "tag":  "o2-step-1c",
+                      "what":  "Platform search: IDs first, then names, grouped, permission-filtered, with actions.",
+                      "see":  "Switch 1c · Meera Krishnan · press Ctrl+K and type TCK-1001, an OON/ invoice number, Northstar or a GSTIN"
+                  },
+                  {
+                      "id":  "2",
+                      "name":  "Home command center",
+                      "status":  "Done",
+                      "tests":  "5/5 (o2-home); crawl, light, auth-flow, bos-login green off and on",
+                      "tag":  "o2-step-2",
+                      "what":  "Home: what needs the platform team first, six KPIs, four charts (illustrative where no history), recent activity.",
+                      "see":  "Switches 0b, 1a, 1b, 2 · Meera Krishnan · Home; click a KPI or a chart bar to open its list"
+                  },
+                  {
+                      "id":  "3a",
+                      "name":  "Workspace lifecycle",
+                      "status":  "Done",
+                      "tests":  "8/8 (o2-workspace-lifecycle); regressions 238/238 off, 239/239 on",
+                      "tag":  "o2-step-3a",
+                      "what":  "Workspace lifecycle as commands: second person for suspension, emergency path, archive tombstone, retention.",
+                      "see":  "Switches 1a, 3a · Meera Krishnan · Workspaces › Northstar › Suspend from the tenant page (a second person must approve)"
+                  },
+                  {
+                      "id":  "3b",
+                      "name":  "Workspace screens",
+                      "status":  "Done",
+                      "tests":  "7/7 (o2-workspace-360); regressions 142/142 off, 143/143 on",
+                      "tag":  "o2-step-3b",
+                      "what":  "Workspaces list and Workspace 360 with a danger zone; Account help actions run as commands.",
+                      "see":  "Switches 0b, 1a, 3a, 3b · Meera Krishnan · Customers › Workspaces › a row (eight tabs); Requests tab"
+                  },
+                  {
+                      "id":  "4a",
+                      "name":  "Subscriptions on the gateway",
+                      "status":  "Done",
+                      "tests":  "5/5 (o2-subscription-gateway); regressions 242/242 off and on",
+                      "tag":  "o2-step-4a",
+                      "what":  "Every subscription change is a command (audit row + event); items and change history on each subscription.",
+                      "see":  "Switches 4a and 4c · Meera Krishnan · Billing › Subscriptions › a subscription › Change history"
+                  },
+                  {
+                      "id":  "4b",
+                      "name":  "Subscription statuses",
+                      "status":  "Done",
+                      "tests":  "11/11 (o2-subscription-lifecycle, o2-access-level); regressions green off and on",
+                      "tag":  "o2-step-4b",
+                      "what":  "Subscription statuses with cancel at period end, cancel now (approval), downgrade at renewal, manual activation; unpaid = read-only.",
+                      "see":  "Switches 3a, 4a, 4b, 4c · Meera Krishnan · Billing › Subscriptions › a subscription › Cancel at period end"
+                  },
+                  {
+                      "id":  "4c",
+                      "name":  "Billing screens",
+                      "status":  "Done",
+                      "tests":  "6/6 (o2-billing-screens); regressions green off and on",
+                      "tag":  "o2-step-4c",
+                      "what":  "Billing split into Invoices \u0026 payments, Plans \u0026 pricing, Tax \u0026 reports; a Subscription page; Mark paid only in Invoices \u0026 payments.",
+                      "see":  "Switches 1a, 4c · Vikram Shah (Finance) · Billing › Invoices \u0026 payments (seven tabs); Subscriptions › a subscription"
+                  },
+                  {
+                      "id":  "4d",
+                      "name":  "Payment allocations and TDS",
+                      "status":  "Done",
+                      "tests":  "10/10 (o2-allocation); regressions 181/181 off, 182/182 on",
+                      "tag":  "o2-step-4d",
+                      "what":  "Payments and allocations: split and combined payments, partial, TDS with certificates, credit, reversals; suggestions only on Finance confirmation.",
+                      "see":  "Switches 1a, 4c, 4d · Vikram Shah · Billing › Invoices \u0026 payments › Reconciliation (Unmatched, Partly paid, TDS receivable)"
+                  },
+                  {
+                      "id":  "5",
+                      "name":  "Customers",
+                      "status":  "Done",
+                      "tests":  "6/6 (o2-customers); regressions 155/155 off, 156/156 on",
+                      "tag":  "o2-step-5",
+                      "what":  "Account 360 with both renewals on one page; Pipeline tabs including Sign-ups; Reports with pipeline analytics.",
+                      "see":  "Switches 1a, 5 · Meera Krishnan or Kavya Iyer · Customers › Accounts › Northstar Talent Partners; Customers › Pipeline › Sign-ups"
+                  },
+                  {
+                      "id":  "6",
+                      "name":  "Service and incidents",
+                      "status":  "Done",
+                      "tests":  "5/5 (o2-incident); regressions 141/141 off, 142/142 on",
+                      "tag":  "o2-step-6",
+                      "what":  "Six visible ticket states; incidents with severity, flow, cadence reminder and review; announcements from an incident.",
+                      "see":  "Switches 1a, 6 · Nisha Pillai or Meera Krishnan · Service › Incidents › open one › Publish update"
+                  },
+                  {
+                      "id":  "7a",
+                      "name":  "Audit completeness",
+                      "status":  "Done",
+                      "tests":  "7/7 (o2-audit); BOS and shell specs 316/316 off and on",
+                      "tag":  "o2-step-7a",
+                      "what":  "Refusals, failures and failed sign-ins are audited once with who, outcome and reason; nothing behaves differently.",
+                      "see":  "Switches 7a, 7c · sign in as Arjun and try a Finance export · then Meera › Admin › Audit \u0026 security › Refusals"
+                  },
+                  {
+                      "id":  "7b",
+                      "name":  "MFA and step-up",
+                      "status":  "Done",
+                      "tests":  "5/5 (o2-mfa); sign-in specs 220/220 off, 221/221 on",
+                      "tag":  "o2-step-7b",
+                      "what":  "Second sign-in step for Oontu employees; step-up for high-risk actions after 15 minutes.",
+                      "see":  "Switch 7b · sign in as any Oontu employee · enter 246810 (shown in Prototype · simulated sign-in)"
+                  },
+                  {
+                      "id":  "7c",
+                      "name":  "People and access",
+                      "status":  "Done",
+                      "tests":  "13/13 (o2-people, o2-sod); regressions green off and on",
+                      "tag":  "o2-step-7c",
+                      "what":  "People \u0026 access with teams, roles and access reviews; duty-conflict checks; Audit \u0026 security with an approved export; policy changes need Security and Finance.",
+                      "see":  "Switches 1a, 7a, 7c · Dev Patel or Meera Krishnan · Admin › People \u0026 access; Admin › Audit \u0026 security › Request export"
+                  },
+                  {
+                      "id":  "8a",
+                      "name":  "Flags and entitlements",
+                      "status":  "Done",
+                      "tests":  "5/5 (o2-entitlements); regressions 214/214 off, 215/215 on",
+                      "tag":  "o2-step-8a",
+                      "what":  "Ops flags (kill switch with reason) and plan entitlements; workspace overrides that end on their date; availability identical for all seeds.",
+                      "see":  "Switches 1a, 3b, 8a · Meera Krishnan · Admin › Product controls; Workspaces › a workspace › Entitlements"
+                  },
+                  {
+                      "id":  "8b",
+                      "name":  "AI agents governance",
+                      "status":  "Done",
+                      "tests":  "6/6 (o2-agents); regressions 151/151 off, 152/152 on",
+                      "tag":  "o2-step-8b",
+                      "what":  "AI agents: allow-listed tools, daily limits, a run log without content; act tools never high-risk.",
+                      "see":  "Switches 1a, 8b · Meera Krishnan · Admin › AI agents › Tools \u0026 policies; Activity"
+                  },
+                  {
+                      "id":  "9",
+                      "name":  "Integration and cleanup",
+                      "status":  "Done",
+                      "tests":  "8/8 (o2-flows), run twice",
+                      "tag":  "o2-step-9",
+                      "what":  "End-to-end flows on the new screens with every step on; docs updated; old code listed for removal (nothing removed).",
+                      "see":  "Turn on every switch · Meera Krishnan · walk Home → Workspaces → Billing → People \u0026 access"
+                  }
+              ],
+    "partB":  [
+                  {
+                      "id":  "G1",
+                      "name":  "Live workflow triggers",
+                      "status":  "Done",
+                      "tests":  "9/9 (rx-g1-live); regressions 292/292 off, green on",
+                      "tag":  "rx-g1",
+                      "what":  "Published workflows run on real events for that one candidate, once, with consent and a daily limit; cards show live runs and skips.",
+                      "see":  "Switch G1 (Prototype tools › Recruiter-app upgrades) · Alex (agency admin) · Cowork › a workflow › Publish; accept an offer; the card shows Actions today"
+                  },
+                  {
+                      "id":  "G2",
+                      "name":  "Automation results",
+                      "status":  "Done",
+                      "tests":  "rx-g2-results 11/11 · regressions on and off green (351/351 off)",
+                      "tag":  "rx-g2",
+                      "what":  "Each live workflow shows what it influenced: replies, submissions, interviews, offers, joins and fees (estimates labelled).",
+                      "see":  "Owner: Cowork › Results, or the Home card “Automation influenced …”"
+                  },
+                  {
+                      "id":  "G3",
+                      "name":  "Money-at-risk board",
+                      "status":  "Done",
+                      "tests":  "rx-g3-leaks 10/10 · regressions on 580/580, off 550/550",
+                      "tag":  "rx-g3",
+                      "what":  "A Money at risk screen: ten rules find money already earned but not collected, each with one fix button; Home card with at-risk and recovered totals.",
+                      "see":  "Owner/Accounts: Home or PayTrack card, then Money at risk"
+                  },
+                  {
+                      "id":  "G4",
+                      "name":  "Redeployment and contract-end decisions",
+                      "status":  "Done",
+                      "tests":  "rx-g4-redeploy 10/10 · regressions on 617/617, off 576/577 (motion flake, passes alone)",
+                      "tag":  "rx-g4",
+                      "what":  "Contractors ending soon get ranked next jobs (thin margins flagged), an availability check link and an ask-to-extend; companies get an extend / make permanent / end card and silver medalists.",
+                      "see":  "Agency: an assignment panel or the Redeploy board. Company: Contract hiring, a requisition."
+                  },
+                  {
+                      "id":  "G5",
+                      "name":  "Own talent first",
+                      "status":  "Done",
+                      "tests":  "rx-g5-own-first 6/6 · regressions on 575/575, off 529/529",
+                      "tag":  "rx-g5",
+                      "what":  "New jobs first look at people already in the database (with clear reasons for who is left out); companies keep new roles for their own pool for 5 working days before vendors.",
+                      "see":  "Agency: a job page. Company: a requisition page."
+                  },
+                  {
+                      "id":  "G6",
+                      "name":  "Interview self-booking",
+                      "status":  "Done",
+                      "tests":  "rx-g6-booking 10/10 · regressions on 478/478 · full suite off 1311/1311",
+                      "tag":  "rx-g6",
+                      "what":  "Candidates pick their own interview time from a link; it books exactly as a recruiter would, and can be moved or cancelled until 12 hours before.",
+                      "see":  "Recruiter: a profile in the client process â€º Schedule â€º Send a booking link instead"
+                  }
+              ],
+    "problems":  [
+
+                 ],
+    "flaky":  [
+                  "Headless Chrome occasionally hangs at launch (seen once on bos-tax before the build); a rerun alone passes.",
+                  "cowork-visual gives no result when two test passes run at once; passes 15/15 alone. Passes are now always run one at a time.",
+                  "Dialog-focus checks (submission-flow K4, intake-flow G6) and jd-reader occasionally fail in long runs and pass alone; motion collapse-pill is the brief\u0027s known flake.",
+                  "motion collapse-pill (G4 off pass): passed alone"
+              ],
+    "decisions":  [
+                      [
+                          "Switch defaults",
+                          "Off in code; tests turn them on."
+                      ],
+                      [
+                          "Briefs location",
+                          "docs/O2-BUILD-BRIEF.md and docs/OONTU-GAME-CHANGERS-PROMPT.md were in Downloads, not in docs/; copied into docs/ at start."
+                      ],
+                      [
+                          "Internal workspaces",
+                          "No seed is Oontu\u0027s own or a test workspace, so every seeded workspace is internal:false; the flag is ready for future ones."
+                      ],
+                      [
+                          "Provisioning access level",
+                          "§3.2 has no provisioning column; a workspace still being set up is shown as Blocked (nobody signs in yet)."
+                      ],
+                      [
+                          "Policy data vs switch",
+                          "PLATFORM_SETTINGS.policy and tenant.internal are always present (additive, harmless); switches only change screens and code paths."
+                      ],
+                      [
+                          "0c wrap point",
+                          "bosTaxPartyOf is wrapped (it builds the party bosTaxSegment receives); bosTaxSegment itself is untouched."
+                      ],
+                      [
+                          "0c snapshot hook",
+                          "Older paths issue invoices through a private function, so the buyer snapshot hooks pushes onto the invoice ledger after page load."
+                      ],
+                      [
+                          "International currency",
+                          "Billing customers outside India bill in USD (plans are priced only in INR and USD)."
+                      ],
+                      [
+                          "Demo tenant plan",
+                          "Not moved: Northstar stays on Growth, labelled grandfathered."
+                      ],
+                      [
+                          "Legacy plans in commands",
+                          "Hidden from pickers only; commands still accept them so existing records keep working."
+                      ],
+                      [
+                          "Overdue date",
+                          "Subscription tax invoices carry no due date today, so the internal row\u0027s due date is used when the tax invoice has none; settlement always comes from the tax invoice."
+                      ],
+                      [
+                          "1a merged screens",
+                          "Until its own step, a new id that merges two screens shows both behind a tab strip (Workspaces: All · Requests; Pipeline: Pipeline · Sign-ups)."
+                      ],
+                      [
+                          "1a and bos-login.spec",
+                          "With 1a on the spec reads its screen lists through the old→new id map (exact lists); with 1a off it is unchanged. Before/after table in the report."
+                      ],
+                      [
+                          "1b Approvals access",
+                          "Approvals is open to every active employee; deciding still needs the approving permission."
+                      ],
+                      [
+                          "1c Sales ticket scope",
+                          "Sales read tickets inside Account 360 but have no Tickets screen; search shows them tickets only on accounts they or their reports own."
+                      ],
+                      [
+                          "2 Home charts",
+                          "No monthly history exists yet, so chart history is a fixed illustrative series labelled Illustrative data; the current points are real."
+                      ],
+                      [
+                          "Older specs and the new menu",
+                          "Specs that assert the old Oontu menu read the §5 menu only while 1a is on (same strictness); with 1a off their expectations are unchanged."
+                      ],
+                      [
+                          "3a second approver in seeds",
+                          "Only the Super Admin holds platform-tenant:activate in the seeds; a workspace-close approval type was added for suspended→closed. Recommended: a seeded Platform Manager login."
+                      ],
+                      [
+                          "4a checkout hook",
+                          "Checkout completion is private to the billing script, so the verified payment event is wrapped; 0c\u0027s checkout link was fixed the same way."
+                      ],
+                      [
+                          "4b dunning",
+                          "Today\u0027s reminder schedule is kept; it equals the policy defaults (1, 3, 7 days; read-only after 7)."
+                      ],
+                      [
+                          "4d ambiguous amounts",
+                          "An amount-only match is suggested only when exactly one open invoice of a matching payer has that outstanding amount."
+                      ],
+                      [
+                          "7b step-up scope",
+                          "Step-up applies to sessions that signed in through the two steps; developer shortcuts that switch the acting employee have no session to age."
+                      ],
+                      [
+                          "7c duty conflicts in templates",
+                          "Seeded Finance templates already hold invoice + verify payment; a conflict inside one template is warned and audited, a conflict from combining roles needs the Security Administrator override."
+                      ],
+                      [
+                          "G1 Run Test",
+                          "wfRunTest is not refactored; wfPerform applies the same checks per candidate so Run Test output cannot change. Consent = candidate consent or a given right-to-represent consent."
+                      ],
+                      [
+                          "G2 wording",
+                          "Agency Cowork never says “workflow” (cowork-simple bans it), so Results copy says “automation”. Results live in Cowork (Workflow Studio routes there)."
+                      ],
+                      [
+                          "G3 fixes",
+                          "Fixes call existing flows; where the target is a later upgrade (G4 decision card, G5 direct sourcing) the button opens the current screen for that record."
+                      ]
+                  ],
+    "suite":  {
+                  "off":  "1310/1311 (final; demo-data date-dependent, pre-existing)",
+                  "on":  "1312/1313 (final; same demo-data check)"
+              },
+    "audit":  {
+                  "status":  "Done · Phase 1 tagged o2-audited · Phase 2 audited G1–G6 (nothing to build)",
+                  "lines":  [
+                                "Every step has its commit and tag (22 O2 steps, 6 upgrades).",
+                                "Diff from o2-step-0a: no lines removed from the prototype; three problems fixed in f8c04ea (lifecycle run and billing-customer sync as commands; one spec check made exact again).",
+                                "Full suite, all switches off: 1311/1311.",
+                                "Full suite, every switch on: 1215/1216 + screens-crawl hung (watchdog); motion flake and screens-crawl pass alone (8/8, 97/97).",
+                                "Full suite with demo saving on (0a acceptance 4): 1311/1311, identical to saving off.",
+                                "Final full suite: off 1310/1311, all on 1312/1313. The only failure is demo-data Vistaar (date-dependent seed, fails the same on pre-O2 code since 2026-11-28)."
+                            ]
+              },
+    "rxAudit":  {
+                    "value":  [
+                                  {
+                                      "id":  "G1",
+                                      "name":  "Live workflow triggers",
+                                      "sw":  "g1",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g1-live 9/9",
+                                      "notes":  "Exactly one action per event; paused never runs; Run Test unchanged."
+                                  },
+                                  {
+                                      "id":  "G2",
+                                      "name":  "Automation results",
+                                      "sw":  "g2",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g2-results 11/11",
+                                      "notes":  "30-day attribution; amounts only for billing viewers; estimates labelled."
+                                  },
+                                  {
+                                      "id":  "G3",
+                                      "name":  "Money at risk",
+                                      "sw":  "g3",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g3-leaks 10/10",
+                                      "notes":  "Ten rules, fix / dismiss / self-close; commit 915386d from your account."
+                                  },
+                                  {
+                                      "id":  "G4",
+                                      "name":  "Redeployment and contract-end decisions",
+                                      "sw":  "g4",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g4-redeploy 10/10",
+                                      "notes":  "Triggers once per threshold; thin margins flagged; decisions via existing functions."
+                                  },
+                                  {
+                                      "id":  "G5",
+                                      "name":  "Own talent first",
+                                      "sw":  "g5",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g5-own-first 6/6",
+                                      "notes":  "Exclusions with reasons; direct sourcing window on the existing hold."
+                                  },
+                                  {
+                                      "id":  "G6",
+                                      "name":  "Interview self-booking",
+                                      "sw":  "g6",
+                                      "verdict":  "Done",
+                                      "test":  "rx-g6-booking 10/10",
+                                      "notes":  "Books through the hand path; taken slots vanish; cutoff respected."
+                                  }
+                              ],
+                    "Count":  6
+                }
+}
+</script>
+<script>
+(function(){
+  var d = JSON.parse(document.getElementById('o2-data').textContent);
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function rows(list){
+    return '<div class="wrap"><table><thead><tr><th>Step</th><th>Name</th><th>Status</th><th>Tests</th><th>What it adds</th><th>See it</th><th>Tag</th></tr></thead><tbody>' +
+      list.map(function(s){
+        return '<tr><td class="id">' + esc(s.id) + '</td><td>' + esc(s.name) + '</td><td><span class="st st-' + esc(s.status).replace(/ /g, '-') + '">' + esc(s.status) + '</span></td>' +
+          '<td>' + (esc(s.tests) || '<span class="empty">—</span>') + '</td><td>' + (esc(s.what) || '<span class="empty">—</span>') + '</td>' +
+          '<td class="see">' + (s.see ? esc(s.see).replace(/^([^·]+)·([^·]+)·/, '<b>$1</b>·<b>$2</b>·') : '<span class="empty">—</span>') + '</td><td>' + (s.tag ? '<code>' + esc(s.tag) + '</code>' : '<span class="empty">—</span>') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+  var all = d.partA.concat(d.partB), done = all.filter(function(s){ return s.status === 'Done'; }).length;
+  var pct = Math.round(done * 100 / all.length);
+  var html = '<h1>Oontu overnight build</h1><p class="meta">Last updated ' + esc(d.updated) + ' · Current step: <b>' + esc(d.current) + '</b> · Branch <code>o2/overnight-2026-11-26</code></p>' +
+    '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + all.length + '" aria-valuenow="' + done + '" aria-label="Steps done"><i style="width:' + pct + '%"></i></div>' +
+    '<p class="barlbl">' + done + ' of ' + all.length + ' steps done (' + pct + '%) · Blocked: ' + all.filter(function(s){ return s.status === 'Blocked'; }).length + ' · Skipped: ' + all.filter(function(s){ return s.status === 'Skipped'; }).length + '</p>' +
+    '<h2>Part A · O2 platform</h2>' + rows(d.partA) +
+    '<h2>Part B · Recruiter app</h2>' + rows(d.partB) +
+    (d.audit ? '<h2>Audit</h2><p class="meta">' + esc(d.audit.status || 'Not started') + '</p>' + ((d.audit.lines || []).length ? '<ul class="plain">' + d.audit.lines.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '') : '') +
+    ((d.rxAudit = d.rxAudit && (d.rxAudit.value || d.rxAudit)) && d.rxAudit.length ?'<h2>Recruiter-app upgrades G1–G6</h2><div class="wrap"><table><thead><tr><th>Upgrade</th><th>Switch</th><th>Audit</th><th>Test</th><th>Notes</th></tr></thead><tbody>' + d.rxAudit.map(function(r){ return '<tr><td class="id">' + esc(r.id) + ' ' + esc(r.name) + '</td><td><code>' + esc(r.sw) + '</code></td><td><span class="st st-' + esc(r.verdict).replace(/ /g, '-') + '">' + esc(r.verdict) + '</span></td><td>' + esc(r.test) + '</td><td>' + esc(r.notes) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '') +
+    '<h2>Problems</h2>' + (d.problems.length ? '<ul class="plain">' + d.problems.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<p class="empty">No blocked steps.</p>') +
+    '<p><b>Flaky tests noted</b></p>' + (d.flaky.length ? '<ul class="plain">' + d.flaky.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<p class="empty">None.</p>') +
+    '<h2>Decisions made</h2><div class="wrap"><table><thead><tr><th>Situation</th><th>Decision</th></tr></thead><tbody>' + d.decisions.map(function(r){ return '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+    '<h2>Last full-suite result</h2><ul class="plain"><li><b>Switches off:</b> ' + esc(d.suite.off) + '</li><li><b>Switches on:</b> ' + esc(d.suite.on) + '</li></ul>';
+  document.getElementById('root').innerHTML = html;
+})();
+</script>
+</body>
+</html>

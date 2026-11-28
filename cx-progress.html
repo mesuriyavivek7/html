@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cowork v2 progress</title>
+<style>
+  :root { --bg:#f7f7f5; --card:#fff; --ink:#1b1b1b; --dim:#6b6b6b; --line:#e6e6e3; --accent:#2f5d50; --warn:#8a5a00; }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) { --bg:#141414; --card:#1d1d1d; --ink:#ececec; --dim:#a0a0a0; --line:#2c2c2c; --accent:#8fc1b0; --warn:#e0b05a; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:22px; margin:0 0 4px; } h2 { font-size:16px; margin:28px 0 8px; }
+  .meta { color:var(--dim); margin:0 0 16px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .card b { display:block; font-size:20px; } .card span { color:var(--dim); font-size:13px; }
+  .wrap { overflow-x:auto; background:var(--card); border:1px solid var(--line); border-radius:12px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; } th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--dim); font-weight:500; } tr:last-child td { border-bottom:0; }
+  .st { padding:2px 8px; border-radius:999px; border:1px solid var(--line); font-size:12px; white-space:nowrap; }
+  .st-done { color:var(--accent); border-color:var(--accent); } .st-isolated { color:var(--warn); border-color:var(--warn); }
+  ul { margin:0; padding-left:18px; } .thumbs { display:flex; flex-wrap:wrap; gap:8px; } .thumbs img { width:180px; border:1px solid var(--line); border-radius:8px; }
+</style>
+</head>
+<body>
+<main id="root"></main>
+<script id="cx-data" type="application/json">
+{
+    "updated":  "2026-11-28 09:06 IST",
+    "phases":  [
+                   {
+                       "id":  "C0",
+                       "name":  "Map the code (audit)",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "—",
+                       "note":  "CX-AUDIT.md; baseline 1310/1311 off, 1312/1313 on (demo-data date-dependent, pre-existing)"
+                   },
+                   {
+                       "id":  "C1",
+                       "name":  "One common credit wallet",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-credits 14/14",
+                       "note":  "Regressions green with CX on and off (demo-data date-dependent, pre-existing)"
+                   },
+                   {
+                       "id":  "C1b",
+                       "name":  "Channel setup (Set up Cowork)",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-setup 12/12",
+                       "note":  "Checklist, channel pages, readiness, cxSend with fallback, webhooks; regressions green on and off"
+                   },
+                   {
+                       "id":  "C2",
+                       "name":  "Talent Discovery: intake and evidence matching",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-match 11/11",
+                       "note":  "Evidence model p@10 1.0 / 1.0 / 1.0, 0 must-have violations; old model 1.0 / 1.0 / 0.9 with 1 violation (nurse); 1,000 ranked \u003c 300 ms"
+                   },
+                   {
+                       "id":  "C3",
+                       "name":  "Outreach playbook and Simple Campaign Builder",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-campaign-builder 13/13",
+                       "note":  "Playbook per segment, weekly cap 2 with moves, A/B, reply outcomes; builder in Cowork \u003e Campaigns (Who / Steps / Review), templates by scope, starts-when, conditions, branch, per-user defaults"
+                   },
+                   {
+                       "id":  "C4",
+                       "name":  "LinkedIn Outreach (recruiter-assisted)",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-linkedin 9/9",
+                       "note":  "Assisted queue per recruiter (Jaydeep 50, Suresh 60, Prakash 30), first-sender ownership, capacity with waiting-capacity, shared weekly cap, 2 credits a task; automation refused and LI_PLATFORM unread with CX on; UNI Box key per job"
+                   },
+                   {
+                       "id":  "C5",
+                       "name":  "Screening: replies to prospects",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-screening 9/9",
+                       "note":  "Opt-out first; intent rules + simulated AI; one question per message in the reply language; Needs you below 0.7; prospect with summary, answers, evidence, consent; suggestions only for non-fits; window rule; idempotent events"
+                   },
+                   {
+                       "id":  "C6",
+                       "name":  "Delivery Guardian",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-guardian 10/10",
+                       "note":  "Stage timers once each (profile sent, interview booked/passed, offer, notice, joining, guarantee), safety-critical on the reserve, owner chain, per-client thresholds from dismissals, 3 backups on High risk, no automatic Joined, Live hires board"
+                   },
+                   {
+                       "id":  "C7",
+                       "name":  "Revenue \u0026 Redeploy, Kairo as manager",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-kairo-revenue 9/9",
+                       "note":  "Revenue \u0026 Redeploy wraps G3 rules and G4 ranking (rupees at risk, recovered on resolve, redeploy to Talent Discovery, extend or convert); Kairo: stuck today, start sourcing (asks first), why flagged, credits by job and agent, pause campaign (asks first)"
+                   },
+                   {
+                       "id":  "C8",
+                       "name":  "Retire Engagement\u0027s name, migration",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-migration 5/5",
+                       "note":  "CX_STEP_MAP (21 steps, one owner each, none twice), CX_OWNERSHIP (13 stages, one owner each), one-time migration log, six agents in order with what they do and the credit line, no Engagement text with CX on"
+                   },
+                   {
+                       "id":  "C9",
+                       "name":  "UX polish pass",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "all cx specs 92/92 + regressions",
+                       "note":  "13 screens x 2 sizes in cx-screens/, each looked at; fixed: Six agents line, chosen chip style, template-mode preview, WhatsApp templates one row each, numbered steps, pick evidence lines, stacked tables on phones, Kairo grouping, Needs-you choices, one description per card"
+                   },
+                   {
+                       "id":  "C10",
+                       "name":  "Final audit and report",
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "cx-audit 4/4",
+                       "note":  "Full suite CX off 1407/1408, CX on 1407/1408 (demo-data date seed only); fixtures re-run; 7 clicks; no LinkedIn automation reachable; CX-REPORT.md written"
+                   }
+               ],
+    "counters":  {
+                     "tests":  "full suite 1407/1408 off and on",
+                     "precision":  "Java 1.0 · Sales 1.0 · Nurse 1.0 (old 1.0 · 1.0 · 0.9)",
+                     "clicks":  "7 clicks (limit 12)",
+                     "seed":  "466 / 19,534 — matches"
+                 },
+    "decisions":  [
+                      "C0: demo-data Vistaar fails from 2026-11-28 on old and new code alike (date-dependent seed); treated as pre-existing, outside CX.",
+                      "C0: AX_SWITCH / A0–A9 not present; nothing in CX depends on them.",
+                      "C0: phase commits on o2/overnight-2026-11-26 (where the queue has been committing), local only.",
+                      "C1: per phase, targeted regressions with CX on and off; full suite at C1, C5 and C10 (a full suite per phase twice would be ~25 h).",
+                      "C1: cowork-agents pinned to CX off (// @cx-runner off): it tests per-agent plans, trials and Add, which CX retires; settings\u0027 trial test runs with CX off inside the test.",
+                      "C1: seeded Cowork history (CW.seeding) is never charged; the wallet seed is the example day.",
+                      "C1: rupee amounts only for people with billing view; a recruiter sees credits only.",
+                      "C1b: Configure opens the channel page directly (the app router rewrites the address); #/settings/channels/\u003cchannel\u003e?return=cowork deep links still work.",
+                      "C2: fixtures shuffled with a fixed order before both models rank, so neither gets the fixture order for free; must-haves use CV evidence over the profile (a skill only on the profile but absent from the CV is not met).",
+                      "C2: runner // @fixture \u003cpath\u003e inlines evaluation fixtures before a spec.",
+                      "C3: the agency has no Campaigns screen today, so under CX the builder is Cowork \u003e Campaigns (reusing the job audience and Talent Discovery picks); Workflow Studio stays behind Advanced.",
+                      "C3: a team is the recruiter department (the roster has no team field); the honesty check reads the message as written, before names are filled in (a candidate sharing a recruiter first name is not a wrong-sender warning).",
+                      "C3: a step skipped for its condition keeps the next step own wait instead of sending it at once.",
+                      "C4: the LinkedIn automation tests in cowork.spec (rotation, checkpoints, masked GoLogin token) and the LinkedIn infrastructure settings test run with CX off inside the test; their assertions are unchanged. cxWeekCount counts a person-sent LinkedIn message once (it is in CX_OUTBOX).",
+                      "C5 checkpoint: full suite CX off 1376/1379. fix-d2 F5 read the seeded ledger action labels as inline calls (word followed by a bracket); labels reworded with a middle dot. motion collapse-pill flake passed alone; demo-data is the date-dependent seed.",
+                      "C5 checkpoint, CX on: green except the not-yet-built C6/C7 specs, demo-data (date seed) and o2-nav-redirect, whose LinkedIn-infrastructure settings test now runs with CX off inside the test.",
+                      "C7: job 42 (the example day) resolves to the workspace Java backend job through CX_JOB_ALIAS; Revenue \u0026 Redeploy runs the G3 rules directly, whatever the RX switch.",
+                      "C8: cards keep data-agent with the old id (old specs and handlers) and add data-cx-agent; the new Revenue \u0026 Redeploy card is its own card type (cx-rr-card) beside the old card contract.",
+                      "C9: screenshots by headless Chrome --screenshot (Playwright is not installed). The page itself overflows at 375 px with CX off too (top bar and cards; pre-existing); CX tables stack into labelled rows on phones."
+                  ],
+    "isolated":  [
+
+                 ],
+    "screens":  [
+                    "cx-screens/agents-desktop-cxoff.png",
+                    "cx-screens/agents-desktop.png",
+                    "cx-screens/agents-mobile-cxoff.png",
+                    "cx-screens/agents-mobile.png",
+                    "cx-screens/calendar-desktop.png",
+                    "cx-screens/calendar-mobile.png",
+                    "cx-screens/campaign-desktop.png",
+                    "cx-screens/campaign-mobile.png",
+                    "cx-screens/credits-desktop.png",
+                    "cx-screens/credits-mobile.png",
+                    "cx-screens/email-desktop.png",
+                    "cx-screens/email-mobile.png",
+                    "cx-screens/kairo-desktop.png",
+                    "cx-screens/kairo-mobile.png",
+                    "cx-screens/li-queue-desktop.png",
+                    "cx-screens/li-queue-mobile.png",
+                    "cx-screens/linkedin-desktop.png",
+                    "cx-screens/linkedin-mobile.png",
+                    "cx-screens/live-hires-desktop.png",
+                    "cx-screens/live-hires-mobile.png",
+                    "cx-screens/needs-you-desktop.png",
+                    "cx-screens/needs-you-mobile.png",
+                    "cx-screens/picks-desktop.png",
+                    "cx-screens/picks-mobile.png",
+                    "cx-screens/setup-desktop.png",
+                    "cx-screens/setup-mobile.png",
+                    "cx-screens/whatsapp-desktop.png",
+                    "cx-screens/whatsapp-mobile.png"
+                ]
+}
+</script>
+<script>
+(function(){
+  var d = JSON.parse(document.getElementById('cx-data').textContent);
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  var done = d.phases.filter(function(p){ return p.status === 'done'; }).length;
+  var html = '<h1>Cowork v2 progress</h1><p class="meta">Updated ' + esc(d.updated) + ' · ' + done + ' of ' + d.phases.length + ' phases done · switch <code>CX_SWITCH</code> (off by default)</p>' +
+    '<div class="cards"><div class="card"><b>' + esc(d.counters.tests) + '</b><span>Tests</span></div><div class="card"><b>' + esc(d.counters.precision) + '</b><span>Precision@10 per fixture job</span></div><div class="card"><b>' + esc(d.counters.clicks) + '</b><span>Campaign builder clicks</span></div><div class="card"><b>' + esc(d.counters.seed) + '</b><span>Seed ledger check (466 / 19,534)</span></div></div>' +
+    '<h2>Phases</h2><div class="wrap"><table><thead><tr><th>Phase</th><th>Name</th><th>Status</th><th>Start</th><th>End</th><th>Specs</th><th>Notes</th></tr></thead><tbody>' +
+    d.phases.map(function(p){ return '<tr><td>' + esc(p.id) + '</td><td>' + esc(p.name) + '</td><td><span class="st st-' + esc(p.status).replace(/ /g, '-') + '">' + esc(p.status) + '</span></td><td>' + esc(p.start) + '</td><td>' + esc(p.end) + '</td><td>' + esc(p.specs) + '</td><td>' + esc(p.note) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+    '<h2>Decision log (latest first)</h2><ul>' + d.decisions.slice().reverse().map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
+    '<h2>Isolated behind sub-switches</h2>' + (d.isolated.length ? '<ul>' + d.isolated.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '<p class="meta">None.</p>') +
+    '<h2>Screens</h2>' + (d.screens.length ? '<div class="thumbs">' + d.screens.map(function(s){ return '<a href="' + esc(s) + '"><img src="' + esc(s) + '" alt="' + esc(s) + '"></a>'; }).join('') + '</div>' : '<p class="meta">Screenshots come with C9.</p>');
+  document.getElementById('root').innerHTML = html;
+})();
+</script>
+</body>
+</html>

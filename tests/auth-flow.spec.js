@@ -188,6 +188,17 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       eq(state.role, 'admin'); eq(authAppSession.method, 'email_code');
     });
 
+    await test('02T Sign-up, last step: no “suTick is not defined” or “arriveInto is not defined”; the green tick lands and the workspace opens on its own (no click)', async function(){
+      const errs = []; const onErr = function(e){ errs.push(e.message || String(e.error)); }; window.addEventListener('error', onErr);
+      try {
+        await signUpTo(null, 'agency', { email:'tick@startup.example', org:'Tick Talent' });
+        const landed = await waitFor(function(){ const d = q('#oa-h .ow-bdot, #oa-h .oa-dotland.is-in'); return !!d; }, 3000); assert(landed, 'the green tick lands as the full stop: ' + ((q('#oa-h') || {}).outerHTML || 'no #oa-h').slice(0, 300));
+        assert(!appVisible(), 'not before the ready screen has been seen');
+        assert(await waitFor(function(){ return appVisible(); }, 6000), 'the workspace opens on its own');
+        assert(!errs.some(function(m){ return /suTick/.test(m); }), 'no suTick error: ' + errs.join(' | ')); assert(!errs.length, 'no errors: ' + errs.join(' | '));
+      } finally { window.removeEventListener('error', onErr); }
+    });
+
     await test('01d An account made through Create workspace is still there after a page reload, so signing in is a sign-in', async function(){
       const email = 'returning.owner@startup.example';
       await authApi.sendCode({ email:email }); const v = await authApi.verifyCode({ email:email, code:authApi._latestEmail(email).code });
@@ -1035,7 +1046,8 @@ window.AUTH_SKIP_OTP = false;   /* the real code step is what these tests check 
       const start = PLATFORM_TENANTS.length;
       state.role = 'oontu'; const app = document.getElementById('app'); app.classList.remove('hidden'); app.classList.add('flex'); document.getElementById('onboarding').classList.add('hidden');
       showView('oontu-tenants'); await idle();
-      const btn = Array.from(document.querySelectorAll('#main-content button')).find(function(b){ return b.textContent.trim()==='Create tenant'; });
+      const label = typeof o2On === 'function' && o2On('3b') ? 'Create workspace' : 'Create tenant';   /* O2 3b names it Create workspace; off, exactly the old label (O2 audit: was either label in both states) */
+      const btn = Array.from(document.querySelectorAll('#main-content button')).find(function(b){ return b.textContent.trim()===label; });
       btn.click();
       ctSheet.company = 'Kite Hiring'; ctSheet.name = 'Ravi Menon'; ctSheet.email = 'ravi@gmail.com'; ctSheet.mobile = '98250 41207'; ctPickType('Corporate');
       ctSubmit(); eq(document.getElementById('ct-email-err').textContent, AUTH_MESSAGES.personal_email, 'corporate work-email rule'); eq(PLATFORM_TENANTS.length, start);

@@ -70,7 +70,8 @@
     });
     await t('Finance sees the vault with each run; customers open and save their invoices', async function(){
       as('PU-106'); bosActAs('PU-106'); renderSidebar(); showView('oontu-finance'); bosTab('oontu-finance', 6); await sleep(20);
-      var m = document.getElementById('main-content').textContent; ok(/Invoice vault/.test(m) && /Stored/.test(m) && /Sent to customer/.test(m), m.slice(0, 160));
+      var m = document.getElementById('main-content').textContent;
+      if(typeof o2On === 'function' && o2On('4c')){ var d4 = document.createElement('div'); d4.innerHTML = o2InvoicesTabHTML('vault'); m = d4.textContent; }   /* O2 4c: the vault is its own tab */ ok(/Invoice vault/.test(m) && /Stored/.test(m) && /Sent to customer/.test(m), m.slice(0, 160));
       bosInvoiceView(BOS.vault[0].docNo); ok(/Stored copy/.test(document.getElementById('bos-dialog-root').textContent) && /unchanged since it was sent/.test(document.getElementById('bos-dialog-root').textContent), 'view'); bosDialogClose();
       bosActAs('PU-001'); state.role = 'admin'; renderSidebar(); var html = sec_billing(true); ok(/bosInvoiceView\('OON\//.test(html), 'the customer can open each invoice');
     });

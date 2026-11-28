@@ -137,8 +137,8 @@
       as('PU-101'); ok(!bosRequestRefund({ invoiceId:inv.id, amount:1, reason:'x' }).ok, 'sales can’t request');
       as('PU-106'); ok(!bosRequestRefund({ invoiceId:inv.id, amount:inv.amount + 1, reason:'Too much' }).ok, 'not more than paid');
       var r = bosRequestRefund({ invoiceId:inv.id, amount:1, reason:'Goodwill credit for the outage' }); ok(r.ok, r.reason);
-      ok(!bosDecide(r.approval.id, true).ok, 'not by the requester');
-      as('PU-001'); ok(bosDecide(r.approval.id, true).ok, 'approved by someone else'); eq(r.refund.status, 'approved');
+      ok(!bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'not by the requester');
+      as('PU-001'); ok(bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'approved by someone else'); eq(r.refund.status, 'approved');
       var done = BOS_PAY.simulate('refund.processed', { id:r.refund.providerId, amount:1, currency:inv.currency, version:1 }); ok(done.applied, 'provider event'); eq(r.refund.status, 'refunded');
     });
     await t('Finance handles a reconciliation exception', async function(){
@@ -164,8 +164,8 @@
       ok(!bosRequestAccess({ tenantId:CURRENT_ORGANIZATION_ID, scope:'workspace-data', purpose:'Check the import mapping', hours:2, ticketId:tk.id }).ok, 'needs customer authorisation');
       var r = bosRequestAccess({ tenantId:CURRENT_ORGANIZATION_ID, scope:'workspace-data', purpose:'Check the import mapping', hours:2, ticketId:tk.id, customerAuthorised:true }); ok(r.ok && r.grant.status === 'requested', r.reason);
       ok(!bosHasAccess(CURRENT_ORGANIZATION_ID, 'workspace-data'), 'no access before approval');
-      ok(!bosDecide(r.approval.id, true).ok, 'not self-approved');
-      as('PU-104'); ok(bosDecide(r.approval.id, true).ok, 'support manager approves');
+      ok(!bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'not self-approved');
+      as('PU-104'); ok(bosDecide(r.approval.id, true, 'Checked the evidence on file and it is justified for this case.', 'Other (explained in note)').ok, 'support manager approves');
       as('PU-103'); ok(bosHasAccess(CURRENT_ORGANIZATION_ID, 'workspace-data'), 'granted');
       APS.clockOffsetMs = (APS.clockOffsetMs || 0) + 3 * H; ok(!bosHasAccess(CURRENT_ORGANIZATION_ID, 'workspace-data'), 'expired'); APS.clockOffsetMs -= 3 * H;
       ok(AUDIT_LOG.some(function(e){ return /Sensitive access requested/.test(e.action); }) && AUDIT_LOG.some(function(e){ return /Access expired/.test(e.action); }), 'audited');
@@ -215,14 +215,17 @@
       bosOpen('onboarding', BOS.onboardings[0].id); await sleep(20); ok(/Milestones/.test(main()) && /Hand-over/.test(main()), 'onboarding page');
       showView('oontu-service'); for(var s = 0; s < 5; s++){ bosTab('oontu-service', s); await sleep(5); }
       showView('oontu-finance'); for(var f = 0; f < 5; f++){ bosTab('oontu-finance', f); await sleep(5); }
-      showView('oontu-platform-users'); for(var e = 0; e < 5; e++){ bosTab('oontu-platform-users', e); await sleep(5); } ok(/Permission catalog|Outbox/.test(main()), 'employees tabs');
+      showView('oontu-platform-users'); for(var e = 0; e < 5; e++){ bosTab('oontu-platform-users', e); await sleep(5); } if(typeof o2On === 'function' && o2On('7c')){ o2PeopleTab('advanced'); await sleep(5); }   /* O2 7c: the catalogue is under Advanced */
+      ok(/Permission catalog|Outbox/.test(main()), 'employees tabs');
       showView('oontu-custops'); for(var c = 0; c < 3; c++){ bosTab('oontu-custops', c); await sleep(5); }
       bosMailDialog(); bosMailSubmit(); await sleep(20); ok(/Received email/.test(main()), 'email intake tab after simulation');
     });
     await t('the sidebar shows the five workspaces for the Super Admin', async function(){
       as('PU-001'); bosActAs('PU-001'); renderSidebar(); var heads = Array.prototype.map.call(document.querySelectorAll('#sidebar-nav .o-nav-head .sidebar-label'), function(x){ return x.textContent.trim(); }).filter(Boolean).join(',');
+      var n1a = typeof o2On === 'function' && o2On('1a');   /* with O2 step 1a the groups follow §5 */
+      if(n1a) ok(/Work/.test(heads) && /Customers/.test(heads) && /Service/.test(heads) && /Billing/.test(heads), heads); else
       ok(/Revenue/.test(heads) && /Service/.test(heads) && /Customer operations/i.test(heads) && /Business & finance/i.test(heads), heads);
-      ok(/Platform administration/i.test(document.getElementById('sidebar-nav').textContent), 'platform administration group');
+      ok((n1a ? /Admin/ : /Platform administration/i).test(document.getElementById('sidebar-nav').textContent), 'platform administration group');
     });
     pub();
   }, 300); });

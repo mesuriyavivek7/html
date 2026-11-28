@@ -2,8 +2,12 @@
   Runs tests/auth-flow.spec.js against recruitment-os-prototype.html in headless Chrome or Edge.
   Usage:  powershell -ExecutionPolicy Bypass -File tests\run-auth-tests.ps1 [-Browser <path to chrome.exe>]
   Exit code 0 = all passed, 1 = failures, 2 = the run itself failed.
+  O2 (Step 0a): every run starts from the seeds in a new browser profile, and saving demo data is OFF
+  (window.__O2_NO_PERSIST__). -Persist turns saving on; -Switches 0a,1b forces O2 step switches on.
+  A spec can ask for the same with a line "// @o2-runner persist switches=0a" (used by o2-persistence.spec.js);
+  "// @o2-runner switches=0b,1a" turns switches on with saving still off.
 #>
-param([string]$Browser, [string]$Spec, [int]$Width = 1440, [int]$Height = 900, [int]$Budget = 200000)
+param([string]$Browser, [string]$Spec, [int]$Width = 1440, [int]$Height = 900, [int]$Budget = 200000, [switch]$Persist, [string]$Switches, [string]$RxSwitches, [switch]$Cx)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $src  = Join-Path $root 'recruitment-os-prototype.html'
@@ -28,7 +32,25 @@ try {
   $html = [IO.File]::ReadAllText($src, $utf8)
   $idx = $html.LastIndexOf('</body>')
   if($idx -lt 0){ Write-Host 'Could not find </body> in the prototype.'; exit 2 }
-  $html = $html.Substring(0, $idx) + "<script>`n" + [IO.File]::ReadAllText($spec, $utf8) + "`n</script>`n" + $html.Substring($idx)
+  $specText = [IO.File]::ReadAllText($spec, $utf8)
+  # "// @fixture tests/fixtures/<file>.js" inlines that script before the spec (evaluation fixtures)
+  foreach($fx in [regex]::Matches($specText, '//\s*@fixture\s+(\S+)')){ $fp = Join-Path $root $fx.Groups[1].Value; if(Test-Path $fp){ $specText = [IO.File]::ReadAllText($fp, $utf8) + "`n" + $specText } else { Write-Host "Fixture not found: $fp"; exit 2 } }
+  $html = $html.Substring(0, $idx) + "<script>`n" + $specText + "`n</script>`n" + $html.Substring($idx)
+  # O2 test setup, placed before every page script
+  $dir = [regex]::Match($specText, '//\s*@o2-runner(\s+persist)?(?:\s+switches=([\w,]+))?')
+  $usePersist = $Persist -or ($dir.Success -and $dir.Groups[1].Success)
+  $sw = @(); if($Switches){ $sw += $Switches -split ',' }; if($dir.Success -and $dir.Groups[2].Success){ $sw += $dir.Groups[2].Value -split ',' }
+  $o2 = '<script>' + $(if($usePersist){ 'window.__O2_NO_PERSIST__=false;' } else { 'window.__O2_NO_PERSIST__=true;' }) +
+        $(if($sw.Count){ 'window.__O2_SWITCHES__={' + (($sw | Where-Object { $_ } | ForEach-Object { "'" + $_.Trim() + "':true" }) -join ',') + '};' } else { '' }) + '</script>'
+  # Recruiter-app upgrade switches (Part B): -RxSwitches g1,g2 or a spec line "// @rx-runner switches=g1"
+  $rxd = [regex]::Match($specText, '//\s*@rx-runner\s+switches=([\w,]+)'); $rx = @(); if($RxSwitches){ $rx += $RxSwitches -split ',' }; if($rxd.Success){ $rx += $rxd.Groups[1].Value -split ',' }
+  if($rx.Count){ $o2 = $o2.Replace('</script>', 'window.__RX_SWITCHES__={' + (($rx | Where-Object { $_ } | ForEach-Object { "'" + $_.Trim() + "':true" }) -join ',') + '};</script>') }
+  # Cowork v2 (CX): -Cx or a spec line "// @cx-runner on" turns CX_SWITCH on for the run
+  # "// @cx-runner off" pins a spec to CX off: it tests a behaviour CX retires by design (e.g. per-agent plans and trials)
+  if([regex]::IsMatch($specText, '//\s*@cx-runner\s+off')){ $o2 = $o2.Replace('</script>', 'window.__CX_SWITCH__=false;</script>') }
+  elseif($Cx -or [regex]::IsMatch($specText, '//\s*@cx-runner\s+on')){ $o2 = $o2.Replace('</script>', 'window.__CX_SWITCH__=true;</script>') }
+  $h = $html.IndexOf('<head>'); if($h -lt 0){ Write-Host 'Could not find <head> in the prototype.'; exit 2 }
+  $html = $html.Substring(0, $h + 6) + $o2 + $html.Substring($h + 6)
   $page = Join-Path $tmp 'test.html'
   [IO.File]::WriteAllText($page, $html, $utf8)
   $url = ([Uri]$page).AbsoluteUri   # percent-encodes spaces in the temp path
