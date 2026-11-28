@@ -26,7 +26,7 @@
 <main id="root"></main>
 <script id="cx-data" type="application/json">
 {
-    "updated":  "2026-11-28 06:59 IST",
+    "updated":  "2026-11-28 07:33 IST",
     "phases":  [
                    {
                        "id":  "C0",
@@ -121,11 +121,11 @@
                    {
                        "id":  "C9",
                        "name":  "UX polish pass",
-                       "status":  "not started",
-                       "start":  "",
-                       "end":  "",
-                       "specs":  "",
-                       "note":  ""
+                       "status":  "done",
+                       "start":  "2026-11-28",
+                       "end":  "2026-11-28",
+                       "specs":  "all cx specs 92/92 + regressions",
+                       "note":  "13 screens x 2 sizes in cx-screens/, each looked at; fixed: Six agents line, chosen chip style, template-mode preview, WhatsApp templates one row each, numbered steps, pick evidence lines, stacked tables on phones, Kairo grouping, Needs-you choices, one description per card"
                    },
                    {
                        "id":  "C10",
@@ -161,13 +161,41 @@
                       "C5 checkpoint: full suite CX off 1376/1379. fix-d2 F5 read the seeded ledger action labels as inline calls (word followed by a bracket); labels reworded with a middle dot. motion collapse-pill flake passed alone; demo-data is the date-dependent seed.",
                       "C5 checkpoint, CX on: green except the not-yet-built C6/C7 specs, demo-data (date seed) and o2-nav-redirect, whose LinkedIn-infrastructure settings test now runs with CX off inside the test.",
                       "C7: job 42 (the example day) resolves to the workspace Java backend job through CX_JOB_ALIAS; Revenue \u0026 Redeploy runs the G3 rules directly, whatever the RX switch.",
-                      "C8: cards keep data-agent with the old id (old specs and handlers) and add data-cx-agent; the new Revenue \u0026 Redeploy card is its own card type (cx-rr-card) beside the old card contract."
+                      "C8: cards keep data-agent with the old id (old specs and handlers) and add data-cx-agent; the new Revenue \u0026 Redeploy card is its own card type (cx-rr-card) beside the old card contract.",
+                      "C9: screenshots by headless Chrome --screenshot (Playwright is not installed). The page itself overflows at 375 px with CX off too (top bar and cards; pre-existing); CX tables stack into labelled rows on phones."
                   ],
     "isolated":  [
 
                  ],
     "screens":  [
-
+                    "cx-screens/agents-desktop-cxoff.png",
+                    "cx-screens/agents-desktop.png",
+                    "cx-screens/agents-mobile-cxoff.png",
+                    "cx-screens/agents-mobile.png",
+                    "cx-screens/calendar-desktop.png",
+                    "cx-screens/calendar-mobile.png",
+                    "cx-screens/campaign-desktop.png",
+                    "cx-screens/campaign-mobile.png",
+                    "cx-screens/credits-desktop.png",
+                    "cx-screens/credits-mobile.png",
+                    "cx-screens/email-desktop.png",
+                    "cx-screens/email-mobile.png",
+                    "cx-screens/kairo-desktop.png",
+                    "cx-screens/kairo-mobile.png",
+                    "cx-screens/li-queue-desktop.png",
+                    "cx-screens/li-queue-mobile.png",
+                    "cx-screens/linkedin-desktop.png",
+                    "cx-screens/linkedin-mobile.png",
+                    "cx-screens/live-hires-desktop.png",
+                    "cx-screens/live-hires-mobile.png",
+                    "cx-screens/needs-you-desktop.png",
+                    "cx-screens/needs-you-mobile.png",
+                    "cx-screens/picks-desktop.png",
+                    "cx-screens/picks-mobile.png",
+                    "cx-screens/setup-desktop.png",
+                    "cx-screens/setup-mobile.png",
+                    "cx-screens/whatsapp-desktop.png",
+                    "cx-screens/whatsapp-mobile.png"
                 ]
 }
 </script>

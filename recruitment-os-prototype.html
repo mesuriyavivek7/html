@@ -74132,6 +74132,18 @@ function cfScopeHTML(){
 .cx-pending { color:var(--ink-3, #8a8a8a); }
 .cx-banner { display:flex; gap:12px; align-items:center; justify-content:space-between; }
 @media (max-width:640px){ .cx-bar { grid-template-columns:110px 1fr 80px; } }
+/* C9 polish: chosen chips look chosen; setup steps breathe; CX tables stack into labelled rows on phones */
+.cx-chip[aria-pressed="true"] { background:var(--ink, #1b1b1b); color:var(--surface, #fff); border-color:var(--ink, #1b1b1b); }
+.cx-chip:focus-visible, .cx-bar:focus-visible { outline:2px solid var(--focus, #2f5d50); outline-offset:2px; }
+.cx-steps { display:grid; gap:16px; padding-left:0; list-style:none; margin:12px 0 0; }
+.cx-steps > li > div { margin-top:6px; }
+@media (max-width:640px){
+  table.cx-stack { min-width:0 !important; }
+  table.cx-stack thead { display:none; }
+  table.cx-stack tr { display:block; padding:8px 0; border-bottom:1px solid var(--line, #e5e5e5); }
+  table.cx-stack td { display:grid; grid-template-columns:38% 1fr; gap:12px; padding:2px 0; border:0; text-align:left; }
+  table.cx-stack td::before { content:attr(data-label); color:var(--ink-3, #8a8a8a); text-align:left; }
+}
 </style>
 <script id="cx-credits">
 /* CX C1 — Cowork v2: the switch and one common credit wallet (live ledger).
@@ -74709,7 +74721,10 @@ function cfScopeHTML(){
   function waPage(){
     const w = CX_SETUP.whatsapp, s = cxWaStatus();
     const step = function(n, title, done, body){ return '<li class="cx-step" data-step="' + n + '"><b>' + n + '. ' + esc(title) + '</b> ' + (done ? st('Done') : '') + '<div>' + body + '</div></li>'; };
-    const tpls = w.templates.length ? '<div class="o-table-wrap"><table class="o-table" id="cx-tpls"><thead><tr><th>Template</th><th>Language</th><th>Status</th><th></th></tr></thead><tbody>' + w.templates.map(function(t){ return '<tr data-tpl="' + esc(t.id) + '"><td>' + esc(t.name) + '<small> · ' + esc(t.category) + '</small></td><td>' + esc(t.lang) + '</td><td>' + esc(t.status) + (t.reason ? '<br><small>' + esc(t.reason) + '</small>' : '') + '</td><td>' + (t.status === 'Rejected' ? btn('Fix and resubmit', "cxDo(function(){ return cxWaResubmit('" + t.id + "', 'Hello, a reminder about joining {{1}}'); })") : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '';
+    /* C9: one row per template, each language's status side by side (21 rows became 7) */
+    const names = []; w.templates.forEach(function(t){ if(names.indexOf(t.name) < 0) names.push(t.name); });
+    const tpls = w.templates.length ? '<div class="o-table-wrap"><table class="o-table" id="cx-tpls"><thead><tr><th>Template</th><th>English · Hindi · Gujarati</th><th></th></tr></thead><tbody>' + names.map(function(nm){ const list = w.templates.filter(function(t){ return t.name === nm; }), rej = list.filter(function(t){ return t.status === 'Rejected'; });
+      return '<tr data-tpl="' + esc((rej[0] || list[0]).id) + '"><td>' + esc(nm) + '<small> · ' + esc(list[0].category) + '</small></td><td>' + list.map(function(t){ return '<span class="cx-chip" data-tpl-lang="' + esc(t.lang) + '">' + (t.status === 'Approved' ? '✓ ' : t.status === 'Rejected' ? '✕ ' : '… ') + esc(t.lang) + ': ' + esc(t.status) + '</span>'; }).join(' ') + rej.map(function(t){ return '<br><small>' + esc(t.lang) + ': ' + esc(t.reason) + '</small>'; }).join('') + '</td><td>' + rej.map(function(t){ return btn('Fix and resubmit', "cxDo(function(){ return cxWaResubmit('" + t.id + "', 'Hello, a reminder about joining {{1}}'); })"); }).join('') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '';
     return sec('Connect WhatsApp', 'Status: ' + st(s) + '. You pay Meta for WhatsApp messages directly; Oontu charges 1 credit for handling each template.', '<ol class="cx-steps">' +
       step(1, 'Connect WhatsApp', w.state !== 'none', w.state === 'none' ? '<p class="o-card__sub">Sign in with Facebook, pick your business, add your number and verify it by code. (Simulated here.)</p><label class="cl-field"><span>Phone number</span><input class="app-input" id="cx-wa-phone" placeholder="+91 98xxx xxxxx" aria-label="Phone number"></label><label class="cl-field"><span>Code from the SMS</span><input class="app-input" id="cx-wa-code" placeholder="6 digits" aria-label="Code"></label>' + btn('Connect WhatsApp', "cxDo(function(){ return cxWaConnect({ phone:document.getElementById('cx-wa-phone').value, code:document.getElementById('cx-wa-code').value }); })", true) : '<p class="o-card__sub">' + esc(w.phone) + ' · ' + esc(w.displayName) + (w.state === 'meta' ? ' · waiting for Meta to finish setup' : '') + '</p>' + (w.state === 'meta' ? btn('Meta finished (simulate)', 'cxDo(cxWaMetaDone)') : '')) +
       step(2, 'Add a payment method in Meta', w.paymentAdded, w.paymentAdded ? '' : '<p class="o-card__sub">Meta bills you for messages. Add a card in Meta Business Settings, then come back.</p>' + btn('I added it (simulate)', 'cxDo(cxWaAddPayment)')) +
@@ -74984,7 +74999,10 @@ function cfScopeHTML(){
       (ed ? '<button type="button" class="o-btn o-btn--primary" id="cx-confirm-criteria" onclick="cxConfirmCriteria(\'' + esc(jobId) + '\'); openJob(\'' + esc(jobId) + '\')">Confirm criteria</button>' : '') + '</div>';
   };
   window.cxPickCardHTML = function(p){
-    const strong = p.rows.filter(function(r){ return r.status === 'met' && r.kind !== 'info'; }).sort(function(a, b){ return SRC_W[b.source] - SRC_W[a.source]; }).slice(0, 3);
+    /* C9: three distinct lines, each with what it proves (a must-have that is also required appears once) */
+    const seenEv = {}, strong = p.rows.filter(function(r){ return r.status === 'met' && r.kind !== 'info'; }).sort(function(a, b){ return SRC_W[b.source] - SRC_W[a.source]; })
+      .filter(function(r){ const k = r.evidence; if(seenEv[k]) return false; seenEv[k] = 1; return true; }).slice(0, 3)
+      .map(function(r){ return { evidence:(r.kind === 'exp' ? 'Experience: ' : '') + r.evidence.replace(/^CV: /, 'CV shows ') }; });
     return '<article class="o-card cx-pick" data-pick="' + esc(p.id) + '"><div class="o-card__head"><div><h3 class="o-card__title">' + esc(p.c.name) + '</h3><p class="o-card__sub">' + esc(p.segment) + '</p></div><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="cx-chip" data-fit="' + p.fit + '">' + p.fit + '% fit</span><span class="cx-chip" data-confidence="' + p.confidence + '">' + p.confidence + ' confidence</span><span class="cx-chip" data-likelihood="' + p.likelihoodLabel + '">' + p.likelihoodLabel + '</span></span></div>' +
       '<p class="o-card__sub"><b>Why:</b> ' + strong.map(function(r){ return esc(r.evidence); }).join(' · ') + '</p>' + (p.willAsk.length ? '<p class="o-card__sub"><b>Missing:</b> ' + p.willAsk.map(function(x){ return esc(x) + ' (will ask)'; }).join(' · ') + '</p>' : '') +
       '<details><summary>All criteria</summary><table class="o-table"><thead><tr><th>Criterion</th><th>Status</th><th>Evidence</th><th>Source</th></tr></thead><tbody>' + p.rows.map(function(r){ return '<tr><td>' + esc(r.label) + '</td><td>' + esc(r.status) + '</td><td>' + esc(r.evidence) + '</td><td>' + esc(r.source) + '</td></tr>'; }).join('') + '</tbody></table></details></article>';
@@ -75144,6 +75162,13 @@ function cfScopeHTML(){
 
   /* ---- message editor ---- */
   const CHIPS = window.CX_CHIPS = ['First name', 'Job title', 'Company', 'Pay band', 'Location', 'Recruiter name'];
+  const langSel = function(s, i){ return '<select class="app-input" aria-label="Language" onchange="CXB.d.steps[' + i + '].message.lang = this.value; cxbRefresh()">' + ['English', 'Hindi', 'Gujarati'].map(function(l){ return '<option' + (s.message.lang === l ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select>'; };
+  /* the words of each approved starter template (variables as chips) */
+  const TPL_TEXT = window.CX_TEMPLATE_TEXT = { 'First touch · Active':'Hi {{First name}}, {{Recruiter name}} here. A {{Job title}} role at {{Company}} ({{Pay band}}, {{Location}}) fits what you are looking for. Interested? Yes / Not now / No',
+    'First touch · Passive known':'Hi {{First name}}, not sure if you are open to a move, but {{Company}} is hiring a {{Job title}} in {{Location}} ({{Pay band}}). Worth a chat? Yes / Not now / No',
+    'Consent request':'Hi {{First name}}, may we share your CV with {{Company}} for the {{Job title}} role? Yes / No', 'Interview confirmation':'Hi {{First name}}, your interview for {{Job title}} is booked. Reply Yes to confirm.',
+    'Interview reminder':'Hi {{First name}}, a reminder about your interview for {{Job title}}.', 'Joining-day check':'Hi {{First name}}, all set for joining {{Company}}?', 'Document request':'Hi {{First name}}, please share the documents for {{Company}}.' };
+  window.cxTemplateText = function(name){ return TPL_TEXT[name] || name || ''; };
   window.cxbFill = function(text, c, job){ const v = { 'First name':(c && c.name || '').split(' ')[0], 'Job title':job ? job.title : 'the role', 'Company':job ? (job.client || '') : '', 'Pay band':job ? (job.salary || '') : '', 'Location':job ? (job.loc || '') : '', 'Recruiter name':B.d ? B.d.sender : myName() }; return String(text || '').replace(/\{\{([^}]+)\}\}/g, function(m, k){ return v[k] != null ? v[k] : ''; }); };
   window.cxbInsertChip = function(i, chip){ const s = B.d.steps[i]; s.message.text = (s.message.text || '') + (s.message.text && !/\s$/.test(s.message.text) ? ' ' : '') + '{{' + chip + '}}'; cxbRefresh(); };
   const AI = { shorter:function(t){ return t.split(/(?<=[.!?])\s+/).slice(0, 2).join(' '); }, friendlier:function(t){ return /^hi\b/i.test(t) ? t.replace(/^hi\b/i, 'Hi there,').replace('there, {{', '{{') : 'Hi! ' + t; }, formal:function(t){ return t.replace(/^hi\b/i, 'Dear').replace(/!/g, '.'); },
@@ -75239,13 +75264,14 @@ function cfScopeHTML(){
       (s.when.type === 'noreply' ? '<input class="app-input" type="number" min="1" max="60" value="' + s.when.n + '" style="width:70px" aria-label="Wait" onchange="CXB.d.steps[' + i + '].when.n = Math.max(1, +this.value || 1); cxbRefresh()"><select class="app-input" aria-label="Unit" onchange="CXB.d.steps[' + i + '].when.unit = this.value; cxbRefresh()"><option' + (s.when.unit === 'days' ? ' selected' : '') + '>days</option><option' + (s.when.unit === 'hours' ? ' selected' : '') + '>hours</option></select>' : '') +
       '<span role="group" aria-label="Channel" style="display:flex;gap:6px">' + ['whatsapp', 'email', 'linkedin', 'call'].map(chipBtn).join('') + '</span></div>' + waNote +
       (s.channel === 'email' || s.channel === 'whatsapp' ? '<div class="cxb-editor" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">' +
-        (tplMode ? '<div><p class="o-card__sub">WhatsApp only allows approved templates for first messages.</p><select class="app-input" aria-label="Approved template" onchange="CXB.d.steps[' + i + '].message.template = this.value; cxbRefresh()">' + (CX_SETUP.whatsapp.templates || []).filter(function(t){ return t.status === 'Approved' && t.lang === s.message.lang; }).map(function(t){ return '<option' + (s.message.template === t.name ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '</select></div>' :
-        '<div><textarea class="app-input" rows="5" aria-label="Message" oninput="CXB.d.steps[' + i + '].message.text = this.value" onchange="cxbRefresh()">' + esc(s.message.text) + '</textarea>') +
+        /* C9: template mode shows only what can change (template and language) and previews the template's own words */
+        (tplMode ? '<div><p class="o-card__sub">WhatsApp only allows approved templates for first messages.</p><select class="app-input" aria-label="Approved template" onchange="CXB.d.steps[' + i + '].message.template = this.value; cxbRefresh()">' + (CX_SETUP.whatsapp.templates || []).filter(function(t){ return t.status === 'Approved' && t.lang === s.message.lang; }).map(function(t){ return '<option' + (s.message.template === t.name ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('') + '</select>' + langSel(s, i) + '</div>' :
+        '<div><textarea class="app-input" rows="5" aria-label="Message" oninput="CXB.d.steps[' + i + '].message.text = this.value" onchange="cxbRefresh()">' + esc(s.message.text) + '</textarea>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + CHIPS.map(function(c){ return '<button type="button" class="cx-chip" data-chip="' + esc(c) + '" onclick="CXB.clicks++; cxbInsertChip(' + i + ', \'' + esc(c) + '\')">+ ' + esc(c) + '</button>'; }).join('') + '</div>' +
-        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><select class="app-input" aria-label="Language" onchange="CXB.d.steps[' + i + '].message.lang = this.value; cxbRefresh()">' + ['English', 'Hindi', 'Gujarati'].map(function(l){ return '<option' + (s.message.lang === l ? ' selected' : '') + '>' + l + '</option>'; }).join('') + '</select>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + langSel(s, i) +
         [['shorter', 'Shorter'], ['friendlier', 'Friendlier'], ['formal', 'More formal'], ['translate', 'Translate']].map(function(x){ return '<button type="button" class="o-btn o-btn--ghost" data-ai="' + x[0] + '" onclick="CXB.clicks++; cxbAI(' + i + ', \'' + x[0] + '\')">' + x[1] + ' <small>≈ 1 credit</small></button>'; }).join('') + '</div>' +
-        (issues.length ? '<p class="o-card__sub" role="alert" data-honesty>' + esc(issues[0].text) + '</p>' : '') + (tplMode ? '' : '</div>') +
-        '<div class="cxb-preview" aria-label="Preview"><p class="o-card__sub">Preview for ' + esc(pc ? pc.name : 'a person in the audience') + ' <button type="button" class="o-link" aria-label="Previous person" onclick="CXB.preview = Math.max(0, CXB.preview - 1); cxbRefresh()">‹</button> <button type="button" class="o-link" aria-label="Next person" onclick="CXB.preview++; cxbRefresh()">›</button></p><div class="o-card" data-preview>' + esc(cxbFill(tplMode ? (s.message.template || '') : s.message.text, pc, job)) + '</div></div></div>' : '') +
+        (issues.length ? '<p class="o-card__sub" role="alert" data-honesty>' + esc(issues[0].text) + '</p>' : '') + '</div>') +
+        '<div class="cxb-preview" aria-label="Preview"><p class="o-card__sub">Preview for ' + esc(pc ? pc.name : 'a person in the audience') + ' <button type="button" class="o-link" aria-label="Previous person" onclick="CXB.preview = Math.max(0, CXB.preview - 1); cxbRefresh()">‹</button> <button type="button" class="o-link" aria-label="Next person" onclick="CXB.preview++; cxbRefresh()">›</button></p><div class="o-card" data-preview>' + esc(cxbFill(tplMode ? cxTemplateText(s.message.template) : s.message.text, pc, job)) + '</div></div></div>' : '') +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center"><select class="app-input" aria-label="Condition" onchange="if(this.value){ CXB.d.steps[' + i + '].conditions = [this.value]; } else { CXB.d.steps[' + i + '].conditions = []; } cxbRefresh()"><option value="">Everyone</option>' + CONDS.map(function(c){ return '<option value="' + esc(c[0]) + '"' + ((s.conditions || []).indexOf(c[0]) > -1 ? ' selected' : '') + '>' + esc(c[1]) + '</option>'; }).join('') + '</select>' +
       '<span style="flex:1"></span>' + lnk('↑', 'cxbMove(' + i + ', -1)', ' aria-label="Move up"') + lnk('↓', 'cxbMove(' + i + ', 1)', ' aria-label="Move down"') + lnk('Duplicate', 'cxbDuplicate(' + i + ')') + lnk('Delete', 'cxbDelete(' + i + ')', ' data-delete="' + i + '"') + '</div></article>';
   }
@@ -75491,7 +75517,10 @@ function cfScopeHTML(){
       const r = cxAI('small', 'extract', { text:t, type:'number' }); cxCharge({ agent:'talent-discovery', rateClass:'ai-small', qty:1, action:'Read an answer' }); let v = r.output; if(q.key === 'notice' && /month/i.test(t) && typeof v === 'number') v *= 30; return { value:v, confidence:typeof v === 'number' ? r.confidence : 0.3 }; }
     return { value:t, confidence:0.8 };
   }
-  window.cxNeedsYouResolve = function(id, value){ const n = NEEDS.find(function(x){ return x.id === id; }); if(!n || n.status !== 'open') return { ok:false }; n.status = 'done'; const s = SCR[n.key]; if(s){ s.answers[n.q] = value; s.status = 'asking'; s.i++; askNext(s); } return { ok:true }; };
+  window.cxNeedsYouResolve = function(id, value){ const n = NEEDS.find(function(x){ return x.id === id; }); if(!n || n.status !== 'open') return { ok:false }; n.status = 'done';
+    /* a reply's meaning, as the recruiter read it: act on it like a confident reading */
+    if(n.q === 'intent' || n.q === 'question'){ if(value === 'interested' && n.jobId) cxScreenStart(n.candidateId, n.jobId, 'whatsapp', cxLang(n.text)); else if(value === 'not-now' || value === 'no') cxReplyOutcome(n.candidateId, value, { jobId:n.jobId }); return { ok:true }; }
+    const s = SCR[n.key]; if(s){ s.answers[n.q] = value; s.status = 'asking'; s.i++; askNext(s); } return { ok:true }; };
   function finish(s){
     const job = jobById(s.jobId), c = byId(s.candidateId), crit = (typeof cxCriteria === 'function' && cxCriteria(s.jobId)) || cxIntakeRules(job);
     const cc = Object.assign({}, c, { answers:Object.assign({}, c.answers || {}) }); s.qs.filter(function(q){ return q.must; }).forEach(function(q){ cc.answers[q.key] = s.answers[q.id]; });
@@ -75535,7 +75564,7 @@ function cfScopeHTML(){
     const open = NEEDS.filter(function(n){ return n.status === 'open'; }), sug = SUGG.filter(function(s){ return s.status === 'open'; });
     if(!open.length && !sug.length) return '';
     return '<section class="o-card" id="cx-needs-you"><h2 class="o-card__title">Needs you</h2><p class="o-card__sub">Replies Talent Discovery could not read with confidence, and suggestions only you decide.</p><ul class="o-list">' +
-      open.map(function(n){ const c = byId(n.candidateId); return '<li data-needs="' + esc(n.id) + '"><b>' + esc(c ? c.name : n.candidateId) + '</b> said “' + esc(n.text) + '”. Suggested reading: <input class="app-input" style="width:140px" value="' + esc(n.suggested == null ? '' : n.suggested) + '" aria-label="Reading" id="ny-' + esc(n.id) + '"> <button type="button" class="o-btn" onclick="cxNeedsYouResolve(\'' + esc(n.id) + '\', document.getElementById(\'ny-' + esc(n.id) + '\').value); caRefresh()">Use this</button></li>'; }).join('') +
+      open.map(function(n){ const c = byId(n.candidateId); return '<li data-needs="' + esc(n.id) + '"><b>' + esc(c ? c.name : n.candidateId) + '</b> said “' + esc(n.text) + '”. Suggested reading: ' + (n.q === 'intent' ? '<select class="app-input" style="width:180px" aria-label="Reading" id="ny-' + esc(n.id) + '">' + [['interested', 'Interested'], ['not-now', 'Not now'], ['no', 'No'], ['question', 'Has a question']].map(function(o){ return '<option value="' + o[0] + '"' + (n.suggested === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' : '<input class="app-input" style="width:140px" value="' + esc(n.suggested == null ? '' : n.suggested) + '" aria-label="Reading" id="ny-' + esc(n.id) + '">') + ' <button type="button" class="o-btn" onclick="cxNeedsYouResolve(\'' + esc(n.id) + '\', document.getElementById(\'ny-' + esc(n.id) + '\').value); caRefresh()">Use this</button></li>'; }).join('') +
       sug.map(function(s){ return '<li data-suggestion="' + esc(s.id) + '">' + esc(s.text) + ' <button type="button" class="o-link" onclick="CX_SUGGESTIONS.find(function(x){ return x.id === \'' + esc(s.id) + '\'; }).status = \'kept\'; caRefresh()">Keep in pool</button></li>'; }).join('') + '</ul></section>';
   };
   function hook(){
@@ -75738,7 +75767,9 @@ function cfScopeHTML(){
       const g = (window.CX_GUARD_ALERTS || []).filter(function(a){ return a.status === 'open'; }), byOwner = {};
       g.forEach(function(a){ (byOwner[a.owner] = byOwner[a.owner] || []).push(a.why); }); Object.keys(REV.open).forEach(function(k){ const i = REV.open[k]; (byOwner[i.owner || 'unassigned'] = byOwner[i.owner || 'unassigned'] || []).push(i.label + ': ' + i.title + (i.amount ? ' (₹' + fmt(i.amount) + (i.estimate ? ', estimate' : '') + ')' : '')); });
       const owners = Object.keys(byOwner); const name = function(id){ const r = typeof tmById === 'function' ? tmById(id) : null; return r ? r.name : id; };
-      return { text:owners.length ? owners.map(function(o){ return name(o) + ': ' + byOwner[o].slice(0, 4).join('; '); }).join('\n') + '\nMoney at risk: ₹' + fmt(rev.atRisk) + '.' : 'Nothing is stuck right now.', cx:{ intent:'stuck', guardian:g.length, revenue:Object.keys(REV.open).length, atRisk:rev.atRisk } };
+      /* C9: the same reason once, with a count */
+      const grouped = function(list){ const c = {}, order = []; list.forEach(function(x){ if(!c[x]){ c[x] = 0; order.push(x); } c[x]++; }); return order.map(function(x){ return c[x] > 1 ? x + ' (' + c[x] + ')' : x; }); };
+      return { text:owners.length ? owners.map(function(o){ return name(o) + ': ' + grouped(byOwner[o]).slice(0, 4).join('; '); }).join('\n') + '\nMoney at risk: ₹' + fmt(rev.atRisk) + '.' : 'Nothing is stuck right now.', cx:{ intent:'stuck', guardian:g.length, revenue:Object.keys(REV.open).length, atRisk:rev.atRisk } };
     }
     if((m = /start sourcing for (?:job\s*)?(.+)$/.exec(low))){ const job = cxResolveJob(m[1].trim()); if(!job) return { text:'I couldn’t find that job.' };
       PENDING.action = { kind:'source', jobId:job.id, run:function(){ const r = cxIntake(job.id); if(!r.ok) return { text:r.reason }; cxConfirmCriteria(job.id); const k = cxRank(job.id); return { text:'Done. Criteria v' + cxCriteria(job.id).version + ' for ' + job.title + '; ' + k.picks.length + ' picks pass the gate, ' + k.excluded.length + ' left out with reasons.', cx:{ intent:'source', jobId:job.id, picks:k.picks.length } }; } };
@@ -75796,8 +75827,10 @@ function cfScopeHTML(){
 
   const DOES = window.CX_AGENT_DOES = { 'talent-discovery':'Reads the job, finds and ranks people with evidence, and screens their replies.', 'outreach':'First messages and follow-ups on WhatsApp and email, at the right time for each person.', 'linkedin':'Prepares a daily LinkedIn queue for each recruiter: who to contact, why, and the note to send.', 'interviews':'Books interviews, sends reminders, reschedules and chases feedback.', 'delivery-guardian':'Protects every hire from profile sent to the end of the guarantee.', 'revenue-redeploy':'Finds money at risk and the next job for contractors whose assignment is ending.' };
   const ORDER = ['talent-discovery', 'outreach', 'linkedin', 'interviews', 'delivery-guardian', 'revenue-redeploy'];
-  const RENAME = function(h){ return h.replace(/\bEngagement\b/g, 'Outreach').replace(/Offer &amp; Joining|Offer & Joining|Offers? and Joining/g, 'Delivery Guardian'); };
+  const RENAME = function(h){ return h.replace('Five agents working on your jobs', 'Six agents working on your jobs').replace(/\bEngagement\b/g, 'Outreach').replace(/Offer &amp; Joining|Offer & Joining|Offers? and Joining/g, 'Delivery Guardian'); };
   window.cxRename = RENAME;
+  /* each agent card's own line reads the CX words while CX is on (the original text otherwise) */
+  if(typeof CA_DOES !== 'undefined') ['talent-discovery', 'engagement', 'interviews', 'offers-joining'].forEach(function(k){ const d0 = CA_DOES[k]; try { Object.defineProperty(CA_DOES, k, { configurable:true, enumerable:true, get:function(){ return on() ? DOES[cxAgentId(k)] : d0; } }); } catch(e){} });
   function rrCard(){ return '<article class="o-card cx-rr-card" data-cx-agent="revenue-redeploy" tabindex="0" style="display:flex;flex-direction:column;gap:8px"><div class="ca-card__h"><h3 class="o-card__title">Revenue &amp; Redeploy</h3><span class="ca-card__st"><span class="cx-chip">On</span></span></div><p class="ca-card__does">' + esc(DOES['revenue-redeploy']) + '</p><p class="ca-card__nums"><b>' + (typeof cxRevenueSweep === 'function' ? Object.keys(CX_REVENUE.open).length : 0) + '</b> items · <small>money at risk and redeploys</small></p><div class="ca-card__f"><span class="cx-chip" data-cx-included>Uses credits from your wallet</span><span style="flex:1"></span><button type="button" class="o-btn" onclick="event.stopPropagation(); kairoRespond && toast(kairoRespond(\'what’s stuck today\').text.split(\'\\n\')[0])">This week</button></div></article>'; }
   function hook(){
     if(typeof window.caAgentsHTML === 'function' && !window.caAgentsHTML.__cx8){
@@ -75805,7 +75838,8 @@ function cfScopeHTML(){
       const w = function(){ const h = b.apply(this, arguments); if(!on() || typeof h !== 'string') return h;
         const cards = {}; const re = /<article class="o-card ca-card" data-agent="([^"]+)"[\s\S]*?<\/article>/g; let m; while((m = re.exec(h))){ cards[cxAgentId(m[1])] = m[0].replace('data-agent="' + m[1] + '"', 'data-agent="' + m[1] + '" data-cx-agent="' + cxAgentId(m[1]) + '"'); }   // data-agent keeps the old id (old specs and handlers); data-cx-agent is the new one
         cards['revenue-redeploy'] = cards['revenue-redeploy'] || rrCard();
-        Object.keys(cards).forEach(function(k){ cards[k] = RENAME(cards[k]).replace('Included · uses credits', 'Uses credits from your wallet'); if(DOES[k] && cards[k].indexOf('ca-card__does') < 0) cards[k] = cards[k].replace(/(<div class="ca-card__h">[\s\S]*?<\/div>)/, '$1<p class="ca-card__does">' + esc(DOES[k]) + '</p>'); });
+        /* C9: one line per agent saying what it does — the card's own line (CA_DOES) reads the CX words while CX is on */
+        Object.keys(cards).forEach(function(k){ cards[k] = RENAME(cards[k]).replace('Included · uses credits', 'Uses credits from your wallet'); });
         return '<div class="ca-grid" id="ca-cards">' + ORDER.map(function(k){ return cards[k] || ''; }).join('') + '</div>'; };
       w.__cx8 = true; window.caAgentsHTML = w; try { caAgentsHTML = w; } catch(e){}
     }
@@ -75816,6 +75850,23 @@ function cfScopeHTML(){
     ['sec_kairoAgents', 'cwAgentPage'].forEach(function(n){ const f = window[n]; if(typeof f !== 'function' || f.__cx8) return; const w3 = function(){ const h = f.apply(this, arguments); return on() && typeof h === 'string' ? RENAME(h) : h; }; w3.__cx8 = true; ['__cx', '__rx'].forEach(function(k){ w3[k] = f[k]; }); window[n] = w3; try { if(n === 'sec_kairoAgents') sec_kairoAgents = w3; else cwAgentPage = w3; } catch(e){} });
   }
   hook(); window.addEventListener('load', hook);
+})();
+</script>
+<script id="cx-polish">
+/* CX C9 — UX polish. CX tables become stacked, labelled rows on phones (≤ 640 px; CSS in cx-style): every table inside
+   a CX screen gets class cx-stack and each cell a data-label from its column heading. Runs on every render of the main
+   content (one MutationObserver), only while CX is on. */
+(function(){
+  const SEL = '#cx-credits-view table, #cx-live-hires table, #cx-channel table, #cx-impact table, #cx-job-credits table, #cxb table, .cx-pick table, #cx-rr table';
+  window.cxStackTables = function(root){
+    if(!(typeof cxOn === 'function' && cxOn())) return 0; let n = 0;
+    (root || document).querySelectorAll(SEL).forEach(function(t){ if(t.classList.contains('cx-stack')) return; const heads = [].map.call(t.querySelectorAll('thead th'), function(th){ return th.textContent.trim(); });
+      t.querySelectorAll('tbody tr').forEach(function(tr){ [].forEach.call(tr.children, function(td, i){ if(heads[i] && !td.hasAttribute('data-label')) td.setAttribute('data-label', heads[i]); }); }); t.classList.add('cx-stack'); n++; });
+    return n;
+  };
+  function watch(){ const m = document.getElementById('main-content'); if(!m || m.__cxObs) return; m.__cxObs = true; let pending = false;
+    new MutationObserver(function(){ if(pending) return; pending = true; setTimeout(function(){ pending = false; try { cxStackTables(m); } catch(e){} }, 0); }).observe(m, { childList:true, subtree:true }); }
+  window.addEventListener('load', watch);
 })();
 </script>
 <script id="o2-persist-script">
